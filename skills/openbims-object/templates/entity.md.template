@@ -1,0 +1,39 @@
+---
+id: {{MODULE}}.{{ENTITY}}
+module: {{MODULE}}
+entity: {{ENTITY}}
+lifecycle: draft
+---
+
+## Purpose
+{{ONE_TO_THREE_SENTENCES_STATING_WHAT_THIS_ENTITY_IS_AND_WHY_IT_EXISTS_AS_A_DISCRETE_OBJECT}} The role of this entity in the {{MODULE_SUBSYSTEM_NAME}} is grounded in [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]].
+
+## Rationale
+{{PARAGRAPH_EXPLAINING_WHY_THE_ENTITY_EXISTS_WHY_THESE_FIELDS_AND_WHAT_MOTIVATES_THE_SHAPE}} The design follows the discipline laid out in [[{{ADR_BACK_SOURCE}}|{{ADR_DISPLAY_TEXT}}]], where {{ADR_CLAIM_SUMMARY}}. {{SECOND_CLAIM_WITH_INLINE_WIKILINK}} grounded in [[{{SECOND_PDD_BACK_SOURCE}}|{{SECOND_PDD_DISPLAY_TEXT}}]].
+
+## Invariants
+- {{INVARIANT_ONE_LINER}}.
+- {{INVARIANT_TWO_LINER}}.
+
+<!--
+  If there are no extra invariants beyond what the Fields table already constrains, replace the
+  bullets above with the single line: `None beyond Fields constraints.` The section must be present.
+-->
+
+## Fields
+
+| Field           | Type        | Notes                                |
+|-----------------|-------------|--------------------------------------|
+| `id`            | uuid        | Primary key.                         |
+| `{{FIELD_TWO}}` | `{{TYPE}}`  | {{NOTES}}                            |
+| `{{FIELD_THREE}}` | `{{TYPE}}` | {{NOTES}}                            |
+| `created_at`    | timestamp   | Set at insert; never updated.        |
+
+### {{FIELD_TWO}}
+{{PER_FIELD_RATIONALE}} The constraint is grounded in [[{{FIELD_BACK_SOURCE}}|{{FIELD_DISPLAY_TEXT}}]]. Use the per-field H3 only when the field needs design notes beyond the Notes column; self-evident fields (`id`, `created_at`) do not need one.
+
+## Touched by
+
+| Action                                                                           | Touch  | Notes                          |
+|----------------------------------------------------------------------------------|--------|--------------------------------|
+| [[{{MODULE}}.{{ENTITY}}.{{ACTION}}|{{MODULE}}::{{ENTITY}}::{{ACTION}}]]          | write  | {{TOUCHED_BY_NOTES}}           |

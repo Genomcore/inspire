@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INSPIRE — Software that breathes</title>
+<meta name="description" content="INSPIRE is a way to build software with AI agents: when generating code is cheap, the scarce work becomes judgment — knowing what to build and telling whether it's right. Born in OpenBIMS.">
+<meta property="og:title" content="INSPIRE — Software that breathes">
+<meta property="og:description" content="A way to build software with AI agents. When code is cheap to generate, the scarce work is judgment — knowing what to build and telling whether it's right; the agents write the code.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#FAFAF8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+
+<!-- Ambient breath -->
+<div class="ambient" aria-hidden="true">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+</div>
+<svg class="currents" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1440 900">
+  <g fill="none" stroke="#98A2B3" stroke-width="1" opacity="0.10">
+    <path d="M-40,150 C 360,90 780,210 1480,120"/>
+    <path d="M-40,300 C 400,240 820,360 1480,270"/>
+    <path d="M-40,470 C 380,410 800,520 1480,430"/>
+    <path d="M-40,650 C 420,590 840,700 1480,600"/>
+    <path d="M-40,810 C 360,760 800,860 1480,770"/>
+  </g>
+</svg>
+
+<!-- Nav -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/></linearGradient></defs>
+        <circle class="ob" cx="20" cy="20" r="14" fill="none" stroke="url(#ig)" stroke-width="2.2"/>
+        <circle cx="20" cy="20" r="4.5" fill="url(#ig)"/>
+      </svg>
+      INSPIRE
+    </a>
+    <nav class="nav-links">
+      <a href="#shift">The shift</a>
+      <a href="#breaths">Principles</a>
+      <a href="#breath">Breath</a>
+      <a href="#speeds">Speeds</a>
+      <a href="#spiral">Spiral</a>
+      <a href="#prototypes">Prototypes</a>
+      <a href="#knowledge">Knowledge</a>
+      <a class="nav-cta" href="#guardrails">Get Inspired!</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <p class="eyebrow reveal">A software engineering framework for the agentic era</p>
+      <h1 class="reveal d1">Software that <span class="breathe-word"><span class="grad-text">breathes</span>.</span></h1>
+      <p class="lede reveal d2">INSPIRE is a way to build software with AI agents. When generating code is cheap, the scarce act is no longer writing it — it's <b>knowing what to build, and telling whether it's right.</b></p>
+      <div class="scrollcue reveal d3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        Breathe in
+      </div>
+    </div>
+  </section>
+
+  <!-- The shift -->
+  <section class="shift" id="shift">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The shift</p>
+        <h2>AI changed software development. Our frameworks haven't.</h2>
+      </div>
+      <div class="shift-body reveal d1">
+        <p>For decades, software development was a coordination problem: getting teams of humans aligned around implementation. Agile was built for that world.</p>
+        <p>Now the unit of work is changing. A single individual can orchestrate a swarm of AI agents, shifting the bottleneck from coordination to judgment.</p>
+      </div>
+      <div class="vs-grid">
+        <div class="vs-col reveal d1">
+          <p class="k">The agile era</p>
+          <h3>SCRUM</h3>
+          <p>Built for teams of humans coordinating over weeks. Work is split into time-boxed <b>Sprints</b>, with roles, estimation and daily stand-ups — because the bottleneck was collaboration between people.</p>
+        </div>
+        <div class="vs-col reveal d2">
+          <p class="k">The agentic era</p>
+          <h3><span class="grad-text">INSPIRE</span></h3>
+          <p>Built for one person orchestrating a swarm of AI agents in a single session — a <b>Breath</b>. Guardrails, skills, QA and version control replace the ceremonies; the bottleneck is judgment, not coordination.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The principles -->
+  <section class="breaths" id="breaths">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The principles</p>
+        <h2>Seven letters. Seven breaths.</h2>
+        <p>INSPIRE is not an acronym stretched over a process. It is seven properties that allow a software product and its underlying knowledge to emerge, evolve and remain coherent in the agentic era.</p>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">I</div>
+        <div class="body">
+          <h3>Individual</h3>
+          <p class="breath">The human becomes the orchestrator.</p>
+          <p class="desc">Software no longer emerges only from teams of humans coordinating implementation. A single contributor, amplified by AI agents, can now direct complex systems through intent, context and judgment.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">N</div>
+        <div class="body">
+          <h3>Navigable</h3>
+          <p class="breath">Context remains discoverable.</p>
+          <p class="desc">A navigable system connects intent, specifications, decisions, implementation and verification into a coherent knowledge graph. Humans and agents can discover context, trace decisions and evolve the system without losing understanding.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">S</div>
+        <div class="body">
+          <h3>Spec-driven</h3>
+          <p class="breath">Intent becomes the source of truth.</p>
+          <p class="desc">The specification captures what the system should be, while code becomes an expression of that intent. Implementation can change, but the knowledge behind it remains durable, explicit and verifiable.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">P</div>
+        <div class="body">
+          <h3>Prototypical</h3>
+          <p class="breath">Explore before committing.</p>
+          <p class="desc">Prototypes are not early versions of the product; they are disposable instruments for learning. They make uncertainty visible, allowing ideas to evolve before becoming part of the persistent knowledge layer.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">I</div>
+        <div class="body">
+          <h3>Iterative</h3>
+          <p class="breath">Progress comes from refinement.</p>
+          <p class="desc">The first version is not expected to be right — it is expected to reveal what is missing. Each iteration reduces uncertainty, revisits previous decisions and moves the system closer to what it should become.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">R</div>
+        <div class="body">
+          <h3>Regenerative</h3>
+          <p class="breath">Intent survives implementation.</p>
+          <p class="desc">The specification is the DNA of the system; code is its current expression. When implementation drifts or becomes constrained, agents can regenerate, refactor and reshape it while preserving the original intent.</p>
+        </div>
+      </div>
+
+      <div class="item reveal">
+        <div class="glyph grad-text">E</div>
+        <div class="body">
+          <h3>Enforceable</h3>
+          <p class="breath">Coherence is protected by design.</p>
+          <p class="desc">Intent alone is not enough. Guardrails, skills and automated checks turn principles into constraints that guide agents and keep every change aligned with the system's standards.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The breath -->
+  <section class="breath" id="breath">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The unit of work</p>
+        <h2>Not sprints. Breaths.</h2>
+        <p>In the agentic era, the unit of work is no longer time — it is context. INSPIRE works in Breaths: one intent, one context, taken exactly as deep as it needs.</p>
+      </div>
+      <svg class="breath-curve reveal" viewBox="0 0 560 210" role="img" aria-label="A breath: an inhale that internalizes a problem, rising to understanding, then an exhale that materializes it as a pull request.">
+        <defs>
+          <linearGradient id="bcurve" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/>
+          </linearGradient>
+        </defs>
+        <line x1="40" y1="168" x2="520" y2="168" stroke="var(--hairline)" stroke-width="1"/>
+        <line x1="280" y1="48" x2="280" y2="176" stroke="var(--hairline)" stroke-width="1" stroke-dasharray="3 5"/>
+        <path id="breathpath" d="M40 168 C 150 168 190 48 280 48 C 370 48 410 168 520 168" fill="none" stroke="url(#bcurve)" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="40" cy="168" r="4.5" fill="#57D9A3"/>
+        <circle cx="520" cy="168" r="4.5" fill="#5E5CE6"/>
+        <circle cx="280" cy="48" r="3.5" fill="#56B4F8"/>
+        <circle class="breath-dot" cx="40" cy="168" r="6" fill="#56B4F8"/>
+        <g font-family="Inter, sans-serif" text-anchor="middle">
+          <text x="280" y="36" font-size="10" letter-spacing="0.8" fill="#98A2B3">HUMAN JUDGEMENT</text>
+          <text x="160" y="132" font-size="13" font-weight="600" letter-spacing="1.5" fill="#1D2939">INHALE</text>
+          <text x="160" y="149" font-size="9" letter-spacing="1.1" fill="#667085">INTERNALIZE</text>
+          <text x="400" y="132" font-size="13" font-weight="600" letter-spacing="1.5" fill="#1D2939">EXHALE</text>
+          <text x="400" y="149" font-size="9" letter-spacing="1.1" fill="#667085">EXTERNALIZE</text>
+          <text x="40" y="192" font-size="10" letter-spacing="0.8" fill="#667085">ISSUE</text>
+          <text x="520" y="192" font-size="10" letter-spacing="0.8" fill="#667085">PULL REQUEST</text>
+        </g>
+      </svg>
+      <div class="breath-phases">
+        <div class="bp reveal d1">
+          <div class="bp-top"><span class="dot" style="background:#57D9A3"></span><h4>Inhale — internalize</h4></div>
+          <p>Take the context and go deep. The human builds the understanding needed to decide what should exist — the one place where scarce judgment enters the loop.</p>
+        </div>
+        <div class="bp reveal d2">
+          <div class="bp-top"><span class="dot" style="background:#5E5CE6"></span><h4>Exhale — externalize</h4></div>
+          <p>Materialize that understanding into durable artifacts — an architectural decision, a specification, an implementation change. The breath lands as a pull request.</p>
+        </div>
+      </div>
+      <p class="breath-note reveal d2">A Breath has no fixed size. It is defined by context and impact — sometimes a sweeping change, sometimes a single line of code.</p>
+    </div>
+  </section>
+
+  <!-- Two speeds -->
+  <section class="speeds" id="speeds">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Two speeds</p>
+        <h2>The system breathes differently as it matures.</h2>
+        <p>The system breathes at the pace of its responsibilities.</p>
+      </div>
+      <div class="speeds-wrap">
+        <svg class="speeds-8 reveal" viewBox="0 20 220 314" role="img" aria-label="Two stacked circles: the top one breathes quickly, the bottom one slowly, both the same depth.">
+          <defs>
+            <linearGradient id="e8top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57D9A3"/><stop offset="1" stop-color="#56B4F8"/></linearGradient>
+            <linearGradient id="e8bot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/></linearGradient>
+          </defs>
+          <circle class="lobe fast" cx="110" cy="112" r="74" fill="url(#e8top)" fill-opacity="0.12" stroke="url(#e8top)" stroke-width="2.6"/>
+          <circle class="lobe slow" cx="110" cy="236" r="74" fill="url(#e8bot)" fill-opacity="0.12" stroke="url(#e8bot)" stroke-width="2.6"/>
+          <circle class="waist" cx="110" cy="174" r="3.2" fill="#B7C0CE"/>
+          <circle class="speed-dot speed-dot-fast" cx="110" cy="38" r="5" fill="#57D9A3"/>
+          <circle class="speed-dot speed-dot-slow" cx="110" cy="162" r="5" fill="#5E5CE6"/>
+          <g font-family="Inter, sans-serif" text-anchor="middle">
+            <text x="110" y="108" font-size="13" font-weight="600" letter-spacing="1.5" fill="#1D2939">YOUNG</text>
+            <text x="110" y="125" font-size="9" letter-spacing="0.6" fill="#667085">SHAPING FAST</text>
+            <text x="110" y="232" font-size="13" font-weight="600" letter-spacing="1.5" fill="#1D2939">MATURE</text>
+            <text x="110" y="249" font-size="9" letter-spacing="0.6" fill="#667085">EVOLVING WISELY</text>
+          </g>
+        </svg>
+        <div class="speeds-legend">
+          <div class="speed reveal d1">
+            <div class="speed-top"><span class="dot" style="background:#57D9A3"></span><h4>Young System — Growing through intent</h4></div>
+            <p class="tag">Accelerated breathing</p>
+            <p>The system breathes with force and intent. It can change direction quickly because its history is still light.</p>
+          </div>
+          <div class="speed reveal d2">
+            <div class="speed-top"><span class="dot" style="background:#5E5CE6"></span><h4>Mature System — Evolving through memory</h4></div>
+            <p class="tag">Conscious breathing</p>
+            <p>The system breathes with depth and experience. It evolves through the memory it has accumulated, preserving what gives it identity.</p>
+          </div>
+          <p class="frontier reveal d2">The boundary isn't the release date. It's the moment the system acquires history.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The spiral -->
+  <section class="spiral" id="spiral">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The spiral</p>
+        <h2>The spiral of convergence.</h2>
+        <p>The phases of development aren't stages you pass once, nor a flat loop you repeat. Every Breath reduces uncertainty, increases value and moves the product closer to release.</p>
+      </div>
+      <div class="spiral-wrap">
+        <svg class="spiral-diagram reveal" viewBox="0 0 320 320" role="img" aria-label="A spiral winding inward through four phases — Discover, Specify, Generate, Verify — converging on the intent at its center.">
+          <defs>
+            <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/>
+            </linearGradient>
+          </defs>
+          <path id="spiralpath" d="M 160.0 48.0 L 165.8 48.4 L 171.7 49.2 L 177.4 50.2 L 183.1 51.5 L 188.6 53.1 L 194.1 55.0 L 199.5 57.2 L 204.7 59.7 L 209.7 62.4 L 214.6 65.4 L 219.4 68.6 L 223.9 72.0 L 228.2 75.7 L 232.4 79.6 L 236.3 83.7 L 240.0 88.0 L 243.4 92.4 L 246.6 97.1 L 249.6 101.8 L 252.3 106.7 L 254.7 111.8 L 256.8 116.9 L 258.7 122.1 L 260.3 127.4 L 261.6 132.8 L 262.6 138.2 L 263.3 143.6 L 263.8 149.1 L 263.9 154.6 L 263.8 160.0 L 263.4 165.4 L 262.7 170.8 L 261.7 176.1 L 260.5 181.4 L 258.9 186.5 L 257.2 191.6 L 255.1 196.5 L 252.8 201.3 L 250.3 206.0 L 247.5 210.5 L 244.5 214.9 L 241.3 219.1 L 237.9 223.1 L 234.3 226.9 L 230.5 230.5 L 226.5 233.9 L 222.4 237.1 L 218.1 240.0 L 213.7 242.7 L 209.2 245.2 L 204.5 247.4 L 199.8 249.3 L 194.9 251.0 L 190.0 252.5 L 185.1 253.7 L 180.1 254.6 L 175.1 255.2 L 170.1 255.6 L 165.0 255.7 L 160.0 255.6 L 155.0 255.2 L 150.1 254.5 L 145.2 253.6 L 140.4 252.4 L 135.6 251.0 L 131.0 249.4 L 126.4 247.5 L 122.0 245.3 L 117.7 243.0 L 113.6 240.4 L 109.6 237.7 L 105.7 234.7 L 102.1 231.5 L 98.6 228.2 L 95.3 224.7 L 92.2 221.0 L 89.3 217.2 L 86.6 213.3 L 84.2 209.2 L 81.9 205.1 L 79.9 200.8 L 78.2 196.4 L 76.6 192.0 L 75.3 187.5 L 74.3 183.0 L 73.4 178.4 L 72.9 173.8 L 72.5 169.2 L 72.4 164.6 L 72.6 160.0 L 73.0 155.4 L 73.6 150.9 L 74.5 146.5 L 75.6 142.1 L 76.9 137.7 L 78.4 133.5 L 80.2 129.4 L 82.2 125.3 L 84.3 121.4 L 86.7 117.7 L 89.2 114.0 L 91.9 110.6 L 94.8 107.2 L 97.9 104.1 L 101.1 101.1 L 104.4 98.3 L 107.9 95.7 L 111.5 93.3 L 115.2 91.1 L 119.0 89.0 L 122.9 87.2 L 126.9 85.6 L 130.9 84.3 L 135.0 83.1 L 139.1 82.2 L 143.3 81.5 L 147.5 81.0 L 151.7 80.7 L 155.8 80.6 L 160.0 80.8 L 164.1 81.2 L 168.2 81.8 L 172.3 82.6 L 176.2 83.6 L 180.1 84.8 L 184.0 86.2 L 187.7 87.8 L 191.3 89.6 L 194.8 91.6 L 198.2 93.8 L 201.5 96.1 L 204.6 98.6 L 207.6 101.2 L 210.4 104.0 L 213.1 106.9 L 215.6 109.9 L 217.9 113.1 L 220.1 116.3 L 222.1 119.7 L 223.9 123.1 L 225.5 126.6 L 226.9 130.2 L 228.1 133.9 L 229.1 137.6 L 229.9 141.3 L 230.5 145.0 L 230.9 148.8 L 231.2 152.5 L 231.2 156.3 L 231.0 160.0 L 230.6 163.7 L 230.1 167.4 L 229.3 171.0 L 228.4 174.5 L 227.3 178.0 L 226.0 181.4 L 224.5 184.8 L 222.9 188.0 L 221.1 191.1 L 219.1 194.1 L 217.0 197.0 L 214.8 199.8 L 212.4 202.4 L 209.9 204.9 L 207.3 207.3 L 204.6 209.5 L 201.8 211.6 L 198.8 213.5 L 195.8 215.2 L 192.8 216.8 L 189.6 218.1 L 186.4 219.4 L 183.2 220.4 L 179.9 221.3 L 176.6 222.0 L 173.3 222.5 L 170.0 222.8 L 166.6 223.0 L 163.3 223.0 L 160.0 222.8 L 156.7 222.4 L 153.5 221.9 L 150.3 221.2 L 147.2 220.4 L 144.1 219.3 L 141.1 218.2 L 138.2 216.8 L 135.3 215.4 L 132.6 213.8 L 130.0 212.0 L 127.4 210.1 L 125.0 208.2 L 122.7 206.0 L 120.5 203.8 L 118.5 201.5 L 116.6 199.1 L 114.8 196.6 L 113.2 194.0 L 111.7 191.4 L 110.3 188.7 L 109.2 185.9 L 108.1 183.1 L 107.2 180.3 L 106.5 177.4 L 105.9 174.5 L 105.5 171.6 L 105.3 168.7 L 105.2 165.8 L 105.2 162.9 L 105.4 160.0 L 105.7 157.2 L 106.2 154.3 L 106.9 151.6 L 107.7 148.9 L 108.6 146.2 L 109.6 143.6 L 110.8 141.1 L 112.1 138.7 L 113.5 136.3 L 115.1 134.1 L 116.7 131.9 L 118.5 129.8 L 120.3 127.9 L 122.3 126.0 L 124.3 124.3 L 126.4 122.7 L 128.6 121.2 L 130.8 119.8 L 133.1 118.6 L 135.4 117.4 L 137.8 116.5 L 140.2 115.6 L 142.7 114.9 L 145.2 114.3 L 147.6 113.9 L 150.1 113.5 L 152.6 113.4 L 155.1 113.3 L 157.6 113.4 L 160.0 113.6 L 162.4 113.9 L 164.8 114.4 L 167.1 115.0 L 169.4 115.7 L 171.7 116.5 L 173.8 117.4 L 175.9 118.5 L 178.0 119.6 L 179.9 120.8 L 181.8 122.2 L 183.6 123.6 L 185.3 125.1 L 187.0 126.7 L 188.5 128.4 L 189.9 130.1 L 191.2 131.9 L 192.4 133.7 L 193.6 135.6 L 194.6 137.6 L 195.4 139.5 L 196.2 141.5 L 196.9 143.6 L 197.4 145.6 L 197.9 147.7 L 198.2 149.8 L 198.4 151.8 L 198.5 153.9 L 198.5 155.9 L 198.4 158.0 L 198.2 160.0 L 197.9 162.0 L 197.4 163.9 L 196.9 165.8 L 196.3 167.7 L 195.6 169.5 L 194.8 171.3 L 193.9 173.0 L 192.9 174.6 L 191.8 176.2 L 190.7 177.7 L 189.5 179.2 L 188.3 180.5 L 186.9 181.8 L 185.5 183.0 L 184.1 184.1 L 182.6 185.1 L 181.1 186.1 L 179.6 186.9 L 178.0 187.7 L 176.4 188.3 L 174.7 188.9 L 173.1 189.4 L 171.4 189.8 L 169.8 190.1 L 168.1 190.3 L 166.5 190.4 L 164.8 190.4 L 163.2 190.4 L 161.6 190.2 L 160.0 190.0" fill="none" stroke="url(#ring)" stroke-width="1.6" stroke-linecap="round" opacity="0.92"/>
+          <circle class="traveler" cx="160" cy="48" r="5" fill="url(#ring)"/>
+          <!-- phase markers: a dot at every crossing of the spiral with the four axes -->
+          <g font-family="Inter, sans-serif" font-size="14" font-weight="500" fill="#1D2939">
+            <!-- Discover · top -->
+            <circle cx="160" cy="48" r="4.6" fill="#fff"/><circle cx="160" cy="48" r="3.4" fill="#57D9A3"/>
+            <circle cx="160" cy="80.8" r="4.6" fill="#fff"/><circle cx="160" cy="80.8" r="3.4" fill="#57D9A3"/>
+            <circle cx="160" cy="113.6" r="4.6" fill="#fff"/><circle cx="160" cy="113.6" r="3.4" fill="#57D9A3"/>
+            <text x="160" y="31" text-anchor="middle">Discover</text>
+            <!-- Specify · right -->
+            <circle cx="263.8" cy="160" r="4.6" fill="#fff"/><circle cx="263.8" cy="160" r="3.4" fill="#56B4F8"/>
+            <circle cx="231" cy="160" r="4.6" fill="#fff"/><circle cx="231" cy="160" r="3.4" fill="#56B4F8"/>
+            <circle cx="198.2" cy="160" r="4.6" fill="#fff"/><circle cx="198.2" cy="160" r="3.4" fill="#56B4F8"/>
+            <text x="271" y="164" text-anchor="start">Specify</text>
+            <!-- Generate · bottom -->
+            <circle cx="160" cy="255.6" r="4.6" fill="#fff"/><circle cx="160" cy="255.6" r="3.4" fill="#5E5CE6"/>
+            <circle cx="160" cy="222.8" r="4.6" fill="#fff"/><circle cx="160" cy="222.8" r="3.4" fill="#5E5CE6"/>
+            <circle cx="160" cy="190" r="4.6" fill="#fff"/><circle cx="160" cy="190" r="3.4" fill="#5E5CE6"/>
+            <text x="160" y="278" text-anchor="middle">Generate</text>
+            <!-- Verify · left -->
+            <circle cx="72.6" cy="160" r="4.6" fill="#fff"/><circle cx="72.6" cy="160" r="3.4" fill="#56B4F8"/>
+            <circle cx="105.4" cy="160" r="4.6" fill="#fff"/><circle cx="105.4" cy="160" r="3.4" fill="#56B4F8"/>
+            <text x="61" y="164" text-anchor="end">Verify</text>
+          </g>
+          <!-- center: the final intent -->
+          <text x="160" y="160" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-size="9.5" font-weight="600" letter-spacing="1.4" fill="#344054">RELEASE</text>
+        </svg>
+        <div class="spiral-legend">
+          <div class="row reveal d1"><span class="dot" style="background:#57D9A3"></span><div><h4>Discover <span class="ph">· Intent, Architecture, Design</span></h4><p>Take in intent and shape the form. A wide, shallow prototype answers: is this the right thing?</p></div></div>
+          <div class="row reveal d1"><span class="dot" style="background:#56B4F8"></span><div><h4>Specify <span class="ph">· Contracts, Schemas, Interfaces</span></h4><p>Turn intent into concrete contracts. A narrow, deep spike answers: can we build it as we think?</p></div></div>
+          <div class="row reveal d2"><span class="dot" style="background:#5E5CE6"></span><div><h4>Generate <span class="ph">· Implementation</span></h4><p>Agents produce the software from the specification, with a bounded margin. The product becomes real.</p></div></div>
+          <div class="row reveal d2"><span class="dot" style="background:#56B4F8"></span><div><h4>Verify <span class="ph">· Tests, QA, Reality</span></h4><p>Tests derived from the spec catch drift; human testing validates what the spec cannot express.</p></div></div>
+        </div>
+      </div>
+      <p class="spiral-close reveal d2">A Breath is not a cycle. It is another turn of the spiral.</p>
+    </div>
+  </section>
+
+  <!-- Prototypes -->
+  <section class="prototypes" id="prototypes">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Prototyping</p>
+        <h2>Prototypes create clarity.</h2>
+        <p>No prototype is the product. Its purpose is to reduce uncertainty and refine the persistent knowledge layer. Different prototypes answer different questions before that knowledge shapes the evolution of the product.</p>
+      </div>
+      <div class="cards">
+        <div class="card reveal d1">
+          <svg class="fig" viewBox="0 0 200 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 38 C 60 20, 140 20, 192 38" opacity="0.9"/><path d="M8 52 C 60 40, 140 40, 192 52" opacity="0.45"/><path d="M8 24 C 60 8, 140 8, 192 24" opacity="0.45"/></svg>
+          <h3>One horizontal prototype</h3>
+          <p class="tag">wide · shallow · not functional</p>
+          <p>A rough but navigable representation of the whole surface — mocked but real. Cheap enough that showing the intended form beats drawing a mockup of it.</p>
+          <p class="q">Is this the right thing?</p>
+        </div>
+        <div class="card reveal d2">
+          <svg class="fig" viewBox="0 0 200 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><g class="sp"><path d="M56 8 C 49 30, 63 46, 56 68" opacity="0.85"/><path d="M56 8 C 63 30, 49 46, 56 68" opacity="0.4"/></g><g class="sp"><path d="M100 6 C 92 30, 108 46, 100 70" opacity="0.9"/><path d="M100 6 C 108 30, 92 46, 100 70" opacity="0.45"/></g><g class="sp"><path d="M144 8 C 137 30, 151 46, 144 68" opacity="0.85"/><path d="M144 8 C 151 30, 137 46, 144 68" opacity="0.4"/></g></svg>
+          <h3>Many vertical prototypes</h3>
+          <p class="tag">narrow · deep · fully functional</p>
+          <p>One focused spike per module, section or component — each running end-to-end in its own isolated sandbox, exercising real behaviour proving that the specification can become reality.</p>
+          <p class="q">Can we build it as we think?</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Knowledge base -->
+  <section class="kb" id="knowledge">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The knowledge base</p>
+        <h2>Knowledge lives in a navigable graph.</h2>
+        <p>The specification is not a document. It is a connected knowledge graph.</p>
+        <p>Every durable decision, specification and piece of knowledge is a plain-text artifact connected into one navigable graph. It becomes the product's memory — a source of truth that humans and agents can read, write and reason over, long after any implementation has been regenerated.</p>
+      </div>
+      <svg class="kb-graph reveal" viewBox="42 42 640 262" role="img" aria-label="A brain-like network across five columns of markdown documents — Architecture, Use cases, Endpoints, Schemas and UI Spec — with connections crossing between them in every direction.">
+        <defs>
+          <linearGradient id="kbflow" gradientUnits="userSpaceOnUse" x1="92" y1="0" x2="652" y2="0">
+            <stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/>
+          </linearGradient>
+        </defs>
+        <g class="edges"><line x1="92" y1="80" x2="232" y2="80"/><line x1="92" y1="80" x2="232" y2="117.8"/><line x1="92" y1="124.9" x2="232" y2="117.8"/><line x1="232" y1="80" x2="92" y2="124.9"/><line x1="232" y1="172.3" x2="92" y2="183.2"/><line x1="92" y1="183.2" x2="232" y2="197.2"/><line x1="92" y1="241.8" x2="232" y2="253.5"/><line x1="232" y1="197.2" x2="92" y2="241.8"/><line x1="92" y1="278.6" x2="232" y2="292"/><line x1="92" y1="278.6" x2="232" y2="253.5"/><line x1="232" y1="80" x2="372" y2="80"/><line x1="372" y1="135.9" x2="232" y2="80"/><line x1="232" y1="117.8" x2="372" y2="135.9"/><line x1="232" y1="117.8" x2="372" y2="80"/><line x1="372" y1="184.6" x2="232" y2="172.3"/><line x1="232" y1="172.3" x2="372" y2="135.9"/><line x1="372" y1="184.6" x2="232" y2="197.2"/><line x1="372" y1="234.7" x2="232" y2="197.2"/><line x1="372" y1="234.7" x2="232" y2="253.5"/><line x1="372" y1="292" x2="232" y2="253.5"/><line x1="372" y1="292" x2="232" y2="292"/><line x1="232" y1="292" x2="372" y2="234.7"/><line x1="372" y1="80" x2="512" y2="80"/><line x1="372" y1="80" x2="512" y2="112.3"/><line x1="372" y1="135.9" x2="512" y2="112.3"/><line x1="372" y1="135.9" x2="512" y2="177.0"/><line x1="372" y1="184.6" x2="512" y2="177.0"/><line x1="512" y1="203.9" x2="372" y2="184.6"/><line x1="512" y1="239.4" x2="372" y2="234.7"/><line x1="372" y1="234.7" x2="512" y2="203.9"/><line x1="372" y1="292" x2="512" y2="283.6"/><line x1="372" y1="292" x2="512" y2="239.4"/><line x1="652" y1="80.5" x2="512" y2="80"/><line x1="652" y1="146.8" x2="512" y2="80"/><line x1="512" y1="112.3" x2="652" y2="80.5"/><line x1="512" y1="112.3" x2="652" y2="146.8"/><line x1="512" y1="177.0" x2="652" y2="178.5"/><line x1="652" y1="146.8" x2="512" y2="177.0"/><line x1="652" y1="178.5" x2="512" y2="203.9"/><line x1="512" y1="203.9" x2="652" y2="229.6"/><line x1="512" y1="239.4" x2="652" y2="229.6"/><line x1="512" y1="239.4" x2="652" y2="290.2"/><line x1="652" y1="290.2" x2="512" y2="283.6"/><line x1="652" y1="229.6" x2="512" y2="283.6"/><line x1="372" y1="135.9" x2="92" y2="124.9"/><line x1="92" y1="183.2" x2="372" y2="184.6"/><line x1="372" y1="234.7" x2="92" y2="241.8"/><line x1="512" y1="203.9" x2="232" y2="197.2"/><line x1="232" y1="253.5" x2="512" y2="239.4"/><line x1="232" y1="292" x2="512" y2="283.6"/><line x1="372" y1="135.9" x2="652" y2="146.8"/><line x1="92" y1="124.9" x2="512" y2="80"/><line x1="512" y1="283.6" x2="92" y2="80"/><line x1="652" y1="146.8" x2="92" y2="124.9"/><line x1="652" y1="146.8" x2="92" y2="183.2"/><line x1="232" y1="292" x2="652" y2="178.5"/><line x1="232" y1="117.8" x2="652" y2="178.5"/><line x1="512" y1="80" x2="232" y2="80"/><line x1="232" y1="172.3" x2="512" y2="177.0"/><line x1="652" y1="178.5" x2="372" y2="234.7"/><line x1="652" y1="229.6" x2="372" y2="80"/><line x1="372" y1="184.6" x2="92" y2="124.9"/></g>
+        <g class="pulses"><line class="pulse" x1="92" y1="80" x2="232" y2="80" style="animation-duration:3.8s;animation-delay:-1.62s"/><line class="pulse" x1="92" y1="80" x2="232" y2="117.8" style="animation-duration:3.94s;animation-delay:-0.29s"/><line class="pulse" x1="92" y1="124.9" x2="232" y2="117.8" style="animation-duration:2.9s;animation-delay:-2.75s"/><line class="pulse" x1="232" y1="80" x2="92" y2="124.9" style="animation-duration:3.36s;animation-delay:-2.2s"/><line class="pulse" x1="232" y1="172.3" x2="92" y2="183.2" style="animation-duration:4.27s;animation-delay:-1.22s"/><line class="pulse" x1="92" y1="183.2" x2="232" y2="197.2" style="animation-duration:2.76s;animation-delay:-0.15s"/><line class="pulse" x1="92" y1="241.8" x2="232" y2="253.5" style="animation-duration:3.36s;animation-delay:-1.31s"/><line class="pulse" x1="232" y1="197.2" x2="92" y2="241.8" style="animation-duration:3.35s;animation-delay:-0.02s"/><line class="pulse" x1="92" y1="278.6" x2="232" y2="292" style="animation-duration:2.4s;animation-delay:-1.67s"/><line class="pulse" x1="92" y1="278.6" x2="232" y2="253.5" style="animation-duration:3.92s;animation-delay:-1.32s"/><line class="pulse" x1="232" y1="80" x2="372" y2="80" style="animation-duration:4.23s;animation-delay:-2.55s"/><line class="pulse" x1="372" y1="135.9" x2="232" y2="80" style="animation-duration:3.21s;animation-delay:-3.42s"/><line class="pulse" x1="232" y1="117.8" x2="372" y2="135.9" style="animation-duration:2.87s;animation-delay:-2.66s"/><line class="pulse" x1="232" y1="117.8" x2="372" y2="80" style="animation-duration:4.09s;animation-delay:-2.38s"/><line class="pulse" x1="372" y1="184.6" x2="232" y2="172.3" style="animation-duration:3.04s;animation-delay:-0.42s"/><line class="pulse" x1="232" y1="172.3" x2="372" y2="135.9" style="animation-duration:3.55s;animation-delay:-0.83s"/><line class="pulse" x1="372" y1="184.6" x2="232" y2="197.2" style="animation-duration:3.15s;animation-delay:-2.39s"/><line class="pulse" x1="372" y1="234.7" x2="232" y2="197.2" style="animation-duration:4.28s;animation-delay:-2.96s"/><line class="pulse" x1="372" y1="234.7" x2="232" y2="253.5" style="animation-duration:3.44s;animation-delay:-3.78s"/><line class="pulse" x1="372" y1="292" x2="232" y2="253.5" style="animation-duration:3.02s;animation-delay:-1.71s"/><line class="pulse" x1="372" y1="292" x2="232" y2="292" style="animation-duration:3.75s;animation-delay:-2.44s"/><line class="pulse" x1="232" y1="292" x2="372" y2="234.7" style="animation-duration:2.84s;animation-delay:-1.81s"/><line class="pulse" x1="372" y1="80" x2="512" y2="80" style="animation-duration:4.05s;animation-delay:-1.07s"/><line class="pulse" x1="372" y1="80" x2="512" y2="112.3" style="animation-duration:3.81s;animation-delay:-0.21s"/><line class="pulse" x1="372" y1="135.9" x2="512" y2="112.3" style="animation-duration:4.31s;animation-delay:-3.01s"/><line class="pulse" x1="372" y1="135.9" x2="512" y2="177.0" style="animation-duration:3.05s;animation-delay:-4.33s"/><line class="pulse" x1="372" y1="184.6" x2="512" y2="177.0" style="animation-duration:3.99s;animation-delay:-0.27s"/><line class="pulse" x1="512" y1="203.9" x2="372" y2="184.6" style="animation-duration:2.9s;animation-delay:-2.16s"/><line class="pulse" x1="512" y1="239.4" x2="372" y2="234.7" style="animation-duration:4.4s;animation-delay:-0.62s"/><line class="pulse" x1="372" y1="234.7" x2="512" y2="203.9" style="animation-duration:2.5s;animation-delay:-1.38s"/><line class="pulse" x1="372" y1="292" x2="512" y2="283.6" style="animation-duration:2.49s;animation-delay:-1.8s"/><line class="pulse" x1="372" y1="292" x2="512" y2="239.4" style="animation-duration:3.48s;animation-delay:-1.94s"/><line class="pulse" x1="652" y1="80.5" x2="512" y2="80" style="animation-duration:2.68s;animation-delay:-0.1s"/><line class="pulse" x1="652" y1="146.8" x2="512" y2="80" style="animation-duration:4.01s;animation-delay:-1.94s"/><line class="pulse" x1="512" y1="112.3" x2="652" y2="80.5" style="animation-duration:3.36s;animation-delay:-2.1s"/><line class="pulse" x1="512" y1="112.3" x2="652" y2="146.8" style="animation-duration:3.77s;animation-delay:-3.96s"/><line class="pulse" x1="512" y1="177.0" x2="652" y2="178.5" style="animation-duration:4.05s;animation-delay:-3.2s"/><line class="pulse" x1="652" y1="146.8" x2="512" y2="177.0" style="animation-duration:3.08s;animation-delay:-0.74s"/><line class="pulse" x1="652" y1="178.5" x2="512" y2="203.9" style="animation-duration:2.58s;animation-delay:-3.78s"/><line class="pulse" x1="512" y1="203.9" x2="652" y2="229.6" style="animation-duration:2.51s;animation-delay:-2.5s"/><line class="pulse" x1="512" y1="239.4" x2="652" y2="229.6" style="animation-duration:4.22s;animation-delay:-1.42s"/><line class="pulse" x1="512" y1="239.4" x2="652" y2="290.2" style="animation-duration:3.18s;animation-delay:-1.84s"/><line class="pulse" x1="652" y1="290.2" x2="512" y2="283.6" style="animation-duration:4.29s;animation-delay:-3.01s"/><line class="pulse" x1="652" y1="229.6" x2="512" y2="283.6" style="animation-duration:4.08s;animation-delay:-0.17s"/><line class="pulse" x1="372" y1="135.9" x2="92" y2="124.9" style="animation-duration:3.86s;animation-delay:-1.98s"/><line class="pulse" x1="92" y1="183.2" x2="372" y2="184.6" style="animation-duration:3.2s;animation-delay:-3.59s"/><line class="pulse" x1="372" y1="234.7" x2="92" y2="241.8" style="animation-duration:3.87s;animation-delay:-4.01s"/><line class="pulse" x1="512" y1="203.9" x2="232" y2="197.2" style="animation-duration:3.88s;animation-delay:-4.0s"/><line class="pulse" x1="232" y1="253.5" x2="512" y2="239.4" style="animation-duration:3.26s;animation-delay:-2.45s"/><line class="pulse" x1="232" y1="292" x2="512" y2="283.6" style="animation-duration:3.97s;animation-delay:-2.0s"/><line class="pulse" x1="372" y1="135.9" x2="652" y2="146.8" style="animation-duration:2.67s;animation-delay:-2.58s"/><line class="pulse" x1="92" y1="124.9" x2="512" y2="80" style="animation-duration:4.14s;animation-delay:-3.83s"/><line class="pulse" x1="512" y1="283.6" x2="92" y2="80" style="animation-duration:2.65s;animation-delay:-1.68s"/><line class="pulse" x1="652" y1="146.8" x2="92" y2="124.9" style="animation-duration:2.86s;animation-delay:-1.5s"/><line class="pulse" x1="652" y1="146.8" x2="92" y2="183.2" style="animation-duration:4.32s;animation-delay:-1.85s"/><line class="pulse" x1="232" y1="292" x2="652" y2="178.5" style="animation-duration:3.03s;animation-delay:-1.2s"/><line class="pulse" x1="232" y1="117.8" x2="652" y2="178.5" style="animation-duration:3.28s;animation-delay:-2.95s"/><line class="pulse" x1="512" y1="80" x2="232" y2="80" style="animation-duration:3.09s;animation-delay:-0.82s"/><line class="pulse" x1="232" y1="172.3" x2="512" y2="177.0" style="animation-duration:2.85s;animation-delay:-1.14s"/><line class="pulse" x1="652" y1="178.5" x2="372" y2="234.7" style="animation-duration:4.21s;animation-delay:-0.75s"/><line class="pulse" x1="652" y1="229.6" x2="372" y2="80" style="animation-duration:3.91s;animation-delay:-0.48s"/><line class="pulse" x1="372" y1="184.6" x2="92" y2="124.9" style="animation-duration:3.97s;animation-delay:-1.17s"/></g>
+        <g class="knodes"><circle cx="92" cy="80" r="5.5" fill="#fff"/><circle cx="92" cy="80" r="4" fill="#57D9A3"/><circle cx="92" cy="124.9" r="5.5" fill="#fff"/><circle cx="92" cy="124.9" r="4" fill="#57D9A3"/><circle cx="92" cy="183.2" r="5.5" fill="#fff"/><circle cx="92" cy="183.2" r="4" fill="#57D9A3"/><circle cx="92" cy="241.8" r="5.5" fill="#fff"/><circle cx="92" cy="241.8" r="4" fill="#57D9A3"/><circle cx="92" cy="278.6" r="5.5" fill="#fff"/><circle cx="92" cy="278.6" r="4" fill="#57D9A3"/><circle cx="232" cy="80" r="5.5" fill="#fff"/><circle cx="232" cy="80" r="4" fill="#56B4F8"/><circle cx="232" cy="117.8" r="5.5" fill="#fff"/><circle cx="232" cy="117.8" r="4" fill="#56B4F8"/><circle cx="232" cy="172.3" r="5.5" fill="#fff"/><circle cx="232" cy="172.3" r="4" fill="#56B4F8"/><circle cx="232" cy="197.2" r="5.5" fill="#fff"/><circle cx="232" cy="197.2" r="4" fill="#56B4F8"/><circle cx="232" cy="253.5" r="5.5" fill="#fff"/><circle cx="232" cy="253.5" r="4" fill="#56B4F8"/><circle cx="232" cy="292" r="5.5" fill="#fff"/><circle cx="232" cy="292" r="4" fill="#56B4F8"/><circle cx="372" cy="80" r="5.5" fill="#fff"/><circle cx="372" cy="80" r="4" fill="#5E5CE6"/><circle cx="372" cy="135.9" r="5.5" fill="#fff"/><circle cx="372" cy="135.9" r="4" fill="#5E5CE6"/><circle cx="372" cy="184.6" r="5.5" fill="#fff"/><circle cx="372" cy="184.6" r="4" fill="#5E5CE6"/><circle cx="372" cy="234.7" r="5.5" fill="#fff"/><circle cx="372" cy="234.7" r="4" fill="#5E5CE6"/><circle cx="372" cy="292" r="5.5" fill="#fff"/><circle cx="372" cy="292" r="4" fill="#5E5CE6"/><circle cx="512" cy="80" r="5.5" fill="#fff"/><circle cx="512" cy="80" r="4" fill="#5E5CE6"/><circle cx="512" cy="112.3" r="5.5" fill="#fff"/><circle cx="512" cy="112.3" r="4" fill="#5E5CE6"/><circle cx="512" cy="177.0" r="5.5" fill="#fff"/><circle cx="512" cy="177.0" r="4" fill="#5E5CE6"/><circle cx="512" cy="203.9" r="5.5" fill="#fff"/><circle cx="512" cy="203.9" r="4" fill="#5E5CE6"/><circle cx="512" cy="239.4" r="5.5" fill="#fff"/><circle cx="512" cy="239.4" r="4" fill="#5E5CE6"/><circle cx="512" cy="283.6" r="5.5" fill="#fff"/><circle cx="512" cy="283.6" r="4" fill="#5E5CE6"/><circle cx="652" cy="80.5" r="5.5" fill="#fff"/><circle cx="652" cy="80.5" r="4" fill="#56B4F8"/><circle cx="652" cy="146.8" r="5.5" fill="#fff"/><circle cx="652" cy="146.8" r="4" fill="#56B4F8"/><circle cx="652" cy="178.5" r="5.5" fill="#fff"/><circle cx="652" cy="178.5" r="4" fill="#56B4F8"/><circle cx="652" cy="229.6" r="5.5" fill="#fff"/><circle cx="652" cy="229.6" r="4" fill="#56B4F8"/><circle cx="652" cy="290.2" r="5.5" fill="#fff"/><circle cx="652" cy="290.2" r="4" fill="#56B4F8"/></g>
+        <g font-family="Inter, sans-serif" text-anchor="middle"><text x="92" y="58" font-size="14" font-weight="600" fill="#1D2939">Architecture</text><text x="232" y="58" font-size="14" font-weight="600" fill="#1D2939">Use cases</text><text x="372" y="58" font-size="14" font-weight="600" fill="#1D2939">Endpoints</text><text x="512" y="58" font-size="14" font-weight="600" fill="#1D2939">Schemas</text><text x="652" y="58" font-size="14" font-weight="600" fill="#1D2939">UI Spec</text></g>
+      </svg>
+      <p class="kb-close reveal d2">The graph is the <b>shared context</b> between humans and agents.</p>
+    </div>
+  </section>
+
+  <!-- Enforceable / guardrails -->
+  <section class="guardrails" id="guardrails">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Enforceable</p>
+        <h2>Coherence is protected by design.</h2>
+        <p>When agents move this fast, coherence can't rely on human discipline or implicit memory. INSPIRE makes it structural — through enforcement and trusted foundations.</p>
+      </div>
+      <div class="vs-grid">
+        <div class="vs-col reveal d1">
+          <p class="k">Driving the Process</p>
+          <h3>The guardrails</h3>
+          <p>Skills, hooks, linters and QA turn the specification's rules into automated checks. Every change is validated against standards before it lands — drift is caught mechanically, not remembered.</p>
+          <a class="cta" href="https://github.com/Genomcore" target="_blank" rel="noopener">Explore Skills <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+        <div class="vs-col reveal d2">
+          <p class="k">Deploying the system</p>
+          <h3>Trusted foundations</h3>
+          <p>The system is built on proven primitives such as OpenBIMS and clear contracts. Agents compose on solid ground instead of reinventing critical components or introducing unnecessary variation.</p>
+          <a class="cta" href="https://openbims.com" target="_blank" rel="noopener">Get OpenBIMS <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing quote -->
+  <section class="quote" id="idea">
+    <div class="wrap">
+      <blockquote class="reveal">INSPIRE doesn't define how code is produced.</blockquote>
+      <p class="sub reveal d1">It represents how a well-designed system <b>breathes</b> — coherent, alive, and able to renew itself.</p>
+      <p class="tagline reveal d1">Stop sprinting.<br><span class="grad-text">Start breathing.</span></p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <div class="foot-brand">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+          <defs><linearGradient id="igf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/></linearGradient></defs>
+          <circle class="ob" cx="20" cy="20" r="14" fill="none" stroke="url(#igf)" stroke-width="2.2"/>
+          <circle cx="20" cy="20" r="4.5" fill="url(#igf)"/>
+        </svg>
+        INSPIRE
+      </div>
+      <p class="foot-note">Individual · Navigable · Spec-driven · Prototypical · Iterative · Regenerative · Enforceable</p>
+    </div>
+    <div class="foot-meta">
+      A software development methodology for the agentic era. Born in <a href="https://openbims.dev" target="_blank" rel="noopener">OpenBIMS</a>, an open-source healthcare-AI platform by <a href="https://genomcore.com" target="_blank" rel="noopener">Genomcore</a>.
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Nav border on scroll
+  var nav = document.getElementById('nav');
+  var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 12); };
+  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+
+  // Gentle reveals
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.reveal');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, {threshold:0.14, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+
+  // Traveler spiralling inward, converging on the intent, then re-entering (calm loop)
+  (function(){
+    if(reduce) return;
+    var t = document.querySelector('.traveler'), path=document.getElementById('spiralpath');
+    if(!t||!path) return;
+    var L=path.getTotalLength(), start=performance.now(), period=13000;
+    function frame(now){
+      var u=((now-start)%period)/period, p=path.getPointAtLength(u*L);
+      t.setAttribute('cx', p.x.toFixed(2));
+      t.setAttribute('cy', p.y.toFixed(2));
+      t.setAttribute('opacity', (u<0.06?u/0.06:u>0.9?(1-u)/0.1:1).toFixed(2));
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // Breath dot travels the inhale -> exhale curve
+  (function(){
+    if(reduce) return;
+    var dot=document.querySelector('.breath-dot'), path=document.getElementById('breathpath');
+    if(!dot||!path) return;
+    var L=path.getTotalLength(), start=performance.now(), period=7000;
+    function frame(now){
+      var t=((now-start)%period)/period, p=path.getPointAtLength(t*L);
+      dot.setAttribute('cx',p.x.toFixed(2)); dot.setAttribute('cy',p.y.toFixed(2));
+      dot.setAttribute('opacity',(t<0.08?t/0.08:t>0.9?(1-t)/0.1:1).toFixed(2));
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // Two dots orbiting the two speed lobes; radius follows each lobe's live breathing scale
+  (function(){
+    if(reduce) return;
+    var fast=document.querySelector('.speed-dot-fast'), slow=document.querySelector('.speed-dot-slow');
+    var lobeFast=document.querySelector('.lobe.fast'), lobeSlow=document.querySelector('.lobe.slow');
+    if(!fast||!slow||!lobeFast||!lobeSlow) return;
+    var start=performance.now();
+    function scaleOf(el){var t=getComputedStyle(el).transform; if(!t||t==='none')return 1; try{return new DOMMatrix(t).a;}catch(e){return 1;}}
+    function orbit(dot,lobe,cx,cy,r,period,dir,now){
+      var a=-Math.PI/2 + dir*((now-start)/period)*Math.PI*2, s=scaleOf(lobe);
+      dot.setAttribute('cx',(cx+r*s*Math.cos(a)).toFixed(2));
+      dot.setAttribute('cy',(cy+r*s*Math.sin(a)).toFixed(2));
+    }
+    function frame(now){
+      orbit(fast,lobeFast,110,112,74,4500,1,now);
+      orbit(slow,lobeSlow,110,236,74,11000,1,now);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

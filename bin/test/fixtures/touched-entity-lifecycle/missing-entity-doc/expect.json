@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "touched-entity-lifecycle", "message_substring": "no entity document found" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "wikilinks-resolve", "message_substring": "wikilink does not resolve" }
+  ]
+}

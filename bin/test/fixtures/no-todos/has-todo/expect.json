@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "no-todos", "message_substring": "body contains TODO marker" }
+  ]
+}

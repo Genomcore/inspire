@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "lifecycle-valid", "message_substring": "invalid lifecycle value" }
+  ]
+}

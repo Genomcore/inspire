@@ -1,0 +1,49 @@
+---
+id: {{MODULE}}::{{ENTITY}}::{{ACTION}}
+module: {{MODULE}}
+entity: {{ENTITY}}
+action: {{ACTION}}
+lifecycle: draft
+requires: []
+superseded_by: null
+---
+
+## Purpose
+{{ONE_PARAGRAPH_RATIONALE}} The claim is grounded in [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]].
+
+## Inputs
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `{{INPUT_FIELD}}` | `{{TYPE}}` | yes | {{DESCRIPTION}} |
+| `{{INPUT_FIELD_2}}` | `{{TYPE}}` | no | {{DESCRIPTION}} |
+
+## Outputs
+
+<!--
+  Pick the sub-pattern that fits and delete the others:
+  - Option A (whole entity or array of it):
+      An array of [[{{MODULE}}.{{ENTITY}}|{{MODULE}}::{{ENTITY}}]] entities.
+  - Option B (subset of an entity): default below — inline table of returned fields.
+  - Option C (derived / synthesized / multi-entity): inline table declaring the actual returned shape.
+-->
+
+| Field | Type | Description |
+|---|---|---|
+| `{{OUTPUT_FIELD}}` | `{{TYPE}}` | {{DESCRIPTION}} |
+
+## Entities
+
+### [[{{MODULE}}.{{ENTITY}}|{{MODULE}}::{{ENTITY}}]]
+**As input:** {{AS_INPUT}} · **Effect:** {{EFFECT}}
+
+| Field | Touch | Type | Mapping | Notes |
+|---|---|---|---|---|
+| `{{FIELD}}` | {{TOUCH}} | `{{TYPE}}` | {{MAPPING}} | {{NOTES}} |
+
+## Behavior
+1. {{STEP_DESCRIPTION}}, following the model defined in [[{{BACK_SOURCE}}|{{BACK_SOURCE_DISPLAY}}]].
+2. {{STEP_DESCRIPTION_2}}.
+
+## Errors
+- `{{ERROR_CODE}}` — operator-facing message: "{{MESSAGE}}"

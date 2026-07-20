@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "stable-blockers", "message_substring": "auth::password::hash" }
+  ]
+}

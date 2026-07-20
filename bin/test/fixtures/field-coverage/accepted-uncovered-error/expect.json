@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "field-coverage", "message_substring": "field-uncovered" }
+  ]
+}

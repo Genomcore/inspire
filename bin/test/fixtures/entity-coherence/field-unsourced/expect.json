@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "entity-coherence", "message_substring": "field-unsourced" },
+    { "rule": "entity-coherence", "message_substring": "last_seen" }
+  ]
+}

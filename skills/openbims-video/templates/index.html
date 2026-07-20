@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OpenBIMS — {{MODULE_NAME}}</title>
+
+<!-- Lato (local woff2 in demo/assets/lato/, copied from skill assets on
+     bootstrap). Lato officially ships only 100/300/400/700/900 — 500/600
+     don't exist, so Medium/Semibold map to Bold (700). -->
+<style>
+  @font-face {
+    font-family: 'Lato'; font-style: normal; font-weight: 300; font-display: block;
+    src: url('../../assets/lato/lato-latin-300-normal.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Lato'; font-style: normal; font-weight: 400; font-display: block;
+    src: url('../../assets/lato/lato-latin-400-normal.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Lato'; font-style: normal; font-weight: 700; font-display: block;
+    src: url('../../assets/lato/lato-latin-700-normal.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Lato'; font-style: normal; font-weight: 900; font-display: block;
+    src: url('../../assets/lato/lato-latin-900-normal.woff2') format('woff2');
+  }
+
+  :root {
+    /* Pastel palette — light theme */
+    --teal-100: #a8ddd6;
+    --teal-200: #c5e6e0;
+    --teal-50:  #eaf3f2;
+    --blue-100: #b3c5ec;
+    --blue-200: #d0dbf1;
+    --blue-50:  #e8eef8;
+    --gray-100: #dedede;
+    --gray-200: #e8e9eb;
+    --gray-50:  #f5f6f7;
+
+    /* Inks */
+    --ink:      #0b3a36;   /* deep teal-slate, primary text */
+    --ink-dim:  #4a5d68;   /* secondary text */
+    --ink-soft: #6b7a82;   /* tertiary text */
+
+    /* Accents */
+    --teal:      #0d9488;
+    --teal-deep: #0b766c;
+    --violet:    #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    font-family: 'Lato', sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    background: var(--gray-50);
+  }
+  /* Layered pastel gradients on the body so every scene sits on the same
+     soft background. Three radial blobs (teal, blue, gray) blended over a
+     near-white base. Tuned to keep all four corners light enough that
+     dark text (--ink) remains readable. */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 12% 18%, var(--teal-100) 0%, transparent 42%),
+      radial-gradient(circle at 88% 22%, var(--blue-100) 0%, transparent 45%),
+      radial-gradient(circle at 50% 95%, var(--gray-100) 0%, transparent 55%),
+      linear-gradient(180deg, var(--teal-50) 0%, var(--blue-50) 50%, var(--gray-50) 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; z-index: 1; }
+  .scene { position: absolute; inset: 0; }
+
+  /* Persistent corporate bar — visible across every scene.
+     Logo + tagline centered vertically inside a 110px band so the wordmark
+     reads as part of a balanced lockup, not floating at the top edge. */
+  .corp-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 110px;
+    display: flex; align-items: center; padding: 0 56px;
+    gap: 22px; z-index: 50; pointer-events: none;
+  }
+  .corp-logo { height: 38px; width: auto; display: block; }
+  .corp-tagline {
+    font-size: 14px; line-height: 1.35; color: var(--ink-dim);
+    font-weight: 400; letter-spacing: 0.02em; max-width: 460px;
+    border-left: 1px solid rgba(11,58,54,0.18);
+    padding-left: 22px;
+  }
+
+  /* Genomcore "powered by" badge — persistent bottom-right across every scene. */
+  .genomcore-badge {
+    position: absolute; right: 56px; bottom: 32px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 50; pointer-events: none;
+    font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+  }
+  .genomcore-badge img { height: 22px; width: auto; opacity: 0.92; }
+
+  /* Title scene */
+  .title-block { position: absolute; left: 80px; top: 240px; max-width: 1500px; }
+  .eyebrow {
+    color: var(--teal-deep); font-weight: 700; font-size: 22px;
+    letter-spacing: 0.32em; text-transform: uppercase; margin-bottom: 28px;
+  }
+  h1 { font-size: 116px; line-height: 1.02; font-weight: 900; letter-spacing: -2px; color: var(--ink); }
+  h1 .accent { color: var(--teal); }
+  .lede {
+    margin-top: 36px; font-size: 30px; color: var(--ink-dim);
+    max-width: 1400px; line-height: 1.4; font-weight: 400;
+  }
+  .pill-row { position: absolute; left: 80px; top: 880px; display: flex; gap: 16px; }
+  .pill {
+    padding: 12px 22px; border-radius: 999px;
+    background: rgba(13,148,136,0.10);
+    border: 1px solid rgba(13,148,136,0.45);
+    color: var(--teal-deep); font-size: 22px; font-weight: 700;
+  }
+  .pill.violet {
+    background: rgba(124,58,237,0.10);
+    border-color: rgba(124,58,237,0.45);
+    color: var(--violet);
+  }
+
+  /* Tour scene */
+  .stage-frame {
+    position: absolute; left: 80px; top: 140px;
+    width: 1760px; height: 810px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow:
+      0 40px 80px rgba(11,58,54,0.15),
+      0 0 0 1px rgba(11,58,54,0.06);
+    overflow: hidden;
+  }
+  .stage-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .caption-strip {
+    position: absolute; left: 80px; bottom: 40px; right: 80px;
+    height: 100px; display: flex; align-items: center; gap: 28px;
+    z-index: 10;
+  }
+  .caption-label {
+    flex: 0 0 auto; font-size: 16px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--teal-deep); font-weight: 700;
+    border: 1px solid rgba(13,148,136,0.55);
+    background: rgba(255,255,255,0.78);
+    padding: 12px 20px; border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+  .caption-text {
+    flex: 1 1 auto; font-size: 30px; line-height: 1.3; color: var(--ink);
+    font-weight: 400;
+  }
+
+  /* Outro scene */
+  .outro h2 {
+    position: absolute; left: 80px; top: 380px; max-width: 1700px;
+    font-size: 96px; line-height: 1.05; font-weight: 900; letter-spacing: -1.5px;
+    color: var(--ink);
+  }
+  .outro .footer {
+    position: absolute; left: 80px; bottom: 96px; font-size: 26px; color: var(--ink-dim);
+    font-weight: 400;
+  }
+  .outro .footer strong { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+  <div id="stage"
+       data-composition-id="openbims-{{MODULE}}"
+       data-start="0"
+       data-width="1920"
+       data-height="1080">
+
+    <div class="corp-bar">
+      <img class="corp-logo" src="../../assets/openbims-logo.svg" alt="OpenBIMS" />
+      <div class="corp-tagline">Open Biomedical Information Management System — a trusted framework for AI-enabled, agentic healthcare</div>
+    </div>
+
+    <div class="genomcore-badge">
+      <span>powered by</span>
+      <img src="../../assets/genomcore-logo.avif" alt="Genomcore" />
+    </div>
+
+    <!-- Scene 1 · Title (0–5s).
+         H1 = "{Module Name} Module" — plain, no marketing teaser.
+         Lede = a one-line teaser (≤ 90 chars) describing what the module does
+         at PDD level. Same anti-implementation-tech rules as narration.
+         Pills = ONE per submodule (no grouping). Last pill renders violet
+         for visual rhythm; rest are teal. The intro narration audio
+         (b00-intro.wav) covers this scene end-to-end. -->
+    <section id="scene-title" class="scene clip"
+             data-start="0" data-duration="5" data-track-index="0">
+      <div class="title-block">
+        <div class="eyebrow">Module Tour</div>
+        <h1>{{MODULE_NAME}} Module</h1>
+        <p class="lede">{{HERO_LEDE}}</p>
+      </div>
+      <div class="pill-row">
+        <!-- {{PILLS_HTML}} — emit one <div class="pill"> per submodule. Last
+             one carries `violet` class. Example for 4 submodules:
+             <div class="pill">engine</div>
+             <div class="pill">images</div>
+             <div class="pill">functions</div>
+             <div class="pill violet">workflows</div>
+        -->
+        {{PILLS_HTML}}
+      </div>
+    </section>
+
+    <!-- Scene 2 · Live tour. Container has NO data-start so the <video>
+         child can be the timed media element (HyperFrames freezes nested
+         media if both ancestor and child carry data-start). Capture size
+         (1760×810 in playwright.config.js) MUST match stage-frame. -->
+    <section id="scene-tour" class="scene">
+      <div class="stage-frame">
+        <video id="tour-video"
+               src="clips/{{MODULE}}.mp4"
+               muted
+               playsinline
+               preload="auto"
+               data-start="5"
+               data-duration="{{TOUR_DURATION}}"></video>
+      </div>
+      <div class="caption-strip">
+        <div class="caption-label" id="caption-label">{{INITIAL_CAPTION_LABEL}}</div>
+        <div class="caption-text"  id="caption-text">{{INITIAL_CAPTION_TEXT}}</div>
+      </div>
+    </section>
+
+    <!-- Scene 3 · Outro -->
+    <section id="scene-outro" class="scene outro clip"
+             data-start="{{OUTRO_START}}" data-duration="5" data-track-index="0">
+      <h2>{{OUTRO_HEADLINE_LINE_1}}<br/><span style="color: var(--teal)">{{OUTRO_HEADLINE_LINE_2}}</span></h2>
+      <div class="footer">A <strong>Genomcore</strong> Project — <strong>https://genomcore.com</strong></div>
+    </section>
+
+    <!-- TTS narration tracks. Each <audio> is anchored at composition-absolute
+         time and HyperFrames mixes them into the final MP4 alongside the
+         silent <video>. Voice: af_sky (Kokoro). Every <audio> MUST have an
+         id or HyperFrames silently drops it.
+
+         The first track is ALWAYS b00-intro covering the title scene
+         (composition-absolute t=0). Remaining tracks live during the tour
+         scene at data-start = SCENE_TOUR_START + beat.t. -->
+    <audio id="aud-b00-intro" src="clips/audio/b00-intro.wav" data-start="0" preload="auto"></audio>
+    <!-- {{AUDIO_TRACKS_HTML}} — emit one <audio> per submodule beat -->
+    {{AUDIO_TRACKS_HTML}}
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    // Caption track. `t` is RELATIVE to the start of the tour video (which
+    // is data-start=5 on the <video> element, so t=0 here means composition
+    // time 5s). Built by /openbims_video postproduction from script.md
+    // captions joined to clips/timing.json beats. parse-timing.mjs anchors
+    // beats on clip start (not on the first beat marker), so caption t
+    // values land where the content actually appears on screen.
+    const captionTrack = /* {{CAPTION_TRACK_JSON}} */ [];
+
+    const SCENE_TOUR_START = 5;
+    const TOUR_DURATION    = {{TOUR_DURATION}};
+    const OUTRO_START      = SCENE_TOUR_START + TOUR_DURATION;
+
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set('#scene-title', { opacity: 0, y: 14 });
+    tl.to('#scene-title', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', overwrite: 'auto' }, 0);
+    tl.to('#scene-title', { opacity: 0, y: -6, duration: 0.4, ease: 'power2.in',  overwrite: 'auto' }, 4.6);
+    tl.set('#scene-title', { opacity: 0 }, 5.0);
+
+    gsap.set('#scene-tour', { opacity: 0 });
+    tl.to('#scene-tour', { opacity: 1, duration: 0.5, ease: 'power2.out', overwrite: 'auto' }, SCENE_TOUR_START);
+    tl.to('#scene-tour', { opacity: 0, duration: 0.4, ease: 'power2.in',  overwrite: 'auto' }, SCENE_TOUR_START + TOUR_DURATION - 0.4);
+    tl.set('#scene-tour', { opacity: 0 }, SCENE_TOUR_START + TOUR_DURATION);
+
+    captionTrack.forEach(({ t, label, text }) => {
+      const at = SCENE_TOUR_START + t;
+      tl.call(() => {
+        const lbl = document.getElementById('caption-label');
+        const txt = document.getElementById('caption-text');
+        gsap.fromTo(
+          [lbl, txt],
+          { opacity: 0, y: 8 },
+          { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
+        );
+        lbl.textContent = label;
+        txt.textContent = text;
+      }, [], at);
+    });
+
+    gsap.set('#scene-outro', { opacity: 0, y: 14 });
+    tl.to('#scene-outro', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', overwrite: 'auto' }, OUTRO_START);
+    tl.to('#scene-outro', { opacity: 0, y: -6, duration: 0.4, ease: 'power2.in',  overwrite: 'auto' }, OUTRO_START + 4.6);
+    tl.set('#scene-outro', { opacity: 0 }, OUTRO_START + 5);
+
+    window.__timelines['openbims-{{MODULE}}'] = tl;
+  </script>
+</body>
+</html>

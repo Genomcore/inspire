@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "touched-entity-lifecycle", "message_substring": "auth::user" },
+    { "rule": "touched-entity-lifecycle", "message_substring": "lifecycle: draft" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "action-fields-in-entity", "message_substring": "no entity document found at expected path" }
+  ]
+}

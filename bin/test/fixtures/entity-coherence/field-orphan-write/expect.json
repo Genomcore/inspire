@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "entity-coherence", "message_substring": "field-orphan-write" },
+    { "rule": "entity-coherence", "message_substring": "internal_audit_id" }
+  ]
+}
