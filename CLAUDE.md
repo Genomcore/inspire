@@ -79,8 +79,8 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
 
 Remaining:
 
-- [ ] Provide the remaining starter conventions a real project supplies (module ID
-      prefixes, a starter `patterns/` + `05_screens/design-system.md`).
+- [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module
+      ID-prefix convention is already carried by the module/feature skills).
 - [ ] Publish the microsite.
 
 ## Provenance

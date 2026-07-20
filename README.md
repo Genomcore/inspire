@@ -58,8 +58,9 @@ specs, screen specs, the horizontal prototype at `/prototype`, external vertical
 
 Instantiation is one command (`bash .inspire/install.sh`), and the foundation
 ([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) ships with a sensible
-default. What each project still supplies is its own content: module ID prefixes
-and a starter `05_screens/patterns/` + `design-system.md`. See the Roadmap.
+default. What each project still supplies is its own content — its modules,
+features, screens and specs — plus a starter `05_screens/patterns/` +
+`design-system.md`. See the Roadmap.
 
 ### Wiring the guardrails into a project
 
@@ -96,7 +97,7 @@ guardrail layer.
 - [x] Strip OpenBIMS domain prose from all skills — the runtime speaks the generic INSPIRE model.
 - [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`) and add the `inspire-bootstrap` skill to configure them.
-- [ ] Provide the remaining starter conventions (module ID prefixes, a starter `patterns/` + `05_screens/design-system.md`).
+- [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module ID-prefix convention already lives in the module/feature skills).
 - [ ] Publish the microsite.
 
 ---
