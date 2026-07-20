@@ -83,6 +83,6 @@ Public-facing signup. Layers domain allow-list enforcement and audit logging on 
 - **One descriptor, three entities.** Multi-entity actions are common. They keep the cross-entity contract co-located.
 - **`from R.field` mapping token.** The audit event's `actor_id` reads from the just-written `auth::user.id`. This is the canonical way to express "use the value written above" without restating it.
 - **`Effect: append` for audit logs.** Audit events use `append`, not `create`. Both write rows, but `append` signals that the rows are immutable and never read individually (only aggregated). The convention is enforced by `entity-coherence`: append-only entities don't trigger field-orphan-write warnings even when no read action exists.
-- **Inheritance of errors.** `signup` lists `(Inherits errors from [[auth.user.create|auth::user::create]])` rather than restating the error catalog. The agent expands this when rendering with `/inspire_object show`.
+- **Inheritance of errors.** `signup` lists `(Inherits errors from [[auth.user.create|auth::user::create]])` rather than restating the error catalog. The agent expands this when rendering with `/inspire_domain show`.
 - **Allow-list read uses `matches` mapping.** The match is by pattern on the input — the descriptor declares the relationship without specifying the SQL query.
 - **Prosaic back-sourcing.** Wikilinks weave into the sentences that make the claims in `## Purpose` and `## Behavior`. No trailing `Back-source:` lines, no bare `[[link]]` at the end of behavior steps.

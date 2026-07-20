@@ -10,8 +10,8 @@ Two consumers wrap this library:
   via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
   `git commit`, `pre-pr.sh` on `gh pr create`.
 - **Skills** invoke them via the `Bash` tool inside conversational
-  sessions. `/inspire_object review` for read-only checks;
-  `/inspire_object promote` uses the write-test-revert pattern against
+  sessions. `/inspire_domain review` for read-only checks;
+  `/inspire_domain promote` uses the write-test-revert pattern against
   `review.sh` to validate lifecycle transitions.
 
 ## Prerequisites

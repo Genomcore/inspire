@@ -110,7 +110,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 ## Related skills
 
 - `/inspire_screens` — the screen specs, patterns and components the horizontal builds from.
-- `/inspire_object` — the specs (`04_domain`) behind the screens.
+- `/inspire_domain` — the specs (`04_domain`) behind the screens.
 - `/inspire_feature` / `/inspire_module review` — feature coverage and module
   consistency before a PR.
 - `run` / `verify` — launch and exercise the prototype end to end.

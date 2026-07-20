@@ -13,7 +13,7 @@ entity's `Fields` table largely emerges from the actions that write it. The
 validators (`entity-coherence`, `touched-entity-lifecycle`) enforce that coupling
 — which is why the two live **together**, not in separate layers.
 
-- **Skill:** `inspire-object` (define / show / update / refactor / delete /
+- **Skill:** `inspire-domain` (define / show / update / refactor / delete /
   promote / demote / review / source / graph).
 - **Layout:**
   ```

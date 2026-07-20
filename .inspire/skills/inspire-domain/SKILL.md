@@ -1,11 +1,11 @@
 ---
-name: inspire-object
+name: inspire-domain
 description: "SDD object lifecycle for both action descriptors (.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md) and entity documents (.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
 argument-hint: "<subcommand> [<id>|<scope>] [args]"
 user-invocable: true
 ---
 
-# /inspire_object — SDD Object Lifecycle
+# /inspire_domain — Domain (SDD object lifecycle)
 
 Every file in the SDD layer is an **object**: either an **action descriptor** (`.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
 
@@ -13,7 +13,7 @@ This skill owns the full lifecycle of both kinds — from first interview throug
 
 ## Conversational ownership
 
-This skill **owns its conversational frame**. While inside any `/inspire_object` subcommand:
+This skill **owns its conversational frame**. While inside any `/inspire_domain` subcommand:
 
 - **Do NOT invoke `superpowers:brainstorming`** or any meta-skill that imposes its own dialogue shape. Authoring an SDD object is creative work, but it is **this skill's** creative work, and its protocol is the interview cadence below.
 - **Do NOT present numbered decision trees or "must resolve before X" walls.** When you hit ambiguity (naming, type, effect), surface it as one focused question and let the operator drive.
@@ -75,21 +75,21 @@ This skill does NOT own: **feature authoring** (`/inspire_module` — back-sourc
 ## Invocation
 
 ```
-/inspire_object define   <id>              # author a new object (interview-driven)
-/inspire_object show     <id>              # render an existing descriptor with resolved cross-refs
-/inspire_object update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
-/inspire_object refactor <id> [args]       # rename / split / merge actions
-/inspire_object delete   <id>              # remove an action (refuses if any other action requires it)
-/inspire_object promote  <id> {accepted|stable|superseded}
-/inspire_object demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
-/inspire_object review   [<scope>]         # run quality_lib checks; show findings
-/inspire_object source   <id>              # show the back-source trail for every claim
-/inspire_object graph    [<scope>]         # print the action→action requires graph + supersession edges
+/inspire_domain define   <id>              # author a new object (interview-driven)
+/inspire_domain show     <id>              # render an existing descriptor with resolved cross-refs
+/inspire_domain update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
+/inspire_domain refactor <id> [args]       # rename / split / merge actions
+/inspire_domain delete   <id>              # remove an action (refuses if any other action requires it)
+/inspire_domain promote  <id> {accepted|stable|superseded}
+/inspire_domain demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
+/inspire_domain review   [<scope>]         # run quality_lib checks; show findings
+/inspire_domain source   <id>              # show the back-source trail for every claim
+/inspire_domain graph    [<scope>]         # print the action→action requires graph + supersession edges
 ```
 
 `<id>` is `module::entity::action` (e.g. `auth::user::create`) for actions, or `module::entity` (e.g. `auth::user`) for entities. `<scope>` is `module` or `module::entity`.
 
-Subcommands accept **natural-language continuations** — e.g. `/inspire_object update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
+Subcommands accept **natural-language continuations** — e.g. `/inspire_domain update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
 
 ## Subcommands
 
@@ -127,7 +127,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 5. **`update` refuses stable.** Modifying a stable object requires `demote` → `update` → `promote`. The regression is an explicit, traceable act.
 6. **`demote` refuses with cascade preview.** Walking lifecycle backwards refuses if downstream consumers depend on the current state. No `--cascade` flag.
 7. **Consolidation follows approval** and goes through show-then-approve. Operator-authored sections (Purpose / Rationale / Invariants / per-field H3) are preserved untouched.
-8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_workspace` (`epic: skill-feedback`, `skills: [object]`).
+8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_workspace` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
 10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire_feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
 

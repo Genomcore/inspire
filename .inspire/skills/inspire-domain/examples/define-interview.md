@@ -1,9 +1,9 @@
 # Example — defining `auth::user::create` (interview cadence in motion)
 
-This is the canonical illustration of the cadence `/inspire_object define` expects. Read it to feel the rhythm: one question at a time, show-then-approve, in-line iteration, consolidation by default. The drift this skill exists to prevent is the opposite of this — proposing a field-list structure after a single question.
+This is the canonical illustration of the cadence `/inspire_domain define` expects. Read it to feel the rhythm: one question at a time, show-then-approve, in-line iteration, consolidation by default. The drift this skill exists to prevent is the opposite of this — proposing a field-list structure after a single question.
 
 ```
-operator: /inspire_object define auth::user::create
+operator: /inspire_domain define auth::user::create
 
 agent:    [Step 0 — authoring context: fresh authoring of an action.
            Step 1 — reads references/interview-prompts-action.md.

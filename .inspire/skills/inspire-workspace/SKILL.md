@@ -353,7 +353,7 @@ related_to: [TASK-xxx]             # list of IDs
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  object | screens | prototype | workspace` — which layer skills cover the work. `[]`
+  domain | screens | prototype | workspace` — which layer skills cover the work. `[]`
   means the work doesn't map to a layer skill (tooling, ops, packaging).
 
 ### Skill-feedback tickets (convention)

@@ -13,7 +13,7 @@ product you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
   - `.inspire/skills/` — the 7 agent skills (`inspire-*`): the judgment half
-    (bootstrap · module · feature · object · prototype · screens · workspace).
+    (bootstrap · module · feature · domain · prototype · screens · workspace).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.

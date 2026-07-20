@@ -1,6 +1,6 @@
 # Findings format (shared reference)
 
-Conversational skills that report SDD-layer issues — `/inspire_object review`, `/inspire_module scan`, `/inspire_feature scan`, source/show traces — use a single rendering format so operators can read every report the same way.
+Conversational skills that report SDD-layer issues — `/inspire_domain review`, `/inspire_module scan`, `/inspire_feature scan`, source/show traces — use a single rendering format so operators can read every report the same way.
 
 ## Underlying machine format
 
@@ -26,7 +26,7 @@ When skills surface findings in conversation, render each one as a markdown sub-
 
 **Issue.** field-conflict: `auth::user.id` has differing types across actions (`uuid` in `auth::user::create`, `integer` in `auth::user::read`).
 
-**Suggested follow-up.** Reconcile the type. Either rewrite the read action to expect `uuid`, or change create to write `integer`. Re-run `/inspire_object review auth::user` after.
+**Suggested follow-up.** Reconcile the type. Either rewrite the read action to expect `uuid`, or change create to write `integer`. Re-run `/inspire_domain review auth::user` after.
 ```
 
 Three required slots:

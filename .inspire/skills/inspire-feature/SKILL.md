@@ -130,14 +130,14 @@ feature or one module's features:
    canonicalization on action ids silently, check whether each already exists at
    `.inspire_kb/04_domain/{module}/{entity}/{action}.md`, and dialogue with the
    operator to pick a set. One focused question at a time; follow the
-   conversational conventions of [`/inspire_object`](../inspire-object/SKILL.md).
+   conversational conventions of [`/inspire_domain`](../inspire-domain/SKILL.md).
 3. **Chained authoring** (only on an explicit "start" signal) — create one
    `TaskCreate` per chosen action, mark the first `in_progress`, and invoke
-   `/inspire_object define {id}` via the Skill tool; `inspire-object` runs its
+   `/inspire_domain define {id}` via the Skill tool; `inspire-domain` runs its
    socratic interview and may co-evolve the action + entity documents in one flow.
 
 Scan is read-only with respect to `.inspire_kb/04_domain/`; authoring lives in
-`/inspire_object`. Pure exploration leaves no tasks created. **Batch mode**
+`/inspire_domain`. Pure exploration leaves no tasks created. **Batch mode**
 (`scan {module}`) expands this over every feature in the module's `_index.md`.
 
 ### Phase 4 — Audit report
@@ -162,7 +162,7 @@ Create a new feature/use-case file in a module. **Required arg:**
    the summary totals.
 5. **Report next steps:**
    - If UI-facing → `/inspire_screens` to add a screen spec.
-   - If it describes a behavior/endpoint → `/inspire_object define
+   - If it describes a behavior/endpoint → `/inspire_domain define
      {module}::{entity}::{verb}` to author the action descriptor.
    - Prototype → `/inspire_prototype` when ready.
 
