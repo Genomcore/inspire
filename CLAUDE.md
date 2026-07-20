@@ -76,12 +76,12 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
       to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`, defaulted from the OpenBIMS
       reference) and add the `inspire-bootstrap` skill to configure them.
+- [x] Publish the microsite (`.manual/`).
 
 Remaining:
 
 - [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module
       ID-prefix convention is already carried by the module/feature skills).
-- [ ] Publish the microsite.
 
 ## Provenance
 

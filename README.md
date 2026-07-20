@@ -97,8 +97,8 @@ guardrail layer.
 - [x] Strip OpenBIMS domain prose from all skills — the runtime speaks the generic INSPIRE model.
 - [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`) and add the `inspire-bootstrap` skill to configure them.
+- [x] Publish the microsite.
 - [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module ID-prefix convention already lives in the module/feature skills).
-- [ ] Publish the microsite.
 
 ---
 
