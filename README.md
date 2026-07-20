@@ -98,7 +98,7 @@ guardrail layer.
 - [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`) and add the `inspire-bootstrap` skill to configure them.
 - [x] Publish the microsite.
-- [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module ID-prefix convention already lives in the module/feature skills).
+- [x] Ship starter `05_screens/patterns/` (list, detail) + a `components/` catalog; the design system is seeded at install from `00_bootstrap/theme.md` and edited via `/inspire_screens design-system`.
 
 ---
 

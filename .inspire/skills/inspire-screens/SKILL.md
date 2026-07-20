@@ -26,6 +26,10 @@ Four levels under `.inspire_kb/05_screens/`:
 | 3 | `components/` | shared component specs | `components/_index.md` |
 | 4 | `{module}/` | module-specific screens | `{module}/_index.md` per module |
 
+`design-system.md` is **seeded at install** from the default template
+`00_bootstrap/theme.md`, then owned here — it is the project's live design system,
+edited with the `design-system` subcommand below.
+
 **Screens are lightweight** — they instantiate a pattern and describe only
 deviations. They do NOT redefine colors, typography, layout, or re-describe
 components.
@@ -241,10 +245,31 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 12. **Propagation check after spec edits.** Ask the user before ending the turn
     whether to propagate visible UI changes to the prototype.
 
+## Subcommand: design-system
+
+Own `05_screens/design-system.md` — the project's **live design system** (tokens,
+typography, color + status map, density, global layout). It was seeded at install
+from the default template `00_bootstrap/theme.md`; from here on this subcommand is
+how it changes.
+
+1. Read the current `design-system.md`. If it's missing, seed it from
+   `00_bootstrap/theme.md` (this is what install does) and say so.
+2. Establish/confirm the change (a token value, the type scale, density, a new
+   status key, a layout rule). Present a diff; apply on approval.
+3. **Propagate.** A token change ripples to every screen and to the prototype —
+   surface it (offer `/inspire_prototype`); screens must not hard-code values that
+   belong here.
+4. Keep token **roles** stable (primary, accent, status keys) even when values
+   change — downstream skills depend on the roles, not the hexes.
+
+The default template lives in `00_bootstrap/theme.md` and is owned by
+`/inspire_bootstrap theme`; the live one lives here. They are allowed to diverge.
+
 ## Skill invocations
 
 - `/inspire_screens create {module}/{screen}` — scaffold a new screen with pattern selection
 - `/inspire_screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
+- `/inspire_screens design-system` — view / edit the live design system (`05_screens/design-system.md`)
 - `/inspire_screens migrate {module}` — migrate a legacy monolith to the new structure
 - `/inspire_screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
 - `/inspire_screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities

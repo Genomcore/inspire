@@ -65,6 +65,19 @@ else
   printf '%s\n' "$HOOKS_JSON" | sed 's/^/      /'
 fi
 
+# 4. Seed the live design system from the bootstrap theme template. The default
+#    theme in 00_bootstrap/theme.md is copied to 05_screens/design-system.md,
+#    which becomes the project's working design system (edit it later with
+#    /inspire_screens design-system). Never clobber an existing one.
+THEME=".inspire_kb/00_bootstrap/theme.md"
+DESIGN_SYSTEM=".inspire_kb/05_screens/design-system.md"
+if [ -f "$THEME" ] && [ ! -f "$DESIGN_SYSTEM" ]; then
+  cp "$THEME" "$DESIGN_SYSTEM"
+  echo "  · seeded $DESIGN_SYSTEM from $THEME"
+elif [ -f "$DESIGN_SYSTEM" ]; then
+  echo "  · $DESIGN_SYSTEM already present — left as-is"
+fi
+
 echo "INSPIRE · done."
 echo "  Guardrail runtime is live in $DEST/. The knowledge base stays at .inspire_kb/,"
 echo "  the horizontal prototype at /prototype, and production code at /source."

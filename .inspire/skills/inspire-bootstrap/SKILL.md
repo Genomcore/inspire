@@ -71,9 +71,15 @@ values are yours to set.
    (primary, accent, success/warn/error/info/neutral) + the canonical status map,
    density, and global layout tokens.
 3. Present a diff and apply on approval.
-4. `theme.md` is the **source of truth** for the design system. The
-   `05_screens/design-system.md` and the prototype must not redefine these tokens — if a
-   token changes, surface the propagation to `/inspire_screens` and `/inspire_prototype`.
+4. **`theme.md` is the default template, not the live design system.** At install
+   it is copied to `05_screens/design-system.md`, which becomes the project's
+   working design system. So:
+   - Edit `theme.md` here to change the **reusable default** (e.g. before
+     bootstrapping, or to keep the default in sync).
+   - To change the **project's live** design system, use
+     `/inspire_screens design-system` — that's the source of truth once seeded.
+   - Offer to (re)seed `05_screens/design-system.md` from `theme.md` if it doesn't
+     exist yet.
 
 ### Abstracting a theme from a mockup's CSS
 
@@ -91,9 +97,10 @@ A fast way to seed `theme.md` is to **derive it from an existing mockup's CSS**:
 
 - `stack.md` and `theme.md` exist and parse.
 - No load-bearing stack choice contradicts an accepted ADR in `01_adr`.
-- The theme tokens the screen specs (`05_screens/design-system.md`) and the prototype use
-  trace back to `theme.md` — flag divergence as drift.
-- Flag any layer/token still on the seeded default when the project has clearly
+- `05_screens/design-system.md` exists (it should have been seeded from `theme.md`
+  at install); flag if missing. It is expected to **diverge** from the default
+  `theme.md` as the project evolves — divergence is not drift.
+- Flag any stack layer still on the seeded default when the project has clearly
   moved past it.
 
 ## Rules

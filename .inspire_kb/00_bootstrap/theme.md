@@ -1,14 +1,17 @@
 ---
 kind: bootstrap-theme
-status: default          # default (abstracted from the OpenBIMS mockup) → adapt per project
+status: template         # the default theme template; copied to 05_screens/design-system.md at install
 ---
 
-# Design system (theme)
+# Design system (theme) — default template
 
-The basic design system — the single source of truth for theme, typography,
-color, density and layout. screen specs ([`05_screens`](../05_screens)) and the prototype
-instantiate these tokens; they do **not** redefine them. Configure with
-`/inspire_bootstrap`.
+The **default design-system template**: theme, typography, color, density and
+layout. This is a *seed*, not the live source of truth — at install
+(`.inspire/install.sh`) it is **copied to
+[`05_screens/design-system.md`](../05_screens)**, which becomes the project's
+working design system. From then on edit the live one with
+`/inspire_screens design-system`; re-seed the default here with
+`/inspire_bootstrap theme`.
 
 > **Default**, abstracted from the OpenBIMS mockup's CSS (`@theme` tokens +
 > design-system spec). Swap the values for your brand — the token *roles* below are

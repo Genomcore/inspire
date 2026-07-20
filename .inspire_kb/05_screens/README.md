@@ -9,15 +9,20 @@ spec for one navigable view; here it's named "screen" because that reads clearer
 - **Layout:**
   ```
   05_screens/
-    patterns/            # reusable UI patterns screens instantiate
+    patterns/            # reusable screen structures (starters: list, detail)
     components/          # the shared component catalog (reused when coding)
     {module}/            # screens per module
-    design-system.md     # tokens, typography, spacing
+    design-system.md     # the live design system — seeded at install
   ```
-- Screens **instantiate shared patterns** and use components from
-  [`components/`](components); the same components are the reference when the
-  UI is implemented in a prototype ([`03_prototypes`](../03_prototypes)) or in
-  production.
+- **`design-system.md`** is the project's live design system (tokens, typography,
+  color, density, layout). It's **seeded at install** by copying the default
+  template [`00_bootstrap/theme.md`](../00_bootstrap/theme.md), then owned here —
+  edit it with `/inspire_screens design-system`. (So it isn't shipped in the bare
+  template; it appears after `.inspire/install.sh` runs.)
+- Screens **instantiate shared patterns** ([`patterns/`](patterns)) and use
+  components from [`components/`](components); the same components are the reference
+  when the UI is implemented in a prototype ([`03_prototypes`](../03_prototypes))
+  or in production.
 
 Screens realise features ([`02_features`](../02_features)) and must stay aligned
 with the specs in [`04_domain`](../04_domain).

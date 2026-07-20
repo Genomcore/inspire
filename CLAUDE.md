@@ -77,11 +77,12 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`, defaulted from the OpenBIMS
       reference) and add the `inspire-bootstrap` skill to configure them.
 - [x] Publish the microsite (`.manual/`) — live at inspire.openbims.dev.
+- [x] Ship starter `05_screens/patterns/` (list, detail) + a `components/` catalog;
+      the design system is seeded at install from `00_bootstrap/theme.md` into
+      `05_screens/design-system.md` and edited via `/inspire_screens design-system`.
 
-Remaining:
-
-- [ ] Ship a starter `05_screens/patterns/` + `design-system.md` (the module
-      ID-prefix convention is already carried by the module/feature skills).
+Remaining: the generalization is complete. Further work is per-project (fill in the
+KB) or methodology evolution.
 
 ## Provenance
 
