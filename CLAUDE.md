@@ -21,7 +21,7 @@ product you build on top of it.
   - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a
   project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
-  `02_features`, `03_prototypes`, `04_domain`, `05_screens`, `06_tracker`); each folder
+  `02_features`, `03_prototypes`, `04_domain`, `05_screens`, `99_tracker`); each folder
   carries a README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).

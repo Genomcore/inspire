@@ -261,8 +261,8 @@ Remove a module across all layers. Use with caution.
    are informational; don't block PRs unless they contradict an accepted ADR.
 6. **Consult the task tracker** at the start of each invocation
    (`/inspire_workspace task list`, or open the Kanban via
-   `node .inspire_kb/06_tracker/serve.mjs`). Known items in
-   `.inspire_kb/06_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
+   `node .inspire_kb/99_tracker/serve.mjs`). Known items in
+   `.inspire_kb/99_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
 7. **Actionable findings.** Every issue names the skill to invoke for the fix:
    - screen spec drift → `/inspire_screens`
    - Prototype drift → `/inspire_prototype`

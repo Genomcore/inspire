@@ -3,7 +3,7 @@
 #
 # Rule: SDD object bodies must not contain TODO or FIXME markers. Per D19
 # (Addendum 2): files state present truth only. Outstanding work belongs in
-# `.inspire_kb/06_tracker/tickets/`, not inline in the spec.
+# `.inspire_kb/99_tracker/tickets/`, not inline in the spec.
 #
 # Detects (case-sensitive, word-boundary): TODO, FIXME, XXX, HACK.
 # Limited to body content — frontmatter is excluded so the rule does not
@@ -50,7 +50,7 @@ scan_file() {
   while IFS=$'\t' read -r ln marker; do
     [ -z "$ln" ] && continue
     sdd_finding "error" "no-todos" "$file" \
-      "body contains $marker marker at line $ln (files state present truth only — move outstanding work to .inspire_kb/06_tracker/tickets/)"
+      "body contains $marker marker at line $ln (files state present truth only — move outstanding work to .inspire_kb/99_tracker/tickets/)"
     sdd_count_error
   done <<< "$hits"
 }

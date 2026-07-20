@@ -14,9 +14,9 @@ This skill owns **workspace-scoped** operations:
 - **ADR lifecycle** — architectural decisions that span ≥2 modules.
 - **Vault structure** — `.inspire_kb/02_features/_index.md`,
   `.inspire_kb/01_adr/_index.md`, folder conventions.
-- **Task tracker** — `.inspire_kb/06_tracker/tickets/` lifecycle. Open tickets
-  live at `.inspire_kb/06_tracker/tickets/*.md`; closed tickets are archived under
-  `.inspire_kb/06_tracker/tickets/archive/*.md` so default scans see only active
+- **Task tracker** — `.inspire_kb/99_tracker/tickets/` lifecycle. Open tickets
+  live at `.inspire_kb/99_tracker/tickets/*.md`; closed tickets are archived under
+  `.inspire_kb/99_tracker/tickets/archive/*.md` so default scans see only active
   work.
 
 ## Invocation
@@ -196,9 +196,9 @@ Drift items pending: {N}
 7. **Migration is not failure.** Legacy screen spec monoliths and pending prototype
    drift are `important` (migrate), not `critical`, unless they contradict an ADR
    within its maturity's reach.
-8. **Consult the task tracker.** Known items in `.inspire_kb/06_tracker/tickets/`
+8. **Consult the task tracker.** Known items in `.inspire_kb/99_tracker/tickets/`
    are flagged `(tracked: TASK-{id})`. Use `/inspire_workspace task list` or open
-   the Kanban via `node .inspire_kb/06_tracker/serve.mjs`.
+   the Kanban via `node .inspire_kb/99_tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
    - screen spec drift → `/inspire_screens`
@@ -307,13 +307,13 @@ truth** — no generated indexes or caches.
 
 ### Storage layout
 
-- **Open tickets** → `.inspire_kb/06_tracker/tickets/TASK-{id}.md`
+- **Open tickets** → `.inspire_kb/99_tracker/tickets/TASK-{id}.md`
 - **Closed tickets** (`status` ∈ {`Done`, `Cancelled`}) →
-  `.inspire_kb/06_tracker/tickets/archive/TASK-{id}.md`
+  `.inspire_kb/99_tracker/tickets/archive/TASK-{id}.md`
 
 The archive subfolder keeps the active set lean: agents scanning "what's pending"
-read only `.inspire_kb/06_tracker/tickets/*.md` (top-level, non-recursive). The
-Kanban web (`.inspire_kb/06_tracker/serve.mjs`) reads both locations. `task close`
+read only `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). The
+Kanban web (`.inspire_kb/99_tracker/serve.mjs`) reads both locations. `task close`
 moves the file; `task show` / `task update` look in `tickets/` first, then
 `tickets/archive/`.
 
@@ -418,7 +418,7 @@ default `status: Done`; with `--cancelled`, `status: Cancelled` (append a
 
 ### Subcommand: task list [--filter]
 
-1. Scan `.inspire_kb/06_tracker/tickets/*.md` (top-level, non-recursive — excludes
+1. Scan `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive — excludes
    `archive/`). Parse frontmatter.
 2. With `--include-archived` (or `--all`), also scan `tickets/archive/*.md`.
 3. Filters: `--status`, `--epic`, `--size`, `--importance`, `--reporter`,
@@ -442,7 +442,7 @@ Read-only.
 5. **`closed_by` / `closed_at` only when status ∈ {Done, Cancelled}.**
 6. **Body markdown is free.** Description / Acceptance criteria / Notes suggested.
 7. **Concurrent edits are safe** — random IDs, no locking.
-8. **Server is read-only.** `.inspire_kb/06_tracker/serve.mjs` never writes; it
+8. **Server is read-only.** `.inspire_kb/99_tracker/serve.mjs` never writes; it
    scans both `tickets/` and `tickets/archive/`.
 
 ## Subcommand: structure
@@ -457,13 +457,13 @@ Validate the vault structure at the top level (not module-scoped).
    - `.inspire_kb/01_adr/_index.md` lists every ADR.
    - Each module folder has `_index.md`.
 3. **Task tracker:**
-   - `.inspire_kb/06_tracker/tickets/` has valid `.md` files at top level (open)
+   - `.inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
      and under `archive/` (closed). Frontmatter parses, enums match, ID format
      `TASK-[a-z0-9]{6}`.
    - `id` matches filename; no duplicate IDs across `tickets/` and `archive/`.
    - **Location ↔ status invariant:** every top-level ticket is `Open`; every
      archived ticket is `Done`/`Cancelled`.
-   - `.inspire_kb/06_tracker/serve.mjs` present.
+   - `.inspire_kb/99_tracker/serve.mjs` present.
    - `blocked_by` / `related_to` references to other `TASK-*` IDs resolve (warning
      if not).
 4. **No orphan files:** no stale `.md` at `.inspire_kb/` root (except
@@ -506,6 +506,6 @@ Validate the vault structure at the top level (not module-scoped).
 5. **Grep references on rename/supersede.** Always scan the vault when renaming an
    ADR or changing its ID.
 6. **Consult the task tracker.** Known items live in
-   `.inspire_kb/06_tracker/tickets/`; don't re-report them as new findings.
+   `.inspire_kb/99_tracker/tickets/`; don't re-report them as new findings.
 7. **No historical language in ADRs.** ADRs describe the decision context at the
    time it was made; don't narrate migration history.

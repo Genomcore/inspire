@@ -15,7 +15,7 @@ Each numbered folder is a layer of the graph, operated by a matching skill in
 | [`03_prototypes`](03_prototypes) | Prototype **knowledge**: horizontal learnings (code at [`/prototype`](../prototype)) + links to external vertical spike repos | `inspire-prototype` |
 | [`04_domain`](04_domain) | The logical domain — data model (entities) + behavior (actions), coupled | `inspire-domain` |
 | [`05_screens`](05_screens) | screen specs + the shared component catalog | `inspire-screens` |
-| [`06_tracker`](06_tracker) | Tickets and work log | `inspire-workspace` |
+| [`99_tracker`](99_tracker) | Tickets and work log | `inspire-workspace` |
 
 Coherence across these layers is protected mechanically by the validators in
 [`.inspire/bin/`](../.inspire/bin) and the git-time hooks in

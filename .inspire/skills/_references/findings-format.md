@@ -56,7 +56,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 |---|---|---|
 | `missing required section(s)` | sections-present | One or more mandatory `## Section` headers absent from the body. |
 | `empty section(s)` | sections-present | Section header present but body has no non-blank content. |
-| `body contains TODO marker` / `FIXME` / `XXX` / `HACK` | no-todos | Outstanding-work marker in body. Move to `.inspire_kb/06_tracker/tickets/`. |
+| `body contains TODO marker` / `FIXME` / `XXX` / `HACK` | no-todos | Outstanding-work marker in body. Move to `.inspire_kb/99_tracker/tickets/`. |
 | `the entity document's '## Fields' table does not declare it` | action-fields-in-entity | Action touches a field the entity doc has not declared. |
 | `no entity document found at expected path` | action-fields-in-entity | Action touches an entity id but no `{module}.{entity}.md` exists. |
 | `field-conflict` | entity-coherence | Same field on same entity declared with differing types across actions. |

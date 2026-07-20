@@ -250,5 +250,5 @@ Use this template at `.inspire_kb/02_features/{module}/{feature-id}.md`:
 8. **Batch synthesis.** In batch review, identify patterns and produce a
    prioritized correction plan grouped by fix skill.
 9. **Consult the task tracker** (`/inspire_workspace task list`, or
-   `node .inspire_kb/06_tracker/serve.mjs`) for tracked drift; don't re-surface it
+   `node .inspire_kb/99_tracker/serve.mjs`) for tracked drift; don't re-surface it
    as new.

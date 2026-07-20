@@ -8,7 +8,7 @@ re-discovered as new findings on every review.
   create`, …).
 - **Layout:**
   ```
-  06_tracker/
+  99_tracker/
     tickets/         # one file per ticket
     serve.mjs        # local Kanban server (node serve.mjs)
   ```
