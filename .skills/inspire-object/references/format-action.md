@@ -2,7 +2,7 @@
 
 The format spec for action descriptors. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An action descriptor lives at `spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md`. The full-dotted-id filename (e.g. `auth/user/auth.user.create.md`) disambiguates Obsidian tabs and Quick Switcher, where bare verb filenames like `create.md` recur across entities. Dots — not `::` — because Windows forbids `:` in filenames.
+An action descriptor lives at `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md`. The full-dotted-id filename (e.g. `auth/user/auth.user.create.md`) disambiguates Obsidian tabs and Quick Switcher, where bare verb filenames like `create.md` recur across entities. Dots — not `::` — because Windows forbids `:` in filenames.
 
 ## Canonical shape
 

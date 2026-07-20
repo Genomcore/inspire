@@ -1,13 +1,13 @@
 ---
 name: inspire-object
-description: "SDD object lifecycle for both action descriptors (spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md) and entity documents (spec/sdd/{module}/{entity}/{module}.{entity}.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
+description: "SDD object lifecycle for both action descriptors (.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md) and entity documents (.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
 argument-hint: "<subcommand> [<id>|<scope>] [args]"
 user-invocable: true
 ---
 
 # /inspire_object — SDD Object Lifecycle
 
-Every file in the SDD layer is an **object**: either an **action descriptor** (`spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`spec/sdd/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
+Every file in the SDD layer is an **object**: either an **action descriptor** (`.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
 
 This skill owns the full lifecycle of both kinds — from first interview through promotion to stable. **Authoring is an interview, not a fill-in-the-blanks.** The single most important thing this skill does is run a socratic per-section walk; the on-disk format is secondary and lives in references.
 

@@ -23,7 +23,7 @@
 #
 # Usage:
 #   .claude/bin/wikilinks-resolve.sh                  # scan whole tree
-#   .claude/bin/wikilinks-resolve.sh spec/sdd/auth    # scoped scan
+#   .claude/bin/wikilinks-resolve.sh .inspire_kb/04_specs/auth    # scoped scan
 
 set -uo pipefail
 
@@ -45,9 +45,9 @@ sdd_build_id_index "$SCOPE"
 NAME_INDEX="$(mktemp -t sdd-name-index.XXXXXX)"
 trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "$NAME_INDEX"' EXIT
 
-# Search the spec/ tree plus other plausible vault roots. Excludes
+# Search the .inspire_kb/ tree plus other plausible vault roots. Excludes
 # .claude/worktrees/ to avoid cross-branch noise.
-find spec .claude/skills 2>/dev/null \
+find .inspire_kb .claude/skills 2>/dev/null \
   -type f -name "*.md" \
   ! -path "*/node_modules/*" \
   | while IFS= read -r p; do

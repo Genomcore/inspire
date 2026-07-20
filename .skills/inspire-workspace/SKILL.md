@@ -11,8 +11,8 @@ This skill owns **workspace-scoped** operations. It covers:
 
 - **Global review** — the pre-merge gate, orchestrating module-level and cross-module checks
 - **ADR lifecycle** — architectural decisions that span ≥2 modules
-- **Vault structure** — `spec/pdd/_index.md`, `spec/adrs/_index.md`, folder conventions, task tracker
-- **Task tracker** — `tracker/tickets/` lifecycle (create, update, close, list, show). Open tickets live at `tracker/tickets/*.md`; closed tickets are archived under `tracker/tickets/archive/*.md` so the agent's default scans only see active work.
+- **Vault structure** — `.inspire_kb/02_features/_index.md`, `.inspire_kb/01_adr/_index.md`, folder conventions, task tracker
+- **Task tracker** — `.inspire_kb/06_tracker/tickets/` lifecycle (create, update, close, list, show). Open tickets live at `.inspire_kb/06_tracker/tickets/*.md`; closed tickets are archived under `.inspire_kb/06_tracker/tickets/archive/*.md` so the agent's default scans only see active work.
 
 ## Invocation
 
@@ -40,7 +40,7 @@ There is no `proposed`/`accepted` state: an ADR present and not superseded/rejec
 - `/inspire_workspace structure` — validate top-level indexes, task tracker, vault conventions
 
 ### Task tracker
-- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,ui]` — create a new ticket as `tracker/tickets/TASK-{id}.md` (status defaults to `Open`)
+- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,ui]` — create a new ticket as `.inspire_kb/06_tracker/tickets/TASK-{id}.md` (status defaults to `Open`)
 - `/inspire_workspace task update TASK-{id} [--field value ...]` — modify a ticket's frontmatter
 - `/inspire_workspace task close TASK-{id} [--cancelled --reason "..."]` — set status to Done (default) or Cancelled
 - `/inspire_workspace task list [--status X --epic Y --skill prototype]` — list filtered tickets to stdout (read-only)
@@ -48,7 +48,7 @@ There is no `proposed`/`accepted` state: an ADR present and not superseded/rejec
 
 ## Subcommand: review (global)
 
-**REQUIRED** before any PR that modifies files in `spec/`. Orchestrates a full consistency review across all affected modules and the vault structure.
+**REQUIRED** before any PR that modifies files in `.inspire_kb/`. Orchestrates a full consistency review across all affected modules and the vault structure.
 
 ### Execution mode
 
@@ -61,7 +61,7 @@ Invariants both modes MUST preserve: **read-only** (flag, never edit, never invo
 
 ### Phase 1 — Identify scope
 
-- If modules are specified, use those. Otherwise, enumerate all 12 core modules + satellites listed in `spec/pdd/_index.md`.
+- If modules are specified, use those. Otherwise, enumerate all 12 core modules + satellites listed in `.inspire_kb/02_features/_index.md`.
 - For each module in scope, delegate to `/inspire_module review {module}`.
 
 ### Phase 2 — Module reviews
@@ -79,7 +79,7 @@ For each module in scope, the module-review performs:
 Checks that span multiple modules:
 
 - **Dependency validation:** feature IDs referenced as dependencies in one module exist in the target
-- **ADR references:** all `[[adr-xxx]]` wikilinks in PDDs resolve to existing ADR files in `spec/adrs/`
+- **ADR references:** all `[[adr-xxx]]` wikilinks in PDDs resolve to existing ADR files in `.inspire_kb/01_adr/`
 - **ADR propagation alignment:** at *every* maturity, an ADR's consequences must cohere across the **in-repo design workspace** (PDD + UISpec + console prototype + mock + manual) — a contradiction there is critical. Maturity adds *external* evidence the review checks only by pointer, never by inspecting the external artifact: `prototyped` needs a `**Prototype:**` pointer (external functional prototype), `implemented` a codebase reference. A `design` ADR simply lacking external validation is NOT a finding; a `design` ADR that contradicts the console prototype IS. Example: ADR-AIA-01 → `agents.md` describes refs-only composition and the AI Agents UISpec must NOT describe inline permissions.
 - **Satellite references:** satellite PDDs reference valid core module feature IDs
 - **Marketplace coherence:** artifact types declared by Marketplace match what other modules register as installable
@@ -89,18 +89,18 @@ Checks that span multiple modules:
 
 **PDD tree:**
 - Repo structure matches CLAUDE.md
-- No scripts, `.py`, `.xlsx`, `.deprecated` files in `spec/`
-- No `.DS_Store` files in `spec/`
+- No scripts, `.py`, `.xlsx`, `.deprecated` files in `.inspire_kb/`
+- No `.DS_Store` files in `.inspire_kb/`
 - Every core module folder has `_index.md`
-- `spec/adrs/_index.md` lists all ADR files (no orphans, no phantoms)
-- `spec/pdd/_index.md` lists all modules (core + satellite)
+- `.inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms)
+- `.inspire_kb/02_features/_index.md` lists all modules (core + satellite)
 - Every core module (12) has: PDD folder, manual page, UISpec (if UI-facing)
-- Every satellite has: PDD in `spec/pdd/satellite/`
+- Every satellite has: PDD in `.inspire_kb/02_features/`
 
 **UISpec tree:**
-- `spec/specs/ui/openbims-console/design-system.md` exists
-- `spec/specs/ui/openbims-console/patterns/` exists with `_index.md` + files per pattern
-- `spec/specs/ui/openbims-console/components/` exists with `_index.md` + files per component
+- `.inspire_kb/05_ui/design-system.md` exists
+- `.inspire_kb/05_ui/patterns/` exists with `_index.md` + files per pattern
+- `.inspire_kb/05_ui/components/` exists with `_index.md` + files per component
 - Every pattern referenced by a screen exists
 - Every component referenced by a screen exists
 - No orphan patterns/components (exist on disk but not referenced)
@@ -190,7 +190,7 @@ Drift items pending: {N}
 5. **Actionable.** Every finding suggests the skill to invoke.
 6. **Delegate deep dives.** For complex feature-level issues, suggest `/inspire_feature review {id}`.
 7. **Migration is not failure.** Legacy UISpec monoliths and pending prototype drift are `important` (migrate), not `critical`, unless they contradict an ADR within its maturity's reach.
-8. **Consult the task tracker.** Known items in `tracker/tickets/` should be flagged `(tracked: TASK-{id})`. Use `/inspire_workspace task list` or open the Kanban via `node tracker/serve.mjs`.
+8. **Consult the task tracker.** Known items in `.inspire_kb/06_tracker/tickets/` should be flagged `(tracked: TASK-{id})`. Use `/inspire_workspace task list` or open the Kanban via `node .inspire_kb/06_tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, explicitly call out the fix skill as mandatory before PR:
    - Prototype drift → `/inspire_prototype`
    - UISpec drift → `/inspire_ui`
@@ -204,7 +204,7 @@ Create a new ADR.
 
 - **Filename:** `adr-{module-prefix}-{slug}.md` (e.g., `adr-ure-scheduler.md`) for module-specific, or `adr-{slug}.md` for cross-cutting (e.g., `adr-interop-pattern.md`). Slug-only — no numeric prefix.
 - **Slug uniqueness:** slugs are unique within their prefix; cross-cutting slugs are unique vault-wide.
-- **Location:** `spec/adrs/`
+- **Location:** `.inspire_kb/01_adr/`
 - **Canonical ID:** the filename (without `.md`). Do not duplicate an `ADR-{CODE}` in the H1 — the H1 is the human title.
 
 **Rationale.** Numeric prefixes are collision-prone under parallel work: two branches can independently grab the same next number, producing semantic conflicts that don't surface as textual conflicts at merge time. Slug-only filenames are collision-free by construction (mirroring the `TASK-{id}` ticket convention). See TASK-t4mxqz.
@@ -255,7 +255,7 @@ What follows — positive and negative. Include breaking changes.
    - Key consequences
    - Alternatives considered
 2. **Write the ADR file** at the computed path
-3. **Update `spec/adrs/_index.md`**: add a row to the appropriate module section (or Transversales for cross-cutting)
+3. **Update `.inspire_kb/01_adr/_index.md`**: add a row to the appropriate module section (or Transversales for cross-cutting)
 4. **Propose ADR references in PDDs** that should link to this ADR: list files to edit, wait for approval
 5. Set `**Status:** design` by default (the entry maturity). Use `adr promote` later to advance as the decision is prototyped / implemented.
 
@@ -292,8 +292,8 @@ Replace an ADR with a new one that changes its decision. Follow after creating t
 1. Verify both ADRs exist (the old one at any non-terminal maturity)
 2. Update old ADR: `**Status:** superseded by [[{new-id}]]`
 3. Update new ADR's header to include `Supersedes: [[{old-id}]]`
-4. Grep `spec/` for references to the old ADR; propose updates to point to the new one
-5. Update `spec/adrs/_index.md` (move the old ADR's entry to the superseded section)
+4. Grep `.inspire_kb/` for references to the old ADR; propose updates to point to the new one
+5. Update `.inspire_kb/01_adr/_index.md` (move the old ADR's entry to the superseded section)
 
 ## Task tracker format
 
@@ -301,10 +301,10 @@ Tickets live as one file per ticket. The `.md` files are the **only source of tr
 
 ### Storage layout
 
-- **Open tickets** → `tracker/tickets/TASK-{id}.md`
-- **Closed tickets** (`status` ∈ {`Done`, `Cancelled`}) → `tracker/tickets/archive/TASK-{id}.md`
+- **Open tickets** → `.inspire_kb/06_tracker/tickets/TASK-{id}.md`
+- **Closed tickets** (`status` ∈ {`Done`, `Cancelled`}) → `.inspire_kb/06_tracker/tickets/archive/TASK-{id}.md`
 
-The archive subfolder keeps the active set lean: agents scanning "what's pending" only need to read `tracker/tickets/*.md` (top-level, non-recursive) and don't have to filter out closed work. The Kanban web (`tracker/serve.mjs`) reads both locations so the Done column stays populated.
+The archive subfolder keeps the active set lean: agents scanning "what's pending" only need to read `.inspire_kb/06_tracker/tickets/*.md` (top-level, non-recursive) and don't have to filter out closed work. The Kanban web (`.inspire_kb/06_tracker/serve.mjs`) reads both locations so the Done column stays populated.
 
 The `task close` subcommand moves the file as part of the operation. `task show` / `task update` look in `tickets/` first and fall back to `tickets/archive/` so callers don't need to know where a ticket lives.
 
@@ -355,7 +355,7 @@ importance: Low                            # default Low; bump when drift is loa
 
 **Body sections:** `## Observation` (what happened — concrete) · `## Where it surfaced` (subcommand / step / session id if relevant) · `## Suggested follow-up` (what would fix it, if known; OK to leave open).
 
-This is the **interim quick-pass mechanism** for the skill-usage feedback loop (see `tracker/tickets/TASK-9bk2nx.md`). It reuses standard ticket infrastructure — no new tooling, no automated capture. The operator decides when an observation deserves a ticket; skills surface candidates conversationally and offer to file. The fuller mechanism (telemetry / triage cadence / feedback application) lives in TASK-9bk2nx.
+This is the **interim quick-pass mechanism** for the skill-usage feedback loop (see `.inspire_kb/06_tracker/tickets/TASK-9bk2nx.md`). It reuses standard ticket infrastructure — no new tooling, no automated capture. The operator decides when an observation deserves a ticket; skills surface candidates conversationally and offer to file. The fuller mechanism (telemetry / triage cadence / feedback application) lives in TASK-9bk2nx.
 
 ### ID scheme
 
@@ -363,7 +363,7 @@ Format: `TASK-` + 6 chars from `[a-z0-9]` (base36 lowercase). Example: `TASK-a3k
 
 - **Generation**: random — `Math.floor(Math.random() * 36).toString(36)` × 6.
 - **Space**: 36⁶ ≈ 2.18B combinations. Collision probability with 10k tickets ≈ 10⁻⁵.
-- **Defense in depth**: before writing a new ticket, verify `tracker/tickets/TASK-{id}.md` doesn't exist. Regenerate on the astronomically improbable collision.
+- **Defense in depth**: before writing a new ticket, verify `.inspire_kb/06_tracker/tickets/TASK-{id}.md` doesn't exist. Regenerate on the astronomically improbable collision.
 - **Concurrency**: no coordination needed. Parallel branches/sessions create tickets with random IDs and effectively never collide.
 - **Stable forever**: cancelled tickets keep their ID (with `status: Cancelled` and reason in body). IDs are never reused.
 
@@ -371,14 +371,14 @@ Format: `TASK-` + 6 chars from `[a-z0-9]` (base36 lowercase). Example: `TASK-a3k
 
 1. Resolve `@handle` from `git config user.email` (cached per session). Default to `@oscar` if not resolvable.
 2. Resolve today's date from CLAUDE.md `currentDate` or `date +%Y-%m-%d`.
-3. Generate a random 6-char base36 ID. Verify `tracker/tickets/TASK-{id}.md` doesn't exist; regenerate if it does.
+3. Generate a random 6-char base36 ID. Verify `.inspire_kb/06_tracker/tickets/TASK-{id}.md` doesn't exist; regenerate if it does.
 4. Apply flag values for `--epic`, `--size`, `--importance`, `--skills` (comma-separated), `--status`, `--blocked-by`, `--related-to`. Defaults: `epic` required (validated against enum), `size: M`, `importance: Mid`, `skills: []`, `status: Open`, lists empty.
 5. Write the file with frontmatter + empty `## Description` body (or content from `--body` if provided).
 6. Print the new ID to stdout for confirmation.
 
 ### Subcommand: task update TASK-{id} [--flags]
 
-1. Resolve ticket path: try `tracker/tickets/TASK-{id}.md` first, then `tracker/tickets/archive/TASK-{id}.md`. Error if neither exists.
+1. Resolve ticket path: try `.inspire_kb/06_tracker/tickets/TASK-{id}.md` first, then `.inspire_kb/06_tracker/tickets/archive/TASK-{id}.md`. Error if neither exists.
 2. Apply flag changes to frontmatter (validate against enums).
 3. Set `updated` to today's date.
 4. **Status transitions move the file:**
@@ -393,19 +393,19 @@ Shortcut for `task update` that transitions an open ticket to a closed status an
 - Default: `status: Done`.
 - With `--cancelled`: `status: Cancelled`. If `--reason` given, append a `## Cancellation reason` section to body (or update existing).
 - Sets `closed_by`, `closed_at`, `updated` to today.
-- **Moves the file** from `tracker/tickets/TASK-{id}.md` to `tracker/tickets/archive/TASK-{id}.md` as part of the same operation.
+- **Moves the file** from `.inspire_kb/06_tracker/tickets/TASK-{id}.md` to `.inspire_kb/06_tracker/tickets/archive/TASK-{id}.md` as part of the same operation.
 
 ### Subcommand: task list [--filter]
 
-1. Scan `tracker/tickets/*.md` (top-level, non-recursive — does NOT include `archive/`). Parse frontmatter.
-2. With `--include-archived` (or `--all`), also scan `tracker/tickets/archive/*.md` and merge.
+1. Scan `.inspire_kb/06_tracker/tickets/*.md` (top-level, non-recursive — does NOT include `archive/`). Parse frontmatter.
+2. With `--include-archived` (or `--all`), also scan `.inspire_kb/06_tracker/tickets/archive/*.md` and merge.
 3. Apply filters: `--status`, `--epic`, `--size`, `--importance`, `--reporter`, `--skill` (matches if ticket's `skills` list contains the value), `--blocked` (only blocked tickets), `--open-only` (alias for `--status Open` — redundant with the default scope but accepted for clarity).
 4. Print as a compact table to stdout: `id | status | epic | size | importance | skills | title`.
 5. Read-only. Never modifies files.
 
 ### Subcommand: task show TASK-{id}
 
-1. Read the file from `tracker/tickets/TASK-{id}.md`; if absent, fall back to `tracker/tickets/archive/TASK-{id}.md`.
+1. Read the file from `.inspire_kb/06_tracker/tickets/TASK-{id}.md`; if absent, fall back to `.inspire_kb/06_tracker/tickets/archive/TASK-{id}.md`.
 2. Print frontmatter + body to stdout.
 3. Read-only.
 
@@ -413,12 +413,12 @@ Shortcut for `task update` that transitions an open ticket to a closed status an
 
 1. **One file per ticket.** Filename = `TASK-{id}.md`. The `id` field in frontmatter must match the filename.
 2. **IDs never reused.** Cancelled tickets stay with `status: Cancelled`. Don't delete files — archive them.
-3. **Open vs archived location is derived from `status`.** Open tickets live at `tracker/tickets/`; closed tickets (Done/Cancelled) at `tracker/tickets/archive/`. The skill is responsible for keeping file location consistent with the `status` field on every transition.
+3. **Open vs archived location is derived from `status`.** Open tickets live at `.inspire_kb/06_tracker/tickets/`; closed tickets (Done/Cancelled) at `.inspire_kb/06_tracker/tickets/archive/`. The skill is responsible for keeping file location consistent with the `status` field on every transition.
 4. **`updated` is auto-managed by the skill.** Don't edit it by hand.
 5. **`closed_by`/`closed_at` only when status ∈ {Done, Cancelled}.** Skill enforces consistency.
 6. **Body markdown is free.** No required sections, but Description / Acceptance criteria / Notes is the suggested pattern.
 7. **Concurrent edits are safe.** Random IDs make collisions effectively impossible. No locking, no merge conflicts on filenames.
-8. **Server is read-only.** `tracker/serve.mjs` never writes. All mutations go through the skill (or direct `.md` edits, but the skill is preferred for consistency). The server scans both `tickets/` and `tickets/archive/`.
+8. **Server is read-only.** `.inspire_kb/06_tracker/serve.mjs` never writes. All mutations go through the skill (or direct `.md` edits, but the skill is preferred for consistency). The server scans both `tickets/` and `tickets/archive/`.
 
 ## Subcommand: structure
 
@@ -428,18 +428,18 @@ Validate the vault structure at the top level (not module-scoped).
 
 1. **CLAUDE.md** is present at workspace root and has the skills table
 2. **Top-level indexes:**
-   - `spec/pdd/_index.md` lists every core module + satellite
-   - `spec/adrs/_index.md` lists every ADR
+   - `.inspire_kb/02_features/_index.md` lists every core module + satellite
+   - `.inspire_kb/01_adr/_index.md` lists every ADR
    - Each module folder has `_index.md`
 3. **Task tracker:**
-   - `tracker/tickets/` exists with valid `.md` files at top level (open tickets) and under `tracker/tickets/archive/` (closed). Frontmatter parses, enums match, ID format `TASK-[a-z0-9]{6}`.
+   - `.inspire_kb/06_tracker/tickets/` exists with valid `.md` files at top level (open tickets) and under `.inspire_kb/06_tracker/tickets/archive/` (closed). Frontmatter parses, enums match, ID format `TASK-[a-z0-9]{6}`.
    - `id` in frontmatter matches filename
    - No duplicate IDs across `tickets/` and `tickets/archive/` (defense in depth)
    - **Location ↔ status invariant:** every ticket in `tickets/*.md` (top-level) has `status: Open`; every ticket in `tickets/archive/*.md` has `status` ∈ {`Done`, `Cancelled`}. Mismatches are violations.
-   - `tracker/serve.mjs` and `tracker/web/index.html` present
+   - `.inspire_kb/06_tracker/serve.mjs` and `.inspire_kb/06_tracker/web/index.html` present
    - References in `blocked_by` / `related_to` to other `TASK-*` IDs resolve (warning if not — search both `tickets/` and `tickets/archive/`)
 4. **No orphan files:**
-   - No stale `.md` at `spec/` root (except `CONTRIBUTING.md` if present)
+   - No stale `.md` at `.inspire_kb/` root (except `CONTRIBUTING.md` if present)
    - No legacy paths (e.g., `pdd/openbims-portal/`, `.claude/PENDING.md`)
 5. **Sync scripts** in `code/*/scripts/` point to current paths
 
@@ -449,17 +449,17 @@ Validate the vault structure at the top level (not module-scoped).
 # Vault Structure | {date}
 
 ## Top-level indexes
-- spec/pdd/_index.md: {ok | N issues}
-- spec/adrs/_index.md: {ok | N issues}
+- .inspire_kb/02_features/_index.md: {ok | N issues}
+- .inspire_kb/01_adr/_index.md: {ok | N issues}
 
 ## Module folders
 - Core modules: {N}/12 with _index.md
 - Satellites: {N}/{total}
 
 ## Task tracker
-- tracker/tickets/: {N} open
-- tracker/tickets/archive/: {N} closed ({Done: N, Cancelled: N})
-- tracker/serve.mjs: {present | missing}
+- .inspire_kb/06_tracker/tickets/: {N} open
+- .inspire_kb/06_tracker/tickets/archive/: {N} closed ({Done: N, Cancelled: N})
+- .inspire_kb/06_tracker/serve.mjs: {present | missing}
 
 ## Issues
 - [{severity}] {description}
@@ -474,6 +474,6 @@ Validate the vault structure at the top level (not module-scoped).
 3. **Only `implemented` ADRs are immutable in content.** Supersede to change their `Decision`; `design` / `prototyped` ADRs are refined in place with `adr update`.
 4. **Propagate to the maturity's reach.** Design-workspace coherence (PDD + UISpec + console prototype + mock + manual) is required at every maturity; `prototyped` adds a pointer to an external functional prototype, `implemented` a codebase reference. The skill surfaces gaps within that reach.
 5. **Grep references on rename/supersede.** Always scan the vault for references when renaming an ADR or changing its ID.
-6. **Consult the task tracker.** Known items live in `tracker/tickets/` (use `task list` or open the Kanban via `node tracker/serve.mjs`). Don't re-report them as new findings.
+6. **Consult the task tracker.** Known items live in `.inspire_kb/06_tracker/tickets/` (use `task list` or open the Kanban via `node .inspire_kb/06_tracker/serve.mjs`). Don't re-report them as new findings.
 7. **No historical language in ADRs.** ADRs describe the decision context at the time it was made. Don't narrate migration history.
 8. **Immutability at `implemented`.** To change an implemented decision, supersede with a new ADR; below that maturity, refine in place with `adr update`.

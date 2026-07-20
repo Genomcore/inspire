@@ -4,7 +4,7 @@ The canonical example (`canonical-action.md`) shows `auth::user::create` — a d
 
 ## PDD source
 
-The platform module's Action Catalog declares (in `spec/pdd/core/platform/_index.md`):
+The platform module's Action Catalog declares (in `.inspire_kb/02_features/platform/_index.md`):
 
 | Action | Description | Priority |
 |---|---|---|
@@ -60,7 +60,7 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 
 ## What's notable
 
-- **The `id:` field is singular** (`platform::action::resolve`) even though the PDD writes it plural. Both are correct — they're the same action expressed at different layers. The folder layout follows the SDD id: `spec/sdd/platform/action/platform.action.resolve.md`.
+- **The `id:` field is singular** (`platform::action::resolve`) even though the PDD writes it plural. Both are correct — they're the same action expressed at different layers. The folder layout follows the SDD id: `.inspire_kb/04_specs/platform/action/platform.action.resolve.md`.
 
 - **The entity `platform::action` is meta**, not a data noun. The fields (`id`, `manifest`) are properties of the action manifest itself, not columns of a `platform_action` table. There's no SQL `CREATE TABLE` for this entity — the source of truth is the filesystem (action descriptors and the catalog index).
 

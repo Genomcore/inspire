@@ -10,7 +10,7 @@ set -uo pipefail
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-spec/sdd}"
+SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-.inspire_kb/04_specs}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dependency checks
@@ -115,14 +115,14 @@ sdd_resolve_id() {
 # ─────────────────────────────────────────────────────────────────────────────
 # Artifact discovery
 #
-# Layout: spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md
+# Layout: .inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md
 #         (full-id leaf filename — 3 dotted segments).
 # Per-entity documents sit alongside actions at the same path with one
-# fewer segment: spec/sdd/{module}/{entity}/{module}.{entity}.md (2
+# fewer segment: .inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md (2
 # dotted segments). Action discovery uses segment count to distinguish them.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# All action descriptor files under spec/sdd/. Actions have 3-segment dotted
+# All action descriptor files under .inspire_kb/04_specs/. Actions have 3-segment dotted
 # leaf filenames ({module}.{entity}.{action}.md); entity documents
 # ({module}.{entity}.md) have 2 segments and are excluded.
 sdd_find_actions() {
@@ -133,7 +133,7 @@ sdd_find_actions() {
     | sort
 }
 
-# All entity document files under spec/sdd/. Entity documents have
+# All entity document files under .inspire_kb/04_specs/. Entity documents have
 # 2-segment dotted leaf filenames ({module}.{entity}.md); action
 # descriptors ({module}.{entity}.{action}.md) have 3 segments and are
 # excluded.
@@ -148,7 +148,7 @@ sdd_find_entities() {
 
 # Resolve an entity id (canonical colon form, e.g. "auth::user") to its
 # entity document file path under $SDD_SPEC_ROOT, by mapping
-# {module}::{entity} → spec/sdd/{module}/{entity}/{module}.{entity}.md.
+# {module}::{entity} → .inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md.
 # Prints the path if the file exists; empty string + non-zero exit otherwise.
 sdd_resolve_entity_id() {
   local rid="$1"
@@ -198,16 +198,16 @@ sdd_entity_population() {
 }
 
 # Module name extracted from an action descriptor path. The path layout is
-# spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md, so the
+# .inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md, so the
 # module segment is the directory after `sdd/`. E.g.
-# spec/sdd/auth/user/auth.user.create.md → "auth".
+# .inspire_kb/04_specs/auth/user/auth.user.create.md → "auth".
 sdd_action_module() {
   local path="$1"
   echo "$path" | awk -F'/' '{ for(i=1;i<=NF;i++) if($i=="sdd"){print $(i+1); exit} }'
 }
 
 # Entity name extracted from an action descriptor path. E.g.,
-# spec/sdd/auth/user/auth.user.create.md → "user".
+# .inspire_kb/04_specs/auth/user/auth.user.create.md → "user".
 sdd_action_entity() {
   local path="$1"
   echo "$path" | awk -F'/' '{ for(i=1;i<=NF;i++) if($i=="sdd"){print $(i+2); exit} }'

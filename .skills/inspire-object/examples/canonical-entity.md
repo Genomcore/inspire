@@ -2,7 +2,7 @@
 
 A complete, annotated entity document. This is the shape every entity doc should mirror — operator-authored `## Purpose` + `## Rationale` + `## Invariants` carry the design discipline; `## Fields` is the field shape (largely emergent from the actions that touch it, but every row exists because a design decision motivated it); per-field H3s opt in only when a field needs more than the Notes column; `## Touched by` is auto-populated by consolidation.
 
-This is the entity document the canonical action descriptors (`auth::user::create`, `auth::user::find`, `auth::user::signup`) all touch. Annotations live in HTML comments so they survive a copy-paste into a real `spec/sdd/auth/user/auth.user.md`.
+This is the entity document the canonical action descriptors (`auth::user::create`, `auth::user::find`, `auth::user::signup`) all touch. Annotations live in HTML comments so they survive a copy-paste into a real `.inspire_kb/04_specs/auth/user/auth.user.md`.
 
 ---
 

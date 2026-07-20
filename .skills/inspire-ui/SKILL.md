@@ -1,6 +1,6 @@
 ---
 name: inspire-ui
-description: "Create and validate UI specifications using a pattern-driven approach. Screens instantiate shared patterns from spec/specs/ui/openbims-console/patterns/ and use components from components/. Use when designing or reviewing screens for OpenBIMS Console or Marketplace Console."
+description: "Create and validate UI specifications using a pattern-driven approach. Screens instantiate shared patterns from .inspire_kb/05_ui/patterns/ and use components from components/. Use when designing or reviewing screens for OpenBIMS Console or Marketplace Console."
 ---
 
 # /inspire-ui — UI Specifications (Pattern-Driven)
@@ -15,7 +15,7 @@ description: "Create and validate UI specifications using a pattern-driven appro
 
 ## Architecture
 
-Four levels under `spec/specs/ui/openbims-console/`:
+Four levels under `.inspire_kb/05_ui/`:
 
 | Level | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|

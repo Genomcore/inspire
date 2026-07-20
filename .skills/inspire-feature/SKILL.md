@@ -7,7 +7,7 @@ description: "Lifecycle of a feature: create / review / update / delete in the P
 
 ## Scope
 
-This skill owns **feature-scoped** operations. A "feature" is a `### {ID} · {Name}` block inside a PDD submodule file (`spec/pdd/core/{module}/{submodule}.md`).
+This skill owns **feature-scoped** operations. A "feature" is a `### {ID} · {Name}` block inside a PDD submodule file (`.inspire_kb/02_features/{module}/{submodule}.md`).
 
 ## Invocation
 
@@ -28,12 +28,12 @@ Reviews one feature across all layers. Runs inline (no agents).
 **Steps:**
 
 1. **Locate the feature definition**
-   - Find the PDD submodule file containing the feature ID in `spec/pdd/core/{module}/`
+   - Find the PDD submodule file containing the feature ID in `.inspire_kb/02_features/{module}/`
    - Read: description, personas, dependencies, priority, state, ADRs referenced
    - Identify the module from the folder path
 
 2. **UISpec coverage**
-   - Detect structure: new folder (`spec/specs/ui/openbims-console/{module}/*.md`) or legacy monolith
+   - Detect structure: new folder (`.inspire_kb/05_ui/{module}/*.md`) or legacy monolith
    - **New:** search each screen file's `**Features:**` line for this feature ID; cross-reference with the UISpec `_index.md` Feature coverage table
    - **Legacy:** search "Features cubiertas" sections
    - Flag if NO screen covers this feature (critical if UI-facing)
@@ -57,16 +57,16 @@ Reviews one feature across all layers. Runs inline (no agents).
    - Flag if user-facing but not documented
 
 6. **API spec coverage** (if applicable)
-   - If the feature describes an API endpoint, verify it exists in `spec/specs/api/`
+   - If the feature describes an API endpoint, verify it exists in `.inspire_kb/04_specs/api/`
    - Flag as `minor` if missing (API spec layer still being populated)
 
 7. **Realizing actions (SDD layer)**
-   - Find action descriptors whose `## Why` body wikilinks back to this feature (or to the PDD section the feature lives in). Search `spec/sdd/**/*.md` for `[[{feature-id}]]` or `[[pdd-{module}-...]]` near the feature.
+   - Find action descriptors whose `## Why` body wikilinks back to this feature (or to the PDD section the feature lives in). Search `.inspire_kb/04_specs/**/*.md` for `[[{feature-id}]]` or `[[pdd-{module}-...]]` near the feature.
    - Flag if zero realizing actions exist (the feature is described in PDD but never realized as an action).
    - For realizing actions, report `id`, `lifecycle`, and a one-line summary of `## Why`.
 
 8. **Use case coverage**
-   - If a use case exists at `spec/specs/usecases/{module}/{feature-id}.md`, verify it aligns with the current PDD definition
+   - If a use case exists at `.inspire_kb/02_features/{module}/{feature-id}.md`, verify it aligns with the current PDD definition
    - If no use case and the feature has complex flows: note as potential candidate
 
 9. **ADR alignment**
@@ -110,7 +110,7 @@ Reviews ALL features of a module in parallel.
 
 **Steps:**
 
-1. Read the module's `_index.md` (`spec/pdd/core/{module}/_index.md`) and extract ALL feature IDs from the Índice de Features table
+1. Read the module's `_index.md` (`.inspire_kb/02_features/{module}/_index.md`) and extract ALL feature IDs from the Índice de Features table
 2. Present the feature list to the user and **ask for confirmation** before proceeding
 3. On confirmation, **launch one Agent per feature in parallel** — each runs the single-feature review
 4. Collect all agent results
@@ -157,7 +157,7 @@ The feature-level entry point for SDD-layer work. Three phases, same shape as [`
 2. **Candidate surfacing + narrowing** — read the feature's PDD section, list candidate actions to realize, dialogue with the operator to pick a set.
 3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/inspire_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill — section-by-section probing of design implications, not template fill-in.
 
-Scan is read-only with respect to `spec/sdd/`. Authoring lives in `/inspire_object`.
+Scan is read-only with respect to `.inspire_kb/04_specs/`. Authoring lives in `/inspire_object`.
 
 ### Phase 1 — Environment setup
 
@@ -176,10 +176,10 @@ Same as [`/inspire_module scan` Phase 1](../inspire-module/SKILL.md#phase-1--env
 Read the relevant PDD content based on mode:
 
 **Single-feature mode** (`/inspire_feature scan {feature-id}`):
-- Locate the feature in `spec/pdd/core/{module}/{submodule}.md` — find its `### {ID} · {Name}` block plus description, dependencies, ADRs referenced.
+- Locate the feature in `.inspire_kb/02_features/{module}/{submodule}.md` — find its `### {ID} · {Name}` block plus description, dependencies, ADRs referenced.
 - Infer candidate actions: what verbs would realize this feature? Most features map to 1–3 actions. Surface the inferred ids with PDD back-source wikilinks.
 - Apply plural→singular canonicalization on any PDD action ids surfaced (e.g. `platform::actions::resolve` → `platform::action::resolve` for the SDD id). Silent normalization; do NOT surface as a "naming reconciliation" question.
-- Check whether each candidate already exists at `spec/sdd/{module}/{entity}/{action}.md`.
+- Check whether each candidate already exists at `.inspire_kb/04_specs/{module}/{entity}/{action}.md`.
 
 **Batch mode** (`/inspire_feature scan {module}`):
 - Same as single-feature, expanded to every feature in the module's `_index.md` Índice de Features.
@@ -228,7 +228,7 @@ Create a new feature in a module's PDD submodule + optional use case.
 
 **Steps:**
 
-1. **Verify** the module exists (`spec/pdd/core/{module}/` or satellite)
+1. **Verify** the module exists (`.inspire_kb/02_features/{module}/` or satellite)
 2. **Ask** the user:
    - Which submodule does it belong to? (list existing submodules)
    - Name, description (2-5 sentences)
@@ -241,7 +241,7 @@ Create a new feature in a module's PDD submodule + optional use case.
 3. **Insert the feature block** in the appropriate submodule file at the right location (by category)
 4. **Update the Índice de Features** table in the module's `_index.md`
 5. **Update the Resumen** table totals
-6. **Create use case** (if requested): `spec/specs/usecases/{module}/{feature-id}.md` using the template
+6. **Create use case** (if requested): `.inspire_kb/02_features/{module}/{feature-id}.md` using the template
 7. **Report next steps:**
    - If UI-facing: invoke `/inspire_ui` to add a screen spec
    - If API endpoint: invoke `/inspire_object define {module}::{entity}::{verb}` to author the action descriptor
@@ -267,7 +267,7 @@ Modify an existing feature definition.
 3. On approval, apply to PDD submodule
 4. If renamed:
    - Update `_index.md` Índice de Features
-   - Grep `spec/` for references to old ID, offer fixes
+   - Grep `.inspire_kb/` for references to old ID, offer fixes
    - Grep `mock-data/` for references (e.g., `source: 'AIA-AGT-01'` in audit events)
    - Grep `code/` for hardcoded references
 5. Run `review {feature-id}` to verify no drift
@@ -282,18 +282,18 @@ Remove a feature and clean up all references.
 2. Delete the `### {ID} · {Name}` block from the submodule file
 3. Remove row from the module's `_index.md` Índice de Features table
 4. Update Resumen totals
-5. Delete use case file if present (`spec/specs/usecases/{module}/{feature-id}.md`)
+5. Delete use case file if present (`.inspire_kb/02_features/{module}/{feature-id}.md`)
 6. For UISpec:
    - Remove feature ID from any screen's `**Features:**` line
    - If a screen's only feature was this one → flag for removal (don't auto-delete; that's `/inspire_ui`'s job)
    - Update UISpec `_index.md` Feature coverage table
 7. For prototype: grep `code/` for hardcoded feature ID references and remove
 8. For manual: find the feature's manual entry (may be within a module section) and propose removal
-9. Grep `spec/adrs/` for references; if an ADR mentions this feature, flag — may need ADR update
+9. Grep `.inspire_kb/01_adr/` for references; if an ADR mentions this feature, flag — may need ADR update
 
 ## Use case template
 
-When creating a use case, use this template at `spec/specs/usecases/{module}/{feature-id}.md`:
+When creating a use case, use this template at `.inspire_kb/02_features/{module}/{feature-id}.md`:
 
 ```markdown
 # {FEATURE-ID}: {Feature Name}
@@ -335,7 +335,7 @@ When creating a use case, use this template at `spec/specs/usecases/{module}/{fe
 6. **N/A is valid.** Not every feature needs every layer. Infrastructure features may have no UI. Backend features may have no manual entry yet.
 7. **Drift is informational.** `## Prototipo actual` "Drift a resolver" items don't block reviews unless they contradict an accepted ADR.
 8. **Batch synthesis.** In batch review, identify patterns and produce a prioritized correction plan grouped by fix skill.
-9. **Consult the task tracker** (`/inspire_workspace task list` or `node tracker/serve.mjs`) for tracked drift; don't re-surface it as new.
+9. **Consult the task tracker** (`/inspire_workspace task list` or `node .inspire_kb/06_tracker/serve.mjs`) for tracked drift; don't re-surface it as new.
 10. **No audit/log features outside the Audit module** (per [[adr-audit-01-centralized-logging]]). If a proposed feature is about logging actions, viewing activity logs, hash-chained events, or retention of auditable records, it belongs to Audit (LOG-01..10). In `create`, reject such features when the target module is not `audit`, and redirect the author to either (a) add a feature to Audit if novel, or (b) rely on existing LOG-01..10 with the appropriate `category`/`module` filter. In `review`, flag any `{MODULE}-LOG-*` / `{MODULE}-ADT-*` / "Audit Trail" features in non-audit modules as a violation. Allowed exception: a module-specific screen that merely **links** to `/audit/logs?module={module}` (no store, no separate feature).
 
 ## Checklist for new features

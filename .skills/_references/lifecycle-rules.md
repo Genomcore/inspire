@@ -1,6 +1,6 @@
 # Lifecycle rules (shared reference)
 
-Every SDD object — **action descriptor** (`spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md`) and **entity document** (`spec/sdd/{module}/{entity}/{module}.{entity}.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The two object kinds share the same 4-state enum and the same state machine.
+Every SDD object — **action descriptor** (`.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md`) and **entity document** (`.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The two object kinds share the same 4-state enum and the same state machine.
 
 ## The 4-state enum
 

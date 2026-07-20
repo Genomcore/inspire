@@ -45,14 +45,14 @@ cd "$PROJECT_ROOT"
 
 # Staged SDD spec files.
 staged_files=$(git diff --cached --name-only 2>/dev/null \
-  | grep -E '^spec/sdd/.+\.md$' \
+  | grep -E '^.inspire_kb/04_specs/.+\.md$' \
   || true)
 
 [ -z "$staged_files" ] && exit 0
 
-# Affected modules — top-level dirs under spec/sdd/ that hold a staged file.
-# e.g. spec/sdd/auth/user/create.md → spec/sdd/auth
-# cut -d/ -f1-3 yields "spec/sdd/{module}" for files under spec/sdd/.
+# Affected modules — top-level dirs under .inspire_kb/04_specs/ that hold a staged file.
+# e.g. .inspire_kb/04_specs/auth/user/create.md → .inspire_kb/04_specs/auth
+# cut -d/ -f1-3 yields ".inspire_kb/04_specs/{module}" for files under .inspire_kb/04_specs/.
 modules=$(echo "$staged_files" | cut -d/ -f1-3 | sort -u)
 modules_pattern=$(echo "$modules" | tr '\n' '|' | sed 's/|$//')
 
@@ -62,11 +62,11 @@ modules_pattern=$(echo "$modules" | tr '\n' '|' | sed 's/|$//')
 findings_file=$(mktemp)
 trap 'rm -f "$findings_file"' EXIT
 SDD_REVIEW_RULES="acyclic-deps.sh stable-blockers.sh" \
-  "$PROJECT_ROOT/.claude/bin/review.sh" spec/sdd 2>"$findings_file" >/dev/null || true
+  "$PROJECT_ROOT/.claude/bin/review.sh" .inspire_kb/04_specs 2>"$findings_file" >/dev/null || true
 
 # Filter to error findings whose target is inside a staged module.
-# Targets are paths under spec/sdd/{module}/...; the pattern matches the
-# module prefix extracted above (e.g. "spec/sdd/auth").
+# Targets are paths under .inspire_kb/04_specs/{module}/...; the pattern matches the
+# module prefix extracted above (e.g. ".inspire_kb/04_specs/auth").
 relevant=$(jq -c --arg pat "^($modules_pattern)/" '
   select(.severity == "error" and (.target | test($pat)))
 ' "$findings_file" 2>/dev/null)

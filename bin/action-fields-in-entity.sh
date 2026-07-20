@@ -19,7 +19,7 @@
 #
 # Usage:
 #   .claude/bin/action-fields-in-entity.sh                  # scan whole tree
-#   .claude/bin/action-fields-in-entity.sh spec/sdd/auth    # scoped scan
+#   .claude/bin/action-fields-in-entity.sh .inspire_kb/04_specs/auth    # scoped scan
 
 set -uo pipefail
 

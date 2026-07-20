@@ -7,7 +7,7 @@ description: "Lifecycle of a module: create / review / update / delete its PDD a
 
 ## Scope
 
-This skill owns **module-scoped** operations. A "module" is a folder in `spec/pdd/core/{module}/` (core module) or a file/folder in `spec/pdd/satellite/` (satellite module).
+This skill owns **module-scoped** operations. A "module" is a folder in `.inspire_kb/02_features/{module}/` (core module) or a file/folder in `.inspire_kb/02_features/` (satellite module).
 
 ## Invocation
 
@@ -18,7 +18,7 @@ This skill owns **module-scoped** operations. A "module" is a folder in `spec/pd
 
 ## Subcommand: review
 
-Runs all consistency checks for the module. This is the **required gate before any PR** that modifies files in `spec/pdd/core/{module}/`.
+Runs all consistency checks for the module. This is the **required gate before any PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 
 ### Steps
 
@@ -48,8 +48,8 @@ Runs all consistency checks for the module. This is the **required gate before a
 
 Detect which UISpec structure the module uses:
 
-- **New structure (preferred):** folder `spec/specs/ui/openbims-console/{module}/` with `_index.md` + one file per screen
-- **Legacy monolith:** single file `spec/specs/ui/openbims-console/UISpec_{Module}.md`
+- **New structure (preferred):** folder `.inspire_kb/05_ui/{module}/` with `_index.md` + one file per screen
+- **Legacy monolith:** single file `.inspire_kb/05_ui/UISpec_{Module}.md`
 - **Both exist simultaneously:** error — migration incomplete; legacy should be deleted once new is complete
 
 **For new structure:**
@@ -57,7 +57,7 @@ Detect which UISpec structure the module uses:
 - Every screen file in the folder is referenced in the route map
 - Every referenced screen file exists on disk
 - Every screen file has header with `**Features:**`, `**Pattern:**`, `**PDD:**`
-- Every `**Pattern:**` resolves to an existing file in `spec/specs/ui/openbims-console/patterns/` (or `bespoke` with justification)
+- Every `**Pattern:**` resolves to an existing file in `.inspire_kb/05_ui/patterns/` (or `bespoke` with justification)
 - Every `[[../components/X]]` wikilink resolves
 - No screen redescribes design tokens (those live in `design-system.md`)
 - No screen contains ASCII layout unless marked `bespoke`
@@ -119,7 +119,7 @@ Detect which UISpec structure the module uses:
 
 #### 5. SDD layer coverage
 
-Run `.claude/bin/review.sh spec/sdd/{module}/` and incorporate findings. The rule set covers:
+Run `.claude/bin/review.sh .inspire_kb/04_specs/{module}/` and incorporate findings. The rule set covers:
 - `acyclic-deps` — no cycles or self-loops in the `requires` graph
 - `stable-blockers` — stable actions don't require non-stable targets
 - `touched-entity-lifecycle` — stable actions touch only entities ≥ accepted
@@ -128,7 +128,7 @@ Run `.claude/bin/review.sh spec/sdd/{module}/` and incorporate findings. The rul
 Render findings via the shared format at [`.claude/skills/_references/findings-format.md`](../_references/findings-format.md). Do not inline a re-spec.
 
 Additionally for SDD-layer coverage:
-- Every PDD feature that describes a behavior should have at least one realizing action descriptor in `spec/sdd/{module}/`. Flag features with no realizing action as `important`.
+- Every PDD feature that describes a behavior should have at least one realizing action descriptor in `.inspire_kb/04_specs/{module}/`. Flag features with no realizing action as `important`.
 - Every action descriptor's `## Why` should back-source to a PDD section via `[[wikilink]]`. Flag orphan actions (no PDD back-source) as `important`.
 
 #### 6. Drift consolidation
@@ -190,13 +190,13 @@ Scaffold a new module across all layers. User provides module name, prefix (e.g.
 
 ### Steps
 
-1. **Create PDD folder:** `spec/pdd/core/{module}/`
+1. **Create PDD folder:** `.inspire_kb/02_features/{module}/`
    - `_index.md` with intro skeleton + empty Subsistemas and Índice de Features tables
    - Initial submodule files if the user describes >1 subsystem
 
-2. **Register in top-level index:** add entry in `spec/pdd/_index.md` for this module
+2. **Register in top-level index:** add entry in `.inspire_kb/02_features/_index.md` for this module
 
-3. **Create UISpec folder:** `spec/specs/ui/openbims-console/{module}/`
+3. **Create UISpec folder:** `.inspire_kb/05_ui/{module}/`
    - `_index.md` skeleton with empty route map and feature coverage tables
    - No screens yet — user adds via `/inspire_feature create` or `/inspire_ui create`
 
@@ -236,7 +236,7 @@ The entry point for SDD-layer work on a module. Three phases:
 2. **Candidate surfacing + narrowing** — read the PDD, list PDD features without realizing SDD action descriptors, dialogue with the operator to pick a set.
 3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/inspire_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill, which probes design implications section by section rather than fill-in-template.
 
-Scan is read-only with respect to `spec/sdd/`; it never authors descriptors itself. Authoring lives in `/inspire_object`.
+Scan is read-only with respect to `.inspire_kb/04_specs/`; it never authors descriptors itself. Authoring lives in `/inspire_object`.
 
 ### Phase 1 — Environment setup
 
@@ -266,13 +266,13 @@ Direct shell call via the Bash tool. **Do NOT defer to `superpowers:using-git-wo
 
 Read the module's PDD:
 
-- `spec/pdd/core/{module}/_index.md` — extract the Action Catalog table rows
-- `spec/pdd/core/{module}/{submodule}.md` for each submodule — extract feature descriptions and any action declarations they carry
+- `.inspire_kb/02_features/{module}/_index.md` — extract the Action Catalog table rows
+- `.inspire_kb/02_features/{module}/{submodule}.md` for each submodule — extract feature descriptions and any action declarations they carry
 
 For each PDD action declaration like `platform::actions::resolve`:
 
 - **Canonicalize plural → singular**. `platform::actions::resolve` becomes the SDD id `platform::action::resolve`. This is a known convention shift between layers — apply it silently. Do NOT surface it as a "naming reconciliation" question or as a decision tree. Same intention, just a layer convention.
-- Check whether `spec/sdd/{module}/{entity}/{action}.md` exists.
+- Check whether `.inspire_kb/04_specs/{module}/{entity}/{action}.md` exists.
 - If no — it's a candidate.
 
 Surface candidates and dialogue:
@@ -282,7 +282,7 @@ Surface candidates and dialogue:
  - platform::action::resolve  (from action-catalog subsystem, [[PDD-platform-...]])
  - platform::action::list
  - platform::action::register
- (plus M existing descriptors at spec/sdd/{module}/)
+ (plus M existing descriptors at .inspire_kb/04_specs/{module}/)
 
  Want to look at any of these in more depth, or pick a set to start with?"
 ```
@@ -312,7 +312,7 @@ In addition to the entry-point phases, scan still produces the audit signals fro
 
 These come at the **end** of the report, after the candidate-narrowing dialogue concludes. They serve as the impetus for further `scan` invocations or follow-up `/inspire_object review` runs. Render via [`_references/findings-format.md`](../_references/findings-format.md).
 
-`scan {module}` batches over a single module; `scan` without args batches over every core module in `spec/pdd/core/`.
+`scan {module}` batches over a single module; `scan` without args batches over every core module in `.inspire_kb/02_features/`.
 
 ## Subcommand: delete
 
@@ -321,8 +321,8 @@ Remove a module across all layers. Use with caution.
 ### Steps
 
 1. **Confirm** with user: list all files and features about to be deleted
-2. **PDD:** delete `spec/pdd/core/{module}/` folder
-3. **UISpec:** delete `spec/specs/ui/openbims-console/{module}/` folder OR legacy `UISpec_{Module}.md`
+2. **PDD:** delete `.inspire_kb/02_features/{module}/` folder
+3. **UISpec:** delete `.inspire_kb/05_ui/{module}/` folder OR legacy `UISpec_{Module}.md`
 4. **Mock data:**
    - Delete or rename `mock-data/schema/{NN}_{module}.sql`
    - Delete JSONL files for this module's tables
@@ -330,10 +330,10 @@ Remove a module across all layers. Use with caution.
 5. **Prototype:** delete `code/openbims-console/src/modules/{module}/` folder. Remove imports and routes from `App.jsx`. Remove entries from `Sidebar.jsx`.
 6. **Manual:** delete `manual/modules/{module}.html`. Remove from `nav.js` `NAV_STRUCTURE`.
 7. **Cross-references:**
-   - Grep the whole `spec/` for `[[{module}]]` or feature-ID references of that module — flag and offer fixes
-   - Check ADRs under `spec/adrs/` for references to this module
+   - Grep the whole `.inspire_kb/` for `[[{module}]]` or feature-ID references of that module — flag and offer fixes
+   - Check ADRs under `.inspire_kb/01_adr/` for references to this module
    - Check other modules' `_index.md` "Relación con otros módulos" sections
-8. **Top-level index:** remove from `spec/pdd/_index.md`
+8. **Top-level index:** remove from `.inspire_kb/02_features/_index.md`
 9. **CLAUDE.md:** remove from the module table
 
 ## Rules
@@ -343,7 +343,7 @@ Remove a module across all layers. Use with caution.
 3. **`update` and `delete` require an explicit plan** presented to the user before any edit.
 4. **Propagation is mandatory.** A module operation that only touches PDD and leaves UISpec/mock/prototype inconsistent is a bug — use the cross-layer propagation logic.
 5. **Pending drift is acceptable.** Drift items listed in `## Prototipo actual` sections of screens are informational; don't block PRs unless they contradict an accepted ADR.
-6. **Consult the task tracker** at the start of each invocation (`/inspire_workspace task list` or open the Kanban via `node tracker/serve.mjs`). Known items in `tracker/tickets/` should be surfaced as `(tracked: TASK-{id})` rather than re-surfaced as new.
+6. **Consult the task tracker** at the start of each invocation (`/inspire_workspace task list` or open the Kanban via `node .inspire_kb/06_tracker/serve.mjs`). Known items in `.inspire_kb/06_tracker/tickets/` should be surfaced as `(tracked: TASK-{id})` rather than re-surfaced as new.
 7. **Actionable findings.** Every issue suggests the skill to invoke for the fix:
    - UISpec drift → `/inspire_ui`
    - Prototype drift → `/inspire_prototype`

@@ -8,7 +8,7 @@
 #
 # Usage:
 #   .claude/bin/stable-blockers.sh                  # scan whole tree
-#   .claude/bin/stable-blockers.sh spec/sdd/auth    # scoped scan
+#   .claude/bin/stable-blockers.sh .inspire_kb/04_specs/auth    # scoped scan
 
 set -uo pipefail
 

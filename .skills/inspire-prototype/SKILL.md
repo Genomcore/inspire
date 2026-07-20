@@ -28,7 +28,7 @@ cd code/marketplace-console && npm run dev # port 5174
 
 Starting a new (or updated) screen involves reading four layers of spec:
 
-1. **UISpec screen file** — `spec/specs/ui/openbims-console/{module}/{screen}.md`. This is the source of truth for what to build. It declares:
+1. **UISpec screen file** — `.inspire_kb/05_ui/{module}/{screen}.md`. This is the source of truth for what to build. It declares:
    - Features covered (PDD IDs)
    - Pattern instantiated
    - Data sources (tables and hooks)
@@ -36,11 +36,11 @@ Starting a new (or updated) screen involves reading four layers of spec:
    - Components referenced
    - "Prototipo actual" section with current `.jsx` path and "Drift a resolver"
 
-2. **Pattern file** — `spec/specs/ui/openbims-console/patterns/{pattern}.md`. Describes the structural pattern the screen instantiates. Read this to understand layout, slots, behavior.
+2. **Pattern file** — `.inspire_kb/05_ui/patterns/{pattern}.md`. Describes the structural pattern the screen instantiates. Read this to understand layout, slots, behavior.
 
-3. **Component files** — `spec/specs/ui/openbims-console/components/{component}.md`. Describe the React components to use. Each has its API, state (implemented/to-extract), and location.
+3. **Component files** — `.inspire_kb/05_ui/components/{component}.md`. Describe the React components to use. Each has its API, state (implemented/to-extract), and location.
 
-4. **Design system** — `spec/specs/ui/openbims-console/design-system.md`. Tokens, colors, typography, density. Do NOT redefine these in any page.
+4. **Design system** — `.inspire_kb/05_ui/design-system.md`. Tokens, colors, typography, density. Do NOT redefine these in any page.
 
 ## Project structure
 
@@ -189,7 +189,7 @@ Expected output: **no matches**. If matches remain, the removal didn't apply —
 
 ## Platform UX conventions (read before implementing a list or detail)
 
-- **Module list pages use the toolbar pattern** (compact header + tabs + horizontal filter dropdowns + dense table + status bar). Reference: `code/openbims-console/src/modules/datastore/pages/Collections.jsx`. See [[../spec/specs/ui/openbims-console/patterns/toolbar-list]]. Do **not** render a left `FacetSidebar` on module lists.
+- **Module list pages use the toolbar pattern** (compact header + tabs + horizontal filter dropdowns + dense table + status bar). Reference: `code/openbims-console/src/modules/datastore/pages/Collections.jsx`. See [[../.inspire_kb/05_ui/patterns/toolbar-list]]. Do **not** render a left `FacetSidebar` on module lists.
 - `FacetSidebar` is reserved for Marketplace-style browsing screens. If a new list page pulls it in, stop and re-read the screen spec — you're probably using the wrong pattern.
 - **Detail screens are routes.** When a row in a list is clicked, `navigate('/{module}/{resource}/:id')`. The detail page renders full-width with [[components/page-header]] + back link. Drawer overlays, `?detail=<id>` query params, and inline `<XDrawer />` sub-components are not the platform default — only use them if the user explicitly asks.
 - **Canonical main-page header** (apply uniformly to every submodule landing page):
@@ -221,7 +221,7 @@ Expected output: **no matches**. If matches remain, the removal didn't apply —
 4. **Imports:** Use `@/` alias (`= src/`). Cross-module imports: `@/modules/{other}/pages/...`. Never relative paths.
 5. **Data via hooks.** Use `src/db/hooks/useXxx.js` for DuckDB queries. Do NOT inline SQL in page components (exception: ad-hoc diagnostics — never committed).
 6. **Icons:** Artifact icons live in `public/icons/*.svg`, rendered via `ArtifactIcon`.
-7. **Styling:** Tailwind utility classes only. Light mode. Color tokens per [[../spec/specs/ui/openbims-console/design-system]]:
+7. **Styling:** Tailwind utility classes only. Light mode. Color tokens per [[../.inspire_kb/05_ui/design-system]]:
    - `teal-600` primary
    - `violet-600` AI/CORA
    - `green-500` success, `amber-500` warn, `red-500` error, `slate-*` neutral
@@ -243,7 +243,7 @@ This is the inverse of the protocol in `/inspire_ui` — the principle is bilate
 
 ### Protocol
 
-1. **Identify the UISpec target.** From the prototype file path, derive the screen: `code/openbims-console/src/modules/{module}/pages/{Component}.jsx` maps to `spec/specs/ui/openbims-console/{module}/{screen}.md`. Read that screen to see what it currently says.
+1. **Identify the UISpec target.** From the prototype file path, derive the screen: `code/openbims-console/src/modules/{module}/pages/{Component}.jsx` maps to `.inspire_kb/05_ui/{module}/{screen}.md`. Read that screen to see what it currently says.
 2. **Classify the change.**
    - **Structural** (new tab, changed data hook, new widget, changed canonical component, route change): propagation to UISpec is strongly recommended.
    - **Cosmetic or implementation-only** (refactor, imports reorder, micro-styling, bug fix that doesn't change described behavior): propagation usually not needed. Mention but don't insist.
@@ -256,7 +256,7 @@ This is the inverse of the protocol in `/inspire_ui` — the principle is bilate
 
    Offer the user the choice — don't invoke `/inspire_ui` silently.
 4. **If user confirms:** invoke `/inspire_ui` with a concrete prompt (target screen + specific updates to apply). At minimum, update the screen's `## Prototipo actual` "Drift a resolver" to remove resolved items and add any new ones.
-5. **If user declines or defers:** create a tracker ticket via `/inspire_workspace task create "{summary}" --epic {module} --size {S|M|L}` so the spec/prototype gap doesn't get lost, and end the turn.
+5. **If user declines or defers:** create a tracker ticket via `/inspire_workspace task create "{summary}" --epic {module} --size {S|M|L}` so the .inspire_kb/03_prototypes gap doesn't get lost, and end the turn.
 
 ### When NOT to ask
 
@@ -285,7 +285,7 @@ After landing the fix (and verifying in preview), **end the turn with a proposal
 > **Improvement opportunity detected.** While fixing `{short description}` in `{file}`, I noticed: {pattern / root cause}. This will likely recur in {scope}. Proposed follow-up:
 > - **Lib:** extract `{functionName}` to `@/lib/{name}.js` so other pages can reuse it (replaces inline helpers in {places}).
 > - **Skill update:** add a "{section name}" entry to `/inspire-prototype` so the next invocation knows to use it.
-> - **Component spec:** if UI-shaped — add `spec/specs/ui/openbims-console/components/{name}.md` per `/inspire_ui`.
+> - **Component spec:** if UI-shaped — add `.inspire_kb/05_ui/components/{name}.md` per `/inspire_ui`.
 >
 > ¿Aplico ahora, o creo un ticket vía `/inspire_workspace task create` para otro turno?
 

@@ -14,7 +14,7 @@
 #
 # Usage:
 #   .claude/bin/touched-entity-lifecycle.sh                  # scan whole tree
-#   .claude/bin/touched-entity-lifecycle.sh spec/sdd/auth    # scoped scan
+#   .claude/bin/touched-entity-lifecycle.sh .inspire_kb/04_specs/auth    # scoped scan
 
 set -uo pipefail
 

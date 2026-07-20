@@ -20,7 +20,7 @@
 #
 # Usage:
 #   .claude/bin/field-coverage.sh                  # scan whole tree
-#   .claude/bin/field-coverage.sh spec/sdd/auth    # scoped scan
+#   .claude/bin/field-coverage.sh .inspire_kb/04_specs/auth    # scoped scan
 
 set -uo pipefail
 
