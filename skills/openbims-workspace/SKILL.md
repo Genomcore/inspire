@@ -192,9 +192,7 @@ Drift items pending: {N}
 7. **Migration is not failure.** Legacy UISpec monoliths and pending prototype drift are `important` (migrate), not `critical`, unless they contradict an ADR within its maturity's reach.
 8. **Consult the task tracker.** Known items in `tracker/tickets/` should be flagged `(tracked: TASK-{id})`. Use `/openbims_workspace task list` or open the Kanban via `node tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, explicitly call out the fix skill as mandatory before PR:
-   - Manual drift → `/openbims_docs` before commit
    - Prototype drift → `/openbims_prototype`
-   - Mock data drift → `/openbims_mockdata`
    - UISpec drift → `/openbims_ui`
    - PDD drift or ADR misalignment → `/openbims_module update` or `/openbims_workspace adr update`
 

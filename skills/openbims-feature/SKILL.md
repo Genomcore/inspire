@@ -146,9 +146,7 @@ UISpec structure: new | legacy | migrating
 
 ## Correction Plan
 1. `/openbims_ui` — Add screens for: {list}
-2. `/openbims_mockdata` — Create tables for: {list}
-3. `/openbims_docs` — Update manual for: {list}
-4. `/openbims_prototype` — Adopt components for: {list}
+2. `/openbims_prototype` — Adopt components for: {list}
 ```
 
 ## Subcommand: scan
@@ -246,7 +244,6 @@ Create a new feature in a module's PDD submodule + optional use case.
 6. **Create use case** (if requested): `spec/specs/usecases/{module}/{feature-id}.md` using the template
 7. **Report next steps:**
    - If UI-facing: invoke `/openbims_ui` to add a screen spec
-   - If needs mock data: invoke `/openbims_mockdata`
    - If API endpoint: invoke `/openbims_object define {module}::{entity}::{verb}` to author the action descriptor
    - Prototype: invoke `/openbims_prototype` when ready
 

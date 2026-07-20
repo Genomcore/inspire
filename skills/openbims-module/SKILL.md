@@ -347,7 +347,5 @@ Remove a module across all layers. Use with caution.
 7. **Actionable findings.** Every issue suggests the skill to invoke for the fix:
    - UISpec drift → `/openbims_ui`
    - Prototype drift → `/openbims_prototype`
-   - Mock-data drift → `/openbims_mockdata`
-   - Manual drift → `/openbims_docs`
    - Feature-level work → `/openbims_feature`
    - ADR or global concerns → `/openbims_workspace`

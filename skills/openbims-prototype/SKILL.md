@@ -324,6 +324,5 @@ When a page still has an inline version of something that's now canonical:
 ## Related skills
 
 - `/openbims_ui` — before implementing, verify the UISpec screen file exists and is current
-- `/openbims_mockdata` — if you need new tables or mock data
 - `/openbims_module review` — before PR, review the whole module's consistency
 - `/openbims_feature review {feature-id}` — verify a specific feature's prototype coverage
