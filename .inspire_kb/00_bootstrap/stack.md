@@ -33,23 +33,15 @@ is an ADR ([`01_adr`](../01_adr)). Configure with `/inspire_bootstrap`.
   `@scope/*` SDK packages, and the CLI.
 - **NestJS** — the backend application framework (modules, DI, controllers/providers).
 
-## Data · messaging · scheduling
+## Data
 
 - **PostgreSQL** — system metadata database.
-- **NATS (JetStream)** — event bus + workflow substrate + dispatch (the messaging
-  fabric: NATS transports).
-- **pg-boss** — durable scheduling / job-queue on Postgres (crons, timers,
-  retries/backoff, DLQ; pg-boss schedules and persists job state).
-
-## Function execution
-
-- **Deno** — the out-of-process sidecar runtime for user Functions (V8 isolates),
-  kept separate from the Node platform process.
 
 ## Prototype (mock data)
 
-- **DuckDB-WASM** — in-browser mock-data engine for the horizontal prototype at
-  [`/prototype`](../../prototype). Prototype data is mocked, not a real backend.
+- The horizontal prototype at [`/prototype`](../../prototype) runs on **mocked
+  data, not a real backend** — pick whatever mock-data approach fits the project
+  (in-memory fixtures, static JSON, a WASM database, …). Not fixed by default.
 
 ## Tooling
 

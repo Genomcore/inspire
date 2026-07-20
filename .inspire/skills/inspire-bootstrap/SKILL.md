@@ -29,11 +29,18 @@ theme); a new project reconfigures them here.
 
 ## Subcommand: init
 
-Bootstrap a project's foundation. Offer two paths, conversationally:
+Bootstrap a project's foundation. **Always show the seeded default and ask the
+operator whether to keep it or change it** — never assume they want the default.
+The default is a starting point, not a mandate; most projects will want to tailor
+at least the stack.
 
-1. **Keep the default** — the seeded stack + theme are a fine starting point; edit
-   later as choices firm up. Fastest.
-2. **Configure now** — run the `stack` then `theme` flows below to tailor both.
+1. **Show the default stack** (`stack.md`) and ask: keep it, or change it? Call out
+   that the default is deliberately lean (TypeScript + React/Vite/Tailwind + a
+   Node/NestJS backend + PostgreSQL); anything heavier (message buses, job queues,
+   function sidecars, a specific mock-data engine) is a project choice, not a
+   default. If they want changes, run the `stack` flow.
+2. **Show the default theme** (`theme.md`) and ask the same. If they want changes,
+   run the `theme` flow (or derive it from a mockup's CSS).
 
 Confirm the outcome and point the operator at the next layer (usually
 `/inspire_module create` for the first module).
