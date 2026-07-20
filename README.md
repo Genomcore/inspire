@@ -24,15 +24,13 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`.skills/`](.skills/) | The agent **skills** — the operating manual each layer of the methodology runs on (module · feature · object · prototype · ui · workspace). |
+| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills), `bin/` (the validators + fixtures), `hooks/` (the git-time hooks), and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
 | [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_tech_stack` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_ui` · `06_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Open `.manual/index.html` in a browser. |
 | [`prototype/`](prototype/) | The **horizontal prototype** (product-side, non-dot) — the wide/shallow/mocked working model of the whole product. Its learnings live in `.inspire_kb/03_prototypes/`; verticals live in external repos. |
 | [`source/`](source/) | The **production monorepo** (product-side, non-dot) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
-| [`hooks/`](hooks/) | Git-time **enforcement hooks** (`pre-commit`, `pre-pr`) that run the review at tool-call time. |
-| [`bin/`](bin/) | The **validators** — bash scripts that parse artifacts, evaluate rules, and emit structured findings. See [`bin/README.md`](bin/README.md). |
 
-`.skills/`, `hooks/` and `bin/` together are the **guardrail layer**: the
+The skills + validators + hooks in `.inspire/` are the **guardrail layer**: the
 concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
 judgment, hooks + validators catch drift mechanically. `.inspire_kb/` is the
 graph they operate on.
@@ -65,26 +63,18 @@ Roadmap.
 
 ### Wiring the guardrails into a project
 
-1. Copy `.skills/` → `<project>/.claude/skills/`
-2. Copy `hooks/` → `<project>/.claude/hooks/` and `bin/` → `<project>/.claude/bin/`
-3. Copy `.inspire_kb/` → `<project>/.inspire_kb/` and start filling it in.
-4. Register the hooks in `<project>/.claude/settings.json`:
-   ```json
-   {
-     "hooks": {
-       "PreToolUse": [
-         {
-           "matcher": "Bash",
-           "hooks": [
-             { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit.sh" },
-             { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-pr.sh" }
-           ]
-         }
-       ]
-     }
-   }
-   ```
-5. Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
+Fork/clone this repo, then instantiate the runtime once:
+
+```bash
+bash .inspire/install.sh
+```
+
+It copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (where
+Claude Code discovers and executes them), makes the scripts executable, and wires
+the `pre-commit` / `pre-pr` hooks into `.claude/settings.json`. It is idempotent —
+re-run it after pulling template updates. Then start filling in `.inspire_kb/`.
+
+Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
 
 ---
 
@@ -103,8 +93,8 @@ guardrail layer.
 - [x] Establish the `.inspire_kb/` knowledge-base skeleton.
 - [x] Define the prototype model and rewrite `inspire-prototype` (horizontal at `/prototype`; verticals as external repos with imported learnings).
 - [x] Reconcile `inspire-module` / `inspire-feature` to the flat `02_features/{module}/{use-case}.md` layout.
-- [x] Strip OpenBIMS domain prose from all skills — `.skills/` now speaks the generic INSPIRE model.
-- [ ] Ship a runnable `.claude/` (or an instantiation script) so a new project works by copy.
+- [x] Strip OpenBIMS domain prose from all skills — the runtime speaks the generic INSPIRE model.
+- [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
 - [ ] Provide starter project conventions (module ID prefixes, `patterns/` + `design-system.md`, `00_tech_stack`).
 - [ ] Publish the microsite.
 

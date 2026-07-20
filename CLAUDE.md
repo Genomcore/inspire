@@ -11,8 +11,14 @@ full overview.
 The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the
 product you build on top of it.
 
-- `.skills/` — the 6 agent skills (`inspire-*`): the guardrail layer's judgment
-  half (module · feature · object · prototype · ui · workspace).
+- `.inspire/` — the **guardrail runtime**, staged dormant (see below):
+  - `.inspire/skills/` — the 6 agent skills (`inspire-*`): the judgment half
+    (module · feature · object · prototype · ui · workspace).
+  - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
+    root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_specs`).
+    Test suite: `bash .inspire/bin/test/run-tests.sh`.
+  - `.inspire/hooks/` — git-time enforcement hooks (`pre-commit`, `pre-pr`).
+  - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a
   project fills in. One layer per skill (`00_tech_stack`, `01_adr`,
   `02_features`, `03_prototypes`, `04_specs`, `05_ui`, `06_tracker`); each folder
@@ -26,19 +32,25 @@ product you build on top of it.
 - `source/` — the **production monorepo** (product-side, non-dot): the root of the
   actual product code, realized from the KB. An ADR reaches `implemented` maturity
   when it lands here.
-- `bin/` — the validators + golden fixtures: the guardrail layer's mechanical
-  half. Spec root is configurable via `SDD_SPEC_ROOT` (defaults to
-  `.inspire_kb/04_specs`). Test suite: `bash bin/test/run-tests.sh`.
-- `hooks/` — git-time enforcement hooks (`pre-commit`, `pre-pr`).
 
-### Template vs deployed layout
+### Template vs deployed layout — why the runtime is staged in `.inspire/`
 
-Skills reference each other and the validators via the **deployed** `.claude/`
-layout (`.claude/skills/…`, `.claude/bin/…`) — that is where they execute in a
-real project. In *this* template repo they stage at `.skills/` and `bin/`, so
-Claude Code does not auto-load them here. Instantiating a project means copying
-(or linking) `.skills/` → `.claude/skills/`, `bin/` → `.claude/bin/`, and wiring
-the hooks (see README → *Using this as a template*).
+Claude Code auto-loads skills from `.claude/skills/` and runs hooks registered in
+`.claude/settings.json`. The skills also reference each other and the validators
+via the **deployed** paths (`.claude/skills/…`, `.claude/bin/…`). If the runtime
+lived in `.claude/` inside *this* template repo, those skills would fire while we
+develop the template itself — so it is staged **dormant** under `.inspire/`.
+
+Instantiating a project (in a fork) is one command:
+
+```bash
+bash .inspire/install.sh
+```
+
+It copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}`, makes the
+scripts executable, and wires the hooks into `.claude/settings.json`. It is
+idempotent — `.inspire/` stays the versioned source of truth; re-run it to refresh
+`.claude/` after pulling template updates.
 
 ## Pending — generalization work
 
@@ -58,13 +70,13 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
 - [x] Strip the residual OpenBIMS **domain content** from all skill prose (the
       React "console", PDD vocabulary, the dangling
       `openbims-console/-cli/-pdd/-portal` refs, the mock-data / manual layers,
-      Kratos/Keto specifics, the workspace review report skeleton). `.skills/` is
+      Kratos/Keto specifics, the workspace review report skeleton). The runtime is
       now free of OpenBIMS domain vocabulary.
+- [x] Stage the guardrail runtime under `.inspire/` and ship `.inspire/install.sh`
+      to instantiate it into `.claude/` on a fork.
 
 Remaining:
 
-- [ ] Ship a runnable `.claude/` (or an instantiation script) that wires
-      `.skills` → `.claude/skills`, `bin` → `.claude/bin`, and registers hooks.
 - [ ] Fill in the project-specific KB conventions a real project needs (module ID
       prefixes, a starter `patterns/` + `design-system.md`, `00_tech_stack`).
 - [ ] Publish the microsite.
