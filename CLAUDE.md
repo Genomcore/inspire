@@ -46,26 +46,25 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
 - [x] Decouple validators/hooks from hard-coded `spec/sdd/` — rewired to the
       `.inspire_kb/` layout; `SDD_SPEC_ROOT` configurable; test suite green (43/43).
 - [x] Establish the `.inspire_kb/` KB skeleton and move `site/` → `.manual/`.
+- [x] Define the prototype model — horizontal at `/prototype`, verticals as
+      external repos, learnings in `.inspire_kb/03_prototypes/`.
+- [x] Rewrite the `inspire-prototype` skill to that model (stack-agnostic).
+- [x] Reconcile `inspire-module` / `inspire-feature` to the flat
+      `.inspire_kb/02_features/{module}/{use-case}.md` layout (drop PDD /
+      core-satellite / submodules).
+- [x] Strip the residual OpenBIMS **domain content** from all skill prose (the
+      React "console", PDD vocabulary, the dangling
+      `openbims-console/-cli/-pdd/-portal` refs, the mock-data / manual layers,
+      Kratos/Keto specifics, the workspace review report skeleton). `.skills/` is
+      now free of OpenBIMS domain vocabulary.
 
 Remaining:
 
-- [ ] Strip the residual OpenBIMS **domain content** from skill prose: the React
-      "console", the PDD / core-satellite / submodule vocabulary, the dangling
-      `openbims-console/-cli/-pdd/-portal` references, and the OpenBIMS-specific
-      bits of the workspace review report skeleton.
-- [ ] Reconcile the `inspire-module` / `inspire-feature` internal model (PDD +
-      core/satellite + submodules) with the flatter
-      `.inspire_kb/02_features/{module}/{use-case}.md` layout.
-- [ ] Rewrite the `inspire-prototype` skill to the defined model (horizontal code
-      at `/prototype` → learnings in the KB; vertical spikes in external repos,
-      linked + learnings imported). The KB structure for this is already in place;
-      the skill body is still the OpenBIMS React-console methodology.
 - [ ] Ship a runnable `.claude/` (or an instantiation script) that wires
       `.skills` → `.claude/skills`, `bin` → `.claude/bin`, and registers hooks.
+- [ ] Fill in the project-specific KB conventions a real project needs (module ID
+      prefixes, a starter `patterns/` + `design-system.md`, `00_tech_stack`).
 - [ ] Publish the microsite.
-
-Until the domain-strip lands, treat the skills as an OpenBIMS-flavored
-reference implementation to adapt, **not** a pure drop-in.
 
 ## Provenance
 

@@ -52,20 +52,15 @@ For the full story, open [`.manual/index.html`](.manual/index.html).
 
 The intent is that a new specification-driven project can adopt INSPIRE's
 guardrail layer wholesale by cloning this repo and filling in `.inspire_kb/`.
-The structure, naming and paths are now generalized; **one caveat remains** —
-see below.
+The skills, hooks and validators are renamed (`inspire-*`), rewired to the
+`.inspire_kb/` layout, parameterized via `SDD_SPEC_ROOT`, and **stripped of
+OpenBIMS domain vocabulary** — they speak the generic INSPIRE model (features,
+specs, UISpecs, the horizontal prototype at `/prototype`, external verticals).
 
-### Heads-up: skill prose is still being generalized
-
-The skills, hooks and validators have been renamed (`inspire-*`) and rewired to
-the `.inspire_kb/` layout, and the validators are parameterized via
-`SDD_SPEC_ROOT`. What still carries OpenBIMS flavor is **domain prose inside the
-skills**: references to the React "console", the PDD / core-satellite /
-submodule vocabulary, and a few dangling links to OpenBIMS-only skills. Stripping
-that is the remaining evolution work (see Roadmap).
-
-So today the skills are **very close to a drop-in** but should be skimmed for
-domain vocabulary before adoption.
+What's left before it's a zero-friction drop-in is **wiring**: a runnable
+`.claude/` and the project-specific conventions each project supplies (module ID
+prefixes, a starter `patterns/` + `design-system.md`, `00_tech_stack`). See the
+Roadmap.
 
 ### Wiring the guardrails into a project
 
@@ -105,9 +100,11 @@ guardrail layer.
 - [x] Rename the skills `openbims-*` → `inspire-*`.
 - [x] Decouple the validators/hooks from hard-coded `spec/sdd/` paths (rewired to `.inspire_kb/`, `SDD_SPEC_ROOT` configurable).
 - [x] Establish the `.inspire_kb/` knowledge-base skeleton.
-- [ ] Strip residual OpenBIMS domain prose from the skills (console, PDD/core-satellite vocabulary, dangling refs).
-- [ ] Rewrite the `inspire-prototype` skill to the defined model (horizontal at `/prototype`; verticals as external repos with imported learnings). KB structure done; skill body still OpenBIMS/React.
+- [x] Define the prototype model and rewrite `inspire-prototype` (horizontal at `/prototype`; verticals as external repos with imported learnings).
+- [x] Reconcile `inspire-module` / `inspire-feature` to the flat `02_features/{module}/{use-case}.md` layout.
+- [x] Strip OpenBIMS domain prose from all skills — `.skills/` now speaks the generic INSPIRE model.
 - [ ] Ship a runnable `.claude/` (or an instantiation script) so a new project works by copy.
+- [ ] Provide starter project conventions (module ID prefixes, `patterns/` + `design-system.md`, `00_tech_stack`).
 - [ ] Publish the microsite.
 
 ---
