@@ -494,6 +494,13 @@ Validate the vault structure at the top level (not module-scoped).
 
 ## Rules
 
+> **Output language.** Write every artifact you produce — ADRs, tracker entries —
+> in the project's declared `output_language` (default English), per
+> [`_references/output-language.md`](../_references/output-language.md). Applies
+> whatever language the conversation is in, and independently of the product's own
+> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> stay verbatim.
+
 1. **`review` is read-only.** It suggests; it does not edit files.
 2. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
    requires `adr promote`; `create` defaults to `design`.

@@ -40,11 +40,19 @@ done
 # 2. Make the validators and hooks executable.
 chmod +x "$DEST"/bin/*.sh "$DEST"/bin/test/*.sh "$DEST"/hooks/*.sh 2>/dev/null || true
 
-# 3. Wire the git-time hooks into .claude/settings.json (only if absent — never
-#    clobber an existing settings file).
+# 3. Wire the hooks into .claude/settings.json (only if absent — never clobber an
+#    existing settings file): the git-time pre-commit / pre-pr guards, plus the
+#    SessionStart hook that injects the project's output language every session.
 SETTINGS="$DEST/settings.json"
 HOOKS_JSON='{
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh" }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -59,7 +67,7 @@ HOOKS_JSON='{
 
 if [ ! -f "$SETTINGS" ]; then
   printf '%s\n' "$HOOKS_JSON" > "$SETTINGS"
-  echo "  · wrote $SETTINGS with the pre-commit / pre-pr hooks"
+  echo "  · wrote $SETTINGS with the session-start + pre-commit / pre-pr hooks"
 else
   echo "  ! $SETTINGS already exists — not touching it. Merge these hooks yourself:"
   printf '%s\n' "$HOOKS_JSON" | sed 's/^/      /'
@@ -78,6 +86,35 @@ elif [ -f "$DESIGN_SYSTEM" ]; then
   echo "  · $DESIGN_SYSTEM already present — left as-is"
 fi
 
+# 5. Materialize the product-side folders. These do NOT ship in the template repo
+#    (they belong to the product you build, not to INSPIRE) — they are created here
+#    from .inspire/templates/, seeded with a guidance README. Never clobber an
+#    existing folder: a project's real prototype / source code is left untouched.
+for part in prototype source; do
+  TEMPLATE="$SRC/templates/$part-README.md"
+  if [ -d "$part" ]; then
+    echo "  · $part/ already present — left as-is"
+  elif [ -f "$TEMPLATE" ]; then
+    mkdir -p "$part"
+    cp "$TEMPLATE" "$part/README.md"
+    echo "  · created $part/ (seeded README from $TEMPLATE)"
+  fi
+done
+
+# 6. Remove the template's own methodology README. Our README documents INSPIRE
+#    the template — it is not the product's README. A project gets its own via
+#    /inspire_bootstrap init (title, git remote, description). Sentinel-checked so
+#    re-running this never deletes a project's own README.
+README="README.md"
+if [ -f "$README" ] && grep -q "A software engineering methodology for the agentic era" "$README"; then
+  rm -f "$README"
+  echo "  · removed the template README ($README) — create the project's own with /inspire_bootstrap init"
+elif [ -f "$README" ]; then
+  echo "  · $README is not the template's — left as-is"
+fi
+
 echo "INSPIRE · done."
 echo "  Guardrail runtime is live in $DEST/. The knowledge base stays at .inspire_kb/,"
 echo "  the horizontal prototype at /prototype, and production code at /source."
+echo "  Next: run /inspire_bootstrap init to configure the stack + theme and create"
+echo "  the project's README."

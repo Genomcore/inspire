@@ -234,6 +234,13 @@ Use this template at `.inspire_kb/02_features/{module}/{feature-id}.md`:
 
 ## Rules
 
+> **Output language.** Write every artifact you produce in the project's declared
+> `output_language` (default English) — see
+> [`_references/output-language.md`](../_references/output-language.md). Applies
+> whatever language the conversation is in, and independently of the product's own
+> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> stay verbatim.
+
 1. **The use-case file is the source of truth.** Everything else (screen spec,
    prototype, specs) references or realizes it.
 2. **One file per use case.** The filename matches the feature ID.

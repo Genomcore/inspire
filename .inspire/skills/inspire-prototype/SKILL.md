@@ -56,6 +56,14 @@ that describe the screen:
 
 ## Rules
 
+> **Output language.** Write every artifact you produce — prototype learnings,
+> vertical-spike notes — in the project's declared `output_language` (default
+> English), per
+> [`_references/output-language.md`](../_references/output-language.md). Applies
+> whatever language the conversation is in, and independently of the product's own
+> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> stay verbatim.
+
 1. **Specs are the source of truth.** Build what the screen spec says — no extra
    screens, tabs, or features "for completeness". If something's missing, fix the
    spec first (via `/inspire_screens`), don't invent scope in the prototype.

@@ -16,7 +16,10 @@ you build on top of it.
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
-  - `.inspire/hooks/` — git-time enforcement hooks (`pre-commit`, `pre-pr`).
+  - `.inspire/hooks/` — enforcement hooks: git-time `pre-commit` / `pre-pr`, and
+    `session-start` (injects the project's `output_language` into every session).
+  - `.inspire/templates/` — files materialized on the product side at
+    instantiation (the `prototype/` + `source/` README stubs).
   - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a project
   fills in. One layer per skill (`00_bootstrap`, `01_adr`, `02_features`,
@@ -24,6 +27,10 @@ you build on top of it.
   README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).
+The two product-side dirs below **do not exist in this template repo** — they are
+the product you build, not INSPIRE. `install.sh` creates them (from
+`.inspire/templates/`) when a fork is instantiated:
+
 - `prototype/` — the **horizontal prototype** (product-side, non-dot): the wide,
   shallow, mocked working model of the whole product. Its *learnings* live in
   `.inspire_kb/03_prototypes/horizontal.md`; vertical prototypes live in their own
@@ -47,10 +54,14 @@ bash .inspire/install.sh
 ```
 
 It copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}`, makes the
-scripts executable, wires the hooks into `.claude/settings.json`, and seeds
-`05_screens/design-system.md` from `00_bootstrap/theme.md`. It is idempotent —
-`.inspire/` stays the versioned source of truth; re-run it to refresh `.claude/`
-after pulling template updates.
+scripts executable, wires the hooks into `.claude/settings.json`, seeds
+`05_screens/design-system.md` from `00_bootstrap/theme.md`, creates the
+product-side `prototype/` + `source/` folders from `.inspire/templates/`, and
+removes the template's own methodology `README.md` (a fork gets its own via
+`/inspire_bootstrap init`). It is idempotent — `.inspire/` stays the versioned
+source of truth; re-run it to refresh `.claude/` after pulling template updates
+(existing `prototype/`, `source/` and a project's own `README.md` are left
+untouched).
 
 ## Working in this repo
 
