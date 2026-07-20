@@ -11,7 +11,7 @@ The platform module's Action Catalog declares (in `spec/pdd/core/platform/_index
 | `platform::actions::resolve` | Resolve action manifest by id | H |
 | `platform::actions::list` | List actions, filtered by module/source | H, M |
 
-Note the **plural `actions` subsystem name** — that's the PDD convention. The SDD canonicalizes this to singular: `platform::action::resolve`. The intention is identical; this is a known naming-convention shift between the layers, applied silently by `/openbims_module scan` when it canonicalizes candidate ids. **The agent does NOT surface this as a "naming reconciliation" question** — there's no decision to make.
+Note the **plural `actions` subsystem name** — that's the PDD convention. The SDD canonicalizes this to singular: `platform::action::resolve`. The intention is identical; this is a known naming-convention shift between the layers, applied silently by `/inspire_module scan` when it canonicalizes candidate ids. **The agent does NOT surface this as a "naming reconciliation" question** — there's no decision to make.
 
 ## SDD descriptor
 

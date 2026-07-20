@@ -2,7 +2,7 @@
 # .claude/bin/review.sh
 #
 # Composite review — orchestrates the rule scripts and aggregates findings.
-# Run by skills (`/openbims_object review`, `/openbims_feature review`) and
+# Run by skills (`/inspire_object review`, `/inspire_feature review`) and
 # by the pre-PR hook.
 #
 # Findings from sub-scripts (JSON lines on stderr) pass through unchanged.

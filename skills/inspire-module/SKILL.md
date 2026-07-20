@@ -1,9 +1,9 @@
 ---
-name: openbims-module
+name: inspire-module
 description: "Lifecycle of a module: create / review / update / delete its PDD and propagate changes across all layers. Use when scaffolding a new module, auditing an existing one before a PR, or removing a module."
 ---
 
-# /openbims_module — Module-level Operations
+# /inspire_module — Module-level Operations
 
 ## Scope
 
@@ -11,10 +11,10 @@ This skill owns **module-scoped** operations. A "module" is a folder in `spec/pd
 
 ## Invocation
 
-- `/openbims_module review {module}` — full consistency review before PR
-- `/openbims_module create {module}` — scaffold a new module across all layers
-- `/openbims_module update {module}` — add/remove features, restructure submodules, propagate across layers
-- `/openbims_module delete {module}` — remove the module and clean up every cross-reference
+- `/inspire_module review {module}` — full consistency review before PR
+- `/inspire_module create {module}` — scaffold a new module across all layers
+- `/inspire_module update {module}` — add/remove features, restructure submodules, propagate across layers
+- `/inspire_module delete {module}` — remove the module and clean up every cross-reference
 
 ## Subcommand: review
 
@@ -198,7 +198,7 @@ Scaffold a new module across all layers. User provides module name, prefix (e.g.
 
 3. **Create UISpec folder:** `spec/specs/ui/openbims-console/{module}/`
    - `_index.md` skeleton with empty route map and feature coverage tables
-   - No screens yet — user adds via `/openbims_feature create` or `/openbims_ui create`
+   - No screens yet — user adds via `/inspire_feature create` or `/inspire_ui create`
 
 4. **Create mock-data schema file:** `mock-data/schema/{NN}_{module}.sql`
    - Empty DDL shell with module comment
@@ -206,11 +206,11 @@ Scaffold a new module across all layers. User provides module name, prefix (e.g.
 5. **Create manual stub:** `manual/modules/{module}.html`
    - Module description placeholder
 
-6. **Add route prefix in prototype (optional, when pages exist):** point user to `/openbims_prototype` to add the module folder and routes
+6. **Add route prefix in prototype (optional, when pages exist):** point user to `/inspire_prototype` to add the module folder and routes
 
 7. **Update CLAUDE.md** module table with the new module
 
-Report what was created and next steps (typically: invoke `/openbims_feature create` for the first features).
+Report what was created and next steps (typically: invoke `/inspire_feature create` for the first features).
 
 ## Subcommand: update
 
@@ -234,9 +234,9 @@ The entry point for SDD-layer work on a module. Three phases:
 
 1. **Environment setup** — confirm the operator is in a clean worktree on the right branch, or offer to bootstrap one.
 2. **Candidate surfacing + narrowing** — read the PDD, list PDD features without realizing SDD action descriptors, dialogue with the operator to pick a set.
-3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/openbims_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill, which probes design implications section by section rather than fill-in-template.
+3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/inspire_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill, which probes design implications section by section rather than fill-in-template.
 
-Scan is read-only with respect to `spec/sdd/`; it never authors descriptors itself. Authoring lives in `/openbims_object`.
+Scan is read-only with respect to `spec/sdd/`; it never authors descriptors itself. Authoring lives in `/inspire_object`.
 
 ### Phase 1 — Environment setup
 
@@ -287,7 +287,7 @@ Surface candidates and dialogue:
  Want to look at any of these in more depth, or pick a set to start with?"
 ```
 
-Then converse — narrow the set based on what the operator wants to prioritize. **Do not enumerate decision-tree options**; let the dialogue decide. Follow the conversational conventions of [`/openbims_object`'s SKILL.md](../openbims-object/SKILL.md#conversational-ownership) (this skill borrows them for its dialogue phase): one focused question at a time, show-then-approve.
+Then converse — narrow the set based on what the operator wants to prioritize. **Do not enumerate decision-tree options**; let the dialogue decide. Follow the conversational conventions of [`/inspire_object`'s SKILL.md](../inspire-object/SKILL.md#conversational-ownership) (this skill borrows them for its dialogue phase): one focused question at a time, show-then-approve.
 
 ### Phase 3 — Chained authoring (when the operator signals start)
 
@@ -295,10 +295,10 @@ When the operator's narrowing has produced a set of ≥1 actions to author AND t
 
 1. Create one `TaskCreate` per chosen action with the canonicalized SDD id in the description.
 2. Mark the first task `in_progress`.
-3. Invoke `/openbims_object define {first-id}` via the Skill tool (programmatic chain). `openbims-object` takes over and runs its socratic interview from here.
-4. When `openbims-object`'s subcommand completes, return to this skill's frame. Ask the operator if they want to continue with the next task. On yes → mark next `in_progress` → chain. On no → pause cleanly; tasks remain in the list for later.
+3. Invoke `/inspire_object define {first-id}` via the Skill tool (programmatic chain). `inspire-object` takes over and runs its socratic interview from here.
+4. When `inspire-object`'s subcommand completes, return to this skill's frame. Ask the operator if they want to continue with the next task. On yes → mark next `in_progress` → chain. On no → pause cleanly; tasks remain in the list for later.
 
-**Co-evolution mid-interview.** The socratic interview may pivot from action authoring to entity authoring inside a single `define` invocation — when an action's field-touch discussion surfaces a new field that the entity document does not yet declare, `/openbims_object` captures the change on both files in the same flow (see its "Conversation capture" section). The operator does not need to switch contexts manually; the object skill handles the bipartite walk. Scan's job ends at the handoff.
+**Co-evolution mid-interview.** The socratic interview may pivot from action authoring to entity authoring inside a single `define` invocation — when an action's field-touch discussion surfaces a new field that the entity document does not yet declare, `/inspire_object` captures the change on both files in the same flow (see its "Conversation capture" section). The operator does not need to switch contexts manually; the object skill handles the bipartite walk. Scan's job ends at the handoff.
 
 If the operator's dialogue produces no chosen set (pure exploration), or they explicitly say "just review the report," scan ends after Phase 2. No tasks are created (or tasks for all candidates if the operator wants a queue for later, at their explicit request). **The operator's right to use scan as exploration is preserved** — scan is NOT "first-action-found-triggers-define."
 
@@ -310,7 +310,7 @@ In addition to the entry-point phases, scan still produces the audit signals fro
 - Orphan actions (no PDD back-source)
 - Coherence conflicts (via `entity-coherence`)
 
-These come at the **end** of the report, after the candidate-narrowing dialogue concludes. They serve as the impetus for further `scan` invocations or follow-up `/openbims_object review` runs. Render via [`_references/findings-format.md`](../_references/findings-format.md).
+These come at the **end** of the report, after the candidate-narrowing dialogue concludes. They serve as the impetus for further `scan` invocations or follow-up `/inspire_object review` runs. Render via [`_references/findings-format.md`](../_references/findings-format.md).
 
 `scan {module}` batches over a single module; `scan` without args batches over every core module in `spec/pdd/core/`.
 
@@ -343,9 +343,9 @@ Remove a module across all layers. Use with caution.
 3. **`update` and `delete` require an explicit plan** presented to the user before any edit.
 4. **Propagation is mandatory.** A module operation that only touches PDD and leaves UISpec/mock/prototype inconsistent is a bug — use the cross-layer propagation logic.
 5. **Pending drift is acceptable.** Drift items listed in `## Prototipo actual` sections of screens are informational; don't block PRs unless they contradict an accepted ADR.
-6. **Consult the task tracker** at the start of each invocation (`/openbims_workspace task list` or open the Kanban via `node tracker/serve.mjs`). Known items in `tracker/tickets/` should be surfaced as `(tracked: TASK-{id})` rather than re-surfaced as new.
+6. **Consult the task tracker** at the start of each invocation (`/inspire_workspace task list` or open the Kanban via `node tracker/serve.mjs`). Known items in `tracker/tickets/` should be surfaced as `(tracked: TASK-{id})` rather than re-surfaced as new.
 7. **Actionable findings.** Every issue suggests the skill to invoke for the fix:
-   - UISpec drift → `/openbims_ui`
-   - Prototype drift → `/openbims_prototype`
-   - Feature-level work → `/openbims_feature`
-   - ADR or global concerns → `/openbims_workspace`
+   - UISpec drift → `/inspire_ui`
+   - Prototype drift → `/inspire_prototype`
+   - Feature-level work → `/inspire_feature`
+   - ADR or global concerns → `/inspire_workspace`

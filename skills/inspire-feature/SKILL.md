@@ -1,9 +1,9 @@
 ---
-name: openbims-feature
+name: inspire-feature
 description: "Lifecycle of a feature: create / review / update / delete in the PDD submodule + optional use case + propagate across layers. Use when adding, auditing, or removing features."
 ---
 
-# /openbims_feature — Feature-level Operations
+# /inspire_feature — Feature-level Operations
 
 ## Scope
 
@@ -11,13 +11,13 @@ This skill owns **feature-scoped** operations. A "feature" is a `### {ID} · {Na
 
 ## Invocation
 
-- `/openbims_feature review {feature-id}` — single feature, all layers
-- `/openbims_feature review {module}` — batch mode, all features of a module (parallel agents)
-- `/openbims_feature create {module}/{feature-id}` — new feature + optional use case
-- `/openbims_feature update {feature-id}` — modify description, dependencies, priority
-- `/openbims_feature delete {feature-id}` — remove + orphan checks across layers
-- `/openbims_feature scan {feature-id}` — SDD layer alignment for one feature (fast)
-- `/openbims_feature scan {module}` — batch SDD layer alignment for all features of a module
+- `/inspire_feature review {feature-id}` — single feature, all layers
+- `/inspire_feature review {module}` — batch mode, all features of a module (parallel agents)
+- `/inspire_feature create {module}/{feature-id}` — new feature + optional use case
+- `/inspire_feature update {feature-id}` — modify description, dependencies, priority
+- `/inspire_feature delete {feature-id}` — remove + orphan checks across layers
+- `/inspire_feature scan {feature-id}` — SDD layer alignment for one feature (fast)
+- `/inspire_feature scan {module}` — batch SDD layer alignment for all features of a module
 
 ## Subcommand: review
 
@@ -145,23 +145,23 @@ UISpec structure: new | legacy | migrating
 - {systemic issue}
 
 ## Correction Plan
-1. `/openbims_ui` — Add screens for: {list}
-2. `/openbims_prototype` — Adopt components for: {list}
+1. `/inspire_ui` — Add screens for: {list}
+2. `/inspire_prototype` — Adopt components for: {list}
 ```
 
 ## Subcommand: scan
 
-The feature-level entry point for SDD-layer work. Three phases, same shape as [`/openbims_module scan`](../openbims-module/SKILL.md#subcommand-scan), but scoped to one feature or one module's features:
+The feature-level entry point for SDD-layer work. Three phases, same shape as [`/inspire_module scan`](../inspire-module/SKILL.md#subcommand-scan), but scoped to one feature or one module's features:
 
 1. **Environment setup** — confirm clean worktree on the right branch, or offer to bootstrap.
 2. **Candidate surfacing + narrowing** — read the feature's PDD section, list candidate actions to realize, dialogue with the operator to pick a set.
-3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/openbims_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill — section-by-section probing of design implications, not template fill-in.
+3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/inspire_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill — section-by-section probing of design implications, not template fill-in.
 
-Scan is read-only with respect to `spec/sdd/`. Authoring lives in `/openbims_object`.
+Scan is read-only with respect to `spec/sdd/`. Authoring lives in `/inspire_object`.
 
 ### Phase 1 — Environment setup
 
-Same as [`/openbims_module scan` Phase 1](../openbims-module/SKILL.md#phase-1--environment-setup):
+Same as [`/inspire_module scan` Phase 1](../inspire-module/SKILL.md#phase-1--environment-setup):
 
 - Check current git worktree, branch (expecting `feat/sdd-{module}` or similar), clean working tree.
 - If any check fails, offer the operator a conversational choice: bootstrap a fresh worktree (`.claude/worktrees/sdd-{module}/`, branch `feat/sdd-{module}` off `origin/main`), continue in current worktree if branch is appropriate, or abort.
@@ -175,13 +175,13 @@ Same as [`/openbims_module scan` Phase 1](../openbims-module/SKILL.md#phase-1--e
 
 Read the relevant PDD content based on mode:
 
-**Single-feature mode** (`/openbims_feature scan {feature-id}`):
+**Single-feature mode** (`/inspire_feature scan {feature-id}`):
 - Locate the feature in `spec/pdd/core/{module}/{submodule}.md` — find its `### {ID} · {Name}` block plus description, dependencies, ADRs referenced.
 - Infer candidate actions: what verbs would realize this feature? Most features map to 1–3 actions. Surface the inferred ids with PDD back-source wikilinks.
 - Apply plural→singular canonicalization on any PDD action ids surfaced (e.g. `platform::actions::resolve` → `platform::action::resolve` for the SDD id). Silent normalization; do NOT surface as a "naming reconciliation" question.
 - Check whether each candidate already exists at `spec/sdd/{module}/{entity}/{action}.md`.
 
-**Batch mode** (`/openbims_feature scan {module}`):
+**Batch mode** (`/inspire_feature scan {module}`):
 - Same as single-feature, expanded to every feature in the module's `_index.md` Índice de Features.
 - For each feature, run the single-feature analysis above; aggregate candidates across the module.
 
@@ -196,17 +196,17 @@ Then dialogue with the operator. For single-feature mode:
  Want to talk through the inferred shape, or pick a set to author?"
 ```
 
-Narrow the set conversationally. Follow the conversational conventions of [`/openbims_object`'s SKILL.md](../openbims-object/SKILL.md#conversational-ownership): one focused question at a time, no decision-tree options, show-then-approve.
+Narrow the set conversationally. Follow the conversational conventions of [`/inspire_object`'s SKILL.md](../inspire-object/SKILL.md#conversational-ownership): one focused question at a time, no decision-tree options, show-then-approve.
 
 ### Phase 3 — Chained authoring (when the operator signals start)
 
-Identical to [`/openbims_module scan` Phase 3](../openbims-module/SKILL.md#phase-3--chained-authoring-when-the-operator-signals-start):
+Identical to [`/inspire_module scan` Phase 3](../inspire-module/SKILL.md#phase-3--chained-authoring-when-the-operator-signals-start):
 
 1. On explicit "let's start" signal, create one `TaskCreate` per chosen action (canonicalized id).
-2. Mark first task `in_progress`; invoke `/openbims_object define {id}` via Skill tool.
+2. Mark first task `in_progress`; invoke `/inspire_object define {id}` via Skill tool.
 3. After completion, ask operator whether to continue with the next task. On yes → serial chain. On no → pause; tasks remain in queue.
 
-**Co-evolution mid-interview.** The socratic interview may pivot from action to entity authoring inside a single `define` invocation — when discussion surfaces a new field, `/openbims_object` captures it on both the action descriptor and the entity document in the same flow (see that skill's "Conversation capture" section). The operator does not switch contexts manually; the object skill handles the bipartite walk. Scan's job ends at the handoff.
+**Co-evolution mid-interview.** The socratic interview may pivot from action to entity authoring inside a single `define` invocation — when discussion surfaces a new field, `/inspire_object` captures it on both the action descriptor and the entity document in the same flow (see that skill's "Conversation capture" section). The operator does not switch contexts manually; the object skill handles the bipartite walk. Scan's job ends at the handoff.
 
 Pure-exploration exits (operator just wants to see what's there) leave no tasks created unless the operator explicitly asks for a queue. Scan as exploration is preserved.
 
@@ -243,9 +243,9 @@ Create a new feature in a module's PDD submodule + optional use case.
 5. **Update the Resumen** table totals
 6. **Create use case** (if requested): `spec/specs/usecases/{module}/{feature-id}.md` using the template
 7. **Report next steps:**
-   - If UI-facing: invoke `/openbims_ui` to add a screen spec
-   - If API endpoint: invoke `/openbims_object define {module}::{entity}::{verb}` to author the action descriptor
-   - Prototype: invoke `/openbims_prototype` when ready
+   - If UI-facing: invoke `/inspire_ui` to add a screen spec
+   - If API endpoint: invoke `/inspire_object define {module}::{entity}::{verb}` to author the action descriptor
+   - Prototype: invoke `/inspire_prototype` when ready
 
 **Feature ID convention:** `{MODULE}-{SUBSYSTEM}-{NN}` where `{NN}` is the next available number in that subsystem (scan existing IDs to find the next).
 
@@ -285,7 +285,7 @@ Remove a feature and clean up all references.
 5. Delete use case file if present (`spec/specs/usecases/{module}/{feature-id}.md`)
 6. For UISpec:
    - Remove feature ID from any screen's `**Features:**` line
-   - If a screen's only feature was this one → flag for removal (don't auto-delete; that's `/openbims_ui`'s job)
+   - If a screen's only feature was this one → flag for removal (don't auto-delete; that's `/inspire_ui`'s job)
    - Update UISpec `_index.md` Feature coverage table
 7. For prototype: grep `code/` for hardcoded feature ID references and remove
 8. For manual: find the feature's manual entry (may be within a module section) and propose removal
@@ -335,7 +335,7 @@ When creating a use case, use this template at `spec/specs/usecases/{module}/{fe
 6. **N/A is valid.** Not every feature needs every layer. Infrastructure features may have no UI. Backend features may have no manual entry yet.
 7. **Drift is informational.** `## Prototipo actual` "Drift a resolver" items don't block reviews unless they contradict an accepted ADR.
 8. **Batch synthesis.** In batch review, identify patterns and produce a prioritized correction plan grouped by fix skill.
-9. **Consult the task tracker** (`/openbims_workspace task list` or `node tracker/serve.mjs`) for tracked drift; don't re-surface it as new.
+9. **Consult the task tracker** (`/inspire_workspace task list` or `node tracker/serve.mjs`) for tracked drift; don't re-surface it as new.
 10. **No audit/log features outside the Audit module** (per [[adr-audit-01-centralized-logging]]). If a proposed feature is about logging actions, viewing activity logs, hash-chained events, or retention of auditable records, it belongs to Audit (LOG-01..10). In `create`, reject such features when the target module is not `audit`, and redirect the author to either (a) add a feature to Audit if novel, or (b) rely on existing LOG-01..10 with the appropriate `category`/`module` filter. In `review`, flag any `{MODULE}-LOG-*` / `{MODULE}-ADT-*` / "Audit Trail" features in non-audit modules as a violation. Allowed exception: a module-specific screen that merely **links** to `/audit/logs?module={module}` (no store, no separate feature).
 
 ## Checklist for new features

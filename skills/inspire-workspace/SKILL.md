@@ -1,9 +1,9 @@
 ---
-name: openbims-workspace
+name: inspire-workspace
 description: "Workspace-level operations: global review (required pre-PR), ADR lifecycle (create/update/promote/supersede, maturity ladder design→prototyped→implemented), vault structure validation. Use for cross-cutting concerns that don't belong to a single module or feature."
 ---
 
-# /openbims_workspace — Workspace-level Operations
+# /inspire_workspace — Workspace-level Operations
 
 ## Scope
 
@@ -17,8 +17,8 @@ This skill owns **workspace-scoped** operations. It covers:
 ## Invocation
 
 ### Global review
-- `/openbims_workspace review` — full vault review
-- `/openbims_workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
+- `/inspire_workspace review` — full vault review
+- `/inspire_workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
 
 ### ADR lifecycle
 
@@ -31,20 +31,20 @@ ADR `Status` is a **maturity ladder**, not a binary — it declares how far the 
 
 There is no `proposed`/`accepted` state: an ADR present and not superseded/rejected **is** the current decision at its maturity; the debate happens in chat before authoring.
 
-- `/openbims_workspace adr create {prefix-slug}` — new ADR (defaults to `Status: design`)
-- `/openbims_workspace adr update {id}` — modify an existing ADR (supersede required only at `implemented`)
-- `/openbims_workspace adr promote {id} {maturity}` — advance maturity (`design`→`prototyped`→`implemented`) and propagate consequences
-- `/openbims_workspace adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
+- `/inspire_workspace adr create {prefix-slug}` — new ADR (defaults to `Status: design`)
+- `/inspire_workspace adr update {id}` — modify an existing ADR (supersede required only at `implemented`)
+- `/inspire_workspace adr promote {id} {maturity}` — advance maturity (`design`→`prototyped`→`implemented`) and propagate consequences
+- `/inspire_workspace adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
 
 ### Vault structure
-- `/openbims_workspace structure` — validate top-level indexes, task tracker, vault conventions
+- `/inspire_workspace structure` — validate top-level indexes, task tracker, vault conventions
 
 ### Task tracker
-- `/openbims_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,ui]` — create a new ticket as `tracker/tickets/TASK-{id}.md` (status defaults to `Open`)
-- `/openbims_workspace task update TASK-{id} [--field value ...]` — modify a ticket's frontmatter
-- `/openbims_workspace task close TASK-{id} [--cancelled --reason "..."]` — set status to Done (default) or Cancelled
-- `/openbims_workspace task list [--status X --epic Y --skill prototype]` — list filtered tickets to stdout (read-only)
-- `/openbims_workspace task show TASK-{id}` — print a ticket in full
+- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,ui]` — create a new ticket as `tracker/tickets/TASK-{id}.md` (status defaults to `Open`)
+- `/inspire_workspace task update TASK-{id} [--field value ...]` — modify a ticket's frontmatter
+- `/inspire_workspace task close TASK-{id} [--cancelled --reason "..."]` — set status to Done (default) or Cancelled
+- `/inspire_workspace task list [--status X --epic Y --skill prototype]` — list filtered tickets to stdout (read-only)
+- `/inspire_workspace task show TASK-{id}` — print a ticket in full
 
 ## Subcommand: review (global)
 
@@ -55,14 +55,14 @@ There is no `proposed`/`accepted` state: an ADR present and not superseded/rejec
 This review runs in one of two modes; the **checks, severity model, and output are identical** either way — only the scheduling differs.
 
 - **Sequential (default).** Execute Phases 1–7 below top-to-bottom in this agent. Use this when not in a multi-agent context.
-- **Workflow (opt-in, when the user enables ultracode / multi-agent).** After Phase 1 (scope), run the bundled workflow at `.claude/skills/openbims-workspace/review.workflow.mjs` via the **Workflow** tool — pass `args: { modules: [<in-scope slugs>] }` and prefer `scriptPath` with that file's absolute path (or read it and pass the contents as `script` if your harness requires inline scripts). It fans the per-module reviews out in parallel (Phase A), runs a deterministic **completeness gate** (any dropped or degenerate module review becomes a `critical: review-incomplete` finding — never a silent pass), then a single synthesizer runs the cross-cutting Phases 3–7 over the **full repo** (scope narrows only the module fan-out) and emits the standard report. v1 keeps Phases 3–7 sequential inside the synthesizer.
+- **Workflow (opt-in, when the user enables ultracode / multi-agent).** After Phase 1 (scope), run the bundled workflow at `.claude/skills/inspire-workspace/review.workflow.mjs` via the **Workflow** tool — pass `args: { modules: [<in-scope slugs>] }` and prefer `scriptPath` with that file's absolute path (or read it and pass the contents as `script` if your harness requires inline scripts). It fans the per-module reviews out in parallel (Phase A), runs a deterministic **completeness gate** (any dropped or degenerate module review becomes a `critical: review-incomplete` finding — never a silent pass), then a single synthesizer runs the cross-cutting Phases 3–7 over the **full repo** (scope narrows only the module fan-out) and emits the standard report. v1 keeps Phases 3–7 sequential inside the synthesizer.
 
 Invariants both modes MUST preserve: **read-only** (flag, never edit, never invoke a fix-skill); ADR-propagation alignment is judged by the synthesizer/orchestrator reading each ADR's `Status`+`Decision` (the per-module review does not read ADR status): design-workspace coherence (PDD + UISpec + console prototype + mock + manual) is required at *every* maturity, and maturity adds *external* evidence checkable only by pointer — `prototyped` a `**Prototype:**` pointer to an external functional prototype, `implemented` a codebase reference; the **three ADR-UX grep gates run as literal greps** (deterministic); and the output uses the exact skeleton in **Output format** below.
 
 ### Phase 1 — Identify scope
 
 - If modules are specified, use those. Otherwise, enumerate all 12 core modules + satellites listed in `spec/pdd/_index.md`.
-- For each module in scope, delegate to `/openbims_module review {module}`.
+- For each module in scope, delegate to `/inspire_module review {module}`.
 
 ### Phase 2 — Module reviews
 
@@ -188,13 +188,13 @@ Drift items pending: {N}
 3. **Prioritize by impact.** Critical = broken refs, missing files, ADR consequences not reflected within their maturity's reach. Important = stale content, missing coverage, legacy structure. Minor = naming, formatting.
 4. **No false positives.** If unsure, note as "verify".
 5. **Actionable.** Every finding suggests the skill to invoke.
-6. **Delegate deep dives.** For complex feature-level issues, suggest `/openbims_feature review {id}`.
+6. **Delegate deep dives.** For complex feature-level issues, suggest `/inspire_feature review {id}`.
 7. **Migration is not failure.** Legacy UISpec monoliths and pending prototype drift are `important` (migrate), not `critical`, unless they contradict an ADR within its maturity's reach.
-8. **Consult the task tracker.** Known items in `tracker/tickets/` should be flagged `(tracked: TASK-{id})`. Use `/openbims_workspace task list` or open the Kanban via `node tracker/serve.mjs`.
+8. **Consult the task tracker.** Known items in `tracker/tickets/` should be flagged `(tracked: TASK-{id})`. Use `/inspire_workspace task list` or open the Kanban via `node tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, explicitly call out the fix skill as mandatory before PR:
-   - Prototype drift → `/openbims_prototype`
-   - UISpec drift → `/openbims_ui`
-   - PDD drift or ADR misalignment → `/openbims_module update` or `/openbims_workspace adr update`
+   - Prototype drift → `/inspire_prototype`
+   - UISpec drift → `/inspire_ui`
+   - PDD drift or ADR misalignment → `/inspire_module update` or `/inspire_workspace adr update`
 
 ## Subcommand: adr create {prefix-slug}
 
@@ -280,7 +280,7 @@ Advance an ADR's maturity along `design → prototyped → implemented` and prop
 2. Update `**Status:** {maturity}` in the ADR file. For `prototyped`, require a `**Prototype:**` pointer (which repo/prototype validated it, and the evidence); for `implemented`, note where in the codebase it lives.
 3. **Propagate / record evidence for the new maturity:**
    - `prototyped` → confirm the design workspace already reflects the decision, then record the `**Prototype:**` pointer to the external functional prototype that validated it (not the console); `implemented` → add the product-codebase reference.
-   - For each module listed in "Modules affected", invoke `/openbims_module review {module}` to detect where the ADR's consequences are not yet reflected across the design workspace.
+   - For each module listed in "Modules affected", invoke `/inspire_module review {module}` to detect where the ADR's consequences are not yet reflected across the design workspace.
    - Surface the gaps as a list of follow-up actions; offer to orchestrate via the appropriate skills.
 
 ## Subcommand: adr supersede {id} {new-id}

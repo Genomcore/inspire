@@ -12,9 +12,9 @@ When the update introduces a new section's worth of content (e.g. fleshing out a
 Cannot update auth::user::create — it is at lifecycle: stable.
 Stable objects are frozen contracts; modifying them in place would silently
 shift the contract under their consumers. To modify a stable object:
-  1. /openbims_object demote auth::user::create     # stable → accepted
-  2. /openbims_object update auth::user::create ... # apply the change
-  3. /openbims_object promote auth::user::create stable
+  1. /inspire_object demote auth::user::create     # stable → accepted
+  2. /inspire_object update auth::user::create ... # apply the change
+  3. /inspire_object promote auth::user::create stable
 ```
 
 The demote-first gate is intentional: it makes the lifecycle regression an explicit, traceable act rather than a silent side-effect of an `update` call.

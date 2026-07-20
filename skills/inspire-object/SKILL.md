@@ -1,11 +1,11 @@
 ---
-name: openbims-object
+name: inspire-object
 description: "SDD object lifecycle for both action descriptors (spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md) and entity documents (spec/sdd/{module}/{entity}/{module}.{entity}.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
 argument-hint: "<subcommand> [<id>|<scope>] [args]"
 user-invocable: true
 ---
 
-# /openbims_object — SDD Object Lifecycle
+# /inspire_object — SDD Object Lifecycle
 
 Every file in the SDD layer is an **object**: either an **action descriptor** (`spec/sdd/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`spec/sdd/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
 
@@ -13,7 +13,7 @@ This skill owns the full lifecycle of both kinds — from first interview throug
 
 ## Conversational ownership
 
-This skill **owns its conversational frame**. While inside any `/openbims_object` subcommand:
+This skill **owns its conversational frame**. While inside any `/inspire_object` subcommand:
 
 - **Do NOT invoke `superpowers:brainstorming`** or any meta-skill that imposes its own dialogue shape. Authoring an SDD object is creative work, but it is **this skill's** creative work, and its protocol is the interview cadence below.
 - **Do NOT present numbered decision trees or "must resolve before X" walls.** When you hit ambiguity (naming, type, effect), surface it as one focused question and let the operator drive.
@@ -70,26 +70,26 @@ The interview produces files **incrementally as the dialogue unfolds**, not in a
 
 This skill owns: **action descriptors**, **entity documents**, **consolidation** (rebuilding the entity doc's derived `## Fields` + `## Touched by` tables after a descriptor change), and the **subcommands** below.
 
-This skill does NOT own: **PDD authoring** (`/openbims_module` — back-sourcing to PDD via wikilinks is required, but the PDD is not modified here); **feature-level grouping + VIER scoring** (`/openbims_feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
+This skill does NOT own: **PDD authoring** (`/inspire_module` — back-sourcing to PDD via wikilinks is required, but the PDD is not modified here); **feature-level grouping + VIER scoring** (`/inspire_feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
 
 ## Invocation
 
 ```
-/openbims_object define   <id>              # author a new object (interview-driven)
-/openbims_object show     <id>              # render an existing descriptor with resolved cross-refs
-/openbims_object update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
-/openbims_object refactor <id> [args]       # rename / split / merge actions
-/openbims_object delete   <id>              # remove an action (refuses if any other action requires it)
-/openbims_object promote  <id> {accepted|stable|superseded}
-/openbims_object demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
-/openbims_object review   [<scope>]         # run quality_lib checks; show findings
-/openbims_object source   <id>              # show the back-source trail for every claim
-/openbims_object graph    [<scope>]         # print the action→action requires graph + supersession edges
+/inspire_object define   <id>              # author a new object (interview-driven)
+/inspire_object show     <id>              # render an existing descriptor with resolved cross-refs
+/inspire_object update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
+/inspire_object refactor <id> [args]       # rename / split / merge actions
+/inspire_object delete   <id>              # remove an action (refuses if any other action requires it)
+/inspire_object promote  <id> {accepted|stable|superseded}
+/inspire_object demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
+/inspire_object review   [<scope>]         # run quality_lib checks; show findings
+/inspire_object source   <id>              # show the back-source trail for every claim
+/inspire_object graph    [<scope>]         # print the action→action requires graph + supersession edges
 ```
 
 `<id>` is `module::entity::action` (e.g. `auth::user::create`) for actions, or `module::entity` (e.g. `auth::user`) for entities. `<scope>` is `module` or `module::entity`.
 
-Subcommands accept **natural-language continuations** — e.g. `/openbims_object update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
+Subcommands accept **natural-language continuations** — e.g. `/inspire_object update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
 
 ## Subcommands
 
@@ -127,9 +127,9 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 5. **`update` refuses stable.** Modifying a stable object requires `demote` → `update` → `promote`. The regression is an explicit, traceable act.
 6. **`demote` refuses with cascade preview.** Walking lifecycle backwards refuses if downstream consumers depend on the current state. No `--cascade` flag.
 7. **Consolidation follows approval** and goes through show-then-approve. Operator-authored sections (Purpose / Rationale / Invariants / per-field H3) are preserved untouched.
-8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/openbims_workspace` (`epic: skill-feedback`, `skills: [object]`).
+8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_workspace` (`epic: skill-feedback`, `skills: [object]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
-10. **PDD is upstream of SDD; no escape hatch.** Every action descriptor must back-source to a PDD feature. No PDD home → `/openbims_feature create` first. `define` refuses descriptors with no PDD wikilink in `## Purpose`.
+10. **PDD is upstream of SDD; no escape hatch.** Every action descriptor must back-source to a PDD feature. No PDD home → `/inspire_feature create` first. `define` refuses descriptors with no PDD wikilink in `## Purpose`.
 
 ## References
 
@@ -143,5 +143,5 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 
 ## Related skills
 
-- `/openbims_module` — module-level review and scaffolding. Its `scan` subcommand surfaces PDD↔SDD candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
-- `/openbims_feature` — feature-level grouping. Its `scan` subcommand surfaces feature↔action linkback gaps.
+- `/inspire_module` — module-level review and scaffolding. Its `scan` subcommand surfaces PDD↔SDD candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
+- `/inspire_feature` — feature-level grouping. Its `scan` subcommand surfaces feature↔action linkback gaps.

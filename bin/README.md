@@ -10,8 +10,8 @@ Two consumers wrap this library:
   via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
   `git commit`, `pre-pr.sh` on `gh pr create`.
 - **Skills** invoke them via the `Bash` tool inside conversational
-  sessions. `/openbims_object review` for read-only checks;
-  `/openbims_object promote` uses the write-test-revert pattern against
+  sessions. `/inspire_object review` for read-only checks;
+  `/inspire_object promote` uses the write-test-revert pattern against
   `review.sh` to validate lifecycle transitions.
 
 ## Prerequisites

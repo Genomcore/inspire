@@ -6,7 +6,7 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 
 ## Precondition
 
-`define` requires a concrete `{module}::{entity}::{action}` id (for actions) or `{module}::{entity}` id (for entity documents). If the operator says "I want to define an action for the platform module" without naming the action, the right place is `/openbims_module scan platform` — `scan` hosts the candidate-narrowing dialogue and chains to `define` once the id is settled. `define` refuses partial ids (e.g. `define platform`) with a one-line redirect to `scan`.
+`define` requires a concrete `{module}::{entity}::{action}` id (for actions) or `{module}::{entity}` id (for entity documents). If the operator says "I want to define an action for the platform module" without naming the action, the right place is `/inspire_module scan platform` — `scan` hosts the candidate-narrowing dialogue and chains to `define` once the id is settled. `define` refuses partial ids (e.g. `define platform`) with a one-line redirect to `scan`.
 
 ## Flow
 
@@ -29,5 +29,5 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 
 ## Hard rules that apply here
 
-- **PDD is upstream; no escape hatch.** `define` refuses an action descriptor with no PDD wikilink in `## Purpose`. If the verb has no PDD home, the operator runs `/openbims_feature create` first.
+- **PDD is upstream; no escape hatch.** `define` refuses an action descriptor with no PDD wikilink in `## Purpose`. If the verb has no PDD home, the operator runs `/inspire_feature create` first.
 - **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.

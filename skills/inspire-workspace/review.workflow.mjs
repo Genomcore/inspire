@@ -1,8 +1,8 @@
 export const meta = {
-  name: 'openbims-workspace-review',
+  name: 'inspire-workspace-review',
   description: 'Pre-PR Global Review (v1, Phase A): parallel module fan-out + completeness gate + sequential cross-cutting synthesis. READ-ONLY — flags issues, never edits.',
   phases: [
-    { title: 'Module reviews', detail: 'one /openbims_module review per in-scope module, in parallel' },
+    { title: 'Module reviews', detail: 'one /inspire_module review per in-scope module, in parallel' },
     { title: 'Completeness', detail: 'no-silent-caps — every module must return a non-degenerate result' },
     { title: 'Synthesize', detail: 'cross-cutting phases 3–7 over the full repo + consolidated report' },
   ],
@@ -54,7 +54,7 @@ phase('Module reviews')
 log(`Fan-out: ${modules.length} module reviews (${modules.join(', ')})`)
 const moduleResults = await parallel(modules.map((m) => () =>
   agent(
-    `In the repo at cwd /Users/oscar/Code/openbims-pdd, perform a consistency review of the "${m}" module by following the \`review\` subcommand procedure documented in \`.claude/skills/openbims-module/SKILL.md\` (steps: PDD structure, UISpec structure, quality checks, cross-layer coverage PDD↔UISpec↔Prototype↔Mock↔Manual, drift consolidation, overengineering detection). ${READ_ONLY}\n\n` +
+    `In the repo at cwd /Users/oscar/Code/openbims-pdd, perform a consistency review of the "${m}" module by following the \`review\` subcommand procedure documented in \`.claude/skills/inspire-module/SKILL.md\` (steps: PDD structure, UISpec structure, quality checks, cross-layer coverage PDD↔UISpec↔Prototype↔Mock↔Manual, drift consolidation, overengineering detection). ${READ_ONLY}\n\n` +
     `Return: module="${m}", reviewed=true ONLY if you actually opened and inspected the module's PDD/UISpec/prototype/mock/manual files (report files_read = how many you opened), the extracted feature_ids and entities (reused downstream), and findings[] (each with severity, description, file, line, fix_skill).`,
     { label: `review:${m}`, phase: 'Module reviews', schema: MODULE_RESULT },
   ),
@@ -84,7 +84,7 @@ const report = await agent(
   `- Phase 5 Mock-data integrity: schema↔jsonl↔views coherence, no orphan jsonl, FK references resolve, sync paths intact. Run the THREE ADR-UX gates as LITERAL shell greps (deterministic) and report exact matches: (a) centralized-logging — no module-local audit-event tables/screens; (b) module-landing-pages per adr-ux-01; (c) module-settings location per adr-ux-02.\n` +
   `- Phase 6 Prototype component adoption: corpus-wide counts (a component is "adopted" by counting imports across ALL pages — never per single module).\n` +
   `- Phase 7 Catalog coherence: patterns/components with 0 references; screens claiming a pattern/component that does not exist.\n\n` +
-  `Then emit the consolidated report in the EXACT skeleton from .claude/skills/openbims-workspace/SKILL.md (## Scope / ## Summary / ## By Module / ## Cross-Module / ## Vault Structure / ## Mock Data Integrity / ## Prototype Component Adoption / ## Catalog Coherence / ## OK). Apply the skill's severity rules (rules 1–9): critical = broken refs / missing files / ADR-consequences-not-reflected-within-maturity-reach / review-incomplete; important = stale content, missing coverage, legacy structure; minor = naming/formatting; "verify" if unsure. Tag known items "(tracked: TASK-{id})" by consulting tracker/tickets/*.md. Every finding names its fix-skill. Return ONLY the final markdown report as your output.`,
+  `Then emit the consolidated report in the EXACT skeleton from .claude/skills/inspire-workspace/SKILL.md (## Scope / ## Summary / ## By Module / ## Cross-Module / ## Vault Structure / ## Mock Data Integrity / ## Prototype Component Adoption / ## Catalog Coherence / ## OK). Apply the skill's severity rules (rules 1–9): critical = broken refs / missing files / ADR-consequences-not-reflected-within-maturity-reach / review-incomplete; important = stale content, missing coverage, legacy structure; minor = naming/formatting; "verify" if unsure. Tag known items "(tracked: TASK-{id})" by consulting tracker/tickets/*.md. Every finding names its fix-skill. Return ONLY the final markdown report as your output.`,
   { label: 'synthesize', phase: 'Synthesize' },
 )
 

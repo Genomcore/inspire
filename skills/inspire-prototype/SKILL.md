@@ -1,9 +1,9 @@
 ---
-name: openbims-prototype
+name: inspire-prototype
 description: "Implement and maintain React prototypes for OpenBIMS Console and Marketplace Console. Use when building screens from UI specifications, adopting shared components, or refactoring to pattern-driven structure."
 ---
 
-# /openbims_prototype — React Prototypes
+# /inspire_prototype — React Prototypes
 
 ## When to use
 
@@ -229,7 +229,7 @@ Expected output: **no matches**. If matches remain, the removal didn't apply —
 8. **Status indicators:** use `<StatusDot status="..."/>`. If your status key isn't in the map, add it to `StatusDot.jsx` — don't inline a `statusColors` map.
 9. **No dead components.** Every `.jsx` must be imported and routed.
 10. **Follow "Drift a resolver".** When opening a screen file to modify it, read its `## Prototipo actual` section and resolve pending drift items as part of the PR if they're trivial (component adoption). Note larger drift in the commit message.
-11. **Propagation check after prototype edits.** When a change affects visible structure/behavior that the UISpec describes, explicitly ask the user before ending the turn whether to propagate to the UISpec via `/openbims_ui`. Don't assume — offer the choice. If declined, track the drift via `/openbims_workspace task create "..." --epic {module}`. See "After modifying the prototype — propagation check" above for the full protocol. This is symmetric with the equivalent rule in [[openbims-ui/SKILL|/openbims_ui]].
+11. **Propagation check after prototype edits.** When a change affects visible structure/behavior that the UISpec describes, explicitly ask the user before ending the turn whether to propagate to the UISpec via `/inspire_ui`. Don't assume — offer the choice. If declined, track the drift via `/inspire_workspace task create "..." --epic {module}`. See "After modifying the prototype — propagation check" above for the full protocol. This is symmetric with the equivalent rule in [[inspire-ui/SKILL|/inspire_ui]].
 12. **Coerce DuckDB values.** Before calling any string/number/date method on a DuckDB column value, route it through `coerceString` / `coerceDate` / `safeParseArray` from `@/lib/duckdb-array`. DuckDB-WASM's return types don't always match the SQL schema — see "DuckDB-WASM type quirks" above for the rationale.
 13. **Never use hook-returned functions as deps.** Depend on the underlying state (array, string, number), not on a function the hook returned — functions are new references every render and will trigger infinite loops. See "Hook return-value pitfalls" above.
 14. **Always open preview after a prototype change.** `npm run build` only catches syntax. Runtime errors (type mismatches, render loops) produce a blank page. Visit the affected route in preview and verify `#root` is not empty before declaring the change done.
@@ -239,7 +239,7 @@ Expected output: **no matches**. If matches remain, the removal didn't apply —
 
 Whenever a prototype edit changes **visible behavior or structure** that the UISpec describes (new tab, changed data source/hook, added/removed section, different pattern instance, renamed route, different canonical component adoption, etc.), the skill MUST explicitly ask the user whether to propagate the change back to the UISpec before ending the turn.
 
-This is the inverse of the protocol in `/openbims_ui` — the principle is bilateral per [[CLAUDE.md]]: if a change affects a layer, that layer must be updated.
+This is the inverse of the protocol in `/inspire_ui` — the principle is bilateral per [[CLAUDE.md]]: if a change affects a layer, that layer must be updated.
 
 ### Protocol
 
@@ -248,15 +248,15 @@ This is the inverse of the protocol in `/openbims_ui` — the principle is bilat
    - **Structural** (new tab, changed data hook, new widget, changed canonical component, route change): propagation to UISpec is strongly recommended.
    - **Cosmetic or implementation-only** (refactor, imports reorder, micro-styling, bug fix that doesn't change described behavior): propagation usually not needed. Mention but don't insist.
    - **Resolves existing drift** (the change closes an item in the screen's "Drift a resolver" list): update that section at minimum — always.
-   - **No spec exists** (legacy monolith still active, or the screen was never spec'd): skip propagation but note the gap so it surfaces in the next `/openbims_ui migrate` or `/openbims_module review`.
+   - **No spec exists** (legacy monolith still active, or the screen was never spec'd): skip propagation but note the gap so it surfaces in the next `/inspire_ui migrate` or `/inspire_module review`.
 3. **Ask, don't assume.** Close the turn with a clear question to the user, e.g.:
 
    > He modificado `{path}.jsx`: {resumen de cambios}. La UISpec `{module}/{screen}.md` está desalineada en: {items}.
-   > ¿Actualizo la UISpec ahora con `/openbims_ui`, o prefieres hacerlo en otro turno?
+   > ¿Actualizo la UISpec ahora con `/inspire_ui`, o prefieres hacerlo en otro turno?
 
-   Offer the user the choice — don't invoke `/openbims_ui` silently.
-4. **If user confirms:** invoke `/openbims_ui` with a concrete prompt (target screen + specific updates to apply). At minimum, update the screen's `## Prototipo actual` "Drift a resolver" to remove resolved items and add any new ones.
-5. **If user declines or defers:** create a tracker ticket via `/openbims_workspace task create "{summary}" --epic {module} --size {S|M|L}` so the spec/prototype gap doesn't get lost, and end the turn.
+   Offer the user the choice — don't invoke `/inspire_ui` silently.
+4. **If user confirms:** invoke `/inspire_ui` with a concrete prompt (target screen + specific updates to apply). At minimum, update the screen's `## Prototipo actual` "Drift a resolver" to remove resolved items and add any new ones.
+5. **If user declines or defers:** create a tracker ticket via `/inspire_workspace task create "{summary}" --epic {module} --size {S|M|L}` so the spec/prototype gap doesn't get lost, and end the turn.
 
 ### When NOT to ask
 
@@ -284,10 +284,10 @@ After landing the fix (and verifying in preview), **end the turn with a proposal
 
 > **Improvement opportunity detected.** While fixing `{short description}` in `{file}`, I noticed: {pattern / root cause}. This will likely recur in {scope}. Proposed follow-up:
 > - **Lib:** extract `{functionName}` to `@/lib/{name}.js` so other pages can reuse it (replaces inline helpers in {places}).
-> - **Skill update:** add a "{section name}" entry to `/openbims-prototype` so the next invocation knows to use it.
-> - **Component spec:** if UI-shaped — add `spec/specs/ui/openbims-console/components/{name}.md` per `/openbims_ui`.
+> - **Skill update:** add a "{section name}" entry to `/inspire-prototype` so the next invocation knows to use it.
+> - **Component spec:** if UI-shaped — add `spec/specs/ui/openbims-console/components/{name}.md` per `/inspire_ui`.
 >
-> ¿Aplico ahora, o creo un ticket vía `/openbims_workspace task create` para otro turno?
+> ¿Aplico ahora, o creo un ticket vía `/inspire_workspace task create` para otro turno?
 
 Offer the choice. Do NOT silently modify the skill, lib, or component catalog — those are workspace-wide artifacts that need the user's awareness.
 
@@ -323,6 +323,6 @@ When a page still has an inline version of something that's now canonical:
 
 ## Related skills
 
-- `/openbims_ui` — before implementing, verify the UISpec screen file exists and is current
-- `/openbims_module review` — before PR, review the whole module's consistency
-- `/openbims_feature review {feature-id}` — verify a specific feature's prototype coverage
+- `/inspire_ui` — before implementing, verify the UISpec screen file exists and is current
+- `/inspire_module review` — before PR, review the whole module's consistency
+- `/inspire_feature review {feature-id}` — verify a specific feature's prototype coverage

@@ -9,7 +9,7 @@ Read-only quality check. Runs the quality_lib rules against the scope and surfac
 3. Render each finding as a markdown sub-section using the shared format: heading `### {severity} · {rule} — {target}`, then **Issue** and **Suggested follow-up**.
 4. Summary at the top: counts by severity, pass/fail.
 
-`review` suggests a follow-up action (`/openbims_object update`, `promote`, etc.) per finding but does not apply it.
+`review` suggests a follow-up action (`/inspire_object update`, `promote`, etc.) per finding but does not apply it.
 
 ## The quality gate (per D24)
 

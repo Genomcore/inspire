@@ -1,9 +1,9 @@
 ---
-name: openbims-ui
+name: inspire-ui
 description: "Create and validate UI specifications using a pattern-driven approach. Screens instantiate shared patterns from spec/specs/ui/openbims-console/patterns/ and use components from components/. Use when designing or reviewing screens for OpenBIMS Console or Marketplace Console."
 ---
 
-# /openbims-ui — UI Specifications (Pattern-Driven)
+# /inspire-ui — UI Specifications (Pattern-Driven)
 
 ## When to use
 
@@ -95,9 +95,9 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 
 | Pair | Mismatch direction | Authority | Action |
 |------|--------------------|-----------|--------|
-| **PDD ↔ Code** | Feature in PDD, not in code | PDD | Flag as "code behind spec". Suggest `/openbims-prototype`. |
-| **PDD ↔ Code** | Feature in code, not in PDD | **Open** | **WARN. Ask user.** Either backfill PDD (`/openbims-feature create`) or remove from code. Don't silently accept undocumented features. |
-| **UISpec ↔ Code** | UISpec describes UI not rendered | Code | Spec stale. Update spec via `/openbims-ui validate|migrate`. Do NOT change code — risks losing iterations. |
+| **PDD ↔ Code** | Feature in PDD, not in code | PDD | Flag as "code behind spec". Suggest `/inspire-prototype`. |
+| **PDD ↔ Code** | Feature in code, not in PDD | **Open** | **WARN. Ask user.** Either backfill PDD (`/inspire-feature create`) or remove from code. Don't silently accept undocumented features. |
+| **UISpec ↔ Code** | UISpec describes UI not rendered | Code | Spec stale. Update spec via `/inspire-ui validate|migrate`. Do NOT change code — risks losing iterations. |
 | **UISpec ↔ Code** | Code renders UI not in UISpec | Code | Spec stale (reverse drift). Update spec. Same rule: code wins. |
 | **Patterns / components / design-system / UI rules** | Code or UISpec contradicts a canonical pattern/component/rule | **Skill** | Enforce. Patterns + components + design-system.md + ADR-UX-* are authoritative for visual/structural conventions. Update spec OR file a prototype task to align. |
 
@@ -149,12 +149,12 @@ PDD often advances faster than UISpec: features land in code (PDD updated, proto
    - **Detail-page tabs / actions in prototype but undocumented** → spec stale.
    - **Spec describes a UI element not rendered** → either prototype regression (raise as drift on prototype) or spec ahead of code (mark as "spec ahead").
    - **Spec uses a pattern that contradicts what renders** (e.g., spec says drawer, code renders route) → spec stale; trust code.
-   - **Code renders a feature not traceable to any PDD feature** → **WARN**. Don't silently document. Ask user whether to backfill PDD (`/openbims-feature create`) or remove the feature from code.
-   - **Code violates a canonical pattern / component / UX ADR** (drawer for detail, dark mode, module dashboard, `/{module}/settings`) → flag as **code regression**, not spec drift. Suggest `/openbims-prototype` to bring code back in line. Skill rules win here.
+   - **Code renders a feature not traceable to any PDD feature** → **WARN**. Don't silently document. Ask user whether to backfill PDD (`/inspire-feature create`) or remove the feature from code.
+   - **Code violates a canonical pattern / component / UX ADR** (drawer for detail, dark mode, module dashboard, `/{module}/settings`) → flag as **code regression**, not spec drift. Suggest `/inspire-prototype` to bring code back in line. Skill rules win here.
 5. **Reverse drift findings** are reported separately from forward drift, with severity:
    - **Important** — entire feature/tab/section in code missing from spec.
    - **Minor** — column, label, badge, breadcrumb, toolbar pill missing or mislabeled in spec.
-6. **Resolution recommendation** — every reverse-drift finding suggests `/openbims-ui {validate|migrate} {module}` to update the spec, NOT `/openbims-prototype` (the prototype is already correct). The spec catches up to code, not the other way around.
+6. **Resolution recommendation** — every reverse-drift finding suggests `/inspire-ui {validate|migrate} {module}` to update the spec, NOT `/inspire-prototype` (the prototype is already correct). The spec catches up to code, not the other way around.
 
 #### Reporting format
 
@@ -202,11 +202,11 @@ Whenever a `create` / `update` / `migrate` / `extract` action changes a screen f
 3. **Ask, don't assume.** Close the turn with a clear question to the user, e.g.:
 
    > La UISpec de `{module}/{screen}` ha cambiado: {resumen de cambios}. El prototipo `{path}.jsx` queda desalineado con: {lista de drift nuevo}.
-   > ¿Propago ahora con `/openbims-prototype`, o prefieres hacerlo en otro turno?
+   > ¿Propago ahora con `/inspire-prototype`, o prefieres hacerlo en otro turno?
 
-   Offer the user the choice — don't invoke `/openbims-prototype` silently.
-4. **If user confirms** (`sí`, `propaga`, `adelante`, etc.): invoke `/openbims-prototype` with a concrete prompt that references the updated screen spec and the specific drift items to resolve.
-5. **If user declines or defers:** create a tracker ticket via `/openbims_workspace task create "{summary}" --epic {module}` so it doesn't get lost, and end the turn.
+   Offer the user the choice — don't invoke `/inspire-prototype` silently.
+4. **If user confirms** (`sí`, `propaga`, `adelante`, etc.): invoke `/inspire-prototype` with a concrete prompt that references the updated screen spec and the specific drift items to resolve.
+5. **If user declines or defers:** create a tracker ticket via `/inspire_workspace task create "{summary}" --epic {module}` so it doesn't get lost, and end the turn.
 
 ### When NOT to ask
 
@@ -252,7 +252,7 @@ Process:
 7. **No inline mock data.** Reference tables from `mock-data/tables/`.
 8. **No historical language.** Specs describe the present.
 9. **Route convention.** `/{module}/...` in console, nested routes for detail/edit/new.
-10. **Validate before merge.** Run `/openbims-module review` before any PR that modifies UISpec files.
+10. **Validate before merge.** Run `/inspire-module review` before any PR that modifies UISpec files.
 11. **Audit/activity log screens live in `audit/`** (per [[adr-audit-01-centralized-logging]]). A module cannot own screens that display, filter, or stream audit events. Allowed: a dashboard widget or link that points to `/audit/logs?module={module}` or `/audit/logs?actor.id={id}`. Forbidden: a dedicated `audit.md` / `activity.md` screen in a non-audit module, or a sidebar entry "Audit Trail" under a non-audit module. When validating a new or existing screen, flag any of these patterns.
 12. **Module landing `/{module}` is a list (or tabbed page), never a dashboard** (per [[adr-ux-01-module-landing-pages]]). Forbidden: `dashboard.md` screen routed as `/{module}`, sidebar entry "Dashboard"/"Overview" pointing to `/{module}`, prototype `{Module}Dashboard.jsx` component rendered at `/{module}`. Allowed: dashboards scoped to a specific resource (`/{module}/{resource}/:id/analytics`) or to a subsystem with its own semantics. When validating, flag any module-level dashboard. When creating a new module, the landing MUST be `<Navigate to="/{module}/{primary-list}" replace />` or a tabbed page.
 13. **Settings live inside the primitive, not as a module-level page** (per [[adr-ux-02-settings-location]]). Forbidden: `settings.md` routed as `/{module}/settings`, sidebar entry "Settings" under a functional module, prototype `{Module}Settings.jsx` as a dedicated page. Allowed: a "Settings" tab inside the primitive's own screen (e.g., `/ai-agents/models?tab=settings`), or cross-module settings under Platform (`/platform/notifications`, `/platform/organization`, etc.). Platform module is the sole exception — its sidebar label is literally "Settings" at top level. When validating, flag any functional module's `/settings` route or sidebar entry.
@@ -260,8 +260,8 @@ Process:
 
 ## Skill invocations
 
-- `/openbims-ui create {module}/{screen}` — scaffold a new screen file with pattern selection
-- `/openbims-ui validate {module}/{screen}` — validate a single screen against patterns/components, browsing the prototype when preview is available to detect reverse drift
-- `/openbims-ui migrate {module}` — migrate a legacy `UISpec_{Module}.md` monolith to the new structure
-- `/openbims-ui extract {pattern|component} {name}` — promote a recurring UI block to a shared pattern or component
-- `/openbims-ui audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities. Browses the running prototype when available.
+- `/inspire-ui create {module}/{screen}` — scaffold a new screen file with pattern selection
+- `/inspire-ui validate {module}/{screen}` — validate a single screen against patterns/components, browsing the prototype when preview is available to detect reverse drift
+- `/inspire-ui migrate {module}` — migrate a legacy `UISpec_{Module}.md` monolith to the new structure
+- `/inspire-ui extract {pattern|component} {name}` — promote a recurring UI block to a shared pattern or component
+- `/inspire-ui audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities. Browses the running prototype when available.
