@@ -32,7 +32,7 @@ decision has been realized, and therefore how far its consequences should have
 propagated (the *propagation contract*):
 
 - `design` — design reasoning. Reach: the whole **design workspace** — features
-  (`02_features`) + UISpec (`05_ui`) + the **horizontal prototype**
+  (`02_features`) + screens (`05_screens`) + the **horizontal prototype**
   (`/prototype`, a *non-functional* interactive mock) + specs (`04_specs`).
   Refined **in place** on new evidence.
 - `prototyped` — additionally **validated in an external functional prototype**:
@@ -56,7 +56,7 @@ happens in chat before authoring.
 - `/inspire_workspace structure` — validate top-level indexes, task tracker, vault conventions
 
 ### Task tracker
-- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,ui]`
+- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,screens]`
 - `/inspire_workspace task update TASK-{id} [--field value ...]`
 - `/inspire_workspace task close TASK-{id} [--cancelled --reason "..."]`
 - `/inspire_workspace task list [--status X --epic Y --skill prototype]` (read-only)
@@ -85,7 +85,7 @@ scheduling differs.
 
 Invariants both modes MUST preserve: **read-only** (flag, never edit, never invoke
 a fix-skill); ADR-propagation alignment is judged by reading each ADR's
-`Status` + `Decision` — design-workspace coherence (features + UISpec + horizontal
+`Status` + `Decision` — design-workspace coherence (features + screen spec + horizontal
 prototype + specs) is required at *every* maturity, and higher maturities add
 *external* evidence checkable only by pointer (`prototyped` → a `**Prototype:**`
 pointer to an external functional prototype; `implemented` → a codebase reference);
@@ -101,9 +101,9 @@ and the output uses the exact skeleton in **Output format** below.
 
 For each module in scope, the module review performs:
 - Features structure (pure `_index.md`, use-case files, index completeness)
-- UISpec structure (folder vs legacy monolith, pattern/component compliance)
+- screen spec structure (folder vs legacy monolith, pattern/component compliance)
 - Quality checks (no historical language, IDs correct, wikilinks resolve)
-- Cross-layer coverage (features ↔ UISpec ↔ prototype ↔ specs)
+- Cross-layer coverage (features ↔ screen spec ↔ prototype ↔ specs)
 - Drift consolidation and overengineering detection
 
 ### Phase 3 — Cross-module consistency
@@ -113,7 +113,7 @@ For each module in scope, the module review performs:
 - **ADR references:** all `[[adr-xxx]]` wikilinks resolve to files in
   `.inspire_kb/01_adr/`.
 - **ADR propagation alignment:** at *every* maturity, an ADR's consequences must
-  cohere across the **in-repo design workspace** (features + UISpec + horizontal
+  cohere across the **in-repo design workspace** (features + screen spec + horizontal
   prototype + specs) — a contradiction there is critical. Higher maturities add
   *external* evidence checked only by pointer, never by inspecting the external
   artifact: `prototyped` needs a `**Prototype:**` pointer; `implemented` a codebase
@@ -130,16 +130,16 @@ For each module in scope, the module review performs:
 - `.inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms).
 - `.inspire_kb/02_features/_index.md` lists all modules.
 
-**UISpec tree:**
-- `.inspire_kb/05_ui/design-system.md` exists.
-- `.inspire_kb/05_ui/patterns/` and `components/` exist with `_index.md` + files.
+**screen spec tree:**
+- `.inspire_kb/05_screens/design-system.md` exists.
+- `.inspire_kb/05_screens/patterns/` and `components/` exist with `_index.md` + files.
 - Every pattern/component referenced by a screen exists; no orphans (on disk, not
   referenced).
 - Per module: either the folder structure OR a legacy monolith, never both.
 
 ### Phase 5 — Prototype component adoption
 
-- Enumerate the shared components catalogued in `.inspire_kb/05_ui/components/`.
+- Enumerate the shared components catalogued in `.inspire_kb/05_screens/components/`.
 - For each, count adoption in the horizontal prototype (`/prototype`): pages using
   the canonical component vs pages still inlining an equivalent.
 - Report consolidated drift. High drift is `important` (not critical) — migration
@@ -159,7 +159,7 @@ For each module in scope, the module review performs:
 
 ## Scope
 - Modules reviewed: {list}
-- UISpec migration status: {N}/{total} migrated
+- screen spec migration status: {N}/{total} migrated
 
 ## Summary
 {X} issues: {critical} critical, {important} important, {minor} minor
@@ -193,7 +193,7 @@ Drift items pending: {N}
 5. **Actionable.** Every finding suggests the skill to invoke.
 6. **Delegate deep dives.** For complex feature-level issues, suggest
    `/inspire_feature review {id}`.
-7. **Migration is not failure.** Legacy UISpec monoliths and pending prototype
+7. **Migration is not failure.** Legacy screen spec monoliths and pending prototype
    drift are `important` (migrate), not `critical`, unless they contradict an ADR
    within its maturity's reach.
 8. **Consult the task tracker.** Known items in `.inspire_kb/06_tracker/tickets/`
@@ -201,7 +201,7 @@ Drift items pending: {N}
    the Kanban via `node .inspire_kb/06_tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
-   - UISpec drift → `/inspire_ui`
+   - screen spec drift → `/inspire_screens`
    - Feature drift or ADR misalignment → `/inspire_module update` or
      `/inspire_workspace adr update`
 
@@ -228,7 +228,7 @@ same next number). Slug-only filenames are collision-free by construction
 **Status:** design
 **Modules affected:** [[module-a]], [[module-b]]
 <!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
-     design = the design workspace (features + UISpec + horizontal prototype + specs).
+     design = the design workspace (features + screen spec + horizontal prototype + specs).
      prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
        NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
 
@@ -322,7 +322,7 @@ moves the file; `task show` / `task update` look in `tickets/` first, then
 ```yaml
 ---
 id: TASK-a3k7m2                    # 6 chars base36 random, must match filename
-title: Migrate UISpec X to pattern-driven
+title: Migrate screen spec X to pattern-driven
 created: 2026-05-07                # YYYY-MM-DD
 updated: 2026-05-07                # auto-updated by skill on each change
 reporter: "@handle"                # git handle
@@ -331,7 +331,7 @@ closed_at: null                    # YYYY-MM-DD when status ∈ {Done, Cancelled
 epic: {module-or-area}             # see enum below
 size: M                            # S | M | L | XL
 importance: High                   # Very Low | Low | Mid | High | Very High
-skills: [prototype, ui]            # which layer skills execute the work
+skills: [prototype, screens]            # which layer skills execute the work
 status: Open                       # Open | Done | Cancelled
 blocked_by: []                     # list of ticket / feature / ADR IDs
 related_to: [TASK-xxx]             # list of IDs
@@ -353,7 +353,7 @@ related_to: [TASK-xxx]             # list of IDs
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  object | ui | prototype | workspace` — which layer skills cover the work. `[]`
+  object | screens | prototype | workspace` — which layer skills cover the work. `[]`
   means the work doesn't map to a layer skill (tooling, ops, packaging).
 
 ### Skill-feedback tickets (convention)
@@ -500,7 +500,7 @@ Validate the vault structure at the top level (not module-scoped).
 3. **Only `implemented` ADRs are immutable in content.** Supersede to change their
    `Decision`; `design` / `prototyped` ADRs are refined in place with `adr update`.
 4. **Propagate to the maturity's reach.** Design-workspace coherence (features +
-   UISpec + horizontal prototype + specs) is required at every maturity;
+   screen spec + horizontal prototype + specs) is required at every maturity;
    `prototyped` adds a pointer to an external functional prototype, `implemented` a
    codebase reference. The skill surfaces gaps within that reach.
 5. **Grep references on rename/supersede.** Always scan the vault when renaming an

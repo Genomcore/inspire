@@ -28,7 +28,7 @@ even after the spike repo goes stale.
 - Capture learnings from the horizontal prototype into `horizontal.md`.
 - Register a new **vertical spike** (external repo) and import its learnings.
 - Refresh a vertical's learnings, or mark it archived.
-- Resolve UISpec drift the prototype surfaced.
+- Resolve screen spec drift the prototype surfaced.
 
 ## Building the horizontal prototype
 
@@ -39,28 +39,28 @@ whole product legible end to end so you can judge whether it's the right thing.
 Build it **pattern-driven from the KB**. Before writing code, read the layers
 that describe the screen:
 
-1. **UISpec screen** — `.inspire_kb/05_ui/{module}/{screen}.md` — the source of
+1. **screen spec screen** — `.inspire_kb/05_screens/{module}/{screen}.md` — the source of
    truth for what to build (features covered, pattern, data, slots, components).
-2. **Pattern** — `.inspire_kb/05_ui/patterns/{pattern}.md` — layout, slots, behavior.
-3. **Components** — `.inspire_kb/05_ui/components/{component}.md` — the shared
+2. **Pattern** — `.inspire_kb/05_screens/patterns/{pattern}.md` — layout, slots, behavior.
+3. **Components** — `.inspire_kb/05_screens/components/{component}.md` — the shared
    catalog. Adopt these; don't reinvent.
-4. **Design system** — `.inspire_kb/05_ui/design-system.md` — tokens, type,
+4. **Design system** — `.inspire_kb/05_screens/design-system.md` — tokens, type,
    density. Never redefine these per screen.
 5. **Intent & contract** — the feature in `.inspire_kb/02_features/{module}/…`
    and, where relevant, the specs in `.inspire_kb/04_specs/…`.
 
 > **Stack-agnostic.** This skill does not assume a framework. The project's own
 > stack, component catalog, conventions and known pitfalls live in its KB
-> (`.inspire_kb/00_bootstrap` and `.inspire_kb/05_ui`), not here. Read those
+> (`.inspire_kb/00_bootstrap` and `.inspire_kb/05_screens`), not here. Read those
 > first on a real project.
 
 ## Rules
 
-1. **Specs are the source of truth.** Build what the UISpec says — no extra
+1. **Specs are the source of truth.** Build what the screen spec says — no extra
    screens, tabs, or features "for completeness". If something's missing, fix the
-   spec first (via `/inspire_ui`), don't invent scope in the prototype.
+   spec first (via `/inspire_screens`), don't invent scope in the prototype.
 2. **Adopt, don't reinvent.** Before writing new UI, check the component catalog
-   (`05_ui/components`) and existing prototype code for something canonical.
+   (`05_screens/components`) and existing prototype code for something canonical.
 3. **Mocked, not real.** The horizontal prototype *visualizes* decisions; it does
    not implement backends, auth, or persistence beyond what's needed to learn.
 4. **Verify by running, not just building.** A green build is not a working
@@ -70,7 +70,7 @@ that describe the screen:
    (use the `run` / `verify` skills).
 5. **Capture the learning.** Learnings are the deliverable — see below.
 6. **Propagation check.** If a prototype change alters behavior or structure the
-   UISpec describes, ask the user whether to propagate it back via `/inspire_ui`.
+   screen spec describes, ask the user whether to propagate it back via `/inspire_screens`.
    This is bilateral: a change to one layer must reach the layer it affects.
 
 ## Capturing learnings (the deliverable)
@@ -79,13 +79,13 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 
 - **Horizontal** → add an entry to `.inspire_kb/03_prototypes/horizontal.md`:
   one insight per line, and **link the artifacts it affects**
-  (`02_features/…`, `04_specs/…`, `05_ui/…`).
+  (`02_features/…`, `04_specs/…`, `05_screens/…`).
 - **Vertical** → in that spike's `verticals/{name}.md`, write the learning so it
   **stands on its own** — useful even if the external repo later disappears.
 - **Recurring class of problem.** If a fix reveals something that will recur (a
   stack quirk, a reusable helper, a canonical component), record it where it
   belongs — project stack pitfalls in `00_bootstrap`, reusable UI in
-  `05_ui/components` via `/inspire_ui`. **Surface the proposal to the user; don't
+  `05_screens/components` via `/inspire_screens`. **Surface the proposal to the user; don't
   silently edit shared artifacts**, and don't let the insight evaporate.
 
 ## Registering a vertical spike
@@ -100,7 +100,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 
 ## Verify checklist
 
-- Every horizontal screen traces to a UISpec (or declares "not implemented yet").
+- Every horizontal screen traces to a screen spec (or declares "not implemented yet").
 - No reinvented UI that duplicates the shared component catalog.
 - The affected route **runs**, not just builds.
 - Learnings are captured for anything the prototype clarified.
@@ -109,7 +109,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 
 ## Related skills
 
-- `/inspire_ui` — the UISpecs, patterns and components the horizontal builds from.
+- `/inspire_screens` — the screen specs, patterns and components the horizontal builds from.
 - `/inspire_object` — the specs (`04_specs`) behind the screens.
 - `/inspire_feature` / `/inspire_module review` — feature coverage and module
   consistency before a PR.

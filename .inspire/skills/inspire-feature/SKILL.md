@@ -10,7 +10,7 @@ description: "Lifecycle of a feature / use case: create / review / update / dele
 A **feature** is a use case, captured as a file
 `.inspire_kb/02_features/{module}/{use-case}.md` and listed in that module's
 `_index.md`. This skill owns feature-scoped operations and their propagation
-across the KB layers: UISpec (`05_ui`), prototype (`03_prototypes` + `/prototype`),
+across the KB layers: screens (`05_screens`), prototype (`03_prototypes` + `/prototype`),
 specs (`04_specs`), and ADRs (`01_adr`).
 
 ## Invocation
@@ -33,8 +33,8 @@ Reviews one feature across all layers. Runs inline (no agents).
    `.inspire_kb/02_features/{module}/`. Read: description, actor/personas,
    dependencies, priority, state, ADRs referenced. Identify the module from the
    folder.
-2. **UISpec coverage.** In `.inspire_kb/05_ui/{module}/`, search each screen's
-   `**Features:**` line for this feature ID; cross-reference the UISpec `_index.md`
+2. **screen spec coverage.** In `.inspire_kb/05_screens/{module}/`, search each screen's
+   `**Features:**` line for this feature ID; cross-reference the screen spec `_index.md`
    coverage table. Flag if no screen covers a UI-facing feature; note "No UI
    expected" for backend/infrastructure features.
 3. **Prototype coverage.** For each covering screen, verify it is reflected in the
@@ -65,7 +65,7 @@ Reviews one feature across all layers. Runs inline (no agents).
 | Layer | Status | Detail |
 |-------|--------|--------|
 | Feature (02_features) | ✅ | {file} |
-| UISpec (05_ui) | ✅/❌/N/A | Screens: {list} |
+| screen spec (05_screens) | ✅/❌/N/A | Screens: {list} |
 | Prototype (/prototype) | ✅/⚠️/❌/N/A | Drift: {count} |
 | Specs (04_specs) | ✅/❌/N/A | Actions: {list} |
 | ADR alignment | ✅/⚠️/❌ | |
@@ -87,7 +87,7 @@ Reviews ALL features of a module in parallel.
    single-feature review.
 4. Collect results.
 5. **Synthesize** a consolidated report: aggregated coverage matrix, issues grouped
-   by severity, and patterns (e.g. "5 features missing UISpec coverage").
+   by severity, and patterns (e.g. "5 features missing screen spec coverage").
 6. If issues are found, present a **correction plan**: ordered actions grouped by
    the skill to invoke.
 
@@ -100,7 +100,7 @@ Reviews ALL features of a module in parallel.
 {N} features reviewed: {list}
 
 ## Aggregated Coverage Matrix
-| Feature | 02_features | UISpec | Prototype | Specs | ADR |
+| Feature | 02_features | screen spec | Prototype | Specs | ADR |
 |---------|-------------|--------|-----------|-------|-----|
 | PRV-01  | ✅          | ✅     | ⚠️ (3)    | ❌    | ✅  |
 | ...     |             |        |           |       |     |
@@ -112,7 +112,7 @@ Reviews ALL features of a module in parallel.
 ### Critical / Important / Minor
 
 ## Correction Plan
-1. `/inspire_ui` — Add screens for: {list}
+1. `/inspire_screens` — Add screens for: {list}
 2. `/inspire_prototype` — Adopt components for: {list}
 ```
 
@@ -161,7 +161,7 @@ Create a new feature/use-case file in a module. **Required arg:**
 4. **Update the module `_index.md`** — add the row to the use-case index and fix
    the summary totals.
 5. **Report next steps:**
-   - If UI-facing → `/inspire_ui` to add a screen spec.
+   - If UI-facing → `/inspire_screens` to add a screen spec.
    - If it describes a behavior/endpoint → `/inspire_object define
      {module}::{entity}::{verb}` to author the action descriptor.
    - Prototype → `/inspire_prototype` when ready.
@@ -191,9 +191,9 @@ Remove a feature and clean up all references.
 2. Delete the use-case file
    (`.inspire_kb/02_features/{module}/{feature-id}.md`).
 3. Remove its row from the module `_index.md` and fix the summary totals.
-4. **UISpec:** remove the feature ID from any screen's `**Features:**` line; if a
-   screen's only feature was this one, flag it for removal (that's `/inspire_ui`'s
-   job) and update the UISpec `_index.md` coverage table.
+4. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
+   screen's only feature was this one, flag it for removal (that's `/inspire_screens`'s
+   job) and update the screen spec `_index.md` coverage table.
 5. **Prototype:** remove references in `/prototype`; prune stale learnings in
    `.inspire_kb/03_prototypes/`.
 6. **ADRs:** grep `.inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
@@ -234,7 +234,7 @@ Use this template at `.inspire_kb/02_features/{module}/{feature-id}.md`:
 
 ## Rules
 
-1. **The use-case file is the source of truth.** Everything else (UISpec,
+1. **The use-case file is the source of truth.** Everything else (screen spec,
    prototype, specs) references or realizes it.
 2. **One file per use case.** The filename matches the feature ID.
 3. **Use cases are functional, not technical.** They describe WHAT from the user's

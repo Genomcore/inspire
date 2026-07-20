@@ -13,7 +13,7 @@ product you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
   - `.inspire/skills/` — the 7 agent skills (`inspire-*`): the judgment half
-    (bootstrap · module · feature · object · prototype · ui · workspace).
+    (bootstrap · module · feature · object · prototype · screens · workspace).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_specs`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
@@ -21,7 +21,7 @@ product you build on top of it.
   - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a
   project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
-  `02_features`, `03_prototypes`, `04_specs`, `05_ui`, `06_tracker`); each folder
+  `02_features`, `03_prototypes`, `04_specs`, `05_screens`, `06_tracker`); each folder
   carries a README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation; open
   `.manual/index.html`).
@@ -80,7 +80,7 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
 Remaining:
 
 - [ ] Provide the remaining starter conventions a real project supplies (module ID
-      prefixes, a starter `patterns/` + `05_ui/design-system.md`).
+      prefixes, a starter `patterns/` + `05_screens/design-system.md`).
 - [ ] Publish the microsite.
 
 ## Provenance

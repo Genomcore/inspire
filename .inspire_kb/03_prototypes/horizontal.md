@@ -25,7 +25,7 @@ or mocked each one is._
 _The point of the prototype. One entry per insight — what we learned, and what it
 changes. Link the affected artifacts._
 
-- **{insight}** → affects [[02_features/{module}/{use-case}]] / [[04_specs/…]] / [[05_ui/…]]
+- **{insight}** → affects [[02_features/{module}/{use-case}]] / [[04_specs/…]] / [[05_screens/…]]
 
 ## Open questions
 

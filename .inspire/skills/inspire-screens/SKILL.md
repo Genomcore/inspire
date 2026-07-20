@@ -1,9 +1,9 @@
 ---
-name: inspire-ui
-description: "Create and validate UI specifications using a pattern-driven approach. Screens instantiate shared patterns and use shared components. Use when designing or reviewing an application's screens against the UI layer."
+name: inspire-screens
+description: "Create and validate screens (a screen is the UI spec for one view) using a pattern-driven approach. Screens instantiate shared patterns and use shared components. Use when designing or reviewing an application's screens."
 ---
 
-# /inspire_ui — UI Specifications (Pattern-Driven)
+# /inspire_screens — Screen Specifications (Pattern-Driven)
 
 ## When to use
 
@@ -13,11 +13,11 @@ description: "Create and validate UI specifications using a pattern-driven appro
   instantiate — **including reverse drift** where the prototype is ahead of the spec
 - **Identifying extraction opportunities** — UI blocks that should become shared
   components or patterns
-- **Migrating legacy UISpec monoliths** to the screen-per-file structure
+- **Migrating legacy screen spec monoliths** to the screen-per-file structure
 
 ## Architecture
 
-Four levels under `.inspire_kb/05_ui/`:
+Four levels under `.inspire_kb/05_screens/`:
 
 | Level | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|
@@ -88,7 +88,7 @@ sub-sections of a single settings form.
 
 ## When validating an existing screen
 
-### Triangulation matrix — Features ↔ UISpec ↔ Prototype
+### Triangulation matrix — Features ↔ screen spec ↔ Prototype
 
 Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 
@@ -96,12 +96,12 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 |------|--------------------|-----------|--------|
 | **Features ↔ Prototype** | Feature described, not in the prototype | Features | "Code behind spec". Suggest `/inspire_prototype`. |
 | **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire_feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
-| **UISpec ↔ Prototype** | UISpec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_ui validate\|migrate`. Do NOT change the prototype — risks losing iterations. |
-| **UISpec ↔ Prototype** | Prototype renders UI not in the UISpec | Prototype | Spec stale (reverse drift). Update the spec. |
-| **Patterns / components / design-system / UX ADRs** | Prototype or UISpec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + accepted UX ADRs are authoritative for visual/structural conventions. |
+| **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_screens validate\|migrate`. Do NOT change the prototype — risks losing iterations. |
+| **screen spec ↔ Prototype** | Prototype renders UI not in the screen spec | Prototype | Spec stale (reverse drift). Update the spec. |
+| **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + accepted UX ADRs are authoritative for visual/structural conventions. |
 
 **Why the prototype wins on functional drift:** prototypes evolve through user
-iterations. The UISpec captures intent at write-time; the prototype captures it at
+iterations. The screen spec captures intent at write-time; the prototype captures it at
 last-touch. Removing user-validated functionality by "fixing" the prototype to
 match a stale spec is riskier than updating the spec.
 
@@ -139,7 +139,7 @@ When uncertain which layer a finding belongs to, ask the user.
 
 ### Live prototype browse — reverse-drift detection
 
-Features often land in the prototype before the UISpec catches up. `validate` and
+Features often land in the prototype before the screen spec catches up. `validate` and
 `audit` should **run the prototype** when possible to surface this **reverse
 drift** (prototype ahead of spec).
 
@@ -158,7 +158,7 @@ drift** (prototype ahead of spec).
 5. **Report reverse drift separately** from forward drift, with severity
    (Important = a whole feature/tab missing from the spec; Minor = a column, label,
    or control).
-6. **Resolution:** reverse-drift findings suggest `/inspire_ui {validate|migrate}`
+6. **Resolution:** reverse-drift findings suggest `/inspire_screens {validate|migrate}`
    to update the spec (the prototype is already correct) — the spec catches up to
    the code, not the other way around.
 
@@ -183,7 +183,7 @@ prototype before ending the turn.
    cosmetic (mention, don't insist), or no-prototype-yet (skip, note it's ready).
 3. **Ask, don't assume.** Close the turn with a clear question, e.g.:
 
-   > La UISpec de `{module}/{screen}` ha cambiado: {resumen}. El prototipo queda
+   > La screen spec de `{module}/{screen}` ha cambiado: {resumen}. El prototipo queda
    > desalineado en: {drift}. ¿Propago ahora con `/inspire_prototype`, o en otro
    > turno?
 
@@ -194,7 +194,7 @@ prototype before ending the turn.
 
 ## When migrating a legacy monolith
 
-Split an old monolithic UISpec into the new structure:
+Split an old monolithic screen spec into the new structure:
 
 1. Read the monolith; identify screens.
 2. Create `{module}/_index.md` — consolidate nav, route map, feature coverage.
@@ -234,7 +234,7 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 8. **No historical language** — specs describe the present.
 9. **Route convention** — `/{module}/...`, nested routes for detail/edit/new.
 10. **Validate before merge** — run `/inspire_module review` before any PR that
-    modifies UISpec files.
+    modifies screen spec files.
 11. **Respect accepted UX ADRs.** Screens must not contradict an accepted UX
     decision in `.inspire_kb/01_adr/`; flag any that do. (Project-specific screen
     conventions live in `patterns/` + `design-system.md`, not in this skill.)
@@ -243,8 +243,8 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 
 ## Skill invocations
 
-- `/inspire_ui create {module}/{screen}` — scaffold a new screen with pattern selection
-- `/inspire_ui validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
-- `/inspire_ui migrate {module}` — migrate a legacy monolith to the new structure
-- `/inspire_ui extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
-- `/inspire_ui audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities
+- `/inspire_screens create {module}/{screen}` — scaffold a new screen with pattern selection
+- `/inspire_screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
+- `/inspire_screens migrate {module}` — migrate a legacy monolith to the new structure
+- `/inspire_screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
+- `/inspire_screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities

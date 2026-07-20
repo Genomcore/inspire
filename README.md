@@ -25,7 +25,7 @@ product you build on top.
 | Path | What it is |
 |---|---|
 | [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills), `bin/` (the validators + fixtures), `hooks/` (the git-time hooks), and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
-| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_ui` · `06_tracker`). Each folder documents its own purpose and layout. |
+| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_screens` · `06_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Open `.manual/index.html` in a browser. |
 | [`prototype/`](prototype/) | The **horizontal prototype** (product-side, non-dot) — the wide/shallow/mocked working model of the whole product. Its learnings live in `.inspire_kb/03_prototypes/`; verticals live in external repos. |
 | [`source/`](source/) | The **production monorepo** (product-side, non-dot) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
@@ -54,12 +54,12 @@ guardrail layer wholesale by cloning this repo and filling in `.inspire_kb/`.
 The skills, hooks and validators are renamed (`inspire-*`), rewired to the
 `.inspire_kb/` layout, parameterized via `SDD_SPEC_ROOT`, and **stripped of
 OpenBIMS domain vocabulary** — they speak the generic INSPIRE model (features,
-specs, UISpecs, the horizontal prototype at `/prototype`, external verticals).
+specs, screen specs, the horizontal prototype at `/prototype`, external verticals).
 
 Instantiation is one command (`bash .inspire/install.sh`), and the foundation
 ([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) ships with a sensible
 default. What each project still supplies is its own content: module ID prefixes
-and a starter `05_ui/patterns/` + `design-system.md`. See the Roadmap.
+and a starter `05_screens/patterns/` + `design-system.md`. See the Roadmap.
 
 ### Wiring the guardrails into a project
 
@@ -96,7 +96,7 @@ guardrail layer.
 - [x] Strip OpenBIMS domain prose from all skills — the runtime speaks the generic INSPIRE model.
 - [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`) and add the `inspire-bootstrap` skill to configure them.
-- [ ] Provide the remaining starter conventions (module ID prefixes, a starter `patterns/` + `05_ui/design-system.md`).
+- [ ] Provide the remaining starter conventions (module ID prefixes, a starter `patterns/` + `05_screens/design-system.md`).
 - [ ] Publish the microsite.
 
 ---

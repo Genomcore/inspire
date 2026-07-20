@@ -14,7 +14,7 @@ reads before working — the base context the rest of the KB assumes.
 
 Both start seeded with a **sensible default** (the stack + theme of the OpenBIMS
 reference implementation). Reconfigure them for your project with
-`/inspire_bootstrap` — every downstream layer (specs, UISpecs, the prototype,
+`/inspire_bootstrap` — every downstream layer (specs, screen specs, the prototype,
 production code) builds on what is declared here.
 
 > Changing a load-bearing choice here (a framework, the primary color) is an

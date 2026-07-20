@@ -6,7 +6,7 @@ status: default          # default (abstracted from the OpenBIMS mockup) → ada
 # Design system (theme)
 
 The basic design system — the single source of truth for theme, typography,
-color, density and layout. UISpecs ([`05_ui`](../05_ui)) and the prototype
+color, density and layout. screen specs ([`05_screens`](../05_screens)) and the prototype
 instantiate these tokens; they do **not** redefine them. Configure with
 `/inspire_bootstrap`.
 
@@ -79,4 +79,4 @@ add or a symptom of local over-specialization.
 - Top bar `h-14`, `border-b border-slate-200` (launcher + logo left; search ⌘K +
   avatar right).
 - Content max-width and page scaffold are defined per pattern in
-  [`05_ui/patterns/`](../05_ui/patterns); screens don't redefine them.
+  [`05_screens/patterns/`](../05_screens/patterns); screens don't redefine them.

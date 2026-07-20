@@ -10,7 +10,7 @@ description: "Lifecycle of a module: create / review / update / scan / delete a 
 A **module** is a folder `.inspire_kb/02_features/{module}/` that holds an
 `_index.md` (the module overview + use-case index) and **one file per use case**
 (`{use-case}.md`). This skill owns module-scoped operations and their propagation
-across the KB layers: features (`02_features`), UISpecs (`05_ui`), the prototype
+across the KB layers: features (`02_features`), screen specs (`05_screens`), the prototype
 (`03_prototypes` + `/prototype`), specs (`04_specs`), and ADRs (`01_adr`).
 
 ## Invocation
@@ -44,13 +44,13 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
   prefix (declared in the module `_index.md` / the project's `00_bootstrap`
   conventions).
 
-### 2. UISpec structure
+### 2. screen spec structure
 
-- Folder `.inspire_kb/05_ui/{module}/` with `_index.md` + one file per screen.
+- Folder `.inspire_kb/05_screens/{module}/` with `_index.md` + one file per screen.
 - `_index.md` contains the route map + feature-coverage table; every screen in
   the map exists on disk, and every screen file is referenced in the map.
 - Every screen header carries `**Features:**` and `**Pattern:**`; every pattern
-  resolves to a file in `.inspire_kb/05_ui/patterns/` (or `bespoke` with
+  resolves to a file in `.inspire_kb/05_screens/patterns/` (or `bespoke` with
   justification).
 - No screen redefines design tokens (those live in `design-system.md`); no inline
   mock data (reference the data source); each screen stays focused (~250 lines).
@@ -66,9 +66,9 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 
 ### 4. Cross-layer coverage
 
-- **Features ↔ UISpec:** every feature with UI implications has a screen; every
+- **Features ↔ screen spec:** every feature with UI implications has a screen; every
   screen's `**Features:**` line references features that exist in `02_features`;
-  the UISpec `_index.md` coverage table aligns with the actual screens.
+  the screen spec `_index.md` coverage table aligns with the actual screens.
 - **Features ↔ Prototype:** features meant to appear in the horizontal prototype
   are reflected at `/prototype`, and what building them taught is captured in
   `.inspire_kb/03_prototypes/`.
@@ -120,7 +120,7 @@ component adoption > cosmetic.
 - Use-case files: {list}
 - Index accuracy: {ok | N mismatches}
 
-## UISpec Structure
+## screen spec Structure
 - Pattern usage: {list} | {bespoke count}
 - Component usage: {list}
 
@@ -143,7 +143,7 @@ prefix (e.g. `MYM`), and a description.
    - `_index.md` with an overview skeleton + an empty use-case index table.
 2. **Register** the module in the top-level `.inspire_kb/02_features/_index.md`
    (if the project keeps one).
-3. **UISpec folder:** `.inspire_kb/05_ui/{module}/_index.md` — empty route map +
+3. **screen spec folder:** `.inspire_kb/05_screens/{module}/_index.md` — empty route map +
    feature-coverage tables. No screens yet.
 4. Record the module's ID prefix + conventions where the project keeps them (the
    module `_index.md` and/or `.inspire_kb/00_bootstrap`).
@@ -158,7 +158,7 @@ Modify an existing module. Use for: adding/removing use cases, renaming a featur
 ID globally, restructuring, or realigning after a new ADR.
 
 Operate transactionally:
-1. Read the current state (features + UISpec + specs).
+1. Read the current state (features + screen spec + specs).
 2. Present the diff proposal to the user.
 3. On approval, apply edits across the affected layers.
 4. Run `review {module}` to verify no drift was introduced.
@@ -235,7 +235,7 @@ Remove a module across all layers. Use with caution.
 
 1. **Confirm** with the user: list every file and feature about to be deleted.
 2. **Features:** delete `.inspire_kb/02_features/{module}/`.
-3. **UISpec:** delete `.inspire_kb/05_ui/{module}/`.
+3. **screen spec:** delete `.inspire_kb/05_screens/{module}/`.
 4. **Prototype:** remove the module's screens and routes from `/prototype`; prune
    any now-stale learnings in `.inspire_kb/03_prototypes/`.
 5. **Specs:** delete `.inspire_kb/04_specs/{module}/`.
@@ -255,7 +255,7 @@ Remove a module across all layers. Use with caution.
 3. **`update` and `delete` require an explicit plan** presented to the user before
    any edit.
 4. **Propagation is mandatory.** A module operation that touches features but
-   leaves UISpec / prototype / specs inconsistent is a bug — use the cross-layer
+   leaves screen spec / prototype / specs inconsistent is a bug — use the cross-layer
    propagation logic.
 5. **Pending drift is acceptable.** Drift items in `## Prototipo actual` sections
    are informational; don't block PRs unless they contradict an accepted ADR.
@@ -264,7 +264,7 @@ Remove a module across all layers. Use with caution.
    `node .inspire_kb/06_tracker/serve.mjs`). Known items in
    `.inspire_kb/06_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
 7. **Actionable findings.** Every issue names the skill to invoke for the fix:
-   - UISpec drift → `/inspire_ui`
+   - screen spec drift → `/inspire_screens`
    - Prototype drift → `/inspire_prototype`
    - Feature-level work → `/inspire_feature`
    - ADR or global concerns → `/inspire_workspace`

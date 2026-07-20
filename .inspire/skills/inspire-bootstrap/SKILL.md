@@ -15,7 +15,7 @@ This skill owns the **bootstrap layer** —
   density, layout tokens).
 
 These are the foundation every other layer reads: specs ([`04_specs`](../../.inspire_kb/04_specs)),
-UISpecs ([`05_ui`](../../.inspire_kb/05_ui)), the prototype ([`/prototype`](../../prototype))
+screen specs ([`05_screens`](../../.inspire_kb/05_screens)), the prototype ([`/prototype`](../../prototype))
 and production code ([`/source`](../../source)) all build on what is declared here.
 The template seeds both with a sensible default (the OpenBIMS reference stack +
 theme); a new project reconfigures them here.
@@ -72,8 +72,8 @@ values are yours to set.
    density, and global layout tokens.
 3. Present a diff and apply on approval.
 4. `theme.md` is the **source of truth** for the design system. The
-   `05_ui/design-system.md` and the prototype must not redefine these tokens — if a
-   token changes, surface the propagation to `/inspire_ui` and `/inspire_prototype`.
+   `05_screens/design-system.md` and the prototype must not redefine these tokens — if a
+   token changes, surface the propagation to `/inspire_screens` and `/inspire_prototype`.
 
 ### Abstracting a theme from a mockup's CSS
 
@@ -91,7 +91,7 @@ A fast way to seed `theme.md` is to **derive it from an existing mockup's CSS**:
 
 - `stack.md` and `theme.md` exist and parse.
 - No load-bearing stack choice contradicts an accepted ADR in `01_adr`.
-- The theme tokens the UISpecs (`05_ui/design-system.md`) and the prototype use
+- The theme tokens the screen specs (`05_screens/design-system.md`) and the prototype use
   trace back to `theme.md` — flag divergence as drift.
 - Flag any layer/token still on the seeded default when the project has clearly
   moved past it.
@@ -101,7 +101,7 @@ A fast way to seed `theme.md` is to **derive it from an existing mockup's CSS**:
 1. **`review` is read-only.** `init` / `stack` / `theme` present a plan before
    writing.
 2. **Bootstrap is upstream of everything.** A change here can ripple to specs,
-   UISpecs, the prototype and production code — surface the propagation; don't edit
+   screen specs, the prototype and production code — surface the propagation; don't edit
    those layers silently.
 3. **Load-bearing choices are ADRs.** Replacing a framework or the primary color is
    an architectural decision recorded in `01_adr` (update to add, supersede to
@@ -113,6 +113,6 @@ A fast way to seed `theme.md` is to **derive it from an existing mockup's CSS**:
 
 ## Related skills
 
-- `/inspire_ui` — instantiates the theme's tokens into patterns/components.
+- `/inspire_screens` — instantiates the theme's tokens into patterns/components.
 - `/inspire_prototype` — builds the horizontal prototype on this stack + theme.
 - `/inspire_workspace adr create` — record load-bearing stack/theme decisions.
