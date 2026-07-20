@@ -23,8 +23,8 @@ product you build on top of it.
   project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
   `02_features`, `03_prototypes`, `04_specs`, `05_screens`, `06_tracker`); each folder
   carries a README explaining its purpose and layout.
-- `.manual/` — the INSPIRE **microsite / manual** (canonical explanation; open
-  `.manual/index.html`).
+- `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
+  published at inspire.openbims.dev; source here — open `.manual/index.html`).
 - `prototype/` — the **horizontal prototype** (product-side, non-dot): the wide,
   shallow, mocked working model of the whole product. Its *learnings* live in
   `.inspire_kb/03_prototypes/horizontal.md`; vertical prototypes live in their own
@@ -76,7 +76,7 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
       to instantiate it into `.claude/` on a fork.
 - [x] Seed `00_bootstrap` (`stack.md` + `theme.md`, defaulted from the OpenBIMS
       reference) and add the `inspire-bootstrap` skill to configure them.
-- [x] Publish the microsite (`.manual/`).
+- [x] Publish the microsite (`.manual/`) — live at inspire.openbims.dev.
 
 Remaining:
 
