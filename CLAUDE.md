@@ -19,6 +19,10 @@ product you build on top of it.
   carries a README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation; open
   `.manual/index.html`).
+- `prototype/` — the **horizontal prototype** (product-side, non-dot): the wide,
+  shallow, mocked working model of the whole product. Its *learnings* live in
+  `.inspire_kb/03_prototypes/horizontal.md`; vertical prototypes live in their own
+  external repos, indexed under `.inspire_kb/03_prototypes/verticals/`.
 - `bin/` — the validators + golden fixtures: the guardrail layer's mechanical
   half. Spec root is configurable via `SDD_SPEC_ROOT` (defaults to
   `.inspire_kb/04_specs`). Test suite: `bash bin/test/run-tests.sh`.
@@ -52,8 +56,10 @@ Remaining:
 - [ ] Reconcile the `inspire-module` / `inspire-feature` internal model (PDD +
       core/satellite + submodules) with the flatter
       `.inspire_kb/02_features/{module}/{use-case}.md` layout.
-- [ ] Generalize `inspire-prototype` for **multiple** prototypes (one horizontal
-      + N verticals) and reframe it around *creating knowledge*.
+- [ ] Rewrite the `inspire-prototype` skill to the defined model (horizontal code
+      at `/prototype` → learnings in the KB; vertical spikes in external repos,
+      linked + learnings imported). The KB structure for this is already in place;
+      the skill body is still the OpenBIMS React-console methodology.
 - [ ] Ship a runnable `.claude/` (or an instantiation script) that wires
       `.skills` → `.claude/skills`, `bin` → `.claude/bin`, and registers hooks.
 - [ ] Publish the microsite.
