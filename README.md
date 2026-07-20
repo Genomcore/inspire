@@ -19,16 +19,21 @@ is its **home** — where the methodology is documented and evolved — and a
 
 ## What's here
 
+The convention: **dotfolders are INSPIRE scaffolding**; non-dot dirs are the
+product you build on top.
+
 | Path | What it is |
 |---|---|
-| [`site/`](site/) | The INSPIRE **microsite** — the canonical explanation of the methodology. Open `site/index.html` in a browser. |
-| [`skills/`](skills/) | The agent **skills** — the operating manual each layer of the methodology runs on (module · feature · UI · mock-data · docs · object · workspace · prototype · video). |
+| [`.skills/`](.skills/) | The agent **skills** — the operating manual each layer of the methodology runs on (module · feature · object · prototype · ui · workspace). |
+| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_tech_stack` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_ui` · `06_tracker`). Each folder documents its own purpose and layout. |
+| [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Open `.manual/index.html` in a browser. |
 | [`hooks/`](hooks/) | Git-time **enforcement hooks** (`pre-commit`, `pre-pr`) that run the review at tool-call time. |
 | [`bin/`](bin/) | The **validators** — bash scripts that parse artifacts, evaluate rules, and emit structured findings. See [`bin/README.md`](bin/README.md). |
 
-`skills/`, `hooks/` and `bin/` together are the **guardrail layer**: the
+`.skills/`, `hooks/` and `bin/` together are the **guardrail layer**: the
 concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
-judgment, hooks + validators catch drift mechanically.
+judgment, hooks + validators catch drift mechanically. `.inspire_kb/` is the
+graph they operate on.
 
 ## The methodology in one breath
 
@@ -38,36 +43,35 @@ judgment, hooks + validators catch drift mechanically.
 - **Prototypes create clarity.** One *horizontal* prototype (wide, shallow, mocked) asks "is this the right thing?"; many *vertical* spikes (narrow, deep, functional) ask "can we build it as we think?".
 - **Knowledge lives in a navigable graph** of plain-text artifacts — the shared context between humans and agents, durable across regenerations of the code.
 
-For the full story, open [`site/index.html`](site/index.html).
+For the full story, open [`.manual/index.html`](.manual/index.html).
 
 ---
 
 ## Using this as a template
 
 The intent is that a new specification-driven project can adopt INSPIRE's
-guardrail layer wholesale. **Important:** this is a *faithful extraction, not
-yet generalized* — see the heads-up below.
+guardrail layer wholesale by cloning this repo and filling in `.inspire_kb/`.
+The structure, naming and paths are now generalized; **one caveat remains** —
+see below.
 
-### Heads-up: still OpenBIMS-flavored
+### Heads-up: skill prose is still being generalized
 
-The skills, hooks and validators are copied **verbatim** from OpenBIMS. They
-still speak OpenBIMS's domain:
+The skills, hooks and validators have been renamed (`inspire-*`) and rewired to
+the `.inspire_kb/` layout, and the validators are parameterized via
+`SDD_SPEC_ROOT`. What still carries OpenBIMS flavor is **domain prose inside the
+skills**: references to the React "console", the PDD / core-satellite /
+submodule vocabulary, and a few dangling links to OpenBIMS-only skills. Stripping
+that is the remaining evolution work (see Roadmap).
 
-- Skills are named `openbims-*` and reference OpenBIMS concepts (PDD, the SDD
-  module layout, the React console prototype, DuckDB mock data, the HTML manual).
-- The hooks derive the project root from `.claude/hooks/` and scope the review
-  to `spec/sdd/`; the validators expect the OpenBIMS SDD layout
-  (`spec/sdd/{module}/{entity}/…`).
+So today the skills are **very close to a drop-in** but should be skimmed for
+domain vocabulary before adoption.
 
-So today they are a **reference implementation to adapt**, not a drop-in.
-Generalizing them is the evolution work this repository exists to do (see
-Roadmap).
+### Wiring the guardrails into a project
 
-### Wiring the guardrails into a project (once adapted)
-
-1. Copy `skills/` → `<project>/.claude/skills/`
+1. Copy `.skills/` → `<project>/.claude/skills/`
 2. Copy `hooks/` → `<project>/.claude/hooks/` and `bin/` → `<project>/.claude/bin/`
-3. Register the hooks in `<project>/.claude/settings.json`:
+3. Copy `.inspire_kb/` → `<project>/.inspire_kb/` and start filling it in.
+4. Register the hooks in `<project>/.claude/settings.json`:
    ```json
    {
      "hooks": {
@@ -83,7 +87,7 @@ Roadmap).
      }
    }
    ```
-4. Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
+5. Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
 
 ---
 
@@ -97,10 +101,12 @@ guardrail layer.
 
 ## Roadmap
 
-- [ ] Generalize the skills: `openbims-*` → `inspire-*`, domain-neutral.
-- [ ] Decouple the validators from hard-coded `spec/sdd/` paths; make the SDD layout configurable.
-- [ ] Ship a runnable `.claude/` so a new project works by copy.
-- [ ] Extract the horizontal/vertical prototype conventions as reusable scaffolding.
+- [x] Rename the skills `openbims-*` → `inspire-*`.
+- [x] Decouple the validators/hooks from hard-coded `spec/sdd/` paths (rewired to `.inspire_kb/`, `SDD_SPEC_ROOT` configurable).
+- [x] Establish the `.inspire_kb/` knowledge-base skeleton.
+- [ ] Strip residual OpenBIMS domain prose from the skills (console, PDD/core-satellite vocabulary, dangling refs).
+- [ ] Generalize `inspire-prototype` for multiple prototypes (one horizontal + N verticals), focused on creating knowledge.
+- [ ] Ship a runnable `.claude/` (or an instantiation script) so a new project works by copy.
 - [ ] Publish the microsite.
 
 ---

@@ -8,33 +8,61 @@ full overview.
 
 ## Structure
 
-- `site/` — the INSPIRE microsite (canonical explanation; open `site/index.html`).
-- `skills/` — the 9 agent skills (the guardrail layer's judgment half).
+The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the
+product you build on top of it.
+
+- `.skills/` — the 6 agent skills (`inspire-*`): the guardrail layer's judgment
+  half (module · feature · object · prototype · ui · workspace).
+- `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a
+  project fills in. One layer per skill (`00_tech_stack`, `01_adr`,
+  `02_features`, `03_prototypes`, `04_specs`, `05_ui`, `06_tracker`); each folder
+  carries a README explaining its purpose and layout.
+- `.manual/` — the INSPIRE **microsite / manual** (canonical explanation; open
+  `.manual/index.html`).
+- `bin/` — the validators + golden fixtures: the guardrail layer's mechanical
+  half. Spec root is configurable via `SDD_SPEC_ROOT` (defaults to
+  `.inspire_kb/04_specs`). Test suite: `bash bin/test/run-tests.sh`.
 - `hooks/` — git-time enforcement hooks (`pre-commit`, `pre-pr`).
-- `bin/` — the validators + golden fixtures (the guardrail layer's mechanical half).
 
-`skills/`, `hooks/` and `bin/` sit at the **top level** (not under `.claude/`),
-so Claude Code does not auto-load them here — this repo is a reference/template,
-not a live workspace. Adoption = copy them into a target project's `.claude/`.
+### Template vs deployed layout
 
-## Pending — next session (to be opened from this repo)
+Skills reference each other and the validators via the **deployed** `.claude/`
+layout (`.claude/skills/…`, `.claude/bin/…`) — that is where they execute in a
+real project. In *this* template repo they stage at `.skills/` and `bin/`, so
+Claude Code does not auto-load them here. Instantiating a project means copying
+(or linking) `.skills/` → `.claude/skills/`, `bin/` → `.claude/bin/`, and wiring
+the hooks (see README → *Using this as a template*).
 
-The guardrail layer is a **faithful, not-yet-generalized** extraction from
-OpenBIMS. Generalizing it is the reason to open a working session here:
+## Pending — generalization work
 
-- [ ] Rename skills `openbims-*` → `inspire-*` and strip OpenBIMS domain content
-      (PDD, the SDD module layout, the React console, DuckDB mock data, the HTML manual).
-- [ ] Decouple the validators (`bin/`) and hooks from hard-coded `spec/sdd/`
-      paths; make the SDD layout configurable.
-- [ ] Ship a runnable `.claude/` so a new project works by copy.
-- [ ] Extract the horizontal/vertical prototype conventions as reusable scaffolding.
+The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
+
+- [x] Delete OpenBIMS-only skills (`video`, `docs`, `mockdata`).
+- [x] Rename skills `openbims-*` → `inspire-*` (directories, frontmatter, cross-refs).
+- [x] Decouple validators/hooks from hard-coded `spec/sdd/` — rewired to the
+      `.inspire_kb/` layout; `SDD_SPEC_ROOT` configurable; test suite green (43/43).
+- [x] Establish the `.inspire_kb/` KB skeleton and move `site/` → `.manual/`.
+
+Remaining:
+
+- [ ] Strip the residual OpenBIMS **domain content** from skill prose: the React
+      "console", the PDD / core-satellite / submodule vocabulary, the dangling
+      `openbims-console/-cli/-pdd/-portal` references, and the OpenBIMS-specific
+      bits of the workspace review report skeleton.
+- [ ] Reconcile the `inspire-module` / `inspire-feature` internal model (PDD +
+      core/satellite + submodules) with the flatter
+      `.inspire_kb/02_features/{module}/{use-case}.md` layout.
+- [ ] Generalize `inspire-prototype` for **multiple** prototypes (one horizontal
+      + N verticals) and reframe it around *creating knowledge*.
+- [ ] Ship a runnable `.claude/` (or an instantiation script) that wires
+      `.skills` → `.claude/skills`, `bin` → `.claude/bin`, and registers hooks.
 - [ ] Publish the microsite.
 
-Until then, treat `skills/`, `hooks/` and `bin/` as an OpenBIMS-flavored
-reference implementation to adapt, **not** a drop-in.
+Until the domain-strip lands, treat the skills as an OpenBIMS-flavored
+reference implementation to adapt, **not** a pure drop-in.
 
 ## Provenance
 
-- The microsite `site/` was **moved** here from `openbims-pdd` (removal PR: Genomcore/openbims-pdd#58).
-- `skills/`, `hooks/` and `bin/` were **copied verbatim** from `openbims-pdd/.claude/`; those copies remain in that repo untouched.
+- The microsite (now `.manual/`) was **moved** here from `openbims-pdd` (removal PR: Genomcore/openbims-pdd#58).
+- The skills (now `.skills/`), `hooks/` and `bin/` were **copied** from `openbims-pdd/.claude/` and generalized here; the original copies remain in that repo untouched.
 - The OpenBIMS-specific alignment ledger (`alineacion-datum-openbims.md`, the *Datum ↔ OpenBIMS* mapping) intentionally **stays** in `openbims-pdd`.
