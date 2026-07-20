@@ -23,7 +23,7 @@ The demote-first gate is intentional: it makes the lifecycle regression an expli
 
 1. Read the current descriptor and display it. If `lifecycle: stable`, refuse with the message above and stop.
 2. If the invocation embedded a change description (natural-language continuation), apply it to the relevant field(s) and show a diff. Otherwise ask: "What would you like to change?".
-3. For every new claim the update introduces — a new behavior step, a new error code, a new invariant, a changed field declaration — ask for its PDD source and embed the wikilink inline. Existing wikilinks are preserved untouched.
+3. For every new claim the update introduces — a new behavior step, a new error code, a new invariant, a changed field declaration — ask for its feature source and embed the wikilink inline. Existing wikilinks are preserved untouched.
 4. Show the proposed diff (unified ` ```diff ` block). Operator approves or iterates.
 5. On approval: write the updated descriptor, then run [consolidation](../consolidation.md) to reconcile the affected entity document.
 

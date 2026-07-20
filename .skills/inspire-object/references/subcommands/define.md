@@ -13,7 +13,7 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 1. **Parse the object id** from the invocation. If absent, ask: "What's the object id? (e.g. `auth::user::create` for an action, `auth::user` for an entity)".
 2. **Step 0 — Authoring-contexts gate.** Establish which context this interview runs in (fresh authoring / field-addition mid-flow / targeted revision) before any design question. For a bare `define <id>` this is almost always *fresh authoring*; surface it explicitly so the section walk is scoped correctly. See the Authoring contexts block in the interview catalogue.
 3. **Step 1 — Load the interview catalogue.** Read `references/interview-prompts-action.md` (for an action id) or `references/interview-prompts-entity.md` (for an entity id). These are the categorical-prompt catalogues that drive the per-section walk. Do this *before* asking the first design question.
-4. **Ground the object.** Read the PDD feature row and any ADRs the PDD references. Produce a short grounding digest so the operator sees what you anchored on. This is reading, not drafting — no structure proposal yet.
+4. **Ground the object.** Read the feature row and any ADRs the feature references. Produce a short grounding digest so the operator sees what you anchored on. This is reading, not drafting — no structure proposal yet.
 5. **Walk the sections one question at a time.** Use the catalogue's categorical prompts + probes, weaving the operator's own language into each question:
    - **Action**: Purpose → Inputs → Outputs → Entities (effect verb + field touches) → Behavior → requires → Errors.
    - **Entity**: Purpose → Rationale → Invariants → Fields → per-field H3.
@@ -29,5 +29,5 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 
 ## Hard rules that apply here
 
-- **PDD is upstream; no escape hatch.** `define` refuses an action descriptor with no PDD wikilink in `## Purpose`. If the verb has no PDD home, the operator runs `/inspire_feature create` first.
+- **feature is upstream; no escape hatch.** `define` refuses an action descriptor with no feature wikilink in `## Purpose`. If the verb has no feature home, the operator runs `/inspire_feature create` first.
 - **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.

@@ -2,7 +2,7 @@
 
 A **categorical prompt catalogue** for the action-descriptor socratic interview. The skill loads this file at the start of any `create` / `update` subcommand and uses it as the backbone of the dialogue: one categorical question per section, then 1–3 design-probing follow-ups when the operator's answer surfaces an implicit decision.
 
-These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (action id, entity names, PDD anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
+These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (action id, entity names, feature anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
 
 Section structure here mirrors the action descriptor format defined in [`../SKILL.md`](../SKILL.md) under *Action descriptor format*. If sections are added or renamed there, update this catalogue.
 
@@ -11,12 +11,12 @@ The interview cadence is **one question at a time**. Never present a numbered de
 ## Purpose prompts
 
 ### Categorical
-Ask what the action accomplishes in one sentence, and which PDD feature / ADR grounds it. The answer becomes the body of `## Purpose` plus the wikilinks woven into its prose.
+Ask what the action accomplishes in one sentence, and which feature / ADR grounds it. The answer becomes the body of `## Purpose` plus the wikilinks woven into its prose.
 
 ### Probes
 - **Boundary probe.** "Could this be a parameter of an existing action on the same entity, or is the verb load-bearing?" Use when the proposed verb is close in shape to an existing one (e.g. `update-status` vs. `update`).
 - **Necessity probe.** "Is this an admin-side action, a public-facing one, or both? If both, do the caller threat models differ enough that two descriptors are warranted?" Use whenever the operator's framing hints at multiple callers.
-- **PDD-grounding probe.** "Which PDD section anchors this — the user-management subsystem, the identity model, something else? Prosaic back-source goes into the Purpose sentence, so I need the link to weave in."
+- **feature-grounding probe.** "Which feature anchors this — the user-management subsystem, the identity model, something else? Prosaic back-source goes into the Purpose sentence, so I need the link to weave in."
 
 ## Inputs prompts
 
@@ -25,7 +25,7 @@ Ask what the caller provides and which inputs are required vs. defaultable vs. v
 
 ### Probes
 - **Necessity probe.** "Is `<input>` required, defaultable, or validated where?" Use for every input where the answer isn't obvious from the action's purpose.
-- **Type probe.** "You said `email` — that maps to the canonical semantic type, validation rules sourced from the PDD email-validation section. Is that the type, or is this a free-form string with action-local rules?" Use to surface where validation lives (here vs. PDD vs. entity invariant).
+- **Type probe.** "You said `email` — that maps to the canonical semantic type, validation rules sourced from the feature email-validation section. Is that the type, or is this a free-form string with action-local rules?" Use to surface where validation lives (here vs. feature vs. entity invariant).
 - **Implication probe.** "If the caller passes `<input>` with `<edge-case-value>`, should the action accept it, reject it, or normalize it?" Use when an input has a non-trivial value space (empty strings, whitespace, mixed case, unicode).
 
 ## Outputs prompts
@@ -52,10 +52,10 @@ Ask which entities the action touches and how — for each: the effect verb (`cr
 ## Behavior prompts
 
 ### Categorical
-Ask for the step-by-step description, in order, with the PDD/ADR back-source for each non-obvious claim. The answer becomes the numbered `## Behavior` list, with wikilinks woven prosaically into each step.
+Ask for the step-by-step description, in order, with the feature/ADR back-source for each non-obvious claim. The answer becomes the numbered `## Behavior` list, with wikilinks woven prosaically into each step.
 
 ### Probes
-- **Sourcing probe.** "Step `<N>` references `<concept>` (validation rules / hashing algorithm / audit emission). Which PDD section or ADR grounds it? The wikilink weaves into the sentence." Ask for every step that makes a sourceable claim — back-sourcing is not optional.
+- **Sourcing probe.** "Step `<N>` references `<concept>` (validation rules / hashing algorithm / audit emission). Which feature or ADR grounds it? The wikilink weaves into the sentence." Ask for every step that makes a sourceable claim — back-sourcing is not optional.
 - **Implicit-side-effect probe.** "Anything implicit in this step — audit emission, event bus publish, cache invalidation, a downstream notification? If yes, it should either be a separate Entity touch in the table above or explicitly out-of-scope here (with the wrapper action linked)." Use whenever a step ends without naming its side-effects.
 - **Error-correspondence probe.** "Step `<N>` mentions `<failure condition>`. Does that correspond to a row in `## Errors`, or is it a precondition the caller is expected to handle?" Use when a step describes a failure mode without a paired error code.
 - **Conflict-mechanism probe.** "Step `<N>` says the action inserts a row with a unique constraint on `<field>`. Is the DB constraint the conflict-detection mechanism (fall through to error), or is there an explicit pre-check?" Use for any step involving uniqueness or referential integrity.

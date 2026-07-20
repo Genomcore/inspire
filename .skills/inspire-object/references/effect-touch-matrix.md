@@ -32,7 +32,7 @@ The orchestrator example in `examples/orchestrator.md` shows the canonical multi
 ## Edge cases
 
 - **`read` action with `Touch=written` field** — this is the canonical shape for derived/computed read responses where the action persists a denormalized cache row. Document the cache rationale in the action's `## Purpose` section.
-- **Pure validators** — an action that only validates (no entity side-effect) declares no `## Entities` sub-sections. `Effect: validated` is allowed for completeness in PDD-traceability, but is rare; usually a validator is a step in a larger action's `## Behavior`, not its own descriptor.
+- **Pure validators** — an action that only validates (no entity side-effect) declares no `## Entities` sub-sections. `Effect: validated` is allowed for completeness in feature-traceability, but is rare; usually a validator is a step in a larger action's `## Behavior`, not its own descriptor.
 
 ## How the matrix is enforced
 

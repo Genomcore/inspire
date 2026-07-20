@@ -2,7 +2,7 @@
 
 A **categorical prompt catalogue** for the entity-document socratic interview. The skill loads this file when authoring a new entity doc, when an action introduces a field that doesn't yet appear in `## Fields`, or when an operator asks to revise an entity's design. Each prompt block lists the categorical question the skill always asks, plus 1–3 design-probing follow-ups for surfacing implicit decisions.
 
-These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (entity id, field names, neighboring entities, PDD anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
+These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (entity id, field names, neighboring entities, feature anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
 
 Section structure here mirrors the entity document format defined in [`../SKILL.md`](../SKILL.md) under *Entity document format*. The four operator-authored sections (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`) plus per-field H3 sub-sections are what the interview shapes; `## Touched by` is auto-populated by consolidation and is **not** interviewed.
 
@@ -21,7 +21,7 @@ The skill picks the context from the invocation; this file does not enforce it. 
 ## Purpose prompts
 
 ### Categorical
-Ask what this entity is, and why it exists as a discrete object in the system. The answer becomes the body of `## Purpose`, with PDD/ADR wikilinks woven prosaically into the sentence that makes each claim.
+Ask what this entity is, and why it exists as a discrete object in the system. The answer becomes the body of `## Purpose`, with feature/ADR wikilinks woven prosaically into the sentence that makes each claim.
 
 ### Probes
 - **Boundary-on-existence probe.** "Why is this its own entity rather than a field on `<adjacent-entity>`? E.g. why is `auth::password` separate from `auth::user`, not a column on it?" Always ask for any new entity — surfacing the boundary justification is the whole point of `## Purpose`.
@@ -31,10 +31,10 @@ Ask what this entity is, and why it exists as a discrete object in the system. T
 ## Rationale prompts
 
 ### Categorical
-Ask which PDD sections and ADRs ground the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. The answer becomes the body of `## Rationale`, the longest operator-authored section, with inline prosaic wikilinks throughout.
+Ask which feature sections and ADRs ground the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. The answer becomes the body of `## Rationale`, the longest operator-authored section, with inline prosaic wikilinks throughout.
 
 ### Probes
-- **Field-shape probe.** "Why is the field shape minimal in this direction (no `display_name`, no `phone`, no `tenant_id`) and rich in that one (`password_hash` + `last_seen_at` + `created_at`)? What forces the shape — Kratos integration constraints, the identity model in [[adr-auth-01-kratos-scopes-keto]], something else?" Use whenever the field set has visible asymmetries.
+- **Field-shape probe.** "Why is the field shape minimal in this direction (no `display_name`, no `phone`, no `tenant_id`) and rich in that one (`password_hash` + `last_seen_at` + `created_at`)? What forces the shape — auth-provider integration constraints, the identity model in [[adr-auth-01-identity-model]], something else?" Use whenever the field set has visible asymmetries.
 - **ADR-grounding probe.** "Which ADR — if any — locks in the design call? If there's no ADR but the rationale is >10 lines, that's a signal an ADR is missing." Use whenever the rationale leans heavily on undocumented platform-level decisions.
 - **Discussion-forcing probe (field addition).** "Adding `<field>` to this entity. What's the design call behind it? — I'll fold the rationale into `## Rationale` before the row lands in `## Fields`." This is the **load-bearing probe**. Always trigger it when an action descriptor introduces a field not yet in the entity doc. The new field row blocks on the Rationale update.
 - **Out-of-scope probe.** "What does this entity *not* carry that a reader might expect — e.g. `auth::user` has no `display_name` because the display layer reads from a separate profile entity? Calling out the non-fields helps future readers." Use for entities whose minimal shape is a deliberate design choice.
@@ -65,7 +65,7 @@ Ask for the field shape — type, notes, and (for non-self-evident fields) wheth
 ## Per-field H3 prompts
 
 ### Categorical
-For each field whose Notes column can't carry the design call, ask for the rationale narrative — what motivates the choice, which ADR/PDD grounds it, what consumers need to know. The answer becomes a `### {field-name}` H3 sub-section placed immediately under the Fields table, in field-table order.
+For each field whose Notes column can't carry the design call, ask for the rationale narrative — what motivates the choice, which ADR/feature grounds it, what consumers need to know. The answer becomes a `### {field-name}` H3 sub-section placed immediately under the Fields table, in field-table order.
 
 ### Probes
 - **Algorithm-as-system-setting probe.** "`<field>` carries `<credential / hash / token>` material. Is the algorithm a per-row column or a system-wide setting? If system-wide, the H3 should ground the choice in the relevant ADR and explain why per-row would have been wrong." Use for any cryptographic / opaque-blob field.

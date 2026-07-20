@@ -10,7 +10,7 @@ agent:    [Step 0 — authoring context: fresh authoring of an action.
            Grounds: reads .inspire_kb/02_features/auth/_index.md, finds the feature
            row; reads adr-auth-01]
           "Got it — this is the user-provisioning entry point. Looking at the
-           PDD it sources from [[adr-auth-01-kratos-scopes-keto]] and the
+           feature it sources from [[adr-auth-01-identity-model]] and the
            Account provisioning section. Quick question before I draft anything:
            the action takes an email + password, but should it also accept a
            pre-set role, or is role assignment a separate action?"

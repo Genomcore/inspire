@@ -19,7 +19,7 @@ superseded_by: null        # required iff lifecycle == superseded
 ---
 
 ## Purpose
-Create a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the Kratos integration are defined in [[adr-auth-01-kratos-scopes-keto]].
+Create a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the auth-provider integration are defined in [[adr-auth-01-identity-model]].
 
 ## Inputs
 
@@ -46,8 +46,8 @@ Create a new platform user account from an email + password pair. The [[auth-use
 | `created_at`   | written | timestamp | `now()`       |       |
 
 ## Behavior
-1. Validate the email format against the constraints described in [[pdd-auth-user-management#email-constraints|the user-management email rules]].
-2. Hash the password using [[auth.password.hash|auth::password::hash]], following the Kratos integration model in [[adr-auth-01-kratos-scopes-keto]].
+1. Validate the email format against the constraints described in [[auth-user-management#email-constraints|the user-management email rules]].
+2. Hash the password using [[auth.password.hash|auth::password::hash]], following the auth-provider integration model in [[adr-auth-01-identity-model]].
 3. Persist a new user row with the hashed credential.
 
 ## Errors

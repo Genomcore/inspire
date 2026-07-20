@@ -17,10 +17,10 @@ lifecycle: draft           # draft | accepted | stable | superseded
 ---
 
 ## Purpose
-Operator-facing prose stating what this entity is and why it exists as a discrete object, with inline prosaic wikilinks back to PDD/ADR. Required, non-empty.
+Operator-facing prose stating what this entity is and why it exists as a discrete object, with inline prosaic wikilinks back to feature/ADR. Required, non-empty.
 
 ## Rationale
-PDD/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic wikilinks throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
+feature/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic wikilinks throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
 
 ## Invariants
 Operator-facing assertions that must hold across the entity — uniqueness, ordering, immutability, referential integrity. May be `None beyond Fields constraints.` when no extra invariants apply; the section must be present but a one-liner is acceptable.
@@ -72,7 +72,7 @@ Three tooling consequences:
 Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`), 1 opt-in per field (`### {field-name}` H3 sub-sections, placed immediately after the Fields table), 1 auto-populated (`## Touched by`).
 
 - **`## Purpose`** — non-empty, operator-readable prose stating what the entity is and why it exists as a discrete object. Back-sourcing is **prosaic**: wikilinks weave into the sentence that makes the claim.
-- **`## Rationale`** — operator-authored, PDD/ADR-grounded. The **discussion-forcing function**: when an action introduces a new field, the agent surfaces the rationale question and waits for the operator to update this section *before* the new field row lands in `## Fields`. This is what keeps the entity shape an act of design rather than an emergent residue of action authoring.
+- **`## Rationale`** — operator-authored, feature/ADR-grounded. The **discussion-forcing function**: when an action introduces a new field, the agent surfaces the rationale question and waits for the operator to update this section *before* the new field row lands in `## Fields`. This is what keeps the entity shape an act of design rather than an emergent residue of action authoring.
 - **`## Invariants`** — operator-authored. `None beyond Fields constraints.` is a valid one-line body; the section must be present, but brevity is welcome when there is genuinely nothing extra to assert.
 - **`## Fields`** — `| Field | Type | Notes |` table with backticked field names. The row set is **largely emergent** — populated and reconciled by the agent during consolidation from every action descriptor's `## Entities` declarations — but each row exists because some action touches the field, and adding one forces a `## Rationale` update.
 - **`### {field-name}`** — opt-in per-field rationale, immediately under the Fields table. Use for fields whose behavior or design needs more than the Notes column can carry. Skip for self-evident fields. Inline wikilinks where claims need sourcing.

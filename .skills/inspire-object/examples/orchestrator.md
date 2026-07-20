@@ -18,7 +18,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Public-facing signup. Layers domain allow-list enforcement and audit logging on top of the bare [[auth.user.create|auth::user::create]] action. The public caller has different threat assumptions — rate limiting, audit, allow-list checks — described in [[pdd-auth-public-signup|the public signup PDD section]]; the admin-side `create` is intentionally minimal.
+Public-facing signup. Layers domain allow-list enforcement and audit logging on top of the bare [[auth.user.create|auth::user::create]] action. The public caller has different threat assumptions — rate limiting, audit, allow-list checks — described in [[auth-public-signup|the public signup feature]]; the admin-side `create` is intentionally minimal.
 
 ## Inputs
 
@@ -66,7 +66,7 @@ Public-facing signup. Layers domain allow-list enforcement and audit logging on 
 | `metadata`   | written | json      | `{ ip: signup_ip }`    | Captured at the request boundary.      |
 
 ## Behavior
-1. Extract the email domain and look up [[auth.email_allowlist|auth::email_allowlist]] by `domain`, following the rule in [[pdd-auth-signup-allowlist|the signup allow-list PDD section]]. If `allowed = false`, return `domain_not_allowed`.
+1. Extract the email domain and look up [[auth.email_allowlist|auth::email_allowlist]] by `domain`, following the rule in [[auth-signup-allowlist|the signup allow-list feature]]. If `allowed = false`, return `domain_not_allowed`.
 2. Delegate user-row creation to [[auth.user.create|auth::user::create]], which handles `email_exists`, `password_too_weak`, and `email_invalid`.
 3. Append a `user.signup` event to [[audit.event|audit::event]] with the new user's `id` as actor and the request IP in metadata, per the central audit policy in [[adr-audit-01-centralized-logging]].
 4. Return the new user's `id` and `email_verification_required: true`. The verification flow is a separate action — [[auth.user.verify_email|auth::user::verify_email]].

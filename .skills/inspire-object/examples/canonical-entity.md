@@ -15,13 +15,13 @@ lifecycle: accepted             # ← symmetric with action lifecycle; promotion
 ---
 
 ## Purpose
-The `auth::user` entity is the platform's single source of truth for a user account — the row that represents an authenticated principal in the [[pdd-auth-user-management|user-management subsystem]]. Every authenticated session, every audit-event actor reference, and every permission-set binding ultimately resolves back to a row in this entity.
+The `auth::user` entity is the platform's single source of truth for a user account — the row that represents an authenticated principal in the [[auth-user-management|user-management subsystem]]. Every authenticated session, every audit-event actor reference, and every permission-set binding ultimately resolves back to a row in this entity.
 
 ## Rationale
-The entity exists as a discrete object because the OpenBIMS identity model defined in [[adr-auth-01-kratos-scopes-keto]] mandates exactly one user-account record per `{scope, email}` tuple — the auth subsystem cannot delegate that uniqueness invariant to downstream consumers. The field shape is the minimum needed for Kratos integration plus the platform's local metadata: `email` is the canonical identity handle described in [[pdd-auth-identity-model|the identity-model PDD section]], `password_hash` carries credential material whose algorithm is a system-wide setting (see field-level rationale below), and `created_at` anchors the row to the platform audit timeline per [[adr-audit-01-centralized-logging]]. New fields land here only after `## Rationale` justifies them — the discussion-forcing discipline is what keeps the entity shape an act of design rather than a residue of action authoring.
+The entity exists as a discrete object because the identity model defined in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple — the auth subsystem cannot delegate that uniqueness invariant to downstream consumers. The field shape is the minimum needed for the auth-provider integration plus the platform's local metadata: `email` is the canonical identity handle described in [[auth-identity-model|the identity-model feature]], `password_hash` carries credential material whose algorithm is a system-wide setting (see field-level rationale below), and `created_at` anchors the row to the platform audit timeline per [[adr-audit-01-centralized-logging]]. New fields land here only after `## Rationale` justifies them — the discussion-forcing discipline is what keeps the entity shape an act of design rather than a residue of action authoring.
 
 ## Invariants
-- `email` is unique within the entity — no two rows may share the same email value. Enforced at the database level and required by the identity model in [[adr-auth-01-kratos-scopes-keto]].
+- `email` is unique within the entity — no two rows may share the same email value. Enforced at the database level and required by the identity model in [[adr-auth-01-identity-model]].
 - `password_hash` is write-only — no read action returns it. Reads exist only via `auth::password::verify` (constant-time comparison, never raw exposure).
 - `created_at` is immutable after insert — no action updates it.
 
@@ -39,7 +39,7 @@ The entity exists as a discrete object because the OpenBIMS identity model defin
 The column stores an opaque hashed credential, never plaintext. The hashing algorithm and cost parameters are a **system-wide** setting — not a per-row column — because rolling the algorithm is a platform migration, not a per-user choice. The decision and the migration mechanism are described in [[adr-auth-02-password-hashing]]. Verification goes through [[auth.password.verify|auth::password::verify]] (constant-time); the field is never returned by any read action.
 
 ### last_seen_at    <!-- ← per-field H3: nullability is non-obvious and worth a sentence. -->
-Nullable until the first successful login. A freshly-created user that has never authenticated has `last_seen_at = null` rather than a synthetic value at the creation timestamp — distinguishing "never logged in" from "logged in once at creation" is load-bearing for the dormant-account reports described in [[pdd-auth-account-hygiene|the account-hygiene PDD section]].
+Nullable until the first successful login. A freshly-created user that has never authenticated has `last_seen_at = null` rather than a synthetic value at the creation timestamp — distinguishing "never logged in" from "logged in once at creation" is load-bearing for the dormant-account reports described in [[auth-account-hygiene|the account-hygiene feature]].
 
 <!-- ← `id` and `created_at` get no H3: self-evident from Notes column. -->
 
@@ -58,7 +58,7 @@ Nullable until the first successful login. A freshly-created user that has never
 
 - **Four mandatory sections + opt-in per-field H3 + auto-populated Touched by.** Every entity doc has `## Purpose` → `## Rationale` → `## Invariants` → `## Fields` → (optional per-field H3 sub-sections, in field-table order, placed immediately under the table) → `## Touched by`. Section order is fixed.
 
-- **Purpose and Rationale are operator-authored prose, PDD/ADR-grounded.** Wikilinks weave into the sentences that make the claims (prosaic back-sourcing). No trailing `Back-source:` lines. The Rationale is the **discussion-forcing function** — when an action introduces a new field, the agent surfaces the question and waits for the operator to update Rationale *before* the new row lands in `## Fields`.
+- **Purpose and Rationale are operator-authored prose, feature/ADR-grounded.** Wikilinks weave into the sentences that make the claims (prosaic back-sourcing). No trailing `Back-source:` lines. The Rationale is the **discussion-forcing function** — when an action introduces a new field, the agent surfaces the question and waits for the operator to update Rationale *before* the new row lands in `## Fields`.
 
 - **Invariants can be short — or even one line.** When there's nothing to assert beyond what the Fields table already constrains, write `None beyond Fields constraints.` The section must be present; brevity is acceptable.
 

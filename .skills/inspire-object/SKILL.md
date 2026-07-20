@@ -35,7 +35,7 @@ A bare `define <id>` is almost always fresh authoring; surface it explicitly so 
 
 **Step 1 — Load the prompt catalogue.** Read [`references/interview-prompts-action.md`](references/interview-prompts-action.md) (action id) or [`references/interview-prompts-entity.md`](references/interview-prompts-entity.md) (entity id) *before* asking the first design question. These catalogues carry the categorical prompts + design-forcing probes per section.
 
-**Step 2 — Ground, don't draft.** Read the PDD feature row and any ADRs it references. Produce a short grounding digest so the operator sees your anchor. This is reading only — no structure proposal yet.
+**Step 2 — Ground, don't draft.** Read the feature row and any ADRs it references. Produce a short grounding digest so the operator sees your anchor. This is reading only — no structure proposal yet.
 
 **Step 3 — Walk the sections, one question at a time.** Weave the operator's own language into each question:
 
@@ -70,7 +70,7 @@ The interview produces files **incrementally as the dialogue unfolds**, not in a
 
 This skill owns: **action descriptors**, **entity documents**, **consolidation** (rebuilding the entity doc's derived `## Fields` + `## Touched by` tables after a descriptor change), and the **subcommands** below.
 
-This skill does NOT own: **PDD authoring** (`/inspire_module` — back-sourcing to PDD via wikilinks is required, but the PDD is not modified here); **feature-level grouping + VIER scoring** (`/inspire_feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
+This skill does NOT own: **feature authoring** (`/inspire_module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire_feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
 
 ## Invocation
 
@@ -129,7 +129,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 7. **Consolidation follows approval** and goes through show-then-approve. Operator-authored sections (Purpose / Rationale / Invariants / per-field H3) are preserved untouched.
 8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_workspace` (`epic: skill-feedback`, `skills: [object]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
-10. **PDD is upstream of SDD; no escape hatch.** Every action descriptor must back-source to a PDD feature. No PDD home → `/inspire_feature create` first. `define` refuses descriptors with no PDD wikilink in `## Purpose`.
+10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire_feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
 
 ## References
 
@@ -143,5 +143,5 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 
 ## Related skills
 
-- `/inspire_module` — module-level review and scaffolding. Its `scan` subcommand surfaces PDD↔SDD candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
+- `/inspire_module` — module-level review and scaffolding. Its `scan` subcommand surfaces features↔specs candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
 - `/inspire_feature` — feature-level grouping. Its `scan` subcommand surfaces feature↔action linkback gaps.
