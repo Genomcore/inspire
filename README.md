@@ -49,18 +49,17 @@ For the full story, read the manual at **[inspire.openbims.dev](https://inspire.
 
 ## Using this as a template
 
-The intent is that a new specification-driven project can adopt INSPIRE's
-guardrail layer wholesale by cloning this repo and filling in `.inspire_kb/`.
-The skills, hooks and validators are renamed (`inspire-*`), rewired to the
-`.inspire_kb/` layout, parameterized via `SDD_SPEC_ROOT`, and **stripped of
-OpenBIMS domain vocabulary** — they speak the generic INSPIRE model (features,
-specs, screen specs, the horizontal prototype at `/prototype`, external verticals).
+A new specification-driven project adopts INSPIRE's guardrail layer wholesale by
+cloning this repo and filling in `.inspire_kb/`. The skills, hooks and validators
+speak a generic, stack-agnostic model — features, specs, screens, the horizontal
+prototype at `/prototype`, external verticals — and read the spec root from
+`SDD_SPEC_ROOT`.
 
 Instantiation is one command (`bash .inspire/install.sh`), and the foundation
 ([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) ships with a sensible
-default. What each project still supplies is its own content — its modules,
-features, screens and specs — plus a starter `05_screens/patterns/` +
-`design-system.md`. See the Roadmap.
+default. Each project supplies its own content — its modules, features, screens
+and specs. Starter `05_screens/patterns/` (`list`, `detail`) come included, and the
+design system is seeded from the bootstrap theme at install.
 
 ### Wiring the guardrails into a project
 
@@ -76,29 +75,6 @@ the `pre-commit` / `pre-pr` hooks into `.claude/settings.json`. It is idempotent
 re-run it after pulling template updates. Then start filling in `.inspire_kb/`.
 
 Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
-
----
-
-## Provenance
-
-Extracted from `openbims-pdd` on 2026-07-20. The OpenBIMS-specific alignment
-ledger (`methodology/alineacion-datum-openbims.md` — the *Datum ↔ OpenBIMS*
-mapping) intentionally **stays in that repository**, since it documents *that*
-implementation. What lives here is the methodology itself and its portable
-guardrail layer.
-
-## Roadmap
-
-- [x] Rename the skills `openbims-*` → `inspire-*`.
-- [x] Decouple the validators/hooks from hard-coded `spec/sdd/` paths (rewired to `.inspire_kb/`, `SDD_SPEC_ROOT` configurable).
-- [x] Establish the `.inspire_kb/` knowledge-base skeleton.
-- [x] Define the prototype model and rewrite `inspire-prototype` (horizontal at `/prototype`; verticals as external repos with imported learnings).
-- [x] Reconcile `inspire-module` / `inspire-feature` to the flat `02_features/{module}/{use-case}.md` layout.
-- [x] Strip OpenBIMS domain prose from all skills — the runtime speaks the generic INSPIRE model.
-- [x] Stage the runtime under `.inspire/` and ship `.inspire/install.sh` to instantiate it into `.claude/` on a fork.
-- [x] Seed `00_bootstrap` (`stack.md` + `theme.md`) and add the `inspire-bootstrap` skill to configure them.
-- [x] Publish the microsite.
-- [x] Ship starter `05_screens/patterns/` (list, detail) + a `components/` catalog; the design system is seeded at install from `00_bootstrap/theme.md` and edited via `/inspire_screens design-system`.
 
 ---
 
