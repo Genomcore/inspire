@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -33,7 +33,7 @@
   </g>
 </svg>
 
-<!-- Nav -->
+<!-- Primary nav (top-level pages) -->
 <header class="nav" id="nav">
   <div class="wrap nav-in">
     <a class="brand" href="#top">
@@ -45,17 +45,26 @@
       INSPIRE
     </a>
     <nav class="nav-links">
-      <a href="#shift">The shift</a>
-      <a href="#breaths">Principles</a>
-      <a href="#breath">Breath</a>
-      <a href="#speeds">Speeds</a>
-      <a href="#spiral">Spiral</a>
-      <a href="#prototypes">Prototypes</a>
-      <a href="#knowledge">Knowledge</a>
-      <a class="nav-cta" href="#guardrails">Get Inspired!</a>
+      <a class="active" href="index.html" aria-current="page">Methodology</a>
+      <a href="skills.html">Skills</a>
+      <a class="nav-cta" href="https://github.com/genomcore/inspire" target="_blank" rel="noopener">Get Inspired! <span class="arr" aria-hidden="true">↗</span></a>
     </nav>
   </div>
 </header>
+
+<!-- Secondary nav (in-page sections) -->
+<nav class="subnav" id="subnav" aria-label="Sections on this page">
+  <div class="wrap subnav-in">
+    <a href="#shift">The shift</a>
+    <a href="#breaths">Principles</a>
+    <a href="#breath">Breath</a>
+    <a href="#speeds">Speeds</a>
+    <a href="#spiral">Spiral</a>
+    <a href="#prototypes">Prototypes</a>
+    <a href="#knowledge">Knowledge</a>
+    <a href="#guardrails">Enforceable</a>
+  </div>
+</nav>
 
 <main id="top">
 
@@ -419,23 +428,10 @@
   </div>
 </footer>
 
+<script src="nav.js"></script>
 <script>
-  // Nav border on scroll
-  var nav = document.getElementById('nav');
-  var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 12); };
-  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
-
-  // Gentle reveals
+  // Page-specific diagram animations (nav border, reveals & scroll-spy live in nav.js)
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var items = document.querySelectorAll('.reveal');
-  if(reduce || !('IntersectionObserver' in window)){
-    items.forEach(function(el){ el.classList.add('in'); });
-  } else {
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, {threshold:0.14, rootMargin:'0px 0px -8% 0px'});
-    items.forEach(function(el){ io.observe(el); });
-  }
 
   // Traveler spiralling inward, converging on the intent, then re-entering (calm loop)
   (function(){
