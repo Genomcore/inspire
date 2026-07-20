@@ -12,15 +12,15 @@ The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the
 product you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
-  - `.inspire/skills/` — the 6 agent skills (`inspire-*`): the judgment half
-    (module · feature · object · prototype · ui · workspace).
+  - `.inspire/skills/` — the 7 agent skills (`inspire-*`): the judgment half
+    (bootstrap · module · feature · object · prototype · ui · workspace).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_specs`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
   - `.inspire/hooks/` — git-time enforcement hooks (`pre-commit`, `pre-pr`).
   - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a
-  project fills in. One layer per skill (`00_tech_stack`, `01_adr`,
+  project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
   `02_features`, `03_prototypes`, `04_specs`, `05_ui`, `06_tracker`); each folder
   carries a README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation; open
@@ -74,11 +74,13 @@ The guardrail layer is being generalized from its OpenBIMS origin. Done so far:
       now free of OpenBIMS domain vocabulary.
 - [x] Stage the guardrail runtime under `.inspire/` and ship `.inspire/install.sh`
       to instantiate it into `.claude/` on a fork.
+- [x] Seed `00_bootstrap` (`stack.md` + `theme.md`, defaulted from the OpenBIMS
+      reference) and add the `inspire-bootstrap` skill to configure them.
 
 Remaining:
 
-- [ ] Fill in the project-specific KB conventions a real project needs (module ID
-      prefixes, a starter `patterns/` + `design-system.md`, `00_tech_stack`).
+- [ ] Provide the remaining starter conventions a real project supplies (module ID
+      prefixes, a starter `patterns/` + `05_ui/design-system.md`).
 - [ ] Publish the microsite.
 
 ## Provenance

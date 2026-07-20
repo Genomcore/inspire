@@ -11,7 +11,7 @@ the knowledge base and de-risked in prototypes, then **realized here**.
   specs ([`.inspire_kb/04_specs`](../.inspire_kb/04_specs)) and UISpecs
   ([`.inspire_kb/05_ui`](../.inspire_kb/05_ui)) define *what* to build and what
   "correct" means; the shared tech context lives in
-  [`.inspire_kb/00_tech_stack`](../.inspire_kb/00_tech_stack).
+  [`.inspire_kb/00_bootstrap`](../.inspire_kb/00_bootstrap).
 - Informed by prototypes: what the horizontal prototype and the external vertical
   spikes clarified ([`.inspire_kb/03_prototypes`](../.inspire_kb/03_prototypes))
   flows into the design before it's built here.

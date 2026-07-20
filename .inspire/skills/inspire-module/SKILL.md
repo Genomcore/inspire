@@ -41,7 +41,7 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 - No orphans (file on disk, not in the index) and no phantoms (in the index, no
   file).
 - Feature / use-case IDs are unique within the module and use the module's ID
-  prefix (declared in the module `_index.md` / the project's `00_tech_stack`
+  prefix (declared in the module `_index.md` / the project's `00_bootstrap`
   conventions).
 
 ### 2. UISpec structure
@@ -146,7 +146,7 @@ prefix (e.g. `MYM`), and a description.
 3. **UISpec folder:** `.inspire_kb/05_ui/{module}/_index.md` — empty route map +
    feature-coverage tables. No screens yet.
 4. Record the module's ID prefix + conventions where the project keeps them (the
-   module `_index.md` and/or `.inspire_kb/00_tech_stack`).
+   module `_index.md` and/or `.inspire_kb/00_bootstrap`).
 5. Point the user to `/inspire_feature create` for the first use cases, and
    `/inspire_prototype` once screens exist.
 

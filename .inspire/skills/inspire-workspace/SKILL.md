@@ -352,9 +352,9 @@ related_to: [TASK-xxx]             # list of IDs
 - **`status`**: `Open | Done | Cancelled` — there is no in-flight state. `Open` =
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
-- **`skills`** (multi-select, may be empty): `module | feature | object | ui |
-  prototype | workspace` — which layer skills cover the work. `[]` means the work
-  doesn't map to a layer skill (tooling, ops, packaging).
+- **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
+  object | ui | prototype | workspace` — which layer skills cover the work. `[]`
+  means the work doesn't map to a layer skill (tooling, ops, packaging).
 
 ### Skill-feedback tickets (convention)
 

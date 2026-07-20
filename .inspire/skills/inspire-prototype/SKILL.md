@@ -51,7 +51,7 @@ that describe the screen:
 
 > **Stack-agnostic.** This skill does not assume a framework. The project's own
 > stack, component catalog, conventions and known pitfalls live in its KB
-> (`.inspire_kb/00_tech_stack` and `.inspire_kb/05_ui`), not here. Read those
+> (`.inspire_kb/00_bootstrap` and `.inspire_kb/05_ui`), not here. Read those
 > first on a real project.
 
 ## Rules
@@ -84,7 +84,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
   **stands on its own** — useful even if the external repo later disappears.
 - **Recurring class of problem.** If a fix reveals something that will recur (a
   stack quirk, a reusable helper, a canonical component), record it where it
-  belongs — project stack pitfalls in `00_tech_stack`, reusable UI in
+  belongs — project stack pitfalls in `00_bootstrap`, reusable UI in
   `05_ui/components` via `/inspire_ui`. **Surface the proposal to the user; don't
   silently edit shared artifacts**, and don't let the insight evaporate.
 

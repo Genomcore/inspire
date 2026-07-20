@@ -168,7 +168,7 @@ Create a new feature/use-case file in a module. **Required arg:**
 
 **Feature ID convention:** the module's prefix + the next available number (scan
 existing IDs), per the convention recorded in the module `_index.md` /
-`00_tech_stack`.
+`00_bootstrap`.
 
 ## Subcommand: update
 

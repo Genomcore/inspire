@@ -9,7 +9,7 @@ Each numbered folder is a layer of the graph, operated by a matching skill in
 
 | Folder | Holds | Skill |
 |--------|-------|-------|
-| [`00_tech_stack`](00_tech_stack) | Foundational, shared docs of the stack & conventions | *(base context, all skills)* |
+| [`00_bootstrap`](00_bootstrap) | The foundation: tech `stack.md` + design-system `theme.md` (base context for all skills) | `inspire-bootstrap` |
 | [`01_adr`](01_adr) | Architecture Decision Records | `inspire-workspace` |
 | [`02_features`](02_features) | Product intent — one folder per module, one file per use case | `inspire-module`, `inspire-feature` |
 | [`03_prototypes`](03_prototypes) | Prototype **knowledge**: horizontal learnings (code at [`/prototype`](../prototype)) + links to external vertical spike repos | `inspire-prototype` |
