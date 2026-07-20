@@ -12,6 +12,27 @@ is an ADR ([`01_adr`](../01_adr)). Configure with `/inspire_bootstrap`.
 > **Default**, seeded from the OpenBIMS reference implementation. Swap any layer
 > for your project's choice — the skills are stack-agnostic and read this file.
 
+## Shape
+
+How the product is laid out. Established at `/inspire_bootstrap init`; it frames
+which layers below apply. **Load-bearing** — changing it later (adding a backend,
+adding mobile, moving off a deployed database) is an ADR.
+
+- **Platform:** monorepo — **frontend + backend**. (Alternatives: frontend-only ·
+  backend-only, an API / service · or *undecided* — revisit once the prototype
+  clarifies; don't force it.)
+- **Frontend targets:** **web**. (Alternatives: mobile-only · web + mobile — mobile
+  pulls in a mobile UI stack, e.g. React Native / Expo, ideally sharing
+  types/logic with web.)
+- **Backend:** yes — an API / service layer (see *Backend / runtime* below).
+- **Database provisioning:** **deploy** the metadata database (see *Data*) as part
+  of the platform. (Alternative: connect to an **existing external** database — no
+  provisioning here, just connection config.)
+- **Local dev database:** yes — run it **locally via Docker**, like any other
+  service in the dev stack; fall back to deploying it directly on the host only if
+  Docker isn't available. (Alternative: no local DB — develop against a
+  shared/remote one.)
+
 ## Language
 
 - **TypeScript**, end to end (backend and frontend), with shared types across the

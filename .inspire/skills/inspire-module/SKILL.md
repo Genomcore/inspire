@@ -249,6 +249,13 @@ Remove a module across all layers. Use with caution.
 
 ## Rules
 
+> **Output language.** Write every artifact you produce in the project's declared
+> `output_language` (default English) — see
+> [`_references/output-language.md`](../_references/output-language.md). Applies
+> whatever language the conversation is in, and independently of the product's own
+> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> stay verbatim.
+
 1. **`review` is read-only.** It reports, suggests fixes, and recommends other
    skills; it never edits files.
 2. **`create` requires user input** for module name, ID prefix, and description.

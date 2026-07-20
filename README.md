@@ -67,11 +67,16 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time hooks) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
+| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time + session-start hooks), `templates/` (product-side files materialized at install) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
 | [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_domain` · `05_screens` · `99_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
-| [`prototype/`](prototype/) | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. |
-| [`source/`](source/) | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
+| `prototype/` | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. *Created at install, not shipped here.* |
+| `source/` | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. *Created at install, not shipped here.* |
+
+> The two product-side dirs (`prototype/`, `source/`) don't exist in this template
+> repo — they're your product, not INSPIRE. `install.sh` creates them on
+> instantiation, and also removes this methodology `README.md` so your fork starts
+> with its own (written by `/inspire_bootstrap init`).
 
 The skills + validators + hooks in `.inspire/` are the **guardrail layer**: the
 concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
@@ -102,14 +107,25 @@ bash .inspire/install.sh
 
 This copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (where
 Claude Code discovers and executes them), makes the scripts executable, wires the
-`pre-commit` / `pre-pr` hooks into `.claude/settings.json`, and seeds the design
-system from your bootstrap theme. It is **idempotent** — `.inspire/` stays the
-versioned source of truth, so re-run it after pulling template updates.
+`session-start` + `pre-commit` / `pre-pr` hooks into `.claude/settings.json`,
+creates the product-side `prototype/` + `source/` folders, seeds the design system
+from your bootstrap theme, and removes this methodology `README.md`. It is
+**idempotent** — `.inspire/` stays the versioned source of truth, so re-run it
+after pulling template updates (your own `prototype/`, `source/` and `README.md`
+are left untouched).
 
-**3. Start filling in `.inspire_kb/`** — your modules, features, screens and specs.
-The foundation ([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) and
+**3. Run `/inspire_bootstrap init`.** It sets the project's output language,
+configures the stack + theme and its shape (frontend / backend / monorepo · web /
+mobile · database), creates your project's own `README.md`, and optionally wires
+your git remote. Then start filling in `.inspire_kb/` — your modules, features,
+screens and specs. The foundation ([`00_bootstrap`](.inspire_kb/00_bootstrap)) and
 starter screen patterns ship with sensible defaults; the `inspire-*` skills guide
 the rest.
+
+> **Output language.** Every skill authors its artifacts in the project's declared
+> language ([`00_bootstrap/project.md`](.inspire_kb/00_bootstrap/project.md),
+> default English) — independent of the language you converse in and of the
+> product's own UI i18n. A `session-start` hook surfaces it into every session.
 
 > **Prerequisites for the validators:** `bash` 4+, [`yq`](https://github.com/mikefarah/yq)
 > (Mike Farah's v4), `jq` 1.6+.
