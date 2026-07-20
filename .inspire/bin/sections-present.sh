@@ -33,7 +33,7 @@
 #
 # Usage:
 #   .claude/bin/sections-present.sh                  # scan whole tree
-#   .claude/bin/sections-present.sh .inspire_kb/04_specs/auth    # scoped scan
+#   .claude/bin/sections-present.sh .inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

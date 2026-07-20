@@ -26,4 +26,4 @@ the *learnings* and *pointers* live here.
 
 The deliverable of any prototype is **what it clarified**. Every entry here ends
 with learnings that feed back into [`02_features`](../02_features),
-[`04_specs`](../04_specs) and [`05_screens`](../05_screens).
+[`04_domain`](../04_domain) and [`05_screens`](../05_screens).

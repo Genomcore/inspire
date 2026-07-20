@@ -15,7 +15,7 @@
 #
 # Usage:
 #   .claude/bin/acyclic-deps.sh                  # scan whole tree
-#   .claude/bin/acyclic-deps.sh .inspire_kb/04_specs/auth    # scoped scan
+#   .claude/bin/acyclic-deps.sh .inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

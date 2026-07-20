@@ -25,7 +25,7 @@ product you build on top.
 | Path | What it is |
 |---|---|
 | [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills), `bin/` (the validators + fixtures), `hooks/` (the git-time hooks), and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
-| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_screens` · `06_tracker`). Each folder documents its own purpose and layout. |
+| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_domain` · `05_screens` · `06_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here (open `.manual/index.html` locally). |
 | [`prototype/`](prototype/) | The **horizontal prototype** (product-side, non-dot) — the wide/shallow/mocked working model of the whole product. Its learnings live in `.inspire_kb/03_prototypes/`; verticals live in external repos. |
 | [`source/`](source/) | The **production monorepo** (product-side, non-dot) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |

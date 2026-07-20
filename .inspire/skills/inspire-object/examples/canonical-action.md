@@ -1,6 +1,6 @@
 ## Canonical action descriptor — `auth::user::create`
 
-A complete, annotated action descriptor. This is the shape every `create` action should mirror. Annotations are in HTML comments so they survive a copy-paste into a real `.inspire_kb/04_specs/auth/user/auth.user.create.md`.
+A complete, annotated action descriptor. This is the shape every `create` action should mirror. Annotations are in HTML comments so they survive a copy-paste into a real `.inspire_kb/04_domain/auth/user/auth.user.create.md`.
 
 ---
 

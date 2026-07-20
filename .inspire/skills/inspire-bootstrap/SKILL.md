@@ -14,7 +14,7 @@ This skill owns the **bootstrap layer** —
 - `theme.md` — the **design system / theme** (fonts, color palette + status map,
   density, layout tokens).
 
-These are the foundation every other layer reads: specs ([`04_specs`](../../.inspire_kb/04_specs)),
+These are the foundation every other layer reads: specs ([`04_domain`](../../.inspire_kb/04_domain)),
 screen specs ([`05_screens`](../../.inspire_kb/05_screens)), the prototype ([`/prototype`](../../prototype))
 and production code ([`/source`](../../source)) all build on what is declared here.
 The template seeds both with a sensible default (the OpenBIMS reference stack +

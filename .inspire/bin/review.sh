@@ -11,7 +11,7 @@
 #
 # Usage:
 #   .claude/bin/review.sh                # scan whole tree
-#   .claude/bin/review.sh .inspire_kb/04_specs/auth  # scoped scan
+#   .claude/bin/review.sh .inspire_kb/04_domain/auth  # scoped scan
 
 set -uo pipefail
 

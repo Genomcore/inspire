@@ -11,7 +11,7 @@ A **feature** is a use case, captured as a file
 `.inspire_kb/02_features/{module}/{use-case}.md` and listed in that module's
 `_index.md`. This skill owns feature-scoped operations and their propagation
 across the KB layers: screens (`05_screens`), prototype (`03_prototypes` + `/prototype`),
-specs (`04_specs`), and ADRs (`01_adr`).
+specs (`04_domain`), and ADRs (`01_adr`).
 
 ## Invocation
 
@@ -42,7 +42,7 @@ Reviews one feature across all layers. Runs inline (no agents).
    adoption, hardcoded data, ADR gaps). Learnings belong in
    `.inspire_kb/03_prototypes/`.
 4. **Specs (SDD) coverage.** Find action descriptors whose `## Why` wikilinks back
-   to this feature. Search `.inspire_kb/04_specs/**/*.md` for `[[{feature-id}]]`.
+   to this feature. Search `.inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
    one-line `## Why` summary.
 5. **ADR alignment.** If the feature references an ADR (`[[adr-xxx]]`), verify it
@@ -67,7 +67,7 @@ Reviews one feature across all layers. Runs inline (no agents).
 | Feature (02_features) | ✅ | {file} |
 | screen spec (05_screens) | ✅/❌/N/A | Screens: {list} |
 | Prototype (/prototype) | ✅/⚠️/❌/N/A | Drift: {count} |
-| Specs (04_specs) | ✅/❌/N/A | Actions: {list} |
+| Specs (04_domain) | ✅/❌/N/A | Actions: {list} |
 | ADR alignment | ✅/⚠️/❌ | |
 
 ## Issues
@@ -128,7 +128,7 @@ feature or one module's features:
 2. **Candidate surfacing + narrowing** — read the feature file, infer the actions
    that would realize it (most features map to 1–3), apply plural→singular
    canonicalization on action ids silently, check whether each already exists at
-   `.inspire_kb/04_specs/{module}/{entity}/{action}.md`, and dialogue with the
+   `.inspire_kb/04_domain/{module}/{entity}/{action}.md`, and dialogue with the
    operator to pick a set. One focused question at a time; follow the
    conversational conventions of [`/inspire_object`](../inspire-object/SKILL.md).
 3. **Chained authoring** (only on an explicit "start" signal) — create one
@@ -136,7 +136,7 @@ feature or one module's features:
    `/inspire_object define {id}` via the Skill tool; `inspire-object` runs its
    socratic interview and may co-evolve the action + entity documents in one flow.
 
-Scan is read-only with respect to `.inspire_kb/04_specs/`; authoring lives in
+Scan is read-only with respect to `.inspire_kb/04_domain/`; authoring lives in
 `/inspire_object`. Pure exploration leaves no tasks created. **Batch mode**
 (`scan {module}`) expands this over every feature in the module's `_index.md`.
 

@@ -8,7 +8,7 @@ It is the last layer in the INSPIRE flow: intent and contracts are worked out in
 the knowledge base and de-risked in prototypes, then **realized here**.
 
 - Driven by the KB: features ([`.inspire_kb/02_features`](../.inspire_kb/02_features)),
-  specs ([`.inspire_kb/04_specs`](../.inspire_kb/04_specs)) and screen specs
+  specs ([`.inspire_kb/04_domain`](../.inspire_kb/04_domain)) and screen specs
   ([`.inspire_kb/05_screens`](../.inspire_kb/05_screens)) define *what* to build and what
   "correct" means; the shared tech context lives in
   [`.inspire_kb/00_bootstrap`](../.inspire_kb/00_bootstrap).

@@ -2,7 +2,7 @@
 
 The format spec for entity documents. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An entity document lives at `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md` — one fewer dotted segment than the action filenames sharing the directory. Segment count is what tells the tooling the two object kinds apart.
+An entity document lives at `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — one fewer dotted segment than the action filenames sharing the directory. Segment count is what tells the tooling the two object kinds apart.
 
 The entity document is a **design-discipline artefact** — it captures *why* this entity exists as a discrete object and *what motivates* its field shape — not a thin projection of the actions that touch it.
 

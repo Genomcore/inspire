@@ -47,7 +47,7 @@ that describe the screen:
 4. **Design system** — `.inspire_kb/05_screens/design-system.md` — tokens, type,
    density. Never redefine these per screen.
 5. **Intent & contract** — the feature in `.inspire_kb/02_features/{module}/…`
-   and, where relevant, the specs in `.inspire_kb/04_specs/…`.
+   and, where relevant, the specs in `.inspire_kb/04_domain/…`.
 
 > **Stack-agnostic.** This skill does not assume a framework. The project's own
 > stack, component catalog, conventions and known pitfalls live in its KB
@@ -79,7 +79,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 
 - **Horizontal** → add an entry to `.inspire_kb/03_prototypes/horizontal.md`:
   one insight per line, and **link the artifacts it affects**
-  (`02_features/…`, `04_specs/…`, `05_screens/…`).
+  (`02_features/…`, `04_domain/…`, `05_screens/…`).
 - **Vertical** → in that spike's `verticals/{name}.md`, write the learning so it
   **stands on its own** — useful even if the external repo later disappears.
 - **Recurring class of problem.** If a fix reveals something that will recur (a
@@ -110,7 +110,7 @@ The point of a prototype is what it teaches. After a meaningful build or fix:
 ## Related skills
 
 - `/inspire_screens` — the screen specs, patterns and components the horizontal builds from.
-- `/inspire_object` — the specs (`04_specs`) behind the screens.
+- `/inspire_object` — the specs (`04_domain`) behind the screens.
 - `/inspire_feature` / `/inspire_module review` — feature coverage and module
   consistency before a PR.
 - `run` / `verify` — launch and exercise the prototype end to end.

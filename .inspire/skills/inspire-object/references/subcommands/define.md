@@ -23,8 +23,8 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 
 ## What gets written
 
-- `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md` — the descriptor (for actions)
-- `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md` — the entity document (for entities)
+- `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` — the descriptor (for actions)
+- `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — the entity document (for entities)
 - Consolidation: the entity document's Fields + Touched by tables reconciled to include this action's field declarations (actions only)
 
 ## Hard rules that apply here

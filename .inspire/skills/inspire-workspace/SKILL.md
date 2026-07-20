@@ -33,7 +33,7 @@ propagated (the *propagation contract*):
 
 - `design` — design reasoning. Reach: the whole **design workspace** — features
   (`02_features`) + screens (`05_screens`) + the **horizontal prototype**
-  (`/prototype`, a *non-functional* interactive mock) + specs (`04_specs`).
+  (`/prototype`, a *non-functional* interactive mock) + specs (`04_domain`).
   Refined **in place** on new evidence.
 - `prototyped` — additionally **validated in an external functional prototype**:
   real running code in a vertical spike repo has proven the architecture works

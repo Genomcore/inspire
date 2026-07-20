@@ -23,7 +23,7 @@
 #
 # Usage:
 #   .claude/bin/wikilinks-resolve.sh                  # scan whole tree
-#   .claude/bin/wikilinks-resolve.sh .inspire_kb/04_specs/auth    # scoped scan
+#   .claude/bin/wikilinks-resolve.sh .inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

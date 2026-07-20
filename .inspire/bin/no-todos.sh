@@ -13,7 +13,7 @@
 #
 # Usage:
 #   .claude/bin/no-todos.sh                  # scan whole tree
-#   .claude/bin/no-todos.sh .inspire_kb/04_specs/auth    # scoped scan
+#   .claude/bin/no-todos.sh .inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

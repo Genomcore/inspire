@@ -4,7 +4,7 @@ After any subcommand that changes a descriptor (`define`, `update`, `refactor`, 
 
 ## What consolidation updates
 
-- `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md` — surgical rewrite of the `## Fields` table (one row per field, deduped across actions, types reconciled) and the `## Touched by` table (one row per action touching this entity, with the touch verb and a short note). Other sections are left exactly as the operator wrote them.
+- `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — surgical rewrite of the `## Fields` table (one row per field, deduped across actions, types reconciled) and the `## Touched by` table (one row per action touching this entity, with the touch verb and a short note). Other sections are left exactly as the operator wrote them.
 
 ## Discussion-forcing field additions
 

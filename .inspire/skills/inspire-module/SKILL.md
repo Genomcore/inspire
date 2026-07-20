@@ -11,7 +11,7 @@ A **module** is a folder `.inspire_kb/02_features/{module}/` that holds an
 `_index.md` (the module overview + use-case index) and **one file per use case**
 (`{use-case}.md`). This skill owns module-scoped operations and their propagation
 across the KB layers: features (`02_features`), screen specs (`05_screens`), the prototype
-(`03_prototypes` + `/prototype`), specs (`04_specs`), and ADRs (`01_adr`).
+(`03_prototypes` + `/prototype`), specs (`04_domain`), and ADRs (`01_adr`).
 
 ## Invocation
 
@@ -73,7 +73,7 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
   are reflected at `/prototype`, and what building them taught is captured in
   `.inspire_kb/03_prototypes/`.
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
-  realizing action descriptor in `.inspire_kb/04_specs/{module}/` (flag gaps as
+  realizing action descriptor in `.inspire_kb/04_domain/{module}/` (flag gaps as
   `important`); every action's `## Why` back-sources to a feature via
   `[[wikilink]]` (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts an **accepted** ADR within its
@@ -81,7 +81,7 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 
 ### 5. Spec-layer (SDD) checks
 
-Run `.claude/bin/review.sh .inspire_kb/04_specs/{module}/` and incorporate
+Run `.claude/bin/review.sh .inspire_kb/04_domain/{module}/` and incorporate
 findings. The rule set covers:
 - `acyclic-deps` — no cycles or self-loops in the `requires` graph
 - `stable-blockers` — stable actions don't require non-stable targets
@@ -167,7 +167,7 @@ Operate transactionally:
 
 The entry point for SDD-layer work on a module. It surfaces features that lack
 realizing specs and chains authoring into `/inspire_object`. Scan is **read-only**
-with respect to `.inspire_kb/04_specs/`; it never authors descriptors itself.
+with respect to `.inspire_kb/04_domain/`; it never authors descriptors itself.
 
 ### Phase 1 — Environment setup
 
@@ -195,7 +195,7 @@ For each declared action (e.g. `platform::actions::resolve`):
 - **Canonicalize plural → singular** (`platform::actions::resolve` →
   `platform::action::resolve`). This is a known layer-convention shift — apply it
   silently, don't surface it as a decision.
-- Check whether `.inspire_kb/04_specs/{module}/{entity}/{action}.md` exists.
+- Check whether `.inspire_kb/04_domain/{module}/{entity}/{action}.md` exists.
 - If not, it's a candidate.
 
 Surface candidates and **dialogue** to narrow the set — one focused question at a
@@ -238,7 +238,7 @@ Remove a module across all layers. Use with caution.
 3. **screen spec:** delete `.inspire_kb/05_screens/{module}/`.
 4. **Prototype:** remove the module's screens and routes from `/prototype`; prune
    any now-stale learnings in `.inspire_kb/03_prototypes/`.
-5. **Specs:** delete `.inspire_kb/04_specs/{module}/`.
+5. **Specs:** delete `.inspire_kb/04_domain/{module}/`.
 6. **Cross-references:**
    - Grep the whole `.inspire_kb/` for `[[{module}]]` or feature-ID references —
      flag and offer fixes.

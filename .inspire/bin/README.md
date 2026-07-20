@@ -1,7 +1,7 @@
 # `.claude/bin/` — SDD Validation Library
 
 Source of truth for what "review" means in the SDD layer. Shell scripts that
-read filesystem state under `.inspire_kb/04_specs/`, parse `.md` frontmatter, evaluate
+read filesystem state under `.inspire_kb/04_domain/`, parse `.md` frontmatter, evaluate
 rules, and emit structured findings.
 
 Two consumers wrap this library:
@@ -62,7 +62,7 @@ The library implements the **quality gate** (per D24 in the SDD V3 reframe adden
 Findings are emitted to **stderr** as JSON lines (one finding per line):
 
 ```json
-{"severity":"error","rule":"entity-coherence","target":".inspire_kb/04_specs/auth/user/auth.user.create.md","message":"..."}
+{"severity":"error","rule":"entity-coherence","target":".inspire_kb/04_domain/auth/user/auth.user.create.md","message":"..."}
 ```
 
 Severity is one of `error` (blocking) or `warning` (advisory).
@@ -74,7 +74,7 @@ they want to format findings for conversational presentation).
 
 ## Scope
 
-The library targets action descriptors under `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.{action}.md` and the per-entity documents at `.inspire_kb/04_specs/{module}/{entity}/{module}.{entity}.md` (one fewer dotted segment than the action filenames — the segment count is how discovery distinguishes them). Surface bindings (HTTP routes, CLI commands, MCP tools) live in surface-binding artifacts owned by their respective modules and are not produced by anything in this library.
+The library targets action descriptors under `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` and the per-entity documents at `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` (one fewer dotted segment than the action filenames — the segment count is how discovery distinguishes them). Surface bindings (HTTP routes, CLI commands, MCP tools) live in surface-binding artifacts owned by their respective modules and are not produced by anything in this library.
 
 ## Manual invocation
 
@@ -86,7 +86,7 @@ The library targets action descriptors under `.inspire_kb/04_specs/{module}/{ent
 .claude/bin/entity-coherence.sh
 
 # Scope to a single module
-.claude/bin/review.sh .inspire_kb/04_specs/auth
+.claude/bin/review.sh .inspire_kb/04_domain/auth
 ```
 
 Scripts read from the **current working directory** as the repo root. Run

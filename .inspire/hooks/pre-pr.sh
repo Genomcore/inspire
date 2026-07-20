@@ -40,4 +40,4 @@ esac
 
 cd "$PROJECT_ROOT"
 
-"$PROJECT_ROOT/.claude/bin/review.sh" .inspire_kb/04_specs || exit 2
+"$PROJECT_ROOT/.claude/bin/review.sh" .inspire_kb/04_domain || exit 2

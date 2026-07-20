@@ -20,4 +20,4 @@ spec for one navigable view; here it's named "screen" because that reads clearer
   production.
 
 Screens realise features ([`02_features`](../02_features)) and must stay aligned
-with the specs in [`04_specs`](../04_specs).
+with the specs in [`04_domain`](../04_domain).
