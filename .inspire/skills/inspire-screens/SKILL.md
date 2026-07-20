@@ -52,10 +52,23 @@ components.
 
 - {describe only what deviates from the pattern defaults}
 
+## Current prototype
+
+- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}` — or `none yet`}
+- **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
+  - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
+
 ## Notes
 
 - {domain-specific behavior, edge cases, user feedback that informed the design}
 ```
+
+The **Current prototype** section names the prototype route(s) realizing the screen
+and tracks **drift** — misalignments between the prototype and this spec, grouped by
+type (`ADR alignment` · `data wiring` · `component adoption` · `gap` · `cosmetic`).
+Drift is **informational**: it never blocks a PR unless it contradicts an accepted
+ADR, and it drives the propagation check below. Omit the section only until a
+prototype target exists.
 
 ## Granularity rule: one file per screen
 
@@ -127,7 +140,7 @@ When uncertain which layer a finding belongs to, ask the user.
 5. **Data reference is valid.**
 6. **No ASCII layout diagrams** unless bespoke.
 7. **No inline mock data.**
-8. **Historical language is absent** ("antes", "reemplaza a", "eliminado",
+8. **Historical language is absent** ("previously", "replaces", "removed",
    strikethrough).
 9. **Route follows convention** (`/{module}/...`).
 10. **Live prototype check.** When the prototype can be run, navigate every route
@@ -136,7 +149,7 @@ When uncertain which layer a finding belongs to, ask the user.
 ### Pattern / component drift
 
 - **Pattern drift:** the screen claims pattern X but its deviations would
-  fundamentally change it → update the pattern's "Variantes" or mark the screen
+  fundamentally change it → update the pattern's "Variants" or mark the screen
   `bespoke`.
 - **Component drift:** the screen describes behavior that contradicts a
   component's canonical spec → update the component spec or fix the screen.
@@ -182,14 +195,14 @@ that affects the UI (new pattern, new slot, renamed data source, added/removed
 section or tab), the skill MUST ask the user whether to propagate the change to the
 prototype before ending the turn.
 
-1. **Detect the prototype target** from the screen's `## Prototipo actual` section.
+1. **Detect the prototype target** from the screen's `## Current prototype` section.
 2. **Classify the change** — structural (propagation strongly recommended),
    cosmetic (mention, don't insist), or no-prototype-yet (skip, note it's ready).
 3. **Ask, don't assume.** Close the turn with a clear question, e.g.:
 
-   > La screen spec de `{module}/{screen}` ha cambiado: {resumen}. El prototipo queda
-   > desalineado en: {drift}. ¿Propago ahora con `/inspire_prototype`, o en otro
-   > turno?
+   > The screen spec for `{module}/{screen}` has changed: {summary}. The prototype is
+   > now misaligned on: {drift}. Shall I propagate now with `/inspire_prototype`, or
+   > in another turn?
 
 4. **If confirmed:** invoke `/inspire_prototype` with a concrete prompt (the
    updated screen + the drift items to resolve).

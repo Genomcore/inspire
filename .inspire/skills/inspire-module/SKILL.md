@@ -57,8 +57,8 @@ PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 
 ### 3. Quality checks
 
-- **No historical language** anywhere (`"anteriormente"`, `"antes de"`,
-  `"reemplaza a"`, `"eliminado"`, `"migrado de"`, strikethrough `~~text~~`, …). The
+- **No historical language** anywhere (`"previously"`, `"used to"`,
+  `"replaces"`, `"removed"`, `"migrated from"`, strikethrough `~~text~~`, …). The
   KB describes the present state, not its history.
 - No embedded ADR content (>~10 lines of rationale without an ADR link).
 - All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `components/`,
@@ -94,7 +94,7 @@ Do not inline a re-spec.
 
 ### 6. Drift consolidation
 
-Screen files carry `## Prototipo actual` sections with drift items. Consolidate:
+Screen files carry `## Current prototype` sections with drift items. Consolidate:
 count total items, group by type (component adoption, data wiring, gap, ADR
 alignment), and report a summary. Priority: ADR alignment > data wiring >
 component adoption > cosmetic.
@@ -257,7 +257,7 @@ Remove a module across all layers. Use with caution.
 4. **Propagation is mandatory.** A module operation that touches features but
    leaves screen spec / prototype / specs inconsistent is a bug — use the cross-layer
    propagation logic.
-5. **Pending drift is acceptable.** Drift items in `## Prototipo actual` sections
+5. **Pending drift is acceptable.** Drift items in `## Current prototype` sections
    are informational; don't block PRs unless they contradict an accepted ADR.
 6. **Consult the task tracker** at the start of each invocation
    (`/inspire_workspace task list`, or open the Kanban via

@@ -245,7 +245,7 @@ Use this template at `.inspire_kb/02_features/{module}/{feature-id}.md`:
    references is drift.
 6. **N/A is valid.** Not every feature needs every layer — infrastructure features
    may have no UI.
-7. **Drift is informational.** `## Prototipo actual` drift items don't block
+7. **Drift is informational.** `## Current prototype` drift items don't block
    reviews unless they contradict an accepted ADR.
 8. **Batch synthesis.** In batch review, identify patterns and produce a
    prioritized correction plan grouped by fix skill.

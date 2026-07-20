@@ -1,81 +1,129 @@
+<div align="center">
+
 # INSPIRE
+
+### Software that breathes.
 
 **A software engineering methodology for the agentic era.**
 
 > **I**ndividual · **N**avigable · **S**pec-driven · **P**rototypical · **I**terative · **R**egenerative · **E**nforceable
 
-When generating code is cheap, the scarce work is no longer writing it — it's
-**knowing what to build, and telling whether it's right.** INSPIRE is a way to
-build software with AI agents around that shift: intent lives in a navigable
-knowledge graph, prototypes create clarity, and coherence is protected
-*mechanically* by guardrails rather than by human discipline.
+[**Read the manual → inspire.openbims.dev**](https://inspire.openbims.dev) · [OpenBIMS](https://openbims.dev) · [Genomcore](https://genomcore.com)
 
-INSPIRE was born inside [OpenBIMS](https://openbims.dev), an open-source
-healthcare-AI platform by [Genomcore](https://genomcore.com). This repository
-is its **home** — where the methodology is documented and evolved — and a
-**template** for bootstrapping new specification-driven projects.
+</div>
 
 ---
 
-## What's here
+## Why INSPIRE
+
+For decades, building software was a **coordination** problem — getting teams of
+humans aligned around implementation. Agile was built for that world.
+
+That world is ending. When generating code is cheap, the scarce work is no longer
+writing it — it's **knowing what to build, and telling whether it's right.** A
+single person can now orchestrate a swarm of AI agents, and the bottleneck moves
+from coordination to **judgment**.
+
+INSPIRE is a way to build software around that shift:
+
+- **Intent lives in a navigable knowledge graph** — plain-text artifacts that stay
+  durable across every regeneration of the code.
+- **Prototypes create clarity** — a wide, shallow horizontal prototype and narrow,
+  deep vertical spikes reduce uncertainty *before* you commit.
+- **Coherence is enforced mechanically** — guardrails, skills and automated checks
+  catch drift by design, not by human discipline.
+
+It was born inside [OpenBIMS](https://openbims.dev), an open-source healthcare-AI
+platform by [Genomcore](https://genomcore.com). This repository is both its
+**home** — where the methodology is documented and evolved — and a ready-to-use
+**template** for bootstrapping your own specification-driven projects.
+
+> 📖 **The full story lives in the manual:** **[inspire.openbims.dev](https://inspire.openbims.dev)**
+> (source in [`.manual/`](.manual/) — open [`.manual/index.html`](.manual/index.html) locally).
+
+---
+
+## The methodology in one breath
+
+- **The unit of work is a Breath, not a sprint.** One intent, one context —
+  *inhale* (internalize the problem) → *exhale* (materialize it as a pull request).
+  Its size is set by context and impact, not by a clock.
+- **Every Breath turns the spiral of convergence** — *Discover → Specify → Generate
+  → Verify* — each loop reducing uncertainty and moving the product closer to release.
+- **Prototypes are instruments for learning, not early products.** One *horizontal*
+  prototype (wide, shallow, mocked) asks "is this the right thing?"; many *vertical*
+  spikes (narrow, deep, functional) ask "can we build it as we think?".
+- **The specification is the DNA of the system.** Code is its current expression; when
+  it drifts, agents regenerate it while preserving the original intent.
+
+*Stop sprinting. Start breathing.*
+
+---
+
+## What's in this repo
 
 The convention: **dotfolders are INSPIRE scaffolding**; non-dot dirs are the
 product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills), `bin/` (the validators + fixtures), `hooks/` (the git-time hooks), and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
+| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time hooks) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
 | [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `02_features` · `03_prototypes` · `04_domain` · `05_screens` · `99_tracker`). Each folder documents its own purpose and layout. |
-| [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here (open `.manual/index.html` locally). |
-| [`prototype/`](prototype/) | The **horizontal prototype** (product-side, non-dot) — the wide/shallow/mocked working model of the whole product. Its learnings live in `.inspire_kb/03_prototypes/`; verticals live in external repos. |
-| [`source/`](source/) | The **production monorepo** (product-side, non-dot) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
+| [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
+| [`prototype/`](prototype/) | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. |
+| [`source/`](source/) | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
 
 The skills + validators + hooks in `.inspire/` are the **guardrail layer**: the
 concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
-judgment, hooks + validators catch drift mechanically. `.inspire_kb/` is the
-graph they operate on.
-
-## The methodology in one breath
-
-- **The shift.** Software development was a coordination problem; Agile was built for that. Now one person can orchestrate a swarm of agents, and the bottleneck moves from coordination to **judgment**.
-- **The unit of work is a Breath**, not a sprint: one intent, one context — *inhale* (internalize the problem) → *exhale* (materialize it as a pull request). Its size is set by context and impact, not by a clock.
-- **The spiral of convergence.** Every Breath turns through *Discover → Specify → Generate → Verify*, each loop reducing uncertainty and moving the product closer to release.
-- **Prototypes create clarity.** One *horizontal* prototype (wide, shallow, mocked) asks "is this the right thing?"; many *vertical* spikes (narrow, deep, functional) ask "can we build it as we think?".
-- **Knowledge lives in a navigable graph** of plain-text artifacts — the shared context between humans and agents, durable across regenerations of the code.
-
-For the full story, read the manual at **[inspire.openbims.dev](https://inspire.openbims.dev)** (or open [`.manual/index.html`](.manual/index.html) locally).
+judgment, hooks + validators catch drift mechanically. `.inspire_kb/` is the graph
+they operate on.
 
 ---
 
-## Using this as a template
+## Get started
 
 A new specification-driven project adopts INSPIRE's guardrail layer wholesale by
 cloning this repo and filling in `.inspire_kb/`. The skills, hooks and validators
-speak a generic, stack-agnostic model — features, specs, screens, the horizontal
-prototype at `/prototype`, external verticals — and read the spec root from
-`SDD_SPEC_ROOT`.
+speak a generic, stack-agnostic model — features, specs, screens, prototypes — so
+they fit any stack.
 
-Instantiation is one command (`bash .inspire/install.sh`), and the foundation
-([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) ships with a sensible
-default. Each project supplies its own content — its modules, features, screens
-and specs. Starter `05_screens/patterns/` (`list`, `detail`) come included, and the
-design system is seeded from the bootstrap theme at install.
+**1. Fork or clone this repository.**
 
-### Wiring the guardrails into a project
+```bash
+git clone https://github.com/genomcore/inspire.git my-project
+cd my-project
+```
 
-Fork/clone this repo, then instantiate the runtime once:
+**2. Instantiate the runtime (once per fork).**
 
 ```bash
 bash .inspire/install.sh
 ```
 
-It copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (where
-Claude Code discovers and executes them), makes the scripts executable, and wires
-the `pre-commit` / `pre-pr` hooks into `.claude/settings.json`. It is idempotent —
-re-run it after pulling template updates. Then start filling in `.inspire_kb/`.
+This copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (where
+Claude Code discovers and executes them), makes the scripts executable, wires the
+`pre-commit` / `pre-pr` hooks into `.claude/settings.json`, and seeds the design
+system from your bootstrap theme. It is **idempotent** — `.inspire/` stays the
+versioned source of truth, so re-run it after pulling template updates.
 
-Prerequisites for the validators: `bash` 4+, `yq` (Mike Farah's v4), `jq` 1.6+.
+**3. Start filling in `.inspire_kb/`** — your modules, features, screens and specs.
+The foundation ([`00_bootstrap`](.inspire_kb/00_bootstrap): stack + theme) and
+starter screen patterns ship with sensible defaults; the `inspire-*` skills guide
+the rest.
+
+> **Prerequisites for the validators:** `bash` 4+, [`yq`](https://github.com/mikefarah/yq)
+> (Mike Farah's v4), `jq` 1.6+.
 
 ---
 
+<div align="center">
+
+**INSPIRE doesn't define how code is produced.**
+It represents how a well-designed system *breathes* — coherent, alive, and able to
+renew itself.
+
 *Individual · Navigable · Spec-driven · Prototypical · Iterative · Regenerative · Enforceable*
+
+Born in [OpenBIMS](https://openbims.dev) · by [Genomcore](https://genomcore.com)
+
+</div>
