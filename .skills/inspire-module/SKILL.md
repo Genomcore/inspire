@@ -1,151 +1,109 @@
 ---
 name: inspire-module
-description: "Lifecycle of a module: create / review / update / delete its PDD and propagate changes across all layers. Use when scaffolding a new module, auditing an existing one before a PR, or removing a module."
+description: "Lifecycle of a module: create / review / update / scan / delete a module's features and propagate changes across the KB layers. Use when scaffolding a new module, auditing an existing one before a PR, authoring its specs, or removing it."
 ---
 
 # /inspire_module — Module-level Operations
 
 ## Scope
 
-This skill owns **module-scoped** operations. A "module" is a folder in `.inspire_kb/02_features/{module}/` (core module) or a file/folder in `.inspire_kb/02_features/` (satellite module).
+A **module** is a folder `.inspire_kb/02_features/{module}/` that holds an
+`_index.md` (the module overview + use-case index) and **one file per use case**
+(`{use-case}.md`). This skill owns module-scoped operations and their propagation
+across the KB layers: features (`02_features`), UISpecs (`05_ui`), the prototype
+(`03_prototypes` + `/prototype`), specs (`04_specs`), and ADRs (`01_adr`).
 
 ## Invocation
 
 - `/inspire_module review {module}` — full consistency review before PR
-- `/inspire_module create {module}` — scaffold a new module across all layers
-- `/inspire_module update {module}` — add/remove features, restructure submodules, propagate across layers
-- `/inspire_module delete {module}` — remove the module and clean up every cross-reference
+- `/inspire_module create {module}` — scaffold a new module across the layers
+- `/inspire_module update {module}` — add/remove use cases, restructure, propagate
+- `/inspire_module scan {module}` — SDD-layer entry point (surface + author specs)
+- `/inspire_module delete {module}` — remove the module and clean every cross-reference
 
 ## Subcommand: review
 
-Runs all consistency checks for the module. This is the **required gate before any PR** that modifies files in `.inspire_kb/02_features/{module}/`.
+Runs all consistency checks for the module. This is the **required gate before any
+PR** that modifies files in `.inspire_kb/02_features/{module}/`.
 
-### Steps
+### 1. Features structure
 
-#### 1. PDD structure validation
+**Index (`_index.md`):**
+- Exists in the module folder.
+- Is a **pure index**: overview, module relationships, a **use-case index** table
+  linking each use case via `[[wikilinks]]`, and a summary. **No full use-case
+  bodies inline.**
+- The summary totals match the actual number of use-case files.
 
-**Index file (`_index.md`):**
-- Exists in the module folder
-- Is a **pure index**: intro, architecture, module relationships, Subsistemas table, Índice de Features table, Resumen. **NO feature definition blocks** (`### {ID} · {Name}` + description + metadata).
-- Has a **Subsistemas** table linking to each submodule file via `[[wikilinks]]`
-- Has an **Índice de Features** table listing ALL feature IDs with wikilinks to their submodule
-- Has a **Resumen** table with correct totals (Total = sum of subsystems; Core + Important = Total)
+**Use-case files:**
+- One file per use case (`{use-case}.md`); each carries a back-link
+  `[[_index|ModuleName]]` in its intro.
+- No orphans (file on disk, not in the index) and no phantoms (in the index, no
+  file).
+- Feature / use-case IDs are unique within the module and use the module's ID
+  prefix (declared in the module `_index.md` / the project's `00_tech_stack`
+  conventions).
 
-**Submodule files:**
-- Every `.md` file in the module folder (except `_index.md`) is referenced in the Subsistemas table
-- Every submodule file has a back-link `[[_index|ModuleName]]` in its intro
-- No orphan submodule files (exist on disk but not in the index)
-- No phantom submodule references (in the index but file doesn't exist)
+### 2. UISpec structure
 
-**Feature completeness:**
-- Read ALL submodule files completely and extract every `### {ID} · {Name}` block
-- Compare extracted features against the Índice de Features table in `_index.md`
-- Flag: features defined in submodules but missing from the index
-- Flag: features listed in the index but not defined in any submodule
-- Flag: feature count in Resumen doesn't match actual count
+- Folder `.inspire_kb/05_ui/{module}/` with `_index.md` + one file per screen.
+- `_index.md` contains the route map + feature-coverage table; every screen in
+  the map exists on disk, and every screen file is referenced in the map.
+- Every screen header carries `**Features:**` and `**Pattern:**`; every pattern
+  resolves to a file in `.inspire_kb/05_ui/patterns/` (or `bespoke` with
+  justification).
+- No screen redefines design tokens (those live in `design-system.md`); no inline
+  mock data (reference the data source); each screen stays focused (~250 lines).
 
-#### 2. UISpec structure validation
+### 3. Quality checks
 
-Detect which UISpec structure the module uses:
+- **No historical language** anywhere (`"anteriormente"`, `"antes de"`,
+  `"reemplaza a"`, `"eliminado"`, `"migrado de"`, strikethrough `~~text~~`, …). The
+  KB describes the present state, not its history.
+- No embedded ADR content (>~10 lines of rationale without an ADR link).
+- All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `components/`,
+  `01_adr/`, `design-system.md`).
 
-- **New structure (preferred):** folder `.inspire_kb/05_ui/{module}/` with `_index.md` + one file per screen
-- **Legacy monolith:** single file `.inspire_kb/05_ui/UISpec_{Module}.md`
-- **Both exist simultaneously:** error — migration incomplete; legacy should be deleted once new is complete
+### 4. Cross-layer coverage
 
-**For new structure:**
-- Module `_index.md` exists and contains: sidebar navigation, route map table, feature coverage table
-- Every screen file in the folder is referenced in the route map
-- Every referenced screen file exists on disk
-- Every screen file has header with `**Features:**`, `**Pattern:**`, `**PDD:**`
-- Every `**Pattern:**` resolves to an existing file in `.inspire_kb/05_ui/patterns/` (or `bespoke` with justification)
-- Every `[[../components/X]]` wikilink resolves
-- No screen redescribes design tokens (those live in `design-system.md`)
-- No screen contains ASCII layout unless marked `bespoke`
-- No inline mock data (must reference tables)
-- Each screen is under ~250 lines
+- **Features ↔ UISpec:** every feature with UI implications has a screen; every
+  screen's `**Features:**` line references features that exist in `02_features`;
+  the UISpec `_index.md` coverage table aligns with the actual screens.
+- **Features ↔ Prototype:** features meant to appear in the horizontal prototype
+  are reflected at `/prototype`, and what building them taught is captured in
+  `.inspire_kb/03_prototypes/`.
+- **Features ↔ Specs:** every feature that describes a behavior has at least one
+  realizing action descriptor in `.inspire_kb/04_specs/{module}/` (flag gaps as
+  `important`); every action's `## Why` back-sources to a feature via
+  `[[wikilink]]` (flag orphan actions as `important`).
+- **ADR alignment:** flag anything that contradicts an **accepted** ADR within its
+  maturity's reach (see `.inspire_kb/01_adr/`).
 
-**For legacy monolith:**
-- Flag as `important`: module should be migrated
-- Apply legacy checks (feature IDs, no historical language, no contradictions)
+### 5. Spec-layer (SDD) checks
 
-#### 3. Quality checks
-
-- No historical language anywhere: `"anteriormente"`, `"antes de"`, `"reemplaza a"`, `"eliminado"`, `"absorbido"`, `"migrado de"`, `"ex-"`, `"absorbe"`, strikethrough `~~text~~`
-- No embedded ADR content (>10 lines rationale without ADR link)
-- Feature IDs use correct prefix for the module (check CLAUDE.md module table)
-- No duplicate feature IDs across all submodule files
-- All `[[wikilinks]]` resolve to existing files (including cross-folder: patterns/, components/, adrs/, design-system.md)
-
-#### 4. Cross-layer coverage
-
-**PDD ↔ UISpec:**
-- Every PDD feature with UI implications has a screen
-- Every screen's `**Features:**` line references features that exist in the PDD
-- The UISpec `_index.md` feature coverage table aligns with actual screen declarations
-
-**PDD ↔ Prototype:**
-- Every screen's `## Prototipo actual` names a real `.jsx` file (or declares "not yet implemented")
-- Every `.jsx` page in the module folder is referenced by at least one screen
-- Routes declared in screen headers match `App.jsx`
-
-**PDD ↔ Mock Data:**
-- Entities referenced in PDD have tables in `mock-data/schema/`
-- Tables have JSONL data files
-- No orphan JSONL files for this module
-
-**PDD ↔ Manual:**
-- Module has a page in `manual/modules/{module}.html`
-- Manual page reflects current PDD (no stale content for removed features)
-
-**Cross-cutting: centralized logging** (per [[adr-audit-01-centralized-logging]]):
-- Flag if the module defines any table like `{module}_audit_events`, `{module}_logs`, `{module}_activity_log`, or any other local store of audit events.
-- Flag if the module defines a screen dedicated to viewing logs/audit events (route like `/{module}/audit`, `/{module}/logs`, or sidebar entry "Audit Trail").
-- Flag if the module PDD describes emitting audit events "via Channels" or "via Event Bus" — the canonical wording is "via `@openbims/audit`".
-- Exception: the `audit` module itself owns `audit_events`, `LOG-*`, and related surfaces.
-
-**Module landing pages** (per [[adr-ux-01-module-landing-pages]]):
-- Flag any PDD feature framed as "module dashboard" / "module overview" / "module home" whose sole purpose is being the `/{module}` landing.
-- Flag UISpec `dashboard.md` routed as `/{module}` (vs `/{module}/{resource}/:id/analytics`).
-- Flag prototype `{Module}Dashboard.jsx` rendered at `/{module}` in `App.jsx`.
-- Flag sidebar entry labeled "Dashboard"/"Overview" pointing to `/{module}` root.
-- Recommend: `<Route path="/{module}" element={<Navigate to="/{module}/{primary-list}" replace />} />`.
-
-**Module-level settings** (per [[adr-ux-02-settings-location]]):
-- Flag UISpec `settings.md` routed as `/{module}/settings` in non-Platform modules.
-- Flag prototype `{Module}Settings.jsx` as a dedicated page routed at `/{module}/settings`.
-- Flag sidebar entry labeled "Settings" under a functional module.
-- For each settings section in such a page, identify its natural home: a tab in the primitive's screen, a subsystem's screen, or Platform for cross-module concerns.
-- Exception: the Platform module owns the global Settings role (its sidebar label is "Settings" at top level).
-
-#### 5. SDD layer coverage
-
-Run `.claude/bin/review.sh .inspire_kb/04_specs/{module}/` and incorporate findings. The rule set covers:
+Run `.claude/bin/review.sh .inspire_kb/04_specs/{module}/` and incorporate
+findings. The rule set covers:
 - `acyclic-deps` — no cycles or self-loops in the `requires` graph
 - `stable-blockers` — stable actions don't require non-stable targets
 - `touched-entity-lifecycle` — stable actions touch only entities ≥ accepted
 - `entity-coherence` — per-field type-conflict, unsourced, and orphan-write findings
 
-Render findings via the shared format at [`.claude/skills/_references/findings-format.md`](../_references/findings-format.md). Do not inline a re-spec.
+Render findings via the shared format at
+[`.claude/skills/_references/findings-format.md`](../_references/findings-format.md).
+Do not inline a re-spec.
 
-Additionally for SDD-layer coverage:
-- Every PDD feature that describes a behavior should have at least one realizing action descriptor in `.inspire_kb/04_specs/{module}/`. Flag features with no realizing action as `important`.
-- Every action descriptor's `## Why` should back-source to a PDD section via `[[wikilink]]`. Flag orphan actions (no PDD back-source) as `important`.
+### 6. Drift consolidation
 
-#### 6. Drift consolidation
+Screen files carry `## Prototipo actual` sections with drift items. Consolidate:
+count total items, group by type (component adoption, data wiring, gap, ADR
+alignment), and report a summary. Priority: ADR alignment > data wiring >
+component adoption > cosmetic.
 
-For new-structure UISpecs, screens contain `## Prototipo actual` sections with drift items. Consolidate:
+### 7. Overengineering detection
 
-- Count total drift items
-- Group by type: component adoption, data wiring, gap (no .jsx yet), ADR alignment
-- Report as summary
-- Priority: ADR alignment > data wiring > component adoption > cosmetic
-
-#### 7. Overengineering detection
-
-- UI described in screens not in the `components/` catalog and used in <2 screens
-- Patterns not in the catalog and not justified as bespoke
-- `.jsx` pages with no screen spec and no PDD feature justification
-- Mock-data tables not referenced by any PDD feature
+- UI/patterns used in <2 screens and not in the catalog / not justified as
+  bespoke.
+- Prototype screens with no screen spec and no feature justification.
 
 ### Output format
 
@@ -153,18 +111,16 @@ For new-structure UISpecs, screens contain `## Prototipo actual` sections with d
 # Module Review: {module} | {date}
 
 ## Summary
-- UISpec structure: new | legacy | migrating
-- Features in PDD: {count}
+- Use cases: {count}
 - Screen files: {count}
 - Drift items pending: {count}
 - Issues: {critical} critical, {important} important, {minor} minor
 
-## PDD Structure
-- Submodule files: {list}
+## Features Structure
+- Use-case files: {list}
 - Index accuracy: {ok | N mismatches}
 
 ## UISpec Structure
-- Path: {folder or monolith file}
 - Pattern usage: {list} | {bespoke count}
 - Component usage: {list}
 
@@ -174,177 +130,140 @@ For new-structure UISpecs, screens contain `## Prototipo actual` sections with d
 ## Important / Minor
 - ...
 
-## Drift Summary
-- Component adoption pending: ...
-- Data wiring pending: ...
-- Gap (new pages): ...
-- ADR alignment pending: ...
-
-## OK
+## Drift Summary / OK
 - ...
 ```
 
 ## Subcommand: create
 
-Scaffold a new module across all layers. User provides module name, prefix (e.g. `MYM`), and description.
+Scaffold a new module across the layers. The user provides the module name, an ID
+prefix (e.g. `MYM`), and a description.
 
-### Steps
+1. **Features folder:** `.inspire_kb/02_features/{module}/`
+   - `_index.md` with an overview skeleton + an empty use-case index table.
+2. **Register** the module in the top-level `.inspire_kb/02_features/_index.md`
+   (if the project keeps one).
+3. **UISpec folder:** `.inspire_kb/05_ui/{module}/_index.md` — empty route map +
+   feature-coverage tables. No screens yet.
+4. Record the module's ID prefix + conventions where the project keeps them (the
+   module `_index.md` and/or `.inspire_kb/00_tech_stack`).
+5. Point the user to `/inspire_feature create` for the first use cases, and
+   `/inspire_prototype` once screens exist.
 
-1. **Create PDD folder:** `.inspire_kb/02_features/{module}/`
-   - `_index.md` with intro skeleton + empty Subsistemas and Índice de Features tables
-   - Initial submodule files if the user describes >1 subsystem
-
-2. **Register in top-level index:** add entry in `.inspire_kb/02_features/_index.md` for this module
-
-3. **Create UISpec folder:** `.inspire_kb/05_ui/{module}/`
-   - `_index.md` skeleton with empty route map and feature coverage tables
-   - No screens yet — user adds via `/inspire_feature create` or `/inspire_ui create`
-
-4. **Create mock-data schema file:** `mock-data/schema/{NN}_{module}.sql`
-   - Empty DDL shell with module comment
-
-5. **Create manual stub:** `manual/modules/{module}.html`
-   - Module description placeholder
-
-6. **Add route prefix in prototype (optional, when pages exist):** point user to `/inspire_prototype` to add the module folder and routes
-
-7. **Update CLAUDE.md** module table with the new module
-
-Report what was created and next steps (typically: invoke `/inspire_feature create` for the first features).
+Report what was created and the next steps.
 
 ## Subcommand: update
 
-Modify an existing module. Use for:
-- Adding/removing a subsystem submodule file
-- Renaming a feature ID globally (with FK updates across mock-data)
-- Moving features between submodules
-- Restructuring after a new ADR
+Modify an existing module. Use for: adding/removing use cases, renaming a feature
+ID globally, restructuring, or realigning after a new ADR.
 
-The update operates transactionally: propose the changes first, get user approval, then apply across layers.
-
-Steps:
-1. Read current state (PDD + UISpec + mock-data + manual)
-2. Present the diff proposal to the user
-3. On approval, apply edits
-4. Run `review {module}` to verify no drift introduced
+Operate transactionally:
+1. Read the current state (features + UISpec + specs).
+2. Present the diff proposal to the user.
+3. On approval, apply edits across the affected layers.
+4. Run `review {module}` to verify no drift was introduced.
 
 ## Subcommand: scan
 
-The entry point for SDD-layer work on a module. Three phases:
-
-1. **Environment setup** — confirm the operator is in a clean worktree on the right branch, or offer to bootstrap one.
-2. **Candidate surfacing + narrowing** — read the PDD, list PDD features without realizing SDD action descriptors, dialogue with the operator to pick a set.
-3. **Chained authoring** — for the chosen set, create TaskCreate items and chain serially to `/inspire_object define`. Authoring proceeds via the **socratic interview** pattern owned by that skill, which probes design implications section by section rather than fill-in-template.
-
-Scan is read-only with respect to `.inspire_kb/04_specs/`; it never authors descriptors itself. Authoring lives in `/inspire_object`.
+The entry point for SDD-layer work on a module. It surfaces features that lack
+realizing specs and chains authoring into `/inspire_object`. Scan is **read-only**
+with respect to `.inspire_kb/04_specs/`; it never authors descriptors itself.
 
 ### Phase 1 — Environment setup
 
-When invoked, check:
-
-- Are we currently in a git worktree?
-- Is the branch one of the operator's per-module SDD branches (e.g. `feat/sdd-{module}`)?
-- Is the working tree clean?
-
-If all three are yes, proceed to Phase 2.
-
-If any is no, surface the gap to the operator and offer options conversationally:
-
-- **Bootstrap a fresh worktree** for this module at `.claude/worktrees/sdd-{module}/`, branch `feat/sdd-{module}` off `origin/main` (or whatever the active SDD-base branch is).
-- **Continue in the current worktree** — only valid if the current branch makes sense for this module.
-- **Abort** — operator wants to set up environment themselves.
-
-When the operator confirms bootstrap, run directly:
+Check: are we in a git worktree, on the right per-module SDD branch (e.g.
+`feat/sdd-{module}`), with a clean tree? If all yes, proceed. Otherwise surface
+the gap and offer, conversationally, to bootstrap a fresh worktree:
 
 ```bash
 git worktree add .claude/worktrees/sdd-{module} -b feat/sdd-{module} origin/main
 ```
 
-Direct shell call via the Bash tool. **Do NOT defer to `superpowers:using-git-worktrees`** or any other skill. Operators may not have superpowers installed; the openbims-* skill family must stay portable.
+Direct shell call via the Bash tool. **Do NOT defer to a third-party worktree
+skill** — operators may not have it installed; the `inspire-*` skill family must
+stay portable.
 
 ### Phase 2 — Candidate surfacing + narrowing
 
-Read the module's PDD:
+Read the module's features:
+- `.inspire_kb/02_features/{module}/_index.md` — the use-case index and any action
+  declarations.
+- `.inspire_kb/02_features/{module}/{use-case}.md` — feature descriptions and the
+  actions they declare.
 
-- `.inspire_kb/02_features/{module}/_index.md` — extract the Action Catalog table rows
-- `.inspire_kb/02_features/{module}/{submodule}.md` for each submodule — extract feature descriptions and any action declarations they carry
-
-For each PDD action declaration like `platform::actions::resolve`:
-
-- **Canonicalize plural → singular**. `platform::actions::resolve` becomes the SDD id `platform::action::resolve`. This is a known convention shift between layers — apply it silently. Do NOT surface it as a "naming reconciliation" question or as a decision tree. Same intention, just a layer convention.
+For each declared action (e.g. `platform::actions::resolve`):
+- **Canonicalize plural → singular** (`platform::actions::resolve` →
+  `platform::action::resolve`). This is a known layer-convention shift — apply it
+  silently, don't surface it as a decision.
 - Check whether `.inspire_kb/04_specs/{module}/{entity}/{action}.md` exists.
-- If no — it's a candidate.
+- If not, it's a candidate.
 
-Surface candidates and dialogue:
+Surface candidates and **dialogue** to narrow the set — one focused question at a
+time, show-then-approve. Follow the conversational conventions of
+[`/inspire_object`](../inspire-object/SKILL.md). Do not enumerate decision-tree
+options; let the conversation decide.
 
-```
-"I see N PDD-declared actions for {module} that aren't yet authored as SDD descriptors:
- - platform::action::resolve  (from action-catalog subsystem, [[PDD-platform-...]])
- - platform::action::list
- - platform::action::register
- (plus M existing descriptors at .inspire_kb/04_specs/{module}/)
+### Phase 3 — Chained authoring (only when the operator signals "start")
 
- Want to look at any of these in more depth, or pick a set to start with?"
-```
+When the operator has chosen ≥1 action AND explicitly signaled start:
+1. Create one `TaskCreate` per chosen action (canonicalized SDD id).
+2. Mark the first `in_progress`.
+3. Invoke `/inspire_object define {first-id}` via the Skill tool. `inspire-object`
+   runs its socratic interview from here.
+4. On completion, return to this frame and ask whether to continue with the next.
 
-Then converse — narrow the set based on what the operator wants to prioritize. **Do not enumerate decision-tree options**; let the dialogue decide. Follow the conversational conventions of [`/inspire_object`'s SKILL.md](../inspire-object/SKILL.md#conversational-ownership) (this skill borrows them for its dialogue phase): one focused question at a time, show-then-approve.
+The interview may co-evolve action + entity documents in one `define` invocation;
+`/inspire_object` handles that bipartite walk. Scan's job ends at the handoff.
 
-### Phase 3 — Chained authoring (when the operator signals start)
+If the dialogue produces no chosen set (pure exploration), scan ends after Phase 2
+without creating tasks. **Scan is valid as pure exploration** — it is not
+"first-action-found-triggers-define".
 
-When the operator's narrowing has produced a set of ≥1 actions to author AND they have **explicitly signaled "let's start"** (not just "these are interesting" or "let me think"):
+### Phase 4 — Audit report
 
-1. Create one `TaskCreate` per chosen action with the canonicalized SDD id in the description.
-2. Mark the first task `in_progress`.
-3. Invoke `/inspire_object define {first-id}` via the Skill tool (programmatic chain). `inspire-object` takes over and runs its socratic interview from here.
-4. When `inspire-object`'s subcommand completes, return to this skill's frame. Ask the operator if they want to continue with the next task. On yes → mark next `in_progress` → chain. On no → pause cleanly; tasks remain in the list for later.
+At the **end** of the report, scan still emits the SDD-layer audit signals:
+features without realizing actions, orphan actions (no feature back-source), and
+coherence conflicts (via `entity-coherence`). Render via
+[`_references/findings-format.md`](../_references/findings-format.md).
 
-**Co-evolution mid-interview.** The socratic interview may pivot from action authoring to entity authoring inside a single `define` invocation — when an action's field-touch discussion surfaces a new field that the entity document does not yet declare, `/inspire_object` captures the change on both files in the same flow (see its "Conversation capture" section). The operator does not need to switch contexts manually; the object skill handles the bipartite walk. Scan's job ends at the handoff.
-
-If the operator's dialogue produces no chosen set (pure exploration), or they explicitly say "just review the report," scan ends after Phase 2. No tasks are created (or tasks for all candidates if the operator wants a queue for later, at their explicit request). **The operator's right to use scan as exploration is preserved** — scan is NOT "first-action-found-triggers-define."
-
-### Phase 4 — Audit report (existing behavior, runs after Phases 1–3)
-
-In addition to the entry-point phases, scan still produces the audit signals from the existing SDD-layer review (per the prior implementation):
-
-- Features without realizing actions
-- Orphan actions (no PDD back-source)
-- Coherence conflicts (via `entity-coherence`)
-
-These come at the **end** of the report, after the candidate-narrowing dialogue concludes. They serve as the impetus for further `scan` invocations or follow-up `/inspire_object review` runs. Render via [`_references/findings-format.md`](../_references/findings-format.md).
-
-`scan {module}` batches over a single module; `scan` without args batches over every core module in `.inspire_kb/02_features/`.
+`scan {module}` batches over one module; `scan` without args batches over every
+module in `.inspire_kb/02_features/`.
 
 ## Subcommand: delete
 
 Remove a module across all layers. Use with caution.
 
-### Steps
-
-1. **Confirm** with user: list all files and features about to be deleted
-2. **PDD:** delete `.inspire_kb/02_features/{module}/` folder
-3. **UISpec:** delete `.inspire_kb/05_ui/{module}/` folder OR legacy `UISpec_{Module}.md`
-4. **Mock data:**
-   - Delete or rename `mock-data/schema/{NN}_{module}.sql`
-   - Delete JSONL files for this module's tables
-   - Remove entries from `code/openbims-console/src/db/client.js` `discoverTables` array
-5. **Prototype:** delete `code/openbims-console/src/modules/{module}/` folder. Remove imports and routes from `App.jsx`. Remove entries from `Sidebar.jsx`.
-6. **Manual:** delete `manual/modules/{module}.html`. Remove from `nav.js` `NAV_STRUCTURE`.
-7. **Cross-references:**
-   - Grep the whole `.inspire_kb/` for `[[{module}]]` or feature-ID references of that module — flag and offer fixes
-   - Check ADRs under `.inspire_kb/01_adr/` for references to this module
-   - Check other modules' `_index.md` "Relación con otros módulos" sections
-8. **Top-level index:** remove from `.inspire_kb/02_features/_index.md`
-9. **CLAUDE.md:** remove from the module table
+1. **Confirm** with the user: list every file and feature about to be deleted.
+2. **Features:** delete `.inspire_kb/02_features/{module}/`.
+3. **UISpec:** delete `.inspire_kb/05_ui/{module}/`.
+4. **Prototype:** remove the module's screens and routes from `/prototype`; prune
+   any now-stale learnings in `.inspire_kb/03_prototypes/`.
+5. **Specs:** delete `.inspire_kb/04_specs/{module}/`.
+6. **Cross-references:**
+   - Grep the whole `.inspire_kb/` for `[[{module}]]` or feature-ID references —
+     flag and offer fixes.
+   - Check ADRs under `.inspire_kb/01_adr/` for references to this module.
+   - Check other modules' relationship sections.
+7. **Top-level index:** remove from `.inspire_kb/02_features/_index.md` and any
+   project-level conventions doc.
 
 ## Rules
 
-1. **`review` is read-only.** It reports, suggests fixes, and recommends other skills; it never edits files.
-2. **`create` requires user input** for module name, prefix, initial subsystem structure.
-3. **`update` and `delete` require an explicit plan** presented to the user before any edit.
-4. **Propagation is mandatory.** A module operation that only touches PDD and leaves UISpec/mock/prototype inconsistent is a bug — use the cross-layer propagation logic.
-5. **Pending drift is acceptable.** Drift items listed in `## Prototipo actual` sections of screens are informational; don't block PRs unless they contradict an accepted ADR.
-6. **Consult the task tracker** at the start of each invocation (`/inspire_workspace task list` or open the Kanban via `node .inspire_kb/06_tracker/serve.mjs`). Known items in `.inspire_kb/06_tracker/tickets/` should be surfaced as `(tracked: TASK-{id})` rather than re-surfaced as new.
-7. **Actionable findings.** Every issue suggests the skill to invoke for the fix:
+1. **`review` is read-only.** It reports, suggests fixes, and recommends other
+   skills; it never edits files.
+2. **`create` requires user input** for module name, ID prefix, and description.
+3. **`update` and `delete` require an explicit plan** presented to the user before
+   any edit.
+4. **Propagation is mandatory.** A module operation that touches features but
+   leaves UISpec / prototype / specs inconsistent is a bug — use the cross-layer
+   propagation logic.
+5. **Pending drift is acceptable.** Drift items in `## Prototipo actual` sections
+   are informational; don't block PRs unless they contradict an accepted ADR.
+6. **Consult the task tracker** at the start of each invocation
+   (`/inspire_workspace task list`, or open the Kanban via
+   `node .inspire_kb/06_tracker/serve.mjs`). Known items in
+   `.inspire_kb/06_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
+7. **Actionable findings.** Every issue names the skill to invoke for the fix:
    - UISpec drift → `/inspire_ui`
    - Prototype drift → `/inspire_prototype`
    - Feature-level work → `/inspire_feature`
