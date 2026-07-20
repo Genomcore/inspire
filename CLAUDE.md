@@ -23,6 +23,9 @@ product you build on top of it.
   shallow, mocked working model of the whole product. Its *learnings* live in
   `.inspire_kb/03_prototypes/horizontal.md`; vertical prototypes live in their own
   external repos, indexed under `.inspire_kb/03_prototypes/verticals/`.
+- `source/` — the **production monorepo** (product-side, non-dot): the root of the
+  actual product code, realized from the KB. An ADR reaches `implemented` maturity
+  when it lands here.
 - `bin/` — the validators + golden fixtures: the guardrail layer's mechanical
   half. Spec root is configurable via `SDD_SPEC_ROOT` (defaults to
   `.inspire_kb/04_specs`). Test suite: `bash bin/test/run-tests.sh`.

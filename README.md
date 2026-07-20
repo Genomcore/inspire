@@ -28,6 +28,7 @@ product you build on top.
 | [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_tech_stack` · `01_adr` · `02_features` · `03_prototypes` · `04_specs` · `05_ui` · `06_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Open `.manual/index.html` in a browser. |
 | [`prototype/`](prototype/) | The **horizontal prototype** (product-side, non-dot) — the wide/shallow/mocked working model of the whole product. Its learnings live in `.inspire_kb/03_prototypes/`; verticals live in external repos. |
+| [`source/`](source/) | The **production monorepo** (product-side, non-dot) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. |
 | [`hooks/`](hooks/) | Git-time **enforcement hooks** (`pre-commit`, `pre-pr`) that run the review at tool-call time. |
 | [`bin/`](bin/) | The **validators** — bash scripts that parse artifacts, evaluate rules, and emit structured findings. See [`bin/README.md`](bin/README.md). |
 
