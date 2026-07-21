@@ -11,8 +11,11 @@ The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the product
 you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
-  - `.inspire/skills/` — the 7 agent skills (`inspire-*`): the judgment half
-    (bootstrap · module · feature · domain · prototype · screens · workspace).
+  - `.inspire/skills/` — the 8 agent skills (`inspire-*`): the judgment half
+    (bootstrap · module · feature · domain · prototype · screens · workspace ·
+    extract — the brownfield entry point that fans out four parallel scanners
+    (stack & infra · UI screens · logic·API·DB · styles), consolidates their
+    findings into cross-linked KB candidates, and delegates authoring).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
