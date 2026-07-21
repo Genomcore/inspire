@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INSPIRE — Skills</title>
-<meta name="description" content="How to use the INSPIRE skills: seven /inspire_* agent skills that generate and validate the knowledge base, plus the validators and git hooks that keep every change coherent.">
+<meta name="description" content="How to use the INSPIRE skills: eight /inspire_* agent skills that generate and validate the knowledge base, plus the validators and git hooks that keep every change coherent.">
 <meta property="og:title" content="INSPIRE — Skills">
-<meta property="og:description" content="Seven agent skills that shape the INSPIRE knowledge base — and the guardrails that keep it coherent.">
+<meta property="og:description" content="Eight agent skills that shape the INSPIRE knowledge base — and the guardrails that keep it coherent.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
@@ -103,8 +103,8 @@
     <div class="wrap">
       <div class="sec-head reveal">
         <p class="eyebrow">The catalog</p>
-        <h2>Seven skills, two families.</h2>
-        <p><b>Scope skills</b> own the full lifecycle of a scoped artifact and propagate across layers. <b>Layer skills</b> produce and validate the artifacts of a single knowledge-base layer.</p>
+        <h2>Eight skills, three families.</h2>
+        <p><b>Scope skills</b> own the full lifecycle of a scoped artifact and propagate across layers. <b>Layer skills</b> produce and validate the artifacts of a single knowledge-base layer. <b>Onboarding</b> brings an existing codebase in — the brownfield entry point that feeds the others.</p>
       </div>
 
       <div class="family reveal">
@@ -163,6 +163,21 @@
             <h3><code>/inspire_prototype</code></h3>
             <p class="skill-scope">Prototypes as knowledge: build the horizontal mockup, register vertical spikes, capture the learnings.</p>
             <div class="skill-cmds"><code class="conv">conversational</code><code>scaffold</code><code>capture learnings</code><code>register vertical</code></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="family reveal">
+        <div class="family-head">
+          <h3>Onboarding</h3>
+          <p>bring an existing codebase into the knowledge base — the brownfield entry point</p>
+        </div>
+        <div class="skill-cards">
+          <article class="skill-card reveal">
+            <span class="kb-chip">00 · 02 · 04 · 05</span>
+            <h3><code>/inspire_extract</code></h3>
+            <p class="skill-scope">Fan out four parallel scanners over an existing codebase — stack &amp; infra, UI screens, logic·API·DB, and styles — then consolidate what they find (which screen uses which API and fields), derive candidate features, and hand off to the authoring skills. Read-only; nothing is blessed without review.</p>
+            <div class="skill-cmds"><code>scan</code><code>fingerprint</code><code>review</code></div>
           </article>
         </div>
       </div>
@@ -237,6 +252,10 @@
         <p>The usual path: edit directly for small changes, reach for a skill for new artifacts or cross-cutting work — and always review before merge.</p>
       </div>
       <div class="scenarios reveal d1">
+        <div class="scenario">
+          <p class="q">I have an existing codebase to bring in</p>
+          <p class="a"><code>/inspire_extract scan {path}</code> — four parallel scanners (stack, screens, logic·API·DB, styles) inventory your code, then consolidate into cross-linked candidate features, screens and domain objects. Read-only; nothing enters the KB without your review.</p>
+        </div>
         <div class="scenario">
           <p class="q">I want to add a feature to a module</p>
           <p class="a"><code>/inspire_feature create {module}/{id}</code> — writes the use-case file, updates the module index, and threads it through screens and specs.</p>
