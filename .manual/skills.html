@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INSPIRE — Skills reference</title>
-<meta name="description" content="Reference for the eleven INSPIRE agent skills across three families: seven that specify the product, one that codifies it into production code, and three for housekeeping (setup, tracking, vault review). Every subcommand, explained.">
+<meta name="description" content="Reference for the twelve INSPIRE agent skills across three families: seven that specify the product, one that codifies it into production code, and four for housekeeping (setup, brownfield onboarding, tracking, vault review). Every subcommand, explained.">
 <meta property="og:title" content="INSPIRE — Skills reference">
-<meta property="og:description" content="The eleven /inspire_* skills and what every subcommand does — seven for specification, one for codification, three for housekeeping.">
+<meta property="og:description" content="The twelve /inspire_* skills and what every subcommand does — seven for specification, one for codification, four for housekeeping.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
@@ -69,7 +69,7 @@
     <div class="wrap">
       <p class="eyebrow reveal">Reference</p>
       <h1 class="reveal d1">The skills.</h1>
-      <p class="lede reveal d2">INSPIRE ships eleven agent skills, each invoked as <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code>. Seven <b>specify</b> the product, one <b>codifies</b> it into production code under <code>source/</code>, and three handle <b>housekeeping</b> — project setup, work tracking and vault-wide review. Every subcommand is listed below.</p>
+      <p class="lede reveal d2">INSPIRE ships twelve agent skills, each invoked as <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code>. Seven <b>specify</b> the product, one <b>codifies</b> it into production code under <code>source/</code>, and four handle <b>housekeeping</b> — project setup, brownfield onboarding, work tracking and vault-wide review. Every subcommand is listed below.</p>
     </div>
   </section>
 
@@ -238,7 +238,7 @@
     <div class="wrap">
       <div class="family-head reveal">
         <h3>Housekeeping</h3>
-        <p>three skills that set up and keep the workspace coherent — the foundation, the pre-PR review, and the work tracker</p>
+        <p>four skills that set up and keep the workspace coherent — greenfield foundation, brownfield onboarding, the pre-PR review, and the work tracker</p>
       </div>
 
       <div class="skill-blocks">
@@ -258,6 +258,21 @@
               <tr><th scope="row"><code>design-system</code></th><td>Edit the project's live design system (<code>05_screens/design-system.md</code>), seeded from the theme.</td></tr>
               <tr><th scope="row"><code>readme</code></th><td>Create or update the project's own root README.</td></tr>
               <tr><th scope="row"><code>review</code></th><td>Check the bootstrap artifacts exist and stay coherent.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_extract</span>
+            <span class="kb-chip">code → KB</span>
+            <p class="sk-line">Brownfield onboarding — fan out four parallel scanners over an existing codebase (stack &amp; infra, UI screens, logic·API·DB, styles), consolidate into cross-linked KB candidates, and hand off to the authoring skills. Read-only against the source.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>scan</code></th><td>The flagship: fan out the four scanners over a path; each inventories its artifacts and proposes consolidations.</td></tr>
+              <tr><th scope="row"><code>fingerprint</code></th><td>Quick read — run only the stack + styles scanners to see what the codebase is before a full scan.</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Re-open the consolidated manifest for another pass before handing candidates to the authoring skills.</td></tr>
             </tbody>
           </table>
         </div>

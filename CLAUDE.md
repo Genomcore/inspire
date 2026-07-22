@@ -11,7 +11,7 @@ The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the product
 you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
-  - `.inspire/skills/` — the 11 agent skills (`inspire-*`): the judgment half of
+  - `.inspire/skills/` — the 12 agent skills (`inspire-*`): the judgment half of
     the runtime, in three families:
     - **Specification** (7) — capture what the product is and why: `module` ·
       `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
@@ -23,9 +23,11 @@ you build on top of it.
       skills. Stack-agnostic, layering optional **stack profiles**
       (`inspire-code/profiles/`, resolved on demand from `00_bootstrap/stack.md`) —
       the template ships lean `react` + `nestjs` defaults; a fork adds its own.
-    - **Housekeeping** (3) — set up and keep the workspace coherent: `bootstrap`
-      (foundation: language, stack, theme + the live design system), `task` (the ticket tracker), `workspace`
-      (the pre-PR global review + vault structure).
+    - **Housekeeping** (4) — set up and keep the workspace coherent: `bootstrap`
+      (greenfield foundation: language, stack, theme + the live design system),
+      `extract` (brownfield onboarding — fan out scanners over an existing codebase
+      into KB candidates), `task` (the ticket tracker), `workspace` (the pre-PR
+      global review + vault structure).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
