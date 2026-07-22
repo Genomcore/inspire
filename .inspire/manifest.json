@@ -1,0 +1,6 @@
+{
+  "name": "inspire",
+  "version": "0.1.0",
+  "released": "2026-07-22",
+  "description": "INSPIRE runtime release identity. Bump `version` (semver) + `released` (YYYY-MM-DD) on each release; install.sh freezes these into a fork's root .inspire.lock, and inspire-learn stamps them onto every 98_skill_learnings node."
+}

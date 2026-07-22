@@ -113,6 +113,28 @@ elif [ -f "$README" ]; then
   echo "  · $README is not the template's — left as-is"
 fi
 
+# 7. Freeze the runtime version into .inspire.lock (repo root). This is the fork's
+#    provenance record — which INSPIRE release the runtime came from — written once at
+#    install. It lives product-side, is read by the session-start hook and by
+#    inspire-learn (which stamps each 98_skill_learnings node with the version it was
+#    captured on), and is read by the upstream pull to know a fork's version. The fork
+#    never contacts upstream — the read is always a pull from above.
+MANIFEST="$SRC/manifest.json"
+LOCK=".inspire.lock"
+if [ -f "$MANIFEST" ] && command -v jq >/dev/null 2>&1; then
+  VERSION="$(jq -r '.version // "unknown"' "$MANIFEST" 2>/dev/null || echo unknown)"
+  RELEASED="$(jq -r '.released // "unknown"' "$MANIFEST" 2>/dev/null || echo unknown)"
+  TEMPLATE_SHA="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
+  jq -n \
+    --arg v "$VERSION" --arg r "$RELEASED" --arg sha "$TEMPLATE_SHA" \
+    --arg ia "$(date +%Y-%m-%d)" \
+    '{inspire_version: $v, released: $r, template_sha: $sha, installed_at: $ia}' \
+    > "$LOCK"
+  echo "  · froze runtime version $VERSION ($RELEASED) into $LOCK"
+else
+  echo "  ! manifest.json or jq missing — skipped writing $LOCK"
+fi
+
 echo "INSPIRE · done."
 echo "  Guardrail runtime is live in $DEST/. The knowledge base stays at .inspire_kb/,"
 echo "  the horizontal prototype at /prototype, and production code at /source."
