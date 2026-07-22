@@ -55,6 +55,22 @@ Machine-read tokens stay verbatim — frontmatter keys and enum values (\`kind\`
 names, IDs and status-map keys are never translated. See \
 \`.claude/skills/_references/output-language.md\` for the full rule."
 
+# Surface the runtime version (best-effort) from .inspire.lock, written by install.sh.
+# Appends a short note so every session knows which INSPIRE release it is running and
+# that skill learnings captured now will be stamped with it.
+INSPIRE_VERSION=""
+LOCK_FILE="$PROJECT_ROOT/.inspire.lock"
+if [ -f "$LOCK_FILE" ] && command -v jq >/dev/null 2>&1; then
+  INSPIRE_VERSION="$(jq -r '.inspire_version // ""' "$LOCK_FILE" 2>/dev/null || true)"
+fi
+if [ -n "$INSPIRE_VERSION" ] && [ "$INSPIRE_VERSION" != "null" ]; then
+  CONTEXT="${CONTEXT}
+
+INSPIRE runtime — version \`${INSPIRE_VERSION}\` (see \`.inspire.lock\`). When a \
+session surfaces a generalizable insight about a skill, record it with \
+\`/inspire_learn note\`; it is stamped with this runtime version."
+fi
+
 # Emit the SessionStart context. Prefer jq for safe JSON escaping; fall back to a
 # minimal python escaper if jq is somehow unavailable.
 if command -v jq >/dev/null 2>&1; then

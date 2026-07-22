@@ -68,7 +68,7 @@ product you build on top.
 | Path | What it is |
 |---|---|
 | [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time + session-start hooks), `templates/` (product-side files materialized at install) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
-| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `03_features` · `06_spikes` · `04_domain` · `05_screens` · `99_tracker`). Each folder documents its own purpose and layout. |
+| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `03_features` · `06_spikes` · `04_domain` · `05_screens` · `98_skill_learnings` · `99_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
 | `prototype/` | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. *Created at install, not shipped here.* |
 | `source/` | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. *Created at install, not shipped here.* |
@@ -109,7 +109,8 @@ This copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (wher
 Claude Code discovers and executes them), makes the scripts executable, wires the
 `session-start` + `pre-commit` / `pre-pr` hooks into `.claude/settings.json`,
 creates the product-side `prototype/` + `source/` folders, seeds the design system
-from your bootstrap theme, and removes this methodology `README.md`. It is
+from your bootstrap theme, writes a root `.inspire.lock` recording which INSPIRE
+release was instantiated, and removes this methodology `README.md`. It is
 **idempotent** — `.inspire/` stays the versioned source of truth, so re-run it
 after pulling template updates (your own `prototype/`, `source/` and `README.md`
 are left untouched).

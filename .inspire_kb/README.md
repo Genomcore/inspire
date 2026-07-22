@@ -16,6 +16,7 @@ Each numbered folder is a layer of the graph, operated by a matching skill in
 | [`04_domain`](04_domain) | The logical domain — data model (entities) + behavior (actions), coupled | `inspire-domain` |
 | [`05_screens`](05_screens) | screen specs + the shared component catalog | `inspire-screens` |
 | [`06_spikes`](06_spikes) | External vertical-spike **knowledge**: repo links + imported learnings + gap analysis (the horizontal prototype keeps no file here — its insights land in the other layers) | `inspire-spike` |
+| [`98_skill_learnings`](98_skill_learnings) | **Meta:** durable, version-stamped learnings about the `inspire-*` skills themselves — a fork's feedback bound for INSPIRE core | `inspire-learn` |
 | [`99_tracker`](99_tracker) | Tickets and work log | `inspire-task` |
 
 Coherence across these layers is protected mechanically by the validators in

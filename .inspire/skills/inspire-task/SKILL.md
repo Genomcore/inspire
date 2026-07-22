@@ -92,6 +92,12 @@ importance: Low
 standard ticket infrastructure — no new tooling; the operator decides when an
 observation deserves a ticket, and skills surface candidates conversationally.
 
+A ticket captures **local, actionable** friction. When the same signal generalizes
+into a durable insight worth sending back to INSPIRE core, it **graduates** into a
+`98_skill_learnings` node via `/inspire_learn` — the ticket tracks the local fix, the
+learning carries the insight upstream and links back with `[[TASK-…]]`. See
+`inspire-learn`.
+
 ## Rules
 
 > **Output language.** Write ticket prose in the project's declared
