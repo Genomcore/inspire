@@ -3,7 +3,7 @@
 The **why** behind the system's shape. One file per decision, capturing the
 context, the options weighed, the choice, and its consequences.
 
-- **Skill:** `inspire-workspace` (ADR lifecycle — create / update / promote /
+- **Skill:** `inspire-adr` (ADR lifecycle — create / update / promote /
   supersede).
 - **Maturity ladder:** `design → prototyped → implemented`. A decision moves
   up the ladder as it is validated; superseded decisions stay in the tree with

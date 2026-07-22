@@ -10,7 +10,7 @@ export const meta = {
 
 // ---------------------------------------------------------------------------
 // Scope. Phase 1 of the skill (scope identification) runs BEFORE this workflow:
-// the caller enumerates the modules under .inspire_kb/02_features/ and passes the
+// the caller enumerates the modules under .inspire_kb/03_features/ and passes the
 // in-scope slugs as args.modules. If omitted, the module fan-out is skipped and
 // only the cross-cutting synthesis runs (over the full repo) — pass args.modules
 // for a complete review.

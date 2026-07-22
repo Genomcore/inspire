@@ -10,7 +10,7 @@ layout. This is a *seed*, not the live source of truth — at install
 (`.inspire/install.sh`) it is **copied to
 [`05_screens/design-system.md`](../05_screens)**, which becomes the project's
 working design system. From then on edit the live one with
-`/inspire_screens design-system`; re-seed the default here with
+`/inspire_bootstrap design-system`; re-seed this default with
 `/inspire_bootstrap theme`.
 
 > **Default**, abstracted from the OpenBIMS mockup's CSS (`@theme` tokens +

@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>INSPIRE — Skills</title>
-<meta name="description" content="How to use the INSPIRE skills: seven /inspire_* agent skills that generate and validate the knowledge base, plus the validators and git hooks that keep every change coherent.">
-<meta property="og:title" content="INSPIRE — Skills">
-<meta property="og:description" content="Seven agent skills that shape the INSPIRE knowledge base — and the guardrails that keep it coherent.">
+<title>INSPIRE — Skills reference</title>
+<meta name="description" content="Reference for the eleven INSPIRE agent skills across three families: seven that specify the product, one that codifies it into production code, and three for housekeeping (setup, tracking, vault review). Every subcommand, explained.">
+<meta property="og:title" content="INSPIRE — Skills reference">
+<meta property="og:description" content="The eleven /inspire_* skills and what every subcommand does — seven for specification, one for codification, three for housekeeping.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body class="skills-page">
 
@@ -47,6 +47,7 @@
     <nav class="nav-links">
       <a href="index.html">Methodology</a>
       <a class="active" href="skills.html" aria-current="page">Skills</a>
+      <a href="how-to.html">How to</a>
       <a class="nav-cta" href="https://github.com/genomcore/inspire" target="_blank" rel="noopener">Get Inspired! <span class="arr" aria-hidden="true">↗</span></a>
     </nav>
   </div>
@@ -55,11 +56,9 @@
 <!-- Secondary nav (in-page sections) -->
 <nav class="subnav" id="subnav" aria-label="Sections on this page">
   <div class="wrap subnav-in">
-    <a href="#how">How it works</a>
-    <a href="#skills">The skills</a>
-    <a href="#workflow">Workflow</a>
-    <a href="#enforcement">Guardrails</a>
-    <a href="#scenarios">Scenarios</a>
+    <a href="#spec">Specification</a>
+    <a href="#code">Codification</a>
+    <a href="#housekeeping">Housekeeping</a>
   </div>
 </nav>
 
@@ -68,208 +67,233 @@
   <!-- Sub-hero -->
   <section class="subhero" id="hero">
     <div class="wrap">
-      <p class="eyebrow reveal">The skills</p>
-      <h1 class="reveal d1">Judgment, made <span class="grad-text">operational</span>.</h1>
-      <p class="lede reveal d2">When agents generate the code, the scarce work is judgment. INSPIRE ships that half as <b>skills</b> — each one interviews you, writes the right artifact into the knowledge base, and keeps every layer coherent as the product evolves.</p>
+      <p class="eyebrow reveal">Reference</p>
+      <h1 class="reveal d1">The skills.</h1>
+      <p class="lede reveal d2">INSPIRE ships eleven agent skills, each invoked as <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code>. Seven <b>specify</b> the product, one <b>codifies</b> it into production code under <code>source/</code>, and three handle <b>housekeeping</b> — project setup, work tracking and vault-wide review. Every subcommand is listed below.</p>
     </div>
   </section>
 
-  <!-- How it works -->
-  <section class="how" id="how">
+  <!-- Specification -->
+  <section class="skills" id="spec">
     <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">How it works</p>
-        <h2>Two ways to shape the knowledge base.</h2>
-        <p>Everything a skill produces is plain-text Markdown under <code>.inspire_kb/</code>. You can write it by hand or drive it through a skill — both are first-class.</p>
-      </div>
-      <div class="vs-grid">
-        <div class="vs-col reveal d1">
-          <p class="k">By hand</p>
-          <h3>Edit the KB directly</h3>
-          <p>Open any file in <code>.inspire_kb/</code> and write. The layout is designed to be human-editable — follow the conventions in each folder's README and your change passes review. You never need an agent for a small edit.</p>
-        </div>
-        <div class="vs-col reveal d2">
-          <p class="k">With an agent</p>
-          <h3>Drive it with a skill</h3>
-          <p>Invoke an <code>/inspire_*</code> skill and it interviews you, generates the artifact in the correct location, and propagates the change across every dependent layer — features, screens, specs, prototype and ADRs.</p>
-        </div>
-      </div>
-      <p class="note reveal d2"><b>Reviews are read-only.</b> A skill's <code>review</code> surfaces findings and recommends the next command — it never applies changes. Landing the fix is always the author's call.</p>
-    </div>
-  </section>
-
-  <!-- The skills -->
-  <section class="skills" id="skills">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">The catalog</p>
-        <h2>Seven skills, two families.</h2>
-        <p><b>Scope skills</b> own the full lifecycle of a scoped artifact and propagate across layers. <b>Layer skills</b> produce and validate the artifacts of a single knowledge-base layer.</p>
+      <div class="family-head reveal">
+        <h3>Specification</h3>
+        <p>seven skills that capture what the product is — its decisions, modules, features, contracts, screens and prototypes — in <code>.inspire_kb/</code></p>
       </div>
 
-      <div class="family reveal">
-        <div class="family-head">
-          <h3>Scope skills</h3>
-          <p>own a create → review → update → delete lifecycle, propagating across layers</p>
-        </div>
-        <div class="skill-cards">
-          <article class="skill-card reveal">
-            <span class="kb-chip">02_features</span>
-            <h3><code>/inspire_module</code></h3>
-            <p class="skill-scope">Scaffold, review, update or remove a module — and propagate the change across every KB layer.</p>
-            <div class="skill-cmds"><code>create</code><code>review</code><code>update</code><code>scan</code><code>delete</code></div>
-          </article>
-          <article class="skill-card reveal d1">
-            <span class="kb-chip">02_features</span>
-            <h3><code>/inspire_feature</code></h3>
-            <p class="skill-scope">The lifecycle of a single use case inside a module, kept in sync with screens, specs and ADRs.</p>
-            <div class="skill-cmds"><code>create</code><code>review</code><code>update</code><code>scan</code><code>delete</code></div>
-          </article>
-          <article class="skill-card reveal d2">
-            <span class="kb-chip">01_adr · 99_tracker</span>
-            <h3><code>/inspire_workspace</code></h3>
-            <p class="skill-scope">Cross-cutting concerns: the pre-PR global review, the ADR maturity ladder, and the task tracker.</p>
-            <div class="skill-cmds"><code>review</code><code>adr create</code><code>adr promote</code><code>adr supersede</code><code>task</code></div>
-          </article>
-        </div>
-      </div>
+      <div class="skill-blocks">
 
-      <div class="family reveal">
-        <div class="family-head">
-          <h3>Layer skills</h3>
-          <p>produce and validate the artifacts of one knowledge-base layer</p>
-        </div>
-        <div class="skill-cards">
-          <article class="skill-card reveal">
-            <span class="kb-chip">00_bootstrap</span>
-            <h3><code>/inspire_bootstrap</code></h3>
-            <p class="skill-scope">The project foundation: the tech stack and the design-system theme every other layer reads.</p>
-            <div class="skill-cmds"><code>init</code><code>stack</code><code>theme</code><code>review</code></div>
-          </article>
-          <article class="skill-card reveal d1">
-            <span class="kb-chip">05_screens</span>
-            <h3><code>/inspire_screens</code></h3>
-            <p class="skill-scope">Pattern-driven screen specs: each screen instantiates a shared pattern and reuses shared components.</p>
-            <div class="skill-cmds"><code>create</code><code>validate</code><code>migrate</code><code>extract</code><code>audit</code></div>
-          </article>
-          <article class="skill-card reveal d2">
-            <span class="kb-chip">04_domain</span>
-            <h3><code>/inspire_domain</code></h3>
-            <p class="skill-scope">Domain contracts (SDD) — action descriptors and entity documents, authored through a socratic interview.</p>
-            <div class="skill-cmds"><code>define</code><code>update</code><code>refactor</code><code>promote</code><code>review</code><code>graph</code></div>
-          </article>
-          <article class="skill-card reveal d3">
-            <span class="kb-chip">03_prototypes</span>
-            <h3><code>/inspire_prototype</code></h3>
-            <p class="skill-scope">Prototypes as knowledge: build the horizontal mockup, register vertical spikes, capture the learnings.</p>
-            <div class="skill-cmds"><code class="conv">conversational</code><code>scaffold</code><code>capture learnings</code><code>register vertical</code></div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Workflow -->
-  <section class="workflow" id="workflow">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">The loop</p>
-        <h2>Install once. Invoke. Review before you merge.</h2>
-        <p>Skills live dormant in <code>.inspire/</code> in the template; one command wakes them up in your fork.</p>
-      </div>
-      <div class="steps">
-        <div class="step reveal d1">
-          <h4>Install the runtime</h4>
-          <p>Run <code>bash .inspire/install.sh</code> in your fork. It copies the skills, validators and hooks into <code>.claude/</code> and wires the git hooks — idempotent, so re-run it to refresh after pulling template updates.</p>
-        </div>
-        <div class="step reveal d2">
-          <h4>Invoke a skill</h4>
-          <p>In a Claude Code session, type <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code> — for example <code>/inspire_feature create billing/INV-01</code>. The skill does the rest, interviewing you wherever judgment is needed.</p>
-        </div>
-        <div class="step reveal d3">
-          <h4>Review before the PR</h4>
-          <p>Run <code>/inspire_module review {module}</code> for single-module changes, or <code>/inspire_workspace review</code> for cross-cutting ones. This is the required gate before any PR that touches <code>.inspire_kb/</code>.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Guardrails -->
-  <section class="enforcement" id="enforcement">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">Enforceable</p>
-        <h2>Coherence is protected by design.</h2>
-        <p>The skills are the judgment half. The mechanical half runs at git-time, so drift is caught even when no one remembers to look.</p>
-      </div>
-      <div class="enforce reveal d1">
-        <div class="row">
-          <span class="dot" aria-hidden="true"></span>
-          <div>
-            <h4>Validators</h4>
-            <p>Bash + <code>yq</code> + <code>jq</code> checks in <code>.inspire/bin/</code> — no Node toolchain. They enforce the structural rules: acyclic dependencies, stable-blocker invariants, entity lifecycle and cross-field coherence.</p>
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_adr</span>
+            <span class="kb-chip">.inspire_kb/01_adr</span>
+            <p class="sk-line">Architecture decisions spanning ≥2 modules, along a maturity ladder (design → prototyped → implemented).</p>
           </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>create</code></th><td>New ADR (defaults to <code>design</code> maturity).</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Modify an ADR — supersede required only once <code>implemented</code>.</td></tr>
+              <tr><th scope="row"><code>promote</code></th><td>Advance the maturity ladder and propagate its consequences.</td></tr>
+              <tr><th scope="row"><code>supersede</code></th><td>Retire an ADR and wire in its replacement.</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="row">
-          <span class="dot" aria-hidden="true"></span>
-          <div>
-            <h4>Git hooks</h4>
-            <p><code>pre-commit</code> surfaces findings inside the modules you staged; <code>pre-pr</code> re-runs the review across the whole tree as defense-in-depth. Both refuse the call while hard errors remain.</p>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_module</span>
+            <span class="kb-chip">.inspire_kb/02_modules</span>
+            <p class="sk-line">The module hub — overview + links to its features, screens, specs and ADRs, kept in sync across every KB layer.</p>
           </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>create</code></th><td>Scaffold a new module: its hub + features and screens folders, and record its ID prefix.</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Full consistency review incl. hub ↔ sub-layer sync. Required gate before a PR that touches it.</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Add or remove use cases, restructure, realign after an ADR — transactionally.</td></tr>
+              <tr><th scope="row"><code>scan</code></th><td>SDD entry point: surface features lacking specs and chain authoring into <code>/inspire_domain</code>.</td></tr>
+              <tr><th scope="row"><code>delete</code></th><td>Remove the module (hub + subfolders) and clean every cross-reference.</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="row">
-          <span class="dot" aria-hidden="true"></span>
-          <div>
-            <h4>No <code>--no-verify</code></h4>
-            <p>If a hook fails, investigate the root cause. Bypassing the gate is never the answer.</p>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_feature</span>
+            <span class="kb-chip">.inspire_kb/03_features</span>
+            <p class="sk-line">Lifecycle of a single use case, kept in sync with screens, specs and ADRs.</p>
           </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>create</code></th><td>New use-case file + hub index entry; runs the acceptance-criteria quality gate first.</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Cross-layer coverage for one feature — or batch over a whole module.</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Change description, dependencies, priority or state; re-gates the acceptance criteria.</td></tr>
+              <tr><th scope="row"><code>scan</code></th><td>SDD-layer alignment: which action descriptors realize the feature (fast).</td></tr>
+              <tr><th scope="row"><code>delete</code></th><td>Remove the feature and clean its references across layers.</td></tr>
+            </tbody>
+          </table>
         </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_domain</span>
+            <span class="kb-chip">.inspire_kb/04_domain</span>
+            <p class="sk-line">Domain contracts (SDD) — action descriptors and entity documents, authored through a socratic interview.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>define</code></th><td>Author a new action or entity from scratch, interview-driven.</td></tr>
+              <tr><th scope="row"><code>show</code></th><td>Render an existing descriptor with cross-references resolved (read-only).</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Iterate on a descriptor — blocks on <code>stable</code>, demote first.</td></tr>
+              <tr><th scope="row"><code>refactor</code></th><td>Rename, split or merge actions, walking each consumer.</td></tr>
+              <tr><th scope="row"><code>delete</code></th><td>Remove an action — refuses if any other action requires it.</td></tr>
+              <tr><th scope="row"><code>promote</code> · <code>demote</code></th><td>Walk the lifecycle forward / back (draft → accepted → stable).</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Run the quality-lib checks and show findings (read-only).</td></tr>
+              <tr><th scope="row"><code>source</code></th><td>Show the back-source trail for every claim (read-only).</td></tr>
+              <tr><th scope="row"><code>graph</code></th><td>Print the action→action <code>requires</code> graph + supersession edges (read-only).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_screens</span>
+            <span class="kb-chip">.inspire_kb/05_screens</span>
+            <p class="sk-line">Pattern-driven screen specs: each screen instantiates a shared pattern and reuses shared components.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>create</code></th><td>Author a new screen spec from a shared pattern.</td></tr>
+              <tr><th scope="row"><code>validate</code></th><td>Check a screen against its pattern and components; flag drift (incl. reverse drift from the prototype).</td></tr>
+              <tr><th scope="row"><code>extract</code></th><td>Promote repeated UI blocks into shared components or patterns.</td></tr>
+              <tr><th scope="row"><code>audit</code></th><td>Sweep a module's screens for pattern and component compliance.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_prototype</span>
+            <span class="kb-chip">/prototype</span>
+            <p class="sk-line">The horizontal, mock-data visual prototype (in this repo). Discovery: the user sees the whole product and steers it; insights co-evolve the vault live.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>scaffold</code></th><td>Build or extend the <code>/prototype</code> mock, pattern-driven from the KB (design system + UI profile, agile — no tests).</td></tr>
+              <tr><th scope="row"><code>learnings</code></th><td>Insights land in the vault live via the spec skills — the horizontal keeps no learnings file.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_spike</span>
+            <span class="kb-chip">.inspire_kb/06_spikes</span>
+            <p class="sk-line">Vertical spikes: register and harvest an external functional-prototype repo — a gap analysis, not a copy.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>register</code></th><td>Reference an external spike repo (name, question, scope, features) and set up its learnings hygiene.</td></tr>
+              <tr><th scope="row"><code>capture</code></th><td>Gap-analyse the spike against the vault; import the signal it de-risked, leave its rough shortcuts behind.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   </section>
 
-  <!-- Common scenarios -->
-  <section class="scenarios-sec" id="scenarios">
+  <!-- Codification -->
+  <section class="skills" id="code">
     <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">Common scenarios</p>
-        <h2>Where do I start?</h2>
-        <p>The usual path: edit directly for small changes, reach for a skill for new artifacts or cross-cutting work — and always review before merge.</p>
+      <div class="family-head reveal">
+        <h3>Codification</h3>
+        <p>one skill that realizes the knowledge base as production code under <code>source/</code></p>
       </div>
-      <div class="scenarios reveal d1">
-        <div class="scenario">
-          <p class="q">I want to add a feature to a module</p>
-          <p class="a"><code>/inspire_feature create {module}/{id}</code> — writes the use-case file, updates the module index, and threads it through screens and specs.</p>
-        </div>
-        <div class="scenario">
-          <p class="q">I want to propose an architectural change</p>
-          <p class="a"><code>/inspire_workspace adr create {slug}</code>, then <code>adr promote {id} {maturity}</code> as the decision moves design → prototyped → implemented.</p>
-        </div>
-        <div class="scenario">
-          <p class="q">I need to design or review a screen</p>
-          <p class="a"><code>/inspire_screens create {module}/{screen}</code> to author one from a pattern, or <code>validate</code> to check an existing screen for drift.</p>
-        </div>
-        <div class="scenario">
-          <p class="q">I need to specify a behavior contract</p>
-          <p class="a"><code>/inspire_domain define {id}</code> — a socratic interview, not a fill-in-the-blanks form; nothing is written until you approve the shape.</p>
-        </div>
-        <div class="scenario">
-          <p class="q">I want a working model of the whole product</p>
-          <p class="a"><code>/inspire_prototype</code> — scaffold the horizontal mockup from the specs and capture what it teaches you in <code>03_prototypes</code>.</p>
-        </div>
-        <div class="scenario">
-          <p class="q">I'm working without an agent</p>
-          <p class="a">Edit the Markdown directly following each folder's conventions; run <code>/inspire_workspace review</code> when Claude is back to catch anything the templates don't enforce.</p>
+
+      <div class="skill-blocks">
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_code</span>
+            <span class="kb-chip">source/</span>
+            <p class="sk-line">The coding stage — always re-anchoring to the ADRs, descriptors and acceptance criteria that specify the code.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>tdd</code></th><td>Implement a feature test-first, anchored to its acceptance criteria.</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Judgment review of a diff against the KB and universal quality; fans out to dimension agents.</td></tr>
+              <tr><th scope="row"><code>debug</code></th><td>Six-step root-cause framework; routes spec gaps back to <code>/inspire_feature</code> or <code>/inspire_domain</code>.</td></tr>
+              <tr><th scope="row"><code>fix-build</code></th><td>Diagnose and fix compile / build errors, then verify.</td></tr>
+              <tr><th scope="row"><code>fix-vulns</code></th><td>Remediate npm vulnerabilities with the fewest overrides, keeping build and tests green.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
+
+      <p class="note reveal"><b>Stack-agnostic by design.</b> <code>/inspire_code</code> layers optional <b>stack profiles</b> — resolved on demand from <code>00_bootstrap/stack.md</code> — that add a framework's concrete conventions (layering, test conventions, review focus, build commands) on top of its generic checks. The template ships lean <code>react</code> and <code>nestjs</code> defaults; a fork adds its own.</p>
     </div>
   </section>
 
-  <!-- Closing -->
-  <section class="quote" id="close">
+  <!-- Housekeeping -->
+  <section class="skills" id="housekeeping">
     <div class="wrap">
-      <blockquote class="reveal">Skills don't write your product.</blockquote>
-      <p class="sub reveal d1">They keep it <b>coherent</b> while the agents do.</p>
+      <div class="family-head reveal">
+        <h3>Housekeeping</h3>
+        <p>three skills that set up and keep the workspace coherent — the foundation, the pre-PR review, and the work tracker</p>
+      </div>
+
+      <div class="skill-blocks">
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_bootstrap</span>
+            <span class="kb-chip">.inspire_kb/00_bootstrap</span>
+            <p class="sk-line">The project foundation — language, tech stack + shape, and the design system every other layer reads.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>init</code></th><td>First-time setup: language, stack + shape, theme, and the project's own root README.</td></tr>
+              <tr><th scope="row"><code>language</code></th><td>Set the output language every skill writes its artifacts in.</td></tr>
+              <tr><th scope="row"><code>stack</code></th><td>Define or update the tech stack, its shape, and the <code>inspire-code</code> stack profiles.</td></tr>
+              <tr><th scope="row"><code>theme</code></th><td>Define or update the design-system default (<code>theme.md</code>) — or derive it from a mockup's CSS.</td></tr>
+              <tr><th scope="row"><code>design-system</code></th><td>Edit the project's live design system (<code>05_screens/design-system.md</code>), seeded from the theme.</td></tr>
+              <tr><th scope="row"><code>readme</code></th><td>Create or update the project's own root README.</td></tr>
+              <tr><th scope="row"><code>review</code></th><td>Check the bootstrap artifacts exist and stay coherent.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_workspace</span>
+            <span class="kb-chip">.inspire_kb/ (all)</span>
+            <p class="sk-line">Workspace-level validation: the pre-PR global review and top-level vault-structure checks.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>review</code></th><td>Full cross-module vault review. Required gate before any PR that touches <code>.inspire_kb/</code>.</td></tr>
+              <tr><th scope="row"><code>structure</code></th><td>Validate the top-level indexes, tracker invariants and vault conventions.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire_task</span>
+            <span class="kb-chip">.inspire_kb/99_tracker</span>
+            <p class="sk-line">A plain-file kanban — one Markdown ticket per file, no external tool — for work, drift and skill-feedback.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>create</code></th><td>Open a ticket (epic, size, importance, owning skills).</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Change fields; a status change moves the file between open and archive.</td></tr>
+              <tr><th scope="row"><code>close</code></th><td>Mark Done (or Cancelled) and archive it.</td></tr>
+              <tr><th scope="row"><code>list</code></th><td>Query open tickets by status, epic, size or skill (read-only).</td></tr>
+              <tr><th scope="row"><code>show</code></th><td>Print a ticket's frontmatter + body (read-only).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
     </div>
   </section>
 

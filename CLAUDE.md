@@ -11,8 +11,21 @@ The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the product
 you build on top of it.
 
 - `.inspire/` — the **guardrail runtime**, staged dormant (see below):
-  - `.inspire/skills/` — the 7 agent skills (`inspire-*`): the judgment half
-    (bootstrap · module · feature · domain · prototype · screens · workspace).
+  - `.inspire/skills/` — the 11 agent skills (`inspire-*`): the judgment half of
+    the runtime, in three families:
+    - **Specification** (7) — capture what the product is and why: `module` ·
+      `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
+      (external verticals) · `adr`.
+    - **Codification** (1) — `inspire-code`: the coding stage that turns the KB into
+      production code under `source/` (subcommands `tdd` · `review` · `debug` ·
+      `fix-build` · `fix-vulns`), always re-anchoring to the ADRs, descriptors and
+      acceptance criteria that specify it, and handing drift back to the specifying
+      skills. Stack-agnostic, layering optional **stack profiles**
+      (`inspire-code/profiles/`, resolved on demand from `00_bootstrap/stack.md`) —
+      the template ships lean `react` + `nestjs` defaults; a fork adds its own.
+    - **Housekeeping** (3) — set up and keep the workspace coherent: `bootstrap`
+      (foundation: language, stack, theme + the live design system), `task` (the ticket tracker), `workspace`
+      (the pre-PR global review + vault structure).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
@@ -22,8 +35,8 @@ you build on top of it.
     instantiation (the `prototype/` + `source/` README stubs).
   - `.inspire/install.sh` — the instantiation script.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a project
-  fills in. One layer per skill (`00_bootstrap`, `01_adr`, `02_features`,
-  `03_prototypes`, `04_domain`, `05_screens`, `99_tracker`); each folder carries a
+  fills in. One layer per skill (`00_bootstrap`, `01_adr`, `02_modules`,
+  `03_features`, `04_domain`, `05_screens`, `06_spikes`, `99_tracker`); each folder carries a
   README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).
@@ -32,9 +45,10 @@ the product you build, not INSPIRE. `install.sh` creates them (from
 `.inspire/templates/`) when a fork is instantiated:
 
 - `prototype/` — the **horizontal prototype** (product-side, non-dot): the wide,
-  shallow, mocked working model of the whole product. Its *learnings* live in
-  `.inspire_kb/03_prototypes/horizontal.md`; vertical prototypes live in their own
-  external repos, indexed under `.inspire_kb/03_prototypes/verticals/`.
+  shallow, mocked working model of the whole product. It keeps **no KB file** — its
+  insights co-evolve the vault directly (features, screens, ADRs, design system).
+  Vertical spikes live in their own external repos, their knowledge brought home
+  under `.inspire_kb/06_spikes/` (skill `inspire-spike`).
 - `source/` — the **production monorepo** (product-side, non-dot): the root of the
   actual product code, realized from the KB. An ADR reaches `implemented` maturity
   when it lands here.

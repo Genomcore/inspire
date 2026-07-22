@@ -1,11 +1,11 @@
 ---
-kind: vertical-prototype
+kind: spike
 repo: https://github.com/org/spike-name    # external repository (source of truth for the code)
 status: active                             # active | archived | superseded
 covers: [ ]                                # feature ids / use cases this spike probes
 ---
 
-# {Vertical name}
+# {Spike name}
 
 > A narrow, deep, functional spike. **The code lives in the external repo above** —
 > this file links it and captures what it taught us.
@@ -23,7 +23,7 @@ _The one flow / capability this spike takes end-to-end, and the stack it used._
 _Brought home from the spike. Written to stand on their own — useful even if the
 external repo is later archived._
 
-- **{insight}** → affects [[02_features/{module}/{use-case}]] / [[04_domain/…]] / [[05_screens/…]]
+- **{insight}** → affects [[03_features/{module}/{use-case}]] / [[04_domain/…]] / [[05_screens/…]]
 
 ## Outcome
 

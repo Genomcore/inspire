@@ -1,66 +1,31 @@
 ---
 name: inspire-workspace
-description: "Workspace-level operations: global review (required pre-PR), ADR lifecycle (create/update/promote/supersede, maturity ladder design→prototyped→implemented), vault structure validation, and the task tracker. Use for cross-cutting concerns that don't belong to a single module or feature."
+description: "Workspace-level validation: the global pre-PR review (orchestrating module + cross-module checks) and vault-structure validation. Use for the required pre-merge gate and top-level structure checks. ADR lifecycle lives in /inspire_adr; the task tracker in /inspire_task."
 ---
 
 # /inspire_workspace — Workspace-level Operations
 
 ## Scope
 
-This skill owns **workspace-scoped** operations:
+This skill owns **workspace-scoped validation** — the cross-cutting checks that
+don't belong to a single module or feature:
 
 - **Global review** — the pre-merge gate, orchestrating module-level and
   cross-module checks.
-- **ADR lifecycle** — architectural decisions that span ≥2 modules.
-- **Vault structure** — `.inspire_kb/02_features/_index.md`,
-  `.inspire_kb/01_adr/_index.md`, folder conventions.
-- **Task tracker** — `.inspire_kb/99_tracker/tickets/` lifecycle. Open tickets
-  live at `.inspire_kb/99_tracker/tickets/*.md`; closed tickets are archived under
-  `.inspire_kb/99_tracker/tickets/archive/*.md` so default scans see only active
-  work.
+- **Vault structure** — top-level indexes (`.inspire_kb/02_modules/_index.md`,
+  `.inspire_kb/01_adr/_index.md`), folder conventions, and the tracker's on-disk
+  invariants.
+
+It does **not** own the artifacts it validates the coherence of: **ADR lifecycle**
+is [`/inspire_adr`](../inspire-adr/SKILL.md) and the **task tracker** is
+[`/inspire_task`](../inspire-task/SKILL.md). This skill reads ADRs and tickets to
+judge coherence; it never authors them.
 
 ## Invocation
 
-### Global review
 - `/inspire_workspace review` — full vault review
 - `/inspire_workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
-
-### ADR lifecycle
-
-ADR `Status` is a **maturity ladder**, not a binary — it declares how far the
-decision has been realized, and therefore how far its consequences should have
-propagated (the *propagation contract*):
-
-- `design` — design reasoning. Reach: the whole **design workspace** — features
-  (`02_features`) + screens (`05_screens`) + the **horizontal prototype**
-  (`/prototype`, a *non-functional* interactive mock) + specs (`04_domain`).
-  Refined **in place** on new evidence.
-- `prototyped` — additionally **validated in an external functional prototype**:
-  real running code in a vertical spike repo has proven the architecture works
-  (record it with a `**Prototype:**` pointer to that repo). The horizontal
-  prototype does **not** count. Still refined in place.
-- `implemented` — additionally realized in the **product codebase**. **Immutable —
-  `supersede` to change.**
-- `superseded` (by [[x]]) / `rejected` — terminal.
-
-There is no `proposed`/`accepted` state: an ADR present and not
-superseded/rejected **is** the current decision at its maturity; the debate
-happens in chat before authoring.
-
-- `/inspire_workspace adr create {prefix-slug}` — new ADR (defaults to `Status: design`)
-- `/inspire_workspace adr update {id}` — modify an ADR (supersede required only at `implemented`)
-- `/inspire_workspace adr promote {id} {maturity}` — advance maturity and propagate consequences
-- `/inspire_workspace adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
-
-### Vault structure
 - `/inspire_workspace structure` — validate top-level indexes, task tracker, vault conventions
-
-### Task tracker
-- `/inspire_workspace task create {title} [--epic X --size M --importance Mid --skills prototype,screens]`
-- `/inspire_workspace task update TASK-{id} [--field value ...]`
-- `/inspire_workspace task close TASK-{id} [--cancelled --reason "..."]`
-- `/inspire_workspace task list [--status X --epic Y --skill prototype]` (read-only)
-- `/inspire_workspace task show TASK-{id}`
 
 ## Subcommand: review (global)
 
@@ -94,14 +59,14 @@ and the output uses the exact skeleton in **Output format** below.
 ### Phase 1 — Identify scope
 
 - If modules are specified, use those. Otherwise, enumerate all modules listed in
-  `.inspire_kb/02_features/_index.md`.
+  `.inspire_kb/02_modules/_index.md`.
 - For each module in scope, delegate to `/inspire_module review {module}`.
 
 ### Phase 2 — Module reviews
 
 For each module in scope, the module review performs:
 - Features structure (pure `_index.md`, use-case files, index completeness)
-- screen spec structure (folder vs legacy monolith, pattern/component compliance)
+- screen spec structure (pattern/component compliance)
 - Quality checks (no historical language, IDs correct, wikilinks resolve)
 - Cross-layer coverage (features ↔ screen spec ↔ prototype ↔ specs)
 - Drift consolidation and overengineering detection
@@ -126,16 +91,16 @@ For each module in scope, the module review performs:
 **Features tree:**
 - Repo structure matches CLAUDE.md.
 - No scripts, `.py`, `.xlsx`, `.deprecated`, or `.DS_Store` files in `.inspire_kb/`.
-- Every module folder has `_index.md`.
+- Every module has a hub in `.inspire_kb/02_modules/`; its per-layer subfolders
+  (`03_features`, `05_screens`, `04_domain`) stay in sync with it.
 - `.inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms).
-- `.inspire_kb/02_features/_index.md` lists all modules.
+- `.inspire_kb/02_modules/_index.md` lists all modules.
 
 **screen spec tree:**
 - `.inspire_kb/05_screens/design-system.md` exists.
 - `.inspire_kb/05_screens/patterns/` and `components/` exist with `_index.md` + files.
 - Every pattern/component referenced by a screen exists; no orphans (on disk, not
   referenced).
-- Per module: either the folder structure OR a legacy monolith, never both.
 
 ### Phase 5 — Prototype component adoption
 
@@ -159,7 +124,6 @@ For each module in scope, the module review performs:
 
 ## Scope
 - Modules reviewed: {list}
-- screen spec migration status: {N}/{total} migrated
 
 ## Summary
 {X} issues: {critical} critical, {important} important, {minor} minor
@@ -193,257 +157,17 @@ Drift items pending: {N}
 5. **Actionable.** Every finding suggests the skill to invoke.
 6. **Delegate deep dives.** For complex feature-level issues, suggest
    `/inspire_feature review {id}`.
-7. **Migration is not failure.** Legacy screen spec monoliths and pending prototype
-   drift are `important` (migrate), not `critical`, unless they contradict an ADR
-   within its maturity's reach.
+7. **Pending drift is not failure.** Prototype drift and pending component adoption
+   are `important`, not `critical`, unless they contradict an ADR within its
+   maturity's reach.
 8. **Consult the task tracker.** Known items in `.inspire_kb/99_tracker/tickets/`
-   are flagged `(tracked: TASK-{id})`. Use `/inspire_workspace task list` or open
-   the Kanban via `node .inspire_kb/99_tracker/serve.mjs`.
+   are flagged `(tracked: TASK-{id})`. Use `/inspire_task list` or open the Kanban
+   via `node .inspire_kb/99_tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
    - screen spec drift → `/inspire_screens`
-   - Feature drift or ADR misalignment → `/inspire_module update` or
-     `/inspire_workspace adr update`
-
-## Subcommand: adr create {prefix-slug}
-
-### Conventions
-
-- **Filename:** `adr-{module-prefix}-{slug}.md` for module-specific, or
-  `adr-{slug}.md` for cross-cutting. Slug-only — no numeric prefix.
-- **Slug uniqueness:** unique within a prefix; cross-cutting slugs unique
-  vault-wide.
-- **Location:** `.inspire_kb/01_adr/`.
-- **Canonical ID:** the filename (without `.md`). The H1 is the human title.
-
-**Rationale.** Numeric prefixes collide under parallel work (two branches grab the
-same next number). Slug-only filenames are collision-free by construction
-(mirroring the `TASK-{id}` convention).
-
-### Template
-
-```markdown
-# {Title}
-
-**Status:** design
-**Modules affected:** [[module-a]], [[module-b]]
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
-     design = the design workspace (features + screen spec + horizontal prototype + specs).
-     prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
-       NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
-
-## Context
-What problem or question prompted this decision.
-
-## Decision
-What we decided and why.
-
-## Consequences
-What follows — positive and negative. Include breaking changes.
-
-### Breaking changes
-- ...
-
-## Alternatives considered
-1. **{alternative}.** Why rejected.
-
-## Related ADRs
-- [[adr-xxx]] — {relation}
-```
-
-### Steps
-
-1. **Ask** the user: short title, modules affected, context, the decision, key
-   consequences, alternatives considered.
-2. **Write the ADR file** at the computed path.
-3. **Update `.inspire_kb/01_adr/_index.md`** — add a row to the appropriate module
-   section (or Transversales for cross-cutting).
-4. **Propose ADR references** in the feature files that should link to it: list
-   files to edit, wait for approval.
-5. Set `**Status:** design` by default. Use `adr promote` later to advance.
-
-## Subcommand: adr update {id}
-
-Modify an ADR in place. At `design` / `prototyped` maturity this is the **normal
-path** — freely edit any section, including `Decision`; record new evidence (e.g. a
-`**Prototype:**` pointer) when it drove the change.
-
-**Only at `Status: implemented`** does a change to the `Decision` section require
-`supersede` (product code depends on it — preserve the audit trail): present a
-warning and offer to switch approach. `supersede` also stays available at any
-maturity for a genuine reversal you want recorded as a distinct decision.
-
-## Subcommand: adr promote {id} {maturity}
-
-Advance an ADR along `design → prototyped → implemented` and propagate its
-consequences to the layers the new maturity reaches.
-
-1. Verify the ADR exists and the transition is a **forward** step. Reject skips and
-   downgrades — refine the `Decision` in place with `adr update` instead.
-2. Update `**Status:** {maturity}`. For `prototyped`, require a `**Prototype:**`
-   pointer (which external repo validated it, and the evidence); for `implemented`,
-   note where in the codebase it lives.
-3. **Propagate / record evidence:** confirm the design workspace reflects the
-   decision, then for each affected module invoke `/inspire_module review {module}`
-   to detect where the ADR's consequences are not yet reflected. Surface the gaps
-   as follow-up actions.
-
-## Subcommand: adr supersede {id} {new-id}
-
-Replace an ADR with a new one that changes its decision (create the new ADR first
-via `adr create`).
-
-1. Verify both ADRs exist (the old one at any non-terminal maturity).
-2. Update the old ADR: `**Status:** superseded by [[{new-id}]]`.
-3. Update the new ADR's header: `Supersedes: [[{old-id}]]`.
-4. Grep `.inspire_kb/` for references to the old ADR; propose updates.
-5. Update `.inspire_kb/01_adr/_index.md` (move the old entry to the superseded
-   section).
-
-## Task tracker format
-
-Tickets live as one file per ticket. The `.md` files are the **only source of
-truth** — no generated indexes or caches.
-
-### Storage layout
-
-- **Open tickets** → `.inspire_kb/99_tracker/tickets/TASK-{id}.md`
-- **Closed tickets** (`status` ∈ {`Done`, `Cancelled`}) →
-  `.inspire_kb/99_tracker/tickets/archive/TASK-{id}.md`
-
-The archive subfolder keeps the active set lean: agents scanning "what's pending"
-read only `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). The
-Kanban web (`.inspire_kb/99_tracker/serve.mjs`) reads both locations. `task close`
-moves the file; `task show` / `task update` look in `tickets/` first, then
-`tickets/archive/`.
-
-### Frontmatter schema
-
-```yaml
----
-id: TASK-a3k7m2                    # 6 chars base36 random, must match filename
-title: Migrate screen spec X to pattern-driven
-created: 2026-05-07                # YYYY-MM-DD
-updated: 2026-05-07                # auto-updated by skill on each change
-reporter: "@handle"                # git handle
-closed_by: null                    # @handle when status ∈ {Done, Cancelled}
-closed_at: null                    # YYYY-MM-DD when status ∈ {Done, Cancelled}
-epic: {module-or-area}             # see enum below
-size: M                            # S | M | L | XL
-importance: High                   # Very Low | Low | Mid | High | Very High
-skills: [prototype, screens]            # which layer skills execute the work
-status: Open                       # Open | Done | Cancelled
-blocked_by: []                     # list of ticket / feature / ADR IDs
-related_to: [TASK-xxx]             # list of IDs
----
-
-## Description
-...free body markdown; suggested: Description / Acceptance criteria / Notes...
-```
-
-### Enums
-
-- **`epic`**: a **project-defined** slug — usually a module from
-  `.inspire_kb/02_features/`, plus cross-cutting areas. Recommended baseline:
-  `workspace | meta | tooling | docs | skill-feedback`, extended with the
-  project's own module slugs.
-- **`size`**: `S | M | L | XL`
-- **`importance`**: `Very Low | Low | Mid | High | Very High`
-- **`status`**: `Open | Done | Cancelled` — there is no in-flight state. `Open` =
-  not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
-  body).
-- **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  domain | screens | prototype | workspace` — which layer skills cover the work. `[]`
-  means the work doesn't map to a layer skill (tooling, ops, packaging).
-
-### Skill-feedback tickets (convention)
-
-When a skill's usage produces a friction signal worth capturing — operator
-pushback, a recurring `AskUserQuestion` that should default, drift from what the
-skill anticipated — file a standard ticket:
-
-```yaml
-epic: skill-feedback
-skills: [<source-skill>]
-size: S
-importance: Low
-```
-
-**Title format:** `{skill-name}: <short friction observation>`. **Body:**
-`## Observation` · `## Where it surfaced` · `## Suggested follow-up`. It reuses
-standard ticket infrastructure — no new tooling; the operator decides when an
-observation deserves a ticket, and skills surface candidates conversationally.
-
-### ID scheme
-
-Format: `TASK-` + 6 chars from `[a-z0-9]` (base36). Example: `TASK-a3k7m2`.
-
-- **Generation:** random. 36⁶ ≈ 2.18B combinations; collision at 10k tickets ≈ 10⁻⁵.
-- **Defense in depth:** before writing, verify the file doesn't exist; regenerate
-  on the improbable collision.
-- **Concurrency:** no coordination needed — random IDs effectively never collide.
-- **Stable forever:** cancelled tickets keep their ID; IDs are never reused.
-
-### Subcommand: task create {title} [--flags]
-
-1. Resolve `@handle` from `git config user.email` (cached per session).
-2. Resolve today's date from CLAUDE.md `currentDate` or `date +%Y-%m-%d`.
-3. Generate a random 6-char base36 ID; verify the file doesn't exist; regenerate
-   if it does.
-4. Apply flags `--epic` (required), `--size` (default M), `--importance` (default
-   Mid), `--skills` (comma-separated, default empty), `--status` (default Open),
-   `--blocked-by`, `--related-to`.
-5. Write the file with frontmatter + an empty `## Description` body (or `--body`).
-6. Print the new ID to stdout.
-
-### Subcommand: task update TASK-{id} [--flags]
-
-1. Resolve the ticket path (`tickets/` then `tickets/archive/`). Error if neither.
-2. Apply flag changes (validate against enums).
-3. Set `updated` to today.
-4. **Status transitions move the file:**
-   - New `status` ∈ {`Done`, `Cancelled`} and file in `tickets/` → write to
-     `tickets/archive/` and remove the original; fill `closed_by` / `closed_at`.
-   - Back to `Open` from `tickets/archive/` → write to `tickets/`; clear
-     `closed_by` / `closed_at`.
-   - Otherwise, write in place.
-5. Show a diff before saving.
-
-### Subcommand: task close TASK-{id} [--cancelled --reason "..."]
-
-Shortcut that transitions an open ticket to a closed status and archives it:
-default `status: Done`; with `--cancelled`, `status: Cancelled` (append a
-`## Cancellation reason` if `--reason` given). Sets `closed_by` / `closed_at` /
-`updated`, and **moves the file** to `tickets/archive/`.
-
-### Subcommand: task list [--filter]
-
-1. Scan `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive — excludes
-   `archive/`). Parse frontmatter.
-2. With `--include-archived` (or `--all`), also scan `tickets/archive/*.md`.
-3. Filters: `--status`, `--epic`, `--size`, `--importance`, `--reporter`,
-   `--skill` (matches if `skills` contains the value), `--blocked`.
-4. Print a compact table to stdout: `id | status | epic | size | importance |
-   skills | title`.
-5. Read-only.
-
-### Subcommand: task show TASK-{id}
-
-Read the file (`tickets/` then `tickets/archive/`) and print frontmatter + body.
-Read-only.
-
-### Rules
-
-1. **One file per ticket.** Filename = `TASK-{id}.md`; the `id` field matches.
-2. **IDs never reused.** Don't delete files — archive them.
-3. **Open vs archived location is derived from `status`.** The skill keeps location
-   consistent with `status` on every transition.
-4. **`updated` is auto-managed.** Don't edit it by hand.
-5. **`closed_by` / `closed_at` only when status ∈ {Done, Cancelled}.**
-6. **Body markdown is free.** Description / Acceptance criteria / Notes suggested.
-7. **Concurrent edits are safe** — random IDs, no locking.
-8. **Server is read-only.** `.inspire_kb/99_tracker/serve.mjs` never writes; it
-   scans both `tickets/` and `tickets/archive/`.
+   - Feature drift → `/inspire_module update` or `/inspire_feature update`
+   - ADR misalignment → `/inspire_adr update`
 
 ## Subcommand: structure
 
@@ -453,9 +177,9 @@ Validate the vault structure at the top level (not module-scoped).
 
 1. **CLAUDE.md** is present at the workspace root.
 2. **Top-level indexes:**
-   - `.inspire_kb/02_features/_index.md` lists every module.
+   - `.inspire_kb/02_modules/_index.md` lists every module.
    - `.inspire_kb/01_adr/_index.md` lists every ADR.
-   - Each module folder has `_index.md`.
+   - Each module has a hub `02_modules/{module}.md`.
 3. **Task tracker:**
    - `.inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
      and under `archive/` (closed). Frontmatter parses, enums match, ID format
@@ -475,7 +199,7 @@ Validate the vault structure at the top level (not module-scoped).
 # Vault Structure | {date}
 
 ## Top-level indexes
-- .inspire_kb/02_features/_index.md: {ok | N issues}
+- .inspire_kb/02_modules/_index.md: {ok | N issues}
 - .inspire_kb/01_adr/_index.md: {ok | N issues}
 
 ## Module folders
@@ -494,25 +218,32 @@ Validate the vault structure at the top level (not module-scoped).
 
 ## Rules
 
-> **Output language.** Write every artifact you produce — ADRs, tracker entries —
-> in the project's declared `output_language` (default English), per
+> **Output language.** Write review reports and findings in the project's declared
+> `output_language` (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Applies
-> whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
-> stay verbatim.
+> whatever language the conversation is in; machine-read tokens (frontmatter
+> keys/values, wikilink slugs, filenames) stay verbatim.
 
-1. **`review` is read-only.** It suggests; it does not edit files.
-2. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
-   requires `adr promote`; `create` defaults to `design`.
-3. **Only `implemented` ADRs are immutable in content.** Supersede to change their
-   `Decision`; `design` / `prototyped` ADRs are refined in place with `adr update`.
-4. **Propagate to the maturity's reach.** Design-workspace coherence (features +
-   screen spec + horizontal prototype + specs) is required at every maturity;
-   `prototyped` adds a pointer to an external functional prototype, `implemented` a
-   codebase reference. The skill surfaces gaps within that reach.
-5. **Grep references on rename/supersede.** Always scan the vault when renaming an
-   ADR or changing its ID.
-6. **Consult the task tracker.** Known items live in
-   `.inspire_kb/99_tracker/tickets/`; don't re-report them as new findings.
-7. **No historical language in ADRs.** ADRs describe the decision context at the
-   time it was made; don't narrate migration history.
+1. **`review` and `structure` are read-only.** They suggest and flag; they never
+   edit files or invoke a fix-skill.
+2. **ADR propagation is judged, not authored.** Review checks that an ADR's
+   consequences cohere within its maturity's reach (design workspace at every
+   maturity; external pointers at higher ones) — authoring/advancing ADRs is
+   `/inspire_adr`.
+3. **Consult the task tracker.** Known items live in
+   `.inspire_kb/99_tracker/tickets/` (`/inspire_task list`); don't re-report them as
+   new findings.
+4. **Git discipline is shared.** Branch/commit/PR conventions, merge-conflict
+   auditing, and the git safety protocol live in
+   [`_references/git-conventions.md`](../_references/git-conventions.md) (sensible
+   defaults; the project's `CLAUDE.md` overrides). Follow it whenever the operator
+   asks for a branch, commit, or PR — and never commit/push on your own initiative.
+
+## Related skills
+
+- `/inspire_adr` — ADR lifecycle (create / update / promote / supersede). Review
+  judges whether ADR consequences propagated; `/inspire_adr` authors them.
+- `/inspire_task` — the task tracker. `structure` validates its on-disk invariants;
+  `/inspire_task` operates the tickets.
+- `/inspire_module`, `/inspire_feature` — the module/feature reviews this
+  orchestrates and delegates deep dives to.

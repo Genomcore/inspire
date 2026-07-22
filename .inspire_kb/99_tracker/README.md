@@ -4,8 +4,8 @@ The project's **work tracker** — tickets and the work log. Known items live
 here so they are surfaced as `(tracked: TASK-{id})` instead of being
 re-discovered as new findings on every review.
 
-- **Skill:** `inspire-workspace` (task subcommands — `task list`, `task
-  create`, …).
+- **Skill:** `inspire-task` (tracker subcommands — `list`, `create`, `update`,
+  `close`, `show`).
 - **Layout:**
   ```
   99_tracker/

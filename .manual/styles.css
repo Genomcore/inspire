@@ -333,6 +333,72 @@ code{font-family:var(--mono);font-size:.9em;overflow-wrap:anywhere}
 }
 .skill-card .skill-cmds .conv{font-style:italic;color:var(--muted);background:transparent;border-color:transparent;padding-inline:0}
 
+/* Skill reference rows (expandable) */
+.skill-rows{display:grid;gap:.75rem}
+.skill-row{
+  background:#fff;border-radius:16px;box-shadow:var(--shadow-soft);
+  overflow:hidden;transition:box-shadow var(--dur) var(--ease);
+}
+.skill-row[open]{box-shadow:var(--shadow)}
+.skill-row>summary{
+  list-style:none;cursor:pointer;
+  display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:.4rem .9rem;
+  padding:clamp(1.05rem,2.6vw,1.45rem) clamp(1.2rem,2.8vw,1.7rem);
+}
+.skill-row>summary::-webkit-details-marker{display:none}
+.skill-row>summary:hover{background:rgba(243,245,247,.5)}
+.skill-row>summary:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.skill-row .sk-name code{font-family:var(--mono);font-size:1rem;color:var(--graphite)}
+.skill-row .kb-chip{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.01em;white-space:nowrap;
+  color:var(--muted);background:var(--cloud);border:1px solid var(--hairline);
+  border-radius:999px;padding:.2rem .6rem;
+}
+.skill-row .sk-line{color:var(--slate);font-size:.95rem;min-width:0}
+.skill-row .sk-chevron{
+  justify-self:end;color:var(--muted);font-size:1.5rem;line-height:1;
+  transition:transform var(--dur) var(--ease);
+}
+.skill-row[open] .sk-chevron{transform:rotate(90deg)}
+.sk-body{padding:0 clamp(1.2rem,2.8vw,1.7rem) clamp(1.3rem,2.8vw,1.6rem)}
+.sk-cmds{margin:0;display:grid;gap:.6rem;border-top:1px solid var(--hairline);padding-top:1.1rem}
+.sk-cmds>div{display:grid;grid-template-columns:minmax(8rem,auto) 1fr;gap:.35rem 1.1rem;align-items:baseline}
+.sk-cmds dt{margin:0}
+.sk-cmds dt code{
+  font-family:var(--mono);font-size:.78rem;color:var(--graphite);white-space:nowrap;
+  background:var(--cloud);border:1px solid var(--hairline);border-radius:7px;padding:.16rem .5rem;
+}
+.sk-cmds dd{margin:0;color:var(--slate);font-size:.95rem}
+.sk-cmds dd code{font-family:var(--mono);font-size:.82rem;color:var(--slate)}
+@media(max-width:640px){
+  .skill-row>summary{grid-template-columns:1fr auto;grid-template-areas:"name chev" "chip chip" "line line"}
+  .skill-row .sk-name{grid-area:name}
+  .skill-row .sk-chevron{grid-area:chev}
+  .skill-row .kb-chip{grid-area:chip;justify-self:start}
+  .skill-row .sk-line{grid-area:line}
+  .sk-cmds>div{grid-template-columns:1fr;gap:.15rem}
+}
+
+/* Skill reference — one block per skill (single column): external header + compact table */
+.skill-blocks{display:flex;flex-direction:column;gap:clamp(1.5rem,4vh,2.4rem);max-width:var(--prose)}
+.skill-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .7rem;margin-bottom:.6rem}
+.skill-head .sk-name{font-family:var(--mono);font-size:1.02rem;font-weight:500;color:var(--graphite)}
+.skill-head .kb-chip{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.01em;white-space:nowrap;
+  color:var(--muted);background:var(--cloud);border:1px solid var(--hairline);border-radius:999px;padding:.16rem .55rem;
+}
+.skill-head .sk-line{flex:1 1 100%;color:var(--slate);font-size:.93rem;margin-top:.1rem}
+.skill-head .sk-line code{font-family:var(--mono);font-size:.85em;color:var(--slate)}
+.skill-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;box-shadow:var(--shadow-soft);overflow:hidden}
+.skill-tbl th{
+  text-align:left;vertical-align:top;white-space:nowrap;width:1%;font-weight:400;
+  padding:.4rem .7rem .4rem .9rem;
+}
+.skill-tbl th code{font-family:var(--mono);font-size:.75rem;color:var(--graphite);background:var(--cloud);border:1px solid var(--hairline);border-radius:6px;padding:.12rem .42rem}
+.skill-tbl td{vertical-align:top;color:var(--slate);font-size:.9rem;line-height:1.45;padding:.4rem .9rem .4rem 0}
+.skill-tbl td code{font-family:var(--mono);font-size:.85em;color:var(--slate)}
+.skill-tbl tr+tr th,.skill-tbl tr+tr td{border-top:1px solid var(--hairline)}
+
 /* Numbered workflow steps */
 .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1.2rem,3vw,2rem);counter-reset:step}
 @media(max-width:760px){.steps{grid-template-columns:1fr}}

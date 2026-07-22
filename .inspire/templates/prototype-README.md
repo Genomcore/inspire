@@ -8,12 +8,11 @@ It answers *"is this the right thing to build?"* by making the shape of the syst
 legible end to end, without real backends or production depth.
 
 - **Skill:** `inspire-prototype`.
-- **Its learnings** are captured in
-  [`.inspire_kb/03_prototypes/horizontal.md`](../.inspire_kb/03_prototypes/horizontal.md) —
-  keep them in sync as the prototype evolves.
-- **Vertical** prototypes (narrow, deep) live in **their own external repos** and
-  are indexed under
-  [`.inspire_kb/03_prototypes/verticals/`](../.inspire_kb/03_prototypes/verticals).
+- **Its insights** co-evolve the vault directly as you build — features, screens,
+  ADRs and the design system. It keeps **no learnings file of its own**.
+- **Vertical spikes** (narrow, deep) live in **their own external repos**; their
+  knowledge is brought home under
+  [`.inspire_kb/06_spikes/`](../.inspire_kb/06_spikes) (skill `inspire-spike`).
 
 > Template note: this folder starts empty (just this README). Scaffold the
 > horizontal prototype here when the project starts.

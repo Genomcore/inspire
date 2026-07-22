@@ -1,6 +1,7 @@
 ---
 kind: bootstrap-stack
 status: default          # default (seeded from the OpenBIMS reference) → adapt per project
+profiles: [react, nestjs]   # inspire-code stack profiles to load (see .inspire/skills/inspire-code/profiles)
 ---
 
 # Tech stack
