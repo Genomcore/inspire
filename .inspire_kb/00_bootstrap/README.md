@@ -18,7 +18,7 @@ reads before working — the base context the rest of the KB assumes.
   - [`theme.md`](theme.md) — the **default design-system template**: fonts, the
     color palette + status map, density and layout tokens. At install it is copied
     to [`05_screens/design-system.md`](../05_screens) (the project's live design
-    system, edited via `/inspire_screens design-system`); `theme.md` stays as the
+    system, edited via `/inspire_bootstrap design-system`); `theme.md` stays as the
     reusable default.
 
 Both start seeded with a **sensible default** (the stack + theme of the OpenBIMS

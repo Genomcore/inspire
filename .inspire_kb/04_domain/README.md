@@ -40,5 +40,5 @@ implementation and live in [`/source`](../../source), not here:
 Keeping `04_domain` free of storage and transport details is deliberate: the
 contract stays stable while the implementation is free to change.
 
-The domain realises features ([`02_features`](../02_features)) and must respect
+The domain realises features ([`03_features`](../03_features)) and must respect
 the decisions in [`01_adr`](../01_adr).

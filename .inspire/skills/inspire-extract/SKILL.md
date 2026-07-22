@@ -33,7 +33,7 @@ shared thing), and proposes **consolidations**.
 | C | **Business logic · API · DB** | entities (schema/ORM/types), actions (services/handlers/mutations), endpoints | `04_domain` (+ feature signals) | [`references/scanner-logic.md`](references/scanner-logic.md) |
 | D | **Application styles** | design tokens, typography, color/status palette, density, layout | `00_bootstrap/theme.md` → `05_screens/design-system.md` | [`references/scanner-styles.md`](references/scanner-styles.md) |
 
-**Features (`02_features`) are not scanned directly** — they are **derived in
+**Features (`03_features`) are not scanned directly** — they are **derived in
 consolidation** from the correlation between B and C: a coherent flow across a
 screen, the API it calls, and the entity/fields it reads or writes *is* a use case.
 
@@ -97,7 +97,7 @@ narrowed a choice to 2–4 options. The consolidated manifest is a large surface
 ### Phase 0 — Scope & safety
 
 Resolve `{path}`; confirm it is **external** (not `.inspire_kb/`, `/prototype`,
-`/source`). Read the current KB (`02_features/_index.md`, screens, domain tree,
+`/source`). Read the current KB (`02_modules/_index.md`, screens, domain tree,
 `00_bootstrap`) so the run **merges, not clobbers**. Confirm the scanner set
 (`--only`, default all four). **Consult the task tracker** so tracked extraction
 work isn't re-surfaced.
@@ -133,7 +133,7 @@ Merge the four slices into one manifest and do the work no single scanner can:
    **traceability graph** `screen → action → entity → field`. This is the
    "*this screen uses this API and these fields*" relation the operator asked for.
 2. **Derive features.** A coherent flow across a screen + its actions + entity is a
-   candidate **feature** (`02_features`). Features are *derived here*, each linking
+   candidate **feature** (`03_features`). Features are *derived here*, each linking
    the screen(s) and action(s) that realize it. Backend-only flows (no screen) are
    features too; infra-only endpoints usually are not.
 3. **Infer modules.** Cluster the cross-linked artifacts into modules (source
@@ -173,7 +173,7 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
    is upstream of everything; a load-bearing change is an ADR
    (`/inspire_workspace adr create`).
 2. **Modules** — scaffold inferred modules via `/inspire_module create`.
-3. **Features** (`02_features`) — the derived use cases; before domain, because
+3. **Features** (`03_features`) — the derived use cases; before domain, because
    **features are upstream of specs**.
 4. **Screens** (`05_screens`) — reference the derived features; adopt the
    consolidated patterns/components from scanner B.

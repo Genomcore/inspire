@@ -13,7 +13,6 @@ description: "Create and validate screens (a screen is the UI spec for one view)
   instantiate — **including reverse drift** where the prototype is ahead of the spec
 - **Identifying extraction opportunities** — UI blocks that should become shared
   components or patterns
-- **Migrating legacy screen spec monoliths** to the screen-per-file structure
 
 ## Architecture
 
@@ -27,8 +26,10 @@ Four levels under `.inspire_kb/05_screens/`:
 | 4 | `{module}/` | module-specific screens | `{module}/_index.md` per module |
 
 `design-system.md` is **seeded at install** from the default template
-`00_bootstrap/theme.md`, then owned here — it is the project's live design system,
-edited with the `design-system` subcommand below.
+`00_bootstrap/theme.md`, and owned by
+[`/inspire_bootstrap design-system`](../inspire-bootstrap/SKILL.md) — screens
+**read** its tokens (they are the source of truth for colors, typography, layout)
+but never edit them.
 
 **Screens are lightweight** — they instantiate a pattern and describe only
 deviations. They do NOT redefine colors, typography, layout, or re-describe
@@ -88,7 +89,7 @@ sub-sections of a single settings form.
 ## When creating a new screen
 
 1. **Identify the feature.** Every screen references at least one feature ID from
-   the module's `02_features`.
+   the module's `03_features`.
 2. **Pick a pattern.** Read `patterns/_index.md` and choose the one that matches
    the screen's purpose. Only mark `**Pattern:** bespoke` if truly unique. The
    project's own screen conventions (default list pattern, header layout, tabs,
@@ -113,7 +114,7 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 |------|--------------------|-----------|--------|
 | **Features ↔ Prototype** | Feature described, not in the prototype | Features | "Code behind spec". Suggest `/inspire_prototype`. |
 | **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire_feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
-| **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_screens validate\|migrate`. Do NOT change the prototype — risks losing iterations. |
+| **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_screens validate`. Do NOT change the prototype — risks losing iterations. |
 | **screen spec ↔ Prototype** | Prototype renders UI not in the screen spec | Prototype | Spec stale (reverse drift). Update the spec. |
 | **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + accepted UX ADRs are authoritative for visual/structural conventions. |
 
@@ -132,7 +133,7 @@ When uncertain which layer a finding belongs to, ask the user.
 
 1. **Pattern exists.** The `**Pattern:**` link resolves.
 2. **Feature IDs exist.** All referenced features exist in the module's
-   `02_features`.
+   `03_features`.
 3. **No redundant structure.** The screen doesn't redescribe what the pattern
    already specifies.
 4. **Component references resolve.** All `[[../components/X]]` wikilinks point to
@@ -175,7 +176,7 @@ drift** (prototype ahead of spec).
 5. **Report reverse drift separately** from forward drift, with severity
    (Important = a whole feature/tab missing from the spec; Minor = a column, label,
    or control).
-6. **Resolution:** reverse-drift findings suggest `/inspire_screens {validate|migrate}`
+6. **Resolution:** reverse-drift findings suggest `/inspire_screens validate`
    to update the spec (the prototype is already correct) — the spec catches up to
    the code, not the other way around.
 
@@ -190,7 +191,7 @@ change.
 
 ## After modifying a screen spec — propagation check
 
-Whenever a `create` / `update` / `migrate` / `extract` changes a screen in a way
+Whenever a `create` / `update` / `extract` changes a screen in a way
 that affects the UI (new pattern, new slot, renamed data source, added/removed
 section or tab), the skill MUST ask the user whether to propagate the change to the
 prototype before ending the turn.
@@ -206,21 +207,8 @@ prototype before ending the turn.
 
 4. **If confirmed:** invoke `/inspire_prototype` with a concrete prompt (the
    updated screen + the drift items to resolve).
-5. **If declined:** create a tracker ticket via `/inspire_workspace task create` so
+5. **If declined:** create a tracker ticket via `/inspire_task create` so
    it isn't lost.
-
-## When migrating a legacy monolith
-
-Split an old monolithic screen spec into the new structure:
-
-1. Read the monolith; identify screens.
-2. Create `{module}/_index.md` — consolidate nav, route map, feature coverage.
-3. Create one screen file per logical grouping (granularity rule).
-4. Remove design-token duplication that matches `design-system.md`; keep only
-   module-specific overrides.
-5. Replace ASCII layouts with pattern references; keep ASCII only if bespoke.
-6. Replace inline mock data with data-source references.
-7. Delete the monolith once every screen is migrated and `_index.md` is complete.
 
 ## When adding a new pattern or component
 
@@ -244,7 +232,7 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 > stay verbatim.
 
 1. **Features are the source of truth for what exists.** Every screen traces to one
-   or more features in `02_features`.
+   or more features in `03_features`.
 2. **`design-system.md` is the source of truth for tokens.** No module redefines
    colors, typography, density.
 3. **`patterns/` is the source of truth for screen structure.** Screens
@@ -265,31 +253,9 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 12. **Propagation check after spec edits.** Ask the user before ending the turn
     whether to propagate visible UI changes to the prototype.
 
-## Subcommand: design-system
-
-Own `05_screens/design-system.md` — the project's **live design system** (tokens,
-typography, color + status map, density, global layout). It was seeded at install
-from the default template `00_bootstrap/theme.md`; from here on this subcommand is
-how it changes.
-
-1. Read the current `design-system.md`. If it's missing, seed it from
-   `00_bootstrap/theme.md` (this is what install does) and say so.
-2. Establish/confirm the change (a token value, the type scale, density, a new
-   status key, a layout rule). Present a diff; apply on approval.
-3. **Propagate.** A token change ripples to every screen and to the prototype —
-   surface it (offer `/inspire_prototype`); screens must not hard-code values that
-   belong here.
-4. Keep token **roles** stable (primary, accent, status keys) even when values
-   change — downstream skills depend on the roles, not the hexes.
-
-The default template lives in `00_bootstrap/theme.md` and is owned by
-`/inspire_bootstrap theme`; the live one lives here. They are allowed to diverge.
-
 ## Skill invocations
 
 - `/inspire_screens create {module}/{screen}` — scaffold a new screen with pattern selection
 - `/inspire_screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
-- `/inspire_screens design-system` — view / edit the live design system (`05_screens/design-system.md`)
-- `/inspire_screens migrate {module}` — migrate a legacy monolith to the new structure
 - `/inspire_screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
 - `/inspire_screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities

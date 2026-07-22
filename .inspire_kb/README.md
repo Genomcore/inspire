@@ -10,12 +10,13 @@ Each numbered folder is a layer of the graph, operated by a matching skill in
 | Folder | Holds | Skill |
 |--------|-------|-------|
 | [`00_bootstrap`](00_bootstrap) | The foundation: tech `stack.md` + design-system `theme.md` (base context for all skills) | `inspire-bootstrap` |
-| [`01_adr`](01_adr) | Architecture Decision Records | `inspire-workspace` |
-| [`02_features`](02_features) | Product intent — one folder per module, one file per use case | `inspire-module`, `inspire-feature` |
-| [`03_prototypes`](03_prototypes) | Prototype **knowledge**: horizontal learnings (code at [`/prototype`](../prototype)) + links to external vertical spike repos | `inspire-prototype` |
+| [`01_adr`](01_adr) | Architecture Decision Records | `inspire-adr` |
+| [`02_modules`](02_modules) | Module **hubs + registry** — the per-module second-level index linking its features, screens, specs and module ADRs | `inspire-module` |
+| [`03_features`](03_features) | Product intent — one file per use case, per module (indexed from `02_modules`) | `inspire-feature` |
 | [`04_domain`](04_domain) | The logical domain — data model (entities) + behavior (actions), coupled | `inspire-domain` |
 | [`05_screens`](05_screens) | screen specs + the shared component catalog | `inspire-screens` |
-| [`99_tracker`](99_tracker) | Tickets and work log | `inspire-workspace` |
+| [`06_spikes`](06_spikes) | External vertical-spike **knowledge**: repo links + imported learnings + gap analysis (the horizontal prototype keeps no file here — its insights land in the other layers) | `inspire-spike` |
+| [`99_tracker`](99_tracker) | Tickets and work log | `inspire-task` |
 
 Coherence across these layers is protected mechanically by the validators in
 [`.inspire/bin/`](../.inspire/bin) and the git-time hooks in

@@ -1,4 +1,4 @@
-// INSPIRE manual — shared nav behavior (index.html + skills.html)
+// INSPIRE manual — shared nav behavior (index.html + skills.html + how-to.html)
 (function () {
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

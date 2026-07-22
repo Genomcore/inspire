@@ -1,6 +1,6 @@
 ---
 name: inspire-bootstrap
-description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and design system (theme) in .inspire_kb/00_bootstrap, plus the project's root README. Use when bootstrapping a new project, setting the language artifacts are written in, choosing the project shape, changing a stack choice, or defining/updating the theme (including abstracting it from a mockup's CSS)."
+description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md template in .inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
 ---
 
 # /inspire_bootstrap — Foundation (language + stack + theme)
@@ -14,8 +14,12 @@ This skill owns the **bootstrap layer** —
   language every skill writes its artifacts in (default English).
 - `stack.md` — the **tech stack** the product is built with, and its **shape**
   (frontend / backend / monorepo · web / mobile · database provisioning).
-- `theme.md` — the **design system / theme** (fonts, color palette + status map,
-  density, layout tokens).
+- `theme.md` — the **design-system default** (fonts, color palette + status map,
+  density, layout tokens) — the reusable template.
+- `05_screens/design-system.md` (the one artifact this skill owns **outside**
+  `00_bootstrap`) — the project's **live design system**, seeded from `theme.md` at
+  install and edited here via the `design-system` subcommand. `theme.md` is the
+  default; this is the working copy.
 
 These are the foundation every other layer reads: specs ([`04_domain`](../../.inspire_kb/04_domain)),
 screen specs ([`05_screens`](../../.inspire_kb/05_screens)), the prototype ([`/prototype`](../../prototype))
@@ -33,7 +37,8 @@ At first-time setup this skill also establishes **project identity** — the roo
   `stack.md` + `theme.md`, and create the project's root `README.md`
 - `/inspire_bootstrap language` — set the output language artifacts are written in
 - `/inspire_bootstrap stack` — define / update the tech stack
-- `/inspire_bootstrap theme` — define / update the design system (theme)
+- `/inspire_bootstrap theme` — define / update the design-system default (`theme.md`)
+- `/inspire_bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md`)
 - `/inspire_bootstrap readme` — create / update the project's root `README.md`
 - `/inspire_bootstrap review` — check the artifacts exist and stay coherent
 
@@ -106,7 +111,23 @@ Define or update `stack.md` — the official application stack, including its
    **changing the shape** (adding a backend, adding mobile, switching from a
    deployed database to an external one) — must be recorded as an ADR in
    [`01_adr`](../../.inspire_kb/01_adr) — surface that and offer to chain
-   `/inspire_workspace adr create`.
+   `/inspire_adr create`.
+
+### Stack profiles (for `/inspire_code`)
+
+`stack.md` also drives which **stack profiles** `/inspire_code` layers onto its
+generic coding-stage checks. After confirming the layers:
+
+1. **Maintain the `profiles:` frontmatter line** — the set of framework ids that
+   have (or should have) a profile, derived from the chosen frontend/backend
+   frameworks (React → `react`, NestJS → `nestjs`, …). It is `/inspire_code`'s
+   deterministic resolution key; without it, `/inspire_code` infers from the stack
+   sections.
+2. **Offer to scaffold missing profiles.** For any id in `profiles:` with no file at
+   `.inspire/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
+   from the contract ([`profiles/README.md`](../inspire-code/profiles/README.md)) so
+   the coding stage starts stack-aware. Framework conventions only — org policy
+   (branch naming, private registries, CI) stays in the project's `CLAUDE.md`.
 
 ## Subcommand: theme
 
@@ -124,8 +145,8 @@ values are yours to set.
    working design system. So:
    - Edit `theme.md` here to change the **reusable default** (e.g. before
      bootstrapping, or to keep the default in sync).
-   - To change the **project's live** design system, use
-     `/inspire_screens design-system` — that's the source of truth once seeded.
+   - To change the **project's live** design system, use the `design-system`
+     subcommand below — that's the source of truth once seeded.
    - Offer to (re)seed `05_screens/design-system.md` from `theme.md` if it doesn't
      exist yet.
 
@@ -140,6 +161,24 @@ A fast way to seed `theme.md` is to **derive it from an existing mockup's CSS**:
 3. Generalize product-specific names into **roles** (e.g. a brand "assistant"
    color → the `accent` / `ai` role); keep the values.
 4. Fill density + layout from how the mockup actually spaces things.
+
+## Subcommand: design-system
+
+Own `05_screens/design-system.md` — the project's **live design system** (tokens,
+typography, color + status map, density, global layout), seeded at install from the
+default `theme.md`. Distinct from `theme` above: `theme.md` is the reusable default,
+`design-system.md` is the project's working copy — they may diverge.
+
+1. Read the current `design-system.md`. If it's missing, seed it from `theme.md`
+   (this is what install does) and say so.
+2. Establish/confirm the change (a token value, the type scale, density, a new
+   status key, a layout rule). Present a diff; apply on approval.
+3. **Propagate.** A token change ripples to every screen and to the prototype —
+   surface it (offer `/inspire_prototype`); screens must not hard-code values that
+   belong here.
+4. Keep token **roles** stable (primary, accent, status keys) even when values
+   change — downstream skills (screens, prototype) depend on the roles, not the
+   hexes.
 
 ## Subcommand: readme
 
@@ -235,11 +274,11 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    replace), kept in sync with `stack.md` / `theme.md`.
 4. **Roles over values.** Downstream skills depend on token *roles* (primary,
    accent, status keys) — keep them stable even when values change.
-5. **Consult the task tracker** (`/inspire_workspace task list`) for tracked
+5. **Consult the task tracker** (`/inspire_task list`) for tracked
    bootstrap work.
 
 ## Related skills
 
 - `/inspire_screens` — instantiates the theme's tokens into patterns/components.
 - `/inspire_prototype` — builds the horizontal prototype on this stack + theme.
-- `/inspire_workspace adr create` — record load-bearing stack/theme decisions.
+- `/inspire_adr create` — record load-bearing stack/theme decisions.

@@ -8,8 +8,8 @@ output language**, read from `output_language` in
 ## The rule
 
 Write **every knowledge-base artifact** in `output_language`, whatever it is:
-specs (`04_domain`), features (`02_features`), ADRs (`01_adr`), screen specs
-(`05_screens`), prototype learnings (`03_prototypes`), tracker entries
+specs (`04_domain`), features (`03_features`), ADRs (`01_adr`), screen specs
+(`05_screens`), spike learnings (`06_spikes`), tracker entries
 (`99_tracker`), bootstrap docs (`00_bootstrap`) and the project `README.md`.
 
 This holds regardless of two things it is deliberately independent of:

@@ -21,7 +21,7 @@ screen so the review shows, at a glance, what each view actually touches. Matchi
 is heuristic — an unresolved `data_ref` is a **gap** to surface (a screen calling an
 endpoint no action explains, or an action no screen consumes), not something to hide.
 
-## 2. Derive features (`02_features`)
+## 2. Derive features (`03_features`)
 
 Features are **not** scanned; they emerge here. A **coherent flow** across a screen,
 the action(s) it triggers, and the entity/fields involved *is* a candidate use case.

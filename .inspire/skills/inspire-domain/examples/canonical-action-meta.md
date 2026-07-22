@@ -4,7 +4,7 @@ The canonical example (`canonical-action.md`) shows `auth::user::create` — a d
 
 ## feature source
 
-The platform module's Action Catalog declares (in `.inspire_kb/02_features/platform/_index.md`):
+The platform module's Action Catalog declares (in `.inspire_kb/02_modules/platform.md`):
 
 | Action | Description | Priority |
 |---|---|---|

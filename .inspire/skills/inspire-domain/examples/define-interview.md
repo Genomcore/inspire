@@ -7,7 +7,7 @@ operator: /inspire_domain define auth::user::create
 
 agent:    [Step 0 — authoring context: fresh authoring of an action.
            Step 1 — reads references/interview-prompts-action.md.
-           Grounds: reads .inspire_kb/02_features/auth/_index.md, finds the feature
+           Grounds: reads .inspire_kb/02_modules/auth.md, finds the feature
            row; reads adr-auth-01]
           "Got it — this is the user-provisioning entry point. Looking at the
            feature it sources from [[adr-auth-01-identity-model]] and the
