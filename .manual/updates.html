@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INSPIRE — Updates &amp; Lessons</title>
+<meta name="description" content="How the INSPIRE runtime updates without destroying local work: lessons — one-line, atomic instructions that teach a skill to behave your way — are materialized into the skills and re-applied on every release, never merged line-by-line and never wiped.">
+<meta property="og:title" content="INSPIRE — Updates &amp; Lessons">
+<meta property="og:description" content="Teach a skill once with a lesson; every release re-teaches the new base and drops what it already knows. Updates rebuild, they never merge line-by-line.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#FAFAF8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=6">
+</head>
+<body class="skills-page">
+
+<!-- Ambient breath -->
+<div class="ambient" aria-hidden="true">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+</div>
+<svg class="currents" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1440 900">
+  <g fill="none" stroke="#98A2B3" stroke-width="1" opacity="0.10">
+    <path d="M-40,150 C 360,90 780,210 1480,120"/>
+    <path d="M-40,300 C 400,240 820,360 1480,270"/>
+    <path d="M-40,470 C 380,410 800,520 1480,430"/>
+    <path d="M-40,650 C 420,590 840,700 1480,600"/>
+    <path d="M-40,810 C 360,760 800,860 1480,770"/>
+  </g>
+</svg>
+
+<!-- Primary nav (top-level pages) -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html#top">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/></linearGradient></defs>
+        <circle class="ob" cx="20" cy="20" r="14" fill="none" stroke="url(#ig)" stroke-width="2.2"/>
+        <circle cx="20" cy="20" r="4.5" fill="url(#ig)"/>
+      </svg>
+      INSPIRE
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Methodology</a>
+      <a href="skills.html">Skills</a>
+      <a href="how-to.html">How to</a>
+      <a class="active" href="updates.html" aria-current="page">Updates &amp; Lessons</a>
+      <a class="nav-cta" href="https://github.com/genomcore/inspire" target="_blank" rel="noopener">Get Inspired! <span class="arr" aria-hidden="true">↗</span></a>
+    </nav>
+  </div>
+</header>
+
+<!-- Secondary nav (in-page sections) -->
+<nav class="subnav" id="subnav" aria-label="Sections on this page">
+  <div class="wrap subnav-in">
+    <a href="#lessons">Lessons</a>
+    <a href="#updates">Updates</a>
+    <a href="#install">Install &amp; ownership</a>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- Sub-hero -->
+  <section class="subhero" id="hero">
+    <div class="wrap">
+      <p class="eyebrow reveal">Updates &amp; Lessons</p>
+      <h1 class="reveal d1">Teach it once. It <span class="grad-text">remembers</span> across every release.</h1>
+      <p class="lede reveal d2">The runtime evolves; your customizations shouldn't have to be re-fought on every upgrade. INSPIRE records how you've taught a skill as <b>lessons</b>, and re-applies them to each new release — never a line-by-line merge, never a wipe.</p>
+      <p class="note reveal d2"><b>Status.</b> The lessons journal ships today. The one-line declarative format, materialization into the skills, and the automated update flow described below are the design for <b>v1</b> — captured in the runtime-lifecycle ADR. This page documents the model, not yet a released command.</p>
+    </div>
+  </section>
+
+  <!-- Lessons -->
+  <section class="how" id="lessons">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The unit</p>
+        <h2>A lesson is one line that changes how a skill behaves.</h2>
+        <p>Not a config file, not a fork of the skill — a single instruction, in your context, that the skill internalizes. <i>"When generating a NestJS controller, keep DTOs in a separate file."</i> That's a lesson.</p>
+      </div>
+      <div class="vs-grid">
+        <div class="vs-col reveal d1">
+          <p class="k">One line, atomic</p>
+          <h3>Short by design</h3>
+          <p>A lesson is a single imperative — at most a positive/negative pair (<i>do this</i> / <i>not that</i>), with an optional example as <b>support only</b>. The one-line limit makes each lesson indivisible, so the catalog stays small and every lesson is easy to reason about.</p>
+        </div>
+        <div class="vs-col reveal d2">
+          <p class="k">Relevant here</p>
+          <h3>Local first</h3>
+          <p>You capture a lesson because it matters to <b>you</b>, in <b>this</b> project — not because it's destined for the official runtime. Whether it generalizes across projects is decided upstream, from the pattern many teams' lessons form, never by a single author.</p>
+        </div>
+      </div>
+      <p class="note reveal d2"><b>Materialized, not consulted.</b> A lesson is written <i>into</i> the skill, so the taught behavior becomes the behavior — the agent acts on it, it doesn't check a footnote and apply it if it happens to notice. Lessons are the source of truth; the skill file is the result. A hand edit to a skill that you don't capture as a lesson is drift — it's overwritten on the next update, exactly like an out-of-band change to declared infrastructure.</p>
+    </div>
+  </section>
+
+  <!-- Updates -->
+  <section class="workflow" id="updates">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The model · roadmap</p>
+        <h2>An update rebuilds. It never merges line-by-line.</h2>
+        <p>Skills are natural language, not code — a textual three-way merge can stitch two edits together into a skill that reads fine and means the wrong thing. So an update takes the new base and re-applies your surviving lessons onto it, from scratch.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal d1">
+          <h4>Fetch a pinned release</h4>
+          <p>The new runtime is pulled at a specific version into a scratch area — never entangling your project's git history. Your lessons stay exactly where they are.</p>
+        </div>
+        <div class="step reveal d2">
+          <h4>Classify each lesson</h4>
+          <p>In parallel, every lesson is checked against the new base: has this release already learned it, reversed it, or left it untouched? A per-skill changelog makes this cheap; without one it still works, just slower.</p>
+        </div>
+        <div class="step reveal d3">
+          <h4>Rebuild &amp; review</h4>
+          <p>The skill is regenerated as <i>new base + your surviving lessons</i>. A plan shows what will change — and warns of any uncaptured hand edits about to be lost — before anything is written.</p>
+        </div>
+      </div>
+
+      <div class="sec-head reveal" style="margin-top:3rem">
+        <p class="eyebrow">Four outcomes</p>
+        <h2>What happens to each lesson.</h2>
+        <p>The default is conservative: when a call is uncertain, your lesson is <b>kept</b>. Silently dropping a taught behavior is the one failure worth guarding against.</p>
+      </div>
+      <table class="skill-tbl reveal d1">
+        <tbody>
+          <tr><th scope="row"><code>Absorbed</code></th><td>The new base now does this natively. The lesson is <b>archived</b> — new versions bring it from the factory, so you no longer teach it.</td></tr>
+          <tr><th scope="row"><code>Untouched</code></th><td>The base is unchanged here. The lesson is <b>kept</b> and re-applied to the new skill.</td></tr>
+          <tr><th scope="row"><code>Partial</code></th><td>The base absorbed part of it. The old lesson is superseded; a new one is written carrying only the <b>residual</b> — the part still not covered.</td></tr>
+          <tr><th scope="row"><code>Contradicted</code></th><td>The base deliberately went the other way. <b>You decide</b> — by default your local lesson wins; accepting the reversal is an explicit choice.</td></tr>
+        </tbody>
+      </table>
+      <p class="note reveal d2"><b>The teaching debt shrinks.</b> Every release the base learns a little more of what forks were teaching it, so archived lessons accumulate and the set you must re-teach gets smaller over time — not larger.</p>
+    </div>
+  </section>
+
+  <!-- Install & ownership -->
+  <section class="enforcement" id="install">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Getting it in · roadmap</p>
+        <h2>INSPIRE touches only what it owns.</h2>
+        <p>Installing or updating the runtime is surgical: it reconciles the files INSPIRE placed and nothing else. Whatever else lives in your workspace is yours, and stays untouched.</p>
+      </div>
+      <div class="enforce reveal d1">
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4>A namespace, not a directory</h4>
+            <p>The runtime owns a known set of paths — the <code>inspire-*</code> skills, the validators, the hooks. Install and update add and reconcile exactly those; your own skills, hooks and settings are never removed or overwritten.</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4>Two ways in</h4>
+            <p><b>Greenfield</b> — clone the template and go. <b>Brownfield</b> — drop the runtime into an existing repo in place; point it at the code you already have, and onboard it with <code>/inspire_extract</code>. No restructuring, no second repo.</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4>Your code stays where it is</h4>
+            <p>Where production code and the prototype live is configuration, not a fixed folder. A greenfield project gets <code>source/</code> and <code>prototype/</code>; an existing project points the runtime at its own layout.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing -->
+  <section class="quote" id="close">
+    <div class="wrap">
+      <blockquote class="reveal">Your agents don't forget what you taught them.</blockquote>
+      <p class="sub reveal d1">Every release re-teaches the new base — and drops what it already knows.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <div class="foot-brand">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+          <defs><linearGradient id="igf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57D9A3"/><stop offset="0.5" stop-color="#56B4F8"/><stop offset="1" stop-color="#5E5CE6"/></linearGradient></defs>
+          <circle class="ob" cx="20" cy="20" r="14" fill="none" stroke="url(#igf)" stroke-width="2.2"/>
+          <circle cx="20" cy="20" r="4.5" fill="url(#igf)"/>
+        </svg>
+        INSPIRE
+      </div>
+      <p class="foot-note">Individual · Navigable · Spec-driven · Prototypical · Iterative · Regenerative · Enforceable</p>
+    </div>
+    <div class="foot-meta">
+      A software development methodology for the agentic era. Born in <a href="https://openbims.dev" target="_blank" rel="noopener">OpenBIMS</a>, an open-source healthcare-AI platform by <a href="https://genomcore.com" target="_blank" rel="noopener">Genomcore</a>.
+    </div>
+  </div>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>
