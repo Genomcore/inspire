@@ -28,17 +28,34 @@ DEST=".claude"
 echo "INSPIRE · installing the guardrail runtime into $DEST/ …"
 mkdir -p "$DEST"
 
-# 1. Copy skills, bin, hooks into .claude/.
+# 1. Copy the runtime into .claude/, one OWNED entry at a time. INSPIRE owns a
+#    namespace, not the parent directory: it materializes exactly the entries it
+#    ships — the inspire-* skills (+ the shared _references), the validators, and
+#    the hooks — and replaces only those. Anything else you keep under
+#    .claude/{skills,bin,hooks} (your own skills, hooks or scripts) is left
+#    untouched. A wholesale `rm -rf "$DEST/$part"` would delete it — we never do
+#    that. See docs/adr/0001-runtime-lifecycle-and-lessons.md (D2).
 for part in skills bin hooks; do
-  if [ -d "$SRC/$part" ]; then
-    rm -rf "$DEST/$part"
-    cp -R "$SRC/$part" "$DEST/$part"
-    echo "  · $SRC/$part → $DEST/$part"
-  fi
+  [ -d "$SRC/$part" ] || continue
+  mkdir -p "$DEST/$part"
+  copied=0
+  for entry in "$SRC/$part"/*; do
+    [ -e "$entry" ] || continue          # empty source dir → nothing to copy
+    name="$(basename "$entry")"
+    rm -rf "$DEST/$part/$name"           # replace ONLY this owned entry
+    cp -R "$entry" "$DEST/$part/$name"
+    copied=$((copied + 1))
+  done
+  echo "  · $SRC/$part → $DEST/$part ($copied owned entries; other files left as-is)"
 done
 
-# 2. Make the validators and hooks executable.
-chmod +x "$DEST"/bin/*.sh "$DEST"/bin/test/*.sh "$DEST"/hooks/*.sh 2>/dev/null || true
+# 2. Make the runtime's own scripts executable — derived from the source paths
+#    under .inspire/, so ONLY the .sh files we just copied get +x. A foreign .sh
+#    you keep in .claude/bin or .claude/hooks is never touched (same ownership
+#    principle as step 1).
+while IFS= read -r src_sh; do
+  chmod +x "$DEST/${src_sh#"$SRC"/}" 2>/dev/null || true
+done < <(find "$SRC/bin" "$SRC/hooks" -type f -name '*.sh' 2>/dev/null)
 
 # 3. Wire the hooks into .claude/settings.json (only if absent — never clobber an
 #    existing settings file): the git-time pre-commit / pre-pr guards, plus the
