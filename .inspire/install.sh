@@ -103,19 +103,40 @@ elif [ -f "$DESIGN_SYSTEM" ]; then
   echo "  · $DESIGN_SYSTEM already present — left as-is"
 fi
 
-# 5. Materialize the product-side folders. These do NOT ship in the template repo
-#    (they belong to the product you build, not to INSPIRE) — they are created here
-#    from .inspire/templates/, seeded with a guidance README. Never clobber an
-#    existing folder: a project's real prototype / source code is left untouched.
-for part in prototype source; do
-  TEMPLATE="$SRC/templates/$part-README.md"
-  if [ -d "$part" ]; then
-    echo "  · $part/ already present — left as-is"
-  elif [ -f "$TEMPLATE" ]; then
-    mkdir -p "$part"
-    cp "$TEMPLATE" "$part/README.md"
-    echo "  · created $part/ (seeded README from $TEMPLATE)"
+# 5. Materialize the product-side folders at their CONFIGURED roots. Production code
+#    lives at source_root, the horizontal prototype at prototype_root (declared in
+#    00_bootstrap/stack.md frontmatter; defaults source/ + prototype/). These do NOT
+#    ship in the template — they are created here from .inspire/templates/, seeded with
+#    a guidance README. Brownfield roots are respected: `.` (the repo root already IS
+#    the code) and `none` are skipped, so an existing project is never clobbered; an
+#    existing folder is always left as-is. See
+#    .inspire/skills/_references/product-roots.md.
+STACK=".inspire_kb/00_bootstrap/stack.md"
+read_root() {  # $1 = frontmatter key, $2 = default
+  local v=""
+  if [ -f "$STACK" ] && command -v yq >/dev/null 2>&1; then
+    v="$(yq --front-matter=extract ".$1 // \"\"" "$STACK" 2>/dev/null || true)"
   fi
+  if [ -n "$v" ] && [ "$v" != "null" ]; then printf '%s' "$v"; else printf '%s' "$2"; fi
+}
+SOURCE_ROOT="$(read_root source_root source)"
+PROTOTYPE_ROOT="$(read_root prototype_root prototype)"
+
+for pair in "prototype:$PROTOTYPE_ROOT" "source:$SOURCE_ROOT"; do
+  concept="${pair%%:*}"; dir="${pair#*:}"
+  TEMPLATE="$SRC/templates/$concept-README.md"
+  case "$dir" in
+    ""|.|none)
+      echo "  · $concept root is '${dir:-unset}' — nothing to create (in place / disabled)" ;;
+    *)
+      if [ -d "$dir" ]; then
+        echo "  · $dir/ already present — left as-is"
+      elif [ -f "$TEMPLATE" ]; then
+        mkdir -p "$dir"
+        cp "$TEMPLATE" "$dir/README.md"
+        echo "  · created $dir/ (seeded README from $TEMPLATE)"
+      fi ;;
+  esac
 done
 
 # 6. Remove the template's own methodology README. Our README documents INSPIRE

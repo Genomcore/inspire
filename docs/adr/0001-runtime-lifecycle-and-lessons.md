@@ -91,15 +91,23 @@ never removed. Consequences:
 
 ### D3 — `source` / `prototype` are configuration, not fixed folders
 
-Introduce `source_root` and `prototype_root` (declared in `00_bootstrap`, mirrored to the
-validators as `SDD_SOURCE_ROOT` / `SDD_PROTOTYPE_ROOT`, following the existing
-`SDD_SPEC_ROOT` pattern). Defaults stay `source/` + `prototype/` for greenfield (no
-regression). Brownfield sets `source_root: .` ("the repo root *is* the production
-monorepo, governed in place") and may set `prototype_root: none`. Every skill that
-hardcodes `/source` or `/prototype` reads the configured path instead. `inspire-extract`
-gains the ability to scan the configured `source_root` (today it forbids scanning
-`/source`), completing the brownfield onboarding loop: install → `bootstrap init` with
-`source_root: .` → `extract scan .`.
+Introduce `source_root` and `prototype_root`, declared in the `00_bootstrap/stack.md`
+frontmatter and owned by `inspire-bootstrap` (part of the product's Shape). Defaults stay
+`source/` + `prototype/` for greenfield (no regression). Brownfield sets `source_root: .`
+("the repo root *is* the production monorepo, governed in place") and may set
+`prototype_root: none`. `install.sh` reads the roots and only materializes the default
+folders when they point at relative paths — it **skips `.` and `none`**, so an existing
+project is never clobbered. Skills that operate on these locations resolve the configured
+root (a shared reference, `_references/product-roots.md`, states the rule; skill prose
+keeps the default names since they read cleanly and cover the greenfield case).
+
+The **validators need no `SDD_SOURCE_ROOT` / `SDD_PROTOTYPE_ROOT` mirror** — contrary to
+this ADR's first draft, they operate only on the knowledge base (`SDD_SPEC_ROOT`), never
+on the code or prototype, so there is nothing to parameterize there.
+
+`inspire-extract` gains (v1) the ability to scan the configured `source_root` (today it
+forbids scanning `/source`), completing the brownfield onboarding loop: install →
+`bootstrap init` with `source_root: .` → `extract scan .`.
 
 ### D4 — Lessons: declarative, one-line, atomic; relevance is local
 
