@@ -105,7 +105,7 @@ gains the ability to scan the configured `source_root` (today it forbids scannin
 
 Rename the `learnings` concept to **lessons**. A lesson is the transmissible unit: it can
 be *learned* or *taught*, and the folder is a **catalog of lessons** a fork holds. Two
-reframes from the current `inspire-learn` design:
+reframes from the previous `inspire-learn` (journal) design:
 
 - **Relevance is local; generalization is the observer's job.** Capture stops asking the
   operator "is this generalizable / worth sending upstream?" — the wrong person to judge
@@ -261,8 +261,8 @@ design-now-build-at-v1 **by necessity**, not merely by prudence.
 
 ## Open items
 
-- **Naming:** `lesson` (the artifact noun) is fixed; the skill rename (`inspire-learn` →
-  `inspire-lesson`) and folder rename (`98_skill_learnings` → `98_lessons`) are proposals,
-  not decided.
+- **Naming:** decided — the skill is `inspire-lesson`, the layer is `98_lessons`, the
+  format reference is `lessons-format.md`. The capture-side rename + redesign landed
+  first; the materialization / update flow is v1.
 - **ADR granularity:** captured here as one cohesive ADR; may later split into separate
   records (distribution / ownership / lessons) so each can be superseded independently.

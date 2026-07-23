@@ -38,10 +38,10 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
 Translate the **prose** — titles, descriptions, rationale, section bodies, review
 findings addressed to the operator. Never the keys.
 
-## Exception: skill learnings (`98_skill_learnings`)
+## Exception: lessons (`98_lessons`)
 
 One layer is **always authored in English**, regardless of `output_language`: the
-skill-learnings journal (`.inspire_kb/98_skill_learnings/`, skill `inspire-learn`).
-Its reader is not the product team but the **cross-org INSPIRE core team**, which
-works in English. Everything else here still applies — machine-read tokens stay
-verbatim. This is the only knowledge-base layer exempt from the rule above.
+lessons catalog (`.inspire_kb/98_lessons/`, skill `inspire-lesson`). Its reader is not
+the product team but the observer / the **cross-org INSPIRE core team**, which works in
+English. Everything else here still applies — machine-read tokens stay verbatim. This
+is the only knowledge-base layer exempt from the rule above.

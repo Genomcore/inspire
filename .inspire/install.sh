@@ -133,7 +133,7 @@ fi
 # 7. Freeze the runtime version into .inspire.lock (repo root). This is the fork's
 #    provenance record — which INSPIRE release the runtime came from — written once at
 #    install. It lives product-side, is read by the session-start hook and by
-#    inspire-learn (which stamps each 98_skill_learnings node with the version it was
+#    inspire-lesson (which stamps each 98_lessons node with the version it was
 #    captured on), and is read by the upstream pull to know a fork's version. The fork
 #    never contacts upstream — the read is always a pull from above.
 MANIFEST="$SRC/manifest.json"

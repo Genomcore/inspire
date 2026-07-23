@@ -27,9 +27,9 @@ you build on top of it.
       (greenfield foundation: language, stack, theme + the live design system),
       `extract` (brownfield onboarding — fan out scanners over an existing codebase
       into KB candidates), `task` (the ticket tracker), `workspace` (the pre-PR
-      global review + vault structure), `learn` (the skill-learnings journal —
-      write-once, timestamp-named, version-stamped insights about the skills
-      themselves, captured in a fork and bound upstream to INSPIRE core).
+      global review + vault structure), `lesson` (the lessons catalog — write-once,
+      timestamp-named, version-stamped one-line instructions that teach the skills how
+      to behave in this fork; relevant locally, distilled upstream by the observer).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
     root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
@@ -41,11 +41,11 @@ you build on top of it.
   - `.inspire/install.sh` — the instantiation script.
   - `.inspire/manifest.json` — the runtime **release identity** (`version` +
     `released`); `install.sh` freezes it into a fork's root `.inspire.lock`
-    (provenance: which release the fork was instantiated from), which `inspire-learn`
-    stamps onto every learning.
+    (provenance: which release the fork was instantiated from), which `inspire-lesson`
+    stamps onto every lesson.
 - `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a project
   fills in. One layer per skill (`00_bootstrap`, `01_adr`, `02_modules`,
-  `03_features`, `04_domain`, `05_screens`, `06_spikes`, `98_skill_learnings`, `99_tracker`); each folder carries a
+  `03_features`, `04_domain`, `05_screens`, `06_spikes`, `98_lessons`, `99_tracker`); each folder carries a
   README explaining its purpose and layout.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).
