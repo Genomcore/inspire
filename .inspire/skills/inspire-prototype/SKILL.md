@@ -12,6 +12,11 @@ UI/UX criteria, fast and interactively. It answers *"is this the right thing to
 build?"* — the code is throwaway; the **clarity is the deliverable**, and that
 clarity lands in the vault.
 
+> **Where the prototype lives is configurable.** `prototype/` is the default; the
+> operative root is `prototype_root` in `00_bootstrap/stack.md`. A project with no
+> horizontal prototype sets `prototype_root: none`. Resolve it rather than assuming
+> `prototype/` — see [`_references/product-roots.md`](../_references/product-roots.md).
+
 > **Agile on purpose.** No tests, no auth, no persistence, minimal controls — only
 > what's needed to *learn*. Rigor (tests, error handling, robustness) is reserved
 > for real implementation in [`/inspire_code`](../inspire-code/SKILL.md). Building

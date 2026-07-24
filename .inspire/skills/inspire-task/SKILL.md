@@ -92,11 +92,11 @@ importance: Low
 standard ticket infrastructure — no new tooling; the operator decides when an
 observation deserves a ticket, and skills surface candidates conversationally.
 
-A ticket captures **local, actionable** friction. When the same signal generalizes
-into a durable insight worth sending back to INSPIRE core, it **graduates** into a
-`98_skill_learnings` node via `/inspire_learn` — the ticket tracks the local fix, the
-learning carries the insight upstream and links back with `[[TASK-…]]`. See
-`inspire-learn`.
+A ticket captures **local, actionable** friction. When the same signal should change
+how a skill behaves, it **graduates** into a `98_lessons` node via `/inspire_lesson` —
+the ticket tracks the local fix, the lesson carries the durable instruction (and, via
+the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
+`inspire-lesson`.
 
 ## Rules
 

@@ -23,3 +23,8 @@ the knowledge base and de-risked in prototypes, then **realized here**.
 > Template note: this folder starts empty (just this README). Scaffold the
 > production monorepo here — packages/apps, build tooling, and its own tech-stack
 > docs — when the project moves from prototype to build.
+>
+> Location is configurable: this is `source_root` (default `source/`) in
+> [`00_bootstrap/stack.md`](../.inspire_kb/00_bootstrap/stack.md). A brownfield project
+> installing in place sets `source_root: .` (the repo root is the code), and this
+> folder is not created.

@@ -14,6 +14,11 @@ keeping the two in agreement. An ADR reaches `implemented` maturity precisely wh
 code that honors it lands in `source/` — this skill is the bridge that gets it
 there without drift.
 
+> **Where the code lives is configurable.** `source/` is the default; the operative
+> root is `source_root` in `00_bootstrap/stack.md` (a brownfield project sets
+> `source_root: .` — the repo root itself). Resolve it rather than assuming `source/` —
+> see [`_references/product-roots.md`](../_references/product-roots.md).
+
 This skill is stack-agnostic on purpose. It carries **judgment** (root-cause
 discipline, architectural review, test strategy, vulnerability triage), not
 mechanical checks — those belong to the project's linters, formatters, and hooks.

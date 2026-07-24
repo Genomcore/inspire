@@ -28,17 +28,34 @@ DEST=".claude"
 echo "INSPIRE · installing the guardrail runtime into $DEST/ …"
 mkdir -p "$DEST"
 
-# 1. Copy skills, bin, hooks into .claude/.
+# 1. Copy the runtime into .claude/, one OWNED entry at a time. INSPIRE owns a
+#    namespace, not the parent directory: it materializes exactly the entries it
+#    ships — the inspire-* skills (+ the shared _references), the validators, and
+#    the hooks — and replaces only those. Anything else you keep under
+#    .claude/{skills,bin,hooks} (your own skills, hooks or scripts) is left
+#    untouched. A wholesale `rm -rf "$DEST/$part"` would delete it — we never do
+#    that. See docs/adr/0001-runtime-lifecycle-and-lessons.md (D2).
 for part in skills bin hooks; do
-  if [ -d "$SRC/$part" ]; then
-    rm -rf "$DEST/$part"
-    cp -R "$SRC/$part" "$DEST/$part"
-    echo "  · $SRC/$part → $DEST/$part"
-  fi
+  [ -d "$SRC/$part" ] || continue
+  mkdir -p "$DEST/$part"
+  copied=0
+  for entry in "$SRC/$part"/*; do
+    [ -e "$entry" ] || continue          # empty source dir → nothing to copy
+    name="$(basename "$entry")"
+    rm -rf "$DEST/$part/$name"           # replace ONLY this owned entry
+    cp -R "$entry" "$DEST/$part/$name"
+    copied=$((copied + 1))
+  done
+  echo "  · $SRC/$part → $DEST/$part ($copied owned entries; other files left as-is)"
 done
 
-# 2. Make the validators and hooks executable.
-chmod +x "$DEST"/bin/*.sh "$DEST"/bin/test/*.sh "$DEST"/hooks/*.sh 2>/dev/null || true
+# 2. Make the runtime's own scripts executable — derived from the source paths
+#    under .inspire/, so ONLY the .sh files we just copied get +x. A foreign .sh
+#    you keep in .claude/bin or .claude/hooks is never touched (same ownership
+#    principle as step 1).
+while IFS= read -r src_sh; do
+  chmod +x "$DEST/${src_sh#"$SRC"/}" 2>/dev/null || true
+done < <(find "$SRC/bin" "$SRC/hooks" -type f -name '*.sh' 2>/dev/null)
 
 # 3. Wire the hooks into .claude/settings.json (only if absent — never clobber an
 #    existing settings file): the git-time pre-commit / pre-pr guards, plus the
@@ -86,19 +103,40 @@ elif [ -f "$DESIGN_SYSTEM" ]; then
   echo "  · $DESIGN_SYSTEM already present — left as-is"
 fi
 
-# 5. Materialize the product-side folders. These do NOT ship in the template repo
-#    (they belong to the product you build, not to INSPIRE) — they are created here
-#    from .inspire/templates/, seeded with a guidance README. Never clobber an
-#    existing folder: a project's real prototype / source code is left untouched.
-for part in prototype source; do
-  TEMPLATE="$SRC/templates/$part-README.md"
-  if [ -d "$part" ]; then
-    echo "  · $part/ already present — left as-is"
-  elif [ -f "$TEMPLATE" ]; then
-    mkdir -p "$part"
-    cp "$TEMPLATE" "$part/README.md"
-    echo "  · created $part/ (seeded README from $TEMPLATE)"
+# 5. Materialize the product-side folders at their CONFIGURED roots. Production code
+#    lives at source_root, the horizontal prototype at prototype_root (declared in
+#    00_bootstrap/stack.md frontmatter; defaults source/ + prototype/). These do NOT
+#    ship in the template — they are created here from .inspire/templates/, seeded with
+#    a guidance README. Brownfield roots are respected: `.` (the repo root already IS
+#    the code) and `none` are skipped, so an existing project is never clobbered; an
+#    existing folder is always left as-is. See
+#    .inspire/skills/_references/product-roots.md.
+STACK=".inspire_kb/00_bootstrap/stack.md"
+read_root() {  # $1 = frontmatter key, $2 = default
+  local v=""
+  if [ -f "$STACK" ] && command -v yq >/dev/null 2>&1; then
+    v="$(yq --front-matter=extract ".$1 // \"\"" "$STACK" 2>/dev/null || true)"
   fi
+  if [ -n "$v" ] && [ "$v" != "null" ]; then printf '%s' "$v"; else printf '%s' "$2"; fi
+}
+SOURCE_ROOT="$(read_root source_root source)"
+PROTOTYPE_ROOT="$(read_root prototype_root prototype)"
+
+for pair in "prototype:$PROTOTYPE_ROOT" "source:$SOURCE_ROOT"; do
+  concept="${pair%%:*}"; dir="${pair#*:}"
+  TEMPLATE="$SRC/templates/$concept-README.md"
+  case "$dir" in
+    ""|.|none)
+      echo "  · $concept root is '${dir:-unset}' — nothing to create (in place / disabled)" ;;
+    *)
+      if [ -d "$dir" ]; then
+        echo "  · $dir/ already present — left as-is"
+      elif [ -f "$TEMPLATE" ]; then
+        mkdir -p "$dir"
+        cp "$TEMPLATE" "$dir/README.md"
+        echo "  · created $dir/ (seeded README from $TEMPLATE)"
+      fi ;;
+  esac
 done
 
 # 6. Remove the template's own methodology README. Our README documents INSPIRE
@@ -116,7 +154,7 @@ fi
 # 7. Freeze the runtime version into .inspire.lock (repo root). This is the fork's
 #    provenance record — which INSPIRE release the runtime came from — written once at
 #    install. It lives product-side, is read by the session-start hook and by
-#    inspire-learn (which stamps each 98_skill_learnings node with the version it was
+#    inspire-lesson (which stamps each 98_lessons node with the version it was
 #    captured on), and is read by the upstream pull to know a fork's version. The fork
 #    never contacts upstream — the read is always a pull from above.
 MANIFEST="$SRC/manifest.json"

@@ -2,6 +2,8 @@
 kind: bootstrap-stack
 status: default          # default (seeded from the OpenBIMS reference) → adapt per project
 profiles: [react, nestjs]   # inspire-code stack profiles to load (see .inspire/skills/inspire-code/profiles)
+source_root: source         # where production code lives (inspire-code). "." = repo root (brownfield, in place); a relative path otherwise
+prototype_root: prototype   # where the horizontal prototype lives (inspire-prototype). "none" = no horizontal prototype
 ---
 
 # Tech stack
@@ -33,6 +35,11 @@ adding mobile, moving off a deployed database) is an ADR.
   service in the dev stack; fall back to deploying it directly on the host only if
   Docker isn't available. (Alternative: no local DB — develop against a
   shared/remote one.)
+- **Product roots:** production code at `source_root` (default `source/`) and the
+  horizontal prototype at `prototype_root` (default `prototype/`) — set in the
+  frontmatter above. A greenfield project keeps the defaults; **brownfield** installing
+  into an existing repo sets `source_root: .` (the repo root *is* the code) and often
+  `prototype_root: none`.
 
 ## Language
 

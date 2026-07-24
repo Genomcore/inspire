@@ -12,8 +12,11 @@ This skill owns the **bootstrap layer** —
 
 - `project.md` — **project conventions**, chiefly `output_language`: the single
   language every skill writes its artifacts in (default English).
-- `stack.md` — the **tech stack** the product is built with, and its **shape**
-  (frontend / backend / monorepo · web / mobile · database provisioning).
+- `stack.md` — the **tech stack** the product is built with, its **shape**
+  (frontend / backend / monorepo · web / mobile · database provisioning), and the
+  **product roots** (`source_root` / `prototype_root` — where the code and the
+  prototype live; see
+  [`_references/product-roots.md`](../_references/product-roots.md)).
 - `theme.md` — the **design-system default** (fonts, color palette + status map,
   density, layout tokens) — the reusable template.
 - `05_screens/design-system.md` (the one artifact this skill owns **outside**
@@ -99,6 +102,11 @@ Define or update `stack.md` — the official application stack, including its
         running it via Docker** — a container like any other local service — and
         fall back to deploying it directly on the host only when Docker isn't
         available. If no, note that dev runs against a shared/remote DB.
+   4. **Product roots** — where production code and the horizontal prototype live.
+      Default `source_root: source`, `prototype_root: prototype` (greenfield). For a
+      **brownfield** install into an existing repo, set `source_root: .` (the repo root
+      *is* the code) and usually `prototype_root: none`. Write both to the `stack.md`
+      frontmatter. See [`_references/product-roots.md`](../_references/product-roots.md).
 3. Interview / confirm each **applicable** layer, skipping what the shape excludes
    (no backend/data questions for a frontend-only product, no frontend questions
    for a backend-only service): language; frontend (UI library, build, styling,
@@ -246,6 +254,9 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
   it (no frontend stack on a backend-only product; a data layer iff the shape
   deploys a database; a mobile stack iff mobile is in scope). Flag a `shape:
   undecided` platform as still-open, to revisit.
+- `stack.md` declares `source_root` and `prototype_root` (frontmatter). Flag if
+  missing. `source_root: .` and `prototype_root: none` are valid (brownfield); a
+  relative path must not escape the repo.
 - The project's root `README.md` exists and is the project's own (not the
   template's methodology README, which install removes). Flag if missing and offer
   to run the `readme` flow.
