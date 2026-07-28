@@ -57,10 +57,38 @@ while IFS= read -r src_sh; do
   chmod +x "$DEST/${src_sh#"$SRC"/}" 2>/dev/null || true
 done < <(find "$SRC/bin" "$SRC/hooks" -type f -name '*.sh' 2>/dev/null)
 
-# 3. Wire the hooks into .claude/settings.json (only if absent — never clobber an
-#    existing settings file): the git-time pre-commit / pre-pr guards, plus the
-#    SessionStart hook that injects the project's output language every session.
+# 3. De-seed the TEMPLATE's own maintenance layer, then wire the runtime hooks
+#    into .claude/settings.json.
+#
+#    The template repo carries hooks that maintain the template itself (e.g. the
+#    release-identity guard that requires a manifest bump when .inspire/ changes).
+#    Those are NOT part of the seeded runtime — a fork consumes the manifest via
+#    .inspire.lock but never authors it — yet they are cloned along with everything
+#    else, and step 1's ownership rule deliberately leaves foreign files in
+#    .claude/hooks/ untouched. So remove them here, sentinel-checked on the marker
+#    in their first line, exactly as step 6 removes the template's own README.
+#    A project's own hooks never carry the marker and are never touched.
+for maint in "$DEST"/hooks/template-*.sh; do
+  [ -f "$maint" ] || continue
+  if head -3 "$maint" | grep -q "INSPIRE-TEMPLATE-MAINTENANCE"; then
+    rm -f "$maint"
+    echo "  · removed template-maintenance hook $(basename "$maint") — not part of the seeded runtime"
+  fi
+done
+
+#    Likewise the settings file that registers them. Sentinel is the reference to
+#    a template-maintenance hook; a fork's own settings.json never mentions one,
+#    so this can only ever match the template's. Removing it lets the wiring below
+#    write the real runtime settings instead of reporting "already exists".
 SETTINGS="$DEST/settings.json"
+if [ -f "$SETTINGS" ] && grep -q "hooks/template-.*\.sh" "$SETTINGS"; then
+  rm -f "$SETTINGS"
+  echo "  · removed the template's own $SETTINGS — replacing it with the runtime's"
+fi
+
+#    Wire the runtime hooks (only if absent — never clobber a project's settings):
+#    the git-time pre-commit / pre-pr guards, plus the SessionStart hook that
+#    injects the project's output language every session.
 HOOKS_JSON='{
   "hooks": {
     "SessionStart": [
