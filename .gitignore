@@ -1,3 +1,9 @@
 .DS_Store
 *.log
 node_modules/
+
+# Editor and agent-tooling state. This repo is cloned wholesale to instantiate
+# a project, so local scratch must never ride along. These were previously in
+# .git/info/exclude, which protects one machine and is not shared on clone.
+.obsidian/
+.impeccable/
