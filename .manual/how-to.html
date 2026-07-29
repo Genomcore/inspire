@@ -105,12 +105,12 @@
       <div class="sec-head reveal">
         <p class="eyebrow">The loop</p>
         <h2>The four moves.</h2>
-        <p>Skills live dormant in <code>.inspire/</code> in the template; one command wakes them up in your fork.</p>
+        <p>Skills ship as a Claude Code plugin; install it once, then materialize it into your project with one command.</p>
       </div>
       <div class="steps">
         <div class="step reveal d1">
           <h4>Install the runtime</h4>
-          <p>Run <code>bash .inspire/install.sh</code> in your fork. It copies the skills, validators and hooks into <code>.claude/</code> and wires the git hooks — idempotent, so re-run it to refresh after pulling template updates.</p>
+          <p>Add the marketplace and install the plugin — <code>/plugin marketplace add Genomcore/inspire</code>, <code>/plugin install inspire@inspire</code>, <code>/reload-plugins</code> — then run <code>/inspire:init</code> in the repo you want to govern. It materializes the skills, validators and hooks into <code>.claude/</code> and <code>.inspire/</code>, wires the git hooks and writes <code>.inspire.lock</code>. Finish with <code>/reload-skills</code> (no restart needed) and <code>/inspire_bootstrap init</code>. It's non-destructive — <code>/inspire:update</code> re-materializes newer versions later without clobbering local edits.</p>
         </div>
         <div class="step reveal d2">
           <h4>Invoke a skill</h4>

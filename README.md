@@ -67,19 +67,20 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time + session-start hooks), `templates/` (product-side files materialized at install) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
-| [`inspire_kb/`](inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `03_features` · `06_spikes` · `04_domain` · `05_screens` · `98_lessons` · `99_tracker`). Each folder documents its own purpose and layout. |
+| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update}/` are the only **live** skills — `/inspire:init` and `/inspire:update`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
+| [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Makes this repo its own plugin marketplace, so `/plugin marketplace add Genomcore/inspire` resolves. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
-| `prototype/` | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. *Created at install, not shipped here.* |
-| `source/` | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. *Created at install, not shipped here.* |
+| [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_adr/`. |
 
-> The two product-side dirs (`prototype/`, `source/`) don't exist in this template
-> repo — they're your product, not INSPIRE. `install.sh` creates them on
-> instantiation, and also removes this methodology `README.md` so your fork starts
-> with its own (written by `/inspire_bootstrap init`).
+> `inspire_kb/`, `prototype/` and `source/` don't exist in this template repo —
+> they're materialized into a **governed** project by `/inspire:init` (the KB
+> skeleton and the product roots, respectively), not shipped here. This list
+> covers the repo's top level, not every file `/inspire:init` writes — see
+> [`CLAUDE.md`](CLAUDE.md)'s *Structure* section for the fuller breakdown of
+> `plugin/base/`.
 
-The skills + validators + hooks in `.inspire/` are the **guardrail layer**: the
-concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
+The skills + validators + hooks under `plugin/base/` are the **guardrail layer**:
+the concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
 judgment, hooks + validators catch drift mechanically. `inspire_kb/` is the graph
 they operate on.
 
@@ -88,48 +89,66 @@ they operate on.
 ## Get started
 
 A new specification-driven project adopts INSPIRE's guardrail layer wholesale by
-cloning this repo and filling in `inspire_kb/`. The skills, hooks and validators
-speak a generic, stack-agnostic model — features, specs, screens, prototypes — so
-they fit any stack.
+installing the plugin and materializing it into a repo. The skills, hooks and
+validators speak a generic, stack-agnostic model — features, specs, screens,
+prototypes — so they fit any stack.
 
-**1. Fork or clone this repository.**
+**1. Install the plugin (once per machine).**
 
-```bash
-git clone https://github.com/genomcore/inspire.git my-project
-cd my-project
+```
+/plugin marketplace add Genomcore/inspire
+/plugin install inspire@inspire
+/reload-plugins
 ```
 
-**2. Instantiate the runtime (once per fork).**
+This is a per-user maintainer tool, not a runtime dependency — it is never
+referenced once a project is materialized. Only whoever runs an init or update
+needs it installed; teammates and CI need nothing.
 
-```bash
-bash .inspire/install.sh
+**2. In the repo you want to govern, initialize.**
+
+```
+/inspire:init
 ```
 
-This copies `.inspire/{skills,bin,hooks}` → `.claude/{skills,bin,hooks}` (where
-Claude Code discovers and executes them), makes the scripts executable, wires the
-`session-start` + `pre-commit` / `pre-pr` hooks into `.claude/settings.json`,
-creates the product-side `prototype/` + `source/` folders, seeds the design system
-from your bootstrap theme, writes a root `.inspire.lock` recording which INSPIRE
-release was instantiated, and removes this methodology `README.md`. It is
-**idempotent** — `.inspire/` stays the versioned source of truth, so re-run it
-after pulling template updates (your own `prototype/`, `source/` and `README.md`
-are left untouched).
+It asks two questions (product roots; whether to declare the marketplace for
+teammates), then materializes the skills, validators, hooks and KB skeleton,
+marker-merges the `session-start` + `dispatch` hooks into `.claude/settings.json`,
+seeds the design system from your bootstrap theme, seeds a provisional root
+`CLAUDE.md` and a `.gitignore` block (both left untouched if already present), and
+writes `.inspire.lock` recording which release was materialized plus a hash of
+every file it wrote (used later for drift detection). It never touches your git
+history and never clobbers existing content.
 
-**3. Run `/inspire_bootstrap init`.** It sets the project's output language,
+**3. Reload, then bootstrap.**
+
+```
+/reload-skills
+/inspire_bootstrap init
+```
+
+`/reload-skills` picks up the newly materialized `inspire-*` skills — no restart
+needed. `/inspire_bootstrap init` then sets the project's output language,
 configures the stack + theme and its shape (frontend / backend / monorepo · web /
-mobile · database), creates your project's own `README.md`, and optionally wires
-your git remote. Then start filling in `inspire_kb/` — your modules, features,
-screens and specs. The foundation ([`00_bootstrap`](inspire_kb/00_bootstrap)) and
-starter screen patterns ship with sensible defaults; the `inspire-*` skills guide
-the rest.
+mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
+`README.md`, and optionally wires your git remote. Then start filling in
+`inspire_kb/` — your modules, features, screens and specs. The foundation
+(`00_bootstrap`) and starter screen patterns ship with sensible defaults; the
+`inspire-*` skills guide the rest.
+
+**4. Commit the result.** From here the runtime lives in git like any other
+project file — pulling a template update means running `/plugin update inspire`
+then `/inspire:update` (which reports drift and never overwrites a locally-edited
+file without your say-so), not re-forking.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
-> language ([`00_bootstrap/project.md`](inspire_kb/00_bootstrap/project.md),
-> default English) — independent of the language you converse in and of the
-> product's own UI i18n. A `session-start` hook surfaces it into every session.
+> language (`inspire_kb/00_bootstrap/project.md`, default English) —
+> independent of the language you converse in and of the product's own UI
+> i18n. A `session-start` hook surfaces it into every session.
 
-> **Prerequisites for the validators:** `bash` 4+, [`yq`](https://github.com/mikefarah/yq)
-> (Mike Farah's v4), `jq` 1.6+.
+> **Prerequisites:** `bash` 3.2+ (macOS's built-in bash is fine — no need to
+> install a newer one), [`yq`](https://github.com/mikefarah/yq) (Mike Farah's v4),
+> `jq` 1.6+.
 
 ---
 

@@ -74,7 +74,7 @@ inspire_kb/00_bootstrap … 99_tracker/     the KB        — visible: non-deriv
 .inspire.lock                             provenance
 .claude/inspire/hooks/                    hooks         — scaffolding, Claude-specific
 .claude/skills/inspire-*/                 skills        — Claude-discovered, forced path
-.claude/settings.json                     marker block  — Claude-specific
+.claude/settings.json                     one marker-tagged hook block + name-keyed marketplace entries — Claude-specific
 ```
 
 **Agent-agnostic → `.inspire/`.** The KB is markdown. The validators are bash + `yq`/`jq`,
