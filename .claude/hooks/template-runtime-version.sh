@@ -4,18 +4,19 @@
 # .claude/hooks/template-runtime-version.sh
 #
 # Release-identity guard for the INSPIRE TEMPLATE REPO ITSELF. If a change
-# touches the runtime under .inspire/, then .inspire/manifest.json's `version`
-# must change in the same branch. Without this, a runtime state ships under a
-# version string that already names a different one — which is what happened
-# between 2fa511b (#5) and d41fd89 (#6), leaving 0.1.0 naming two runtimes
-# while every fork wrote the same .inspire.lock value regardless.
+# touches the runtime under plugin/, then plugin/.claude-plugin/plugin.json's
+# `version` must change in the same branch. Without this, a runtime state
+# ships under a version string that already names a different one — which is
+# what happened between 2fa511b (#5) and d41fd89 (#6), leaving 0.1.0 naming
+# two runtimes while every fork wrote the same .inspire.lock value regardless.
 #
-# WHY THIS LIVES IN .claude/ AND NOT .inspire/hooks/
-#   .inspire/hooks/ is the SEED — install.sh copies it into a fork's .claude/.
-#   This hook is about maintaining the template, and a fork consumes the
-#   manifest via .inspire.lock but never authors it. So it is template-scoped,
-#   and install.sh removes it (sentinel-checked on the marker in line 1) the
-#   same way it removes the template's own README.md.
+# WHY THIS LIVES IN .claude/ AND NOT plugin/
+#   plugin/ is the SEED — /inspire:init materializes it into a fork's
+#   .claude/ and inspire_kb/. This hook is about maintaining the template,
+#   and a fork consumes the plugin manifest via .inspire.lock but never
+#   authors it. So it is template-scoped, and it never ships inside plugin/
+#   (sentinel-checked on the marker in line 1) the same way the template's
+#   own README.md never reaches a fork.
 #
 # Claude PreToolUse Bash hook. Exit codes follow the hook contract:
 #   0 — allow the tool call
@@ -27,21 +28,25 @@
 
 set -uo pipefail
 
-MANIFEST=".inspire/manifest.json"
+MANIFEST="plugin/.claude-plugin/plugin.json"
 
-# Paths under .inspire/ that are NOT the runtime a fork consumes. Everything
-# else counts — including skill prose, because a skill IS its prompt.
-EXEMPT_RE="^\.inspire/(manifest\.json|README\.md)$"
+# Paths under plugin/ that are NOT the runtime a fork consumes. Everything else
+# counts — including skill prose, because a skill IS its prompt. The plugin
+# manifest is exempt (it is the version being bumped), as is base/bin/test/
+# and test/, which never materialize into a project. plugin/scripts/ is NOT
+# exempt: it is the materialization script that determines how every install
+# behaves, so a change to it must require a version bump like everything else.
+EXEMPT_RE="^plugin/(\.claude-plugin/plugin\.json|base/bin/test/.*|test/.*)$"
 
 # Prints the failure report on stdout; returns 0 pass / 1 fail.
 check_versions() {
   local base="$1" head="$2" changed runtime_changed base_version head_version
 
-  changed="$(git diff --name-only "$base" "$head" -- .inspire/ 2>/dev/null)"
-  runtime_changed="$(printf '%s\n' "$changed" | grep -vE "$EXEMPT_RE" | grep -E '^\.inspire/.' || true)"
+  changed="$(git diff --name-only "$base" "$head" -- plugin/ 2>/dev/null)"
+  runtime_changed="$(printf '%s\n' "$changed" | grep -vE "$EXEMPT_RE" | grep -E '^plugin/.' || true)"
 
   if [ -z "$runtime_changed" ]; then
-    echo "✓ no runtime change under .inspire/ — version bump not required"
+    echo "✓ no runtime change under plugin/ — version bump not required"
     return 0
   fi
 
@@ -68,7 +73,7 @@ check_versions() {
     printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
     echo ""
     echo "  Bump \`version\` (semver) and \`released\` (YYYY-MM-DD) in $MANIFEST."
-    echo "  install.sh freezes these into a fork's .inspire.lock and inspire-lesson"
+    echo "  /inspire:init freezes these into a fork's .inspire.lock and inspire-lesson"
     echo "  stamps them onto every lesson, so a version naming two different runtime"
     echo "  states breaks fork provenance."
     echo ""
