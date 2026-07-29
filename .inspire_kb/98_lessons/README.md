@@ -10,7 +10,7 @@ fork holds. Two audiences read it:
 
 - **This project, across releases** — on update, lessons are re-applied to the new
   base so the agents keep behaving as taught (materialization / update model —
-  roadmap, v1; see [`docs/adr/0001`](../../docs/adr/0001-runtime-lifecycle-and-lessons.md)).
+  roadmap, v1; see [`docs/adr/adr-runtime-lifecycle-and-lessons`](../../docs/adr/adr-runtime-lifecycle-and-lessons.md)).
 - **INSPIRE core, via the observer** — an external pull-from-above reads the catalog
   across many forks and distills the patterns worth folding into the next release.
   The fork only ever writes lessons.

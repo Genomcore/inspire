@@ -118,7 +118,7 @@ new versions, but kept as durable provenance (and as confirmation, for the obser
 that a generalization landed). Archiving is a **move, never an edit**. A **partially**
 absorbed lesson is superseded: the original moves to `archive/` and a new lesson carries
 only the residual. (Archiving is performed by the v1 update flow — see
-[`docs/adr/0001`](../../../../docs/adr/0001-runtime-lifecycle-and-lessons.md).)
+[`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../../docs/adr/adr-runtime-lifecycle-and-lessons.md).)
 
 ## Sweeping by date (org level)
 

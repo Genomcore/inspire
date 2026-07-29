@@ -19,7 +19,7 @@ Two audiences read the catalog:
 1. **This project, across releases** — on update, your lessons are re-applied to the
    new base so the agents keep behaving as you taught them (the materialization /
    update model — roadmap, v1; see *Materialization & updates* and
-   [`docs/adr/0001`](../../../docs/adr/0001-runtime-lifecycle-and-lessons.md)).
+   [`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../docs/adr/adr-runtime-lifecycle-and-lessons.md)).
 2. **INSPIRE core, via the observer** — an external pull-from-above reads the catalog
    across many forks and distills the patterns worth folding into the next release.
    The fork only ever **writes** lessons and is unaware of any central system.
@@ -130,7 +130,7 @@ it never edits one, so the write-once contract holds. (Until the update flow exi
 
 Today this skill **captures** lessons. Applying them — the half that makes a lesson
 *materialized, not consulted* — is the v1 update flow, recorded in
-[`docs/adr/0001`](../../../docs/adr/0001-runtime-lifecycle-and-lessons.md):
+[`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../docs/adr/adr-runtime-lifecycle-and-lessons.md):
 
 - **`apply`** reconciles a skill to `base + lessons` (Terraform's desired-state). A
   hand edit to a skill you did **not** capture as a lesson is **drift** — overwritten on
