@@ -4,8 +4,9 @@
 # and /inspire:update.
 #
 # Everything mechanical lives here rather than in skill prose: copying entries,
-# chmod, excluding bin/test/, seeding the design system, creating product roots,
-# the marker-based settings.json merge, and writing .inspire.lock. Skills carry
+# chmod, excluding bin/test/, seeding the design system, seeding CLAUDE.md and
+# .gitignore, creating product roots, the marker-based settings.json merge, and
+# writing .inspire.lock. Skills carry
 # judgment — preconditions, questions, routing, reporting; this script carries
 # the copy rules exactly once so init and update cannot drift apart.
 #
@@ -293,6 +294,68 @@ seed_design_system() {
   log "  · seeded inspire_kb/05_screens/design-system.md from theme.md"
 }
 
+# Seed the project's root CLAUDE.md from the stub template, once. Never
+# clobbers an existing CLAUDE.md — a brownfield adopter brings their own, and
+# from here on the file is the project's: `/inspire_bootstrap init` refines
+# the seeded stub in place, it is not re-seeded on update.
+seed_claude_md() {
+  local stub_src="$PLUGIN_ROOT/base/templates/CLAUDE.md"
+  local claude_dest="$PROJECT_ROOT/CLAUDE.md"
+  [ -f "$stub_src" ] || return 0
+
+  if [ -f "$claude_dest" ]; then
+    log "  · CLAUDE.md already present — left as-is"
+    return 0
+  fi
+
+  CREATED+=("CLAUDE.md")
+  if [ "$DRY_RUN" = 1 ]; then
+    log "  · [dry-run] would seed CLAUDE.md"
+    return 0
+  fi
+  cp "$stub_src" "$claude_dest"
+  log "  · seeded CLAUDE.md"
+}
+
+# Seed (or extend) the project's .gitignore with the entries INSPIRE needs —
+# chiefly .claude/settings.local.json, Claude Code's personal per-user
+# override file, which must never be committed/shared. A pre-existing
+# .gitignore is never replaced: the block is appended under a marked comment,
+# and the marker makes a second run's append a no-op (idempotent).
+GITIGNORE_MARK_BEGIN="# --- INSPIRE (materialize.sh) ---"
+GITIGNORE_MARK_END="# --- end INSPIRE ---"
+
+seed_gitignore() {
+  local gi="$PROJECT_ROOT/.gitignore"
+  local block
+  block="$GITIGNORE_MARK_BEGIN
+.claude/settings.local.json
+$GITIGNORE_MARK_END"
+
+  if [ ! -f "$gi" ]; then
+    CREATED+=(".gitignore")
+    if [ "$DRY_RUN" = 1 ]; then
+      log "  · [dry-run] would create .gitignore"
+      return 0
+    fi
+    printf '%s\n' "$block" > "$gi"
+    log "  · created .gitignore"
+    return 0
+  fi
+
+  if grep -qF "$GITIGNORE_MARK_BEGIN" "$gi" 2>/dev/null; then
+    log "  · .gitignore already has the INSPIRE block — left as-is"
+    return 0
+  fi
+
+  if [ "$DRY_RUN" = 1 ]; then
+    log "  · [dry-run] would append the INSPIRE block to .gitignore"
+    return 0
+  fi
+  printf '\n%s\n' "$block" >> "$gi"
+  log "  · appended the INSPIRE block to .gitignore"
+}
+
 # Create the product-side roots (source/prototype) at their configured location.
 # ".", "none" and empty create nothing; an existing directory is left alone.
 # Also writes both values into inspire_kb/00_bootstrap/stack.md frontmatter —
@@ -529,6 +592,8 @@ run_materialize() {
   copy_plan
   chmod_executables
   seed_design_system
+  seed_claude_md
+  seed_gitignore
   create_product_roots
   merge_settings
   compute_lock_files

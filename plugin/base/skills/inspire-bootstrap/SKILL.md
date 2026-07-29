@@ -33,6 +33,9 @@ reference stack + theme); a new project reconfigures them here.
 At first-time setup this skill also establishes **project identity** — the root
 `README.md`. A project materialized from the plugin never carries the template's
 methodology README, so `init` creates the project's own (see the `readme` subcommand).
+It also **refines the seeded `CLAUDE.md`** — `/inspire:init` writes a provisional
+stub with the project name, purpose and stack marked as placeholders; this skill's
+`init` subcommand replaces them with the real thing (see below).
 
 ## Invocation
 
@@ -63,10 +66,21 @@ at least the stack.
    project choice, not a default.
 3. **Show the default theme** (`theme.md`) and ask the same. If they want changes,
    run the `theme` flow (or derive it from a mockup's CSS).
-4. **Create the project's root `README.md`** by running the `readme` flow. A project
+4. **Refine the project's `CLAUDE.md`.** `/inspire:init` seeds a provisional stub
+   (project name, purpose and stack left as placeholders, clearly marked). Replace
+   those placeholders **in place** with the project's real name, a one- or
+   two-line purpose, and a short summary of the `stack.md` just confirmed — never
+   append a second copy of the orientation content below it. If no `CLAUDE.md`
+   exists (a brownfield adopter removed it, or `/inspire:init` was never run),
+   create one carrying the same INSPIRE-orientation content as the shipped stub
+   ([`templates/CLAUDE.md`](../../templates/CLAUDE.md)), then refine it the same
+   way. Leave the rest of the file (the INSPIRE orientation, KB layer list,
+   skills, validators, lock note) untouched — that part is generic and correct
+   as shipped.
+5. **Create the project's root `README.md`** by running the `readme` flow. A project
    materialized from the plugin never carries the template's own methodology README, so
    a fresh project has none — this is where it gets one.
-5. **Wire the local git remote (optional).** Run `git remote -v`; show the current
+6. **Wire the local git remote (optional).** Run `git remote -v`; show the current
    `origin`. Ask — optional, skippable — for the remote the project should push to.
    If they give one, wire it on an **explicit yes** (`git remote add origin <url>`,
    or `git remote set-url origin <url>` if one exists); never change git config
@@ -135,7 +149,9 @@ generic coding-stage checks. After confirming the layers:
    `.inspire/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
    from the contract ([`profiles/README.md`](../inspire-code/profiles/README.md)) so
    the coding stage starts stack-aware. Framework conventions only — org policy
-   (branch naming, private registries, CI) stays in the project's `CLAUDE.md`.
+   (branch naming, private registries, CI) stays in the project's `CLAUDE.md`
+   (seeded by `/inspire:init`, refined by this skill's `init` step above; that
+   step also creates one if the project somehow lacks it).
 
 ## Subcommand: theme
 
@@ -218,8 +234,14 @@ project's `output_language` (default English).
 
    Built with the [INSPIRE](https://inspire.openbims.dev) methodology. Project
    intent and specs live in [`inspire_kb/`](inspire_kb/); the guardrail runtime
-   and agent skills are in `.claude/` (see [`CLAUDE.md`](CLAUDE.md)).
+   and agent skills are in `.claude/`{CLAUDE.md pointer}.
    ```
+
+   `{CLAUDE.md pointer}` is `" (see [`CLAUDE.md`](CLAUDE.md))"` when `CLAUDE.md`
+   exists at the project root — the normal case, since `/inspire:init` seeds it
+   and this subcommand's `init` step (above) runs before `readme` and refines
+   it — otherwise the empty string, so the README never links a file that isn't
+   there.
 
    Drop any section whose input was skipped. If everything was skipped, write just
    the title heading plus the `## Development` note.

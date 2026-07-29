@@ -42,6 +42,10 @@ check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.l
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
 check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
 check "no template hook leaked"       "[ -z \"\$(find '$proj/.claude' -name 'template-*.sh')\" ]"
+check "CLAUDE.md seeded"              "[ -f '$proj/CLAUDE.md' ]"
+check "CLAUDE.md is the stub"         "grep -q 'Provisional stub' '$proj/CLAUDE.md'"
+check ".gitignore created"            "[ -f '$proj/.gitignore' ]"
+check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local.json' '$proj/.gitignore'"
 
 # Idempotency: a second init must not duplicate the settings block.
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
@@ -90,6 +94,28 @@ bf="$(mktemp -d)/p3"; mkdir -p "$bf"; ( cd "$bf" && git init -q )
 check "brownfield creates no source/" "[ ! -e '$bf/source' ] && [ ! -e '$bf/prototype' ]"
 check "brownfield still gets kb"      "[ -d '$bf/inspire_kb/00_bootstrap' ]"
 
-rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")"
+# Never-clobber: a pre-existing CLAUDE.md and .gitignore are the operator's —
+# CLAUDE.md is left byte-identical, .gitignore is appended-to (not replaced),
+# and a second init does not duplicate the appended block.
+own="$(mktemp -d)/p4"; mkdir -p "$own"; ( cd "$own" && git init -q )
+printf 'MY OWN CLAUDE.md\ndo not touch\n' > "$own/CLAUDE.md"
+printf 'node_modules/\n' > "$own/.gitignore"
+claude_before="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$own" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+claude_after="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+check "EXISTING CLAUDE.md UNTOUCHED"        "[ '$claude_before' = '$claude_after' ]"
+check ".gitignore keeps original line"      "grep -qF 'node_modules/' '$own/.gitignore'"
+check ".gitignore gains INSPIRE block"      "grep -qF '.claude/settings.local.json' '$own/.gitignore'"
+check ".gitignore block appears once"       "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$own/.gitignore')\" = 1 ]"
+
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$own" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+claude_after2="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+check "second init: CLAUDE.md still untouched" "[ '$claude_before' = '$claude_after2' ]"
+check "second init: .gitignore block still once" "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$own/.gitignore')\" = 1 ]"
+check "second init: original line survives"     "grep -qF 'node_modules/' '$own/.gitignore'"
+
+rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")"
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
