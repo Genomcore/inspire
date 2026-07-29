@@ -17,11 +17,15 @@
 # Exit codes follow Claude Code's hook contract:
 #   0 — allow the tool call
 #   2 — block the tool call; stderr is fed back to the agent
+#
+# Depth note: this hook is installed at .claude/inspire/hooks/, so the project
+# root is three levels up — not two. Getting this wrong makes the guard below
+# never match, which silently disables the hook.
 
 set -uo pipefail
 
 HOOK_DIR="$(cd -P "$(dirname "$0")" && pwd -P)"
-HOME_ROOT="$(cd -P "$HOOK_DIR/../.." && pwd -P)"
+HOME_ROOT="$(cd -P "$HOOK_DIR/../../.." && pwd -P)"
 
 SESSION_ROOT_RAW="${CLAUDE_PROJECT_DIR:-$PWD}"
 SESSION_ROOT="$(cd -P "$SESSION_ROOT_RAW" 2>/dev/null && pwd -P)" || SESSION_ROOT=""
