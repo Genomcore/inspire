@@ -233,6 +233,17 @@ anyone unasked.
   it would also introduce a chicken-and-egg (the root would have to live outside the KB it
   configures), expand `.inspire.lock` from provenance to provenance-plus-layout, and thread
   resolution indirection through every KB reference.
+- **`.inspire/kb/`**, keeping the dot rather than dropping it. Rejected (D4e) — dropping the dot
+  instead is a one-character substitution with **no change in path depth**, so every relative
+  link inside the KB (`[[../../02_modules/…]]`) stays valid; `.inspire/kb/` would have shifted
+  depth for every link crossing the KB boundary.
+- **`_inspire_kb/`**, an underscore prefix for sort-first ordering. Rejected (D4e) — it overloads
+  an existing convention: the KB already uses `_index.md` and `_template.md` to mean
+  "structural, not a content node." Marking the whole vault that way would assert the KB is
+  structure rather than content — backwards. The sort-first benefit does not outweigh it.
+- **`spec/` and `kb/`.** Rejected (D4e) — bare generic names, higher collision risk in a
+  brownfield repo, and `spec/` is inaccurate for a tree that also holds `99_tracker` and
+  `98_lessons`.
 - **Shipping `bin/test/`.** Rejected (D4d) — shipping a test harness would imply local rule
   authoring is a supported extension point; it is not, since validator edits have no lesson
   capture mechanism and are correctly treated as drift.
