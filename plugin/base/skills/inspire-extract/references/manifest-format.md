@@ -3,7 +3,7 @@
 Two shapes: the **per-scanner slice** each of the four scanners returns (Phase 1),
 and the **consolidated manifest** the synthesis builds from them (Phase 2). Both are
 **working state**, staged in the session scratchpad (or an operator-named path) —
-**never committed into `.inspire_kb/`**. The KB holds blessed artifacts; the
+**never committed into `inspire_kb/`**. The KB holds blessed artifacts; the
 manifest is the raw archaeology behind them.
 
 Throughout, a candidate carries a stable local key (`c1`, `c2`, …) used to refer to
@@ -123,7 +123,7 @@ modules_inferred:
 - **`key`** — stable within one manifest; cross-references (`covers_features`,
   `realized_by`, `back_source_feature`, `collapse`, `merge:<key>`) use keys.
 - **`evidence`** — `file:line` pointers into the **source** (never into
-  `.inspire_kb/`). This is *provenance* — it explains why a candidate surfaced; it is
+  `inspire_kb/`). This is *provenance* — it explains why a candidate surfaced; it is
   **not** a back-source.
 - **`confidence`** — `high` / `medium` / `low`. Low is a reason to ask, not to hide.
 - **`decision`** — set in Phase 3. Only `keep` / `rename` / `merge` are authored;

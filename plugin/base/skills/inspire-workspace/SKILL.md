@@ -12,8 +12,8 @@ don't belong to a single module or feature:
 
 - **Global review** — the pre-merge gate, orchestrating module-level and
   cross-module checks.
-- **Vault structure** — top-level indexes (`.inspire_kb/02_modules/_index.md`,
-  `.inspire_kb/01_adr/_index.md`), folder conventions, and the tracker's on-disk
+- **Vault structure** — top-level indexes (`inspire_kb/02_modules/_index.md`,
+  `inspire_kb/01_adr/_index.md`), folder conventions, and the tracker's on-disk
   invariants.
 
 It does **not** own the artifacts it validates the coherence of: **ADR lifecycle**
@@ -29,7 +29,7 @@ judge coherence; it never authors them.
 
 ## Subcommand: review (global)
 
-**REQUIRED** before any PR that modifies files in `.inspire_kb/`. Orchestrates a
+**REQUIRED** before any PR that modifies files in `inspire_kb/`. Orchestrates a
 full consistency review across all affected modules and the vault structure.
 
 ### Execution mode
@@ -59,7 +59,7 @@ and the output uses the exact skeleton in **Output format** below.
 ### Phase 1 — Identify scope
 
 - If modules are specified, use those. Otherwise, enumerate all modules listed in
-  `.inspire_kb/02_modules/_index.md`.
+  `inspire_kb/02_modules/_index.md`.
 - For each module in scope, delegate to `/inspire_module review {module}`.
 
 ### Phase 2 — Module reviews
@@ -76,7 +76,7 @@ For each module in scope, the module review performs:
 - **Dependency validation:** feature IDs referenced as dependencies in one module
   exist in the target.
 - **ADR references:** all `[[adr-xxx]]` wikilinks resolve to files in
-  `.inspire_kb/01_adr/`.
+  `inspire_kb/01_adr/`.
 - **ADR propagation alignment:** at *every* maturity, an ADR's consequences must
   cohere across the **in-repo design workspace** (features + screen spec + horizontal
   prototype + specs) — a contradiction there is critical. Higher maturities add
@@ -90,21 +90,21 @@ For each module in scope, the module review performs:
 
 **Features tree:**
 - Repo structure matches CLAUDE.md.
-- No scripts, `.py`, `.xlsx`, `.deprecated`, or `.DS_Store` files in `.inspire_kb/`.
-- Every module has a hub in `.inspire_kb/02_modules/`; its per-layer subfolders
+- No scripts, `.py`, `.xlsx`, `.deprecated`, or `.DS_Store` files in `inspire_kb/`.
+- Every module has a hub in `inspire_kb/02_modules/`; its per-layer subfolders
   (`03_features`, `05_screens`, `04_domain`) stay in sync with it.
-- `.inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms).
-- `.inspire_kb/02_modules/_index.md` lists all modules.
+- `inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms).
+- `inspire_kb/02_modules/_index.md` lists all modules.
 
 **screen spec tree:**
-- `.inspire_kb/05_screens/design-system.md` exists.
-- `.inspire_kb/05_screens/patterns/` and `components/` exist with `_index.md` + files.
+- `inspire_kb/05_screens/design-system.md` exists.
+- `inspire_kb/05_screens/patterns/` and `components/` exist with `_index.md` + files.
 - Every pattern/component referenced by a screen exists; no orphans (on disk, not
   referenced).
 
 ### Phase 5 — Prototype component adoption
 
-- Enumerate the shared components catalogued in `.inspire_kb/05_screens/components/`.
+- Enumerate the shared components catalogued in `inspire_kb/05_screens/components/`.
 - For each, count adoption in the horizontal prototype (`/prototype`): pages using
   the canonical component vs pages still inlining an equivalent.
 - Report consolidated drift. High drift is `important` (not critical) — migration
@@ -160,9 +160,9 @@ Drift items pending: {N}
 7. **Pending drift is not failure.** Prototype drift and pending component adoption
    are `important`, not `critical`, unless they contradict an ADR within its
    maturity's reach.
-8. **Consult the task tracker.** Known items in `.inspire_kb/99_tracker/tickets/`
+8. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
    are flagged `(tracked: TASK-{id})`. Use `/inspire_task list` or open the Kanban
-   via `node .inspire_kb/99_tracker/serve.mjs`.
+   via `node inspire_kb/99_tracker/serve.mjs`.
 9. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
    - screen spec drift → `/inspire_screens`
@@ -177,20 +177,20 @@ Validate the vault structure at the top level (not module-scoped).
 
 1. **CLAUDE.md** is present at the workspace root.
 2. **Top-level indexes:**
-   - `.inspire_kb/02_modules/_index.md` lists every module.
-   - `.inspire_kb/01_adr/_index.md` lists every ADR.
+   - `inspire_kb/02_modules/_index.md` lists every module.
+   - `inspire_kb/01_adr/_index.md` lists every ADR.
    - Each module has a hub `02_modules/{module}.md`.
 3. **Task tracker:**
-   - `.inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
+   - `inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
      and under `archive/` (closed). Frontmatter parses, enums match, ID format
      `TASK-[a-z0-9]{6}`.
    - `id` matches filename; no duplicate IDs across `tickets/` and `archive/`.
    - **Location ↔ status invariant:** every top-level ticket is `Open`; every
      archived ticket is `Done`/`Cancelled`.
-   - `.inspire_kb/99_tracker/serve.mjs` present.
+   - `inspire_kb/99_tracker/serve.mjs` present.
    - `blocked_by` / `related_to` references to other `TASK-*` IDs resolve (warning
      if not).
-4. **No orphan files:** no stale `.md` at `.inspire_kb/` root (except
+4. **No orphan files:** no stale `.md` at `inspire_kb/` root (except
    `CONTRIBUTING.md` if present); no legacy paths.
 
 ### Output
@@ -199,8 +199,8 @@ Validate the vault structure at the top level (not module-scoped).
 # Vault Structure | {date}
 
 ## Top-level indexes
-- .inspire_kb/02_modules/_index.md: {ok | N issues}
-- .inspire_kb/01_adr/_index.md: {ok | N issues}
+- inspire_kb/02_modules/_index.md: {ok | N issues}
+- inspire_kb/01_adr/_index.md: {ok | N issues}
 
 ## Module folders
 - Modules with _index.md: {N}/{total}
@@ -231,7 +231,7 @@ Validate the vault structure at the top level (not module-scoped).
    maturity; external pointers at higher ones) — authoring/advancing ADRs is
    `/inspire_adr`.
 3. **Consult the task tracker.** Known items live in
-   `.inspire_kb/99_tracker/tickets/` (`/inspire_task list`); don't re-report them as
+   `inspire_kb/99_tracker/tickets/` (`/inspire_task list`); don't re-report them as
    new findings.
 4. **Git discipline is shared.** Branch/commit/PR conventions, merge-conflict
    auditing, and the git safety protocol live in

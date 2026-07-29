@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/rationale-wikilink.sh
+# .inspire/bin/rationale-wikilink.sh
 #
 # Rule: every object must back-source its design decisions to upstream
 # PDD or ADR documents via ≥1 wikilink in the rationale-bearing section(s).
@@ -19,8 +19,8 @@
 #   - object at lifecycle: accepted+ → error
 #
 # Usage:
-#   .claude/bin/rationale-wikilink.sh                  # scan whole tree
-#   .claude/bin/rationale-wikilink.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/rationale-wikilink.sh                  # scan whole tree
+#   .inspire/bin/rationale-wikilink.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

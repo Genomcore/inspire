@@ -96,7 +96,7 @@ narrowed a choice to 2–4 options. The consolidated manifest is a large surface
 
 ### Phase 0 — Scope & safety
 
-Resolve `{path}`; confirm it is **external** (not `.inspire_kb/`, `/prototype`,
+Resolve `{path}`; confirm it is **external** (not `inspire_kb/`, `/prototype`,
 `/source`). Read the current KB (`02_modules/_index.md`, screens, domain tree,
 `00_bootstrap`) so the run **merges, not clobbers**. Confirm the scanner set
 (`--only`, default all four). **Consult the task tracker** so tracked extraction
@@ -183,7 +183,7 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
 ## Provenance & staging
 
 - **The manifest is transient working state**, staged in the session scratchpad (or
-  an operator-named path). It is **never** committed into `.inspire_kb/`.
+  an operator-named path). It is **never** committed into `inspire_kb/`.
 - **Confirmed candidates leave a durable record via the tracker**: one ticket per
   authored artifact (`/inspire_workspace task create --epic extract`) — no new KB
   structure.

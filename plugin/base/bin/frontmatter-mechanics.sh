@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/frontmatter-mechanics.sh
+# .inspire/bin/frontmatter-mechanics.sh
 #
 # Mechanical-blocker bundle (always enforced, any lifecycle). Groups three
 # small frontmatter checks into one pass over the SDD tree:
@@ -18,8 +18,8 @@
 # Severity: error.
 #
 # Usage:
-#   .claude/bin/frontmatter-mechanics.sh                  # scan whole tree
-#   .claude/bin/frontmatter-mechanics.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/frontmatter-mechanics.sh                  # scan whole tree
+#   .inspire/bin/frontmatter-mechanics.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

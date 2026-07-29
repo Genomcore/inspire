@@ -10,7 +10,7 @@ A **vertical spike** is a narrow, deep, **functional** prototype that lives in i
 horizontal prototype ([`/inspire_prototype`](../inspire-prototype/SKILL.md), which is
 wide, shallow and in *this* repo), a spike is throwaway code somewhere else — so
 this skill never builds it. It **brings the knowledge home** into
-[`.inspire_kb/06_spikes/`](../../../.inspire_kb/06_spikes), so it survives even after
+[`inspire_kb/06_spikes/`](../../../inspire_kb/06_spikes), so it survives even after
 the spike repo goes stale.
 
 The code is disposable; the **learnings are the deliverable**. A spike usually

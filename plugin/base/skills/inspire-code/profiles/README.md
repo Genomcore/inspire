@@ -9,7 +9,7 @@ the KB (`00_bootstrap` → `04_domain`) is the source of truth, and they load
 ## Resolution
 
 At the start of any subcommand, `inspire-code` resolves the active profile set from
-[`00_bootstrap/stack.md`](../../../../.inspire_kb/00_bootstrap/stack.md):
+[`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
    use that set. `/inspire_bootstrap stack` maintains this line.

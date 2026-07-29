@@ -68,7 +68,7 @@ product you build on top.
 | Path | What it is |
 |---|---|
 | [`.inspire/`](.inspire/) | The **guardrail runtime**, staged dormant: `skills/` (the `inspire-*` agent skills — the judgment half), `bin/` (the validators + fixtures — the mechanical half), `hooks/` (the git-time + session-start hooks), `templates/` (product-side files materialized at install) and `install.sh` (instantiation). See [`.inspire/README.md`](.inspire/README.md). |
-| [`.inspire_kb/`](.inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `03_features` · `06_spikes` · `04_domain` · `05_screens` · `98_lessons` · `99_tracker`). Each folder documents its own purpose and layout. |
+| [`inspire_kb/`](inspire_kb/) | The **knowledge-base skeleton** — the navigable graph a project fills in (`00_bootstrap` · `01_adr` · `03_features` · `06_spikes` · `04_domain` · `05_screens` · `98_lessons` · `99_tracker`). Each folder documents its own purpose and layout. |
 | [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
 | `prototype/` | The **horizontal prototype** (product-side) — the wide/shallow/mocked working model of the whole product. *Created at install, not shipped here.* |
 | `source/` | The **production monorepo** (product-side) — the root of the actual product code, realized from the KB. Where ADRs reach `implemented`. *Created at install, not shipped here.* |
@@ -80,7 +80,7 @@ product you build on top.
 
 The skills + validators + hooks in `.inspire/` are the **guardrail layer**: the
 concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
-judgment, hooks + validators catch drift mechanically. `.inspire_kb/` is the graph
+judgment, hooks + validators catch drift mechanically. `inspire_kb/` is the graph
 they operate on.
 
 ---
@@ -88,7 +88,7 @@ they operate on.
 ## Get started
 
 A new specification-driven project adopts INSPIRE's guardrail layer wholesale by
-cloning this repo and filling in `.inspire_kb/`. The skills, hooks and validators
+cloning this repo and filling in `inspire_kb/`. The skills, hooks and validators
 speak a generic, stack-agnostic model — features, specs, screens, prototypes — so
 they fit any stack.
 
@@ -118,13 +118,13 @@ are left untouched).
 **3. Run `/inspire_bootstrap init`.** It sets the project's output language,
 configures the stack + theme and its shape (frontend / backend / monorepo · web /
 mobile · database), creates your project's own `README.md`, and optionally wires
-your git remote. Then start filling in `.inspire_kb/` — your modules, features,
-screens and specs. The foundation ([`00_bootstrap`](.inspire_kb/00_bootstrap)) and
+your git remote. Then start filling in `inspire_kb/` — your modules, features,
+screens and specs. The foundation ([`00_bootstrap`](inspire_kb/00_bootstrap)) and
 starter screen patterns ship with sensible defaults; the `inspire-*` skills guide
 the rest.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
-> language ([`00_bootstrap/project.md`](.inspire_kb/00_bootstrap/project.md),
+> language ([`00_bootstrap/project.md`](inspire_kb/00_bootstrap/project.md),
 > default English) — independent of the language you converse in and of the
 > product's own UI i18n. A `session-start` hook surfaces it into every session.
 

@@ -5,13 +5,13 @@ truth** — no generated indexes or caches.
 
 ## Storage layout
 
-- **Open tickets** → `.inspire_kb/99_tracker/tickets/TASK-{id}.md`
+- **Open tickets** → `inspire_kb/99_tracker/tickets/TASK-{id}.md`
 - **Closed tickets** (`status` ∈ {`Done`, `Cancelled`}) →
-  `.inspire_kb/99_tracker/tickets/archive/TASK-{id}.md`
+  `inspire_kb/99_tracker/tickets/archive/TASK-{id}.md`
 
 The archive subfolder keeps the active set lean: agents scanning "what's pending"
-read only `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). The
-Kanban web (`.inspire_kb/99_tracker/serve.mjs`) reads both locations. `close`
+read only `inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). The
+Kanban web (`inspire_kb/99_tracker/serve.mjs`) reads both locations. `close`
 moves the file; `show` / `update` look in `tickets/` first, then `tickets/archive/`.
 
 ## Frontmatter schema
@@ -41,7 +41,7 @@ related_to: [TASK-xxx]             # list of IDs
 ## Enums
 
 - **`epic`**: a **project-defined** slug — usually a module from
-  `.inspire_kb/03_features/`, plus cross-cutting areas. Recommended baseline:
+  `inspire_kb/03_features/`, plus cross-cutting areas. Recommended baseline:
   `workspace | meta | tooling | docs | skill-feedback`, extended with the
   project's own module slugs.
 - **`size`**: `S | M | L | XL`

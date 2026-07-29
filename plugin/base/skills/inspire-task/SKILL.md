@@ -1,6 +1,6 @@
 ---
 name: inspire-task
-description: "Task tracker: create / update / close / list / show tickets in .inspire_kb/99_tracker/. A plain-file kanban (one Markdown file per ticket, no external tool) for tracking work, drift, and skill-feedback. Use to open, advance, close, or query tickets."
+description: "Task tracker: create / update / close / list / show tickets in inspire_kb/99_tracker/. A plain-file kanban (one Markdown file per ticket, no external tool) for tracking work, drift, and skill-feedback. Use to open, advance, close, or query tickets."
 ---
 
 # /inspire_task — Task tracker
@@ -8,11 +8,11 @@ description: "Task tracker: create / update / close / list / show tickets in .in
 ## Scope
 
 A plain-file ticket tracker under
-[`.inspire_kb/99_tracker/`](../../../.inspire_kb/99_tracker): **one Markdown file
+[`inspire_kb/99_tracker/`](../../../inspire_kb/99_tracker): **one Markdown file
 per ticket**, the only source of truth — no external tool, no generated cache. Open
 tickets live at `tickets/*.md`; closed ones are archived under `tickets/archive/*.md`
 so default scans see only active work. A read-only Kanban web view is available via
-`node .inspire_kb/99_tracker/serve.mjs`.
+`node inspire_kb/99_tracker/serve.mjs`.
 
 The on-disk contract — storage layout, frontmatter schema, enums, ID scheme — lives
 in [`references/tracker-format.md`](references/tracker-format.md). **Read it before
@@ -60,7 +60,7 @@ default `status: Done`; with `--cancelled`, `status: Cancelled` (append a
 
 ## Subcommand: list [--filter]
 
-1. Scan `.inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive — excludes
+1. Scan `inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive — excludes
    `archive/`). Parse frontmatter.
 2. With `--include-archived` (or `--all`), also scan `tickets/archive/*.md`.
 3. Filters: `--status`, `--epic`, `--size`, `--importance`, `--reporter`,
@@ -114,7 +114,7 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 5. **`closed_by` / `closed_at` only when status ∈ {Done, Cancelled}.**
 6. **Body markdown is free.** Description / Acceptance criteria / Notes suggested.
 7. **Concurrent edits are safe** — random IDs, no locking.
-8. **Server is read-only.** `.inspire_kb/99_tracker/serve.mjs` never writes; it
+8. **Server is read-only.** `inspire_kb/99_tracker/serve.mjs` never writes; it
    scans both `tickets/` and `tickets/archive/`.
 
 ## Related skills

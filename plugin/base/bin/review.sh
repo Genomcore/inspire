@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/review.sh
+# .inspire/bin/review.sh
 #
 # Composite review — orchestrates the rule scripts and aggregates findings.
 # Run by skills (`/inspire_domain review`, `/inspire_feature review`) and
@@ -10,8 +10,8 @@
 # Exit code: 0 if all rules pass with no errors; 1 if any error finding.
 #
 # Usage:
-#   .claude/bin/review.sh                # scan whole tree
-#   .claude/bin/review.sh .inspire_kb/04_domain/auth  # scoped scan
+#   .inspire/bin/review.sh                # scan whole tree
+#   .inspire/bin/review.sh inspire_kb/04_domain/auth  # scoped scan
 
 set -uo pipefail
 

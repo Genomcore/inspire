@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/sections-present.sh
+# .inspire/bin/sections-present.sh
 #
 # Rule: every object descriptor must declare its mandatory body sections,
 # and each section's body must be non-empty (a header alone is insufficient).
@@ -32,8 +32,8 @@
 # Severity: error (coherence blocker, applies from draft+).
 #
 # Usage:
-#   .claude/bin/sections-present.sh                  # scan whole tree
-#   .claude/bin/sections-present.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/sections-present.sh                  # scan whole tree
+#   .inspire/bin/sections-present.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

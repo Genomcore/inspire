@@ -31,7 +31,7 @@ you build on top of it.
       timestamp-named, version-stamped one-line instructions that teach the skills how
       to behave in this fork; relevant locally, distilled upstream by the observer).
   - `.inspire/bin/` — the validators + golden fixtures: the mechanical half. Spec
-    root is configurable via `SDD_SPEC_ROOT` (defaults to `.inspire_kb/04_domain`).
+    root is configurable via `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`).
     Test suite: `bash .inspire/bin/test/run-tests.sh`.
   - `.inspire/hooks/` — enforcement hooks: git-time `pre-commit` / `pre-pr`, and
     `session-start` (injects the project's `output_language` — and the runtime
@@ -43,7 +43,7 @@ you build on top of it.
     `released`); `install.sh` freezes it into a fork's root `.inspire.lock`
     (provenance: which release the fork was instantiated from), which `inspire-lesson`
     stamps onto every lesson.
-- `.inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a project
+- `inspire_kb/` — the **knowledge-base skeleton**: the navigable graph a project
   fills in. One layer per skill (`00_bootstrap`, `01_adr`, `02_modules`,
   `03_features`, `04_domain`, `05_screens`, `06_spikes`, `98_lessons`, `99_tracker`); each folder carries a
   README explaining its purpose and layout.
@@ -57,7 +57,7 @@ the product you build, not INSPIRE. `install.sh` creates them (from
   shallow, mocked working model of the whole product. It keeps **no KB file** — its
   insights co-evolve the vault directly (features, screens, ADRs, design system).
   Vertical spikes live in their own external repos, their knowledge brought home
-  under `.inspire_kb/06_spikes/` (skill `inspire-spike`).
+  under `inspire_kb/06_spikes/` (skill `inspire-spike`).
 - `source/` — the **production monorepo** (product-side, non-dot): the root of the
   actual product code, realized from the KB. An ADR reaches `implemented` maturity
   when it lands here.
@@ -66,7 +66,7 @@ the product you build, not INSPIRE. `install.sh` creates them (from
 
 Claude Code auto-loads skills from `.claude/skills/` and runs hooks registered in
 `.claude/settings.json`. The skills also reference each other and the validators
-via the **deployed** paths (`.claude/skills/…`, `.claude/bin/…`). If the runtime
+via the **deployed** paths (`.claude/skills/…`, `.inspire/bin/…`). If the runtime
 lived in `.claude/` inside *this* template repo, those skills would fire while the
 template itself is edited — so it is staged **dormant** under `.inspire/`.
 
@@ -90,9 +90,9 @@ untouched).
 
 - This is the **template**, not a live project. Do **not** run
   `.inspire/install.sh` here — it would activate the runtime against this repo.
-- Keep the runtime **generic**: the skills, the validators and the `.inspire_kb/`
+- Keep the runtime **generic**: the skills, the validators and the `inspire_kb/`
   skeleton must stay stack-agnostic and free of any specific product's domain
-  vocabulary. Concrete project content belongs in a fork's `.inspire_kb/`, not here.
+  vocabulary. Concrete project content belongs in a fork's `inspire_kb/`, not here.
 - The KB ships as a **skeleton** — each layer has a README (and, where useful,
   starter files); a real project fills the rest in via the skills.
 - Run the validator suite with `bash .inspire/bin/test/run-tests.sh` after touching

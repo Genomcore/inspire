@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/action-fields-in-entity.sh
+# .inspire/bin/action-fields-in-entity.sh
 #
 # Rule: every field declared in an action's `## Entities` per-entity
 # field-touch table must appear in the touched entity document's `## Fields`
@@ -18,8 +18,8 @@
 # Severity: error (coherence blocker, applies from draft+).
 #
 # Usage:
-#   .claude/bin/action-fields-in-entity.sh                  # scan whole tree
-#   .claude/bin/action-fields-in-entity.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/action-fields-in-entity.sh                  # scan whole tree
+#   .inspire/bin/action-fields-in-entity.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

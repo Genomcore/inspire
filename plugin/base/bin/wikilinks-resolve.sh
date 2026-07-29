@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/wikilinks-resolve.sh
+# .inspire/bin/wikilinks-resolve.sh
 #
 # Rule: every `[[wikilink]]` in an object's body must resolve to an
 # existing .md file somewhere in the vault. Pipe-syntax wikilinks are
@@ -22,8 +22,8 @@
 #   - object at lifecycle: accepted+ → error
 #
 # Usage:
-#   .claude/bin/wikilinks-resolve.sh                  # scan whole tree
-#   .claude/bin/wikilinks-resolve.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/wikilinks-resolve.sh                  # scan whole tree
+#   .inspire/bin/wikilinks-resolve.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 
@@ -45,9 +45,9 @@ sdd_build_id_index "$SCOPE"
 NAME_INDEX="$(mktemp -t sdd-name-index.XXXXXX)"
 trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "$NAME_INDEX"' EXIT
 
-# Search the .inspire_kb/ tree plus other plausible vault roots. Excludes
+# Search the inspire_kb/ tree plus other plausible vault roots. Excludes
 # .claude/worktrees/ to avoid cross-branch noise.
-find .inspire_kb .claude/skills 2>/dev/null \
+find inspire_kb .claude/skills 2>/dev/null \
   -type f -name "*.md" \
   ! -path "*/node_modules/*" \
   | while IFS= read -r p; do

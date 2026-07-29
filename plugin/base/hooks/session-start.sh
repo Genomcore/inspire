@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# .claude/hooks/session-start.sh
+# .claude/inspire/hooks/session-start.sh
 #
 # Claude SessionStart hook. Reads the project's declared output language from
-# .inspire_kb/00_bootstrap/project.md and injects it into the session as context,
+# inspire_kb/00_bootstrap/project.md and injects it into the session as context,
 # so EVERY session — regardless of the language the operator converses in — starts
 # knowing which language INSPIRE artifacts must be authored in. This is the strong,
 # always-present half of the output-language rule; the skills carry the same rule
@@ -38,7 +38,7 @@ PROJECT_ROOT="$HOME_ROOT"
 # Consume stdin (the SessionStart payload) so the runner never sees a broken pipe.
 cat >/dev/null 2>&1 || true
 
-PROJECT_FILE="$PROJECT_ROOT/.inspire_kb/00_bootstrap/project.md"
+PROJECT_FILE="$PROJECT_ROOT/inspire_kb/00_bootstrap/project.md"
 
 # Read output_language from the frontmatter; default to English if absent/empty.
 LANG_VALUE=""
@@ -50,7 +50,7 @@ fi
 CONTEXT="INSPIRE output language — \`output_language: ${LANG_VALUE}\`.
 
 When you create or edit any knowledge-base artifact as part of an INSPIRE skill \
-(anything under \`.inspire_kb/\`, plus the project \`README.md\` and prototype \
+(anything under \`inspire_kb/\`, plus the project \`README.md\` and prototype \
 learnings), author the **prose** in \`${LANG_VALUE}\`. This holds regardless of the \
 language of this conversation and regardless of the product's own UI i18n: reply \
 to the operator in their language, but write the *files* in the project language. \

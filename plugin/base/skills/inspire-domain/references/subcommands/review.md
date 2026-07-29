@@ -4,7 +4,7 @@ Read-only quality check. Runs the quality_lib rules against the scope and surfac
 
 ## Flow
 
-1. Invoke `.claude/bin/review.sh` for the scope.
+1. Invoke `.inspire/bin/review.sh` for the scope.
 2. Collect findings from stderr (JSON Lines format — see [`findings-format.md`](../../../_references/findings-format.md)).
 3. Render each finding as a markdown sub-section using the shared format: heading `### {severity} · {rule} — {target}`, then **Issue** and **Suggested follow-up**.
 4. Summary at the top: counts by severity, pass/fail.
@@ -43,4 +43,4 @@ The gate composes 10 rule families across three severity tiers. `review` runs ev
 | `rationale-wikilink` | Entity `## Rationale` (or action `## Purpose` ∪ `## Behavior`) has no `[[wikilink]]` back-source |
 | `wikilinks-resolve` | A `[[wikilink]]` in body does not resolve to an existing file |
 
-The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.claude/bin/*.sh` (see [`.claude/bin/README.md`](../../../../bin/README.md) for the script catalog).
+The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../bin/README.md) for the script catalog).

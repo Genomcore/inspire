@@ -2,7 +2,7 @@
 
 Every INSPIRE skill authors the artifacts it produces in the project's **declared
 output language**, read from `output_language` in
-[`00_bootstrap/project.md`](../../../.inspire_kb/00_bootstrap/project.md). Default:
+[`00_bootstrap/project.md`](../../../inspire_kb/00_bootstrap/project.md). Default:
 `en` (English). Set it with `/inspire_bootstrap language`.
 
 ## The rule
@@ -41,7 +41,7 @@ findings addressed to the operator. Never the keys.
 ## Exception: lessons (`98_lessons`)
 
 One layer is **always authored in English**, regardless of `output_language`: the
-lessons catalog (`.inspire_kb/98_lessons/`, skill `inspire-lesson`). Its reader is not
+lessons catalog (`inspire_kb/98_lessons/`, skill `inspire-lesson`). Its reader is not
 the product team but the observer / the **cross-org INSPIRE core team**, which works in
 English. Everything else here still applies — machine-read tokens stay verbatim. This
 is the only knowledge-base layer exempt from the rule above.

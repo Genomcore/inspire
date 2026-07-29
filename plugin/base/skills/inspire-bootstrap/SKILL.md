@@ -1,6 +1,6 @@
 ---
 name: inspire-bootstrap
-description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md template in .inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
+description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md template in inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
 ---
 
 # /inspire_bootstrap — Foundation (language + stack + theme)
@@ -8,7 +8,7 @@ description: "Configure the project's foundation — the output language, tech s
 ## Scope
 
 This skill owns the **bootstrap layer** —
-[`.inspire_kb/00_bootstrap/`](../../.inspire_kb/00_bootstrap):
+[`inspire_kb/00_bootstrap/`](../../inspire_kb/00_bootstrap):
 
 - `project.md` — **project conventions**, chiefly `output_language`: the single
   language every skill writes its artifacts in (default English).
@@ -24,8 +24,8 @@ This skill owns the **bootstrap layer** —
   install and edited here via the `design-system` subcommand. `theme.md` is the
   default; this is the working copy.
 
-These are the foundation every other layer reads: specs ([`04_domain`](../../.inspire_kb/04_domain)),
-screen specs ([`05_screens`](../../.inspire_kb/05_screens)), the prototype ([`/prototype`](../../prototype))
+These are the foundation every other layer reads: specs ([`04_domain`](../../inspire_kb/04_domain)),
+screen specs ([`05_screens`](../../inspire_kb/05_screens)), the prototype ([`/prototype`](../../prototype))
 and production code ([`/source`](../../source)) all build on what is declared here.
 The template seeds all three with a sensible default (English + the OpenBIMS
 reference stack + theme); a new project reconfigures them here.
@@ -118,7 +118,7 @@ Define or update `stack.md` — the official application stack, including its
    replacing a load-bearing choice (a framework, the runtime, the primary DB) — or
    **changing the shape** (adding a backend, adding mobile, switching from a
    deployed database to an external one) — must be recorded as an ADR in
-   [`01_adr`](../../.inspire_kb/01_adr) — surface that and offer to chain
+   [`01_adr`](../../inspire_kb/01_adr) — surface that and offer to chain
    `/inspire_adr create`.
 
 ### Stack profiles (for `/inspire_code`)
@@ -217,7 +217,7 @@ project's `output_language` (default English).
    ## Development
 
    Built with the [INSPIRE](https://inspire.openbims.dev) methodology. Project
-   intent and specs live in [`.inspire_kb/`](.inspire_kb/); the guardrail runtime
+   intent and specs live in [`inspire_kb/`](inspire_kb/); the guardrail runtime
    and agent skills are in `.claude/` (see [`CLAUDE.md`](CLAUDE.md)).
    ```
 
@@ -233,7 +233,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 `en`). See [`_references/output-language.md`](../_references/output-language.md).
 
 1. Read the current `output_language` from
-   [`00_bootstrap/project.md`](../../.inspire_kb/00_bootstrap/project.md).
+   [`00_bootstrap/project.md`](../../inspire_kb/00_bootstrap/project.md).
 2. Ask for the language (an ISO 639-1 code or a plain name; default English). Make
    clear what it does and does **not** govern:
    - **Governs:** every KB artifact — specs, features, ADRs, screen specs,

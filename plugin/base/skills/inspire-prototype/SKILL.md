@@ -33,19 +33,19 @@ clarity lands in the vault.
 Build it **pattern-driven from the KB**. Before writing code, read the layers that
 describe the screen:
 
-1. **Screen spec** — `.inspire_kb/05_screens/{module}/{screen}.md` — the source of
+1. **Screen spec** — `inspire_kb/05_screens/{module}/{screen}.md` — the source of
    truth for what to build (features covered, pattern, data, slots, components).
-2. **Pattern** — `.inspire_kb/05_screens/patterns/{pattern}.md` — layout, slots, behavior.
-3. **Components** — `.inspire_kb/05_screens/components/{component}.md` — the shared
+2. **Pattern** — `inspire_kb/05_screens/patterns/{pattern}.md` — layout, slots, behavior.
+3. **Components** — `inspire_kb/05_screens/components/{component}.md` — the shared
    catalog. Adopt these; don't reinvent.
-4. **Design system** — `.inspire_kb/05_screens/design-system.md` — tokens, type,
+4. **Design system** — `inspire_kb/05_screens/design-system.md` — tokens, type,
    density. Never redefine these per screen.
-5. **Intent & contract** — the feature in `.inspire_kb/03_features/{module}/…`
-   and, where relevant, the specs in `.inspire_kb/04_domain/…`.
+5. **Intent & contract** — the feature in `inspire_kb/03_features/{module}/…`
+   and, where relevant, the specs in `inspire_kb/04_domain/…`.
 
 > **Stack-agnostic.** This skill assumes no framework. The project's own stack,
 > component catalog, conventions and known pitfalls live in its KB
-> (`.inspire_kb/00_bootstrap` and `.inspire_kb/05_screens`), not here — read those
+> (`inspire_kb/00_bootstrap` and `inspire_kb/05_screens`), not here — read those
 > first on a real project.
 
 ## The learnings loop — insights co-evolve the vault, live

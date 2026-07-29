@@ -1,6 +1,6 @@
 ---
 name: inspire-lesson
-description: "Lessons catalog: capture durable, write-once, version-stamped LESSONS that change how an inspire-* skill behaves in this project — each a single one-line instruction (\"do X this way\"), materialized into the skill so the agent internalizes it. One timestamp-named file per lesson (YYYYMMDD_<slug>) in .inspire_kb/98_lessons/. A lesson is relevant HERE; whether it generalizes is decided upstream. Use to record a lesson after skill friction or a deliberate skill change, list / show them, or purge the archive. Not for product work — that is the tracker (inspire-task), nor for spike/prototype learnings."
+description: "Lessons catalog: capture durable, write-once, version-stamped LESSONS that change how an inspire-* skill behaves in this project — each a single one-line instruction (\"do X this way\"), materialized into the skill so the agent internalizes it. One timestamp-named file per lesson (YYYYMMDD_<slug>) in inspire_kb/98_lessons/. A lesson is relevant HERE; whether it generalizes is decided upstream. Use to record a lesson after skill friction or a deliberate skill change, list / show them, or purge the archive. Not for product work — that is the tracker (inspire-task), nor for spike/prototype learnings."
 ---
 
 # /inspire_lesson — Lessons catalog
@@ -8,7 +8,7 @@ description: "Lessons catalog: capture durable, write-once, version-stamped LESS
 ## Scope
 
 The **self-teaching layer** —
-[`.inspire_kb/98_lessons/`](../../../.inspire_kb/98_lessons): **one Markdown file
+[`inspire_kb/98_lessons/`](../../../inspire_kb/98_lessons): **one Markdown file
 per lesson**, **write-once** (created once, never edited). A lesson is a durable,
 transmissible instruction about how an `inspire-*` **skill itself** should behave —
 not about the product. It can be *learned* or *taught*; the folder is a **catalog of
@@ -104,7 +104,7 @@ how a skill behaves graduates into a lesson (see *Relationship to the tracker*).
 
 ## Subcommand: list [--filter]
 
-1. Scan `.inspire_kb/98_lessons/*.md` (the live catalog; `--archived` also scans
+1. Scan `inspire_kb/98_lessons/*.md` (the live catalog; `--archived` also scans
    `98_lessons/archive/`).
 2. `--since` / `--until` filter on the **filename date prefix** (cheap — no frontmatter
    read). `--skill` / `--category` / `--reporter` filter on frontmatter.

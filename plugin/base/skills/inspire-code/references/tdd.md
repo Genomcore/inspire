@@ -5,7 +5,7 @@ red-green-refactor loop with its test conventions, and the non-negotiable author
 rules that hold for *any* code this skill writes (not only under `tdd`).
 
 The unit of work is a **feature**: `tdd {feature-id}` implements the use case at
-`.inspire_kb/03_features/{module}/{feature-id}.md`, and its **acceptance criteria
+`inspire_kb/03_features/{module}/{feature-id}.md`, and its **acceptance criteria
 are the test list**. One testable criterion → at least one test. A criterion you
 cannot write a test for is a spec problem — hand it back to `/inspire_feature`
 before writing code.

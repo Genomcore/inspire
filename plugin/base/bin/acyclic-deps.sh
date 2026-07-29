@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/acyclic-deps.sh
+# .inspire/bin/acyclic-deps.sh
 #
 # Rule: the global action→action `requires` graph must be acyclic and free
 # of self-loops. Detects:
@@ -14,8 +14,8 @@
 # Severity: error.
 #
 # Usage:
-#   .claude/bin/acyclic-deps.sh                  # scan whole tree
-#   .claude/bin/acyclic-deps.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/acyclic-deps.sh                  # scan whole tree
+#   .inspire/bin/acyclic-deps.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

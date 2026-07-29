@@ -8,9 +8,9 @@ description: "Lifecycle of a module and its 02_modules hub: create / review / up
 ## Scope
 
 A **module** is the organizing unit of the product. Its **hub** is
-`.inspire_kb/02_modules/{module}.md` — the second-level index (after `00_bootstrap`):
+`inspire_kb/02_modules/{module}.md` — the second-level index (after `00_bootstrap`):
 overview, relationships to other modules, and links to everything the module owns
-across the layers. Its use cases live in `.inspire_kb/03_features/{module}/` (**one
+across the layers. Its use cases live in `inspire_kb/03_features/{module}/` (**one
 file per use case**). This skill owns the hub and its propagation across the KB
 layers it links: features (`03_features`), screen specs (`05_screens`), the prototype
 (`/prototype`), specs (`04_domain`), spikes (`06_spikes`), and ADRs (`01_adr`). The
@@ -28,8 +28,8 @@ invariant.
 ## Subcommand: review
 
 Runs all consistency checks for the module. This is the **required gate before any
-PR** that modifies the module's hub (`.inspire_kb/02_modules/{module}.md`) or its
-files under `.inspire_kb/03_features/{module}/`.
+PR** that modifies the module's hub (`inspire_kb/02_modules/{module}.md`) or its
+files under `inspire_kb/03_features/{module}/`.
 
 ### 1. Module hub + features structure
 
@@ -51,11 +51,11 @@ files under `.inspire_kb/03_features/{module}/`.
 
 ### 2. screen spec structure
 
-- Folder `.inspire_kb/05_screens/{module}/` with `_index.md` + one file per screen.
+- Folder `inspire_kb/05_screens/{module}/` with `_index.md` + one file per screen.
 - `_index.md` contains the route map + feature-coverage table; every screen in
   the map exists on disk, and every screen file is referenced in the map.
 - Every screen header carries `**Features:**` and `**Pattern:**`; every pattern
-  resolves to a file in `.inspire_kb/05_screens/patterns/` (or `bespoke` with
+  resolves to a file in `inspire_kb/05_screens/patterns/` (or `bespoke` with
   justification).
 - No screen redefines design tokens (those live in `design-system.md`); no inline
   mock data (reference the data source); each screen stays focused (~250 lines).
@@ -78,15 +78,15 @@ files under `.inspire_kb/03_features/{module}/`.
   are reflected at `/prototype`, and what building them taught has landed in the
   specs / screens / ADRs (the horizontal keeps no learnings file).
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
-  realizing action descriptor in `.inspire_kb/04_domain/{module}/` (flag gaps as
+  realizing action descriptor in `inspire_kb/04_domain/{module}/` (flag gaps as
   `important`); every action's `## Why` back-sources to a feature via
   `[[wikilink]]` (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts an **accepted** ADR within its
-  maturity's reach (see `.inspire_kb/01_adr/`).
+  maturity's reach (see `inspire_kb/01_adr/`).
 
 ### 5. Spec-layer (SDD) checks
 
-Run `.claude/bin/review.sh .inspire_kb/04_domain/{module}/` and incorporate
+Run `.inspire/bin/review.sh inspire_kb/04_domain/{module}/` and incorporate
 findings. The rule set covers:
 - `acyclic-deps` — no cycles or self-loops in the `requires` graph
 - `stable-blockers` — stable actions don't require non-stable targets
@@ -145,13 +145,13 @@ component adoption > cosmetic.
 Scaffold a new module across the layers. The user provides the module name, an ID
 prefix (e.g. `MYM`), and a description.
 
-1. **Module hub:** `.inspire_kb/02_modules/{module}.md` from the hub template —
+1. **Module hub:** `inspire_kb/02_modules/{module}.md` from the hub template —
    overview, relationships, the ID prefix, and empty link sections (features,
    screens, specs, ADRs). This is the module's home.
-2. **Register** it in `.inspire_kb/02_modules/_index.md` (the module registry).
-3. **Features folder:** `.inspire_kb/03_features/{module}/` — empty; use cases are
+2. **Register** it in `inspire_kb/02_modules/_index.md` (the module registry).
+3. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
    added via `/inspire_feature create` and indexed back in the hub.
-4. **screen spec folder:** `.inspire_kb/05_screens/{module}/_index.md` — empty route map +
+4. **screen spec folder:** `inspire_kb/05_screens/{module}/_index.md` — empty route map +
    feature-coverage tables. No screens yet.
 5. Point the user to `/inspire_feature create` for the first use cases, and
    `/inspire_prototype` once screens exist.
@@ -173,7 +173,7 @@ Operate transactionally:
 
 The entry point for SDD-layer work on a module. It surfaces features that lack
 realizing specs and chains authoring into `/inspire_domain`. Scan is **read-only**
-with respect to `.inspire_kb/04_domain/`; it never authors descriptors itself.
+with respect to `inspire_kb/04_domain/`; it never authors descriptors itself.
 
 ### Phase 1 — Environment setup
 
@@ -192,16 +192,16 @@ stay portable.
 ### Phase 2 — Candidate surfacing + narrowing
 
 Read the module's features:
-- `.inspire_kb/02_modules/{module}.md` — the hub's use-case index and any action
+- `inspire_kb/02_modules/{module}.md` — the hub's use-case index and any action
   declarations.
-- `.inspire_kb/03_features/{module}/{use-case}.md` — feature descriptions and the
+- `inspire_kb/03_features/{module}/{use-case}.md` — feature descriptions and the
   actions they declare.
 
 For each declared action (e.g. `platform::actions::resolve`):
 - **Canonicalize plural → singular** (`platform::actions::resolve` →
   `platform::action::resolve`). This is a known layer-convention shift — apply it
   silently, don't surface it as a decision.
-- Check whether `.inspire_kb/04_domain/{module}/{entity}/{action}.md` exists.
+- Check whether `inspire_kb/04_domain/{module}/{entity}/{action}.md` exists.
 - If not, it's a candidate.
 
 Surface candidates and **dialogue** to narrow the set — one focused question at a
@@ -233,24 +233,24 @@ coherence conflicts (via `entity-coherence`). Render via
 [`_references/findings-format.md`](../_references/findings-format.md).
 
 `scan {module}` batches over one module; `scan` without args batches over every
-module registered in `.inspire_kb/02_modules/`.
+module registered in `inspire_kb/02_modules/`.
 
 ## Subcommand: delete
 
 Remove a module across all layers. Use with caution.
 
 1. **Confirm** with the user: list every file and feature about to be deleted.
-2. **Hub:** delete `.inspire_kb/02_modules/{module}.md` and its entry in
-   `.inspire_kb/02_modules/_index.md`.
-3. **Features:** delete `.inspire_kb/03_features/{module}/`.
-4. **screen spec:** delete `.inspire_kb/05_screens/{module}/`.
-5. **Specs:** delete `.inspire_kb/04_domain/{module}/`.
+2. **Hub:** delete `inspire_kb/02_modules/{module}.md` and its entry in
+   `inspire_kb/02_modules/_index.md`.
+3. **Features:** delete `inspire_kb/03_features/{module}/`.
+4. **screen spec:** delete `inspire_kb/05_screens/{module}/`.
+5. **Specs:** delete `inspire_kb/04_domain/{module}/`.
 6. **Prototype:** remove the module's screens and routes from `/prototype`; note
-   any `.inspire_kb/06_spikes/` entry that referenced this module.
+   any `inspire_kb/06_spikes/` entry that referenced this module.
 7. **Cross-references:**
-   - Grep the whole `.inspire_kb/` for `[[{module}]]` or feature-ID references —
+   - Grep the whole `inspire_kb/` for `[[{module}]]` or feature-ID references —
      flag and offer fixes.
-   - Check ADRs under `.inspire_kb/01_adr/` for references to this module.
+   - Check ADRs under `inspire_kb/01_adr/` for references to this module.
    - Check other modules' relationship sections.
 
 ## Rules
@@ -275,8 +275,8 @@ Remove a module across all layers. Use with caution.
    are informational; don't block PRs unless they contradict an accepted ADR.
 6. **Consult the task tracker** at the start of each invocation
    (`/inspire_task list`, or open the Kanban via
-   `node .inspire_kb/99_tracker/serve.mjs`). Known items in
-   `.inspire_kb/99_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
+   `node inspire_kb/99_tracker/serve.mjs`). Known items in
+   `inspire_kb/99_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
 7. **Actionable findings.** Every issue names the skill to invoke for the fix:
    - screen spec drift → `/inspire_screens`
    - Prototype drift → `/inspire_prototype`

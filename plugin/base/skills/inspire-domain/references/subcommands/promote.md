@@ -6,7 +6,7 @@ Walk lifecycle states forward. See [`lifecycle-rules.md`](../../../_references/l
 
 1. Resolve the action id and read its current `lifecycle:`.
 2. Refuse if the target state equals the current state, or if the target state is `superseded` without a `superseded_by:` pointer being provided or already present.
-3. Run the quality_lib gates that apply to the target state via `.claude/bin/review.sh`. Filter findings to those targeting this descriptor.
+3. Run the quality_lib gates that apply to the target state via `.inspire/bin/review.sh`. Filter findings to those targeting this descriptor.
    - **Error findings** → refuse promotion. Show the blockers. Operator fixes, then retries.
    - **Warning findings** → show them; ask "Promote anyway? [y/N]". On `N` → do not promote.
 4. Apply the `lifecycle:` change, write the file.

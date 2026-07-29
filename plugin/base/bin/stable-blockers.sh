@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/stable-blockers.sh
+# .inspire/bin/stable-blockers.sh
 #
 # Rule: every action at lifecycle: stable must have all `requires` targets
 # also at lifecycle: stable. Promotion is blocked otherwise.
@@ -7,8 +7,8 @@
 # Severity: error.
 #
 # Usage:
-#   .claude/bin/stable-blockers.sh                  # scan whole tree
-#   .claude/bin/stable-blockers.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/stable-blockers.sh                  # scan whole tree
+#   .inspire/bin/stable-blockers.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

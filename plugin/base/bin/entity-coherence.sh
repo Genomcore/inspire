@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/entity-coherence.sh
+# .inspire/bin/entity-coherence.sh
 #
 # Per-field rule (not per-entity) with three findings:
 #   - field-conflict     (error)   — same Field on same Entity declared

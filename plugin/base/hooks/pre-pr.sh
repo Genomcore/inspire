@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/hooks/pre-pr.sh
+# .claude/inspire/hooks/pre-pr.sh
 #
 # Routed check, not a registered hook. Invoked by dispatch.sh — never directly —
 # with the matched command string as $1; it does not read stdin. Matches
@@ -19,4 +19,4 @@
 set -uo pipefail
 PROJECT_ROOT="$(pwd -P)"   # dispatcher cd'd here
 
-"$PROJECT_ROOT/.claude/bin/review.sh" .inspire_kb/04_domain || exit 2
+"$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb/04_domain || exit 2

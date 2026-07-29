@@ -2,7 +2,7 @@
 
 This is the **horizontal prototype**: a wide, shallow, mocked working model of the
 **whole product**. It is real, runnable code and it lives here at the repo root
-(product side, not under `.inspire_kb/`) — one per project.
+(product side, not under `inspire_kb/`) — one per project.
 
 It answers *"is this the right thing to build?"* by making the shape of the system
 legible end to end, without real backends or production depth.
@@ -12,11 +12,11 @@ legible end to end, without real backends or production depth.
   ADRs and the design system. It keeps **no learnings file of its own**.
 - **Vertical spikes** (narrow, deep) live in **their own external repos**; their
   knowledge is brought home under
-  [`.inspire_kb/06_spikes/`](../.inspire_kb/06_spikes) (skill `inspire-spike`).
+  [`inspire_kb/06_spikes/`](../inspire_kb/06_spikes) (skill `inspire-spike`).
 
 > Template note: this folder starts empty (just this README). Scaffold the
 > horizontal prototype here when the project starts.
 >
 > Location is configurable: this is `prototype_root` (default `prototype/`) in
-> [`00_bootstrap/stack.md`](../.inspire_kb/00_bootstrap/stack.md). A project with no
+> [`00_bootstrap/stack.md`](../inspire_kb/00_bootstrap/stack.md). A project with no
 > horizontal prototype sets `prototype_root: none`, and this folder is not created.

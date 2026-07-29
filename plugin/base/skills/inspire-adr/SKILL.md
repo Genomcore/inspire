@@ -8,7 +8,7 @@ description: "ADR lifecycle for architectural decisions that span ≥2 modules: 
 ## Scope
 
 An **ADR** records an architectural decision that spans **≥2 modules**, stored in
-[`.inspire_kb/01_adr/`](../../../.inspire_kb/01_adr). This skill owns their full
+[`inspire_kb/01_adr/`](../../../inspire_kb/01_adr). This skill owns their full
 lifecycle. It does **not** run the global review — [`/inspire_workspace review`](../inspire-workspace/SKILL.md)
 checks that an ADR's consequences have actually propagated; this skill authors and
 advances the decisions themselves.
@@ -50,7 +50,7 @@ happens in chat before authoring.
   `adr-{slug}.md` for cross-cutting. Slug-only — no numeric prefix.
 - **Slug uniqueness:** unique within a prefix; cross-cutting slugs unique
   vault-wide.
-- **Location:** `.inspire_kb/01_adr/`.
+- **Location:** `inspire_kb/01_adr/`.
 - **Canonical ID:** the filename (without `.md`). The H1 is the human title.
 
 **Rationale.** Numeric prefixes collide under parallel work (two branches grab the
@@ -93,7 +93,7 @@ What follows — positive and negative. Include breaking changes.
 1. **Ask** the user: short title, modules affected, context, the decision, key
    consequences, alternatives considered.
 2. **Write the ADR file** at the computed path.
-3. **Update `.inspire_kb/01_adr/_index.md`** — add a row to the appropriate module
+3. **Update `inspire_kb/01_adr/_index.md`** — add a row to the appropriate module
    section (or Transversales for cross-cutting).
 4. **Propose ADR references** in the feature files that should link to it: list
    files to edit, wait for approval.
@@ -133,8 +133,8 @@ via `create`).
 1. Verify both ADRs exist (the old one at any non-terminal maturity).
 2. Update the old ADR: `**Status:** superseded by [[{new-id}]]`.
 3. Update the new ADR's header: `Supersedes: [[{old-id}]]`.
-4. Grep `.inspire_kb/` for references to the old ADR; propose updates.
-5. Update `.inspire_kb/01_adr/_index.md` (move the old entry to the superseded
+4. Grep `inspire_kb/` for references to the old ADR; propose updates.
+5. Update `inspire_kb/01_adr/_index.md` (move the old entry to the superseded
    section).
 
 ## Rules

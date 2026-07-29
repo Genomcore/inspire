@@ -1,12 +1,12 @@
-# `.claude/bin/` — SDD Validation Library
+# `.inspire/bin/` — SDD Validation Library
 
 Source of truth for what "review" means in the SDD layer. Shell scripts that
-read filesystem state under `.inspire_kb/04_domain/`, parse `.md` frontmatter, evaluate
+read filesystem state under `inspire_kb/04_domain/`, parse `.md` frontmatter, evaluate
 rules, and emit structured findings.
 
 Two consumers wrap this library:
 
-- **Hooks** (`.claude/hooks/*.sh`) call these scripts at tool-call time
+- **Hooks** (`.claude/inspire/hooks/*.sh`) call these scripts at tool-call time
   via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
   `git commit`, `pre-pr.sh` on `gh pr create`.
 - **Skills** invoke them via the `Bash` tool inside conversational
@@ -62,7 +62,7 @@ The library implements the **quality gate** (per D24 in the SDD V3 reframe adden
 Findings are emitted to **stderr** as JSON lines (one finding per line):
 
 ```json
-{"severity":"error","rule":"entity-coherence","target":".inspire_kb/04_domain/auth/user/auth.user.create.md","message":"..."}
+{"severity":"error","rule":"entity-coherence","target":"inspire_kb/04_domain/auth/user/auth.user.create.md","message":"..."}
 ```
 
 Severity is one of `error` (blocking) or `warning` (advisory).
@@ -74,19 +74,19 @@ they want to format findings for conversational presentation).
 
 ## Scope
 
-The library targets action descriptors under `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` and the per-entity documents at `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` (one fewer dotted segment than the action filenames — the segment count is how discovery distinguishes them). Surface bindings (HTTP routes, CLI commands, MCP tools) live in surface-binding artifacts owned by their respective modules and are not produced by anything in this library.
+The library targets action descriptors under `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` and the per-entity documents at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` (one fewer dotted segment than the action filenames — the segment count is how discovery distinguishes them). Surface bindings (HTTP routes, CLI commands, MCP tools) live in surface-binding artifacts owned by their respective modules and are not produced by anything in this library.
 
 ## Manual invocation
 
 ```bash
 # Run the full review on the whole workspace
-.claude/bin/review.sh
+.inspire/bin/review.sh
 
 # Run a single rule
-.claude/bin/entity-coherence.sh
+.inspire/bin/entity-coherence.sh
 
 # Scope to a single module
-.claude/bin/review.sh .inspire_kb/04_domain/auth
+.inspire/bin/review.sh inspire_kb/04_domain/auth
 ```
 
 Scripts read from the **current working directory** as the repo root. Run

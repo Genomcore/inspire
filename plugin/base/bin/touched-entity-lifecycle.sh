@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/bin/touched-entity-lifecycle.sh
+# .inspire/bin/touched-entity-lifecycle.sh
 #
 # Rule: every action at lifecycle: stable must touch only entities whose
 # own lifecycle is >= accepted. Promotion gating is one-directional:
@@ -13,8 +13,8 @@
 # Severity: error (blocker).
 #
 # Usage:
-#   .claude/bin/touched-entity-lifecycle.sh                  # scan whole tree
-#   .claude/bin/touched-entity-lifecycle.sh .inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/touched-entity-lifecycle.sh                  # scan whole tree
+#   .inspire/bin/touched-entity-lifecycle.sh inspire_kb/04_domain/auth    # scoped scan
 
 set -uo pipefail
 

@@ -16,7 +16,7 @@ description: "Create and validate screens (a screen is the UI spec for one view)
 
 ## Architecture
 
-Four levels under `.inspire_kb/05_screens/`:
+Four levels under `inspire_kb/05_screens/`:
 
 | Level | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|
@@ -248,7 +248,7 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 10. **Validate before merge** — run `/inspire_module review` before any PR that
     modifies screen spec files.
 11. **Respect accepted UX ADRs.** Screens must not contradict an accepted UX
-    decision in `.inspire_kb/01_adr/`; flag any that do. (Project-specific screen
+    decision in `inspire_kb/01_adr/`; flag any that do. (Project-specific screen
     conventions live in `patterns/` + `design-system.md`, not in this skill.)
 12. **Propagation check after spec edits.** Ask the user before ending the turn
     whether to propagate visible UI changes to the prototype.

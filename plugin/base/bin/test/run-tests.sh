@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# .claude/bin/test/run-tests.sh — run quality_lib rules against fixtures
+# plugin/base/bin/test/run-tests.sh — run quality_lib rules against fixtures
 #
 # Usage:
-#   .claude/bin/test/run-tests.sh                # run all tests
-#   .claude/bin/test/run-tests.sh <rule-name>    # run tests for one rule
+#   plugin/base/bin/test/run-tests.sh                # run all tests
+#   plugin/base/bin/test/run-tests.sh <rule-name>    # run tests for one rule
 #
-# Each fixture lives at .claude/bin/test/fixtures/{rule}/{scenario}/
+# Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
 #   - spec/sdd/...  the test SDD tree to scan
 #   - expect.json   { "exit": N, "findings": [{rule, target_glob, message_substring}, ...] }
@@ -16,7 +16,6 @@ set -uo pipefail
 shopt -s nullglob
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 BIN_DIR="$SCRIPT_DIR/.."
 

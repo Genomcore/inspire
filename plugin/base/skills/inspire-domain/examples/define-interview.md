@@ -7,7 +7,7 @@ operator: /inspire_domain define auth::user::create
 
 agent:    [Step 0 — authoring context: fresh authoring of an action.
            Step 1 — reads references/interview-prompts-action.md.
-           Grounds: reads .inspire_kb/02_modules/auth.md, finds the feature
+           Grounds: reads inspire_kb/02_modules/auth.md, finds the feature
            row; reads adr-auth-01]
           "Got it — this is the user-provisioning entry point. Looking at the
            feature it sources from [[adr-auth-01-identity-model]] and the
@@ -38,7 +38,7 @@ agent:    [updates the descriptor, showing the change as a unified diff]
 
 operator: "Yes, write it."
 
-agent:    [writes .inspire_kb/04_domain/auth/user/auth.user.create.md]
+agent:    [writes inspire_kb/04_domain/auth/user/auth.user.create.md]
           "Done. Now reconciling the auth::user entity document —
            refreshing its Fields + Touched by tables from every action
            that touches it. Show you the diff before writing?"
@@ -62,10 +62,10 @@ agent:    [shows the auth.user.md diff, waits for ok, writes]
 ```
 operator: "Also track the last successful login on the user."
 
-agent:    [updates .inspire_kb/04_domain/auth/user/auth.user.create.md — adds a
+agent:    [updates inspire_kb/04_domain/auth/user/auth.user.create.md — adds a
            `last_login_at` row to its ## Entities field-touch table with
            effect: written, mapping `null` (set later by sign-in flow)]
-          [updates .inspire_kb/04_domain/auth/user/auth.user.md — adds `last_login_at`
+          [updates inspire_kb/04_domain/auth/user/auth.user.md — adds `last_login_at`
            to ## Fields and surfaces the rationale prompt]
           "Added `last_login_at` (timestamp, nullable) to both files. The
            entity doc's rationale needs a line on why this lives on

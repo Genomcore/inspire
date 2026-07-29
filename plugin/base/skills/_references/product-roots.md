@@ -2,7 +2,7 @@
 
 Two locations on the **product side** are configurable per project, declared in the
 frontmatter of
-[`00_bootstrap/stack.md`](../../../.inspire_kb/00_bootstrap/stack.md):
+[`00_bootstrap/stack.md`](../../../inspire_kb/00_bootstrap/stack.md):
 
 | Field | Points at | Default | Owner skill |
 |-------|-----------|---------|-------------|

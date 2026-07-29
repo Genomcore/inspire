@@ -1,6 +1,6 @@
 # Lessons — on-disk format
 
-Lessons live as **one file per lesson** under `.inspire_kb/98_lessons/`, and they are
+Lessons live as **one file per lesson** under `inspire_kb/98_lessons/`, and they are
 **write-once**: created once, never edited. The `.md` files are the only source of
 truth — no generated index, no mutable status. "Already processed" is not a field a
 fork toggles; it is decided centrally by the observer's date cursor (see *Sweeping by
@@ -8,8 +8,8 @@ date*).
 
 ## Storage layout & naming
 
-- `.inspire_kb/98_lessons/YYYYMMDD_<slug>.md` — one node per lesson, flat.
-- `.inspire_kb/98_lessons/archive/YYYYMMDD_<slug>.md` — lessons the base has since
+- `inspire_kb/98_lessons/YYYYMMDD_<slug>.md` — one node per lesson, flat.
+- `inspire_kb/98_lessons/archive/YYYYMMDD_<slug>.md` — lessons the base has since
   learned (moved here by an update; see *Archive*). Same naming, same write-once rule.
 
 The filename **starts with the capture date** (`YYYYMMDD`) so the org-wide sweep can

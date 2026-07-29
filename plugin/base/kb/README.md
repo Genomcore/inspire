@@ -1,4 +1,4 @@
-# `.inspire_kb` — the INSPIRE knowledge base
+# `inspire_kb` — the INSPIRE knowledge base
 
 The project's **navigable knowledge graph**. This is where intent lives: what
 the product is, why it's shaped the way it is, and what "correct" means — the

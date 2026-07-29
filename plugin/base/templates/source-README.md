@@ -7,16 +7,16 @@ the horizontal prototype at [`/prototype`](../prototype).
 It is the last layer in the INSPIRE flow: intent and contracts are worked out in
 the knowledge base and de-risked in prototypes, then **realized here**.
 
-- Driven by the KB: features ([`.inspire_kb/03_features`](../.inspire_kb/03_features)),
-  specs ([`.inspire_kb/04_domain`](../.inspire_kb/04_domain)) and screen specs
-  ([`.inspire_kb/05_screens`](../.inspire_kb/05_screens)) define *what* to build and what
+- Driven by the KB: features ([`inspire_kb/03_features`](../inspire_kb/03_features)),
+  specs ([`inspire_kb/04_domain`](../inspire_kb/04_domain)) and screen specs
+  ([`inspire_kb/05_screens`](../inspire_kb/05_screens)) define *what* to build and what
   "correct" means; the shared tech context lives in
-  [`.inspire_kb/00_bootstrap`](../.inspire_kb/00_bootstrap).
+  [`inspire_kb/00_bootstrap`](../inspire_kb/00_bootstrap).
 - Informed by prototypes: what the horizontal prototype clarified (now in the
-  specs) and what the external spikes de-risked ([`.inspire_kb/06_spikes`](../.inspire_kb/06_spikes))
+  specs) and what the external spikes de-risked ([`inspire_kb/06_spikes`](../inspire_kb/06_spikes))
   flows into the design before it's built here.
 - Governed by ADRs: an ADR reaches `implemented` maturity
-  ([`.inspire_kb/01_adr`](../.inspire_kb/01_adr)) when it is realized in this
+  ([`inspire_kb/01_adr`](../inspire_kb/01_adr)) when it is realized in this
   codebase — the point at which the decision becomes immutable (supersede to
   change).
 
@@ -25,6 +25,6 @@ the knowledge base and de-risked in prototypes, then **realized here**.
 > docs — when the project moves from prototype to build.
 >
 > Location is configurable: this is `source_root` (default `source/`) in
-> [`00_bootstrap/stack.md`](../.inspire_kb/00_bootstrap/stack.md). A brownfield project
+> [`00_bootstrap/stack.md`](../inspire_kb/00_bootstrap/stack.md). A brownfield project
 > installing in place sets `source_root: .` (the repo root is the code), and this
 > folder is not created.

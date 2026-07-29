@@ -2,7 +2,7 @@
 
 The format spec for entity documents. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An entity document lives at `.inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — one fewer dotted segment than the action filenames sharing the directory. Segment count is what tells the tooling the two object kinds apart.
+An entity document lives at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — one fewer dotted segment than the action filenames sharing the directory. Segment count is what tells the tooling the two object kinds apart.
 
 The entity document is a **design-discipline artefact** — it captures *why* this entity exists as a discrete object and *what motivates* its field shape — not a thin projection of the actions that touch it.
 
@@ -88,7 +88,7 @@ Entity documents carry a `lifecycle:` frontmatter field with the **same 4-state 
 
 The touch graph is **bipartite** (actions ↔ entities only) and therefore cycle-free by construction — cross-object cycles cannot form, so the gate is a simple per-action scan rather than a transitive walk. The action-to-action `requires:` graph is governed separately by `acyclic-deps` + `stable-blockers`.
 
-Tooling: the gate is enforced by `.claude/bin/touched-entity-lifecycle.sh` (severity: error), wired into `review.sh`'s default rule list. The rule scans every `lifecycle: stable` action, resolves each touched entity id (colon form, e.g. `auth::user`) to its entity document on disk, and emits a finding if the document's `lifecycle:` is below `accepted` (or the document is missing). It does **not** apply to draft or accepted actions — those may touch entities at any lifecycle, including `draft`.
+Tooling: the gate is enforced by `.inspire/bin/touched-entity-lifecycle.sh` (severity: error), wired into `review.sh`'s default rule list. The rule scans every `lifecycle: stable` action, resolves each touched entity id (colon form, e.g. `auth::user`) to its entity document on disk, and emits a finding if the document's `lifecycle:` is below `accepted` (or the document is missing). It does **not** apply to draft or accepted actions — those may touch entities at any lifecycle, including `draft`.
 
 ## Wikilink convention
 

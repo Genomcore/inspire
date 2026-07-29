@@ -54,7 +54,7 @@ the local fix, the lesson carries the durable instruction and links back with
 ## Distillation
 
 Consumption is always a **pull from above**: an external observer pulls the org's forks
-and reads the raw `**/.inspire_kb/98_lessons/*.md` (plus each fork's `.inspire.lock` for
+and reads the raw `**/inspire_kb/98_lessons/*.md` (plus each fork's `.inspire.lock` for
 its version), clusters the lessons by skill and theme, and feeds the patterns into
 INSPIRE core's own ADRs / tracker for the next release — *not necessarily literally*.
 Because lessons are write-once and date-prefixed, the pull keeps a **date cursor** and

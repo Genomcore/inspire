@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .claude/hooks/pre-commit.sh
+# .claude/inspire/hooks/pre-commit.sh
 #
 # Routed check, not a registered hook. Invoked by dispatch.sh — never directly —
 # with the matched command string as $1; it does not read stdin. Matches
@@ -25,14 +25,14 @@ PROJECT_ROOT="$(pwd -P)"   # dispatcher cd'd here
 
 # Staged SDD spec files.
 staged_files=$(git diff --cached --name-only 2>/dev/null \
-  | grep -E '^.inspire_kb/04_domain/.+\.md$' \
+  | grep -E '^inspire_kb/04_domain/.+\.md$' \
   || true)
 
 [ -z "$staged_files" ] && exit 0
 
-# Affected modules — top-level dirs under .inspire_kb/04_domain/ that hold a staged file.
-# e.g. .inspire_kb/04_domain/auth/user/create.md → .inspire_kb/04_domain/auth
-# cut -d/ -f1-3 yields ".inspire_kb/04_domain/{module}" for files under .inspire_kb/04_domain/.
+# Affected modules — top-level dirs under inspire_kb/04_domain/ that hold a staged file.
+# e.g. inspire_kb/04_domain/auth/user/create.md → inspire_kb/04_domain/auth
+# cut -d/ -f1-3 yields "inspire_kb/04_domain/{module}" for files under inspire_kb/04_domain/.
 modules=$(echo "$staged_files" | cut -d/ -f1-3 | sort -u)
 modules_pattern=$(echo "$modules" | tr '\n' '|' | sed 's/|$//')
 
@@ -42,11 +42,11 @@ modules_pattern=$(echo "$modules" | tr '\n' '|' | sed 's/|$//')
 findings_file=$(mktemp)
 trap 'rm -f "$findings_file"' EXIT
 SDD_REVIEW_RULES="acyclic-deps.sh stable-blockers.sh" \
-  "$PROJECT_ROOT/.claude/bin/review.sh" .inspire_kb/04_domain 2>"$findings_file" >/dev/null || true
+  "$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb/04_domain 2>"$findings_file" >/dev/null || true
 
 # Filter to error findings whose target is inside a staged module.
-# Targets are paths under .inspire_kb/04_domain/{module}/...; the pattern matches the
-# module prefix extracted above (e.g. ".inspire_kb/04_domain/auth").
+# Targets are paths under inspire_kb/04_domain/{module}/...; the pattern matches the
+# module prefix extracted above (e.g. "inspire_kb/04_domain/auth").
 relevant=$(jq -c --arg pat "^($modules_pattern)/" '
   select(.severity == "error" and (.target | test($pat)))
 ' "$findings_file" 2>/dev/null)

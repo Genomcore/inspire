@@ -91,7 +91,7 @@ you believe is wrong — surface the disagreement.
 This skill is stack-agnostic; a **stack profile** layers a framework's concrete
 conventions onto its generic dimensions. At the start of any subcommand, resolve
 the active profile set from
-[`00_bootstrap/stack.md`](../../../.inspire_kb/00_bootstrap/stack.md):
+[`00_bootstrap/stack.md`](../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
    use that set.

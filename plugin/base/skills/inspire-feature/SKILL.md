@@ -8,7 +8,7 @@ description: "Lifecycle of a feature / use case: create / review / update / dele
 ## Scope
 
 A **feature** is a use case, captured as a file
-`.inspire_kb/03_features/{module}/{use-case}.md` and indexed in that module's hub
+`inspire_kb/03_features/{module}/{use-case}.md` and indexed in that module's hub
 `02_modules/{module}.md`. This skill owns feature-scoped operations and their propagation
 across the KB layers: screens (`05_screens`), prototype (`/prototype`),
 specs (`04_domain`), and ADRs (`01_adr`).
@@ -30,10 +30,10 @@ specs (`04_domain`), and ADRs (`01_adr`).
 Reviews one feature across all layers. Runs inline (no agents).
 
 1. **Locate the feature.** Find the use-case file in
-   `.inspire_kb/03_features/{module}/`. Read: description, actor/personas,
+   `inspire_kb/03_features/{module}/`. Read: description, actor/personas,
    dependencies, priority, state, ADRs referenced. Identify the module from the
    folder.
-2. **screen spec coverage.** In `.inspire_kb/05_screens/{module}/`, search each screen's
+2. **screen spec coverage.** In `inspire_kb/05_screens/{module}/`, search each screen's
    `**Features:**` line for this feature ID; cross-reference the screen spec `_index.md`
    coverage table. Flag if no screen covers a UI-facing feature; note "No UI
    expected" for backend/infrastructure features.
@@ -42,7 +42,7 @@ Reviews one feature across all layers. Runs inline (no agents).
    adoption, hardcoded data, ADR gaps). Insights land in the specs / screens / ADRs,
    not a prototype learnings file.
 4. **Specs (SDD) coverage.** Find action descriptors whose `## Why` wikilinks back
-   to this feature. Search `.inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
+   to this feature. Search `inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
    one-line `## Why` summary.
 5. **ADR alignment.** If the feature references an ADR (`[[adr-xxx]]`), verify it
@@ -128,7 +128,7 @@ feature or one module's features:
 2. **Candidate surfacing + narrowing** — read the feature file, infer the actions
    that would realize it (most features map to 1–3), apply plural→singular
    canonicalization on action ids silently, check whether each already exists at
-   `.inspire_kb/04_domain/{module}/{entity}/{action}.md`, and dialogue with the
+   `inspire_kb/04_domain/{module}/{entity}/{action}.md`, and dialogue with the
    operator to pick a set. One focused question at a time; follow the
    conversational conventions of [`/inspire_domain`](../inspire-domain/SKILL.md).
 3. **Chained authoring** (only on an explicit "start" signal) — create one
@@ -136,7 +136,7 @@ feature or one module's features:
    `/inspire_domain define {id}` via the Skill tool; `inspire-domain` runs its
    socratic interview and may co-evolve the action + entity documents in one flow.
 
-Scan is read-only with respect to `.inspire_kb/04_domain/`; authoring lives in
+Scan is read-only with respect to `inspire_kb/04_domain/`; authoring lives in
 `/inspire_domain`. Pure exploration leaves no tasks created. **Batch mode**
 (`scan {module}`) expands this over every feature in the module's hub `02_modules/{module}.md`.
 
@@ -152,13 +152,13 @@ implemented but realizing actions still `lifecycle: draft`). Render via
 Create a new feature/use-case file in a module. **Required arg:**
 `{module}/{feature-id}` (e.g. `ai-agents/AIA-08`).
 
-1. **Verify** the module exists (`.inspire_kb/02_modules/{module}.md`).
+1. **Verify** the module exists (`inspire_kb/02_modules/{module}.md`).
 2. **Ask** the user: name, description (2–5 sentences), actor/personas,
    dependencies (other feature IDs), priority (Core / Important / Nice-to-have),
    state (🟡 Planned default), ADRs to reference.
 3. **Run the acceptance-criteria quality gate** (below) on the criteria before
    writing, then **create the use-case file**
-   `.inspire_kb/03_features/{module}/{feature-id}.md` from the template below.
+   `inspire_kb/03_features/{module}/{feature-id}.md` from the template below.
 4. **Update the module hub** (`02_modules/{module}.md`) — add the row to its
    use-case index and fix the totals.
 5. **Report next steps:**
@@ -181,7 +181,7 @@ dependencies, promoting priority, changing state
 2. Present a diff proposal to the user. If the `## Acceptance criteria` change, run
    them through the acceptance-criteria quality gate (below) before proposing.
 3. On approval, apply it.
-4. If renamed: update the module hub `02_modules/{module}.md`, and grep `.inspire_kb/` (and any
+4. If renamed: update the module hub `02_modules/{module}.md`, and grep `inspire_kb/` (and any
    project code) for references to the old ID and offer fixes.
 5. Run `review {feature-id}` to verify no drift.
 
@@ -191,19 +191,19 @@ Remove a feature and clean up all references.
 
 1. **Confirm** with the user: list every file touching this feature.
 2. Delete the use-case file
-   (`.inspire_kb/03_features/{module}/{feature-id}.md`).
+   (`inspire_kb/03_features/{module}/{feature-id}.md`).
 3. Remove its row from the module hub `02_modules/{module}.md` and fix the totals.
 4. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
    screen's only feature was this one, flag it for removal (that's `/inspire_screens`'s
    job) and update the screen spec `_index.md` coverage table.
 5. **Prototype:** remove references in `/prototype`; note any
-   `.inspire_kb/06_spikes/` entry that referenced this feature.
-6. **ADRs:** grep `.inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
+   `inspire_kb/06_spikes/` entry that referenced this feature.
+6. **ADRs:** grep `inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
    may need an ADR update.
 
 ## Use case template
 
-Use this template at `.inspire_kb/03_features/{module}/{feature-id}.md`:
+Use this template at `inspire_kb/03_features/{module}/{feature-id}.md`:
 
 ```markdown
 # {FEATURE-ID}: {Feature Name}
@@ -292,7 +292,7 @@ depends on a behavioral contract, chain to `/inspire_domain`.
 8. **Batch synthesis.** In batch review, identify patterns and produce a
    prioritized correction plan grouped by fix skill.
 9. **Consult the task tracker** (`/inspire_task list`, or
-   `node .inspire_kb/99_tracker/serve.mjs`) for tracked drift; don't re-surface it
+   `node inspire_kb/99_tracker/serve.mjs`) for tracked drift; don't re-surface it
    as new.
 10. **Acceptance criteria pass the quality gate before they land.** `create` and
     `update` run the gate above; criteria that can't be made testable signal a
