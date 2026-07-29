@@ -15,7 +15,7 @@ proj="$(mktemp -d)/proj"; mkdir -p "$proj"
 # Pre-existing user content that must survive — the regression this replaces.
 mkdir -p "$proj/.claude/skills/my-own-skill"
 printf -- '---\ndescription: mine\n---\nbody\n' > "$proj/.claude/skills/my-own-skill/SKILL.md"
-printf '{"permissions":{"allow":["Bash(ls:*)"]}}\n' > "$proj/.claude/settings.json"
+printf '{"permissions":{"allow":["Bash(ls:*)"]},"enabledPlugins":{"other@thing":true}}\n' > "$proj/.claude/settings.json"
 
 out="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
         --source-root source --prototype-root prototype --declare-marketplace 2>/dev/null)"
@@ -34,6 +34,9 @@ check "marker present"                "grep -q INSPIRE-MANAGED '$proj/.claude/se
 check "one PreToolUse command"        "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
 check "marketplace declared"          "jq -e '.extraKnownMarketplaces.inspire' '$proj/.claude/settings.json' >/dev/null"
 check "settings still parses"         "jq -e . '$proj/.claude/settings.json' >/dev/null"
+check "enabledPlugins is a record"      "[ \"\$(jq -r '.enabledPlugins|type' '$proj/.claude/settings.json')\" = object ]"
+check "enabledPlugins names the plugin" "jq -e '.enabledPlugins[\"inspire@inspire\"] == true' '$proj/.claude/settings.json' >/dev/null"
+check "foreign enabledPlugins survive"  "jq -e '.enabledPlugins[\"other@thing\"] == true' '$proj/.claude/settings.json' >/dev/null"
 check "lock version 0.3.0"            "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = 0.3.0 ]"
 check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.lock' >/dev/null"
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"

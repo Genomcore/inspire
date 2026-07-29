@@ -387,7 +387,7 @@ merge_settings() {
     | .hooks.PreToolUse  += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
     | if $declare_marketplace then
         .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + { inspire: { source: { source: "github", repo: $repo_slug } } })
-        | .enabledPlugins = (((.enabledPlugins // []) + ["inspire@inspire"]) | unique)
+        | .enabledPlugins = ((.enabledPlugins // {}) + { "inspire@inspire": true })
       else . end
     ')"
 
