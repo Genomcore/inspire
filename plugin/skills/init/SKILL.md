@@ -24,9 +24,6 @@ committed, the runtime travels with the repo: teammates and CI need no plugin.
 
 Record, before writing anything:
 
-- `PRESET_SKILLS` — whether `.claude/skills/` already exists. This decides the handoff in
-  Step 4, because Claude Code cannot watch a top-level skills directory created after the
-  session started.
 - `BROWNFIELD` — whether the repo has code already. Heuristic: any of `package.json`,
   `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile` at root, or a `src/`
   directory. Used only to recommend roots in Step 2.
@@ -76,30 +73,24 @@ says it did, never what you assume it did.
 
 ## Step 4 — Report, and hand off
 
-Print what was created, then the next step — which depends on `PRESET_SKILLS` from Step 1:
-
-**If `.claude/skills/` did not pre-exist** (the common greenfield case), the newly
-materialized skills are **not available in this session**: Claude Code watches skill
-directories for changes, but *"creating a top-level skills directory that did not exist
-when the session started requires restarting Claude Code."* So print:
+Print what was created, then:
 
 ```
 INSPIRE 0.3.0 installed.
 
-  Restart Claude Code, then run:  /inspire_bootstrap init
+  Run:  /reload-skills
+  Then: /inspire_bootstrap init
 
-  (The skills directory was just created, so this session cannot see it yet.)
+  (/reload-skills picks up the newly materialized skills; /inspire_bootstrap init
+  fills in CLAUDE.md's placeholders and starts the KB.)
 ```
 
-Do **not** attempt to invoke `/inspire_bootstrap init` via the Skill tool here — it will
-fail, because the skill does not exist as far as this session is concerned.
+Do not invoke `/reload-skills` or `/inspire_bootstrap init` on the operator's behalf —
+`/reload-skills` is the operator's action, and chaining `/inspire_bootstrap init` across it
+would run against whatever skill state existed before the reload. Instruct, don't chain.
 
-**If `.claude/skills/` did pre-exist**, the materialized files load live. Offer the chain
-with `AskUserQuestion`: run `/inspire_bootstrap init` now, or later. On "now", invoke it
-with the Skill tool.
-
-Either way, remind the operator to **commit** the result — that is what makes the runtime
-available to teammates and CI.
+Remind the operator to **commit** the result — that is what makes the runtime available to
+teammates and CI.
 
 ## Rules
 
@@ -114,5 +105,5 @@ available to teammates and CI.
    non-zero exit from the script is a stop, not something to patch up by hand.
 4. **This skill does not author content.** Language, stack, theme and the project README
    belong to `/inspire_bootstrap init`.
-5. **Never invoke `/inspire_bootstrap init` via the Skill tool after a greenfield init** —
-   the skill is not loadable until the session restarts. Print the instruction instead.
+5. **Instruct, don't chain.** Report the handoff and stop; `/reload-skills` and
+   `/inspire_bootstrap init` are the operator's next actions, not this skill's.
