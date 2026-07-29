@@ -5,10 +5,14 @@
 #
 # Release-identity guard for the INSPIRE TEMPLATE REPO ITSELF. If a change
 # touches the runtime under plugin/, then plugin/.claude-plugin/plugin.json's
-# `version` must change in the same branch. Without this, a runtime state
-# ships under a version string that already names a different one — which is
-# what happened between 2fa511b (#5) and d41fd89 (#6), leaving 0.1.0 naming
-# two runtimes while every fork wrote the same .inspire.lock value regardless.
+# `version` must move FORWARD — strictly above the base version, and not a
+# value some earlier release already tagged — in the same branch. A merely
+# *different* string is not enough: 0.3.0 → 0.2.9, or reverting to an
+# already-released 0.2.1, would satisfy an inequality while still shipping a
+# runtime state under a version string that already names a different one —
+# which is what happened between 2fa511b (#5) and d41fd89 (#6), leaving 0.1.0
+# naming two runtimes while every fork wrote the same .inspire.lock value
+# regardless.
 #
 # WHY THIS LIVES IN .claude/ AND NOT plugin/
 #   plugin/ is the SEED — /inspire:init materializes it into a fork's
@@ -40,7 +44,7 @@ EXEMPT_RE="^plugin/(\.claude-plugin/plugin\.json|base/bin/test/.*|test/.*)$"
 
 # Prints the failure report on stdout; returns 0 pass / 1 fail.
 check_versions() {
-  local base="$1" head="$2" changed runtime_changed base_version head_version
+  local base="$1" head="$2" changed runtime_changed base_version head_version highest
 
   changed="$(git diff --name-only "$base" "$head" -- plugin/ 2>/dev/null)"
   runtime_changed="$(printf '%s\n' "$changed" | grep -vE "$EXEMPT_RE" | grep -E '^plugin/.' || true)"
@@ -58,29 +62,82 @@ check_versions() {
     return 1
   fi
 
-  if [ "$base_version" != "$head_version" ]; then
-    echo "✓ runtime changed and version bumped: ${base_version:-<none>} → $head_version"
+  # A tagged version has shipped — forks that installed it already recorded
+  # it as their provenance. Checked before the base_version-empty branch
+  # below: a newly-added manifest naming an already-tagged version is still
+  # wrong, even though there is nothing yet to compare it against.
+  if git rev-parse -q --verify "refs/tags/v$head_version" >/dev/null 2>&1; then
+    {
+      echo ""
+      echo "Version v$head_version is already tagged — blocking the PR."
+      echo ""
+      echo "  $MANIFEST version: $head_version"
+      echo ""
+      echo "  Changed runtime files:"
+      printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
+      echo ""
+      echo "  A tagged version has shipped; reusing it would let two different"
+      echo "  runtime states share one version string, and forks that already"
+      echo "  installed v$head_version have recorded it as their provenance."
+      echo ""
+      echo "  Bump \`version\` to a new, untagged value (semver) in $MANIFEST."
+      echo ""
+    }
+    return 1
+  fi
+
+  if [ -z "$base_version" ]; then
+    echo "✓ runtime changed and version bumped: <none> → $head_version"
     return 0
   fi
 
-  {
-    echo ""
-    echo "Runtime changed without a version bump — blocking the PR."
-    echo ""
-    echo "  $MANIFEST version is still: $head_version"
-    echo ""
-    echo "  Changed runtime files:"
-    printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
-    echo ""
-    echo "  Bump \`version\` (semver) and \`released\` (YYYY-MM-DD) in $MANIFEST."
-    echo "  /inspire:init freezes these into a fork's .inspire.lock and inspire-lesson"
-    echo "  stamps them onto every lesson, so a version naming two different runtime"
-    echo "  states breaks fork provenance."
-    echo ""
-    echo "  On merge, tag the result \"v<version>\" and publish a release."
-    echo ""
-  }
-  return 1
+  if [ "$base_version" = "$head_version" ]; then
+    {
+      echo ""
+      echo "Runtime changed without a version bump — blocking the PR."
+      echo ""
+      echo "  $MANIFEST version is still: $head_version"
+      echo ""
+      echo "  Changed runtime files:"
+      printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
+      echo ""
+      echo "  Bump \`version\` (semver) and \`released\` (YYYY-MM-DD) in $MANIFEST."
+      echo "  /inspire:init freezes these into a fork's .inspire.lock and inspire-lesson"
+      echo "  stamps them onto every lesson, so a version naming two different runtime"
+      echo "  states breaks fork provenance."
+      echo ""
+      echo "  On merge, tag the result \"v<version>\" and publish a release."
+      echo ""
+    }
+    return 1
+  fi
+
+  # A version must move FORWARD. `!=` would accept 0.3.0 → 0.2.9, which is
+  # the same provenance corruption this guard exists to prevent: one version
+  # naming two runtimes.
+  highest="$(printf '%s\n%s\n' "$base_version" "$head_version" | sort -V | tail -1)"
+  if [ "$highest" != "$head_version" ]; then
+    {
+      echo ""
+      echo "Version went backwards — blocking the PR."
+      echo ""
+      echo "  $MANIFEST version: $base_version → $head_version"
+      echo ""
+      echo "  Changed runtime files:"
+      printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
+      echo ""
+      echo "  A runtime version must move forward, never back — reverting the"
+      echo "  string lets two different runtime states share one name, which is"
+      echo "  the exact corruption this guard exists to prevent."
+      echo ""
+      echo "  Bump \`version\` above $base_version (semver) in $MANIFEST."
+      echo ""
+    }
+    return 1
+  fi
+
+  echo "✓ runtime changed and version bumped: $base_version → $head_version"
+  return 0
 }
 
 # ---- self-test mode -------------------------------------------------------
