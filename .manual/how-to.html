@@ -110,7 +110,7 @@
       <div class="steps">
         <div class="step reveal d1">
           <h4>Install the runtime</h4>
-          <p>Add the marketplace and install the plugin — <code>/plugin marketplace add Genomcore/inspire</code>, <code>/plugin install inspire@inspire</code>, <code>/reload-plugins</code> — then run <code>/inspire:init</code> in the repo you want to govern. It materializes the skills, validators and hooks into <code>.claude/</code> and <code>.inspire/</code>, wires the git hooks and writes <code>.inspire.lock</code>. Finish with <code>/reload-skills</code> (no restart needed) and <code>/inspire_bootstrap init</code>. It's non-destructive — <code>/inspire:update</code> re-materializes newer versions later without clobbering local edits.</p>
+          <p>Add the marketplace, install, reload — <code>/plugin marketplace add Genomcore/inspire</code>, <code>/plugin install inspire@inspire</code>, <code>/reload-plugins</code> — then, in the target repo, <code>/inspire:init</code>, <code>/reload-skills</code>, <code>/inspire_bootstrap init</code>.</p>
         </div>
         <div class="step reveal d2">
           <h4>Invoke a skill</h4>

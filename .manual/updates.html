@@ -107,6 +107,7 @@
         <h2>An update rebuilds. It never merges line-by-line.</h2>
         <p>Skills are natural language, not code — a textual three-way merge can stitch two edits together into a skill that reads fine and means the wrong thing. So an update takes the new base and re-applies your surviving lessons onto it, from scratch.</p>
       </div>
+      <p class="note reveal d2"><b><code>/inspire:update</code> ships now.</b> It handles the deterministic half — comparing versions, detecting drift against <code>.inspire.lock</code>, and re-materializing what you haven't locally edited — and refuses to overwrite a drifted file, handing you the paths and a <code>diff</code> instead so nothing local is silently clobbered. The lesson re-derivation below — classifying each lesson against the new base and rebuilding the skill — is the semantic half, and it isn't built yet.</p>
       <div class="steps">
         <div class="step reveal d1">
           <h4>Fetch a pinned release</h4>
