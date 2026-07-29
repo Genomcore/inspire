@@ -26,7 +26,9 @@ Read `inspire_version` from `.inspire.lock` and `version` from
 
 - Equal → report "already at <version>; nothing to do" and stop.
 - Plugin older than the lock → the operator has an older plugin than the project was
-  built from. Report both versions and stop; do not downgrade silently.
+  built from. Report both versions and stop; do not downgrade silently. Tell them what
+  to do about it: update the plugin itself (`/plugin update inspire`, or refresh the
+  marketplace) until it is at least the lock's version, then re-run `/inspire:update`.
 - Plugin newer → continue.
 
 ## Step 2 — Drift check
@@ -108,6 +110,16 @@ never re-asks; those were settled at init and changing them is a Shape change ow
 `/inspire_bootstrap stack`.
 
 Run with `--dry-run` first if the operator wants to see the exact file list before writing.
+
+**On failure:** if the script exits non-zero, report its stderr verbatim and stop; do not
+hand-patch. On exit 2, the copy may already have landed on disk while `.inspire.lock` still
+records the previous version's hashes, because copying runs first and the lock is written
+last. Consequently a re-run's drift-check may report those freshly-copied, unskipped files
+as drifted — that is expected after a failed update, and it is **not** the local-teaching
+kind of drift described in Step 3. If unsure which it is, apply Step 3's `diff` guidance
+against the new base to check; either way, proceeding is correct, because a skipped path is
+rebaselined at its current hash when the lock is rewritten. Re-running `/inspire:update` is
+the correct recovery — the copy is idempotent.
 
 ## Step 5 — Report
 
