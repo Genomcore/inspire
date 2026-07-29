@@ -1,0 +1,12 @@
+{
+  "name": "inspire",
+  "description": "INSPIRE — a specification-driven software engineering methodology for the agentic era. Installs a guardrail runtime and knowledge-base skeleton into your project.",
+  "version": "0.3.0",
+  "released": "2026-07-29",
+  "author": {
+    "name": "Genomcore"
+  },
+  "homepage": "https://inspire.openbims.dev",
+  "repository": "https://github.com/Genomcore/inspire",
+  "license": "See LICENSE"
+}

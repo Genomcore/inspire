@@ -1,0 +1,15 @@
+{
+  "name": "inspire",
+  "owner": {
+    "name": "Genomcore",
+    "url": "https://github.com/Genomcore"
+  },
+  "plugins": [
+    {
+      "name": "inspire",
+      "source": "./plugin",
+      "description": "Install and update the INSPIRE guardrail runtime in a project. Provides /inspire:init and /inspire:update.",
+      "version": "0.3.0"
+    }
+  ]
+}

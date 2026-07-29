@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+# Tests plugin/scripts/materialize.sh against a scratch project.
+set -uo pipefail
+HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
+PLUGIN_ROOT="$HERE/.."
+SCRIPT="$PLUGIN_ROOT/scripts/materialize.sh"
+pass=0; fail=0
+ok()   { echo "PASS $1"; pass=$((pass+1)); }
+bad()  { echo "FAIL $1"; fail=$((fail+1)); }
+check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+
+proj="$(mktemp -d)/proj"; mkdir -p "$proj"
+( cd "$proj" && git init -q )
+
+# Pre-existing user content that must survive — the regression this replaces.
+mkdir -p "$proj/.claude/skills/my-own-skill"
+printf -- '---\ndescription: mine\n---\nbody\n' > "$proj/.claude/skills/my-own-skill/SKILL.md"
+printf '{"permissions":{"allow":["Bash(ls:*)"]},"enabledPlugins":{"other@thing":true}}\n' > "$proj/.claude/settings.json"
+
+out="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+        --source-root source --prototype-root prototype --declare-marketplace 2>/dev/null)"
+
+check "emits parseable JSON"          "printf '%s' \"\$out\" | jq -e . >/dev/null"
+check "reports mode init"             "[ \"\$(printf '%s' \"\$out\" | jq -r .mode)\" = init ]"
+check "kb materialized"               "[ -d '$proj/inspire_kb/00_bootstrap' ]"
+check "validators materialized"       "[ -x '$proj/.inspire/bin/review.sh' ]"
+check "test/ EXCLUDED"                "[ ! -e '$proj/.inspire/bin/test' ]"
+check "dispatcher materialized"       "[ -x '$proj/.claude/inspire/hooks/dispatch.sh' ]"
+check "skills materialized"           "[ -d '$proj/.claude/skills/inspire-domain' ]"
+check "shared _references present"    "[ -d '$proj/.claude/skills/_references' ]"
+check "USER SKILL PRESERVED"          "[ -f '$proj/.claude/skills/my-own-skill/SKILL.md' ]"
+check "FOREIGN SETTINGS PRESERVED"    "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
+check "marker present"                "grep -q INSPIRE-MANAGED '$proj/.claude/settings.json'"
+check "one PreToolUse command"        "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
+check "marketplace declared"          "jq -e '.extraKnownMarketplaces.inspire' '$proj/.claude/settings.json' >/dev/null"
+check "settings still parses"         "jq -e . '$proj/.claude/settings.json' >/dev/null"
+check "enabledPlugins is a record"      "[ \"\$(jq -r '.enabledPlugins|type' '$proj/.claude/settings.json')\" = object ]"
+check "enabledPlugins names the plugin" "jq -e '.enabledPlugins[\"inspire@inspire\"] == true' '$proj/.claude/settings.json' >/dev/null"
+check "foreign enabledPlugins survive"  "jq -e '.enabledPlugins[\"other@thing\"] == true' '$proj/.claude/settings.json' >/dev/null"
+check "lock version 0.3.0"            "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = 0.3.0 ]"
+check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.lock' >/dev/null"
+check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
+check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
+check "no template hook leaked"       "[ -z \"\$(find '$proj/.claude' -name 'template-*.sh')\" ]"
+check "CLAUDE.md seeded"              "[ -f '$proj/CLAUDE.md' ]"
+check "CLAUDE.md is the stub"         "grep -q 'Provisional stub' '$proj/CLAUDE.md'"
+check ".gitignore created"            "[ -f '$proj/.gitignore' ]"
+check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local.json' '$proj/.gitignore'"
+
+# Idempotency: a second init must not duplicate the settings block.
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+check "idempotent PreToolUse"         "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
+check "idempotent foreign key"        "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
+
+# drift-check classifies against the lock and writes nothing.
+# Must run BEFORE the --skip test below: an update with --skip rebaselines the lock to
+# the drifted hash, after which drift-check would correctly report it as unchanged.
+drift="$proj/.claude/skills/inspire-domain/SKILL.md"
+printf '\nLOCAL EDIT\n' >> "$drift"
+rm -f "$proj/.inspire/bin/no-todos.sh"
+lock_before="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
+dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
+lock_after="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
+check "drift-check parses"             "printf '%s' \"\$dc\" | jq -e . >/dev/null"
+check "drift-check finds the edit"     "printf '%s' \"\$dc\" | jq -e '.drifted|index(\".claude/skills/inspire-domain/SKILL.md\")' >/dev/null"
+check "drift-check finds the deletion" "printf '%s' \"\$dc\" | jq -e '.missing|index(\".inspire/bin/no-todos.sh\")' >/dev/null"
+check "drift-check lists unchanged"    "[ \"\$(printf '%s' \"\$dc\" | jq '.unchanged|length')\" -gt 0 ]"
+check "drift-check is read-only"       "[ '$lock_before' = \"\$lock_after\" ]"
+# Restore the deleted validator so the --skip test below starts from a known state.
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+  --source-root source --prototype-root prototype \
+  --skip .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+check "missing file restored"          "[ -x '$proj/.inspire/bin/no-todos.sh' ]"
+
+# --skip must not overwrite a drifted file.
+before="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+  --source-root source --prototype-root prototype \
+  --skip .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+after="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
+check "SKIPPED FILE UNTOUCHED"        "[ '$before' = '$after' ]"
+
+# --dry-run writes nothing.
+clean="$(mktemp -d)/p2"; mkdir -p "$clean"; ( cd "$clean" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$clean" \
+  --source-root source --prototype-root prototype --dry-run >/dev/null 2>&1
+check "dry-run writes nothing"        "[ ! -e '$clean/inspire_kb' ] && [ ! -e '$clean/.inspire.lock' ]"
+
+# Brownfield: '.' and 'none' create no folders.
+bf="$(mktemp -d)/p3"; mkdir -p "$bf"; ( cd "$bf" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$bf" \
+  --source-root . --prototype-root none >/dev/null 2>&1
+check "brownfield creates no source/" "[ ! -e '$bf/source' ] && [ ! -e '$bf/prototype' ]"
+check "brownfield still gets kb"      "[ -d '$bf/inspire_kb/00_bootstrap' ]"
+
+# Never-clobber: a pre-existing CLAUDE.md and .gitignore are the operator's —
+# CLAUDE.md is left byte-identical, .gitignore is appended-to (not replaced),
+# and a second init does not duplicate the appended block.
+own="$(mktemp -d)/p4"; mkdir -p "$own"; ( cd "$own" && git init -q )
+printf 'MY OWN CLAUDE.md\ndo not touch\n' > "$own/CLAUDE.md"
+printf 'node_modules/\n' > "$own/.gitignore"
+claude_before="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$own" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+claude_after="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+check "EXISTING CLAUDE.md UNTOUCHED"        "[ '$claude_before' = '$claude_after' ]"
+check ".gitignore keeps original line"      "grep -qF 'node_modules/' '$own/.gitignore'"
+check ".gitignore gains INSPIRE block"      "grep -qF '.claude/settings.local.json' '$own/.gitignore'"
+check ".gitignore block appears once"       "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$own/.gitignore')\" = 1 ]"
+
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$own" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+claude_after2="$(shasum -a 256 "$own/CLAUDE.md" | cut -d' ' -f1)"
+check "second init: CLAUDE.md still untouched" "[ '$claude_before' = '$claude_after2' ]"
+check "second init: .gitignore block still once" "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$own/.gitignore')\" = 1 ]"
+check "second init: original line survives"     "grep -qF 'node_modules/' '$own/.gitignore'"
+
+rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")"
+
+# ---------------------------------------------------------------------------
+# Regression: /inspire:update must never touch inspire_kb/ — the KB is
+# product content, not runtime. The historical bug: `--mode update` treated
+# each top-level KB layer directory as an INSPIRE-owned entry and `rm -rf`'d
+# it before recopying the skeleton, silently destroying anything a project
+# authored after init (drift-check never caught it, because it only walks
+# paths recorded in .inspire.lock, and the KB was never in there once
+# authored). Populate every layer with realistic content, then update
+# exactly the way update/SKILL.md tells the skill to — drift-check first,
+# --skip each drifted path — and assert nothing under inspire_kb/ moved.
+# ---------------------------------------------------------------------------
+kbp="$(mktemp -d)/kbproj"; mkdir -p "$kbp"; ( cd "$kbp" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+
+# Author realistic project content across several KB layers.
+mkdir -p "$kbp/inspire_kb/02_modules/billing"
+printf -- '# Billing module\n\nOwns invoicing and payment capture.\n' \
+  > "$kbp/inspire_kb/02_modules/billing/module.md"
+
+mkdir -p "$kbp/inspire_kb/04_domain/billing/invoice"
+printf -- '# Invoice\n\nfields:\n  - id\n  - amount\n' \
+  > "$kbp/inspire_kb/04_domain/billing/invoice/invoice.md"
+
+printf -- '# ADR-0099: Use event sourcing for invoices\n\nStatus: accepted\n' \
+  > "$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md"
+
+printf -- '---\nid: 20260715_example-lesson\nskill: inspire-domain\ncategory: preference\n---\nAlways validate invoice totals against line items.\n' \
+  > "$kbp/inspire_kb/98_lessons/20260715_example-lesson.md"
+
+mkdir -p "$kbp/inspire_kb/99_tracker/tickets"
+printf -- '# TICKET-001: Add refund flow\n\nStatus: open\n' \
+  > "$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md"
+
+printf -- '\n## Project accent\n\nOur real design system diverges here.\n' \
+  >> "$kbp/inspire_kb/05_screens/design-system.md"
+
+adr_before="$(shasum -a 256 "$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md" | cut -d' ' -f1)"
+module_before="$(shasum -a 256 "$kbp/inspire_kb/02_modules/billing/module.md" | cut -d' ' -f1)"
+domain_before="$(shasum -a 256 "$kbp/inspire_kb/04_domain/billing/invoice/invoice.md" | cut -d' ' -f1)"
+lesson_before="$(shasum -a 256 "$kbp/inspire_kb/98_lessons/20260715_example-lesson.md" | cut -d' ' -f1)"
+ticket_before="$(shasum -a 256 "$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md" | cut -d' ' -f1)"
+design_before="$(shasum -a 256 "$kbp/inspire_kb/05_screens/design-system.md" | cut -d' ' -f1)"
+kb_count_before="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
+
+# Also drift a runtime file and delete another, so the update call below
+# mirrors a real operator run exactly as update/SKILL.md Steps 2-4 describe.
+printf '\nLOCAL EDIT\n' >> "$kbp/.claude/skills/inspire-domain/SKILL.md"
+rm -f "$kbp/.inspire/bin/no-todos.sh"
+
+dc_kb="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" 2>/dev/null)"
+check "KB regression: drift-check names no inspire_kb path" \
+  "! (printf '%s' \"\$dc_kb\" | jq -r '.drifted[], .missing[], .unchanged[]' | grep -q '^inspire_kb/')"
+
+# Build --skip args exactly as the skill does: one per drifted path reported.
+skip_args=()
+while IFS= read -r p; do
+  [ -n "$p" ] && skip_args+=(--skip "$p")
+done < <(printf '%s' "$dc_kb" | jq -r '.drifted[]')
+
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
+  --source-root source --prototype-root prototype "${skip_args[@]}" >/dev/null 2>&1
+
+check "KB regression: ADR in 01_adr survives update" \
+  "[ -f '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' ] && [ '$adr_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' | cut -d' ' -f1)\" ]"
+check "KB regression: module in 02_modules survives update" \
+  "[ -f '$kbp/inspire_kb/02_modules/billing/module.md' ] && [ '$module_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/02_modules/billing/module.md' | cut -d' ' -f1)\" ]"
+check "KB regression: nested 04_domain descriptor survives update" \
+  "[ -f '$kbp/inspire_kb/04_domain/billing/invoice/invoice.md' ] && [ '$domain_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/04_domain/billing/invoice/invoice.md' | cut -d' ' -f1)\" ]"
+check "KB regression: lesson in 98_lessons survives update" \
+  "[ -f '$kbp/inspire_kb/98_lessons/20260715_example-lesson.md' ] && [ '$lesson_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/98_lessons/20260715_example-lesson.md' | cut -d' ' -f1)\" ]"
+check "KB regression: ticket in 99_tracker/tickets survives update" \
+  "[ -f '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' ] && [ '$ticket_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' | cut -d' ' -f1)\" ]"
+check "KB regression: customized design-system.md survives update" \
+  "[ -f '$kbp/inspire_kb/05_screens/design-system.md' ] && [ '$design_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/05_screens/design-system.md' | cut -d' ' -f1)\" ]"
+
+kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
+check "KB regression: no KB files added or removed by update" \
+  "[ \"\$kb_count_before\" = \"\$kb_count_after\" ]"
+check "KB regression: lock carries no inspire_kb entries" \
+  "[ -z \"\$(jq -r '.files|keys[]' '$kbp/.inspire.lock' | cut -d/ -f1 | sort -u | grep '^inspire_kb$')\" ]"
+
+# The runtime half of update must still work: a lock-tracked file deleted
+# before the run is restored, and a drifted one is left exactly as edited.
+check "KB regression: runtime still updates (missing validator restored)" \
+  "[ -x '$kbp/.inspire/bin/no-todos.sh' ]"
+check "KB regression: drifted skill still skipped, not overwritten" \
+  "grep -q 'LOCAL EDIT' '$kbp/.claude/skills/inspire-domain/SKILL.md'"
+
+rm -rf "$(dirname "$kbp")"
+
+# ---------------------------------------------------------------------------
+# Input guards. Each of these reports SUCCESS while doing the wrong thing if
+# its guard is removed — that is why they are here rather than left to review.
+# ---------------------------------------------------------------------------
+
+# A --plugin-root that is a directory but not a plugin: every consumer of
+# base/ degrades silently, so without the guard this exits 0 having installed
+# nothing, and leaves a lock that makes init refuse forever.
+gp="$(mktemp -d)/proj"; mkdir -p "$gp"; ( cd "$gp" && git init -q )
+notplugin="$(mktemp -d)"
+"$SCRIPT" --mode init --plugin-root "$notplugin" --project-root "$gp" >/dev/null 2>&1
+rc_notplugin=$?
+check "guard: non-plugin --plugin-root exits 1"        "[ '$rc_notplugin' = 1 ]"
+check "guard: non-plugin --plugin-root writes no lock" "[ ! -f '$gp/.inspire.lock' ]"
+check "guard: non-plugin --plugin-root writes no .gitignore" "[ ! -f '$gp/.gitignore' ]"
+check "guard: non-plugin --plugin-root copies nothing" "[ ! -d '$gp/.claude/skills' ]"
+
+# --skip is fed from drift-check echoing the lock's keys verbatim, so a
+# corrupted lock must not become an rm -rf outside the project root.
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+  --skip '.claude/skills/../../../ESCAPE' >/dev/null 2>&1
+rc_traverse=$?
+check "guard: --skip containing .. is rejected" "[ '$rc_traverse' = 1 ]"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+  --skip '/etc/passwd' >/dev/null 2>&1
+rc_abs=$?
+check "guard: absolute --skip is rejected"      "[ '$rc_abs' = 1 ]"
+
+# A pre-0.3 lock has no `files` map. Everything downstream reads `.files // {}`,
+# so without the guard such a project drift-checks as "nothing drifted" and an
+# update strands its KB at .inspire_kb/ while the old hooks stay registered.
+v2p="$(mktemp -d)/proj"; mkdir -p "$v2p"; ( cd "$v2p" && git init -q )
+printf '{"inspire_version":"0.2.1","released":"2026-07-20","template_sha":"abc"}\n' > "$v2p/.inspire.lock"
+v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" 2>&1 >/dev/null)"
+rc_v2drift=$?
+check "guard: pre-0.3 lock fails drift-check"      "[ '$rc_v2drift' = 2 ]"
+check "guard: pre-0.3 message names the migration" "printf '%s' \"\$v2err\" | grep -q 'git mv .inspire_kb inspire_kb'"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
+rc_v2update=$?
+check "guard: pre-0.3 lock fails update"           "[ '$rc_v2update' = 2 ]"
+check "guard: pre-0.3 update wrote nothing"        "[ ! -d '$v2p/.claude/skills' ]"
+
+# The guard must not fire on a real v0.3 lock — a false positive here would
+# break every legitimate update. Needs its own sandbox: $proj is gone by now.
+okp="$(mktemp -d)/proj"; mkdir -p "$okp"; ( cd "$okp" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$okp" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+"$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
+rc_okdrift=$?
+check "guard: real v0.3 lock still drift-checks" "[ '$rc_okdrift' = 0 ]"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
+rc_okupdate=$?
+check "guard: real v0.3 lock still updates"      "[ '$rc_okupdate' = 0 ]"
+check "guard: real v0.3 update kept the KB"      "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" = 22 ]"
+
+rm -rf "$(dirname "$gp")" "$(dirname "$v2p")" "$(dirname "$okp")" "$notplugin"
+
+echo ""; echo "Passed: $pass · Failed: $fail"
+[ "$fail" -eq 0 ]
