@@ -25,11 +25,11 @@ committed, the runtime travels with the repo: teammates and CI need no plugin.
 Record, before writing anything:
 
 - `PRESET_SKILLS` — whether `.claude/skills/` already exists. This decides the handoff in
-  Step 7, because Claude Code cannot watch a top-level skills directory created after the
+  Step 4, because Claude Code cannot watch a top-level skills directory created after the
   session started.
 - `BROWNFIELD` — whether the repo has code already. Heuristic: any of `package.json`,
   `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile` at root, or a `src/`
-  directory. Used only to recommend roots in Step 6.
+  directory. Used only to recommend roots in Step 2.
 
 ## Step 2 — Ask the operator
 
@@ -38,11 +38,11 @@ One `AskUserQuestion` with these questions:
 1. **Product roots.** Greenfield (`source_root: source`, `prototype_root: prototype`) or
    brownfield-in-place (`source_root: .`, `prototype_root: none`)? Recommend by
    `BROWNFIELD`.
-2. **Declare the marketplace for teammates?** If yes, Step 6 writes
-   `extraKnownMarketplaces` + `enabledPlugins` into `.claude/settings.json` so a teammate
-   who trusts the repo folder is prompted to install the plugin. Recommend yes. Declining
-   breaks nothing — the runtime is in the repo either way; only running a future
-   `/inspire:update` needs the plugin.
+2. **Declare the marketplace for teammates?** If yes, Step 3 passes `--declare-marketplace`
+   to `materialize.sh`, which writes `extraKnownMarketplaces` + `enabledPlugins` into
+   `.claude/settings.json` so a teammate who trusts the repo folder is prompted to install
+   the plugin. Recommend yes. Declining breaks nothing — the runtime is in the repo either
+   way; only running a future `/inspire:update` needs the plugin.
 
 ## Step 3 — Show the plan, then materialize
 
@@ -66,8 +66,10 @@ First a dry run, and show the operator what it will do:
 Summarize the returned JSON for the operator: what will be created, what already exists and
 will be left alone. Then run the same command **without** `--dry-run`.
 
-If it exits non-zero, report its stderr verbatim and stop. Do not attempt a partial
-recovery by hand — exit 2 means nothing was committed.
+If it exits non-zero, report its stderr verbatim and stop. Do not hand-patch a partial
+install: on exit 2 the payload may already be on disk, but the settings block and
+`.inspire.lock` were not written. Because the lock is written last, its absence means the
+install did not complete — re-running `/inspire:init` is the correct recovery.
 
 Parse the JSON summary from stdout and use it for Step 4's report. Report what the script
 says it did, never what you assume it did.
