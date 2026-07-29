@@ -204,8 +204,8 @@ test fixtures, which is a test affordance, not a relocation mechanism.
 ### D5 — Marketplace declared in the project, trust-gated
 
 `/inspire:init` offers (via `AskUserQuestion`) to write into the project's
-`.claude/settings.json` an `extraKnownMarketplaces` entry for this repo plus
-`enabledPlugins: ["inspire@inspire"]`. Teammates who trust the repo folder are **prompted** to
+`.claude/settings.json` an `extraKnownMarketplaces` entry for this repo plus an
+`enabledPlugins` record entry, `"inspire@inspire": true`. Teammates who trust the repo folder are **prompted** to
 install — never silently. Declining breaks nothing, since the runtime is already in the repo.
 Third-party marketplaces have auto-update **off** by default, so the base cannot shift under
 anyone unasked.
