@@ -143,6 +143,9 @@ resolve_paths() {
 # ---------------------------------------------------------------------------
 # Copy plan: base/{kb,bin,hooks,skills} → project targets. bin/test/ is never
 # materialized — neither the fixtures nor the harness (see Global Constraints).
+# `kb` is init-only and never lock-tracked — it is product content the KB
+# owns from the moment it is seeded, not runtime INSPIRE can regenerate (see
+# copy_plan / materialize_entry).
 # ---------------------------------------------------------------------------
 
 MAP_NAMES=(kb bin hooks skills)
@@ -157,9 +160,10 @@ SETTINGS_STATUS="unchanged"
 LOCK_STATUS="unchanged"
 
 # Copies (or skip-restores) one top-level entry. $1=src abs path, $2=dest abs
-# path, $3=dest path relative to $PROJECT_ROOT.
+# path, $3=dest path relative to $PROJECT_ROOT, $4=track (1=feed the lock,
+# 0=materialize but never lock-track — used for the KB, see copy_plan).
 materialize_entry() {
-  local src="$1" dest_abs="$2" dest_rel="$3"
+  local src="$1" dest_abs="$2" dest_rel="$3" track="${4:-1}"
 
   local relevant=()
   if [ "${#SKIP_PATHS[@]}" -gt 0 ]; then
@@ -173,7 +177,7 @@ materialize_entry() {
     done
   fi
 
-  TRACKED_ENTRIES+=("$dest_rel")
+  [ "$track" = 1 ] && TRACKED_ENTRIES+=("$dest_rel")
 
   if [ "$DRY_RUN" = 1 ]; then
     [ "${#relevant[@]}" -eq 0 ] && COPIED+=("$dest_rel")
@@ -228,10 +232,25 @@ materialize_entry() {
 }
 
 copy_plan() {
-  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel
+  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel track
   for idx in 0 1 2 3; do
     name="${MAP_NAMES[$idx]}"
     dest_rel="${MAP_DESTS[$idx]}"
+
+    # The KB (inspire_kb) is product content, not runtime: seeded once at
+    # init from base/kb, then owned by the project from then on. `update`
+    # must never reach it — structurally, not merely via `--skip` (which is
+    # fed from drift-check and only ever covers what the lock tracks, so a
+    # project's own layer content, authored after init, would never be
+    # reported and never be protected). So on any mode other than init, the
+    # kb mapping is skipped before its directory is even opened.
+    if [ "$name" = "kb" ]; then
+      [ "$MODE" = "init" ] || continue
+      track=0
+    else
+      track=1
+    fi
+
     src_dir="$PLUGIN_ROOT/base/$name"
     dest_dir="$PROJECT_ROOT/$dest_rel"
     [ -d "$src_dir" ] || continue
@@ -249,7 +268,7 @@ copy_plan() {
 
       dest_entry="$dest_dir/$entry_name"
       dest_entry_rel="$dest_rel/$entry_name"
-      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel"
+      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" "$track"
       log "  · $name/$entry_name → $dest_entry_rel"
     done
   done
@@ -272,8 +291,9 @@ chmod_executables() {
 }
 
 # Seed the live design system from the bootstrap theme, once. Never clobbers an
-# existing design-system.md — that file belongs to the project from here on, so
-# it is not tracked in the lock (it is meant to diverge).
+# existing design-system.md — that file belongs to the project from here on.
+# It lives under inspire_kb, and the whole KB is untracked in the lock (see
+# copy_plan), so it is free to diverge without ever being reported as drift.
 seed_design_system() {
   local theme_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.md"
   local design_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-system.md"

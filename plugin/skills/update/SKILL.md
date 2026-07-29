@@ -33,6 +33,12 @@ Read `inspire_version` from `.inspire.lock` and `version` from
 
 ## Step 2 — Drift check
 
+**Scope: the runtime only, never the KB.** `inspire_kb/` is product content — seeded
+once at init from `base/kb`, owned by the project from that moment on. It is not in
+`.inspire.lock`'s `files` map and `materialize.sh --mode update` cannot reach it
+structurally (see Rule 2). Drift-check output below only ever names paths under
+`.claude/skills/`, `.inspire/bin/` and `.claude/inspire/hooks/`.
+
 Hashing is deterministic, so the script does it. This skill does not compute hashes itself:
 
 ```bash
@@ -90,11 +96,12 @@ Stop for approval via `AskUserQuestion`: proceed (skipping drifted files), or ab
 ## Step 4 — Materialize
 
 On approval, one call — passing every drifted path as `--skip`. The script handles the
-copying (mirroring `plugin/base/` into the project, excluding `base/bin/test` — the
-validator fixtures and harness are never materialized), the `settings.json` re-merge and
-the lock rewrite; this skill performs no file operations of its own. The re-merge only
-touches hook entries carrying the `INSPIRE-MANAGED` marker, so any hooks the operator
-added independently are left alone.
+copying (mirroring `plugin/base/{bin,hooks,skills}` into the project, excluding
+`base/bin/test` — the validator fixtures and harness are never materialized — and
+excluding `base/kb` entirely, which `--mode update` never opens), the `settings.json`
+re-merge and the lock rewrite; this skill performs no file operations of its own. The
+re-merge only touches hook entries carrying the `INSPIRE-MANAGED` marker, so any hooks
+the operator added independently are left alone.
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/materialize.sh" \
@@ -154,8 +161,12 @@ genuinely useful on its own — it brings validators, hooks and untouched skills
 
 1. **All file operations go through `materialize.sh`.** No copying, hashing or settings
    editing in prose. Drift detection is `--mode drift-check`.
-2. **Never overwrite a drifted file.** Pass every drifted path as `--skip`. Skipping and
-   reporting is always correct; silent clobbering never is.
+2. **Never overwrite a drifted file, and never touch the KB.** Pass every drifted path
+   as `--skip`. Skipping and reporting is always correct; silent clobbering never is.
+   `inspire_kb/` is out of scope by construction — `--mode update` never copies,
+   replaces or deletes anything under it, `--skip` cannot make it more excluded than
+   it already is, and it carries no lock entries to drift in the first place. The KB
+   is seeded once at init and belongs to the project from then on.
 3. **The plan gate is mandatory.** No writes before approval.
 4. **Never downgrade.** A plugin older than the lock is an error, not an update.
 5. **No lesson reconciliation here.** Classification, archiving and skill rebuilding are v1

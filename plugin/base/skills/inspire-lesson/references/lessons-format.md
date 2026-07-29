@@ -107,8 +107,8 @@ observer, keyed by `id` and the date prefix, not inside the fork.
 by `materialize.sh`) **at capture time** and, like everything else, never rewritten. They
 let the observer answer "was this already learned?" — by checking whether the release
 that carries it is newer than the one the lesson was based on. If the lock is absent
-(e.g. inside the template repo), fall back to `.inspire/manifest.json`; else record
-`unknown`.
+(e.g. inside the template repo), fall back to `plugin/.claude-plugin/plugin.json`; else
+record `unknown`.
 
 ## Archive
 

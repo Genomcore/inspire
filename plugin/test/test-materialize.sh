@@ -117,5 +117,97 @@ check "second init: .gitignore block still once" "[ \"\$(grep -c 'INSPIRE (mater
 check "second init: original line survives"     "grep -qF 'node_modules/' '$own/.gitignore'"
 
 rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")"
+
+# ---------------------------------------------------------------------------
+# Regression: /inspire:update must never touch inspire_kb/ — the KB is
+# product content, not runtime. The historical bug: `--mode update` treated
+# each top-level KB layer directory as an INSPIRE-owned entry and `rm -rf`'d
+# it before recopying the skeleton, silently destroying anything a project
+# authored after init (drift-check never caught it, because it only walks
+# paths recorded in .inspire.lock, and the KB was never in there once
+# authored). Populate every layer with realistic content, then update
+# exactly the way update/SKILL.md tells the skill to — drift-check first,
+# --skip each drifted path — and assert nothing under inspire_kb/ moved.
+# ---------------------------------------------------------------------------
+kbp="$(mktemp -d)/kbproj"; mkdir -p "$kbp"; ( cd "$kbp" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+
+# Author realistic project content across several KB layers.
+mkdir -p "$kbp/inspire_kb/02_modules/billing"
+printf -- '# Billing module\n\nOwns invoicing and payment capture.\n' \
+  > "$kbp/inspire_kb/02_modules/billing/module.md"
+
+mkdir -p "$kbp/inspire_kb/04_domain/billing/invoice"
+printf -- '# Invoice\n\nfields:\n  - id\n  - amount\n' \
+  > "$kbp/inspire_kb/04_domain/billing/invoice/invoice.md"
+
+printf -- '# ADR-0099: Use event sourcing for invoices\n\nStatus: accepted\n' \
+  > "$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md"
+
+printf -- '---\nid: 20260715_example-lesson\nskill: inspire-domain\ncategory: preference\n---\nAlways validate invoice totals against line items.\n' \
+  > "$kbp/inspire_kb/98_lessons/20260715_example-lesson.md"
+
+mkdir -p "$kbp/inspire_kb/99_tracker/tickets"
+printf -- '# TICKET-001: Add refund flow\n\nStatus: open\n' \
+  > "$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md"
+
+printf -- '\n## Project accent\n\nOur real design system diverges here.\n' \
+  >> "$kbp/inspire_kb/05_screens/design-system.md"
+
+adr_before="$(shasum -a 256 "$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md" | cut -d' ' -f1)"
+module_before="$(shasum -a 256 "$kbp/inspire_kb/02_modules/billing/module.md" | cut -d' ' -f1)"
+domain_before="$(shasum -a 256 "$kbp/inspire_kb/04_domain/billing/invoice/invoice.md" | cut -d' ' -f1)"
+lesson_before="$(shasum -a 256 "$kbp/inspire_kb/98_lessons/20260715_example-lesson.md" | cut -d' ' -f1)"
+ticket_before="$(shasum -a 256 "$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md" | cut -d' ' -f1)"
+design_before="$(shasum -a 256 "$kbp/inspire_kb/05_screens/design-system.md" | cut -d' ' -f1)"
+kb_count_before="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
+
+# Also drift a runtime file and delete another, so the update call below
+# mirrors a real operator run exactly as update/SKILL.md Steps 2-4 describe.
+printf '\nLOCAL EDIT\n' >> "$kbp/.claude/skills/inspire-domain/SKILL.md"
+rm -f "$kbp/.inspire/bin/no-todos.sh"
+
+dc_kb="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" 2>/dev/null)"
+check "KB regression: drift-check names no inspire_kb path" \
+  "! (printf '%s' \"\$dc_kb\" | jq -r '.drifted[], .missing[], .unchanged[]' | grep -q '^inspire_kb/')"
+
+# Build --skip args exactly as the skill does: one per drifted path reported.
+skip_args=()
+while IFS= read -r p; do
+  [ -n "$p" ] && skip_args+=(--skip "$p")
+done < <(printf '%s' "$dc_kb" | jq -r '.drifted[]')
+
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
+  --source-root source --prototype-root prototype "${skip_args[@]}" >/dev/null 2>&1
+
+check "KB regression: ADR in 01_adr survives update" \
+  "[ -f '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' ] && [ '$adr_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' | cut -d' ' -f1)\" ]"
+check "KB regression: module in 02_modules survives update" \
+  "[ -f '$kbp/inspire_kb/02_modules/billing/module.md' ] && [ '$module_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/02_modules/billing/module.md' | cut -d' ' -f1)\" ]"
+check "KB regression: nested 04_domain descriptor survives update" \
+  "[ -f '$kbp/inspire_kb/04_domain/billing/invoice/invoice.md' ] && [ '$domain_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/04_domain/billing/invoice/invoice.md' | cut -d' ' -f1)\" ]"
+check "KB regression: lesson in 98_lessons survives update" \
+  "[ -f '$kbp/inspire_kb/98_lessons/20260715_example-lesson.md' ] && [ '$lesson_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/98_lessons/20260715_example-lesson.md' | cut -d' ' -f1)\" ]"
+check "KB regression: ticket in 99_tracker/tickets survives update" \
+  "[ -f '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' ] && [ '$ticket_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' | cut -d' ' -f1)\" ]"
+check "KB regression: customized design-system.md survives update" \
+  "[ -f '$kbp/inspire_kb/05_screens/design-system.md' ] && [ '$design_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/05_screens/design-system.md' | cut -d' ' -f1)\" ]"
+
+kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
+check "KB regression: no KB files added or removed by update" \
+  "[ \"\$kb_count_before\" = \"\$kb_count_after\" ]"
+check "KB regression: lock carries no inspire_kb entries" \
+  "[ -z \"\$(jq -r '.files|keys[]' '$kbp/.inspire.lock' | cut -d/ -f1 | sort -u | grep '^inspire_kb$')\" ]"
+
+# The runtime half of update must still work: a lock-tracked file deleted
+# before the run is restored, and a drifted one is left exactly as edited.
+check "KB regression: runtime still updates (missing validator restored)" \
+  "[ -x '$kbp/.inspire/bin/no-todos.sh' ]"
+check "KB regression: drifted skill still skipped, not overwritten" \
+  "grep -q 'LOCAL EDIT' '$kbp/.claude/skills/inspire-domain/SKILL.md'"
+
+rm -rf "$(dirname "$kbp")"
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]

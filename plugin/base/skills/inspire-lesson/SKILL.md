@@ -85,7 +85,7 @@ how a skill behaves graduates into a lesson (see *Relationship to the tracker*).
 2. Resolve today's date from CLAUDE.md `currentDate` or `date +%Y-%m-%d`.
 3. Read `inspire_version` + `template_sha` from `.inspire.lock` (repo root). If the
    lock is absent (e.g. inside the template repo itself), fall back to
-   `.inspire/manifest.json`; else record `unknown` and warn.
+   `plugin/.claude-plugin/plugin.json`; else record `unknown` and warn.
 4. Build the filename `YYYYMMDD_<slug>.md`, where `<slug>` is a kebab-case short form
    of the title (~40 chars). Several lessons may share a date — the slug keeps each
    name distinct; pick a more specific slug if one would collide. `id` = the filename

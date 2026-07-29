@@ -138,8 +138,10 @@ mobile · database), refines the seeded `CLAUDE.md` and creates your project's o
 
 **4. Commit the result.** From here the runtime lives in git like any other
 project file — pulling a template update means running `/plugin update inspire`
-then `/inspire:update` (which reports drift and never overwrites a locally-edited
-file without your say-so), not re-forking.
+then `/inspire:update` (which reports drift on the runtime — skills, validators,
+hooks — and never overwrites a locally-edited file without your say-so), not
+re-forking. `inspire_kb/` is out of scope for update entirely: it is seeded once
+at init and is yours from then on.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
 > language (`inspire_kb/00_bootstrap/project.md`, default English) —
