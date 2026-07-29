@@ -139,9 +139,16 @@ mobile · database), refines the seeded `CLAUDE.md` and creates your project's o
 **4. Commit the result.** From here the runtime lives in git like any other
 project file — pulling a template update means running `/plugin update inspire`
 then `/inspire:update` (which reports drift on the runtime — skills, validators,
-hooks — and never overwrites a locally-edited file without your say-so), not
+hooks — and never overwrites a file INSPIRE shipped without your say-so), not
 re-forking. `inspire_kb/` is out of scope for update entirely: it is seeded once
 at init and is yours from then on.
+
+> Drift tracking covers the files INSPIRE shipped, recorded in `.inspire.lock`. A
+> file you add *inside* an `inspire-*` skill directory (a custom stack profile, say)
+> is not tracked, and is replaced along with that directory on update — as
+> `install.sh` did before v0.3. Keep such files committed; v0.4 revisits it.
+> Migrating a pre-0.3 install is a one-time manual step, which `/inspire:update`
+> prints and refuses to guess at.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
 > language (`inspire_kb/00_bootstrap/project.md`, default English) —

@@ -28,7 +28,7 @@ history into your product.**
 
 1. **`install.sh` destroys non-INSPIRE content.** Step 1 does `rm -rf "$DEST/$part"` over
    the *whole* `skills`, `bin`, and `hooks` directories before copying
-   ([`.inspire/install.sh` L32–38](../../.inspire/install.sh)). Any skill, hook, or bin
+   ([`.inspire/install.sh` L32–38](https://github.com/Genomcore/inspire/blob/v0.2.1/.inspire/install.sh)). Any skill, hook, or bin
    the user placed in `.claude/` (personal skills, other plugins) is deleted on
    (re)install. The advertised idempotency only holds for `prototype/`, `source/`,
    `README.md`, `settings.json`, and `design-system.md` — not for the contents of
@@ -45,7 +45,7 @@ history into your product.**
 4. **No install-in-place for an existing repo.** The only on-ramp is "clone the template
    as your repo." A team with an existing codebase cannot add INSPIRE without forking,
    and `install.sh` unconditionally creates `source/` and `prototype/` at the repo root
-   ([L93–102](../../.inspire/install.sh)) — wrong when the product code already lives at
+   ([L93–102](https://github.com/Genomcore/inspire/blob/v0.2.1/.inspire/install.sh)) — wrong when the product code already lives at
    `./`, `packages/`, `apps/`, etc.
 
 A fifth, subtler issue underlies the "how do updates preserve local edits" question: the

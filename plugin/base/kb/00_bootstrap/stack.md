@@ -1,7 +1,7 @@
 ---
 kind: bootstrap-stack
 status: default          # default (seeded from the OpenBIMS reference) → adapt per project
-profiles: [react, nestjs]   # inspire-code stack profiles to load (see .inspire/skills/inspire-code/profiles)
+profiles: [react, nestjs]   # inspire-code stack profiles to load (see .claude/skills/inspire-code/profiles)
 source_root: source         # where production code lives (inspire-code). "." = repo root (brownfield, in place); a relative path otherwise
 prototype_root: prototype   # where the horizontal prototype lives (inspire-prototype). "none" = no horizontal prototype
 ---

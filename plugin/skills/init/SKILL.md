@@ -43,10 +43,11 @@ One `AskUserQuestion` with these questions:
 
 ## Step 3 — Show the plan, then materialize
 
-Everything mechanical is handled by `materialize.sh` — copying, `chmod`, the `test/`
-exclusion, design-system seeding, product roots, the `settings.json` merge and
-`.inspire.lock`. This skill does not reimplement any of it, and must not perform file
-operations of its own.
+Everything mechanical is handled by `materialize.sh` — copying (including the
+`inspire_kb/` skeleton, seeded once here and never again), `chmod`, the `test/`
+exclusion, design-system seeding, a provisional root `CLAUDE.md`, the `.gitignore`
+block, product roots, the `settings.json` merge and `.inspire.lock`. This skill does
+not reimplement any of it, and must not perform file operations of its own.
 
 First a dry run, and show the operator what it will do:
 
@@ -76,7 +77,7 @@ says it did, never what you assume it did.
 Print what was created, then:
 
 ```
-INSPIRE 0.3.0 installed.
+INSPIRE <version> installed.
 
   Run:  /reload-skills
   Then: /inspire_bootstrap init

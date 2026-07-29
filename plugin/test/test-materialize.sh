@@ -209,5 +209,62 @@ check "KB regression: drifted skill still skipped, not overwritten" \
 
 rm -rf "$(dirname "$kbp")"
 
+# ---------------------------------------------------------------------------
+# Input guards. Each of these reports SUCCESS while doing the wrong thing if
+# its guard is removed — that is why they are here rather than left to review.
+# ---------------------------------------------------------------------------
+
+# A --plugin-root that is a directory but not a plugin: every consumer of
+# base/ degrades silently, so without the guard this exits 0 having installed
+# nothing, and leaves a lock that makes init refuse forever.
+gp="$(mktemp -d)/proj"; mkdir -p "$gp"; ( cd "$gp" && git init -q )
+notplugin="$(mktemp -d)"
+"$SCRIPT" --mode init --plugin-root "$notplugin" --project-root "$gp" >/dev/null 2>&1
+rc_notplugin=$?
+check "guard: non-plugin --plugin-root exits 1"        "[ '$rc_notplugin' = 1 ]"
+check "guard: non-plugin --plugin-root writes no lock" "[ ! -f '$gp/.inspire.lock' ]"
+check "guard: non-plugin --plugin-root writes no .gitignore" "[ ! -f '$gp/.gitignore' ]"
+check "guard: non-plugin --plugin-root copies nothing" "[ ! -d '$gp/.claude/skills' ]"
+
+# --skip is fed from drift-check echoing the lock's keys verbatim, so a
+# corrupted lock must not become an rm -rf outside the project root.
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+  --skip '.claude/skills/../../../ESCAPE' >/dev/null 2>&1
+rc_traverse=$?
+check "guard: --skip containing .. is rejected" "[ '$rc_traverse' = 1 ]"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+  --skip '/etc/passwd' >/dev/null 2>&1
+rc_abs=$?
+check "guard: absolute --skip is rejected"      "[ '$rc_abs' = 1 ]"
+
+# A pre-0.3 lock has no `files` map. Everything downstream reads `.files // {}`,
+# so without the guard such a project drift-checks as "nothing drifted" and an
+# update strands its KB at .inspire_kb/ while the old hooks stay registered.
+v2p="$(mktemp -d)/proj"; mkdir -p "$v2p"; ( cd "$v2p" && git init -q )
+printf '{"inspire_version":"0.2.1","released":"2026-07-20","template_sha":"abc"}\n' > "$v2p/.inspire.lock"
+v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" 2>&1 >/dev/null)"
+rc_v2drift=$?
+check "guard: pre-0.3 lock fails drift-check"      "[ '$rc_v2drift' = 2 ]"
+check "guard: pre-0.3 message names the migration" "printf '%s' \"\$v2err\" | grep -q 'git mv .inspire_kb inspire_kb'"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
+rc_v2update=$?
+check "guard: pre-0.3 lock fails update"           "[ '$rc_v2update' = 2 ]"
+check "guard: pre-0.3 update wrote nothing"        "[ ! -d '$v2p/.claude/skills' ]"
+
+# The guard must not fire on a real v0.3 lock — a false positive here would
+# break every legitimate update. Needs its own sandbox: $proj is gone by now.
+okp="$(mktemp -d)/proj"; mkdir -p "$okp"; ( cd "$okp" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$okp" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+"$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
+rc_okdrift=$?
+check "guard: real v0.3 lock still drift-checks" "[ '$rc_okdrift' = 0 ]"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
+rc_okupdate=$?
+check "guard: real v0.3 lock still updates"      "[ '$rc_okupdate' = 0 ]"
+check "guard: real v0.3 update kept the KB"      "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" = 22 ]"
+
+rm -rf "$(dirname "$gp")" "$(dirname "$v2p")" "$(dirname "$okp")" "$notplugin"
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]

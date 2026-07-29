@@ -33,6 +33,7 @@
 set -uo pipefail
 
 MANIFEST="plugin/.claude-plugin/plugin.json"
+MARKETPLACE=".claude-plugin/marketplace.json"
 
 # Paths under plugin/ that are NOT the runtime a fork consumes. Everything else
 # counts — including skill prose, because a skill IS its prompt. The plugin
@@ -59,6 +60,27 @@ check_versions() {
 
   if [ -z "$head_version" ]; then
     echo "✗ cannot read .version from $MANIFEST at $head"
+    return 1
+  fi
+
+  # The release identity is duplicated: plugin.json is what a materialized
+  # project records in .inspire.lock, marketplace.json is what `/plugin install`
+  # resolves. If they disagree, an install and its provenance record disagree.
+  local mkt_version
+  mkt_version="$(git show "$head:$MARKETPLACE" 2>/dev/null \
+    | jq -r '.plugins[]? | select(.name == "inspire") | .version // empty' 2>/dev/null || true)"
+  if [ -n "$mkt_version" ] && [ "$mkt_version" != "$head_version" ]; then
+    {
+      echo ""
+      echo "Release identity is inconsistent — blocking the PR."
+      echo ""
+      echo "  $MANIFEST      version: $head_version"
+      echo "  $MARKETPLACE   version: $mkt_version"
+      echo ""
+      echo "  plugin.json is what a project freezes into .inspire.lock;"
+      echo "  marketplace.json is what /plugin install resolves. Bump both."
+      echo ""
+    }
     return 1
   fi
 

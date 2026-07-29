@@ -10,12 +10,15 @@
 
 ## Context
 
-INSPIRE is distributed today as "fork the template repo." `install.sh` does `rm -rf` over
-`.claude/{skills,bin,hooks}` before copying the runtime back in, destroying any non-INSPIRE
-content a user placed there. There is no surgical update path — "re-run `install.sh` after
-pulling template updates" means merging the template's git history into the product,
-conflicting with product code, KB, and local skill edits. There is no changelog or migration
-record of what changed between versions. And there is no install-in-place on-ramp: the only
+INSPIRE is distributed today as "fork the template repo." `install.sh` replaces the runtime
+one **owned entry** at a time (`rm -rf "$DEST/$part/$name"` per entry, deliberately never a
+wholesale `rm -rf "$DEST/$part"`), so a user's own skills and hooks under
+`.claude/{skills,bin,hooks}` survive — but anything nested *inside* an owned entry does not,
+and there is no record of what the runtime shipped, so no way to tell a local edit from a
+stale copy. There is no surgical update path either — "re-run `install.sh` after pulling
+template updates" means merging the template's git history into the product, conflicting with
+product code, KB, and local skill edits. There is no changelog or migration record of what
+changed between versions. And there is no install-in-place on-ramp: the only
 way to adopt INSPIRE is to clone the template as your repo, which is wrong the moment a team
 already has a codebase.
 

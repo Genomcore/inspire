@@ -77,7 +77,18 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
 - **No product vocabulary.** A profile that a different React project could not
   reuse verbatim has leaked something that isn't a framework convention.
 - **The template ships lean defaults** (`react`, `nestjs`) matching the seeded
-  reference stack; a fork adds or replaces profiles for its own frameworks by
-  dropping `profiles/{id}.md` here (versioned in `.inspire/`, like all runtime).
+  reference stack; a project adds or replaces profiles for its own frameworks by
+  dropping `profiles/{id}.md` here — inside the runtime, at
+  `.claude/skills/inspire-code/profiles/`.
+
+> **Back up a profile you author here before running `/inspire:update`.**
+> This directory lives inside a skill directory INSPIRE owns and replaces
+> wholesale, so a profile you add is **deleted on update** and is not reported as
+> drift (drift tracking covers only files INSPIRE shipped — see
+> `.inspire.lock`'s `files` map). The same was true of `install.sh` before v0.3;
+> making project-authored profiles survive is on the v0.4 roadmap, along with
+> revisiting where profiles live. Until then: keep yours in version control (a
+> committed profile is restored with `git checkout`), or keep a copy outside
+> `.claude/`.
 
 See [`_example.md`](_example.md) for an annotated skeleton.

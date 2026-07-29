@@ -146,7 +146,7 @@ generic coding-stage checks. After confirming the layers:
    deterministic resolution key; without it, `/inspire_code` infers from the stack
    sections.
 2. **Offer to scaffold missing profiles.** For any id in `profiles:` with no file at
-   `.inspire/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
+   `.claude/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
    from the contract ([`profiles/README.md`](../inspire-code/profiles/README.md)) so
    the coding stage starts stack-aware. Framework conventions only — org policy
    (branch naming, private registries, CI) stays in the project's `CLAUDE.md`

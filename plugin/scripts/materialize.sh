@@ -26,7 +26,7 @@
 # stdout: a JSON summary (machine-readable). stderr: human progress.
 # exit:   0 ok · 1 precondition failure · 2 partial failure (nothing committed)
 #
-# Prerequisites: bash 4+, yq (Mike Farah's v4), jq 1.6+.
+# Prerequisites: bash 3.2+ (macOS default), yq (Mike Farah's v4), jq 1.6+.
 
 set -uo pipefail
 
@@ -108,6 +108,15 @@ parse_args() {
         DECLARE_MARKETPLACE=1; shift 1 ;;
       --skip)
         [ "$#" -ge 2 ] || { log "materialize.sh: --skip requires a value"; usage; exit 1; }
+        # A --skip value is used to build "$PROJECT_ROOT/$sp" and that path is
+        # rm -rf'd during backup/restore, so it must not be able to escape the
+        # project. Values come from drift-check echoing .inspire.lock's keys —
+        # a corrupted or hand-edited lock would otherwise become an arbitrary
+        # deletion outside the project root.
+        case "$2" in
+          /*|*..*)
+            log "materialize.sh: --skip '$2' must be a project-relative path without '..'"; exit 1 ;;
+        esac
         SKIP_PATHS+=("$2"); shift 2 ;;
       --dry-run)
         DRY_RUN=1; shift 1 ;;
@@ -127,6 +136,15 @@ validate_args() {
   [ -n "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root is required"; usage; exit 1; }
   [ -n "$PROJECT_ROOT" ] || { log "materialize.sh: --project-root is required"; usage; exit 1; }
   [ -d "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root '$PLUGIN_ROOT' is not a directory"; exit 1; }
+  # A directory is not enough: every consumer of $PLUGIN_ROOT/base degrades
+  # SILENTLY when it is absent (copy_plan becomes a no-op, the seeds return
+  # early), so a wrong --plugin-root would otherwise report a successful install
+  # that installed nothing — and write an .inspire.lock that makes /inspire:init
+  # refuse forever while update cannot seed the KB. Fail loudly instead.
+  [ -d "$PLUGIN_ROOT/base" ] || {
+    log "materialize.sh: --plugin-root '$PLUGIN_ROOT' has no base/ — not an INSPIRE plugin root"; exit 1; }
+  [ -f "$PLUGIN_ROOT/.claude-plugin/plugin.json" ] || {
+    log "materialize.sh: --plugin-root '$PLUGIN_ROOT' has no .claude-plugin/plugin.json — not an INSPIRE plugin root"; exit 1; }
   [ -d "$PROJECT_ROOT" ] || { log "materialize.sh: --project-root '$PROJECT_ROOT' is not a directory"; exit 1; }
   command -v jq >/dev/null 2>&1 || { log "materialize.sh: jq is required on PATH"; exit 1; }
   command -v yq >/dev/null 2>&1 || { log "materialize.sh: yq is required on PATH"; exit 1; }
@@ -188,7 +206,8 @@ materialize_entry() {
     # INSPIRE owns this entry outright: replace it, never the parent directory.
     rm -rf "$dest_abs"
     mkdir -p "$(dirname "$dest_abs")"
-    cp -R "$src" "$dest_abs"
+    cp -R "$src" "$dest_abs" || {
+      log "materialize.sh: failed to copy $src → $dest_abs (the entry is now absent)"; exit 2; }
     COPIED+=("$dest_rel")
     return 0
   fi
@@ -214,7 +233,19 @@ materialize_entry() {
 
   rm -rf "$dest_abs"
   mkdir -p "$(dirname "$dest_abs")"
-  cp -R "$src" "$dest_abs"
+  cp -R "$src" "$dest_abs" || {
+    log "materialize.sh: failed to copy $src → $dest_abs; restoring skipped paths from $backup"
+    i=0
+    for sp in "${relevant[@]}"; do
+      if [ "${existed[$i]}" = 1 ]; then
+        mkdir -p "$(dirname "$PROJECT_ROOT/$sp")"
+        cp -R "$backup/$i" "$PROJECT_ROOT/$sp" 2>/dev/null || true
+      fi
+      i=$((i + 1))
+    done
+    rm -rf "$backup"
+    exit 2
+  }
 
   i=0
   for sp in "${relevant[@]}"; do
@@ -559,12 +590,60 @@ write_lock() {
 # drift-check — read-only: hashes recorded paths against disk. Writes nothing.
 # ---------------------------------------------------------------------------
 
+# Refuses to operate on a pre-0.3 (install.sh-era) project.
+#
+# A v0.2 .inspire.lock carries inspire_version / released / template_sha but NO
+# `files` map — drift detection did not exist. Everything downstream reads
+# `.files // {}`, so such a project drift-checks as "nothing drifted, nothing
+# missing" and an update then proceeds with no --skip at all. The v0.2 layout
+# also differs: the KB lived at .inspire_kb/, validators at .claude/bin/, hooks
+# at .claude/hooks/ registered WITHOUT the INSPIRE-MANAGED marker (so the
+# marker-scoped re-merge cannot retire them). Materializing v0.3 over that
+# leaves the KB stranded where no skill looks and the old hooks still firing.
+#
+# v0.2 upgraded by git-merging the template and re-running install.sh; there is
+# no in-place path from it, so refuse loudly rather than half-migrate.
+require_v03_lock() {
+  local lock="$1"
+  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
+
+  local lv
+  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
+  {
+    echo ""
+    echo "This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports"
+    echo "version '$lv' and carries no 'files' map), and v0.3 moved the runtime:"
+    echo ""
+    echo "    .inspire_kb/      →  inspire_kb/"
+    echo "    .claude/bin/      →  .inspire/bin/"
+    echo "    .claude/hooks/    →  .claude/inspire/hooks/"
+    echo "    .inspire/{skills,install.sh,manifest.json}  →  removed (now the plugin)"
+    echo ""
+    echo "Migrate by hand once, then re-run:"
+    echo ""
+    echo "  1. git mv .inspire_kb inspire_kb"
+    echo "  2. git rm -r --cached .claude/bin .claude/hooks .inspire/skills \\"
+    echo "       .inspire/install.sh .inspire/manifest.json  (and delete them)"
+    echo "  3. Remove the three INSPIRE hook entries from .claude/settings.json"
+    echo "     (they point at .claude/hooks/ and carry no INSPIRE-MANAGED marker)"
+    echo "  4. rm .inspire.lock"
+    echo "  5. Run /inspire:init — it will re-materialize the v0.3 layout and"
+    echo "     seed a lock with drift tracking. Your inspire_kb/ is left alone."
+    echo ""
+    echo "Refusing to proceed: an update here would strand the KB at .inspire_kb/"
+    echo "and leave the old hooks registered."
+    echo ""
+  } >&2
+  exit 2
+}
+
 run_drift_check() {
   local lock="$PROJECT_ROOT/.inspire.lock"
   if [ ! -f "$lock" ]; then
     log "materialize.sh: no .inspire.lock at $PROJECT_ROOT — run /inspire:init first"
     exit 1
   fi
+  require_v03_lock "$lock"
 
   local lock_version plugin_version
   lock_version="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
@@ -607,6 +686,11 @@ run_drift_check() {
 # ---------------------------------------------------------------------------
 
 run_materialize() {
+  # An update against a pre-0.3 project must refuse before anything is written.
+  if [ "$MODE" = "update" ] && [ -f "$PROJECT_ROOT/.inspire.lock" ]; then
+    require_v03_lock "$PROJECT_ROOT/.inspire.lock"
+  fi
+
   log "INSPIRE · materialize ($MODE) → $PROJECT_ROOT"
 
   copy_plan

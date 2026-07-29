@@ -5,7 +5,7 @@ the product is, why it's shaped the way it is, and what "correct" means — the
 source of truth the agents read from and write to.
 
 Each numbered folder is a layer of the graph, operated by a matching skill in
-[`.inspire/skills/`](../.inspire/skills):
+[`.claude/skills/`](../.claude/skills):
 
 | Folder | Holds | Skill |
 |--------|-------|-------|

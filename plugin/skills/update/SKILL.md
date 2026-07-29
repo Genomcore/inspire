@@ -8,7 +8,7 @@ description: "Update this project's INSPIRE runtime to the installed plugin's ve
 Brings a project's materialized runtime up to the plugin's current base. This is the
 **materialize-only** stage: it does not yet reconcile lessons. Lesson classification and
 skill rebuilding are specified in
-[`adr-runtime-lifecycle-and-lessons`](../../../docs/adr/adr-runtime-lifecycle-and-lessons.md)
+[`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md)
 D6 and land at v1.
 
 ## Preconditions
@@ -35,9 +35,22 @@ Read `inspire_version` from `.inspire.lock` and `version` from
 
 **Scope: the runtime only, never the KB.** `inspire_kb/` is product content — seeded
 once at init from `base/kb`, owned by the project from that moment on. It is not in
-`.inspire.lock`'s `files` map and `materialize.sh --mode update` cannot reach it
-structurally (see Rule 2). Drift-check output below only ever names paths under
+`.inspire.lock`'s `files` map, and `materialize.sh --mode update` never replaces or
+deletes anything under it — the `kb` mapping is init-only (it seeds two missing files
+additively; see Rule 2). Drift-check output below only ever names paths under
 `.claude/skills/`, `.inspire/bin/` and `.claude/inspire/hooks/`.
+
+**A pre-0.3 project cannot be updated in place.** If `.inspire.lock` has no `files`
+map it came from the `install.sh` era, whose layout differs (`.inspire_kb/`,
+`.claude/bin/`, `.claude/hooks/`). `materialize.sh` refuses with exit 2 and prints the
+one-time manual migration; relay it verbatim rather than improvising.
+
+**If a newer release adds a KB layer file** (a new README, a new starter template),
+update will not deliver it — the `kb` mapping is init-only. That is deliberate, but it
+leaves the operator with no automatic route to genuinely new skeleton content. If they
+want it, tell them where to copy it from by hand:
+`${CLAUDE_PLUGIN_ROOT}/base/kb/<layer>/<file>`. Never copy it for them without asking —
+an existing file at that path is theirs.
 
 Hashing is deterministic, so the script does it. This skill does not compute hashes itself:
 
@@ -161,12 +174,25 @@ genuinely useful on its own — it brings validators, hooks and untouched skills
 
 1. **All file operations go through `materialize.sh`.** No copying, hashing or settings
    editing in prose. Drift detection is `--mode drift-check`.
-2. **Never overwrite a drifted file, and never touch the KB.** Pass every drifted path
-   as `--skip`. Skipping and reporting is always correct; silent clobbering never is.
-   `inspire_kb/` is out of scope by construction — `--mode update` never copies,
-   replaces or deletes anything under it, `--skip` cannot make it more excluded than
-   it already is, and it carries no lock entries to drift in the first place. The KB
-   is seeded once at init and belongs to the project from then on.
+2. **Never overwrite a drifted file, and never delete from the KB.** Pass every drifted
+   path as `--skip`. Skipping and reporting is always correct; silent clobbering never is.
+
+   **The guarantee's exact scope: files INSPIRE shipped.** Drift detection compares
+   against `.inspire.lock`'s `files` map, so it protects files that came from a
+   previous materialize. A file the *project* authored **inside** a skill directory
+   INSPIRE owns — e.g. `.claude/skills/inspire-code/profiles/mystack.md`, or
+   `inspire-*/references/*.md` — was never in the lock, so it is never reported as
+   drift and **is deleted** when the entry is replaced. This is pre-0.3 behaviour
+   (`install.sh` replaced owned entries the same way) and is on the v0.4 roadmap, not
+   a regression. Report it as a known limitation if an operator asks. Project content
+   belongs in the KB, in a `98_lessons` node, or in the project's `CLAUDE.md` — not
+   inside an `inspire-*` directory.
+
+   `inspire_kb/` is out of scope for replacement — `--mode update` never *replaces or
+   deletes* anything under it and it carries no lock entries to drift. Two exceptions
+   are additive and never clobber: `seed_design_system` creates
+   `05_screens/design-system.md`, and `seed_claude_md` creates `CLAUDE.md`, **only if
+   absent**. The KB is seeded once at init and belongs to the project from then on.
 3. **The plan gate is mandatory.** No writes before approval.
 4. **Never downgrade.** A plugin older than the lock is an error, not an update.
 5. **No lesson reconciliation here.** Classification, archiving and skill rebuilding are v1

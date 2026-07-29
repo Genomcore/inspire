@@ -1,6 +1,6 @@
-# `.inspire/templates` — files materialized at instantiation
+# `plugin/base/templates` — files materialized at instantiation
 
-Templates that [`materialize.sh`](../scripts/materialize.sh) writes into the **product
+Templates that [`materialize.sh`](../../scripts/materialize.sh) writes into the **product
 side** of a fork when the runtime is instantiated. They do **not** exist in the template
 repo itself — they are created (idempotently, never clobbering existing content) in a
 project the first time `materialize.sh` runs (via `/inspire:init`).
