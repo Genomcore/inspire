@@ -59,7 +59,7 @@ Machine-read tokens stay verbatim — frontmatter keys and enum values (\`kind\`
 names, IDs and status-map keys are never translated. See \
 \`.claude/skills/_references/output-language.md\` for the full rule."
 
-# Surface the runtime version (best-effort) from .inspire.lock, written by install.sh.
+# Surface the runtime version (best-effort) from .inspire.lock, written by materialize.sh.
 # Appends a short note so every session knows which INSPIRE release it is running and
 # that lessons captured now will be stamped with it.
 INSPIRE_VERSION=""

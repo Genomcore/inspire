@@ -15,11 +15,11 @@ spec for one navigable view; here it's named "screen" because that reads clearer
     design-system.md     # the live design system — seeded at install
   ```
 - **`design-system.md`** is the project's live design system (tokens, typography,
-  color, density, layout). It's **seeded at install** by copying the default
+  color, density, layout). It's **seeded by `materialize.sh`** by copying the default
   template [`00_bootstrap/theme.md`](../00_bootstrap/theme.md), then owned by
   `/inspire_bootstrap design-system` (screens **read** its tokens, they don't edit
   them). (So it isn't shipped in the bare template; it appears after
-  `.inspire/install.sh` runs.)
+  `/inspire:init` runs.)
 - Screens **instantiate shared patterns** ([`patterns/`](patterns)) and use
   components from [`components/`](components); the same components are the reference
   when the UI is implemented in the prototype ([`/prototype`](../../prototype))

@@ -33,7 +33,7 @@ declares.
 ## Who sets them
 
 `inspire-bootstrap` owns these fields — the `stack` subcommand, as part of the product's
-**Shape**. `install.sh` reads them when materializing the product-side folders: it
-creates the default `source/` / `prototype/` only when the roots point at those relative
-paths, and skips creation for `.` / `none`. Changing a root later is a layout change —
-surface it like any Shape change.
+**Shape**. `materialize.sh` reads them (via `/inspire:init` / `/inspire:update`) when
+materializing the product-side folders: it creates the default `source/` / `prototype/`
+only when the roots point at those relative paths, and skips creation for `.` / `none`.
+Changing a root later is a layout change — surface it like any Shape change.

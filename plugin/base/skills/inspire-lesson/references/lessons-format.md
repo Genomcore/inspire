@@ -104,7 +104,7 @@ observer, keyed by `id` and the date prefix, not inside the fork.
 ## Version stamp
 
 `inspire_version` + `template_sha` are copied from `.inspire.lock` (repo root, written
-by `install.sh`) **at capture time** and, like everything else, never rewritten. They
+by `materialize.sh`) **at capture time** and, like everything else, never rewritten. They
 let the observer answer "was this already learned?" — by checking whether the release
 that carries it is newer than the one the lesson was based on. If the lock is absent
 (e.g. inside the template repo), fall back to `.inspire/manifest.json`; else record

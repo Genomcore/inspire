@@ -6,10 +6,9 @@ status: template         # the default theme template; copied to 05_screens/desi
 # Design system (theme) — default template
 
 The **default design-system template**: theme, typography, color, density and
-layout. This is a *seed*, not the live source of truth — at install
-(`.inspire/install.sh`) it is **copied to
-[`05_screens/design-system.md`](../05_screens)**, which becomes the project's
-working design system. From then on edit the live one with
+layout. This is a *seed*, not the live source of truth — `materialize.sh` copies
+it to [`05_screens/design-system.md`](../05_screens) during `/inspire:init`,
+which becomes the project's working design system. From then on edit the live one with
 `/inspire_bootstrap design-system`; re-seed this default with
 `/inspire_bootstrap theme`.
 

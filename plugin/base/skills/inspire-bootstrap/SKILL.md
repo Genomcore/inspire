@@ -31,8 +31,8 @@ The template seeds all three with a sensible default (English + the OpenBIMS
 reference stack + theme); a new project reconfigures them here.
 
 At first-time setup this skill also establishes **project identity** — the root
-`README.md`. The template's methodology README is removed at instantiation
-(`install.sh`), so `init` creates the project's own (see the `readme` subcommand).
+`README.md`. A project materialized from the plugin never carries the template's
+methodology README, so `init` creates the project's own (see the `readme` subcommand).
 
 ## Invocation
 
@@ -63,9 +63,9 @@ at least the stack.
    project choice, not a default.
 3. **Show the default theme** (`theme.md`) and ask the same. If they want changes,
    run the `theme` flow (or derive it from a mockup's CSS).
-4. **Create the project's root `README.md`** by running the `readme` flow. At
-   instantiation `install.sh` removes the template's own methodology README, so a
-   fresh project has none — this is where it gets one.
+4. **Create the project's root `README.md`** by running the `readme` flow. A project
+   materialized from the plugin never carries the template's own methodology README, so
+   a fresh project has none — this is where it gets one.
 5. **Wire the local git remote (optional).** Run `git remote -v`; show the current
    `origin`. Ask — optional, skippable — for the remote the project should push to.
    If they give one, wire it on an **explicit yes** (`git remote add origin <url>`,
