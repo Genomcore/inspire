@@ -337,6 +337,19 @@ v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-roo
 rc_v2drift=$?
 check "guard: pre-0.3 lock fails drift-check"      "[ '$rc_v2drift' = 2 ]"
 check "guard: pre-0.3 message names the migration" "printf '%s' \"\$v2err\" | grep -q 'git mv .inspire_kb inspire_kb'"
+# The migration steps are executed verbatim by an operator, so they must WORK.
+# In a 0.2 project .claude/ was gitignored, so .claude/bin and .claude/hooks
+# were never tracked — and `git rm` aborts on the first unmatched pathspec,
+# taking the tracked .inspire/ paths down with it. The whole command then does
+# nothing while looking like a failed migration.
+check "guard: pre-0.3 git rm tolerates untracked pathspecs" \
+  "printf '%s' \"\$v2err\" | grep -q -- '--ignore-unmatch'"
+check "guard: pre-0.3 does not git rm the never-tracked .claude paths" \
+  "! (printf '%s' \"\$v2err\" | grep -- 'git rm' | grep -q '.claude/')"
+# 0.2's install.sh wrote `/.claude` into .gitignore. Left in place it hides the
+# entire 0.3 runtime, so the migration has to call it out.
+check "guard: pre-0.3 message calls out the /.claude gitignore rule" \
+  "printf '%s' \"\$v2err\" | grep -q 'gitignore'"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
 rc_v2update=$?
 check "guard: pre-0.3 lock fails update"           "[ '$rc_v2update' = 2 ]"
