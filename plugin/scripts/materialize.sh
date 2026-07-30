@@ -159,19 +159,21 @@ resolve_paths() {
 }
 
 # ---------------------------------------------------------------------------
-# Copy plan: base/{kb,bin,hooks,skills} → project targets. bin/test/ is never
+# Copy plan: base/{bin,hooks,skills} → project targets. bin/test/ is never
 # materialized — neither the fixtures nor the harness (see Global Constraints).
-# `kb` is init-only and never lock-tracked — it is product content the KB
-# owns from the moment it is seeded, not runtime INSPIRE can regenerate (see
-# copy_plan / materialize_entry).
+#
+# base/kb is deliberately NOT in this map. Everything here is INSPIRE-owned
+# runtime, replaced wholesale on every run; the KB is product content and is
+# only ever *seeded* (see seed_kb), never replaced, in either mode.
 # ---------------------------------------------------------------------------
 
-MAP_NAMES=(kb bin hooks skills)
-MAP_DESTS=(inspire_kb .inspire/bin .claude/inspire/hooks .claude/skills)
+MAP_NAMES=(bin hooks skills)
+MAP_DESTS=(.inspire/bin .claude/inspire/hooks .claude/skills)
 
 COPIED=()
 SKIPPED=()
 CREATED=()
+WARNINGS=()
 TRACKED_ENTRIES=()   # dest-relative entries whose files feed the lock
 FILES_LINES=()       # "relpath<TAB>sha256" lines, built once disk state settles
 SETTINGS_STATUS="unchanged"
@@ -263,24 +265,10 @@ materialize_entry() {
 }
 
 copy_plan() {
-  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel track
-  for idx in 0 1 2 3; do
+  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel
+  for idx in $(seq 0 $((${#MAP_NAMES[@]} - 1))); do
     name="${MAP_NAMES[$idx]}"
     dest_rel="${MAP_DESTS[$idx]}"
-
-    # The KB (inspire_kb) is product content, not runtime: seeded once at
-    # init from base/kb, then owned by the project from then on. `update`
-    # must never reach it — structurally, not merely via `--skip` (which is
-    # fed from drift-check and only ever covers what the lock tracks, so a
-    # project's own layer content, authored after init, would never be
-    # reported and never be protected). So on any mode other than init, the
-    # kb mapping is skipped before its directory is even opened.
-    if [ "$name" = "kb" ]; then
-      [ "$MODE" = "init" ] || continue
-      track=0
-    else
-      track=1
-    fi
 
     src_dir="$PLUGIN_ROOT/base/$name"
     dest_dir="$PROJECT_ROOT/$dest_rel"
@@ -299,9 +287,80 @@ copy_plan() {
 
       dest_entry="$dest_dir/$entry_name"
       dest_entry_rel="$dest_rel/$entry_name"
-      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" "$track"
+      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" 1
       log "  · $name/$entry_name → $dest_entry_rel"
     done
+  done
+}
+
+# Seed inspire_kb/ from base/kb — init only, and strictly additive.
+#
+# The KB is PRODUCT content, not runtime. INSPIRE never owns a file under
+# inspire_kb/ the way it owns .claude/skills/: from the moment a layer exists,
+# what is in it belongs to the project. So this is a seed, never a copy:
+#
+#   · a path absent on disk      → copied from the skeleton
+#   · a path already on disk     → left byte-for-byte, and recursed into, so a
+#                                  layer the project already has still gains the
+#                                  skeleton files it happens to lack
+#
+# It must be file-granular, not entry-granular. Going through materialize_entry
+# (rm -rf + cp -R per top-level entry) destroyed an existing KB outright: every
+# authored feature, descriptor, ADR, screen and ticket under a layer directory
+# went with the directory. Nothing protected them — the lock does not track the
+# KB, so drift-check never reports a KB path and --skip can never cover one.
+# The pre-0.3 migration made that reachable by design: its step 4 is
+# `rm .inspire.lock`, which removes init's "already installed" precondition and
+# routes a real project's KB straight into the replace. A restored backup, a KB
+# vendored in before init, or a hand-deleted lock reach it the same way.
+seed_kb() {
+  local src_dir="$PLUGIN_ROOT/base/kb"
+  local dest_dir="$PROJECT_ROOT/inspire_kb"
+  [ -d "$src_dir" ] || return 0
+
+  local entry entry_name dest_entry dest_entry_rel added kept f rel target
+  for entry in "$src_dir"/*; do
+    [ -e "$entry" ] || continue
+    entry_name="$(basename "$entry")"
+    dest_entry="$dest_dir/$entry_name"
+    dest_entry_rel="inspire_kb/$entry_name"
+
+    if [ ! -e "$dest_entry" ]; then
+      COPIED+=("$dest_entry_rel")
+      if [ "$DRY_RUN" = 1 ]; then
+        log "  · [dry-run] would seed $dest_entry_rel"
+      else
+        mkdir -p "$dest_dir"
+        cp -R "$entry" "$dest_entry" || {
+          log "materialize.sh: failed to seed $entry → $dest_entry"; exit 2; }
+        log "  · kb/$entry_name → $dest_entry_rel"
+      fi
+      continue
+    fi
+
+    # Already on disk. Add only what is missing beneath it; touch nothing else.
+    # A non-directory (or a type mismatch against the skeleton) is the
+    # project's — left exactly as found.
+    added=0; kept=0
+    if [ -d "$entry" ] && [ -d "$dest_entry" ]; then
+      while IFS= read -r f; do
+        rel="${f#"$entry"/}"
+        target="$dest_entry/$rel"
+        if [ -e "$target" ]; then
+          kept=$((kept + 1))
+          continue
+        fi
+        added=$((added + 1))
+        CREATED+=("$dest_entry_rel/$rel")
+        [ "$DRY_RUN" = 1 ] && continue
+        mkdir -p "$(dirname "$target")"
+        cp "$f" "$target" || {
+          log "materialize.sh: failed to seed $f → $target"; exit 2; }
+      done < <(find "$entry" -type f)
+    else
+      kept=1
+    fi
+    log "  · $dest_entry_rel already present — left as-is (seeded $added missing file(s), kept $kept)"
   done
 }
 
@@ -405,6 +464,45 @@ $GITIGNORE_MARK_END"
   fi
   printf '\n%s\n' "$block" >> "$gi"
   log "  · appended the INSPIRE block to .gitignore"
+}
+
+# The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
+# the repo, so teammates and CI need no plugin. A .gitignore rule that excludes
+# it therefore defeats the whole delivery model, silently: init reports
+# "settings: merged, lock: written" and `git status` shows nothing at all.
+#
+# The common case is a 0.2 project. Its install.sh wrote `/.claude`, because
+# back then the runtime was regenerated locally and never committed. Appending
+# `.claude/settings.local.json` cannot undo that: git cannot re-include a path
+# below an excluded directory, so no line this script adds could fix it.
+#
+# So: report, never rewrite. The operator's .gitignore is the operator's.
+warn_shadowed_runtime() {
+  local shadowed=() p
+  for p in .claude/skills .claude/inspire/hooks .inspire/bin; do
+    if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$p" 2>/dev/null; then
+      shadowed+=("$p")
+    fi
+  done
+  [ "${#shadowed[@]}" -gt 0 ] || return 0
+
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. Remove the rule (a 0.2 install wrote '/.claude') and commit these paths.")
+  {
+    echo ""
+    echo "  WARNING · .gitignore excludes the INSPIRE runtime"
+    echo ""
+    for p in "${shadowed[@]}"; do
+      echo "      $p  ($(git -C "$PROJECT_ROOT" check-ignore -v --no-index "$p" 2>/dev/null | awk -F'\t' '{print $1}'))"
+    done
+    echo ""
+    echo "  v0.3 expects these committed — that is what makes the runtime travel"
+    echo "  with the repo, so teammates and CI need no plugin. A v0.2 install.sh"
+    echo "  wrote '/.claude' for the opposite model."
+    echo ""
+    echo "  Nothing this script appends can undo it: git cannot re-include a path"
+    echo "  below an excluded directory. Remove the rule by hand, then commit."
+    echo ""
+  } >&2
 }
 
 # Create the product-side roots (source/prototype) at their configured location.
@@ -603,16 +701,15 @@ write_lock() {
 #
 # v0.2 upgraded by git-merging the template and re-running install.sh; there is
 # no in-place path from it, so refuse loudly rather than half-migrate.
-require_v03_lock() {
-  local lock="$1"
-  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
-
-  local lv
-  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
+# The migration text itself, shared by the two routes that detect a pre-0.3
+# project: an `update` against a v0.2 lock (require_v03_lock) and an `init`
+# against an unmigrated v0.2 tree (require_migrated_layout). $1 opens, $2 says
+# what is being refused; both may be multi-line.
+print_v02_migration() {
+  local why="$1" refusal="$2"
   {
     echo ""
-    echo "This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports"
-    echo "version '$lv' and carries no 'files' map), and v0.3 moved the runtime:"
+    printf '%s\n' "$why"
     echo ""
     echo "    .inspire_kb/      →  inspire_kb/"
     echo "    .claude/bin/      →  .inspire/bin/"
@@ -622,19 +719,78 @@ require_v03_lock() {
     echo "Migrate by hand once, then re-run:"
     echo ""
     echo "  1. git mv .inspire_kb inspire_kb"
-    echo "  2. git rm -r --cached .claude/bin .claude/hooks .inspire/skills \\"
-    echo "       .inspire/install.sh .inspire/manifest.json  (and delete them)"
+    echo "  2. Untrack the v0.2 runtime that WAS committed:"
+    echo "       git rm -r --cached --ignore-unmatch \\"
+    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
+    echo "     then delete the v0.2 runtime that was NOT (v0.2 gitignored"
+    echo "     /.claude, so these were never tracked — 'git rm' would abort on"
+    echo "     them and take the whole command with it):"
+    echo "       rm -rf .claude/bin .claude/hooks \\"
+    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
     echo "  3. Remove the three INSPIRE hook entries from .claude/settings.json"
     echo "     (they point at .claude/hooks/ and carry no INSPIRE-MANAGED marker)"
-    echo "  4. rm .inspire.lock"
-    echo "  5. Run /inspire:init — it will re-materialize the v0.3 layout and"
-    echo "     seed a lock with drift tracking. Your inspire_kb/ is left alone."
+    echo "  4. Remove the '/.claude' line your v0.2 install wrote into .gitignore."
+    echo "     v0.3 expects .claude/skills/ and .claude/inspire/hooks/ to be"
+    echo "     COMMITTED — that is what makes the runtime travel with the repo."
+    echo "     Left in place it hides the entire new runtime from git, silently."
+    echo "  5. rm .inspire.lock"
+    echo "  6. Run /inspire:init — it will materialize the v0.3 layout and seed a"
+    echo "     lock with drift tracking. Your inspire_kb/ is left alone: init only"
+    echo "     adds skeleton files your KB does not already have."
     echo ""
-    echo "Refusing to proceed: an update here would strand the KB at .inspire_kb/"
-    echo "and leave the old hooks registered."
+    printf '%s\n' "$refusal"
     echo ""
   } >&2
+}
+
+require_v03_lock() {
+  local lock="$1"
+  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
+
+  local lv
+  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
+  print_v02_migration \
+"This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports
+version '$lv' and carries no 'files' map), and v0.3 moved the runtime:" \
+"Refusing to proceed: an update here would strand the KB at .inspire_kb/
+and leave the old hooks registered."
   exit 2
+}
+
+# An unmigrated v0.2 tree: .inspire_kb/ present, inspire_kb/ absent. The lock
+# guard above cannot catch this one — the operator may have already reached
+# step 5 (`rm .inspire.lock`) without doing step 1 (`git mv`), or never had a
+# lock to begin with. Without this guard init exits 0 reporting a clean
+# install, having seeded an EMPTY inspire_kb/ beside the real one: the whole
+# knowledge base left at a path no v0.3 skill ever reads, and nothing in the
+# output saying so.
+require_migrated_layout() {
+  [ -d "$PROJECT_ROOT/.inspire_kb" ] || return 0
+  [ -d "$PROJECT_ROOT/inspire_kb" ] && return 0
+
+  print_v02_migration \
+"This project still has the pre-0.3 layout — .inspire_kb/ is present and
+inspire_kb/ is not — and v0.3 moved the runtime:" \
+"Refusing to proceed: an init here would strand your knowledge base at
+.inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/
+beside it. Start at step 1."
+  exit 1
+}
+
+# init over a project that already has inspire_kb/ is an ADOPTION, not a fresh
+# install: a completed v0.2 migration, a restored backup, a KB vendored in
+# before init, or a lock deleted by hand. seed_kb makes it safe — nothing under
+# inspire_kb/ is replaced — but "safe" is not the same as "expected", so it is
+# reported rather than passed over in silence, and /inspire:init confirms it
+# with the operator before writing anything.
+EXISTING_KB=0
+detect_existing_kb() {
+  [ -d "$PROJECT_ROOT/inspire_kb" ] || return 0
+  EXISTING_KB=1
+  local n
+  n="$(find "$PROJECT_ROOT/inspire_kb" -type f 2>/dev/null | wc -l | tr -d ' ')"
+  WARNINGS+=("inspire_kb/ already exists ($n file(s)) — this is an adoption, not a fresh install. Nothing under it is replaced; only skeleton files it lacks are added.")
+  log "  · inspire_kb/ already exists ($n file(s)) — adopting it: seeding only what is missing"
 }
 
 run_drift_check() {
@@ -686,27 +842,36 @@ run_drift_check() {
 # ---------------------------------------------------------------------------
 
 run_materialize() {
-  # An update against a pre-0.3 project must refuse before anything is written.
+  # Both pre-0.3 detections run before anything is written.
   if [ "$MODE" = "update" ] && [ -f "$PROJECT_ROOT/.inspire.lock" ]; then
     require_v03_lock "$PROJECT_ROOT/.inspire.lock"
   fi
+  require_migrated_layout
 
   log "INSPIRE · materialize ($MODE) → $PROJECT_ROOT"
+  [ "$MODE" = "init" ] && detect_existing_kb
 
   copy_plan
+  # The KB is seeded only at init, and only additively. `update` never reaches
+  # it at all — structurally, not merely via --skip (which is fed from
+  # drift-check and only covers what the lock tracks, so a project's own layer
+  # content, authored after init, would never be reported nor protected).
+  [ "$MODE" = "init" ] && seed_kb
   chmod_executables
   seed_design_system
   seed_claude_md
   seed_gitignore
   create_product_roots
+  warn_shadowed_runtime
   merge_settings
   compute_lock_files
   write_lock
 
-  local copied_json skipped_json created_json
+  local copied_json skipped_json created_json warnings_json
   if [ "${#COPIED[@]}" -gt 0 ]; then copied_json="$(arr_to_json "${COPIED[@]}")"; else copied_json="[]"; fi
   if [ "${#SKIPPED[@]}" -gt 0 ]; then skipped_json="$(arr_to_json "${SKIPPED[@]}")"; else skipped_json="[]"; fi
   if [ "${#CREATED[@]}" -gt 0 ]; then created_json="$(arr_to_json "${CREATED[@]}")"; else created_json="[]"; fi
+  if [ "${#WARNINGS[@]}" -gt 0 ]; then warnings_json="$(arr_to_json "${WARNINGS[@]}")"; else warnings_json="[]"; fi
 
   local version
   version="$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
@@ -714,16 +879,21 @@ run_materialize() {
   local dry_bool="false"
   [ "$DRY_RUN" = 1 ] && dry_bool="true"
 
+  local existing_kb_bool="false"
+  [ "$EXISTING_KB" = 1 ] && existing_kb_bool="true"
+
   jq -n \
+    --argjson existing_kb "$existing_kb_bool" \
     --arg mode "$MODE" \
     --arg version "$version" \
     --argjson copied "$copied_json" \
     --argjson skipped "$skipped_json" \
     --argjson created "$created_json" \
+    --argjson warnings "$warnings_json" \
     --arg settings "$SETTINGS_STATUS" \
     --arg lock "$LOCK_STATUS" \
     --argjson dry_run "$dry_bool" \
-    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, settings: $settings, lock: $lock}
+    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, warnings: $warnings, existing_kb: $existing_kb, settings: $settings, lock: $lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
   log "INSPIRE · materialize ($MODE) done."

@@ -37,7 +37,11 @@ check "settings still parses"         "jq -e . '$proj/.claude/settings.json' >/d
 check "enabledPlugins is a record"      "[ \"\$(jq -r '.enabledPlugins|type' '$proj/.claude/settings.json')\" = object ]"
 check "enabledPlugins names the plugin" "jq -e '.enabledPlugins[\"inspire@inspire\"] == true' '$proj/.claude/settings.json' >/dev/null"
 check "foreign enabledPlugins survive"  "jq -e '.enabledPlugins[\"other@thing\"] == true' '$proj/.claude/settings.json' >/dev/null"
-check "lock version 0.3.0"            "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = 0.3.0 ]"
+# Read the expected version from the manifest rather than hardcoding it: the
+# assertion is "the lock records what the plugin says it is", not "the plugin
+# is at some particular version", and a literal here goes stale on every bump.
+manifest_version="$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
+check "lock records the manifest version" "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = '$manifest_version' ]"
 check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.lock' >/dev/null"
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
 check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
@@ -210,6 +214,146 @@ check "KB regression: drifted skill still skipped, not overwritten" \
 rm -rf "$(dirname "$kbp")"
 
 # ---------------------------------------------------------------------------
+# Regression: /inspire:init over a repo that ALREADY has an inspire_kb/ must
+# seed around it, never through it. The historical bug: init treated each
+# top-level KB layer as an INSPIRE-owned entry and `rm -rf`'d it before
+# copying the skeleton, so a restored backup, a KB vendored in before init, a
+# hand-deleted lock — and above all the pre-0.3 migration, whose step 4 is
+# `rm .inspire.lock` — all walked into total loss of the knowledge base.
+# init must add only the layer files the project lacks.
+# ---------------------------------------------------------------------------
+pre="$(mktemp -d)/preproj"; mkdir -p "$pre"; ( cd "$pre" && git init -q )
+mkdir -p "$pre/inspire_kb/00_bootstrap" "$pre/inspire_kb/03_features" \
+         "$pre/inspire_kb/04_domain/billing/invoice" "$pre/inspire_kb/01_adr"
+printf -- '---\nlanguage: en\n---\n# Our real stack\n' > "$pre/inspire_kb/00_bootstrap/stack.md"
+printf -- '# Login\n\nAcceptance: user signs in.\n'      > "$pre/inspire_kb/03_features/feat-login.md"
+printf -- '# Invoice\n\nfields:\n  - id\n'               > "$pre/inspire_kb/04_domain/billing/invoice/invoice.md"
+printf -- '# ADR-0001: Use Postgres\n\nStatus: accepted\n' > "$pre/inspire_kb/01_adr/adr-0001-postgres.md"
+
+pre_stack_before="$(shasum -a 256 "$pre/inspire_kb/00_bootstrap/stack.md" | cut -d' ' -f1)"
+pre_feat_before="$(shasum -a 256 "$pre/inspire_kb/03_features/feat-login.md" | cut -d' ' -f1)"
+pre_dom_before="$(shasum -a 256 "$pre/inspire_kb/04_domain/billing/invoice/invoice.md" | cut -d' ' -f1)"
+pre_adr_before="$(shasum -a 256 "$pre/inspire_kb/01_adr/adr-0001-postgres.md" | cut -d' ' -f1)"
+
+preout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$pre" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+
+check "PRE-EXISTING KB: authored feature survives init" \
+  "[ -f '$pre/inspire_kb/03_features/feat-login.md' ] && [ '$pre_feat_before' = \"\$(shasum -a 256 '$pre/inspire_kb/03_features/feat-login.md' | cut -d' ' -f1)\" ]"
+check "PRE-EXISTING KB: nested domain descriptor survives init" \
+  "[ -f '$pre/inspire_kb/04_domain/billing/invoice/invoice.md' ] && [ '$pre_dom_before' = \"\$(shasum -a 256 '$pre/inspire_kb/04_domain/billing/invoice/invoice.md' | cut -d' ' -f1)\" ]"
+check "PRE-EXISTING KB: authored ADR survives init" \
+  "[ -f '$pre/inspire_kb/01_adr/adr-0001-postgres.md' ] && [ '$pre_adr_before' = \"\$(shasum -a 256 '$pre/inspire_kb/01_adr/adr-0001-postgres.md' | cut -d' ' -f1)\" ]"
+# stack.md is the one KB file init may still edit — create_product_roots writes
+# the answered roots into its frontmatter. It must be AMENDED, never replaced.
+check "PRE-EXISTING KB: stack.md keeps its authored body" \
+  "grep -q 'Our real stack' '$pre/inspire_kb/00_bootstrap/stack.md'"
+check "PRE-EXISTING KB: stack.md gains the answered source_root" \
+  "grep -q 'source_root' '$pre/inspire_kb/00_bootstrap/stack.md'"
+# Seeding must still fill in what the project lacks, at file granularity.
+check "PRE-EXISTING KB: missing file inside an existing layer is seeded" \
+  "[ -f '$pre/inspire_kb/03_features/README.md' ]"
+check "PRE-EXISTING KB: missing sibling in an existing layer is seeded" \
+  "[ -f '$pre/inspire_kb/00_bootstrap/theme.md' ]"
+check "PRE-EXISTING KB: wholly absent layer is created" \
+  "[ -f '$pre/inspire_kb/99_tracker/README.md' ]"
+check "PRE-EXISTING KB: design system still seeded" \
+  "[ -f '$pre/inspire_kb/05_screens/design-system.md' ]"
+
+check "PRE-EXISTING KB: reported as an adoption, not a fresh install" \
+  "printf '%s' \"\$preout\" | jq -e '.existing_kb == true' >/dev/null"
+check "PRE-EXISTING KB: adoption surfaced as a warning" \
+  "printf '%s' \"\$preout\" | jq -e '[.warnings[] | select(test(\"already exists\"))] | length > 0' >/dev/null"
+# The skill shows a dry run first, so the dry run must reveal the adoption too —
+# that plan is the operator's only chance to say no.
+predry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$pre" \
+  --source-root source --prototype-root prototype --dry-run 2>/dev/null)"
+check "PRE-EXISTING KB: dry run also reports the adoption" \
+  "printf '%s' \"\$predry\" | jq -e '.existing_kb == true' >/dev/null"
+
+rm -rf "$(dirname "$pre")"
+
+# A fresh repo must NOT be reported as an adoption.
+frk="$(mktemp -d)/frproj"; mkdir -p "$frk"; ( cd "$frk" && git init -q )
+frout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$frk" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "fresh repo: not flagged as an existing KB" \
+  "printf '%s' \"\$frout\" | jq -e '.existing_kb == false' >/dev/null"
+rm -rf "$(dirname "$frk")"
+
+# ---------------------------------------------------------------------------
+# An UNMIGRATED v0.2 tree (.inspire_kb/ present, inspire_kb/ absent) must be
+# refused by init. The lock guard cannot catch it: the operator may have
+# reached migration step 5 (`rm .inspire.lock`) without doing step 1
+# (`git mv`), or never had a lock. Unguarded, init exits 0 reporting a clean
+# install while the entire knowledge base sits at .inspire_kb/, a path no v0.3
+# skill reads, with an empty inspire_kb/ seeded beside it.
+# ---------------------------------------------------------------------------
+um="$(mktemp -d)/umproj"; mkdir -p "$um/.inspire_kb/03_features"; ( cd "$um" && git init -q )
+printf -- '# Login\n\nThe real, only copy.\n' > "$um/.inspire_kb/03_features/feat-login.md"
+umerr="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um" \
+  --source-root source --prototype-root prototype 2>&1 >/dev/null)"
+rc_um=$?
+check "unmigrated v0.2: init exits 1"                 "[ '$rc_um' = 1 ]"
+check "unmigrated v0.2: names the git mv step"        "printf '%s' \"\$umerr\" | grep -q 'git mv .inspire_kb inspire_kb'"
+check "unmigrated v0.2: no empty KB seeded beside it" "[ ! -e '$um/inspire_kb' ]"
+check "unmigrated v0.2: nothing written at all"       "[ ! -d '$um/.claude/skills' ] && [ ! -f '$um/.inspire.lock' ]"
+check "unmigrated v0.2: the old KB is untouched"      "[ -f '$um/.inspire_kb/03_features/feat-login.md' ]"
+
+# Once step 1 is done the guard must stand down — otherwise it blocks the very
+# migration it prescribes.
+( cd "$um" && mv .inspire_kb inspire_kb )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+rc_um2=$?
+check "migrated v0.2: init now succeeds"              "[ '$rc_um2' = 0 ]"
+check "migrated v0.2: the migrated KB survives it"    "[ -f '$um/inspire_kb/03_features/feat-login.md' ] && grep -q 'The real, only copy' '$um/inspire_kb/03_features/feat-login.md'"
+check "migrated v0.2: skeleton filled in around it"   "[ -f '$um/inspire_kb/03_features/README.md' ] && [ -f '$um/inspire_kb/99_tracker/README.md' ]"
+rm -rf "$(dirname "$um")"
+
+# ---------------------------------------------------------------------------
+# A .gitignore rule that shadows the materialized runtime must be REPORTED.
+# 0.2's install.sh wrote `/.claude` (the runtime was regenerated, never
+# committed); 0.3 inverts that — .claude/skills/ and .claude/inspire/hooks/
+# must be committed so the runtime travels with the repo. An appended
+# `.claude/settings.local.json` cannot re-include what a broader earlier rule
+# already excluded (git cannot re-include below an excluded directory), so
+# init would otherwise report success while the whole runtime stays invisible
+# to git — the headline benefit of 0.3, silently absent.
+# ---------------------------------------------------------------------------
+shp="$(mktemp -d)/shproj"; mkdir -p "$shp"; ( cd "$shp" && git init -q )
+printf '/.claude\nnode_modules/\n' > "$shp/.gitignore"
+shout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp" \
+  --source-root source --prototype-root prototype 2>"$shp/.stderr")"
+check "gitignore shadow: runtime really is ignored (premise)" \
+  "git -C '$shp' check-ignore -q --no-index .claude/skills"
+check "gitignore shadow: reported on stderr" \
+  "grep -q 'WARNING' '$shp/.stderr' && grep -qi 'gitignore' '$shp/.stderr'"
+check "gitignore shadow: the warning names the shadowed path" \
+  "grep 'WARNING' -A6 '$shp/.stderr' | grep -q '.claude/skills'"
+check "gitignore shadow: surfaced in the JSON summary" \
+  "printf '%s' \"\$shout\" | jq -e '.warnings | length > 0' >/dev/null"
+check "gitignore shadow: operator's own rules untouched" \
+  "grep -qF 'node_modules/' '$shp/.gitignore' && grep -qxF '/.claude' '$shp/.gitignore'"
+
+# The skill shows a dry run first, so the warning must fire there too — that
+# plan is the operator's only chance to fix it before anything is written.
+shdry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp" \
+  --source-root source --prototype-root prototype --dry-run 2>/dev/null)"
+check "gitignore shadow: dry run warns before writing" \
+  "printf '%s' \"\$shdry\" | jq -e '.warnings | length > 0' >/dev/null"
+
+# No false positive on a clean repo: the INSPIRE block ignores only
+# settings.local.json, which must never trip the warning.
+nsh="$(mktemp -d)/nshproj"; mkdir -p "$nsh"; ( cd "$nsh" && git init -q )
+nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$nsh" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "gitignore shadow: no false positive on a clean repo" \
+  "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
+
+rm -rf "$(dirname "$shp")" "$(dirname "$nsh")"
+
+# ---------------------------------------------------------------------------
 # Input guards. Each of these reports SUCCESS while doing the wrong thing if
 # its guard is removed — that is why they are here rather than left to review.
 # ---------------------------------------------------------------------------
@@ -246,6 +390,19 @@ v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-roo
 rc_v2drift=$?
 check "guard: pre-0.3 lock fails drift-check"      "[ '$rc_v2drift' = 2 ]"
 check "guard: pre-0.3 message names the migration" "printf '%s' \"\$v2err\" | grep -q 'git mv .inspire_kb inspire_kb'"
+# The migration steps are executed verbatim by an operator, so they must WORK.
+# In a 0.2 project .claude/ was gitignored, so .claude/bin and .claude/hooks
+# were never tracked — and `git rm` aborts on the first unmatched pathspec,
+# taking the tracked .inspire/ paths down with it. The whole command then does
+# nothing while looking like a failed migration.
+check "guard: pre-0.3 git rm tolerates untracked pathspecs" \
+  "printf '%s' \"\$v2err\" | grep -q -- '--ignore-unmatch'"
+check "guard: pre-0.3 does not git rm the never-tracked .claude paths" \
+  "! (printf '%s' \"\$v2err\" | grep -- 'git rm' | grep -q '.claude/')"
+# 0.2's install.sh wrote `/.claude` into .gitignore. Left in place it hides the
+# entire 0.3 runtime, so the migration has to call it out.
+check "guard: pre-0.3 message calls out the /.claude gitignore rule" \
+  "printf '%s' \"\$v2err\" | grep -q 'gitignore'"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
 rc_v2update=$?
 check "guard: pre-0.3 lock fails update"           "[ '$rc_v2update' = 2 ]"
