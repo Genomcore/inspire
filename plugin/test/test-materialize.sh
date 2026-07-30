@@ -37,7 +37,11 @@ check "settings still parses"         "jq -e . '$proj/.claude/settings.json' >/d
 check "enabledPlugins is a record"      "[ \"\$(jq -r '.enabledPlugins|type' '$proj/.claude/settings.json')\" = object ]"
 check "enabledPlugins names the plugin" "jq -e '.enabledPlugins[\"inspire@inspire\"] == true' '$proj/.claude/settings.json' >/dev/null"
 check "foreign enabledPlugins survive"  "jq -e '.enabledPlugins[\"other@thing\"] == true' '$proj/.claude/settings.json' >/dev/null"
-check "lock version 0.3.0"            "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = 0.3.0 ]"
+# Read the expected version from the manifest rather than hardcoding it: the
+# assertion is "the lock records what the plugin says it is", not "the plugin
+# is at some particular version", and a literal here goes stale on every bump.
+manifest_version="$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
+check "lock records the manifest version" "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = '$manifest_version' ]"
 check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.lock' >/dev/null"
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
 check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
