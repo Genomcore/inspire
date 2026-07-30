@@ -259,6 +259,48 @@ check "PRE-EXISTING KB: design system still seeded" \
 rm -rf "$(dirname "$pre")"
 
 # ---------------------------------------------------------------------------
+# A .gitignore rule that shadows the materialized runtime must be REPORTED.
+# 0.2's install.sh wrote `/.claude` (the runtime was regenerated, never
+# committed); 0.3 inverts that — .claude/skills/ and .claude/inspire/hooks/
+# must be committed so the runtime travels with the repo. An appended
+# `.claude/settings.local.json` cannot re-include what a broader earlier rule
+# already excluded (git cannot re-include below an excluded directory), so
+# init would otherwise report success while the whole runtime stays invisible
+# to git — the headline benefit of 0.3, silently absent.
+# ---------------------------------------------------------------------------
+shp="$(mktemp -d)/shproj"; mkdir -p "$shp"; ( cd "$shp" && git init -q )
+printf '/.claude\nnode_modules/\n' > "$shp/.gitignore"
+shout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp" \
+  --source-root source --prototype-root prototype 2>"$shp/.stderr")"
+check "gitignore shadow: runtime really is ignored (premise)" \
+  "git -C '$shp' check-ignore -q --no-index .claude/skills"
+check "gitignore shadow: reported on stderr" \
+  "grep -q 'WARNING' '$shp/.stderr' && grep -qi 'gitignore' '$shp/.stderr'"
+check "gitignore shadow: the warning names the shadowed path" \
+  "grep 'WARNING' -A6 '$shp/.stderr' | grep -q '.claude/skills'"
+check "gitignore shadow: surfaced in the JSON summary" \
+  "printf '%s' \"\$shout\" | jq -e '.warnings | length > 0' >/dev/null"
+check "gitignore shadow: operator's own rules untouched" \
+  "grep -qF 'node_modules/' '$shp/.gitignore' && grep -qxF '/.claude' '$shp/.gitignore'"
+
+# The skill shows a dry run first, so the warning must fire there too — that
+# plan is the operator's only chance to fix it before anything is written.
+shdry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp" \
+  --source-root source --prototype-root prototype --dry-run 2>/dev/null)"
+check "gitignore shadow: dry run warns before writing" \
+  "printf '%s' \"\$shdry\" | jq -e '.warnings | length > 0' >/dev/null"
+
+# No false positive on a clean repo: the INSPIRE block ignores only
+# settings.local.json, which must never trip the warning.
+nsh="$(mktemp -d)/nshproj"; mkdir -p "$nsh"; ( cd "$nsh" && git init -q )
+nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$nsh" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "gitignore shadow: no false positive on a clean repo" \
+  "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
+
+rm -rf "$(dirname "$shp")" "$(dirname "$nsh")"
+
+# ---------------------------------------------------------------------------
 # Input guards. Each of these reports SUCCESS while doing the wrong thing if
 # its guard is removed — that is why they are here rather than left to review.
 # ---------------------------------------------------------------------------

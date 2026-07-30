@@ -62,7 +62,11 @@ First a dry run, and show the operator what it will do:
 ```
 
 Summarize the returned JSON for the operator: what will be created, what already exists and
-will be left alone. Then run the same command **without** `--dry-run`.
+will be left alone. Print every entry in **`warnings`** verbatim — these are conditions the
+run cannot fix on the operator's behalf. A `.gitignore` that excludes the runtime is the
+common one, and it silently defeats the point of committing the runtime at all.
+
+Then run the same command **without** `--dry-run`.
 
 If it exits non-zero, report its stderr verbatim and stop. Do not hand-patch a partial
 install: on exit 2 the payload may already be on disk, but the settings block and
@@ -74,7 +78,9 @@ says it did, never what you assume it did.
 
 ## Step 4 — Report, and hand off
 
-Print what was created, then:
+Print what was created — and re-print any `warnings` from the final run, above the handoff
+rather than buried under it. A warning the operator scrolls past is a warning that did not
+happen. Then:
 
 ```
 INSPIRE <version> installed.

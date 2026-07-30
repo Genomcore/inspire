@@ -173,6 +173,7 @@ MAP_DESTS=(.inspire/bin .claude/inspire/hooks .claude/skills)
 COPIED=()
 SKIPPED=()
 CREATED=()
+WARNINGS=()
 TRACKED_ENTRIES=()   # dest-relative entries whose files feed the lock
 FILES_LINES=()       # "relpath<TAB>sha256" lines, built once disk state settles
 SETTINGS_STATUS="unchanged"
@@ -463,6 +464,45 @@ $GITIGNORE_MARK_END"
   fi
   printf '\n%s\n' "$block" >> "$gi"
   log "  · appended the INSPIRE block to .gitignore"
+}
+
+# The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
+# the repo, so teammates and CI need no plugin. A .gitignore rule that excludes
+# it therefore defeats the whole delivery model, silently: init reports
+# "settings: merged, lock: written" and `git status` shows nothing at all.
+#
+# The common case is a 0.2 project. Its install.sh wrote `/.claude`, because
+# back then the runtime was regenerated locally and never committed. Appending
+# `.claude/settings.local.json` cannot undo that: git cannot re-include a path
+# below an excluded directory, so no line this script adds could fix it.
+#
+# So: report, never rewrite. The operator's .gitignore is the operator's.
+warn_shadowed_runtime() {
+  local shadowed=() p
+  for p in .claude/skills .claude/inspire/hooks .inspire/bin; do
+    if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$p" 2>/dev/null; then
+      shadowed+=("$p")
+    fi
+  done
+  [ "${#shadowed[@]}" -gt 0 ] || return 0
+
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. Remove the rule (a 0.2 install wrote '/.claude') and commit these paths.")
+  {
+    echo ""
+    echo "  WARNING · .gitignore excludes the INSPIRE runtime"
+    echo ""
+    for p in "${shadowed[@]}"; do
+      echo "      $p  ($(git -C "$PROJECT_ROOT" check-ignore -v --no-index "$p" 2>/dev/null | awk -F'\t' '{print $1}'))"
+    done
+    echo ""
+    echo "  v0.3 expects these committed — that is what makes the runtime travel"
+    echo "  with the repo, so teammates and CI need no plugin. A v0.2 install.sh"
+    echo "  wrote '/.claude' for the opposite model."
+    echo ""
+    echo "  Nothing this script appends can undo it: git cannot re-include a path"
+    echo "  below an excluded directory. Remove the rule by hand, then commit."
+    echo ""
+  } >&2
 }
 
 # Create the product-side roots (source/prototype) at their configured location.
@@ -762,14 +802,16 @@ run_materialize() {
   seed_claude_md
   seed_gitignore
   create_product_roots
+  warn_shadowed_runtime
   merge_settings
   compute_lock_files
   write_lock
 
-  local copied_json skipped_json created_json
+  local copied_json skipped_json created_json warnings_json
   if [ "${#COPIED[@]}" -gt 0 ]; then copied_json="$(arr_to_json "${COPIED[@]}")"; else copied_json="[]"; fi
   if [ "${#SKIPPED[@]}" -gt 0 ]; then skipped_json="$(arr_to_json "${SKIPPED[@]}")"; else skipped_json="[]"; fi
   if [ "${#CREATED[@]}" -gt 0 ]; then created_json="$(arr_to_json "${CREATED[@]}")"; else created_json="[]"; fi
+  if [ "${#WARNINGS[@]}" -gt 0 ]; then warnings_json="$(arr_to_json "${WARNINGS[@]}")"; else warnings_json="[]"; fi
 
   local version
   version="$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
@@ -783,10 +825,11 @@ run_materialize() {
     --argjson copied "$copied_json" \
     --argjson skipped "$skipped_json" \
     --argjson created "$created_json" \
+    --argjson warnings "$warnings_json" \
     --arg settings "$SETTINGS_STATUS" \
     --arg lock "$LOCK_STATUS" \
     --argjson dry_run "$dry_bool" \
-    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, settings: $settings, lock: $lock}
+    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, warnings: $warnings, settings: $settings, lock: $lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
   log "INSPIRE · materialize ($MODE) done."

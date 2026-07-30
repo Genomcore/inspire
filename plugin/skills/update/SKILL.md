@@ -143,9 +143,12 @@ the correct recovery — the copy is idempotent.
 
 ## Step 5 — Report
 
-Summarize what changed, list what was skipped, and note that no session restart is
-needed: `.claude/skills/` already existed at session start, so edits to files inside it
-load live. Remind the operator to review the git diff and commit.
+Summarize what changed, list what was skipped, and print every entry in the JSON's
+`warnings` array verbatim — these are conditions the run could not fix on the operator's
+behalf (a `.gitignore` excluding the runtime being the common one, which silently keeps the
+update out of the commit entirely). Note that no session restart is needed:
+`.claude/skills/` already existed at session start, so edits to files inside it load live.
+Remind the operator to review the git diff and commit.
 
 ## What this skill is, and what is missing from it
 
