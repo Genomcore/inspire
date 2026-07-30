@@ -701,16 +701,15 @@ write_lock() {
 #
 # v0.2 upgraded by git-merging the template and re-running install.sh; there is
 # no in-place path from it, so refuse loudly rather than half-migrate.
-require_v03_lock() {
-  local lock="$1"
-  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
-
-  local lv
-  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
+# The migration text itself, shared by the two routes that detect a pre-0.3
+# project: an `update` against a v0.2 lock (require_v03_lock) and an `init`
+# against an unmigrated v0.2 tree (require_migrated_layout). $1 opens, $2 says
+# what is being refused; both may be multi-line.
+print_v02_migration() {
+  local why="$1" refusal="$2"
   {
     echo ""
-    echo "This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports"
-    echo "version '$lv' and carries no 'files' map), and v0.3 moved the runtime:"
+    printf '%s\n' "$why"
     echo ""
     echo "    .inspire_kb/      →  inspire_kb/"
     echo "    .claude/bin/      →  .inspire/bin/"
@@ -739,11 +738,59 @@ require_v03_lock() {
     echo "     lock with drift tracking. Your inspire_kb/ is left alone: init only"
     echo "     adds skeleton files your KB does not already have."
     echo ""
-    echo "Refusing to proceed: an update here would strand the KB at .inspire_kb/"
-    echo "and leave the old hooks registered."
+    printf '%s\n' "$refusal"
     echo ""
   } >&2
+}
+
+require_v03_lock() {
+  local lock="$1"
+  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
+
+  local lv
+  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
+  print_v02_migration \
+"This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports
+version '$lv' and carries no 'files' map), and v0.3 moved the runtime:" \
+"Refusing to proceed: an update here would strand the KB at .inspire_kb/
+and leave the old hooks registered."
   exit 2
+}
+
+# An unmigrated v0.2 tree: .inspire_kb/ present, inspire_kb/ absent. The lock
+# guard above cannot catch this one — the operator may have already reached
+# step 5 (`rm .inspire.lock`) without doing step 1 (`git mv`), or never had a
+# lock to begin with. Without this guard init exits 0 reporting a clean
+# install, having seeded an EMPTY inspire_kb/ beside the real one: the whole
+# knowledge base left at a path no v0.3 skill ever reads, and nothing in the
+# output saying so.
+require_migrated_layout() {
+  [ -d "$PROJECT_ROOT/.inspire_kb" ] || return 0
+  [ -d "$PROJECT_ROOT/inspire_kb" ] && return 0
+
+  print_v02_migration \
+"This project still has the pre-0.3 layout — .inspire_kb/ is present and
+inspire_kb/ is not — and v0.3 moved the runtime:" \
+"Refusing to proceed: an init here would strand your knowledge base at
+.inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/
+beside it. Start at step 1."
+  exit 1
+}
+
+# init over a project that already has inspire_kb/ is an ADOPTION, not a fresh
+# install: a completed v0.2 migration, a restored backup, a KB vendored in
+# before init, or a lock deleted by hand. seed_kb makes it safe — nothing under
+# inspire_kb/ is replaced — but "safe" is not the same as "expected", so it is
+# reported rather than passed over in silence, and /inspire:init confirms it
+# with the operator before writing anything.
+EXISTING_KB=0
+detect_existing_kb() {
+  [ -d "$PROJECT_ROOT/inspire_kb" ] || return 0
+  EXISTING_KB=1
+  local n
+  n="$(find "$PROJECT_ROOT/inspire_kb" -type f 2>/dev/null | wc -l | tr -d ' ')"
+  WARNINGS+=("inspire_kb/ already exists ($n file(s)) — this is an adoption, not a fresh install. Nothing under it is replaced; only skeleton files it lacks are added.")
+  log "  · inspire_kb/ already exists ($n file(s)) — adopting it: seeding only what is missing"
 }
 
 run_drift_check() {
@@ -795,12 +842,14 @@ run_drift_check() {
 # ---------------------------------------------------------------------------
 
 run_materialize() {
-  # An update against a pre-0.3 project must refuse before anything is written.
+  # Both pre-0.3 detections run before anything is written.
   if [ "$MODE" = "update" ] && [ -f "$PROJECT_ROOT/.inspire.lock" ]; then
     require_v03_lock "$PROJECT_ROOT/.inspire.lock"
   fi
+  require_migrated_layout
 
   log "INSPIRE · materialize ($MODE) → $PROJECT_ROOT"
+  [ "$MODE" = "init" ] && detect_existing_kb
 
   copy_plan
   # The KB is seeded only at init, and only additively. `update` never reaches
@@ -830,7 +879,11 @@ run_materialize() {
   local dry_bool="false"
   [ "$DRY_RUN" = 1 ] && dry_bool="true"
 
+  local existing_kb_bool="false"
+  [ "$EXISTING_KB" = 1 ] && existing_kb_bool="true"
+
   jq -n \
+    --argjson existing_kb "$existing_kb_bool" \
     --arg mode "$MODE" \
     --arg version "$version" \
     --argjson copied "$copied_json" \
@@ -840,7 +893,7 @@ run_materialize() {
     --arg settings "$SETTINGS_STATUS" \
     --arg lock "$LOCK_STATUS" \
     --argjson dry_run "$dry_bool" \
-    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, warnings: $warnings, settings: $settings, lock: $lock}
+    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, warnings: $warnings, existing_kb: $existing_kb, settings: $settings, lock: $lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
   log "INSPIRE · materialize ($MODE) done."

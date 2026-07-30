@@ -256,7 +256,56 @@ check "PRE-EXISTING KB: wholly absent layer is created" \
 check "PRE-EXISTING KB: design system still seeded" \
   "[ -f '$pre/inspire_kb/05_screens/design-system.md' ]"
 
+check "PRE-EXISTING KB: reported as an adoption, not a fresh install" \
+  "printf '%s' \"\$preout\" | jq -e '.existing_kb == true' >/dev/null"
+check "PRE-EXISTING KB: adoption surfaced as a warning" \
+  "printf '%s' \"\$preout\" | jq -e '[.warnings[] | select(test(\"already exists\"))] | length > 0' >/dev/null"
+# The skill shows a dry run first, so the dry run must reveal the adoption too —
+# that plan is the operator's only chance to say no.
+predry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$pre" \
+  --source-root source --prototype-root prototype --dry-run 2>/dev/null)"
+check "PRE-EXISTING KB: dry run also reports the adoption" \
+  "printf '%s' \"\$predry\" | jq -e '.existing_kb == true' >/dev/null"
+
 rm -rf "$(dirname "$pre")"
+
+# A fresh repo must NOT be reported as an adoption.
+frk="$(mktemp -d)/frproj"; mkdir -p "$frk"; ( cd "$frk" && git init -q )
+frout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$frk" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "fresh repo: not flagged as an existing KB" \
+  "printf '%s' \"\$frout\" | jq -e '.existing_kb == false' >/dev/null"
+rm -rf "$(dirname "$frk")"
+
+# ---------------------------------------------------------------------------
+# An UNMIGRATED v0.2 tree (.inspire_kb/ present, inspire_kb/ absent) must be
+# refused by init. The lock guard cannot catch it: the operator may have
+# reached migration step 5 (`rm .inspire.lock`) without doing step 1
+# (`git mv`), or never had a lock. Unguarded, init exits 0 reporting a clean
+# install while the entire knowledge base sits at .inspire_kb/, a path no v0.3
+# skill reads, with an empty inspire_kb/ seeded beside it.
+# ---------------------------------------------------------------------------
+um="$(mktemp -d)/umproj"; mkdir -p "$um/.inspire_kb/03_features"; ( cd "$um" && git init -q )
+printf -- '# Login\n\nThe real, only copy.\n' > "$um/.inspire_kb/03_features/feat-login.md"
+umerr="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um" \
+  --source-root source --prototype-root prototype 2>&1 >/dev/null)"
+rc_um=$?
+check "unmigrated v0.2: init exits 1"                 "[ '$rc_um' = 1 ]"
+check "unmigrated v0.2: names the git mv step"        "printf '%s' \"\$umerr\" | grep -q 'git mv .inspire_kb inspire_kb'"
+check "unmigrated v0.2: no empty KB seeded beside it" "[ ! -e '$um/inspire_kb' ]"
+check "unmigrated v0.2: nothing written at all"       "[ ! -d '$um/.claude/skills' ] && [ ! -f '$um/.inspire.lock' ]"
+check "unmigrated v0.2: the old KB is untouched"      "[ -f '$um/.inspire_kb/03_features/feat-login.md' ]"
+
+# Once step 1 is done the guard must stand down — otherwise it blocks the very
+# migration it prescribes.
+( cd "$um" && mv .inspire_kb inspire_kb )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+rc_um2=$?
+check "migrated v0.2: init now succeeds"              "[ '$rc_um2' = 0 ]"
+check "migrated v0.2: the migrated KB survives it"    "[ -f '$um/inspire_kb/03_features/feat-login.md' ] && grep -q 'The real, only copy' '$um/inspire_kb/03_features/feat-login.md'"
+check "migrated v0.2: skeleton filled in around it"   "[ -f '$um/inspire_kb/03_features/README.md' ] && [ -f '$um/inspire_kb/99_tracker/README.md' ]"
+rm -rf "$(dirname "$um")"
 
 # ---------------------------------------------------------------------------
 # A .gitignore rule that shadows the materialized runtime must be REPORTED.

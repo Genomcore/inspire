@@ -19,6 +19,11 @@ committed, the runtime travels with the repo: teammates and CI need no plugin.
 4. **Not the template repo.** If `plugin/.claude-plugin/plugin.json` exists at the
    project root, stop: this is the INSPIRE template itself, and installing here would
    activate the runtime against it.
+5. **Not an unmigrated pre-0.3 project.** If `.inspire_kb/` exists and `inspire_kb/` does
+   not, stop: this is a v0.2 layout that has not been migrated. `materialize.sh` refuses
+   this too (exit 1, with the migration steps), but say it here rather than surfacing it
+   as an error — initializing over it would strand the entire knowledge base at
+   `.inspire_kb/`, where no v0.3 skill looks.
 
 ## Step 1 — Detect the shape
 
@@ -27,6 +32,11 @@ Record, before writing anything:
 - `BROWNFIELD` — whether the repo has code already. Heuristic: any of `package.json`,
   `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile` at root, or a `src/`
   directory. Used only to recommend roots in Step 2.
+- `EXISTING_KB` — whether `inspire_kb/` is already present. With no `.inspire.lock`
+  (precondition 3), that means this is an **adoption**, not a fresh install: a completed
+  v0.2 migration, a restored backup, a KB vendored in before init, or a lock deleted by
+  hand. `materialize.sh` seeds the KB additively — it replaces nothing under
+  `inspire_kb/` — but the operator must be told, not have it inferred.
 
 ## Step 2 — Ask the operator
 
@@ -62,9 +72,17 @@ First a dry run, and show the operator what it will do:
 ```
 
 Summarize the returned JSON for the operator: what will be created, what already exists and
-will be left alone. Print every entry in **`warnings`** verbatim — these are conditions the
-run cannot fix on the operator's behalf. A `.gitignore` that excludes the runtime is the
-common one, and it silently defeats the point of committing the runtime at all.
+will be left alone. Two fields need more than a summary line:
+
+- **`existing_kb: true`** — the run is adopting a KB that is already there. Say so
+  explicitly and confirm before proceeding: *"`inspire_kb/` already exists (N files). Init
+  will keep everything in it and only add skeleton files it lacks. Proceed?"* If the
+  operator did not expect a KB to be there, stop — a KB present without a lock usually
+  means an interrupted migration or a restored backup, and it is worth understanding
+  which before writing.
+- **`warnings: [...]`** — print each one verbatim. These are conditions the run cannot fix
+  on the operator's behalf. A `.gitignore` that excludes the runtime is the common one,
+  and it silently defeats the point of committing the runtime at all.
 
 Then run the same command **without** `--dry-run`.
 

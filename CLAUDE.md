@@ -24,8 +24,8 @@ repo is both its source and its own marketplace.
     missing skeleton files are added, because the KB is product content INSPIRE
     never owns), seeding the design system, seeding
     a provisional root `CLAUDE.md` + a `.gitignore` block, creating the product
-    roots, warning when `.gitignore` excludes the runtime,
-    the marker-based `settings.json` merge, and writing `.inspire.lock`
+    roots, refusing an unmigrated pre-0.3 layout and warning when `.gitignore`
+    excludes the runtime, the marker-based `settings.json` merge, and writing `.inspire.lock`
     (which now carries a `files` map — path → sha256 — driving `/inspire:update`'s
     drift detection, alongside `inspire_version`/`released`/`template_sha`).
   - `plugin/base/` — the **inert payload**: materialized into a project by
