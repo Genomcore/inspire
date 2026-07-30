@@ -19,7 +19,10 @@ repo is both its source and its own marketplace.
     and `/inspire:update` (re-materialize from a newer plugin version, reporting
     drift and never overwriting a locally-edited file).
   - `plugin/scripts/materialize.sh` — the mechanics both of the above skills call:
-    copying, `chmod`, excluding `base/bin/test/`, seeding the design system, seeding
+    copying, `chmod`, excluding `base/bin/test/`, **seeding** `inspire_kb/` (init
+    only, and strictly additive — a path already on disk is never replaced, only
+    missing skeleton files are added, because the KB is product content INSPIRE
+    never owns), seeding the design system, seeding
     a provisional root `CLAUDE.md` + a `.gitignore` block, creating the product
     roots, the marker-based `settings.json` merge, and writing `.inspire.lock`
     (which now carries a `files` map — path → sha256 — driving `/inspire:update`'s

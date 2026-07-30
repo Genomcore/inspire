@@ -159,15 +159,16 @@ resolve_paths() {
 }
 
 # ---------------------------------------------------------------------------
-# Copy plan: base/{kb,bin,hooks,skills} → project targets. bin/test/ is never
+# Copy plan: base/{bin,hooks,skills} → project targets. bin/test/ is never
 # materialized — neither the fixtures nor the harness (see Global Constraints).
-# `kb` is init-only and never lock-tracked — it is product content the KB
-# owns from the moment it is seeded, not runtime INSPIRE can regenerate (see
-# copy_plan / materialize_entry).
+#
+# base/kb is deliberately NOT in this map. Everything here is INSPIRE-owned
+# runtime, replaced wholesale on every run; the KB is product content and is
+# only ever *seeded* (see seed_kb), never replaced, in either mode.
 # ---------------------------------------------------------------------------
 
-MAP_NAMES=(kb bin hooks skills)
-MAP_DESTS=(inspire_kb .inspire/bin .claude/inspire/hooks .claude/skills)
+MAP_NAMES=(bin hooks skills)
+MAP_DESTS=(.inspire/bin .claude/inspire/hooks .claude/skills)
 
 COPIED=()
 SKIPPED=()
@@ -263,24 +264,10 @@ materialize_entry() {
 }
 
 copy_plan() {
-  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel track
-  for idx in 0 1 2 3; do
+  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel
+  for idx in $(seq 0 $((${#MAP_NAMES[@]} - 1))); do
     name="${MAP_NAMES[$idx]}"
     dest_rel="${MAP_DESTS[$idx]}"
-
-    # The KB (inspire_kb) is product content, not runtime: seeded once at
-    # init from base/kb, then owned by the project from then on. `update`
-    # must never reach it — structurally, not merely via `--skip` (which is
-    # fed from drift-check and only ever covers what the lock tracks, so a
-    # project's own layer content, authored after init, would never be
-    # reported and never be protected). So on any mode other than init, the
-    # kb mapping is skipped before its directory is even opened.
-    if [ "$name" = "kb" ]; then
-      [ "$MODE" = "init" ] || continue
-      track=0
-    else
-      track=1
-    fi
 
     src_dir="$PLUGIN_ROOT/base/$name"
     dest_dir="$PROJECT_ROOT/$dest_rel"
@@ -299,9 +286,80 @@ copy_plan() {
 
       dest_entry="$dest_dir/$entry_name"
       dest_entry_rel="$dest_rel/$entry_name"
-      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" "$track"
+      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" 1
       log "  · $name/$entry_name → $dest_entry_rel"
     done
+  done
+}
+
+# Seed inspire_kb/ from base/kb — init only, and strictly additive.
+#
+# The KB is PRODUCT content, not runtime. INSPIRE never owns a file under
+# inspire_kb/ the way it owns .claude/skills/: from the moment a layer exists,
+# what is in it belongs to the project. So this is a seed, never a copy:
+#
+#   · a path absent on disk      → copied from the skeleton
+#   · a path already on disk     → left byte-for-byte, and recursed into, so a
+#                                  layer the project already has still gains the
+#                                  skeleton files it happens to lack
+#
+# It must be file-granular, not entry-granular. Going through materialize_entry
+# (rm -rf + cp -R per top-level entry) destroyed an existing KB outright: every
+# authored feature, descriptor, ADR, screen and ticket under a layer directory
+# went with the directory. Nothing protected them — the lock does not track the
+# KB, so drift-check never reports a KB path and --skip can never cover one.
+# The pre-0.3 migration made that reachable by design: its step 4 is
+# `rm .inspire.lock`, which removes init's "already installed" precondition and
+# routes a real project's KB straight into the replace. A restored backup, a KB
+# vendored in before init, or a hand-deleted lock reach it the same way.
+seed_kb() {
+  local src_dir="$PLUGIN_ROOT/base/kb"
+  local dest_dir="$PROJECT_ROOT/inspire_kb"
+  [ -d "$src_dir" ] || return 0
+
+  local entry entry_name dest_entry dest_entry_rel added kept f rel target
+  for entry in "$src_dir"/*; do
+    [ -e "$entry" ] || continue
+    entry_name="$(basename "$entry")"
+    dest_entry="$dest_dir/$entry_name"
+    dest_entry_rel="inspire_kb/$entry_name"
+
+    if [ ! -e "$dest_entry" ]; then
+      COPIED+=("$dest_entry_rel")
+      if [ "$DRY_RUN" = 1 ]; then
+        log "  · [dry-run] would seed $dest_entry_rel"
+      else
+        mkdir -p "$dest_dir"
+        cp -R "$entry" "$dest_entry" || {
+          log "materialize.sh: failed to seed $entry → $dest_entry"; exit 2; }
+        log "  · kb/$entry_name → $dest_entry_rel"
+      fi
+      continue
+    fi
+
+    # Already on disk. Add only what is missing beneath it; touch nothing else.
+    # A non-directory (or a type mismatch against the skeleton) is the
+    # project's — left exactly as found.
+    added=0; kept=0
+    if [ -d "$entry" ] && [ -d "$dest_entry" ]; then
+      while IFS= read -r f; do
+        rel="${f#"$entry"/}"
+        target="$dest_entry/$rel"
+        if [ -e "$target" ]; then
+          kept=$((kept + 1))
+          continue
+        fi
+        added=$((added + 1))
+        CREATED+=("$dest_entry_rel/$rel")
+        [ "$DRY_RUN" = 1 ] && continue
+        mkdir -p "$(dirname "$target")"
+        cp "$f" "$target" || {
+          log "materialize.sh: failed to seed $f → $target"; exit 2; }
+      done < <(find "$entry" -type f)
+    else
+      kept=1
+    fi
+    log "  · $dest_entry_rel already present — left as-is (seeded $added missing file(s), kept $kept)"
   done
 }
 
@@ -694,6 +752,11 @@ run_materialize() {
   log "INSPIRE · materialize ($MODE) → $PROJECT_ROOT"
 
   copy_plan
+  # The KB is seeded only at init, and only additively. `update` never reaches
+  # it at all — structurally, not merely via --skip (which is fed from
+  # drift-check and only covers what the lock tracks, so a project's own layer
+  # content, authored after init, would never be reported nor protected).
+  [ "$MODE" = "init" ] && seed_kb
   chmod_executables
   seed_design_system
   seed_claude_md
