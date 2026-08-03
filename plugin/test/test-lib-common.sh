@@ -17,6 +17,14 @@ eq "double digits"    "$(version_cmp 0.10.0 0.9.0)"  "1"
 eq "short vs long"    "$(version_cmp 0.3 0.3.0)"     "0"
 eq "missing patch"    "$(version_cmp 0.4 0.3.9)"     "1"
 
+# Regressions found in review: leading zeros previously fell into bash's
+# octal parsing of $((...)) (crashing on 8/9 digits, miscomputing otherwise),
+# and only the first 3 components were ever compared.
+eq "leading zero, same value"   "$(version_cmp 1.09.0 1.9.0)"    "0"
+eq "leading zero, real diff"    "$(version_cmp 1.010.0 1.9.0)"   "1"
+eq "4th component, older"       "$(version_cmp 1.2.3.4 1.2.3.5)" "-1"
+eq "4th component, newer"       "$(version_cmp 1.2.3.5 1.2.3.4)" "1"
+
 tmp="$(mktemp)"; printf 'abc' > "$tmp"
 eq "sha256_of" "$(sha256_of "$tmp")" \
   "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
