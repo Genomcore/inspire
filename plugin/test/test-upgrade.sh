@@ -555,5 +555,87 @@ run_chain "$PLUGIN_ROOT" 0.3.1 0.4.0
 eq "0.3.1 → 0.4.0 runs no hops" "$(grep -c . "$HOP_JOURNAL" || true)" "0"
 fixture_cleanup "$w"
 
+# ---- the three-way classifier -------------------------------------------
+. "$PLUGIN_ROOT/scripts/lib/merge.sh"
+MAP_03="$(layout_map "$PLUGIN_ROOT" 0.3)"
+MAP_PRE="$(layout_map "$PLUGIN_ROOT" pre-0.3)"
+
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.3.1 "$w" "$REPO")"
+mf="$PLUGIN_ROOT/manifests/0.3.1.json"
+base="$PLUGIN_ROOT/base"
+
+verdict_for() { printf '%s' "$1" | awk -F'\t' -v t="$2" '$2==t{print $1; exit}'; }
+# A content fingerprint of the whole project: path + hash of every file. classify
+# must leave this byte-identical — it is the only assertion that actually proves
+# "writes nothing" (a per-file existence check cannot see a rewrite).
+tree_print() { ( cd "$1" && find . -type f | LC_ALL=C sort \
+                 | while IFS= read -r f; do printf '%s %s\n' "$f" "$(sha256_of "$f")"; done ); }
+
+# Row: they didn't change it, we didn't change it → noop.
+# Row: they changed it, we didn't → keep.
+printf '\nMY EDIT\n' >> "$p/.inspire/bin/no-todos.sh"
+# Row: they deleted an owned file → restore.
+rm -f "$p/.inspire/bin/acyclic-deps.sh"
+# Row: project-authored file inside an owned dir → keep. THE rm -rf REGRESSION.
+printf 'go rules\n' > "$p/.claude/skills/inspire-code/references/go-best-practices.md"
+
+before="$(tree_print "$p")"
+out="$(classify "$mf" "$p" "$base" "$MAP_03" "$MAP_03")"
+after="$(tree_print "$p")"
+
+eq "unmodified file is a no-op" \
+   "$(verdict_for "$out" .inspire/bin/review.sh)" "noop"
+eq "operator edit is kept" \
+   "$(verdict_for "$out" .inspire/bin/no-todos.sh)" "keep"
+eq "operator deletion is restored" \
+   "$(verdict_for "$out" .inspire/bin/acyclic-deps.sh)" "restore"
+eq "project-authored file is kept" \
+   "$(verdict_for "$out" .claude/skills/inspire-code/references/go-best-practices.md)" "keep"
+check "classify wrote nothing" "[ -f '$p/.inspire/bin/no-todos.sh' ]"
+check "classify did not restore anything itself" \
+   "[ ! -e '$p/.inspire/bin/acyclic-deps.sh' ]"
+eq "classify left the whole tree byte-identical" "$before" "$after"
+
+# keepset_of: hashes, not paths — every keep plus every unresolved ask.
+vf="$w/verdicts.tsv"; printf '%s\n' "$out" > "$vf"
+ks="$(keepset_of "$vf" "$p")"
+check "keepset carries the operator's edited validator" \
+   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/no-todos.sh')\""
+check "keepset carries the project-authored file" \
+   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.claude/skills/inspire-code/references/go-best-practices.md')\""
+check "keepset does not carry an untouched shipped file" \
+   "! printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/review.sh')\""
+check "keepset is deduplicated and hash-shaped" \
+   "[ -z \"\$(printf '%s\n' \"\$ks\" | grep -vE '^[0-9a-f]{64}\$')\" ]"
+fixture_cleanup "$w"
+
+# --- staleness and conflict, on a PRE-0.3 source -------------------------
+# NOTE: do not use a 0.3.0 fixture for staleness. plugin/base/ is byte-identical
+# between 0.3.0 and 0.3.1 (the hotfix touched only materialize.sh, the skills
+# and the tests), so a 0.3.0 project has NOTHING stale and the assertion would
+# fail for a reason unrelated to the code. 0.2.1's base genuinely differs.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+mf21="$PLUGIN_ROOT/manifests/0.2.1.json"
+out="$(classify "$mf21" "$p" "$base" "$MAP_PRE" "$MAP_03")"
+
+check "a pre-0.3 source finds its base counterparts (nothing wholesale-deleted)" \
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 !~ /^\.claude\/bin\/test\//' | wc -l | tr -d ' ')\" -lt 20 ]"
+check "the validator set is NOT mass-classified as delete" \
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 ~ /^\.claude\/bin\/[^\/]*\$/' | wc -l | tr -d ' ')\" = 0 ]"
+check "at least one untouched-but-stale file is replaced" \
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"replace\"' | wc -l | tr -d ' ')\" -ge 1 ]"
+check "the dropped bin/test fixtures are recognised as ours to delete" \
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 ~ /^\.claude\/bin\/test\//' | wc -l | tr -d ' ')\" = 114 ]"
+check "a file that only MOVED is not reported as a creation" \
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"create\" && \$2==\".inspire/bin/review.sh\"' | wc -l | tr -d ' ')\" = 0 ]"
+
+# A genuine conflict: they edited a file that also changed upstream.
+stale="$(printf '%s' "$out" | awk -F'\t' '$1=="replace"{print $2; exit}')"
+check "a stale path was found to conflict on" "[ -n '$stale' ]"
+printf '\nMY EDIT\n' >> "$p/$stale"
+out2="$(classify "$mf21" "$p" "$base" "$MAP_PRE" "$MAP_03")"
+eq "both-changed is a conflict" "$(verdict_for "$out2" "$stale")" "ask"
+fixture_cleanup "$w"
+
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]
