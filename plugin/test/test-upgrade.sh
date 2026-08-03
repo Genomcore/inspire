@@ -794,5 +794,34 @@ check "a directory in the way is left alone, not nested into" \
    "[ -d '$sp/.inspire/bin/README.md' ] && [ -z \"\$(ls -A '$sp/.inspire/bin/README.md')\" ]"
 rm -rf "$sw"
 
+# ---- the grouped report -------------------------------------------------
+. "$PLUGIN_ROOT/scripts/lib/report.sh"
+
+j="$(mktemp)"; v="$(mktemp)"
+printf 'move\t.claude/bin/review.sh\t.inspire/bin/review.sh\n'      >> "$j"
+printf 'delete\t.claude/bin/test/run-tests.sh\t\n'                  >> "$j"
+printf 'keep\t.claude/bin/test/my-fixture.sh\tyours\n'              >> "$j"
+printf 'move\t.inspire_kb\tinspire_kb\n'                            >> "$j"
+printf 'report\t\t.manual/ came from the fork\n'                    >> "$j"
+printf 'replace\t.claude/skills/inspire-domain/SKILL.md\tstale\n'   >> "$v"
+printf 'ask\t.claude/skills/inspire-task/SKILL.md\tboth changed\n'  >> "$v"
+printf 'create\tinspire_kb/07_x/README.md\tnew\n'                   >> "$v"
+
+out="$(render_report 0.2.1 0.4.0 "$j" "$v" 1 2>&1)"
+
+check "report announces the dry run"  "printf '%s' \"\$out\" | grep -q 'DRY RUN'"
+check "report shows the chain"        "printf '%s' \"\$out\" | grep -q '0.2.1 → 0.4.0'"
+check "report has a RUNTIME group"    "printf '%s' \"\$out\" | grep -q 'RUNTIME'"
+check "report has a KNOWLEDGE BASE group" \
+      "printf '%s' \"\$out\" | grep -q 'KNOWLEDGE BASE'"
+check "report has a LEFT ALONE group" "printf '%s' \"\$out\" | grep -q 'LEFT ALONE'"
+check "report flags the decision"     "printf '%s' \"\$out\" | grep -q 'ASK'"
+check "report counts the decision"    "printf '%s' \"\$out\" | grep -q '1 decision'"
+check "report carries the superset caveat" \
+      "printf '%s' \"\$out\" | grep -qi 'already absent'"
+check "KB move lands in the KB group" \
+      "printf '%s' \"\$out\" | awk '/KNOWLEDGE BASE/,/^\$/' | grep -q 'inspire_kb'"
+rm -f "$j" "$v"
+
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]
