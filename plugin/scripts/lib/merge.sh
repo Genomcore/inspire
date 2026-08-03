@@ -31,8 +31,9 @@
 # plugin but is NEVER materialized into a project.
 #
 # This filter is why a "does the target ship it?" question is not just
-# `[ -f base/<middle> ]`. It mirrors materialize.sh's copy_plan exactly, and it
-# is load-bearing in BOTH directions:
+# `[ -f base/<middle> ]`. materialize.sh's copy_plan calls this directly — the
+# single definition of the rule, not a mirror of it — and it is load-bearing
+# in BOTH directions:
 #   · pass 1 — .claude/bin/test/ was shipped by 0.1–0.2 (114 files in the 0.2.1
 #     manifest) and is deliberately dropped from 0.3 onward. plugin/base/bin/test/
 #     still exists here (the template's own golden fixtures), so without this

@@ -57,20 +57,27 @@ check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local
 check "idempotent PreToolUse"         "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
 check "idempotent foreign key"        "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
 
-# drift-check classifies against the lock and writes nothing.
+# drift-check is now a deprecated alias for --mode plan (Task 12): it no
+# longer emits the old {drifted,missing,unchanged} shape. It classifies
+# instead — an edited-but-otherwise-unchanged-upstream file comes back
+# `keep` ("you changed it, we did not"), a deleted-but-still-shipped file
+# comes back `restore` ("you deleted this; restoring at the new version") —
+# both visible in the stderr report, rolled up as counts in the JSON.
 # Must run BEFORE the --skip test below: an update with --skip rebaselines the lock to
-# the drifted hash, after which drift-check would correctly report it as unchanged.
+# the drifted hash, after which a re-plan would correctly report it as unchanged.
 drift="$proj/.claude/skills/inspire-domain/SKILL.md"
 printf '\nLOCAL EDIT\n' >> "$drift"
 rm -f "$proj/.inspire/bin/no-todos.sh"
 lock_before="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
-dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
+dc_err="$(mktemp)"
+dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>"$dc_err")"
 lock_after="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
 check "drift-check parses"             "printf '%s' \"\$dc\" | jq -e . >/dev/null"
-check "drift-check finds the edit"     "printf '%s' \"\$dc\" | jq -e '.drifted|index(\".claude/skills/inspire-domain/SKILL.md\")' >/dev/null"
-check "drift-check finds the deletion" "printf '%s' \"\$dc\" | jq -e '.missing|index(\".inspire/bin/no-todos.sh\")' >/dev/null"
-check "drift-check lists unchanged"    "[ \"\$(printf '%s' \"\$dc\" | jq '.unchanged|length')\" -gt 0 ]"
+check "drift-check finds the edit"     "grep -q 'SKILL.md.*you changed it, we did not' '$dc_err'"
+check "drift-check finds the deletion" "grep -q 'no-todos.sh.*restoring at the new version' '$dc_err'"
+check "drift-check lists unchanged"    "[ \"\$(printf '%s' \"\$dc\" | jq '.verdicts.noop')\" -gt 0 ]"
 check "drift-check is read-only"       "[ '$lock_before' = \"\$lock_after\" ]"
+rm -f "$dc_err"
 # Restore the deleted validator so the --skip test below starts from a known state.
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype \
@@ -168,19 +175,26 @@ design_before="$(shasum -a 256 "$kbp/inspire_kb/05_screens/design-system.md" | c
 kb_count_before="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
 
 # Also drift a runtime file and delete another, so the update call below
-# mirrors a real operator run exactly as update/SKILL.md Steps 2-4 describe.
+# mirrors a real operator run against a divergent runtime.
+#
+# drift-check is now a deprecated alias for --mode plan (Task 12): it
+# classifies rather than flatly listing every path whose hash differs from
+# the lock, so its only per-path list is `.ask` — reserved for genuine 3-way
+# conflicts (both the operator and this INSPIRE release changed the same
+# path). An edit with no upstream change classifies `keep`, never `ask` (see
+# the block above), so it can no longer be discovered by round-tripping
+# `.ask` into --skip the way this test used to. Re-wiring `update` itself to
+# consult classify()/keepset_of() instead of an explicit --skip list is
+# Task 13's job; this test only needs the one path it itself just edited, so
+# it is named directly.
 printf '\nLOCAL EDIT\n' >> "$kbp/.claude/skills/inspire-domain/SKILL.md"
 rm -f "$kbp/.inspire/bin/no-todos.sh"
 
 dc_kb="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" 2>/dev/null)"
 check "KB regression: drift-check names no inspire_kb path" \
-  "! (printf '%s' \"\$dc_kb\" | jq -r '.drifted[], .missing[], .unchanged[]' | grep -q '^inspire_kb/')"
+  "! (printf '%s' \"\$dc_kb\" | jq -r '.ask[]' | grep -q '^inspire_kb/')"
 
-# Build --skip args exactly as the skill does: one per drifted path reported.
-skip_args=()
-while IFS= read -r p; do
-  [ -n "$p" ] && skip_args+=(--skip "$p")
-done < <(printf '%s' "$dc_kb" | jq -r '.drifted[]')
+skip_args=(--skip .claude/skills/inspire-domain/SKILL.md)
 
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
   --source-root source --prototype-root prototype "${skip_args[@]}" >/dev/null 2>&1
@@ -381,32 +395,36 @@ check "guard: --skip containing .. is rejected" "[ '$rc_traverse' = 1 ]"
 rc_abs=$?
 check "guard: absolute --skip is rejected"      "[ '$rc_abs' = 1 ]"
 
-# A pre-0.3 lock has no `files` map. Everything downstream reads `.files // {}`,
-# so without the guard such a project drift-checks as "nothing drifted" and an
-# update strands its KB at .inspire_kb/ while the old hooks stay registered.
+# A pre-0.3 *lock* (no `files` map, no actual v0.2 tree behind it — just the
+# lock file itself) used to be refused outright by require_v03_lock. Task 12
+# deletes that guard on purpose: "a pre-0.3 project is no longer refused, it
+# is the longest chain" — detect_version and the hop chain are what decide
+# now, not a lock-shape check. This fixture has no real content behind its
+# lock, though, so detect_version still refuses it, just for a different
+# reason (it cannot identify ANY version from an empty tree) and with a
+# different exit code: 1 (precondition failure), not the old 2 (failure
+# after writing began — which never applied here anyway, since the old guard
+# fired before anything was written).
 v2p="$(mktemp -d)/proj"; mkdir -p "$v2p"; ( cd "$v2p" && git init -q )
 printf '{"inspire_version":"0.2.1","released":"2026-07-20","template_sha":"abc"}\n' > "$v2p/.inspire.lock"
 v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" 2>&1 >/dev/null)"
 rc_v2drift=$?
-check "guard: pre-0.3 lock fails drift-check"      "[ '$rc_v2drift' = 2 ]"
-check "guard: pre-0.3 message names the migration" "printf '%s' \"\$v2err\" | grep -q 'git mv .inspire_kb inspire_kb'"
-# The migration steps are executed verbatim by an operator, so they must WORK.
-# In a 0.2 project .claude/ was gitignored, so .claude/bin and .claude/hooks
-# were never tracked — and `git rm` aborts on the first unmatched pathspec,
-# taking the tracked .inspire/ paths down with it. The whole command then does
-# nothing while looking like a failed migration.
-check "guard: pre-0.3 git rm tolerates untracked pathspecs" \
-  "printf '%s' \"\$v2err\" | grep -q -- '--ignore-unmatch'"
-check "guard: pre-0.3 does not git rm the never-tracked .claude paths" \
-  "! (printf '%s' \"\$v2err\" | grep -- 'git rm' | grep -q '.claude/')"
-# 0.2's install.sh wrote `/.claude` into .gitignore. Left in place it hides the
-# entire 0.3 runtime, so the migration has to call it out.
-check "guard: pre-0.3 message calls out the /.claude gitignore rule" \
-  "printf '%s' \"\$v2err\" | grep -q 'gitignore'"
+check "guard: pre-0.3 lock — plan can't identify an empty tree (rc)" "[ '$rc_v2drift' = 1 ]"
+check "guard: pre-0.3 lock — plan explains why" \
+  "printf '%s' \"\$v2err\" | grep -qi 'cannot identify'"
+# require_v03_lock's call site inside run_materialize is deleted too (Task 12,
+# "both call sites"), and re-wiring `update` itself to run the chain/classify
+# path instead of a blind copy is Task 13's job — not yet done here. So an
+# `update` against this same fixture no longer refuses: it now runs the
+# ordinary init/update copy path (require_migrated_layout does not fire
+# either, since there is no .inspire_kb/ here to trip it) and writes the v0.3
+# runtime. This is a deliberately accepted gap until Task 13 lands the real
+# chain-driven update; a real (non-empty) pre-0.3 project is exercised
+# end-to-end via --mode plan in test-upgrade.sh instead.
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
 rc_v2update=$?
-check "guard: pre-0.3 lock fails update"           "[ '$rc_v2update' = 2 ]"
-check "guard: pre-0.3 update wrote nothing"        "[ ! -d '$v2p/.claude/skills' ]"
+check "guard: pre-0.3 lock — update is unguarded pending Task 13 (rc)" "[ '$rc_v2update' = 0 ]"
+check "guard: pre-0.3 lock — update now writes the runtime" "[ -d '$v2p/.claude/skills' ]"
 
 # The guard must not fire on a real v0.3 lock — a false positive here would
 # break every legitimate update. Needs its own sandbox: $proj is gone by now.
