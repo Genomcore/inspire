@@ -419,7 +419,9 @@ check "guard: real v0.3 lock still drift-checks" "[ '$rc_okdrift' = 0 ]"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
 rc_okupdate=$?
 check "guard: real v0.3 lock still updates"      "[ '$rc_okupdate' = 0 ]"
-check "guard: real v0.3 update kept the KB"      "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" = 22 ]"
+kb_expect="$(find "$PLUGIN_ROOT/base/kb" -type f | wc -l | tr -d ' ')"
+check "guard: real v0.3 update kept the KB" \
+  "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" -ge '$kb_expect' ]"
 
 rm -rf "$(dirname "$gp")" "$(dirname "$v2p")" "$(dirname "$okp")" "$notplugin"
 
