@@ -823,5 +823,21 @@ check "KB move lands in the KB group" \
       "printf '%s' \"\$out\" | awk '/KNOWLEDGE BASE/,/^\$/' | grep -q 'inspire_kb'"
 rm -f "$j" "$v"
 
+# A path outside .claude/*, .inspire/*, inspire_kb and the harness literals
+# (source/, prototype/, root CLAUDE.md) is real product-space, not a catch-all
+# to drop: _group_of buckets it as `product`, and render_report must give that
+# bucket its own section, or the footer's tallies describe lines the operator
+# is never shown at all.
+pj="$(mktemp)"; pv="$(mktemp)"
+printf 'delete\tsource/README.md\tstale product-space file\n' >> "$pj"
+printf 'ask\tCLAUDE.md\tboth changed\n'                        >> "$pv"
+pout="$(render_report 0.2.1 0.4.0 "$pj" "$pv" 0 2>&1)"
+check "a product-space file is rendered in the body, not just tallied in the footer" \
+      "printf '%s' \"\$pout\" | grep -q 'PRODUCT' && \
+       printf '%s' \"\$pout\" | grep -q 'source/README.md' && \
+       printf '%s' \"\$pout\" | grep -q 'CLAUDE.md' && \
+       printf '%s' \"\$pout\" | grep -q '1 decision'"
+rm -f "$pj" "$pv"
+
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]

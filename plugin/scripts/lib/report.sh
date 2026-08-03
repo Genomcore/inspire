@@ -3,7 +3,12 @@
 #
 # Grouped by CONCEPT first, operation within. Operation-first says what
 # happens; concept-first says whose files are being touched, which is the
-# operator's actual question.
+# operator's actual question. Five sections, in order: RUNTIME (INSPIRE-
+# owned), KNOWLEDGE BASE (theirs, additive only), HARNESS, PRODUCT (theirs,
+# outside the runtime entirely — source/, prototype/, root CLAUDE.md — a
+# fourth _group_of bucket that needs its own _emit_group call precisely
+# because it is a legitimate answer to "whose files", not a catch-all to
+# drop), and LEFT ALONE (report-verb notes with no path at all).
 #
 # Consumes two `<verb>\t<path>\t<detail>` files (see lib/hop-ops.sh and
 # lib/merge.sh's classify): the hop journal (verbs move|delete|keep|
@@ -83,9 +88,10 @@ render_report() {
 
   printf '\nINSPIRE upgrade — %s → %s%s\n' "$from" "$to" "$banner" >&2
 
-  _emit_group 'RUNTIME — INSPIRE-owned'                runtime "$j" "$v"
-  _emit_group 'KNOWLEDGE BASE — yours, additive only'  kb      "$j" "$v"
-  _emit_group 'HARNESS'                                harness "$j" "$v"
+  _emit_group 'RUNTIME — INSPIRE-owned'                          runtime "$j" "$v"
+  _emit_group 'KNOWLEDGE BASE — yours, additive only'            kb      "$j" "$v"
+  _emit_group 'HARNESS'                                          harness "$j" "$v"
+  _emit_group 'PRODUCT — yours, outside the INSPIRE runtime'     product "$j" "$v"
 
   # Report-only notes carry no path, so they group by intent, not location.
   # Their whole point is an empty path (see _tsv_split) — plain `read` would
