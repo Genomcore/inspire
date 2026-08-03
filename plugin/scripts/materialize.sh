@@ -30,11 +30,12 @@
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd -P "$(dirname "$0")" && pwd -P)"
+. "$SCRIPT_DIR/lib/common.sh"
+
 # ---------------------------------------------------------------------------
 # Small helpers
 # ---------------------------------------------------------------------------
-
-log() { printf '%s\n' "$*" >&2; }
 
 usage() {
   cat >&2 <<'EOF'
@@ -43,23 +44,6 @@ Usage: materialize.sh --mode init|update|drift-check
                        [--source-root VALUE] [--prototype-root VALUE]
                        [--declare-marketplace] [--skip RELPATH]... [--dry-run]
 EOF
-}
-
-sha256_of() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$1" | awk '{print $1}'
-  else
-    shasum -a 256 "$1" | awk '{print $1}'
-  fi
-}
-
-# Prints a JSON array from its arguments (each one string element). No args → [].
-arr_to_json() {
-  if [ "$#" -eq 0 ]; then
-    printf '[]'
-    return 0
-  fi
-  printf '%s\n' "$@" | jq -R -s 'split("\n") | map(select(length > 0))'
 }
 
 # True if skip path $1 is $2 itself, or nested under it.
