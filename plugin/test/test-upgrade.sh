@@ -347,5 +347,104 @@ eq "the record-mode refusal journals nothing either" \
   "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$rec_j_before"
 fixture_cleanup "$w"
 
+# ---- the journal must never claim a mutation that failed -------------------
+# The journal IS the operator's report, and nothing downstream cross-checks it
+# against disk, so a line written BEFORE the mutation is a claim we cannot
+# support. chmod 555 on the parent makes rm/mv fail while the paths survive —
+# the same shape as a read-only mount, an immutable flag, or a full disk.
+# Literal /tmp paths throughout, and the mode is restored before cleanup.
+rm -rf /tmp/inspire-hopops-perm
+mkdir -p /tmp/inspire-hopops-perm/locked
+perm=/tmp/inspire-hopops-perm
+printf 'a\n' > "$perm/locked/a.txt"
+printf 'b\n' > "$perm/locked/b.txt"
+printf 'victim\n' > "$perm/locked/victim.txt"
+jq -n --arg a "$(sha256_of "$perm/locked/a.txt")" --arg b "$(sha256_of "$perm/locked/b.txt")" \
+  '{version:"9.9.9",released:"x",commit:"x",layout:"A",
+    files:{"locked/a.txt":$a,"locked/b.txt":$b}}' > "$perm/mf.json"
+chmod 555 "$perm/locked"
+# `touch`, not `: >` — a redirection failure is reported by the shell itself and
+# cannot be silenced with 2>/dev/null on the command.
+if touch "$perm/locked/probe" 2>/dev/null; then
+  rm -f "$perm/locked/probe"
+  echo "SKIP permission-failure assertions — writable despite chmod 555 (running as root?)"
+else
+  HOP_JOURNAL="$perm/j1"; hop_ops_init "$perm" "$perm/mf.json" 0
+  perm_err="$(hop_rm locked/victim.txt 2>&1 >/dev/null)"; perm_rc=$?
+  eq "a failed hop_rm returns non-zero" "$perm_rc" "1"
+  check "a failed hop_rm journals NO delete line" "! grep -q \$'^delete\t' '$perm/j1'"
+  check "a failed hop_rm journals keep with the reason" \
+    "grep -q \$'^keep\tlocked/victim.txt\tcould not be removed' '$perm/j1'"
+  check "a failed hop_rm leaks no raw rm error" \
+    "! printf '%s' \"\$perm_err\" | grep -q '^rm:'"
+  check "a failed hop_rm explains itself as INSPIRE" \
+    "printf '%s' \"\$perm_err\" | grep -q 'INSPIRE: could not delete'"
+  check "the file hop_rm failed on is still on disk" "[ -f '$perm/locked/victim.txt' ]"
+
+  # The severe case: the per-file rm had no error check at all, so this
+  # returned 0 and journalled two deletes while removing nothing.
+  HOP_JOURNAL="$perm/j2"; hop_ops_init "$perm" "$perm/mf.json" 0
+  hop_rm_owned locked 2>/dev/null; perm_rc2=$?
+  eq "hop_rm_owned propagates a failed file deletion" "$perm_rc2" "1"
+  check "hop_rm_owned journals NO delete it did not perform" \
+    "! grep -q \$'^delete\t' '$perm/j2'"
+  eq "hop_rm_owned journals a keep-with-reason per failed file" \
+    "$(awk -F'\t' '$3 ~ /^could not be removed/' "$perm/j2" | wc -l | tr -d ' ')" "2"
+  check "both shipped files hop_rm_owned failed on are still on disk" \
+    "[ -f '$perm/locked/a.txt' ] && [ -f '$perm/locked/b.txt' ]"
+
+  HOP_JOURNAL="$perm/j3"; hop_ops_init "$perm" "$perm/mf.json" 0
+  hop_mv locked/a.txt moved/a.txt 2>/dev/null
+  eq "a failed hop_mv returns non-zero" "$?" "1"
+  check "a failed hop_mv journals NO move line" "! grep -q \$'^move\t' '$perm/j3'"
+  check "a failed hop_mv journals keep with the reason" \
+    "grep -q \$'^keep\tlocked/a.txt\tcould not be moved' '$perm/j3'"
+fi
+chmod 755 /tmp/inspire-hopops-perm/locked
+rm -rf /tmp/inspire-hopops-perm
+
+# ---- a symlink is a directory entry, so both modes must see it -------------
+# `find -type f` excluded it, so both modes computed zero survivors; only act
+# mode then discovered via rmdir that the directory was not empty. The two
+# modes returned OPPOSITE verdicts on identical input, and neither mentioned
+# the symlink at all. `! -type d` fixes both halves at once.
+rm -rf /tmp/inspire-hopops-link
+mkdir -p /tmp/inspire-hopops-link/proj/pfx/nested
+sym=/tmp/inspire-hopops-link
+printf 'x\n' > "$sym/proj/pfx/nested/ours.txt"
+jq -n --arg h "$(sha256_of "$sym/proj/pfx/nested/ours.txt")" \
+  '{version:"9.9.9",released:"x",commit:"x",layout:"A",
+    files:{"pfx/nested/ours.txt":$h}}' > "$sym/mf.json"
+ln -s /nonexistent-target-xyz "$sym/proj/pfx/operator-symlink"
+eq "the symlink is invisible to -type f but seen by ! -type d" \
+  "$(find "$sym/proj/pfx" -type f | wc -l | tr -d ' ')/$(find "$sym/proj/pfx" ! -type d | wc -l | tr -d ' ')" \
+  "1/2"
+
+HOP_JOURNAL="$sym/j-act"; hop_ops_init "$sym/proj" "$sym/mf.json" 0
+hop_rm_owned pfx
+sym_act="$(awk -F'\t' '$2=="pfx/" {print $1}' "$sym/j-act")"
+sym_act_link="$(grep -c 'operator-symlink' "$sym/j-act")"
+
+# Rebuild an identical starting tree for record mode.
+rm -rf /tmp/inspire-hopops-link/proj
+mkdir -p /tmp/inspire-hopops-link/proj/pfx/nested
+printf 'x\n' > "$sym/proj/pfx/nested/ours.txt"
+ln -s /nonexistent-target-xyz "$sym/proj/pfx/operator-symlink"
+HOP_JOURNAL="$sym/j-rec"; hop_ops_init "$sym/proj" "$sym/mf.json" 1
+hop_rm_owned pfx
+sym_rec="$(awk -F'\t' '$2=="pfx/" {print $1}' "$sym/j-rec")"
+sym_rec_link="$(grep -c 'operator-symlink' "$sym/j-rec")"
+
+eq "act and record agree on the directory verdict with a symlink present" \
+  "$sym_act" "$sym_rec"
+eq "the verdict is keep — a symlink blocks the removal" "$sym_act" "keep"
+eq "act mode reports the operator's symlink" "$sym_act_link" "1"
+eq "record mode reports the operator's symlink" "$sym_rec_link" "1"
+check "the symlink is labelled the operator's, not ours" \
+  "grep -q \$'^keep\tpfx/operator-symlink\tyours' '$sym/j-rec'"
+check "the operator's symlink was not deleted" \
+  "[ -L '$sym/proj/pfx/operator-symlink' ]"
+rm -rf /tmp/inspire-hopops-link
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
