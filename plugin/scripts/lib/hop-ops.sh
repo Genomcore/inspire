@@ -20,23 +20,64 @@ hop_ops_init() {
   : > "$HOP_JOURNAL"
 }
 
+# KNOWN LIMITATION: a path containing a literal TAB or NEWLINE is not
+# representable in this format — the tab would read as a field separator and
+# produce a 4-field line that downstream `awk -F'\t'` mis-parses. No
+# INSPIRE-shipped path contains either character, and both are pathological in
+# a repository, but git can store them, so a project-authored path could hit
+# it. The consequence is confined to how the REPORT renders: what gets deleted
+# and what gets kept is decided by the operations themselves, never by re-
+# reading the journal. Deliberately not escaped or quoted here — the format is
+# consumed by Tasks 8 and 11 with plain `awk -F'\t'`, and complicating it for a
+# case that cannot arise from anything we ship is not worth the ripple.
 _hop_journal() { printf '%s\t%s\t%s\n' "$1" "$2" "${3:-}" >> "$HOP_JOURNAL"; }
 
 # A missing source is a SILENT NO-OP. Operator deletion is expected — INSPIRE
 # is a methodology, not a framework — and this is also what makes a
 # half-completed hop safe to re-run: a finished move skips itself.
+#
+# An existing DIRECTORY at the destination is a hard refusal, because `mv a b`
+# with `b` a directory does not replace `b` — it puts `a` INSIDE it, yielding
+# `b/a` and reporting success. That is silent tree corruption of exactly the
+# kind this design exists to prevent, and it is reachable: a pre-0.3 project
+# retains `.inspire/bin` as the staged source install.sh copied FROM, so a hop
+# moving `.claude/bin` onto it would produce `.inspire/bin/bin`. A hop that
+# hits this is wrong and must stop, in BOTH modes, so a record-mode preview
+# surfaces it before anything is touched. Nothing is journalled on the refusal
+# path: the report must never claim a move that did not happen.
 hop_mv() {
   local src="$1" dst="$2"
   [ -e "$PROJECT_ROOT/$src" ] || return 0
+  if [ -d "$PROJECT_ROOT/$dst" ]; then
+    log "INSPIRE: refusing to move '$src' onto '$dst'."
+    log "  '$dst' already exists and is a directory, so the move would nest the"
+    log "  source inside it ('$dst/$(basename "$src")') instead of replacing it."
+    log "  This is a bug in the hop script, not in your project. Nothing was moved."
+    return 1
+  fi
   _hop_journal move "$src" "$dst"
   [ "$HOP_RECORD" = 1 ] && return 0
   mkdir -p "$(dirname "$PROJECT_ROOT/$dst")"
   mv "$PROJECT_ROOT/$src" "$PROJECT_ROOT/$dst" || return 1
 }
 
+# Removes ONE FILE whose ownership is provable from its name alone. A directory
+# is refused: removing one requires proving we own everything inside it, which
+# we cannot do from a name, and which is hop_rm_owned's job. Without this,
+# `rm -f` leaked a raw "is a directory" error and the journal had already
+# recorded a `delete` that never happened. Note `-d` follows symlinks, so a
+# symlink pointing at a directory is refused too — the safe direction.
 hop_rm() {
   local rel="$1"
   [ -e "$PROJECT_ROOT/$rel" ] || return 0
+  if [ -d "$PROJECT_ROOT/$rel" ]; then
+    log "INSPIRE: refusing to delete '$rel' — it is a directory."
+    log "  hop_rm removes a single file whose ownership is provable by name."
+    log "  Removing a directory means proving we own everything inside it; that"
+    log "  is hop_rm_owned's job. This is a bug in the hop script. Nothing was"
+    log "  deleted."
+    return 1
+  fi
   _hop_journal delete "$rel"
   [ "$HOP_RECORD" = 1 ] && return 0
   rm -f "$PROJECT_ROOT/$rel" || return 1

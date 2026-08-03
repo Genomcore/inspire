@@ -236,6 +236,40 @@ eq "no shipped file is ever labelled 'yours'" \
 check "the one 'yours' line is the operator's own file" \
   "[ \"\$(awk -F'\t' '\$3 ~ /not shipped by INSPIRE/ {print \$2}' '$HOP_JOURNAL')\" = '.claude/bin/test/my-fixture.sh' ]"
 
+# `mv a b` with b an existing DIRECTORY does not replace b — it puts a inside
+# it, yielding b/a, and reports success. Reachable for real: a pre-0.3 project
+# retains .inspire/bin as the staged source, so a hop moving .claude/bin onto
+# it would silently produce .inspire/bin/bin. Refuse, and journal nothing.
+mkdir -p "$p/.claude/nest-src" "$p/.inspire/nest-dst/payload"
+printf 'PAYLOAD\n' > "$p/.claude/nest-src/payload"
+nest_j_before="$(wc -l < "$HOP_JOURNAL" | tr -d ' ')"
+nest_err="$(hop_mv .claude/nest-src/payload .inspire/nest-dst/payload 2>&1 >/dev/null)"; nest_rc=$?
+eq "hop_mv refuses a destination that is a directory" "$nest_rc" "1"
+check "hop_mv did not nest the source inside the destination" \
+  "[ ! -e '$p/.inspire/nest-dst/payload/payload' ]"
+check "hop_mv left the refused source where it was" \
+  "[ -f '$p/.claude/nest-src/payload' ]"
+eq "a refused hop_mv journals nothing" \
+  "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$nest_j_before"
+check "the hop_mv refusal names both paths on stderr" \
+  "printf '%s' \"\$nest_err\" | grep -q 'nest-src/payload' && printf '%s' \"\$nest_err\" | grep -q 'nest-dst/payload'"
+
+# hop_rm removes ONE FILE. `rm -f` cannot remove a directory, so it used to
+# leak a raw "is a directory" error after already journalling the delete.
+mkdir -p "$p/.claude/rmdir-probe/sub"
+printf 'keep\n' > "$p/.claude/rmdir-probe/sub/keepme.txt"
+rmd_j_before="$(wc -l < "$HOP_JOURNAL" | tr -d ' ')"
+rmd_err="$(hop_rm .claude/rmdir-probe/sub 2>&1 >/dev/null)"; rmd_rc=$?
+eq "hop_rm refuses a directory" "$rmd_rc" "1"
+check "hop_rm left the refused directory and its contents" \
+  "[ -f '$p/.claude/rmdir-probe/sub/keepme.txt' ]"
+eq "a refused hop_rm journals nothing" \
+  "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$rmd_j_before"
+check "hop_rm explains itself instead of leaking a raw rm error" \
+  "printf '%s' \"\$rmd_err\" | grep -q 'it is a directory' && ! printf '%s' \"\$rmd_err\" | grep -q '^rm:'"
+check "hop_rm points at hop_rm_owned for directories" \
+  "printf '%s' \"\$rmd_err\" | grep -q 'hop_rm_owned'"
+
 hop_report 'a note for the operator'
 check "hop_report journals the note" "grep -q 'a note for the operator' '$HOP_JOURNAL'"
 hop_unregister_hook '.claude/hooks/'
@@ -300,6 +334,17 @@ check "record mode does not predict removing a directory that must stay" \
   "! grep -q \$'^delete\t.claude/bin/test/\t' '$HOP_JOURNAL'"
 eq "record mode labels exactly one file as the operator's own" \
   "$(awk -F'\t' '$3 ~ /not shipped by INSPIRE/' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "1"
+
+# The nesting refusal must fire in record mode too, so a preview surfaces a
+# broken hop before anything is touched — a refusal only act mode can discover
+# is a refusal that arrives too late.
+mkdir -p "$p/.claude/nest-src" "$p/.inspire/nest-dst/payload"
+printf 'PAYLOAD\n' > "$p/.claude/nest-src/payload"
+rec_j_before="$(wc -l < "$HOP_JOURNAL" | tr -d ' ')"
+hop_mv .claude/nest-src/payload .inspire/nest-dst/payload 2>/dev/null
+eq "record mode refuses the nesting move too" "$?" "1"
+eq "the record-mode refusal journals nothing either" \
+  "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$rec_j_before"
 fixture_cleanup "$w"
 
 echo ""; echo "Passed: $pass · Failed: $fail"
