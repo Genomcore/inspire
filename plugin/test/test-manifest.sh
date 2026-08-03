@@ -38,5 +38,19 @@ b="$(bash "$GEN" --tag v0.2.1 --repo "$REPO")"
 eq "deterministic output" "$a" "$b"
 
 rm -f "$m21" "$m31"
+
+# Every committed manifest must be reproducible from its tag. A manifest that
+# cannot be regenerated means the release is broken — this is the only thing
+# keeping the content baseline honest.
+for f in "$HERE/../manifests"/*.json; do
+  v="$(basename "$f" .json)"
+  live="$(bash "$GEN" --tag "v$v" --repo "$REPO")"
+  if [ "$live" = "$(cat "$f")" ]; then
+    ok "manifest $v reproduces from tag"
+  else
+    bad "manifest $v does NOT reproduce from tag"
+  fi
+done
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
