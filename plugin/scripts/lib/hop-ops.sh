@@ -74,6 +74,13 @@ _hop_reason() {
 hop_mv() {
   local src="$1" dst="$2" err reason
   [ -e "$PROJECT_ROOT/$src" ] || return 0
+  # Moving a path onto itself is nothing to do. It must be caught here, before
+  # the success test below, because `mv same same` succeeds silently yet leaves
+  # the source present — so `[ ! -e src ]` would read as failure and journal a
+  # false "could not be moved (unknown error)". A false failure report is the
+  # same sin as a false success. String equality only: a hop writes literal
+  # relative paths, and resolving `./x` against `x` would buy nothing real.
+  [ "$src" = "$dst" ] && return 0
   if [ -d "$PROJECT_ROOT/$dst" ]; then
     log "INSPIRE: refusing to move '$src' onto '$dst'."
     log "  '$dst' already exists and is a directory, so the move would nest the"
@@ -83,8 +90,19 @@ hop_mv() {
   fi
   # Record mode journals the INTENDED verb, because whether the mutation would
   # fail is not knowable without attempting it. That divergence is deliberate —
-  # the preview is a superset of what act mode achieves — and must not later be
+  # the preview is a SUPERSET of what act mode achieves — and must not later be
   # "fixed" into a claim act mode cannot honour.
+  #
+  # The superset caveat covers exactly three things, all of them cases where the
+  # preview lists work the real run then skips or cannot do:
+  #   1. a move whose source is already absent by the time act mode runs;
+  #   2. a WRITE FAILURE — permission denied, read-only mount, immutable flag,
+  #      full disk — which cannot be foreseen without writing, so record mode is
+  #      optimistic about it and act mode reports the truth and returns non-zero;
+  #   3. a directory removal record mode forecasts and act mode's prune cannot
+  #      complete (see hop_rm_owned).
+  # It does NOT license disagreeing about anything observable on disk: those the
+  # preview must get right, and a miss is a defect.
   if [ "$HOP_RECORD" = 1 ]; then
     _hop_journal move "$src" "$dst"
     return 0
@@ -196,9 +214,10 @@ hop_rm_owned() {
   # what it points at, so `-type f` counted zero survivors for a directory that
   # `rmdir` then refused to remove — act mode discovered this empirically via
   # the prune while record mode trusted the count, and the two modes returned
-  # OPPOSITE directory verdicts on identical input. That is not the
-  # dry-run-is-a-superset caveat (which licenses over-reporting a move that
-  # turns out to be a no-op); it is a flat contradiction about a deletion. This
+  # OPPOSITE directory verdicts on identical input. That is NOT excused by the
+  # superset caveat: a symlink is plainly observable on disk, so record mode
+  # could have seen it and simply did not. Contrast a permission failure, which
+  # is unobservable without writing and IS covered. This
   # also picks up fifos, sockets and device nodes — equally foreign entries we
   # must never delete and must report. The DELETION loop above is unaffected:
   # its paths come from the manifest, never from `find`.
@@ -221,11 +240,29 @@ hop_rm_owned() {
   done
 
   # The directory can go only if NOTHING will be left in it — neither files of
-  # theirs nor files of ours they edited. Both modes evaluate the same
-  # predicate, so record mode predicts exactly what act mode does.
+  # theirs, nor files of ours they changed, nor files we failed to remove.
+  #
+  # PARTIAL parity, stated precisely, because the previous claim here ("both
+  # modes evaluate the same predicate, so record mode predicts exactly what act
+  # mode does") became false when failed_n joined the predicate, and an
+  # invariant asserted in a comment instead of a test is where defects hide:
+  #   · `unowned` and `edited_n` are computed identically in both modes — both
+  #     read only disk state, so record mode CAN and MUST predict them. A miss
+  #     there is a defect (that was the `find -type f` symlink bug).
+  #   · `failed_n` is act-mode-only and structurally cannot be predicted:
+  #     knowing whether `rm` will succeed requires attempting a write, and
+  #     record mode's whole contract is that it writes nothing. A `[ -w ]` probe
+  #     would not close the gap — immutable flags, read-only mounts and ACLs all
+  #     defeat it — and being right most of the time is worse than an honest
+  #     limitation.
+  # So record mode is OPTIMISTIC ABOUT PERMISSIONS. It says the directory
+  # "would be" removed; only act mode ever asserts that it WAS. Where the real
+  # run cannot remove something it reports that honestly and returns non-zero.
   if [ "${#unowned[@]}" -eq 0 ] && [ "$edited_n" -eq 0 ] && [ "$failed_n" -eq 0 ]; then
     if [ "$HOP_RECORD" = 1 ]; then
-      _hop_journal delete "$prefix/" "directory emptied and removed"
+      # Predictive wording, deliberately not past tense: this is a forecast that
+      # a write failure can still invalidate, not a statement of completion.
+      _hop_journal delete "$prefix/" "directory would be emptied and removed"
     else
       # Bottom-up, because the tree is deep (.claude/bin/test/ is ~230 nested
       # directories) and a single rmdir on the top could never succeed. rmdir

@@ -9,9 +9,14 @@ PLUGIN_ROOT="$HERE/.."
 . "$PLUGIN_ROOT/scripts/lib/common.sh"
 . "$PLUGIN_ROOT/scripts/lib/manifest.sh"
 
-pass=0; fail=0
+pass=0; fail=0; skip=0
 ok(){ echo "PASS $1"; pass=$((pass+1)); }
 bad(){ echo "FAIL $1"; fail=$((fail+1)); }
+# A block that cannot run must not masquerade as coverage: count the assertions
+# it would have made and surface them in the summary, so an environment where it
+# never runs (CI as root, where chmod 555 does not bite) shows the gap instead of
+# reading all-green. skipped <n> <why>.
+skipped(){ echo "SKIP $2 ($1 assertions)"; skip=$((skip+$1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
@@ -190,6 +195,19 @@ eq "hop_mv transferred the content intact" \
 check "hop_mv journalled move with both paths" \
   "grep -q \$'^move\t.claude/bin/hop-canary.txt\t.inspire/fresh/hop-canary.txt$' '$HOP_JOURNAL'"
 
+# Moving a path onto itself: `mv same same` succeeds silently but leaves the
+# source present, so the disk-state success test read it as a failure and
+# journalled a false "could not be moved (unknown error)". A false failure is
+# the same sin as a false success.
+printf 'SELF\n' > "$p/.claude/bin/self-move.txt"
+selfmv_j="$(wc -l < "$HOP_JOURNAL" | tr -d ' ')"
+hop_mv .claude/bin/self-move.txt .claude/bin/self-move.txt 2>/dev/null
+eq "hop_mv onto itself returns 0" "$?" "0"
+eq "hop_mv onto itself journals nothing" \
+  "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$selfmv_j"
+eq "hop_mv onto itself leaves the file intact" \
+  "$(cat "$p/.claude/bin/self-move.txt" 2>/dev/null)" "SELF"
+
 hop_mv .claude/bin/definitely-absent.sh .inspire/bin/definitely-absent.sh
 eq "hop_mv on a missing source is a silent no-op" "$?" "0"
 check "hop_mv created nothing from nothing" "[ ! -e '$p/.inspire/bin/definitely-absent.sh' ]"
@@ -290,9 +308,12 @@ check "record mode journalled the move" \
   "grep -q \$'move\t.claude/bin/review.sh' '$HOP_JOURNAL'"
 eq "record mode journalled 114 deletions" "$(hop_deletes "$HOP_JOURNAL")" "114"
 rec_clean_deletes="$(hop_deletes "$HOP_JOURNAL")"
-# Record mode must PREDICT the directory removal, not just the file deletions.
+# Record mode must PREDICT the directory removal, and must word it as a forecast
+# — a write failure it cannot foresee can still invalidate it.
 check "record mode predicts the directory removal" \
-  "grep -q \$'^delete\t.claude/bin/test/\tdirectory emptied and removed$' '$HOP_JOURNAL'"
+  "grep -q \$'^delete\t.claude/bin/test/\tdirectory would be emptied and removed$' '$HOP_JOURNAL'"
+check "record mode never asserts the removal completed" \
+  "! grep -q \$'\tdirectory emptied and removed$' '$HOP_JOURNAL'"
 fixture_cleanup "$w"
 
 # --- act mode on a CLEAN tree: the real 0.3.0 hop's normal case -------------
@@ -367,7 +388,7 @@ chmod 555 "$perm/locked"
 # cannot be silenced with 2>/dev/null on the command.
 if touch "$perm/locked/probe" 2>/dev/null; then
   rm -f "$perm/locked/probe"
-  echo "SKIP permission-failure assertions — writable despite chmod 555 (running as root?)"
+  skipped 19 "permission-failure journalling — writable despite chmod 555 (running as root?)"
 else
   HOP_JOURNAL="$perm/j1"; hop_ops_init "$perm" "$perm/mf.json" 0
   perm_err="$(hop_rm locked/victim.txt 2>&1 >/dev/null)"; perm_rc=$?
@@ -399,6 +420,36 @@ else
   check "a failed hop_mv journals NO move line" "! grep -q \$'^move\t' '$perm/j3'"
   check "a failed hop_mv journals keep with the reason" \
     "grep -q \$'^keep\tlocked/a.txt\tcould not be moved' '$perm/j3'"
+
+  # Act vs record where the deletion WILL fail. `failed_n` is act-mode-only and
+  # structurally unpredictable — knowing whether rm succeeds needs a write, and
+  # record mode writes nothing. So record mode is allowed to be optimistic, but
+  # it must word its verdict as a FORECAST and must never assert completion.
+  # A prefix holding only manifest-listed files, so nothing else blocks removal.
+  mkdir -p "$perm/only"
+  printf 'a\n' > "$perm/only/a.txt"
+  printf 'b\n' > "$perm/only/b.txt"
+  jq -n --arg a "$(sha256_of "$perm/only/a.txt")" --arg b "$(sha256_of "$perm/only/b.txt")" \
+    '{version:"9.9.9",released:"x",commit:"x",layout:"A",
+      files:{"only/a.txt":$a,"only/b.txt":$b}}' > "$perm/mf-only.json"
+  chmod 555 "$perm/only"
+
+  HOP_JOURNAL="$perm/j-rec"; hop_ops_init "$perm" "$perm/mf-only.json" 1
+  hop_rm_owned only 2>/dev/null; only_rec_rc=$?
+  HOP_JOURNAL="$perm/j-act"; hop_ops_init "$perm" "$perm/mf-only.json" 0
+  hop_rm_owned only 2>/dev/null; only_act_rc=$?
+
+  eq "record mode returns 0 where it cannot foresee the failure" "$only_rec_rc" "0"
+  eq "act mode returns non-zero when the deletion really fails" "$only_act_rc" "1"
+  check "record mode's optimistic verdict is worded as a forecast" \
+    "grep -q \$'^delete\tonly/\tdirectory would be emptied and removed$' '$perm/j-rec'"
+  check "record mode never asserts a removal it cannot guarantee" \
+    "! grep -q \$'\tdirectory emptied and removed$' '$perm/j-rec'"
+  check "act mode reports the truth: the directory stayed" \
+    "grep -q \$'^keep\tonly/\tdirectory left in place — files in it could not be removed$' '$perm/j-act'"
+  check "act mode journals no directory deletion it did not perform" \
+    "! grep -q \$'^delete\tonly/' '$perm/j-act'"
+  chmod 755 "$perm/only"
 fi
 chmod 755 /tmp/inspire-hopops-perm/locked
 rm -rf /tmp/inspire-hopops-perm
@@ -446,5 +497,5 @@ check "the operator's symlink was not deleted" \
   "[ -L '$sym/proj/pfx/operator-symlink' ]"
 rm -rf /tmp/inspire-hopops-link
 
-echo ""; echo "Passed: $pass · Failed: $fail"
+echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]
