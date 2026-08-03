@@ -42,7 +42,17 @@ check "foreign enabledPlugins survive"  "jq -e '.enabledPlugins[\"other@thing\"]
 # is at some particular version", and a literal here goes stale on every bump.
 manifest_version="$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
 check "lock records the manifest version" "[ \"\$(jq -r .inspire_version '$proj/.inspire.lock')\" = '$manifest_version' ]"
-check "lock has file hashes"          "jq -e '.files|length>0' '$proj/.inspire.lock' >/dev/null"
+# The per-file `files` map is GONE (Task 13). Drift is derived from
+# plugin/manifests/<version>.json now — a baseline that ships with the plugin,
+# cannot be rebaselined by a --take-mine, and exists for versions installed
+# before the lock ever carried hashes. Two baselines would mean two disagreeing
+# answers to "what did we ship?", so the lock must not carry one at all.
+check "lock carries NO file hashes"   "[ \"\$(jq -r 'has(\"files\")' '$proj/.inspire.lock')\" = false ]"
+# template_sha used to be the hardcoded literal "unknown", which inspire-lesson
+# then stamped onto every lesson in every project. It now comes from the
+# manifest's commit for the installed version.
+check "lock carries a real template_sha" \
+  "[ \"\$(jq -r .template_sha '$proj/.inspire.lock')\" = \"\$(jq -r .commit '$PLUGIN_ROOT/manifests/$manifest_version.json')\" ]"
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
 check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
 check "no template hook leaked"       "[ -z \"\$(find '$proj/.claude' -name 'template-*.sh')\" ]"
@@ -215,8 +225,12 @@ check "KB regression: customized design-system.md survives update" \
 kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
 check "KB regression: no KB files added or removed by update" \
   "[ \"\$kb_count_before\" = \"\$kb_count_after\" ]"
-check "KB regression: lock carries no inspire_kb entries" \
-  "[ -z \"\$(jq -r '.files|keys[]' '$kbp/.inspire.lock' | cut -d/ -f1 | sort -u | grep '^inspire_kb$')\" ]"
+# The lock no longer carries a `files` map at all (Task 13), which is the
+# strongest possible form of "no inspire_kb entries in it": there is nothing in
+# the lock that could name a KB path, so no future --take-mine round-trip can
+# ever be handed one.
+check "KB regression: lock names no paths at all" \
+  "[ \"\$(jq -r 'has(\"files\")' '$kbp/.inspire.lock')\" = false ]"
 
 # The runtime half of update must still work: a lock-tracked file deleted
 # before the run is restored, and a drifted one is left exactly as edited.
@@ -412,19 +426,28 @@ rc_v2drift=$?
 check "guard: pre-0.3 lock — plan can't identify an empty tree (rc)" "[ '$rc_v2drift' = 1 ]"
 check "guard: pre-0.3 lock — plan explains why" \
   "printf '%s' \"\$v2err\" | grep -qi 'cannot identify'"
-# require_v03_lock's call site inside run_materialize is deleted too (Task 12,
-# "both call sites"), and re-wiring `update` itself to run the chain/classify
-# path instead of a blind copy is Task 13's job — not yet done here. So an
-# `update` against this same fixture no longer refuses: it now runs the
-# ordinary init/update copy path (require_migrated_layout does not fire
-# either, since there is no .inspire_kb/ here to trip it) and writes the v0.3
-# runtime. This is a deliberately accepted gap until Task 13 lands the real
-# chain-driven update; a real (non-empty) pre-0.3 project is exercised
-# end-to-end via --mode plan in test-upgrade.sh instead.
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" >/dev/null 2>&1
+# require_v03_lock's call site inside run_materialize was deleted in Task 12,
+# which left `update` running the old blind-copy path for one release: it wrote
+# the v0.3 runtime over this fixture, exiting 0, on the strength of nothing but
+# a lock file claiming a version. Task 13 wires update through the same
+# detect → verify → hop → classify → apply pipeline as `plan`, so the SAME
+# refusal now applies to both: an unidentifiable tree is a precondition
+# failure, before a byte is written, and the lock is never believed.
+#
+# These two assertions previously asserted rc = 0 and "the runtime is now on
+# disk" — they were tripwires encoding the gap as if it were correct, and they
+# had to flip.
+v2lock_before="$(shasum -a 256 "$v2p/.inspire.lock" | cut -d' ' -f1)"
+v2uerr="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$v2p" 2>&1 >/dev/null)"
 rc_v2update=$?
-check "guard: pre-0.3 lock — update is unguarded pending Task 13 (rc)" "[ '$rc_v2update' = 0 ]"
-check "guard: pre-0.3 lock — update now writes the runtime" "[ -d '$v2p/.claude/skills' ]"
+check "guard: pre-0.3 lock — update refuses an unidentifiable tree (rc)" "[ '$rc_v2update' = 1 ]"
+check "guard: pre-0.3 lock — update explains why, as plan does" \
+  "printf '%s' \"\$v2uerr\" | grep -qi 'cannot identify'"
+check "guard: pre-0.3 lock — update wrote no runtime" \
+  "[ ! -d '$v2p/.claude/skills' ] && [ ! -d '$v2p/.inspire/bin' ]"
+check "guard: pre-0.3 lock — update did not rewrite the lock" \
+  "[ '$v2lock_before' = \"\$(shasum -a 256 '$v2p/.inspire.lock' | cut -d' ' -f1)\" ]"
+check "guard: pre-0.3 lock — update seeded no KB beside it" "[ ! -e '$v2p/inspire_kb' ]"
 
 # The guard must not fire on a real v0.3 lock — a false positive here would
 # break every legitimate update. Needs its own sandbox: $proj is gone by now.

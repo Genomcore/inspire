@@ -874,5 +874,148 @@ bash "$MZ" --mode plan --plugin-root "$fake/plugin" --project-root "$p" >/dev/nu
 eq "a downgrade is refused" "$?" "1"
 rm -rf "$fake"; fixture_cleanup "$w"
 
+# ---- end to end: 0.2.1 → current ---------------------------------------
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+printf 'mine\n' > "$p/.claude/bin/test/my-fixture.sh"
+mkdir -p "$p/.claude/skills/inspire-code/references"
+printf 'go rules\n' > "$p/.claude/skills/inspire-code/references/go-best-practices.md"
+printf '\nMY EDIT\n' >> "$p/.claude/skills/inspire-domain/SKILL.md"
+mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')"
+
+# seed_kb must run on UPGRADE, not just init — a 0.2 project has to finally
+# receive the KB layers and files added since. Proving that needs care: 0.2.1's
+# skeleton happens to have the SAME 21-file list as today's base/kb, so the
+# hop's `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file is
+# present" and the check below passes with seed_kb stubbed to a no-op. Remove
+# one whole layer and one file inside a layer that stays, so only a seed can
+# put them back.
+rm -rf "$p/.inspire_kb/98_lessons"
+rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
+kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
+
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
+eq "update exits 0" "$?" "0"
+
+check "layout is now 0.3"       "[ -d '$p/inspire_kb' ] && [ -f '$p/.inspire/bin/review.sh' ]"
+check "hooks relocated"         "[ -f '$p/.claude/inspire/hooks/dispatch.sh' ]"
+eq    "lock reports the target" "$(jq -r .inspire_version "$p/.inspire.lock")" "$target"
+check "lock no longer carries a files map" \
+      "[ \"\$(jq -r 'has(\"files\")' '$p/.inspire.lock')\" = 'false' ]"
+check "lock carries a real template_sha" \
+      "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
+check "project-authored reference survived" \
+      "[ -f '$p/.claude/skills/inspire-code/references/go-best-practices.md' ]"
+check "operator fixture survived" "[ -f '$p/.claude/bin/test/my-fixture.sh' ]"
+eq    "edited skill kept by default" \
+      "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$mine_hash"
+check "KB gained no losses" \
+      "[ \"\$(find '$p/inspire_kb' -type f | wc -l | tr -d ' ')\" -ge '$kb_before' ]"
+
+check "seed_kb ran on upgrade: a wholly missing layer came back" \
+      "[ -f '$p/inspire_kb/98_lessons/README.md' ]"
+check "seed_kb ran on upgrade: a missing file inside a kept layer came back" \
+      "[ -f '$p/inspire_kb/00_bootstrap/theme.md' ]"
+
+# Every file in the plugin's KB skeleton must now exist in the project. Asserting
+# on inspire_kb/README.md alone would pass trivially: the hop MOVES the 0.2
+# .inspire_kb/README.md there, so it proves nothing about seed_kb having run.
+missing_kb=0
+while IFS= read -r f; do
+  [ -f "$p/inspire_kb/${f#"$PLUGIN_ROOT/base/kb/"}" ] || missing_kb=$((missing_kb+1))
+done < <(find "$PLUGIN_ROOT/base/kb" -type f)
+eq "KB received every file of the newer skeleton" "$missing_kb" "0"
+
+# settings.json: exactly the two marked hooks, and none of the three old ones.
+eq "two INSPIRE-MANAGED hooks registered" \
+   "$(jq '[.. | objects | select(has("command")) | select(.command|contains("INSPIRE-MANAGED"))] | length' \
+      "$p/.claude/settings.json")" "2"
+eq "no .claude/hooks registrations remain" \
+   "$(jq '[.. | objects | select(has("command")) | select(.command|contains(".claude/hooks/"))] | length' \
+      "$p/.claude/settings.json")" "0"
+
+# Re-running converges.
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
+eq "update is re-runnable" "$?" "0"
+eq "edit still kept after a second run" \
+   "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$mine_hash"
+fixture_cleanup "$w"
+
+# --take-base overrides a conflict.
+#
+# A 0.2.1 fixture again, and a SKILL: base/ is byte-identical between 0.3.0 and
+# 0.3.1, so a 0.3.0 project has no stale file to build a conflict from. Skills
+# also live at .claude/skills/ in both layouts, so the path the flag names is the
+# same before and after the hops — which is what --take-base takes.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+v="$(mktemp)"
+classify "$PLUGIN_ROOT/manifests/0.2.1.json" "$p" "$base" "$MAP_PRE" "$MAP_03" > "$v"
+stale="$(awk -F'\t' '$1=="replace" && $2 ~ /^\.claude\/skills\//{print $2; exit}' "$v")"
+check "found a stale skill to conflict on" "[ -n '$stale' ]"
+printf '\nMY EDIT\n' >> "$p/$stale"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" \
+     --take-base "$stale" >/dev/null 2>&1
+src_of="skills/${stale#.claude/skills/}"
+eq "--take-base installed ours" \
+   "$(shasum -a 256 "$p/$stale" | awk '{print $1}')" \
+   "$(shasum -a 256 "$base/$src_of" | awk '{print $1}')"
+
+# And the default the other way: an unresolved conflict keeps theirs.
+w2="$(mktemp -d)"; p2="$(fixture_from_tag v0.2.1 "$w2" "$REPO")"
+printf '\nMY EDIT\n' >> "$p2/$stale"
+mine2="$(shasum -a 256 "$p2/$stale" | awk '{print $1}')"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p2" >/dev/null 2>&1
+eq "an unresolved conflict defaults to keeping theirs" \
+   "$(shasum -a 256 "$p2/$stale" | awk '{print $1}')" "$mine2"
+fixture_cleanup "$w2"
+
+# --take-mine is the explicit spelling of that default, and --skip is its
+# deprecated alias. Both must resolve the same ask row to `keep`.
+w3="$(mktemp -d)"; p3="$(fixture_from_tag v0.2.1 "$w3" "$REPO")"
+printf '\nMY EDIT\n' >> "$p3/$stale"
+mine3="$(shasum -a 256 "$p3/$stale" | awk '{print $1}')"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p3" \
+     --take-mine "$stale" >/dev/null 2>&1
+eq "--take-mine keeps theirs" \
+   "$(shasum -a 256 "$p3/$stale" | awk '{print $1}')" "$mine3"
+fixture_cleanup "$w3"
+
+w4="$(mktemp -d)"; p4="$(fixture_from_tag v0.2.1 "$w4" "$REPO")"
+printf '\nMY EDIT\n' >> "$p4/$stale"
+mine4="$(shasum -a 256 "$p4/$stale" | awk '{print $1}')"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p4" \
+     --skip "$stale" >/dev/null 2>&1
+eq "--skip still keeps theirs (deprecated alias)" \
+   "$(shasum -a 256 "$p4/$stale" | awk '{print $1}')" "$mine4"
+fixture_cleanup "$w4"
+rm -f "$v"; fixture_cleanup "$w"
+
+# ---- the half-migrated tree ---------------------------------------------
+# THE gap Task 12 left open. A project that ran migration step 1 only
+# (`git mv .inspire_kb inspire_kb`) and none of steps 2-6 is not caught by
+# require_migrated_layout — inspire_kb/ exists, so that guard stands down —
+# yet .claude/skills/ is the SAME destination in both layouts, so the old
+# copy path overwrote a locally-edited shipped skill with no drift step and
+# no gate. verify_layout is what closes it: the pre-0.3 signature requires
+# .inspire_kb/ present and inspire_kb/ absent, and this tree is neither.
+# Refusal before anything is written is the only safe answer — the two
+# locations cannot be told apart, and guessing risks the live one.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+( cd "$p" && mv .inspire_kb inspire_kb )
+printf '\nMY EDIT\n' >> "$p/.claude/skills/inspire-domain/SKILL.md"
+half_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')"
+half_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+eq "half-migrated tree: update refuses (rc)" "$?" "1"
+check "half-migrated tree: the refusal names both KB locations" \
+  "printf '%s' \"\$half_err\" | grep -q 'inspire_kb'"
+eq "half-migrated tree: the edited skill is untouched" \
+   "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$half_hash"
+check "half-migrated tree: nothing was moved" \
+  "[ -d '$p/.claude/bin' ] && [ ! -d '$p/.claude/inspire/hooks' ]"
+check "half-migrated tree: the 0.2 hook registrations are left as they were" \
+  "[ \"\$(jq '[.. | objects | select(has(\"command\")) | select(.command|contains(\".claude/hooks/\"))] | length' '$p/.claude/settings.json')\" = 3 ]"
+check "half-migrated tree: no lock was rewritten" \
+  "[ \"\$(jq -r .inspire_version '$p/.inspire.lock')\" = '0.2.1' ]"
+fixture_cleanup "$w"
+
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]
