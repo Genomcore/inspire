@@ -216,3 +216,141 @@ keepset_of() {
     sha256_of "$root/$target"
   done < "$vf" | LC_ALL=C sort -u
 }
+
+# _apply_write <src_abs> <dst_abs> <middle> → install one file, atomically.
+#
+# Temp + rename PER FILE, so an interrupted or failed run never leaves a
+# half-written file: the operator either has the old bytes or the new ones.
+#
+# The mode is set on the temp file BEFORE the rename, so what appears at the
+# destination is already complete AND correctly permissioned — never briefly
+# 0600 (mktemp's mode) or briefly non-executable.
+#
+# The mode rule mirrors materialize.sh's chmod_executables rather than the
+# source file's own bit: base/hooks/*.sh are committed 644, yet the two
+# registered hooks are invoked BY PATH from .claude/settings.json, so a 644
+# dispatch.sh is a broken runtime. Everything else gets 644, not mktemp's 0600 —
+# an upgrade that silently tightened hundreds of files would be a nasty
+# surprise, and cp does not copy the source mode onto an existing temp file.
+_apply_write() {
+  local src="$1" dst="$2" mid="$3" tmp
+  mkdir -p "$(dirname "$dst")" 2>/dev/null
+  tmp="$(mktemp "$dst.XXXXXX" 2>/dev/null)" || {
+    log "INSPIRE: could not write '$dst' — no temporary file could be created next to it."
+    log "  It was left exactly as it was."
+    return 1
+  }
+  if ! cp "$src" "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    log "INSPIRE: could not write '$dst' — the copy failed. It was left as it was."
+    return 1
+  fi
+  case "$mid" in
+    bin/*.sh|hooks/*.sh) chmod 755 "$tmp" 2>/dev/null ;;
+    *) if [ -x "$src" ]; then chmod 755 "$tmp" 2>/dev/null
+       else chmod 644 "$tmp" 2>/dev/null; fi ;;
+  esac
+  if mv "$tmp" "$dst" 2>/dev/null; then return 0; fi
+  rm -f "$tmp"
+  log "INSPIRE: could not replace '$dst' — it was left exactly as it was."
+  return 1
+}
+
+# apply_base <keepset> <source_manifest> <project_root> <base_dir> \
+#            <src_map> <tgt_map> <record>
+#
+# Driven by the TARGET layout, so it is correct after the hops have moved
+# things: classify's verdict paths are in the SOURCE layout and stop existing
+# the moment a hop runs, which is why the keep-set is consulted BY CONTENT (a
+# `mv` changes a path, never a byte) and why every path here is derived from
+# base(Y) and tgt_map instead.
+#
+# Leaving a file alone is how an operator's work survives, so every uncertain
+# case resolves to "leave it".
+#
+# Limitations, declared rather than handled:
+#   · symlinks are unsupported (spec-level decision).
+#   · the keep-set is content-addressed, so if a file the operator gets to keep
+#     happens to be byte-identical to some OTHER stale file of ours, that other
+#     file is left stale too. It is never lost, only not updated, and content
+#     collision is the price of surviving the hops at all.
+#   · pass 2 prunes only the immediate parent directory of a file it removed,
+#     and only if that leaves it empty. Deeper empty scaffolding may remain;
+#     nothing claims otherwise, and hop_rm_owned owns the deep prune.
+apply_base() {
+  local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
+  local pair name dest abs rel target h rc=0
+
+  # Pass 1 — every file the target version ships.
+  for pair in $tgt_map; do
+    name="${pair%%:*}"; dest="${pair#*:}"
+    [ -d "$base/$name" ] || continue
+    while IFS= read -r abs; do
+      rel="${abs#"$base/$name"/}"
+      # "In base/" is NOT "shipped": bin/test/ and template-*.sh live here and
+      # are never materialized. Without this the applier would install a dead
+      # 114-file test harness into every project it touches.
+      _base_excluded "$name" "$rel" && continue
+      target="$dest/$rel"
+
+      # A directory (or fifo, socket, device node) where we ship a file. `mv a b`
+      # with b a directory puts a INSIDE it and reports success — silent tree
+      # corruption. classify already reports this path as `keep`; do nothing.
+      if [ -e "$root/$target" ] && [ ! -f "$root/$target" ]; then
+        continue
+      fi
+
+      if [ -f "$root/$target" ]; then
+        h="$(sha256_of "$root/$target")"
+        # Theirs to keep, or already identical to ours: leave it.
+        grep -Fxq "$h" "$keep" 2>/dev/null && continue
+        [ "$h" = "$(sha256_of "$abs")" ] && continue
+      fi
+
+      # The decision above is made in both modes; only the act is switched, so a
+      # preview can never diverge from what the real run decides.
+      [ "$record" = 1 ] && continue
+      _apply_write "$abs" "$root/$target" "$name/$rel" || rc=2
+    done < <(find "$base/$name" -type f)
+  done
+
+  # Pass 2 — files we shipped at the SOURCE version that the target no longer
+  # ships. Removed only when still byte-identical to what we shipped: an edited
+  # one is the operator's and is never deleted (classify reports it as `keep`).
+  #
+  # That hash test is strictly stronger than consulting the keep-set here, which
+  # is why it does not: every keep/ask verdict at a manifest path implies a hash
+  # that differs from the manifest's, so an operator's file can never satisfy it.
+  local path hash mid found
+  while IFS=$'\t' read -r path hash; do
+    [ -n "$path" ] || continue
+    # Source path → base-relative middle → where the target layout puts it.
+    mid="$(_middle "$src_map" "$path")" || continue
+    [ -n "$mid" ] || continue
+    found="$(_from_middle "$tgt_map" "$mid")" || continue
+    [ -n "$found" ] || continue
+    # DELIBERATELY `[ -f "$base/$mid" ]` and not _base_src: the only paths where
+    # the two disagree are bin/test/**, whose target-space home (.inspire/bin/
+    # test/) holds nothing but 0.2 STAGING RESIDUE — which hop 0.3.0 explicitly
+    # leaves in place and reports to the operator as theirs to remove. The
+    # materialized copy at .claude/bin/test/ is removed by that hop's
+    # hop_rm_owned, per file, not here. Deleting the residue here would
+    # contradict a report the operator has already read.
+    [ -f "$base/$mid" ] && continue                          # still shipped
+    [ -f "$root/$found" ] || continue
+    [ "$(sha256_of "$root/$found")" = "$hash" ] || continue   # not ours to delete
+    [ "$record" = 1 ] && continue
+    rm -f "$root/$found" 2>/dev/null
+    if [ -e "$root/$found" ]; then
+      log "INSPIRE: could not delete '$found' — it is still on disk."
+      rc=2
+      continue
+    fi
+    # Best effort, and nothing claims it succeeded: rmdir refuses a non-empty
+    # directory, so this clears our own emptied scaffolding and stops dead at
+    # anything of theirs. Never rm -rf.
+    rmdir "$(dirname "$root/$found")" 2>/dev/null
+  done < <(manifest_paths "$mf")
+
+  return "$rc"
+}
