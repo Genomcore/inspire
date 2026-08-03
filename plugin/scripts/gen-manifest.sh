@@ -8,7 +8,11 @@
 # Two layouts exist:
 #   pre-0.3 : install.sh copied .inspire/{skills,bin,hooks} → .claude/{skills,bin,hooks}
 #   0.3     : materialize.sh copies base/{bin,hooks,skills}  → .inspire/bin,
-#             .claude/inspire/hooks, .claude/skills (excluding bin/test and template-*.sh)
+#             .claude/inspire/hooks, .claude/skills — excluding the top-level
+#             base/bin/test/ entry and any top-level template-*.sh entry in
+#             any of the three subtrees (matching copy_plan's entry_name
+#             checks in materialize.sh exactly: both apply only to the first
+#             path component under base/<name>/, never to a deeper basename)
 #
 # Only read-only git is used. Content hashes come from the blob, which is
 # identical to the installed file: no installer transforms a runtime file
@@ -37,21 +41,30 @@ commit="$(git -C "$REPO" rev-list -n1 "$TAG")"
 # plugin/.claude-plugin/plugin.json (0.3+).
 if git -C "$REPO" cat-file -e "$TAG:plugin/.claude-plugin/plugin.json" 2>/dev/null; then
   LAYOUT="0.3"
-  identity="$(git -C "$REPO" show "$TAG:plugin/.claude-plugin/plugin.json")"
+  IDENTITY_PATH="plugin/.claude-plugin/plugin.json"
   SRC_PREFIX="plugin/base"
   MAP_NAMES="bin hooks skills"
   MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills"
 else
   LAYOUT="pre-0.3"
-  identity="$(git -C "$REPO" show "$TAG:.inspire/manifest.json")"
+  IDENTITY_PATH=".inspire/manifest.json"
   SRC_PREFIX=".inspire"
   MAP_NAMES="skills bin hooks"
   MAP_DESTS=".claude/skills .claude/bin .claude/hooks"
 fi
+
+# A tag with neither identity file (e.g. history before either layout
+# existed) must fail loudly, not fall through to an empty-but-well-formed
+# manifest — that is worse than no manifest, because a caller cannot tell it
+# apart from a real one.
+identity="$(git -C "$REPO" show "$TAG:$IDENTITY_PATH" 2>/dev/null)" \
+  || { log "gen-manifest.sh: cannot read $IDENTITY_PATH at $TAG — no release identity, refusing to emit a manifest"; exit 1; }
+
 version="$(printf '%s' "$identity"  | jq -r '.version  // "unknown"')"
 released="$(printf '%s' "$identity" | jq -r '.released // "unknown"')"
 
-tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+tmp="$(mktemp)"; blobtmp="$(mktemp)"
+trap 'rm -f "$tmp" "$blobtmp"' EXIT
 
 i=0
 for name in $MAP_NAMES; do
@@ -60,12 +73,19 @@ for name in $MAP_NAMES; do
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     rel="${path#"$SRC_PREFIX/$name/"}"
-    # 0.3 never materializes bin/test/ nor template-*.sh.
+    # 0.3 never materializes base/bin/test/ nor a top-level template-*.sh —
+    # mirroring materialize.sh's copy_plan exactly: both exclusions apply
+    # only to the FIRST path component under base/<name>/ (the top-level
+    # entry copy_plan iterates over), not to a basename at arbitrary depth,
+    # and the test exclusion is bin-only.
     if [ "$LAYOUT" = "0.3" ]; then
-      case "$rel" in test/*) continue ;; esac
-      case "$(basename "$rel")" in template-*.sh) continue ;; esac
+      first="${rel%%/*}"
+      [ "$name" = "bin" ] && [ "$first" = "test" ] && continue
+      case "$first" in template-*.sh) continue ;; esac
     fi
-    h="$(git -C "$REPO" show "$TAG:$path" | sha256_of /dev/stdin)"
+    git -C "$REPO" show "$TAG:$path" > "$blobtmp" \
+      || { log "gen-manifest.sh: cannot read $path at $TAG"; exit 1; }
+    h="$(sha256_of "$blobtmp")"
     printf '%s\t%s\n' "$dest/$rel" "$h" >> "$tmp"
   done < <(git -C "$REPO" ls-tree -r --name-only "$TAG" -- "$SRC_PREFIX/$name")
 done
