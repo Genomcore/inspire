@@ -9,5 +9,5 @@
 # lets a manifest path be translated to its base/ counterpart, in either
 # direction, without any inference: the base-relative middle (bin/…, hooks/…,
 # skills/…) is stable across every released version — only the roots moved.
-pre-0.3	.inspire_kb .claude/skills	inspire_kb .claude/inspire/hooks	bin:.claude/bin hooks:.claude/hooks skills:.claude/skills
-0.3	inspire_kb .claude/skills	.inspire_kb .claude/bin .claude/hooks	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills
+pre-0.3	.inspire_kb	inspire_kb .claude/inspire/hooks	bin:.claude/bin hooks:.claude/hooks skills:.claude/skills
+0.3	inspire_kb	.inspire_kb	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills
