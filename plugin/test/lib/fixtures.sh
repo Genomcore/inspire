@@ -6,7 +6,7 @@
 # fixture_from_tag <tag> <workdir> <repo>  → prints the project root
 fixture_from_tag() {
   local tag="$1" work="$2" repo="$3"
-  local src="$work/src" proj="$work/proj"
+  local src="$work/src" proj="$work/proj" rc
   mkdir -p "$src" "$proj"
   git -C "$repo" archive "$tag" | tar -x -C "$src" || return 1
 
@@ -17,16 +17,20 @@ fixture_from_tag() {
     ( cd "$proj" \
       && git init -q \
       && git add -A \
-      && git -c user.email=f@f -c user.name=f commit -qm "fixture $tag" \
+      && git -c user.email=f@f -c user.name=f -c commit.gpgsign=false \
+             -c core.hooksPath=/dev/null commit -qm "fixture $tag" \
       && bash .inspire/install.sh ) >/dev/null 2>&1
+    rc=$?
   else
     # 0.3+: plugin materializes into a separate project root.
-    ( cd "$proj" && git init -q ) >/dev/null 2>&1
-    ( cd "$proj" && bash "$src/plugin/scripts/materialize.sh" \
-        --mode init \
-        --plugin-root "$src/plugin" \
-        --project-root "$proj" ) >/dev/null 2>&1
+    ( cd "$proj" && git init -q \
+        && bash "$src/plugin/scripts/materialize.sh" \
+             --mode init \
+             --plugin-root "$src/plugin" \
+             --project-root "$proj" ) >/dev/null 2>&1
+    rc=$?
   fi
+  [ "$rc" -eq 0 ] || return 1
 
   printf '%s\n' "$proj"
 }
