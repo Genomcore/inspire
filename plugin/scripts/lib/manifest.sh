@@ -47,48 +47,85 @@ _score() {
 # operators edit skills, delete validators, add their own files. It also covers a
 # project cloned from an untagged intermediate commit — it scores below 100%
 # against the nearest release and is still nominated correctly.
+#
+# Two-pass by construction: every candidate is scored once (pass 1), then the
+# maximum is found and EVERY candidate at that maximum is collected (pass 2).
+# A single min/max variable pair can only ever remember one "runner up", so a
+# three-way (or wider) tie would silently lose all but one of the contenders —
+# that is exactly the guess-across-layouts failure this function must refuse.
 detect_version() {
   local plugin_root="$1" root="$2" hint="${3:-}"
-  local v s best="" best_s=-1 runner_up="" runner_s=-1
-  local -a order=()
+  local v s mf i best_s
+  local -a order=() versions=() scores=() tied=()
 
   # The lock's version is a hint about ORDER only, so the likely candidate is
-  # scored first and wins an exact tie. It is never believed.
+  # scored first. It has no effect on the two-pass outcome below — a lock can
+  # never tip a tie or hide a candidate — it is never believed.
   [ -n "$hint" ] && order+=("$hint")
   while IFS= read -r v; do
+    [ -n "$v" ] || continue
     [ "$v" = "$hint" ] || order+=("$v")
   done < <(manifest_versions "$plugin_root")
 
-  for v in "${order[@]}"; do
-    local mf; mf="$(manifest_path "$plugin_root" "$v")" || continue
-    [ -n "$mf" ] || continue
-    s="$(_score "$mf" "$root")"
-    if [ "$s" -gt "$best_s" ]; then
-      runner_up="$best"; runner_s="$best_s"; best="$v"; best_s="$s"
-    elif [ "$s" -gt "$runner_s" ]; then
-      runner_up="$v"; runner_s="$s"
-    fi
-  done
-
-  if [ -z "$best" ] || [ "$best_s" -lt "$MANIFEST_FLOOR_PCT" ]; then
-    log "INSPIRE: cannot identify this project's INSPIRE version."
-    log "  Best match was '${best:-none}' at ${best_s}% (floor ${MANIFEST_FLOOR_PCT}%)."
+  if [ "${#order[@]}" -eq 0 ]; then
+    log "INSPIRE: no manifests found under '$plugin_root/manifests'."
     log "  Refusing to guess — an upgrade from the wrong baseline can lose work."
     return 1
   fi
 
-  # A tie is only dangerous across layouts: within one layout the tied versions
-  # hop identically and the choice only affects which manifest supplies A.
-  if [ "$runner_s" -eq "$best_s" ] && [ -n "$runner_up" ]; then
-    local lb lr
+  # Pass 1: score every candidate exactly once.
+  for v in "${order[@]}"; do
+    mf="$(manifest_path "$plugin_root" "$v")" || continue
+    [ -n "$mf" ] || continue
+    s="$(_score "$mf" "$root")"
+    versions+=("$v")
+    scores+=("$s")
+  done
+
+  if [ "${#versions[@]}" -eq 0 ]; then
+    log "INSPIRE: no readable manifests under '$plugin_root/manifests'."
+    log "  Refusing to guess — an upgrade from the wrong baseline can lose work."
+    return 1
+  fi
+
+  # Pass 2a: find the maximum score.
+  best_s=-1
+  i=0
+  while [ "$i" -lt "${#scores[@]}" ]; do
+    [ "${scores[$i]}" -gt "$best_s" ] && best_s="${scores[$i]}"
+    i=$((i+1))
+  done
+
+  if [ "$best_s" -lt "$MANIFEST_FLOOR_PCT" ]; then
+    log "INSPIRE: cannot identify this project's INSPIRE version."
+    log "  Best match was at ${best_s}% (floor ${MANIFEST_FLOOR_PCT}%)."
+    log "  Refusing to guess — an upgrade from the wrong baseline can lose work."
+    return 1
+  fi
+
+  # Pass 2b: collect EVERY candidate at the maximum — not just the first two.
+  i=0
+  while [ "$i" -lt "${#scores[@]}" ]; do
+    [ "${scores[$i]}" -eq "$best_s" ] && tied+=("${versions[$i]}")
+    i=$((i+1))
+  done
+
+  local best="${tied[0]}"
+  if [ "${#tied[@]}" -gt 1 ]; then
+    # A tie is only dangerous across layouts: within one layout the tied
+    # versions hop identically and the choice only affects which manifest
+    # supplies the content baseline.
+    local lb t lt
     lb="$(manifest_layout "$(manifest_path "$plugin_root" "$best")")"
-    lr="$(manifest_layout "$(manifest_path "$plugin_root" "$runner_up")")"
-    if [ "$lb" != "$lr" ]; then
-      log "INSPIRE: this project matches both $best ($lb) and $runner_up ($lr) equally."
-      log "  Those layouts differ, so proceeding would mean guessing. Refusing."
-      return 1
-    fi
-    if [ "$(version_cmp "$runner_up" "$best")" = "1" ]; then best="$runner_up"; fi
+    for t in "${tied[@]}"; do
+      lt="$(manifest_layout "$(manifest_path "$plugin_root" "$t")")"
+      if [ "$lt" != "$lb" ]; then
+        log "INSPIRE: this project matches multiple versions equally at ${best_s}%: ${tied[*]}."
+        log "  Those span different layouts, so proceeding would mean guessing. Refusing."
+        return 1
+      fi
+      [ "$(version_cmp "$t" "$best")" = "1" ] && best="$t"
+    done
   fi
 
   printf '%s\t%s\n' "$best" "$best_s"
