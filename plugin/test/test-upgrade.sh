@@ -218,6 +218,24 @@ check "hop_rm_owned never deletes a file we shipped but they edited" \
 eq "the edited shipped file is byte-identical" \
   "$(shasum -a 256 "$p/$edited_rel" 2>/dev/null | awk '{print $1}')" "$edited_hash"
 
+# Count FILE deletions only. The directory-level line is `delete\t<prefix>/`,
+# which a bare `^delete\t<prefix>/` grep also matches — requiring one more
+# character after the final slash separates the two for good.
+hop_deletes() { awk -F'\t' '$1=="delete" && $2 ~ /^\.claude\/bin\/test\/./' "$1" | wc -l | tr -d ' '; }
+act_deletes="$(hop_deletes "$HOP_JOURNAL")"
+eq "act mode deleted 114 shipped files minus the 1 they edited" "$act_deletes" "113"
+
+# A journal that contradicts itself is worse than a silent one: the operator
+# decides what to trust from these lines. An edited shipped file gets exactly
+# ONE verdict — previously it also drew "yours — not shipped by INSPIRE",
+# which was false about a file INSPIRE shipped.
+eq "the edited file draws exactly one journal line" \
+  "$(grep -c -F "	$edited_rel	" "$HOP_JOURNAL")" "1"
+eq "no shipped file is ever labelled 'yours'" \
+  "$(awk -F'\t' '$3 ~ /not shipped by INSPIRE/ {print $2}' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "1"
+check "the one 'yours' line is the operator's own file" \
+  "[ \"\$(awk -F'\t' '\$3 ~ /not shipped by INSPIRE/ {print \$2}' '$HOP_JOURNAL')\" = '.claude/bin/test/my-fixture.sh' ]"
+
 hop_report 'a note for the operator'
 check "hop_report journals the note" "grep -q 'a note for the operator' '$HOP_JOURNAL'"
 hop_unregister_hook '.claude/hooks/'
@@ -236,8 +254,52 @@ after="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | s
 eq "record mode wrote nothing" "$before" "$after"
 check "record mode journalled the move" \
   "grep -q \$'move\t.claude/bin/review.sh' '$HOP_JOURNAL'"
-check "record mode journalled 114 deletions" \
-  "[ \"\$(grep -c \$'^delete\t.claude/bin/test/' '$HOP_JOURNAL')\" = 114 ]"
+eq "record mode journalled 114 deletions" "$(hop_deletes "$HOP_JOURNAL")" "114"
+rec_clean_deletes="$(hop_deletes "$HOP_JOURNAL")"
+# Record mode must PREDICT the directory removal, not just the file deletions.
+check "record mode predicts the directory removal" \
+  "grep -q \$'^delete\t.claude/bin/test/\tdirectory emptied and removed$' '$HOP_JOURNAL'"
+fixture_cleanup "$w"
+
+# --- act mode on a CLEAN tree: the real 0.3.0 hop's normal case -------------
+# Nothing of the operator's under the prefix, so the directory itself goes.
+# .claude/bin/test/ is ~230 nested directories: a single rmdir on the top can
+# never succeed, and ending the function on its status returned 1 from the
+# happy path — which would abort a hop guarded by `hop_rm_owned … || return`.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+hop_ops_init "$p" "$mf" 0
+hop_rm_owned .claude/bin/test; clean_rc=$?
+eq "hop_rm_owned returns 0 on a clean tree" "$clean_rc" "0"
+check "hop_rm_owned removed the emptied directory" "[ ! -d '$p/.claude/bin/test' ]"
+check "hop_rm_owned left the sibling validators alone" "[ -d '$p/.claude/bin' ]"
+check "the directory-removal claim is true, not aspirational" \
+  "grep -q \$'^delete\t.claude/bin/test/\tdirectory emptied and removed$' '$HOP_JOURNAL'"
+act_clean_deletes="$(hop_deletes "$HOP_JOURNAL")"
+eq "act mode on a clean tree deleted all 114 shipped files" "$act_clean_deletes" "114"
+eq "act and record agree on the deletion count for the same tree" \
+  "$act_clean_deletes" "$rec_clean_deletes"
+fixture_cleanup "$w"
+
+# --- record mode on the SAME tree act mode modified ------------------------
+# Fidelity, stated directly: given identical input, record mode's prediction
+# must match what act mode did — including that it does NOT predict removing
+# a directory still holding a file the operator edited.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+hop_ops_init "$p" "$mf" 1
+printf 'mine\n' > "$p/.claude/bin/test/my-fixture.sh"
+printf '\nMY EDIT\n' >> "$p/$edited_rel"
+rec_dirty_before="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+hop_rm_owned .claude/bin/test; dirty_rc=$?
+eq "record mode returns 0 too" "$dirty_rc" "0"
+eq "record mode predicts act mode's deletion count exactly" \
+  "$(hop_deletes "$HOP_JOURNAL")" "$act_deletes"
+eq "record mode still wrote nothing" \
+  "$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)" \
+  "$rec_dirty_before"
+check "record mode does not predict removing a directory that must stay" \
+  "! grep -q \$'^delete\t.claude/bin/test/\t' '$HOP_JOURNAL'"
+eq "record mode labels exactly one file as the operator's own" \
+  "$(awk -F'\t' '$3 ~ /not shipped by INSPIRE/' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "1"
 fixture_cleanup "$w"
 
 echo ""; echo "Passed: $pass · Failed: $fail"

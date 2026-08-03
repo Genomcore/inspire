@@ -53,14 +53,22 @@ hop_rm() {
 # directory is still there and what of theirs was found in it.
 hop_rm_owned() {
   local prefix="${1%/}" path hash abs
-  local -a survivors=()
+  local edited_n=0
+  local -a survivors=() decided=() unowned=()
 
   while IFS=$'\t' read -r path hash; do
     [ -n "$path" ] || continue
     case "$path" in "$prefix"/*) ;; *) continue ;; esac
     [ -e "$PROJECT_ROOT/$path" ] || continue
+    # Ruled on below either way. Remember the DECISION, not the mode: in record
+    # mode nothing is removed, so the disk scan further down sees every shipped
+    # file still sitting there and would otherwise report it as the operator's.
+    # Keying off HOP_RECORD instead would make the label mode-dependent — and
+    # in act mode it mislabelled a file we shipped as "yours".
+    decided+=("$path")
     if [ "$(sha256_of "$PROJECT_ROOT/$path")" != "$hash" ]; then
       _hop_journal keep "$path" "you edited this — not removing it"
+      edited_n=$((edited_n + 1))
       continue
     fi
     _hop_journal delete "$path"
@@ -68,30 +76,52 @@ hop_rm_owned() {
     rm -f "$PROJECT_ROOT/$path"
   done < <(manifest_paths "$HOP_SOURCE_MANIFEST")
 
-  # Whatever is still there was never ours.
   if [ -d "$PROJECT_ROOT/$prefix" ]; then
     while IFS= read -r abs; do
       survivors+=("${abs#"$PROJECT_ROOT"/}")
     done < <(find "$PROJECT_ROOT/$prefix" -type f 2>/dev/null)
   fi
 
-  local s
+  # Anything on disk we never ruled on was never ours.
+  local s d claimed
   for s in ${survivors[@]+"${survivors[@]}"}; do
-    # In record mode the shipped files are still on disk; only report the ones
-    # the manifest does not claim.
-    if [ "$HOP_RECORD" = 1 ] \
-       && manifest_paths "$HOP_SOURCE_MANIFEST" | cut -f1 | grep -Fxq "$s"; then
-      continue
-    fi
+    claimed=0
+    for d in ${decided[@]+"${decided[@]}"}; do
+      [ "$d" = "$s" ] && { claimed=1; break; }
+    done
+    [ "$claimed" = 1 ] && continue
+    unowned+=("$s")
     _hop_journal keep "$s" "yours — not shipped by INSPIRE"
   done
 
-  if [ "${#survivors[@]}" -eq 0 ]; then
-    _hop_journal delete "$prefix/" "directory emptied and removed"
-    [ "$HOP_RECORD" = 1 ] || rmdir "$PROJECT_ROOT/$prefix" 2>/dev/null
-  else
+  # The directory can go only if NOTHING will be left in it — neither files of
+  # theirs nor files of ours they edited. Both modes evaluate the same
+  # predicate, so record mode predicts exactly what act mode does.
+  if [ "${#unowned[@]}" -eq 0 ] && [ "$edited_n" -eq 0 ]; then
+    if [ "$HOP_RECORD" = 1 ]; then
+      _hop_journal delete "$prefix/" "directory emptied and removed"
+    else
+      # Bottom-up, because the tree is deep (.claude/bin/test/ is ~230 nested
+      # directories) and a single rmdir on the top could never succeed. rmdir
+      # refuses a non-empty directory, so this clears our empty scaffolding and
+      # stops dead at anything of theirs — never rm -rf. Best-effort: the
+      # journal below reports what actually happened, not what we attempted.
+      find "$PROJECT_ROOT/$prefix" -depth -type d -exec rmdir {} + 2>/dev/null
+      if [ -d "$PROJECT_ROOT/$prefix" ]; then
+        _hop_journal keep "$prefix/" "directory left in place — it could not be removed"
+      else
+        _hop_journal delete "$prefix/" "directory emptied and removed"
+      fi
+    fi
+  elif [ "${#unowned[@]}" -gt 0 ]; then
     _hop_journal keep "$prefix/" "directory left in place — it still holds your files"
+  else
+    _hop_journal keep "$prefix/" "directory left in place — it still holds files you edited"
   fi
+
+  # Never end on the status of a best-effort prune: a hop script guards these
+  # calls with `|| return`, and a failed rmdir is not a failed migration.
+  return 0
 }
 
 # Queues a plain SUBSTRING. Any registered hook command containing it is
