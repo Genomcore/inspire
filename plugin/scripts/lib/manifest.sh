@@ -130,3 +130,55 @@ detect_version() {
 
   printf '%s\t%s\n' "$best" "$best_s"
 }
+
+# verify_layout <plugin_root> <project_root> <layout_id>
+#
+# Asserts STRUCTURE, never content. Three outcomes: match (0); no such layout
+# (1); markers contradict each other (1, "ambiguous") — which happens when
+# someone half-migrated by hand and we cannot tell which directory is live.
+verify_layout() {
+  local plugin_root="$1" root="$2" want="$3"
+  local tsv="$plugin_root/scripts/hops/layouts.tsv"
+  local layout musts nots dmap p
+  local -a missing=() present=()
+
+  [ -f "$tsv" ] || { log "INSPIRE: missing $tsv"; return 1; }
+
+  while IFS=$'\t' read -r layout musts nots dmap; do
+    case "$layout" in ''|\#*) continue ;; esac
+    [ "$layout" = "$want" ] || continue
+
+    for p in $musts;  do [ -e "$root/$p" ] || missing+=("$p"); done
+    for p in $nots;   do [ -e "$root/$p" ] && present+=("$p"); done
+
+    if [ "${#missing[@]}" -eq 0 ] && [ "${#present[@]}" -eq 0 ]; then
+      return 0
+    fi
+    if [ "${#missing[@]}" -eq 0 ] && [ "${#present[@]}" -gt 0 ]; then
+      log "INSPIRE: this project's layout is ambiguous."
+      log "  Expected a '$layout' layout, which requires these to be absent,"
+      log "  but they are present: ${present[*]}"
+      log "  That usually means a migration was started by hand. We cannot tell"
+      log "  which location holds your live content, and guessing risks it."
+      log "  Resolve it by keeping one of each pair, then run the upgrade again."
+      return 1
+    fi
+    log "INSPIRE: this project does not have the '$layout' layout."
+    log "  Missing: ${missing[*]:-none}"
+    log "  Unexpectedly present: ${present[*]:-none}"
+    return 1
+  done < "$tsv"
+
+  log "INSPIRE: unknown layout id '$want' — not listed in $tsv"
+  return 1
+}
+
+# layout_map <plugin_root> <layout_id> → that layout's dest_map
+layout_map() {
+  local tsv="$1/scripts/hops/layouts.tsv" want="$2" layout musts nots dmap
+  while IFS=$'\t' read -r layout musts nots dmap; do
+    case "$layout" in ''|\#*) continue ;; esac
+    if [ "$layout" = "$want" ]; then printf '%s\n' "$dmap"; return 0; fi
+  done < "$tsv"
+  return 1
+}

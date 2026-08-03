@@ -88,5 +88,38 @@ check "empty manifests dir does not raise an unbound-variable error" \
   "! printf '%s' \"\$noman_err\" | grep -qi 'unbound variable'"
 fixture_cleanup "$noman_w"
 
+# ---- layout signatures --------------------------------------------------
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+verify_layout "$PLUGIN_ROOT" "$p" pre-0.3 >/dev/null 2>&1
+eq "0.2.1 tree satisfies the pre-0.3 signature" "$?" "0"
+
+verify_layout "$PLUGIN_ROOT" "$p" 0.3 >/dev/null 2>&1
+eq "0.2.1 tree fails the 0.3 signature" "$?" "1"
+
+# Half-migrated by hand: both KB roots present. We cannot tell which is live.
+mkdir -p "$p/inspire_kb"
+out="$(verify_layout "$PLUGIN_ROOT" "$p" pre-0.3 2>&1)"; rc=$?
+eq "half-migrated tree is refused" "$rc" "1"
+check "refusal explains the ambiguity" \
+  "printf '%s' \"\$out\" | grep -qi 'inspire_kb'"
+fixture_cleanup "$w"
+
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.3.1 "$w" "$REPO")"
+verify_layout "$PLUGIN_ROOT" "$p" 0.3 >/dev/null 2>&1
+eq "0.3.1 tree satisfies the 0.3 signature" "$?" "0"
+fixture_cleanup "$w"
+
+verify_layout "$PLUGIN_ROOT" "$p" no-such-layout >/dev/null 2>&1
+eq "unknown layout id is refused" "$?" "1"
+
+eq "layout_map for pre-0.3 puts bin under .claude" \
+   "$(layout_map "$PLUGIN_ROOT" pre-0.3)" \
+   "bin:.claude/bin hooks:.claude/hooks skills:.claude/skills"
+eq "layout_map for 0.3 puts bin under .inspire" \
+   "$(layout_map "$PLUGIN_ROOT" 0.3)" \
+   "bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills"
+layout_map "$PLUGIN_ROOT" no-such-layout >/dev/null 2>&1
+eq "layout_map refuses an unknown layout" "$?" "1"
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
