@@ -164,5 +164,81 @@ verify_layout "$PLUGIN_ROOT" "$p" pre-0.3 >/dev/null 2>&1
 eq "deleted validator, edited skill, removed skill dir still pass pre-0.3" "$?" "0"
 fixture_cleanup "$w"
 
+# ---- hop ops ------------------------------------------------------------
+. "$PLUGIN_ROOT/scripts/lib/hop-ops.sh"
+
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+mf="$PLUGIN_ROOT/manifests/0.2.1.json"
+
+# --- act mode ---
+hop_ops_init "$p" "$mf" 0
+mkdir -p "$p/.inspire/bin"
+hop_mv .claude/bin/review.sh .inspire/bin/review.sh
+check "hop_mv moved the file"        "[ -f '$p/.inspire/bin/review.sh' ]"
+check "hop_mv left no source behind" "[ ! -e '$p/.claude/bin/review.sh' ]"
+
+# The check above is vacuous on its own: a pre-0.3 project legitimately retains
+# .inspire/bin/review.sh — the staged source install.sh copied FROM — so the
+# destination already existed (verified: it passes even with hop_mv undefined).
+# Only "left no source behind" fails without hop_mv. Prove a real transfer, and
+# the destination-dir creation, against a path nothing could have pre-created.
+printf 'CANARY\n' > "$p/.claude/bin/hop-canary.txt"
+hop_mv .claude/bin/hop-canary.txt .inspire/fresh/hop-canary.txt
+check "hop_mv creates the missing destination directory" "[ -d '$p/.inspire/fresh' ]"
+eq "hop_mv transferred the content intact" \
+  "$(cat "$p/.inspire/fresh/hop-canary.txt" 2>/dev/null)" "CANARY"
+check "hop_mv journalled move with both paths" \
+  "grep -q \$'^move\t.claude/bin/hop-canary.txt\t.inspire/fresh/hop-canary.txt$' '$HOP_JOURNAL'"
+
+hop_mv .claude/bin/definitely-absent.sh .inspire/bin/definitely-absent.sh
+eq "hop_mv on a missing source is a silent no-op" "$?" "0"
+check "hop_mv created nothing from nothing" "[ ! -e '$p/.inspire/bin/definitely-absent.sh' ]"
+
+# hop_rm_owned deletes only what the manifest says we shipped.
+printf 'mine\n' > "$p/.claude/bin/test/my-fixture.sh"
+owned_before="$(jq -r '[.files|keys[]|select(startswith(".claude/bin/test/"))]|length' "$mf")"
+eq "manifest lists the shipped fixtures" "$owned_before" "114"
+# A file we shipped that the operator EDITED must also survive. Pick the target
+# deterministically from the manifest — not `find | head -1`, whose result
+# depends on filesystem order.
+edited_rel="$(manifest_paths "$mf" | cut -f1 | grep '^\.claude/bin/test/' \
+              | LC_ALL=C sort | head -1)"
+check "picked a shipped fixture deterministically" "[ -n '$edited_rel' ]"
+printf '\nMY EDIT\n' >> "$p/$edited_rel"
+edited_hash="$(shasum -a 256 "$p/$edited_rel" | awk '{print $1}')"
+
+hop_rm_owned .claude/bin/test
+check "hop_rm_owned kept the operator's fixture" "[ -f '$p/.claude/bin/test/my-fixture.sh' ]"
+check "hop_rm_owned removed a file we shipped" \
+  "[ ! -e '$p/.claude/bin/test/run-tests.sh' ]"
+check "hop_rm_owned reported the survivor" \
+  "grep -q 'my-fixture.sh' '$HOP_JOURNAL'"
+check "hop_rm_owned never deletes a file we shipped but they edited" \
+  "[ -f '$p/$edited_rel' ]"
+eq "the edited shipped file is byte-identical" \
+  "$(shasum -a 256 "$p/$edited_rel" 2>/dev/null | awk '{print $1}')" "$edited_hash"
+
+hop_report 'a note for the operator'
+check "hop_report journals the note" "grep -q 'a note for the operator' '$HOP_JOURNAL'"
+hop_unregister_hook '.claude/hooks/'
+check "hop_unregister_hook journals the substring" \
+  "grep -q \$'unregister\t.claude/hooks/' '$HOP_JOURNAL'"
+fixture_cleanup "$w"
+
+# --- record mode writes nothing ---
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+before="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+hop_ops_init "$p" "$mf" 1
+hop_mv .claude/bin/review.sh .inspire/bin/review.sh
+hop_rm_owned .claude/bin/test
+hop_rm .inspire/install.sh
+after="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "record mode wrote nothing" "$before" "$after"
+check "record mode journalled the move" \
+  "grep -q \$'move\t.claude/bin/review.sh' '$HOP_JOURNAL'"
+check "record mode journalled 114 deletions" \
+  "[ \"\$(grep -c \$'^delete\t.claude/bin/test/' '$HOP_JOURNAL')\" = 114 ]"
+fixture_cleanup "$w"
+
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
