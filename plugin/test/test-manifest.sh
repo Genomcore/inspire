@@ -42,7 +42,10 @@ rm -f "$m21" "$m31"
 # Every committed manifest must be reproducible from its tag. A manifest that
 # cannot be regenerated means the release is broken — this is the only thing
 # keeping the content baseline honest.
+mf_count=0
 for f in "$HERE/../manifests"/*.json; do
+  [ -f "$f" ] || continue
+  mf_count=$((mf_count+1))
   v="$(basename "$f" .json)"
   live="$(bash "$GEN" --tag "v$v" --repo "$REPO")"
   if [ "$live" = "$(cat "$f")" ]; then
@@ -51,6 +54,11 @@ for f in "$HERE/../manifests"/*.json; do
     bad "manifest $v does NOT reproduce from tag"
   fi
 done
+if [ "$mf_count" -eq 0 ]; then
+  bad "no manifests found under plugin/manifests — the sweep cannot pass vacuously"
+else
+  ok "sweep covered $mf_count manifest(s)"
+fi
 
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
