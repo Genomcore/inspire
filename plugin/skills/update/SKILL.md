@@ -13,8 +13,16 @@ D6 and land at v1.
 
 ## Preconditions
 
-1. `.inspire.lock` exists at the project root. If not, this project was never
-   initialized — direct the operator to `/inspire:init`.
+1. **`.inspire.lock` is not required, and a missing one is not evidence of anything.**
+   `--mode plan` identifies the project's version from what is actually on disk,
+   scoring it against every shipped manifest; the lock is only a tie-break hint. A
+   pre-0.3 install may legitimately have no lock at all — the `install.sh`-era
+   installer wrote one only when both a manifest and `jq` were present — and those
+   are exactly the projects this skill exists to migrate. So never read a missing lock
+   as evidence that INSPIRE was never installed here, and never redirect the operator
+   to `/inspire:init` over it: init refuses a pre-0.3 tree and points back here, so that
+   advice is a closed loop with no exit. If the tree genuinely holds no INSPIRE
+   runtime, `--mode plan` says so itself by exiting 1 — let it.
 2. `jq` and `yq` (Mike Farah v4) are on `PATH` — `materialize.sh` hard-requires both.
 3. A clean-enough working tree that the operator can review a diff. If `git status
    --porcelain` is non-empty, warn and ask whether to continue.
@@ -112,6 +120,11 @@ preview cannot diverge from what happens next.
 recovery, not a hopeful guess:**
 - a hop that already moved a path is a silent no-op the next time (a missing source is
   treated as "already done," never an error);
+- a failed layout hop stops the run *before* `.inspire.lock` is rewritten, so the
+  version still reads the old one. That is deliberate and it is what makes the re-run
+  work: a lock claiming a migration that did not happen would make the next run score
+  the project as already migrated and never retry the hop. Tell the operator the
+  version was left as it was — it is not a second failure to explain away;
 - the content merge converges: a file already replaced with the new base version hashes
   identical to that base version, so a second run reads it as already matching and leaves
   it alone rather than reapplying or re-flagging it.

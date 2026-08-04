@@ -32,6 +32,17 @@ check "0.3.1 maps hooks into .claude/inspire/hooks" \
 check "0.3.1 excludes bin/test" \
   "[ \"\$(jq -r '[.files|keys[]|select(contains(\"/test/\"))]|length' '$m31')\" = 0 ]"
 
+# ONE definition of "what base/ actually ships", not two. The generator held a
+# re-expressed copy of the rule while lib/merge.sh's _base_excluded was the
+# definition the classifier and the applier used. Neither copy had drifted, but a
+# second copy is the only place this rule CAN drift — and a manifest that
+# disagreed with the applier about what ships turns every affected path into a
+# phantom deletion or a phantom creation.
+eq "the base-exclusion rule is defined exactly once under scripts/" \
+  "$(grep -rl '^_base_excluded()' "$HERE/../scripts" | wc -l | tr -d ' ')" "1"
+check "gen-manifest.sh asks that definition instead of re-expressing it" \
+  "grep -q 'lib/merge.sh' '$GEN' && grep -q '_base_excluded \"\$name\" \"\$rel\"' '$GEN'"
+
 # Reproducibility: same tag twice → byte-identical.
 a="$(bash "$GEN" --tag v0.2.1 --repo "$REPO")"
 b="$(bash "$GEN" --tag v0.2.1 --repo "$REPO")"

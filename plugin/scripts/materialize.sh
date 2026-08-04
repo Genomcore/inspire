@@ -393,10 +393,21 @@ $GITIGNORE_MARK_END"
 # it therefore defeats the whole delivery model, silently: init reports
 # "settings: merged, lock: written" and `git status` shows nothing at all.
 #
-# The common case is a 0.2 project. Its install.sh wrote `/.claude`, because
-# back then the runtime was regenerated locally and never committed. Appending
-# `.claude/settings.local.json` cannot undo that: git cannot re-include a path
-# below an excluded directory, so no line this script adds could fix it.
+# WHO WROTE THE RULE: not us. No INSPIRE release ever wrote a .gitignore line —
+# verified at v0.1.0, v0.2.0 and v0.2.1, where `git grep -il gitignore` is empty
+# tree-wide, and this repo's own .gitignore has three commits, none of them an
+# install. An earlier draft of this warning told operators to "remove the rule (a
+# 0.2 install wrote '/.claude')", which is a false provenance claim about the
+# operator's own file — and the text is relayed verbatim by /inspire:update.
+#
+# The DETECTION stays exactly as it was: a fork, a project template or the
+# operator themselves may well have written such a rule, and when they have, the
+# consequence is real and worth reporting. Only the claim about its author was
+# wrong.
+#
+# Whoever wrote it, appending `.claude/settings.local.json` cannot undo it: git
+# cannot re-include a path below an excluded directory, so no line this script
+# adds could fix it.
 #
 # So: report, never rewrite. The operator's .gitignore is the operator's.
 warn_shadowed_runtime() {
@@ -408,7 +419,7 @@ warn_shadowed_runtime() {
   done
   [ "${#shadowed[@]}" -gt 0 ] || return 0
 
-  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. Remove the rule (a 0.2 install wrote '/.claude') and commit these paths.")
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: no release ever touched .gitignore. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
   {
     echo ""
     echo "  WARNING · .gitignore excludes the INSPIRE runtime"
@@ -418,8 +429,9 @@ warn_shadowed_runtime() {
     done
     echo ""
     echo "  v0.3 expects these committed — that is what makes the runtime travel"
-    echo "  with the repo, so teammates and CI need no plugin. A v0.2 install.sh"
-    echo "  wrote '/.claude' for the opposite model."
+    echo "  with the repo, so teammates and CI need no plugin. This rule is not"
+    echo "  ours: no INSPIRE release has ever written to .gitignore. The file it"
+    echo "  came from is named in parentheses above."
     echo ""
     echo "  Nothing this script appends can undo it: git cannot re-include a path"
     echo "  below an excluded directory. Remove the rule by hand, then commit."
@@ -718,7 +730,18 @@ run_plan() {
     log "  without one, since the report and audit trail depend on it."
     exit 1
   }
-  run_chain "$PLUGIN_ROOT" "$src" "$target"
+  # Record mode writes nothing, but it can still FAIL: hop_mv refuses outright
+  # when the destination is an existing directory, in both modes, because such a
+  # move would nest the source inside it. A preview that logged that and carried
+  # on would forecast a migration the real run will refuse to perform, so the
+  # plan stops here instead of printing a chain and a verdict set that cannot be
+  # honoured.
+  run_chain "$PLUGIN_ROOT" "$src" "$target" || {
+    log "INSPIRE: the upgrade cannot be planned — a layout hop refused an operation."
+    log "  Nothing was written. The lines above name the paths involved."
+    rm -f "$HOP_JOURNAL"
+    exit 2
+  }
 
   local verdicts src_map tgt_map
   src_map="$(layout_map "$PLUGIN_ROOT" "$layout")"
@@ -832,7 +855,23 @@ run_materialize() {
       exit 1
     }
     # Unlike --mode plan, a hop failure here is real: the tree is mid-migration.
-    run_chain "$PLUGIN_ROOT" "$src" "$target" || exit 2
+    #
+    # WE STOP BEFORE write_lock, deliberately. A lock still reading $src is
+    # merely stale, and a re-run picks up exactly where this one stopped; a lock
+    # reading $target after a migration that did not happen is a lie the whole
+    # upgrade path is then built on — detection would score the project as
+    # already migrated and never run the hop again. Nothing done so far is undone
+    # (a hop is re-runnable: a move whose source is gone is a silent no-op), and
+    # the per-operation failures are already on stderr.
+    run_chain "$PLUGIN_ROOT" "$src" "$target" || {
+      log "INSPIRE: the layout migration did not complete, so the runtime version"
+      log "  was left at $src — nothing claims an upgrade that did not happen."
+      log "  Nothing done so far was undone. Fix the cause (a permission on a path"
+      log "  we had to move or remove is the usual one) and run the update again:"
+      log "  every hop operation is re-runnable, and the ones that succeeded are"
+      log "  no-ops the second time."
+      exit 2
+    }
   fi
 
   apply_base "$keepset" "$src_manifest" "$PROJECT_ROOT" \

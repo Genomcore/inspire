@@ -342,10 +342,42 @@ check "migrated v0.2: skeleton filled in around it"   "[ -f '$um/inspire_kb/03_f
 rm -rf "$(dirname "$um")"
 
 # ---------------------------------------------------------------------------
+# THE PAIR OF REFUSALS ABOVE AND BELOW MUST NOT FORM A CLOSED LOOP. init refuses
+# an unmigrated pre-0.3 tree and points at /inspire:update (asserted above);
+# update/SKILL.md used to refuse when .inspire.lock was absent, telling the
+# operator "this project was never initialized" and sending them to
+# /inspire:init. But a pre-0.3 project may legitimately have NO lock — the
+# install.sh-era installer wrote one only when both a manifest and jq were
+# present, and detection works fine without one (test-upgrade.sh: "detect 0.2.1
+# with no lock at all"). So the two instructions pointed at each other with no
+# exit, and one of them stated something false about the operator's project.
+# Prose is all that was wrong, and prose is what is asserted.
+# ---------------------------------------------------------------------------
+US="$PLUGIN_ROOT/skills/update/SKILL.md"
+check "update skill: exists where the assertions below can see it" "[ -f '$US' ]"
+# Grep a FLATTENED copy, not the file: markdown wraps, and the sentence this must
+# never say again was itself split across two lines ("this project was never" /
+# "initialized — direct the operator to /inspire:init"), so a line-oriented grep
+# for it passed even before the fix. Whitespace-squeezed, the claim is visible
+# however it is wrapped, and so is a re-worded reintroduction of it.
+US_FLAT="$(mktemp)"; tr '\n' ' ' < "$US" | tr -s ' ' > "$US_FLAT"
+check "update skill: never claims a missing lock means the project was never initialized" \
+  "! grep -qi 'never initialized' '$US_FLAT'"
+check "update skill: says the version is identified from disk" \
+  "grep -qi 'from what is actually on disk' '$US_FLAT'"
+check "update skill: names the legitimate no-lock pre-0.3 case" \
+  "grep -qi 'may legitimately have no lock' '$US_FLAT'"
+check "update skill: warns that redirecting to init is the closed loop" \
+  "grep -qi 'closed loop' '$US_FLAT'"
+rm -f "$US_FLAT"
+
+# ---------------------------------------------------------------------------
 # A .gitignore rule that shadows the materialized runtime must be REPORTED.
-# 0.2's install.sh wrote `/.claude` (the runtime was regenerated, never
-# committed); 0.3 inverts that — .claude/skills/ and .claude/inspire/hooks/
-# must be committed so the runtime travels with the repo. An appended
+# 0.3 wants .claude/skills/ and .claude/inspire/hooks/ committed, so the runtime
+# travels with the repo. INSPIRE never wrote such a rule — `git grep -il gitignore`
+# is empty tree-wide at v0.1.0, v0.2.0 and v0.2.1 — so a rule that excludes those
+# paths is the project's own (a fork, a template, or the operator). Detection
+# still matters; only the earlier claim about WHO wrote it was false. An appended
 # `.claude/settings.local.json` cannot re-include what a broader earlier rule
 # already excluded (git cannot re-include below an excluded directory), so
 # init would otherwise report success while the whole runtime stays invisible
@@ -363,6 +395,17 @@ check "gitignore shadow: the warning names the shadowed path" \
   "grep 'WARNING' -A6 '$shp/.stderr' | grep -q '.claude/skills'"
 check "gitignore shadow: surfaced in the JSON summary" \
   "printf '%s' \"\$shout\" | jq -e '.warnings | length > 0' >/dev/null"
+# PROVENANCE. The warning used to say "remove the rule (a 0.2 install wrote
+# '/.claude')" — and that text is relayed verbatim to the operator by
+# /inspire:update. No INSPIRE release ever wrote a .gitignore line, so it told
+# them to delete a line we blamed ourselves for by mistake, in their own file.
+# Both the stderr block and the JSON warning are checked: they are two texts.
+check "gitignore shadow: the warning does not blame a 0.2 install for the rule" \
+  "! grep -qi '0.2 install' '$shp/.stderr' && ! grep -qi \"install.sh wrote\" '$shp/.stderr'"
+check "gitignore shadow: the JSON warning does not blame a 0.2 install either" \
+  "! printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep -qi '0.2 install'"
+check "gitignore shadow: the warning says the rule is not ours" \
+  "printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep -q 'INSPIRE did not write this rule'"
 check "gitignore shadow: operator's own rules untouched" \
   "grep -qF 'node_modules/' '$shp/.gitignore' && grep -qxF '/.claude' '$shp/.gitignore'"
 

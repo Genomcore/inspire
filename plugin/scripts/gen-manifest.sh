@@ -8,11 +8,13 @@
 # Two layouts exist:
 #   pre-0.3 : install.sh copied .inspire/{skills,bin,hooks} → .claude/{skills,bin,hooks}
 #   0.3     : materialize.sh copies base/{bin,hooks,skills}  → .inspire/bin,
-#             .claude/inspire/hooks, .claude/skills — excluding the top-level
-#             base/bin/test/ entry and any top-level template-*.sh entry in
-#             any of the three subtrees (matching copy_plan's entry_name
-#             checks in materialize.sh exactly: both apply only to the first
-#             path component under base/<name>/, never to a deeper basename)
+#             .claude/inspire/hooks, .claude/skills — excluding whatever
+#             lib/merge.sh's _base_excluded rejects (today: the top-level
+#             base/bin/test/ entry and any top-level template-*.sh entry).
+#             That function is SOURCED here rather than re-expressed: it is the
+#             single definition of the rule, and a manifest that disagreed with
+#             the applier about what ships would make every such path read as
+#             either a phantom deletion or a phantom creation.
 #
 # Only read-only git is used. Content hashes come from the blob, which is
 # identical to the installed file: no installer transforms a runtime file
@@ -20,6 +22,10 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd -P "$(dirname "$0")" && pwd -P)"
 . "$SCRIPT_DIR/lib/common.sh"
+# For _base_excluded, and only that. lib/merge.sh is pure function definitions
+# with no top-level side effects; classify/apply_base need lib/manifest.sh at
+# CALL time, and neither is called here.
+. "$SCRIPT_DIR/lib/merge.sh"
 
 TAG=""; REPO="."
 while [ "$#" -gt 0 ]; do
@@ -73,15 +79,15 @@ for name in $MAP_NAMES; do
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     rel="${path#"$SRC_PREFIX/$name/"}"
-    # 0.3 never materializes base/bin/test/ nor a top-level template-*.sh —
-    # mirroring materialize.sh's copy_plan exactly: both exclusions apply
-    # only to the FIRST path component under base/<name>/ (the top-level
-    # entry copy_plan iterates over), not to a basename at arbitrary depth,
-    # and the test exclusion is bin-only.
+    # What 0.3 ships is one rule, defined once, in lib/merge.sh: the applier
+    # (apply_base), the classifier (_base_src) and this generator all ask
+    # _base_excluded. It was duplicated here until the final review; the copy
+    # never diverged, but the only place a rule CAN drift is a second copy of it.
+    # (Pre-0.3 needs no filter: install.sh copied .inspire/{skills,bin,hooks}
+    # wholesale, bin/test/ included — that is precisely why 114 fixture paths sit
+    # in the 0.2.1 manifest.)
     if [ "$LAYOUT" = "0.3" ]; then
-      first="${rel%%/*}"
-      [ "$name" = "bin" ] && [ "$first" = "test" ] && continue
-      case "$first" in template-*.sh) continue ;; esac
+      _base_excluded "$name" "$rel" && continue
     fi
     git -C "$REPO" show "$TAG:$path" > "$blobtmp" \
       || { log "gen-manifest.sh: cannot read $path at $TAG"; exit 1; }

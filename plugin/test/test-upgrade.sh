@@ -368,6 +368,33 @@ eq "the record-mode refusal journals nothing either" \
   "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$rec_j_before"
 fixture_cleanup "$w"
 
+# --- a prefix that was NEVER THERE gets no directory verdict at all ---------
+# Reached the ordinary way: the operator deleted .claude/bin/test/ by hand before
+# upgrading. With nothing under the prefix the "the directory can go" predicate
+# is trivially satisfied, so both modes journalled an outcome for it — record
+# mode "directory would be emptied and removed", act mode the past-tense
+# "directory emptied and removed". Neither happened; there was no directory.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+rm -rf "$p/.claude/bin/test"
+check "premise: the prefix really is absent" "[ ! -e '$p/.claude/bin/test' ]"
+dirverdicts() { awk -F'\t' '$2==".claude/bin/test/"' "$1" | wc -l | tr -d ' '; }
+unset HOP_JOURNAL
+hop_ops_init "$p" "$mf" 0
+hop_rm_owned .claude/bin/test; absent_rc=$?
+eq "hop_rm_owned on an absent prefix returns 0" "$absent_rc" "0"
+eq "act mode says nothing about a directory that never existed" \
+  "$(dirverdicts "$HOP_JOURNAL")" "0"
+check "act mode never claims it was emptied and removed" \
+  "! grep -q 'directory emptied and removed' '$HOP_JOURNAL'"
+unset HOP_JOURNAL
+hop_ops_init "$p" "$mf" 1
+hop_rm_owned .claude/bin/test
+eq "record mode forecasts nothing about it either" \
+  "$(dirverdicts "$HOP_JOURNAL")" "0"
+check "record mode never forecasts emptying it" \
+  "! grep -q 'directory would be emptied' '$HOP_JOURNAL'"
+fixture_cleanup "$w"
+
 # ---- the journal must never claim a mutation that failed -------------------
 # The journal IS the operator's report, and nothing downstream cross-checks it
 # against disk, so a line written BEFORE the mutation is a claim we cannot
@@ -839,6 +866,39 @@ check "a product-space file is rendered in the body, not just tallied in the foo
        printf '%s' \"\$pout\" | grep -q '1 decision'"
 rm -f "$pj" "$pv"
 
+# The two streams legitimately describe the same paths, and the report merged
+# them raw: the hop journals `delete` for each of the 114 pre-0.3 fixtures it
+# removes and classify independently reaches `delete` for the same 114, so a
+# clean v0.2.1 fixture read "232 deletions" where 118 paths are deleted, across
+# 306 body lines of which 230 were about one prefix. The footer is the number an
+# operator judges the risk by. Same verb + same path is ONE fact: render once,
+# count once. Two DIFFERENT verbs on one path are two facts and both must stay.
+dj="$(mktemp)"; dv="$(mktemp)"
+printf 'delete\t.claude/bin/test/run-tests.sh\t\n'                          >> "$dj"
+printf 'move\t.claude/bin/review.sh\t.inspire/bin/review.sh\n'              >> "$dj"
+printf 'unregister\t.claude/hooks/\tretire stale hook registration\n'       >> "$dj"
+printf 'report\t\tfirst note\n'                                             >> "$dj"
+printf 'report\t\tsecond note\n'                                            >> "$dj"
+printf 'delete\t.claude/bin/test/run-tests.sh\tno longer part of INSPIRE\n' >> "$dv"
+printf 'replace\t.claude/bin/review.sh\tuntouched, takes the new version\n' >> "$dv"
+dout="$(render_report 0.2.1 0.4.0 "$dj" "$dv" 1 2>&1)"
+
+eq "a path both halves delete is rendered once, not twice" \
+   "$(printf '%s' "$dout" | grep -c 'run-tests.sh')" "1"
+eq "the surviving line is the hop's, which performed the deletion" \
+   "$(printf '%s' "$dout" | grep -c 'no longer part of INSPIRE')" "0"
+eq "two different verbs on one path stay two lines" \
+   "$(printf '%s' "$dout" | grep -c 'review.sh')" "2"
+check "the footer counts unique paths per verb, and tallies replace" \
+   "printf '%s' \"\$dout\" | grep -q '1 moves · 1 replacements · 1 deletions'"
+check "the footer tallies unregister too" \
+   "printf '%s' \"\$dout\" | grep -q '1 hook registration(s) retired'"
+# A `report` note has NO path, so a verb+path key would collapse every note into
+# the first one. Path-less lines are exempt from de-duplication for that reason.
+check "path-less notes are exempt from de-duplication" \
+   "printf '%s' \"\$dout\" | grep -q 'first note' && printf '%s' \"\$dout\" | grep -q 'second note'"
+rm -f "$dj" "$dv"
+
 # ---- --mode plan --------------------------------------------------------
 MZ="$PLUGIN_ROOT/scripts/materialize.sh"
 target="$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
@@ -873,6 +933,68 @@ jq '.version="0.1.0"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" > "$fake/plugin/
 bash "$MZ" --mode plan --plugin-root "$fake/plugin" --project-root "$p" >/dev/null 2>&1
 eq "a downgrade is refused" "$?" "1"
 rm -rf "$fake"; fixture_cleanup "$w"
+
+# ---- a failed hop must propagate, and must never stamp the version ---------
+# `. "$hop" || return 2` CANNOT see this: a sourced script's exit status is its
+# LAST command's, and hops/0.3.0.sh ends with hop_report, which always returns 0.
+# So run_chain returned 0 whatever happened in the middle and run_materialize's
+# `|| exit 2` was dead code. Reproduced with .claude/bin unwritable: all 14
+# validator moves failed, every failure was honestly journalled, the run exited
+# 0 — and .inspire.lock went 0.2.1 → 0.3.1, claiming a migration that did not
+# happen. HOP_FAILED, compared across each hop, is what makes it observable.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+chmod 500 "$p/.claude/bin"
+if touch "$p/.claude/bin/probe" 2>/dev/null; then
+  rm -f "$p/.claude/bin/probe"; chmod 755 "$p/.claude/bin"
+  skipped 7 "hop-failure propagation — .claude/bin writable despite chmod 500 (running as root?)"
+  fixture_cleanup "$w"
+else
+  unset HOP_JOURNAL
+  hop_ops_init "$p" "$PLUGIN_ROOT/manifests/0.2.1.json" 0
+  run_chain "$PLUGIN_ROOT" 0.2.1 0.4.0 >/dev/null 2>&1
+  eq "run_chain returns 2 when an operation inside a hop fails" "$?" "2"
+  check "the failure counter saw every failed move" "[ \"\${HOP_FAILED:-0}\" -ge 14 ]"
+  eq "the journal still records each failure honestly" \
+     "$(awk -F'\t' '$1=="keep" && $3 ~ /^could not be moved/' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "14"
+  check "no move it could not perform is claimed as done" \
+     "! grep -q \$'^move\t.claude/bin/' '$HOP_JOURNAL'"
+  chmod 755 "$p/.claude/bin"
+  fixture_cleanup "$w"
+
+  # End to end: exit 2, and the lock still reads the OLD version. A stale lock is
+  # recoverable — the next run re-detects 0.2.1 and re-runs the hop; a lock that
+  # claims 0.3.1 would make detection score the project as already migrated and
+  # the migration would never be retried.
+  w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+  chmod 500 "$p/.claude/bin"
+  hf_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+  hf_rc=$?
+  chmod 755 "$p/.claude/bin"
+  eq "a failed hop makes --mode update exit 2" "$hf_rc" "2"
+  eq "a failed hop does NOT stamp the new version into the lock" \
+     "$(jq -r .inspire_version "$p/.inspire.lock")" "0.2.1"
+  check "the failure is explained and re-running is named as the recovery" \
+     "printf '%s' \"\$hf_err\" | grep -q 'did not complete' && \
+      printf '%s' \"\$hf_err\" | grep -q 'run the update again'"
+  fixture_cleanup "$w"
+fi
+
+# Record mode can fail too, and --mode plan must check it: hop_mv refuses in BOTH
+# modes when the destination is a directory (the move would nest the source
+# inside it). A plan that logged that and carried on would forecast a migration
+# the real run refuses to perform.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+rm -f "$p/.inspire/bin/review.sh"; mkdir -p "$p/.inspire/bin/review.sh"
+planfail_before="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+pf_err="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+pf_rc=$?
+eq "a hop refusal in record mode makes --mode plan exit 2" "$pf_rc" "2"
+eq "the refused plan still wrote nothing" \
+   "$planfail_before" \
+   "$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+check "the plan says why it stopped" \
+   "printf '%s' \"\$pf_err\" | grep -q 'refused an operation'"
+fixture_cleanup "$w"
 
 # ---- end to end: 0.2.1 → current ---------------------------------------
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
@@ -938,6 +1060,28 @@ bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/
 eq "update is re-runnable" "$?" "0"
 eq "edit still kept after a second run" \
    "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$mine_hash"
+
+# The 0.2 staging tree survives at .inspire/bin/test/ — the hop reports it as
+# residue and deliberately leaves it, since an operator's un-reinstalled edit
+# could be in there. But .inspire/bin IS the 0.3 destination for `bin`, so
+# classify's pass 3 walked those 114 files, found them absent from `seen`, and
+# labelled every one "yours — INSPIRE never shipped this" on this and every later
+# run. We shipped every byte of them; it is the same false ownership claim the
+# 0.3.0 hop had removed, arriving from the other side, and it contradicted the
+# hop's own report. The premise is asserted first — with the residue gone the
+# count below would be 0 for the wrong reason.
+residue_n="$(find "$p/.inspire/bin/test" -type f 2>/dev/null | wc -l | tr -d ' ')"
+eq "premise: the 0.2 staged fixture residue is still on disk" "$residue_n" "114"
+rv="$(mktemp)"
+classify "$PLUGIN_ROOT/manifests/0.3.1.json" "$p" "$base" "$MAP_03" "$MAP_03" > "$rv"
+eq "staged source residue is never claimed as the operator's" \
+   "$(awk -F'\t' '$1=="keep" && $2 ~ /^\.inspire\/bin\/test\// && $3 ~ /yours/' "$rv" | wc -l | tr -d ' ')" "0"
+# ...and the skip is narrow: a genuinely project-authored file inside a directory
+# INSPIRE owns must still be reported as theirs. Without this the fix could have
+# silenced pass 3 altogether and still passed the assertion above.
+check "a genuinely project-authored file is still reported as theirs" \
+   "awk -F'\t' '\$1==\"keep\" && \$3 ~ /yours/' '$rv' | grep -q 'go-best-practices.md'"
+rm -f "$rv"
 fixture_cleanup "$w"
 
 # --take-base overrides a conflict.

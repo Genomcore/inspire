@@ -30,10 +30,14 @@
 # _base_excluded <name> <rel> → 0 when base/<name>/<rel> is present in the
 # plugin but is NEVER materialized into a project.
 #
+# THE SINGLE DEFINITION OF THE RULE, and it must stay that way: _base_src (the
+# classifier), apply_base (the applier), classify's pass 3 and
+# scripts/gen-manifest.sh (which decides what a released manifest even lists)
+# all call it. The generator carried a re-expressed copy of the rule until the
+# final whole-branch review; a second copy is the only place a rule can drift.
+#
 # This filter is why a "does the target ship it?" question is not just
-# `[ -f base/<middle> ]`. materialize.sh's copy_plan calls this directly — the
-# single definition of the rule, not a mirror of it — and it is load-bearing
-# in BOTH directions:
+# `[ -f base/<middle> ]`, and it is load-bearing in BOTH directions:
 #   · pass 1 — .claude/bin/test/ was shipped by 0.1–0.2 (114 files in the 0.2.1
 #     manifest) and is deliberately dropped from 0.3 onward. plugin/base/bin/test/
 #     still exists here (the template's own golden fixtures), so without this
@@ -184,12 +188,43 @@ classify() {
   # never ours and must survive; this is the row that replaces materialize_entry's
   # `rm -rf` of a whole owned entry. Disk is still in SOURCE space at this point,
   # so walk the source map.
+  local mid ex_name ex_rel
   for pair in $src_map; do
     dest="${pair#*:}"
     [ -d "$root/$dest" ] || continue
     while IFS= read -r abs; do
       rel="${abs#"$root"/}"
       grep -Fxq "$rel" "$seen" && continue
+      # NOT THEIRS IF WE SHIP IT BUT NEVER MATERIALIZE IT. `_base_excluded` is
+      # exactly that question, and a path it rejects is INSPIRE's own staged
+      # source, not project-authored work.
+      #
+      # The case that forced this: after a pre-0.3 upgrade, .inspire/bin/test/
+      # still holds the 114 staged fixtures install.sh copied FROM, and
+      # .inspire/bin IS the 0.3 dest_map root for `bin` — so every later run
+      # walked them here, found them absent from `seen` (no manifest lists them
+      # at that path, and pass 2 skips them for this very reason), and emitted
+      # 114 x `keep … "yours — INSPIRE never shipped this"`. We shipped every
+      # byte of it. That is the same false ownership claim the 0.3.0 hop had
+      # removed, arriving from the other side, and it contradicted the hop's own
+      # report, which correctly calls the prefix 0.2 staging residue and tells
+      # the operator to delete it when ready. No new verb: the honest answer is
+      # that this pass has nothing to say about these paths at all.
+      #
+      # DELIBERATE CONSEQUENCE, stated so it is not rediscovered as a bug: a
+      # fixture the OPERATOR wrote under an excluded prefix (say
+      # .claude/bin/test/my-fixture.sh on a pre-0.3 project) is skipped here too,
+      # so it gets no `keep` verdict. It is not at risk — apply_base only ever
+      # writes paths the target ships, and this prefix is by definition not one
+      # of them — and it is still reported, by hop_rm_owned, which walks that
+      # exact prefix per file and labels the survivors "yours — not shipped by
+      # INSPIRE". Staying silent where a truthful line is available elsewhere
+      # beats asserting ownership of 114 files that are ours.
+      mid="$(_middle "$src_map" "$rel")" || mid=""
+      if [ -n "$mid" ]; then
+        ex_name="${mid%%/*}"; ex_rel="${mid#*/}"
+        _base_excluded "$ex_name" "$ex_rel" && continue
+      fi
       printf 'keep\t%s\t%s\n' "$rel" "yours — INSPIRE never shipped this"
       printf '%s\n' "$rel" >> "$seen"
     done < <(find "$root/$dest" -type f)

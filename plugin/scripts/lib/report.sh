@@ -17,6 +17,10 @@
 # deliberately not surfaced — the operator does not need a line for every
 # file INSPIRE chose not to touch.
 #
+# The two streams legitimately describe some of the same paths, so they are
+# merged and de-duplicated on <verb>+<path> once, in render_report, and both the
+# body and the footer read that one stream. The reasoning is written out there.
+#
 # A path containing a literal tab or newline is not representable in this
 # format; see the caveat at _hop_journal in lib/hop-ops.sh. Not our problem
 # to fix here — this renderer consumes the format as documented, plain
@@ -50,11 +54,13 @@ _tsv_split() {
   RDETAIL="${rest#*$'\t'}"
 }
 
-# _emit_group <title> <want> <hop_journal> <verdicts>
+# _emit_group <title> <want> <merged>
 # Prints the title once, lazily, only if a line for this group exists —
-# an empty group is not shown at all.
+# an empty group is not shown at all. <merged> is the de-duplicated union of
+# the two streams (see render_report), so a path both halves describe with the
+# SAME verb is already down to one line by the time it gets here.
 _emit_group() {
-  local title="$1" want="$2" j="$3" v="$4" line verb path detail printed=0
+  local title="$1" want="$2" merged="$3" line verb path detail printed=0
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     _tsv_split "$line"; verb="$RVERB" path="$RPATH" detail="$RDETAIL"
@@ -77,7 +83,7 @@ _emit_group() {
               printf '  ASK      %-46s %s\n' "$path" "$detail" >&2 ;;
       # noop: nothing changed, nothing to tell the operator — deliberately silent.
     esac
-  done < <(cat "$j" "$v" 2>/dev/null)
+  done < "$merged"
 }
 
 # render_report <from> <to> <hop_journal> <verdicts> <dry_run>
@@ -88,14 +94,43 @@ render_report() {
 
   printf '\nINSPIRE upgrade — %s → %s%s\n' "$from" "$to" "$banner" >&2
 
-  _emit_group 'RUNTIME — INSPIRE-owned'                          runtime "$j" "$v"
-  _emit_group 'KNOWLEDGE BASE — yours, additive only'            kb      "$j" "$v"
-  _emit_group 'HARNESS'                                          harness "$j" "$v"
-  _emit_group 'PRODUCT — yours, outside the INSPIRE runtime'     product "$j" "$v"
+  # THE TWO STREAMS LEGITIMATELY OVERLAP, so they are merged and de-duplicated
+  # ONCE, here, and everything below — body and footer alike — reads the result.
+  #
+  # The overlap is not a bug in either half: the hop journals `delete` for each
+  # of the 114 pre-0.3 fixtures it removes, and classify independently reaches
+  # `delete` for the same 114 because the target ships none of them. Rendered
+  # raw that was 229 body lines about one prefix and a footer reading 232
+  # deletions where 118 paths are deleted. Every line was true; the number an
+  # operator judges the risk by was 2x reality, which is its own kind of false.
+  #
+  # De-duplication is on <verb>+<path> ONLY, deliberately:
+  #   · same verb, same path → one fact stated twice, rendered once. The detail
+  #     text may differ between the streams (`` vs "no longer part of INSPIRE");
+  #     first line wins, and since the journal is concatenated first that is the
+  #     hop's wording — the half that actually performed the operation.
+  #   · DIFFERENT verbs on one path stay as separate lines: the 14 validators are
+  #     genuinely both `move` (the hop relocates them) and `replace` (the content
+  #     merge then installs a newer version at the new location). Collapsing those
+  #     into one synthesised verb would invent an operation neither half performed.
+  #   · a line with an EMPTY path is exempt: `report\t\t<message>` notes carry no
+  #     path at all, so keying on verb+path would collapse every one of them into
+  #     the first note. `$2==""` is checked before the seen[] test for that reason.
+  local merged; merged="$(mktemp)"
+  cat "$j" "$v" 2>/dev/null | awk -F'\t' '$2=="" || !seen[$1 FS $2]++' > "$merged"
+
+  _emit_group 'RUNTIME — INSPIRE-owned'                          runtime "$merged"
+  _emit_group 'KNOWLEDGE BASE — yours, additive only'            kb      "$merged"
+  _emit_group 'HARNESS'                                          harness "$merged"
+  _emit_group 'PRODUCT — yours, outside the INSPIRE runtime'     product "$merged"
 
   # Report-only notes carry no path, so they group by intent, not location.
   # Their whole point is an empty path (see _tsv_split) — plain `read` would
-  # eat the message here, so this loop needs the same split.
+  # eat the message here, so this loop needs the same split. Read from $merged
+  # like everything else, so ONE stream feeds the entire report: that is also
+  # what makes the empty-path exemption in the de-dup filter load-bearing rather
+  # than theoretical — without it, every note after the first would be dropped
+  # here as a duplicate of the key `report<TAB>`.
   local line verb path detail any_note=0
   while IFS= read -r line; do
     [ -n "$line" ] || continue
@@ -103,17 +138,27 @@ render_report() {
     [ "$verb" = "report" ] || continue
     [ "$any_note" = 0 ] && { printf '\nLEFT ALONE — reported, never touched\n' >&2; any_note=1; }
     printf '  %s\n' "$detail" >&2
-  done < "$j"
+  done < "$merged"
 
-  local asks moves dels creates keeps
-  asks="$(awk -F'\t'   '$1=="ask"'    "$v" 2>/dev/null | wc -l | tr -d ' ')"
-  moves="$(awk -F'\t'  '$1=="move"'   "$j" 2>/dev/null | wc -l | tr -d ' ')"
-  dels="$(cat "$j" "$v" 2>/dev/null | awk -F'\t' '$1=="delete"' | wc -l | tr -d ' ')"
-  creates="$(awk -F'\t' '$1=="create"||$1=="restore"' "$v" 2>/dev/null | wc -l | tr -d ' ')"
-  keeps="$(cat "$j" "$v" 2>/dev/null | awk -F'\t' '$1=="keep"' | wc -l | tr -d ' ')"
+  # Counted over the SAME de-duplicated stream the body renders, so the footer
+  # and the lines above it can never disagree: one path with one verb is one
+  # unit of work however many halves of the tool mention it. `unregister` and
+  # `replace` are tallied too — the footer is the number an operator judges the
+  # risk by, and silently omitting two of the seven verbs it could report makes
+  # a small run look smaller than it is.
+  local asks moves reps dels creates keeps unregs
+  asks="$(awk    -F'\t' '$1=="ask"'                  "$merged" | wc -l | tr -d ' ')"
+  moves="$(awk   -F'\t' '$1=="move"'                 "$merged" | wc -l | tr -d ' ')"
+  reps="$(awk    -F'\t' '$1=="replace"'              "$merged" | wc -l | tr -d ' ')"
+  dels="$(awk    -F'\t' '$1=="delete"'               "$merged" | wc -l | tr -d ' ')"
+  creates="$(awk -F'\t' '$1=="create"||$1=="restore"' "$merged" | wc -l | tr -d ' ')"
+  keeps="$(awk   -F'\t' '$1=="keep"'                 "$merged" | wc -l | tr -d ' ')"
+  unregs="$(awk  -F'\t' '$1=="unregister"'           "$merged" | wc -l | tr -d ' ')"
 
-  printf '\n%s decision(s) needed · %s moves · %s deletions · %s creations · %s keeps\n' \
-    "$asks" "$moves" "$dels" "$creates" "$keeps" >&2
+  printf '\n%s decision(s) needed · %s moves · %s replacements · %s deletions · %s creations · %s keeps · %s hook registration(s) retired\n' \
+    "$asks" "$moves" "$reps" "$dels" "$creates" "$keeps" "$unregs" >&2
+
+  rm -f "$merged"
 
   if [ "$dry" = 1 ]; then
     printf '%s\n' \
