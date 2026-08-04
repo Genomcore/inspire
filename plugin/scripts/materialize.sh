@@ -3,25 +3,40 @@
 # plugin/scripts/materialize.sh — the deterministic engine shared by /inspire:init
 # and /inspire:update.
 #
-# Everything mechanical lives here rather than in skill prose: copying entries,
-# chmod, excluding bin/test/, seeding the design system, seeding CLAUDE.md and
+# Everything mechanical lives here rather than in skill prose: version detection,
+# layout verification, the layout hops, the three-way content merge, chmod,
+# excluding bin/test/, seeding the KB and the design system, seeding CLAUDE.md and
 # .gitignore, creating product roots, the marker-based settings.json merge, and
-# writing .inspire.lock. Skills carry
-# judgment — preconditions, questions, routing, reporting; this script carries
-# the copy rules exactly once so init and update cannot drift apart.
+# writing .inspire.lock. Skills carry judgment — preconditions, questions,
+# routing, reporting; this script carries the merge rules exactly once so init
+# and update cannot drift apart.
 #
 # Never materialized itself: this file and plugin/test/ live outside plugin/base/,
 # so /inspire:init has no path that would ever copy them into a project.
 #
 # Usage:
-#   materialize.sh --mode init|update|drift-check
+#   materialize.sh --mode init|update|plan
 #                   --plugin-root PATH        # ${CLAUDE_PLUGIN_ROOT}
 #                   --project-root PATH       # repo root
 #                   [--source-root VALUE]     # e.g. source | . | none   (init/update)
 #                   [--prototype-root VALUE]  # e.g. prototype | none    (init/update)
 #                   [--declare-marketplace]   # add extraKnownMarketplaces + enabledPlugins
-#                   [--skip RELPATH]...       # update: drifted paths, never overwritten
+#                   [--take-base RELPATH]...  # update: resolve an `ask` row to OUR version
+#                   [--take-mine RELPATH]...  # update: resolve an `ask` row to THEIRS
+#                   [--skip RELPATH]...       # deprecated alias for --take-mine
 #                   [--dry-run]               # plan only, write nothing
+#
+# --mode update is the chain-driven upgrade: detect the project's version,
+# verify its layout, classify content against the manifest that version shipped,
+# run the layout hops, then apply the target version's base/ around everything
+# the operator gets to keep. An `ask` row nobody resolved defaults to KEEPING the
+# operator's file — doing nothing is how work survives.
+#
+# --mode plan is read-only: it detects the project's version, verifies its
+# layout, enumerates the hop chain in RECORD mode, classifies content and
+# reports the result — a JSON summary on stdout, a grouped report on stderr.
+# It writes nothing to the project. `drift-check` is accepted as a deprecated
+# alias for it.
 #
 # stdout: a JSON summary (machine-readable). stderr: human progress.
 # exit:   0 ok · 1 precondition failure · 2 partial failure (nothing committed)
@@ -30,45 +45,30 @@
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd -P "$(dirname "$0")" && pwd -P)"
+. "$SCRIPT_DIR/lib/common.sh"
+. "$SCRIPT_DIR/lib/manifest.sh"
+. "$SCRIPT_DIR/lib/hop-ops.sh"
+. "$SCRIPT_DIR/lib/chain.sh"
+. "$SCRIPT_DIR/lib/merge.sh"
+. "$SCRIPT_DIR/lib/report.sh"
+
 # ---------------------------------------------------------------------------
 # Small helpers
 # ---------------------------------------------------------------------------
 
-log() { printf '%s\n' "$*" >&2; }
-
 usage() {
   cat >&2 <<'EOF'
-Usage: materialize.sh --mode init|update|drift-check
+Usage: materialize.sh --mode init|update|plan
                        --plugin-root PATH --project-root PATH
                        [--source-root VALUE] [--prototype-root VALUE]
-                       [--declare-marketplace] [--skip RELPATH]... [--dry-run]
+                       [--declare-marketplace]
+                       [--take-base RELPATH]... [--take-mine RELPATH]...
+                       [--dry-run]
+
+       'drift-check' is accepted as a deprecated alias for 'plan'.
+       '--skip'       is accepted as a deprecated alias for '--take-mine'.
 EOF
-}
-
-sha256_of() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$1" | awk '{print $1}'
-  else
-    shasum -a 256 "$1" | awk '{print $1}'
-  fi
-}
-
-# Prints a JSON array from its arguments (each one string element). No args → [].
-arr_to_json() {
-  if [ "$#" -eq 0 ]; then
-    printf '[]'
-    return 0
-  fi
-  printf '%s\n' "$@" | jq -R -s 'split("\n") | map(select(length > 0))'
-}
-
-# True if skip path $1 is $2 itself, or nested under it.
-is_skip_relevant() {
-  [ "$1" = "$2" ] && return 0
-  case "$1" in
-    "$2"/*) return 0 ;;
-  esac
-  return 1
 }
 
 # ---------------------------------------------------------------------------
@@ -84,7 +84,12 @@ SOURCE_ROOT_SET=0
 PROTOTYPE_ROOT_SET=0
 DECLARE_MARKETPLACE=0
 DRY_RUN=0
-SKIP_PATHS=()
+# The two ways an `ask` row gets resolved. Repeatable, project-relative paths in
+# the SOURCE layout's space — the space classify's verdicts are in, which is
+# also the space `--mode plan` reports them in, so the operator can hand a path
+# straight back from the plan.
+TAKE_BASE=()
+TAKE_MINE=()
 
 parse_args() {
   while [ "$#" -gt 0 ]; do
@@ -106,18 +111,36 @@ parse_args() {
         PROTOTYPE_ROOT="$2"; PROTOTYPE_ROOT_SET=1; shift 2 ;;
       --declare-marketplace)
         DECLARE_MARKETPLACE=1; shift 1 ;;
+      # A resolution value is matched against a verdict path and, for --take-base,
+      # decides that a file gets overwritten. It must therefore not be able to
+      # name anything outside the project: the values are echoed back from a plan
+      # the operator may have hand-edited, and a lock or report is not a
+      # capability grant.
+      --take-base)
+        [ "$#" -ge 2 ] || { log "materialize.sh: --take-base requires a value"; usage; exit 1; }
+        case "$2" in
+          /*|*..*)
+            log "materialize.sh: --take-base '$2' must be project-relative without '..'"; exit 1 ;;
+        esac
+        TAKE_BASE+=("$2"); shift 2 ;;
+      --take-mine)
+        [ "$#" -ge 2 ] || { log "materialize.sh: --take-mine requires a value"; usage; exit 1; }
+        case "$2" in
+          /*|*..*)
+            log "materialize.sh: --take-mine '$2' must be project-relative without '..'"; exit 1 ;;
+        esac
+        TAKE_MINE+=("$2"); shift 2 ;;
+      # Deprecated. --skip used to mean "do not overwrite this drifted path",
+      # which is exactly --take-mine now that the merge decides per file rather
+      # than replacing whole entries. Kept so the 0.3 update skill's command
+      # line keeps working.
       --skip)
         [ "$#" -ge 2 ] || { log "materialize.sh: --skip requires a value"; usage; exit 1; }
-        # A --skip value is used to build "$PROJECT_ROOT/$sp" and that path is
-        # rm -rf'd during backup/restore, so it must not be able to escape the
-        # project. Values come from drift-check echoing .inspire.lock's keys —
-        # a corrupted or hand-edited lock would otherwise become an arbitrary
-        # deletion outside the project root.
         case "$2" in
           /*|*..*)
             log "materialize.sh: --skip '$2' must be a project-relative path without '..'"; exit 1 ;;
         esac
-        SKIP_PATHS+=("$2"); shift 2 ;;
+        TAKE_MINE+=("$2"); shift 2 ;;
       --dry-run)
         DRY_RUN=1; shift 1 ;;
       -h|--help)
@@ -130,14 +153,15 @@ parse_args() {
 
 validate_args() {
   case "$MODE" in
-    init|update|drift-check) ;;
-    *) log "materialize.sh: --mode must be one of init|update|drift-check (got '${MODE:-<missing>}')"; usage; exit 1 ;;
+    init|update|plan) ;;
+    drift-check) MODE=plan ;;   # deprecated alias
+    *) log "materialize.sh: --mode must be init, update or plan (got '${MODE:-<missing>}')"; usage; exit 1 ;;
   esac
   [ -n "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root is required"; usage; exit 1; }
   [ -n "$PROJECT_ROOT" ] || { log "materialize.sh: --project-root is required"; usage; exit 1; }
   [ -d "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root '$PLUGIN_ROOT' is not a directory"; exit 1; }
   # A directory is not enough: every consumer of $PLUGIN_ROOT/base degrades
-  # SILENTLY when it is absent (copy_plan becomes a no-op, the seeds return
+  # SILENTLY when it is absent (apply_base becomes a no-op, the seeds return
   # early), so a wrong --plugin-root would otherwise report a successful install
   # that installed nothing — and write an .inspire.lock that makes /inspire:init
   # refuse forever while update cannot seed the KB. Fail loudly instead.
@@ -159,141 +183,38 @@ resolve_paths() {
 }
 
 # ---------------------------------------------------------------------------
-# Copy plan: base/{bin,hooks,skills} → project targets. bin/test/ is never
-# materialized — neither the fixtures nor the harness (see Global Constraints).
+# Module-level state.
 #
-# base/kb is deliberately NOT in this map. Everything here is INSPIRE-owned
-# runtime, replaced wholesale on every run; the KB is product content and is
-# only ever *seeded* (see seed_kb), never replaced, in either mode.
+# The layout this plugin version installs. Its dest_map — and every source
+# version's — comes from layouts.tsv via layout_map, never from a literal here.
+#
+# There is no copy plan any more. base/{bin,hooks,skills} reach the project
+# through lib/merge.sh's apply_base, driven by the target layout's dest_map and
+# by classify's verdicts, so "in the project but never shipped by us" is a KEEP
+# row and the file survives by construction. The function this replaced,
+# materialize_entry, did `rm -rf` on a whole owned entry before `cp -R` — which
+# destroyed a project-authored file living inside an INSPIRE-owned directory
+# (say .claude/skills/inspire-code/references/go-best-practices.md) with nothing
+# able to protect it: the lock never tracked it, so drift-check never reported
+# it and --skip could never cover it.
+#
+# base/kb is deliberately outside that map. Everything in the map is
+# INSPIRE-owned runtime; the KB is product content and is only ever *seeded*
+# (see seed_kb), never replaced, in either mode.
 # ---------------------------------------------------------------------------
+TARGET_LAYOUT='0.3'
 
-MAP_NAMES=(bin hooks skills)
-MAP_DESTS=(.inspire/bin .claude/inspire/hooks .claude/skills)
-
-COPIED=()
-SKIPPED=()
+# Everything this run ADDED that was not there before, whole KB layers included.
+# There is no separate `copied` list any more: the runtime half is reported per
+# file by render_report from the verdicts and the hop journal, so a second,
+# entry-granular list of the same work would only be a way for the two to
+# disagree.
 CREATED=()
 WARNINGS=()
-TRACKED_ENTRIES=()   # dest-relative entries whose files feed the lock
-FILES_LINES=()       # "relpath<TAB>sha256" lines, built once disk state settles
 SETTINGS_STATUS="unchanged"
 LOCK_STATUS="unchanged"
 
-# Copies (or skip-restores) one top-level entry. $1=src abs path, $2=dest abs
-# path, $3=dest path relative to $PROJECT_ROOT, $4=track (1=feed the lock,
-# 0=materialize but never lock-track — used for the KB, see copy_plan).
-materialize_entry() {
-  local src="$1" dest_abs="$2" dest_rel="$3" track="${4:-1}"
-
-  local relevant=()
-  if [ "${#SKIP_PATHS[@]}" -gt 0 ]; then
-    local sp
-    for sp in "${SKIP_PATHS[@]}"; do
-      [ -n "$sp" ] || continue
-      if is_skip_relevant "$sp" "$dest_rel"; then
-        relevant+=("$sp")
-        SKIPPED+=("$sp")
-      fi
-    done
-  fi
-
-  [ "$track" = 1 ] && TRACKED_ENTRIES+=("$dest_rel")
-
-  if [ "$DRY_RUN" = 1 ]; then
-    [ "${#relevant[@]}" -eq 0 ] && COPIED+=("$dest_rel")
-    return 0
-  fi
-
-  if [ "${#relevant[@]}" -eq 0 ]; then
-    # INSPIRE owns this entry outright: replace it, never the parent directory.
-    rm -rf "$dest_abs"
-    mkdir -p "$(dirname "$dest_abs")"
-    cp -R "$src" "$dest_abs" || {
-      log "materialize.sh: failed to copy $src → $dest_abs (the entry is now absent)"; exit 2; }
-    COPIED+=("$dest_rel")
-    return 0
-  fi
-
-  # A --skip path falls inside this entry: back up its exact pre-run state
-  # (present or absent), replace the entry wholesale, then restore that exact
-  # state so the skipped path is never touched, byte for byte.
-  local backup
-  backup="$(mktemp -d)"
-  local existed=()
-  local i=0 sp_abs
-  for sp in "${relevant[@]}"; do
-    sp_abs="$PROJECT_ROOT/$sp"
-    if [ -e "$sp_abs" ]; then
-      mkdir -p "$(dirname "$backup/$i")"
-      cp -R "$sp_abs" "$backup/$i"
-      existed[$i]=1
-    else
-      existed[$i]=0
-    fi
-    i=$((i + 1))
-  done
-
-  rm -rf "$dest_abs"
-  mkdir -p "$(dirname "$dest_abs")"
-  cp -R "$src" "$dest_abs" || {
-    log "materialize.sh: failed to copy $src → $dest_abs; restoring skipped paths from $backup"
-    i=0
-    for sp in "${relevant[@]}"; do
-      if [ "${existed[$i]}" = 1 ]; then
-        mkdir -p "$(dirname "$PROJECT_ROOT/$sp")"
-        cp -R "$backup/$i" "$PROJECT_ROOT/$sp" 2>/dev/null || true
-      fi
-      i=$((i + 1))
-    done
-    rm -rf "$backup"
-    exit 2
-  }
-
-  i=0
-  for sp in "${relevant[@]}"; do
-    sp_abs="$PROJECT_ROOT/$sp"
-    if [ "${existed[$i]}" = 1 ]; then
-      rm -rf "$sp_abs"
-      mkdir -p "$(dirname "$sp_abs")"
-      cp -R "$backup/$i" "$sp_abs"
-    else
-      rm -rf "$sp_abs"
-    fi
-    i=$((i + 1))
-  done
-  rm -rf "$backup"
-}
-
-copy_plan() {
-  local idx name dest_rel src_dir dest_dir entry entry_name dest_entry dest_entry_rel
-  for idx in $(seq 0 $((${#MAP_NAMES[@]} - 1))); do
-    name="${MAP_NAMES[$idx]}"
-    dest_rel="${MAP_DESTS[$idx]}"
-
-    src_dir="$PLUGIN_ROOT/base/$name"
-    dest_dir="$PROJECT_ROOT/$dest_rel"
-    [ -d "$src_dir" ] || continue
-
-    [ "$DRY_RUN" = 1 ] || mkdir -p "$dest_dir"
-
-    for entry in "$src_dir"/*; do
-      [ -e "$entry" ] || continue
-      entry_name="$(basename "$entry")"
-
-      # bin/test/ is never materialized — neither fixtures nor harness.
-      [ "$name" = "bin" ] && [ "$entry_name" = "test" ] && continue
-      # Defensive: a template-maintenance script never leaks into a project.
-      case "$entry_name" in template-*.sh) continue ;; esac
-
-      dest_entry="$dest_dir/$entry_name"
-      dest_entry_rel="$dest_rel/$entry_name"
-      materialize_entry "$entry" "$dest_entry" "$dest_entry_rel" 1
-      log "  · $name/$entry_name → $dest_entry_rel"
-    done
-  done
-}
-
-# Seed inspire_kb/ from base/kb — init only, and strictly additive.
+# Seed inspire_kb/ from base/kb — strictly additive, in BOTH modes.
 #
 # The KB is PRODUCT content, not runtime. INSPIRE never owns a file under
 # inspire_kb/ the way it owns .claude/skills/: from the moment a layer exists,
@@ -304,15 +225,16 @@ copy_plan() {
 #                                  layer the project already has still gains the
 #                                  skeleton files it happens to lack
 #
-# It must be file-granular, not entry-granular. Going through materialize_entry
+# It must be file-granular, not entry-granular. The deleted materialize_entry
 # (rm -rf + cp -R per top-level entry) destroyed an existing KB outright: every
 # authored feature, descriptor, ADR, screen and ticket under a layer directory
-# went with the directory. Nothing protected them — the lock does not track the
-# KB, so drift-check never reports a KB path and --skip can never cover one.
-# The pre-0.3 migration made that reachable by design: its step 4 is
-# `rm .inspire.lock`, which removes init's "already installed" precondition and
-# routes a real project's KB straight into the replace. A restored backup, a KB
-# vendored in before init, or a hand-deleted lock reach it the same way.
+# went with the directory. Nothing protected them — the lock did not track the
+# KB, so drift-check never reported a KB path and --skip could never cover one.
+#
+# It runs on UPGRADE as well as init, and that is the point: a 0.2 project must
+# finally receive the KB layers added since (98_lessons, and whatever a later
+# release adds). There are four rows and no delete row — a layer INSPIRE stopped
+# shipping stays exactly where it is, because by then it is the project's.
 seed_kb() {
   local src_dir="$PLUGIN_ROOT/base/kb"
   local dest_dir="$PROJECT_ROOT/inspire_kb"
@@ -326,7 +248,7 @@ seed_kb() {
     dest_entry_rel="inspire_kb/$entry_name"
 
     if [ ! -e "$dest_entry" ]; then
-      COPIED+=("$dest_entry_rel")
+      CREATED+=("$dest_entry_rel")
       if [ "$DRY_RUN" = 1 ]; then
         log "  · [dry-run] would seed $dest_entry_rel"
       else
@@ -382,8 +304,8 @@ chmod_executables() {
 
 # Seed the live design system from the bootstrap theme, once. Never clobbers an
 # existing design-system.md — that file belongs to the project from here on.
-# It lives under inspire_kb, and the whole KB is untracked in the lock (see
-# copy_plan), so it is free to diverge without ever being reported as drift.
+# It lives under inspire_kb, which is outside the layout dest_map entirely, so
+# it is free to diverge without ever being reported as drift.
 seed_design_system() {
   local theme_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.md"
   local design_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-system.md"
@@ -471,10 +393,21 @@ $GITIGNORE_MARK_END"
 # it therefore defeats the whole delivery model, silently: init reports
 # "settings: merged, lock: written" and `git status` shows nothing at all.
 #
-# The common case is a 0.2 project. Its install.sh wrote `/.claude`, because
-# back then the runtime was regenerated locally and never committed. Appending
-# `.claude/settings.local.json` cannot undo that: git cannot re-include a path
-# below an excluded directory, so no line this script adds could fix it.
+# WHO WROTE THE RULE: not us. No INSPIRE release ever wrote a .gitignore line —
+# verified at v0.1.0, v0.2.0 and v0.2.1, where `git grep -il gitignore` is empty
+# tree-wide, and this repo's own .gitignore has three commits, none of them an
+# install. An earlier draft of this warning told operators to "remove the rule (a
+# 0.2 install wrote '/.claude')", which is a false provenance claim about the
+# operator's own file — and the text is relayed verbatim by /inspire:update.
+#
+# The DETECTION stays exactly as it was: a fork, a project template or the
+# operator themselves may well have written such a rule, and when they have, the
+# consequence is real and worth reporting. Only the claim about its author was
+# wrong.
+#
+# Whoever wrote it, appending `.claude/settings.local.json` cannot undo it: git
+# cannot re-include a path below an excluded directory, so no line this script
+# adds could fix it.
 #
 # So: report, never rewrite. The operator's .gitignore is the operator's.
 warn_shadowed_runtime() {
@@ -486,7 +419,7 @@ warn_shadowed_runtime() {
   done
   [ "${#shadowed[@]}" -gt 0 ] || return 0
 
-  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. Remove the rule (a 0.2 install wrote '/.claude') and commit these paths.")
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: no release ever touched .gitignore. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
   {
     echo ""
     echo "  WARNING · .gitignore excludes the INSPIRE runtime"
@@ -496,8 +429,9 @@ warn_shadowed_runtime() {
     done
     echo ""
     echo "  v0.3 expects these committed — that is what makes the runtime travel"
-    echo "  with the repo, so teammates and CI need no plugin. A v0.2 install.sh"
-    echo "  wrote '/.claude' for the opposite model."
+    echo "  with the repo, so teammates and CI need no plugin. This rule is not"
+    echo "  ours: no INSPIRE release has ever written to .gitignore. The file it"
+    echo "  came from is named in parentheses above."
     echo ""
     echo "  Nothing this script appends can undo it: git cannot re-include a path"
     echo "  below an excluded directory. Remove the rule by hand, then commit."
@@ -557,9 +491,29 @@ create_product_roots() {
 # .claude/settings.json — marker-based merge, never a wholesale rewrite.
 # ---------------------------------------------------------------------------
 
+# merge_settings <hop_journal>
+#
+# The journal's `unregister` rows are plain SUBSTRINGS queued by a hop (see
+# hop_unregister_hook). They are drained into the ONE write below rather than a
+# second pass over the file, so a project only ever sees one settings.json
+# rewrite per run — and so the three unmarked pre-0.3 registrations, which point
+# at .claude/hooks/ and carry no INSPIRE-MANAGED marker the re-merge could see,
+# are actually retired instead of being left to fire alongside the new pair.
 merge_settings() {
   local settings="$PROJECT_ROOT/.claude/settings.json"
   local existing="{}"
+
+  # NOT `IFS=$'\t' read -r verb path detail`: bash collapses runs of tabs, and a
+  # `report\t\t<message>` row has an empty middle field, so the message would
+  # slide into $path and a report could be mistaken for a queued substring.
+  local extra_drop=() jline
+  while IFS= read -r jline; do
+    [ -n "$jline" ] || continue
+    _tsv_split "$jline"
+    [ "$RVERB" = "unregister" ] || continue
+    [ -n "$RPATH" ] || continue
+    extra_drop+=("$RPATH")
+  done < "${1:-/dev/null}"
 
   if [ -f "$settings" ]; then
     if ! existing="$(jq -e . "$settings" 2>/dev/null)"; then
@@ -584,16 +538,24 @@ merge_settings() {
     --arg session_cmd "$session_cmd" \
     --arg dispatch_cmd "$dispatch_cmd" \
     --argjson declare_marketplace "$declare_bool" \
+    --argjson drop "$(arr_to_json ${extra_drop[@]+"${extra_drop[@]}"})" \
     --arg repo_slug "$repo_slug" \
     '
-    # Idempotency: drop every hook entry this runtime previously injected —
-    # matched solely by the INSPIRE-MANAGED marker on its command — before
-    # adding the current pair back. A group left with no hooks is dropped too.
+    # Idempotency, plus retirement of what a hop queued. One predicate, used by
+    # both filters: an entry stays unless its command carries the
+    # INSPIRE-MANAGED marker (ours, re-added below) or contains a queued
+    # substring (a stale registration from an older layout). `contains` on
+    # strings is plain substring matching, so there is no regex to escape.
+    def keep_hook:
+      (.command // "") as $c
+      | (($c | contains("INSPIRE-MANAGED")) | not)
+        and (([$drop[] | select($c | contains(.))] | length) == 0);
+
     .hooks.SessionStart = ((.hooks.SessionStart // [])
-      | map(.hooks = ((.hooks // []) | map(select(((.command // "") | contains("INSPIRE-MANAGED")) | not))))
+      | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
       | map(select((.hooks | length) > 0)))
     | .hooks.PreToolUse = ((.hooks.PreToolUse // [])
-      | map(.hooks = ((.hooks // []) | map(select(((.command // "") | contains("INSPIRE-MANAGED")) | not))))
+      | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
       | map(select((.hooks | length) > 0)))
     | .hooks.SessionStart += [ { hooks: [ { type: "command", command: $session_cmd } ] } ]
     | .hooks.PreToolUse  += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
@@ -624,55 +586,46 @@ merge_settings() {
 }
 
 # ---------------------------------------------------------------------------
-# .inspire.lock — provenance + per-file hashes for drift-check.
+# .inspire.lock — provenance only.
+#
+# The per-file `files` map is GONE. It existed to drive drift detection, and
+# drift is now derived from plugin/manifests/<version>.json instead — a baseline
+# that ships with the plugin and cannot be rebaselined by a --skip, cannot be
+# hand-edited into an arbitrary path, and exists for versions installed before
+# the lock ever carried hashes. Keeping both would mean two disagreeing answers
+# to "what did we ship?".
+#
+# template_sha now carries the manifest's `commit` for the installed version
+# instead of the literal "unknown" it used to hardcode — inspire-lesson stamps
+# that value onto every lesson it writes, so "unknown" made the provenance of
+# every lesson in every project unresolvable.
 # ---------------------------------------------------------------------------
 
-# Hashes every file under each tracked entry, once disk state has settled
-# (after chmod, after the stack.md frontmatter edit — never a stale hash).
-compute_lock_files() {
-  FILES_LINES=()
-  [ "$DRY_RUN" = 1 ] && return 0
-  [ "${#TRACKED_ENTRIES[@]}" -gt 0 ] || return 0
-
-  local rel abs f relpath
-  for rel in "${TRACKED_ENTRIES[@]}"; do
-    abs="$PROJECT_ROOT/$rel"
-    if [ -d "$abs" ]; then
-      while IFS= read -r f; do
-        relpath="${f#"$PROJECT_ROOT"/}"
-        FILES_LINES+=("$relpath"$'\t'"$(sha256_of "$f")")
-      done < <(find "$abs" -type f)
-    elif [ -f "$abs" ]; then
-      FILES_LINES+=("$rel"$'\t'"$(sha256_of "$abs")")
-    fi
-  done
-}
-
+# write_lock <version>
 write_lock() {
   if [ "$DRY_RUN" = 1 ]; then
     LOCK_STATUS="planned"
     return 0
   fi
 
-  local version released
-  version="$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
+  local released commit mf
   released="$(jq -r '.released // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
-
-  local files_json="{}"
-  if [ "${#FILES_LINES[@]}" -gt 0 ]; then
-    files_json="$(printf '%s\n' "${FILES_LINES[@]}" | jq -R -s '
-      split("\n") | map(select(length > 0) | split("\t") | {(.[0]): .[1]}) | add // {}
-    ')"
+  commit="unknown"
+  mf="$(manifest_path "$PLUGIN_ROOT" "$1" || true)"
+  # A version with no shipped manifest is the release currently being cut: its
+  # own commit does not exist yet, so "unknown" is the honest answer.
+  if [ -n "$mf" ]; then
+    commit="$(jq -r '.commit // "unknown"' "$mf" 2>/dev/null || echo unknown)"
+    [ -n "$commit" ] || commit="unknown"
   fi
 
   local lock="$PROJECT_ROOT/.inspire.lock"
   local tmp
   tmp="$(mktemp "${lock}.XXXXXX" 2>/dev/null || mktemp)"
   jq -n \
-    --arg v "$version" --arg r "$released" --arg sha "unknown" \
+    --arg v "$1" --arg r "$released" --arg c "$commit" \
     --arg ia "$(date +%Y-%m-%d)" \
-    --argjson files "$files_json" \
-    '{inspire_version: $v, released: $r, template_sha: $sha, installed_at: $ia, files: $files}' \
+    '{inspire_version: $v, released: $r, template_sha: $c, installed_at: $ia}' \
     > "$tmp"
 
   if ! jq -e . "$tmp" >/dev/null 2>&1; then
@@ -685,95 +638,48 @@ write_lock() {
 }
 
 # ---------------------------------------------------------------------------
-# drift-check — read-only: hashes recorded paths against disk. Writes nothing.
+# plan — read-only: detects the version, verifies the layout, enumerates the
+# hop chain in RECORD mode, classifies content, reports. Writes nothing.
+# `drift-check` is a deprecated alias (see validate_args).
 # ---------------------------------------------------------------------------
 
-# Refuses to operate on a pre-0.3 (install.sh-era) project.
+# A pre-0.3 (install.sh-era) project is no longer refused by `plan` or
+# `update` — detect_version and the hop chain treat it as simply the longest
+# chain there is, and run_materialize/run_plan migrate it automatically. The
+# one remaining hand-migration guard is require_migrated_layout below, and it
+# guards `init` only, for the one shape that command cannot recover from on
+# its own (see its comment) — `init` never runs the hop chain, so it must
+# refuse rather than attempt to migrate.
 #
-# A v0.2 .inspire.lock carries inspire_version / released / template_sha but NO
-# `files` map — drift detection did not exist. Everything downstream reads
-# `.files // {}`, so such a project drift-checks as "nothing drifted, nothing
-# missing" and an update then proceeds with no --skip at all. The v0.2 layout
-# also differs: the KB lived at .inspire_kb/, validators at .claude/bin/, hooks
-# at .claude/hooks/ registered WITHOUT the INSPIRE-MANAGED marker (so the
-# marker-scoped re-merge cannot retire them). Materializing v0.3 over that
-# leaves the KB stranded where no skill looks and the old hooks still firing.
-#
-# v0.2 upgraded by git-merging the template and re-running install.sh; there is
-# no in-place path from it, so refuse loudly rather than half-migrate.
-# The migration text itself, shared by the two routes that detect a pre-0.3
-# project: an `update` against a v0.2 lock (require_v03_lock) and an `init`
-# against an unmigrated v0.2 tree (require_migrated_layout). $1 opens, $2 says
-# what is being refused; both may be multi-line.
-print_v02_migration() {
-  local why="$1" refusal="$2"
-  {
-    echo ""
-    printf '%s\n' "$why"
-    echo ""
-    echo "    .inspire_kb/      →  inspire_kb/"
-    echo "    .claude/bin/      →  .inspire/bin/"
-    echo "    .claude/hooks/    →  .claude/inspire/hooks/"
-    echo "    .inspire/{skills,install.sh,manifest.json}  →  removed (now the plugin)"
-    echo ""
-    echo "Migrate by hand once, then re-run:"
-    echo ""
-    echo "  1. git mv .inspire_kb inspire_kb"
-    echo "  2. Untrack the v0.2 runtime that WAS committed:"
-    echo "       git rm -r --cached --ignore-unmatch \\"
-    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
-    echo "     then delete the v0.2 runtime that was NOT (v0.2 gitignored"
-    echo "     /.claude, so these were never tracked — 'git rm' would abort on"
-    echo "     them and take the whole command with it):"
-    echo "       rm -rf .claude/bin .claude/hooks \\"
-    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
-    echo "  3. Remove the three INSPIRE hook entries from .claude/settings.json"
-    echo "     (they point at .claude/hooks/ and carry no INSPIRE-MANAGED marker)"
-    echo "  4. Remove the '/.claude' line your v0.2 install wrote into .gitignore."
-    echo "     v0.3 expects .claude/skills/ and .claude/inspire/hooks/ to be"
-    echo "     COMMITTED — that is what makes the runtime travel with the repo."
-    echo "     Left in place it hides the entire new runtime from git, silently."
-    echo "  5. rm .inspire.lock"
-    echo "  6. Run /inspire:init — it will materialize the v0.3 layout and seed a"
-    echo "     lock with drift tracking. Your inspire_kb/ is left alone: init only"
-    echo "     adds skeleton files your KB does not already have."
-    echo ""
-    printf '%s\n' "$refusal"
-    echo ""
-  } >&2
-}
-
-require_v03_lock() {
-  local lock="$1"
-  jq -e 'has("files")' "$lock" >/dev/null 2>&1 && return 0
-
-  local lv
-  lv="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
-  print_v02_migration \
-"This project was installed by a pre-0.3 INSPIRE (.inspire.lock reports
-version '$lv' and carries no 'files' map), and v0.3 moved the runtime:" \
-"Refusing to proceed: an update here would strand the KB at .inspire_kb/
-and leave the old hooks registered."
-  exit 2
-}
-
-# An unmigrated v0.2 tree: .inspire_kb/ present, inspire_kb/ absent. The lock
-# guard above cannot catch this one — the operator may have already reached
-# step 5 (`rm .inspire.lock`) without doing step 1 (`git mv`), or never had a
-# lock to begin with. Without this guard init exits 0 reporting a clean
-# install, having seeded an EMPTY inspire_kb/ beside the real one: the whole
-# knowledge base left at a path no v0.3 skill ever reads, and nothing in the
-# output saying so.
+# An unmigrated v0.2 tree: .inspire_kb/ present, inspire_kb/ absent. Detection
+# cannot catch this one on its own — the operator may have deleted the lock by
+# hand, or never had one to begin with. Without this guard init exits 0
+# reporting a clean install, having seeded an EMPTY inspire_kb/ beside the
+# real one: the whole knowledge base left at a path no v0.3 skill ever reads,
+# and nothing in the output saying so. The remedy is /inspire:update, not a
+# hand-migration: it runs the same hop chain init cannot, moving
+# .inspire_kb/ → inspire_kb/, .claude/bin/ → .inspire/bin/ and
+# .claude/hooks/ → .claude/inspire/hooks/, then applies the current base
+# around whatever survives.
 require_migrated_layout() {
   [ -d "$PROJECT_ROOT/.inspire_kb" ] || return 0
   [ -d "$PROJECT_ROOT/inspire_kb" ] && return 0
 
-  print_v02_migration \
-"This project still has the pre-0.3 layout — .inspire_kb/ is present and
-inspire_kb/ is not — and v0.3 moved the runtime:" \
-"Refusing to proceed: an init here would strand your knowledge base at
-.inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/
-beside it. Start at step 1."
+  {
+    echo ""
+    echo "This project still has the pre-0.3 layout — .inspire_kb/ is present and"
+    echo "inspire_kb/ is not — and v0.3 moved the runtime. /inspire:init does not"
+    echo "migrate an existing project; it only installs fresh."
+    echo ""
+    echo "Run /inspire:update instead: it detects the pre-0.3 layout and runs the"
+    echo "migration chain for you, then applies the current base around whatever"
+    echo "you already have. Your inspire_kb/ is never replaced, only seeded."
+    echo ""
+    echo "Refusing to proceed: an init here would strand your knowledge base at"
+    echo ".inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/"
+    echo "beside it."
+    echo ""
+  } >&2
   exit 1
 }
 
@@ -793,88 +699,201 @@ detect_existing_kb() {
   log "  · inspire_kb/ already exists ($n file(s)) — adopting it: seeding only what is missing"
 }
 
-run_drift_check() {
-  local lock="$PROJECT_ROOT/.inspire.lock"
-  if [ ! -f "$lock" ]; then
-    log "materialize.sh: no .inspire.lock at $PROJECT_ROOT — run /inspire:init first"
+# run_plan — detect, verify, enumerate the hop chain in RECORD mode, classify,
+# report. Never writes: hop_ops_init/run_chain run with HOP_RECORD=1, and
+# classify itself only ever emits verdicts on stdout (see lib/merge.sh).
+run_plan() {
+  local target hint src score layout
+  target="$(jq -r '.version // "unknown"' "$PLUGIN_JSON")"
+
+  hint=""
+  [ -f "$PROJECT_ROOT/.inspire.lock" ] \
+    && hint="$(jq -r '.inspire_version // ""' "$PROJECT_ROOT/.inspire.lock" 2>/dev/null)"
+
+  local det; det="$(detect_version "$PLUGIN_ROOT" "$PROJECT_ROOT" "$hint")" || exit 1
+  src="$(printf '%s' "$det" | cut -f1)"
+  score="$(printf '%s' "$det" | cut -f2)"
+
+  case "$(version_cmp "$target" "$src")" in
+    -1) log "INSPIRE: the installed plugin ($target) is older than this project ($src)."
+        log "  Refusing to downgrade. Run /plugin update inspire first."
+        exit 1 ;;
+  esac
+
+  layout="$(manifest_layout "$(manifest_path "$PLUGIN_ROOT" "$src")")"
+  verify_layout "$PLUGIN_ROOT" "$PROJECT_ROOT" "$layout" || exit 1
+
+  # Record the layout half without performing it.
+  HOP_JOURNAL="$(mktemp)"
+  hop_ops_init "$PROJECT_ROOT" "$(manifest_path "$PLUGIN_ROOT" "$src")" 1 || {
+    log "materialize.sh: could not initialize the hop journal — refusing to plan"
+    log "  without one, since the report and audit trail depend on it."
     exit 1
-  fi
-  require_v03_lock "$lock"
+  }
+  # Record mode writes nothing, but it can still FAIL: hop_mv refuses outright
+  # when the destination is an existing directory, in both modes, because such a
+  # move would nest the source inside it. A preview that logged that and carried
+  # on would forecast a migration the real run will refuse to perform, so the
+  # plan stops here instead of printing a chain and a verdict set that cannot be
+  # honoured.
+  run_chain "$PLUGIN_ROOT" "$src" "$target" || {
+    log "INSPIRE: the upgrade cannot be planned — a layout hop refused an operation."
+    log "  Nothing was written. The lines above name the paths involved."
+    rm -f "$HOP_JOURNAL"
+    exit 2
+  }
 
-  local lock_version plugin_version
-  lock_version="$(jq -r '.inspire_version // "unknown"' "$lock" 2>/dev/null || echo unknown)"
-  plugin_version="$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
+  local verdicts src_map tgt_map
+  src_map="$(layout_map "$PLUGIN_ROOT" "$layout")"
+  tgt_map="$(layout_map "$PLUGIN_ROOT" "$TARGET_LAYOUT")"
+  verdicts="$(mktemp)"
+  classify "$(manifest_path "$PLUGIN_ROOT" "$src")" "$PROJECT_ROOT" \
+           "$PLUGIN_ROOT/base" "$src_map" "$tgt_map" > "$verdicts"
 
-  local unchanged=() drifted=() missing=()
-  local path hash abs cur
-  while IFS=$'\t' read -r path hash; do
-    [ -n "$path" ] || continue
-    abs="$PROJECT_ROOT/$path"
-    if [ ! -e "$abs" ]; then
-      missing+=("$path")
-    else
-      cur="$(sha256_of "$abs")"
-      if [ "$cur" = "$hash" ]; then
-        unchanged+=("$path")
-      else
-        drifted+=("$path")
-      fi
-    fi
-  done < <(jq -r '.files // {} | to_entries[] | "\(.key)\t\(.value)"' "$lock" 2>/dev/null)
+  render_report "$src" "$target" "$HOP_JOURNAL" "$verdicts" 1
 
-  local unchanged_json drifted_json missing_json
-  if [ "${#unchanged[@]}" -gt 0 ]; then unchanged_json="$(arr_to_json "${unchanged[@]}")"; else unchanged_json="[]"; fi
-  if [ "${#drifted[@]}" -gt 0 ]; then drifted_json="$(arr_to_json "${drifted[@]}")"; else drifted_json="[]"; fi
-  if [ "${#missing[@]}" -gt 0 ]; then missing_json="$(arr_to_json "${missing[@]}")"; else missing_json="[]"; fi
+  # CHAIN_RAN is SPACE-separated (see lib/chain.sh), not newline-separated.
+  local chain_json ask_json
+  chain_json="$(printf '%s' "$CHAIN_RAN" | jq -R -s 'split(" ")|map(select(length>0))')"
+  ask_json="$(awk -F'\t' '$1=="ask"{print $2}' "$verdicts" \
+    | jq -R -s 'split("\n")|map(select(length>0))')"
+
+  local counts_json
+  counts_json="$(awk -F'\t' '{c[$1]++} END{
+        printf "{\"noop\":%d,\"replace\":%d,\"keep\":%d,\"ask\":%d,\"create\":%d,\"restore\":%d,\"delete\":%d}",
+        c["noop"]+0,c["replace"]+0,c["keep"]+0,c["ask"]+0,c["create"]+0,c["restore"]+0,c["delete"]+0}' "$verdicts")"
 
   jq -n \
-    --arg mode "drift-check" \
-    --arg lock_version "$lock_version" \
-    --arg plugin_version "$plugin_version" \
-    --argjson unchanged "$unchanged_json" \
-    --argjson drifted "$drifted_json" \
-    --argjson missing "$missing_json" \
-    '{mode: $mode, lock_version: $lock_version, plugin_version: $plugin_version, unchanged: $unchanged, drifted: $drifted, missing: $missing}'
+    --arg src "$src" --arg tgt "$target" --arg sc "$score" --arg ly "$layout" \
+    --argjson chain "$chain_json" --argjson ask "$ask_json" --argjson counts "$counts_json" \
+    '{mode:"plan", source_version:$src, target_version:$tgt, score:($sc|tonumber),
+      layout:$ly, chain:$chain, verdicts:$counts, ask:$ask}'
+
+  rm -f "$verdicts" "$HOP_JOURNAL"
 }
 
 # ---------------------------------------------------------------------------
 # init / update
 # ---------------------------------------------------------------------------
 
+# One pipeline for both modes. `init` is the degenerate upgrade: no source
+# manifest, so every base file is a create, nothing is kept, and no hop runs.
+#
+# THE ORDER IS THE CORRECTNESS ARGUMENT, and it is not rearrangeable:
+#
+#   1. classify BEFORE the hops. A pre-0.3 manifest records pre-0.3 paths, and
+#      those paths stop existing the moment a hop moves them. Classifying after
+#      would match nothing.
+#   2. reduce the decisions to a set of HASHES (keepset_of), also before the
+#      hops. Bytes survive a `mv`; paths do not. This is what lets step 4 run
+#      against the target layout with no path translation at all.
+#   3. run the hops.
+#   4. apply_base AFTER the hops, driven by the TARGET layout.
+#
+# Get 1 and 4 the wrong way round and either nothing matches or an operator's
+# edit is silently overwritten.
 run_materialize() {
-  # Both pre-0.3 detections run before anything is written.
-  if [ "$MODE" = "update" ] && [ -f "$PROJECT_ROOT/.inspire.lock" ]; then
-    require_v03_lock "$PROJECT_ROOT/.inspire.lock"
-  fi
-  require_migrated_layout
+  local target src layout verdicts
+  target="$(jq -r '.version // "unknown"' "$PLUGIN_JSON")"
+
+  local keepset src_map tgt_map src_manifest
+  keepset="$(mktemp)"
+  tgt_map="$(layout_map "$PLUGIN_ROOT" "$TARGET_LAYOUT")"
 
   log "INSPIRE · materialize ($MODE) → $PROJECT_ROOT"
-  [ "$MODE" = "init" ] && detect_existing_kb
 
-  copy_plan
-  # The KB is seeded only at init, and only additively. `update` never reaches
-  # it at all — structurally, not merely via --skip (which is fed from
-  # drift-check and only covers what the lock tracks, so a project's own layer
-  # content, authored after init, would never be reported nor protected).
-  [ "$MODE" = "init" ] && seed_kb
+  if [ "$MODE" = "init" ]; then
+    require_migrated_layout
+    detect_existing_kb
+    src="$target"; layout="$TARGET_LAYOUT"; src_map="$tgt_map"
+    HOP_JOURNAL="$(mktemp)"
+    hop_ops_init "$PROJECT_ROOT" /dev/null "$DRY_RUN" || {
+      log "materialize.sh: could not initialize the hop journal — refusing to proceed"
+      log "  without one, since the report and audit trail depend on it."
+      exit 1
+    }
+    verdicts="$(mktemp)"
+    # A fresh install has no source manifest: every base file is a create, and
+    # nothing is kept.
+    classify /dev/null "$PROJECT_ROOT" "$PLUGIN_ROOT/base" "$src_map" "$tgt_map" > "$verdicts"
+    : > "$keepset"
+    src_manifest=/dev/null
+  else
+    local hint det
+    hint=""
+    [ -f "$PROJECT_ROOT/.inspire.lock" ] \
+      && hint="$(jq -r '.inspire_version // ""' "$PROJECT_ROOT/.inspire.lock" 2>/dev/null)"
+    det="$(detect_version "$PLUGIN_ROOT" "$PROJECT_ROOT" "$hint")" || exit 1
+    src="$(printf '%s' "$det" | cut -f1)"
+    case "$(version_cmp "$target" "$src")" in
+      -1) log "INSPIRE: plugin $target is older than project $src — refusing to downgrade."
+          log "  Run /plugin update inspire first."
+          exit 1 ;;
+    esac
+    layout="$(manifest_layout "$(manifest_path "$PLUGIN_ROOT" "$src")")"
+    # This is also the guard that catches a HALF-MIGRATED pre-0.3 tree — the one
+    # shape require_migrated_layout cannot see, because it stands down as soon as
+    # inspire_kb/ exists. A project that ran only `git mv .inspire_kb inspire_kb`
+    # matches neither layout signature, and .claude/skills/ is the same
+    # destination in both, so proceeding would overwrite locally-edited shipped
+    # skills while leaving the v0.2 remnants and their unmarked hook
+    # registrations behind. Refuse before writing anything instead.
+    verify_layout "$PLUGIN_ROOT" "$PROJECT_ROOT" "$layout" || exit 1
+
+    src_manifest="$(manifest_path "$PLUGIN_ROOT" "$src")"
+    src_map="$(layout_map "$PLUGIN_ROOT" "$layout")"
+    verdicts="$(mktemp)"
+    classify "$src_manifest" "$PROJECT_ROOT" "$PLUGIN_ROOT/base" \
+             "$src_map" "$tgt_map" > "$verdicts"
+    _apply_resolutions "$verdicts"
+    keepset_of "$verdicts" "$PROJECT_ROOT" > "$keepset"
+
+    HOP_JOURNAL="$(mktemp)"
+    hop_ops_init "$PROJECT_ROOT" "$src_manifest" "$DRY_RUN" || {
+      log "materialize.sh: could not initialize the hop journal — refusing to proceed"
+      log "  without one, since the report and audit trail depend on it."
+      exit 1
+    }
+    # Unlike --mode plan, a hop failure here is real: the tree is mid-migration.
+    #
+    # WE STOP BEFORE write_lock, deliberately. A lock still reading $src is
+    # merely stale, and a re-run picks up exactly where this one stopped; a lock
+    # reading $target after a migration that did not happen is a lie the whole
+    # upgrade path is then built on — detection would score the project as
+    # already migrated and never run the hop again. Nothing done so far is undone
+    # (a hop is re-runnable: a move whose source is gone is a silent no-op), and
+    # the per-operation failures are already on stderr.
+    run_chain "$PLUGIN_ROOT" "$src" "$target" || {
+      log "INSPIRE: the layout migration did not complete, so the runtime version"
+      log "  was left at $src — nothing claims an upgrade that did not happen."
+      log "  Nothing done so far was undone. Fix the cause (a permission on a path"
+      log "  we had to move or remove is the usual one) and run the update again:"
+      log "  every hop operation is re-runnable, and the ones that succeeded are"
+      log "  no-ops the second time."
+      exit 2
+    }
+  fi
+
+  apply_base "$keepset" "$src_manifest" "$PROJECT_ROOT" \
+             "$PLUGIN_ROOT/base" "$src_map" "$tgt_map" "$DRY_RUN" || exit 2
+
+  seed_kb                       # additive in BOTH modes now
   chmod_executables
   seed_design_system
   seed_claude_md
   seed_gitignore
   create_product_roots
   warn_shadowed_runtime
-  merge_settings
-  compute_lock_files
-  write_lock
+  merge_settings "$HOP_JOURNAL"
+  write_lock "$target"
 
-  local copied_json skipped_json created_json warnings_json
-  if [ "${#COPIED[@]}" -gt 0 ]; then copied_json="$(arr_to_json "${COPIED[@]}")"; else copied_json="[]"; fi
-  if [ "${#SKIPPED[@]}" -gt 0 ]; then skipped_json="$(arr_to_json "${SKIPPED[@]}")"; else skipped_json="[]"; fi
+  # The project root is what lets render_report persist the report to
+  # .inspire/last-upgrade.log — act mode only; it writes nothing when DRY_RUN=1.
+  render_report "$src" "$target" "$HOP_JOURNAL" "$verdicts" "$DRY_RUN" "$PROJECT_ROOT"
+
+  local created_json warnings_json
   if [ "${#CREATED[@]}" -gt 0 ]; then created_json="$(arr_to_json "${CREATED[@]}")"; else created_json="[]"; fi
   if [ "${#WARNINGS[@]}" -gt 0 ]; then warnings_json="$(arr_to_json "${WARNINGS[@]}")"; else warnings_json="[]"; fi
-
-  local version
-  version="$(jq -r '.version // "unknown"' "$PLUGIN_JSON" 2>/dev/null || echo unknown)"
 
   local dry_bool="false"
   [ "$DRY_RUN" = 1 ] && dry_bool="true"
@@ -883,20 +902,52 @@ run_materialize() {
   [ "$EXISTING_KB" = 1 ] && existing_kb_bool="true"
 
   jq -n \
-    --argjson existing_kb "$existing_kb_bool" \
-    --arg mode "$MODE" \
-    --arg version "$version" \
-    --argjson copied "$copied_json" \
-    --argjson skipped "$skipped_json" \
+    --arg mode "$MODE" --arg src "$src" --arg tgt "$target" \
     --argjson created "$created_json" \
     --argjson warnings "$warnings_json" \
-    --arg settings "$SETTINGS_STATUS" \
-    --arg lock "$LOCK_STATUS" \
+    --argjson existing_kb "$existing_kb_bool" \
+    --arg settings "$SETTINGS_STATUS" --arg lock "$LOCK_STATUS" \
     --argjson dry_run "$dry_bool" \
-    '{mode: $mode, version: $version, copied: $copied, skipped: $skipped, created: $created, warnings: $warnings, existing_kb: $existing_kb, settings: $settings, lock: $lock}
+    '{mode:$mode, source_version:$src, version:$tgt, created:$created,
+      warnings:$warnings, existing_kb:$existing_kb, settings:$settings, lock:$lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
+  rm -f "$verdicts" "$HOP_JOURNAL" "$keepset"
+
   log "INSPIRE · materialize ($MODE) done."
+}
+
+# Rewrite `ask` rows according to --take-base / --take-mine. An unresolved ask
+# stays the operator's file: doing nothing is how work survives.
+#
+# --take-mine is applied second, so naming the same path in both flags resolves
+# to keeping their file. That is the safe direction, and the only one worth
+# defining for what is operator error.
+_apply_resolutions() {
+  # `vpath`, not `target`: run_materialize's `target` is the plugin VERSION, and
+  # two different meanings behind one name in the same call chain is how a future
+  # edit gets it wrong.
+  local vf="$1" tmp p line verdict vpath detail
+  tmp="$(mktemp)"
+  # Parameter-expansion split, not `IFS=$'\t' read -r a b c`: bash collapses
+  # runs of tabs, so a row whose detail is empty must not lose a field on the
+  # way through — the file is re-read by keepset_of and render_report.
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    _tsv_split "$line"
+    verdict="$RVERB"; vpath="$RPATH"; detail="$RDETAIL"
+    if [ "$verdict" = "ask" ]; then
+      for p in ${TAKE_BASE[@]+"${TAKE_BASE[@]}"}; do
+        [ "$p" = "$vpath" ] && verdict=replace && break
+      done
+      for p in ${TAKE_MINE[@]+"${TAKE_MINE[@]}"}; do
+        [ "$p" = "$vpath" ] && verdict=keep && break
+      done
+      [ "$verdict" = "ask" ] && verdict=keep
+    fi
+    printf '%s\t%s\t%s\n' "$verdict" "$vpath" "$detail" >> "$tmp"
+  done < "$vf"
+  mv "$tmp" "$vf"
 }
 
 # ---------------------------------------------------------------------------
@@ -909,7 +960,7 @@ main() {
   resolve_paths
 
   case "$MODE" in
-    drift-check) run_drift_check ;;
+    plan)        run_plan ;;
     init|update) run_materialize ;;
   esac
 }
