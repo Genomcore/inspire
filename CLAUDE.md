@@ -27,7 +27,10 @@ repo is both its source and its own marketplace.
     roots, refusing an unmigrated pre-0.3 layout and warning when `.gitignore`
     excludes the runtime, the marker-based `settings.json` merge, and writing `.inspire.lock`
     (which now carries a `files` map — path → sha256 — driving `/inspire:update`'s
-    drift detection, alongside `inspire_version`/`released`/`template_sha`).
+    drift detection, alongside `inspire_version`/`released`/`template_sha`). In act
+    mode it also saves the grouped report to `.inspire/last-upgrade.log` —
+    overwritten each run, so what the last upgrade did stays auditable; `--mode plan`
+    writes nothing at all, that file included.
   - `plugin/base/` — the **inert payload**: materialized into a project by
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside

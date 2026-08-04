@@ -72,6 +72,35 @@ _hop_reason() {
   printf '%s\n' "$msg"
 }
 
+# _hop_prune_parent <relative path that was just moved away>
+#
+# ACT MODE ONLY, best effort, one level. A hop that drains a directory must not
+# leave the emptied container behind: the 0.3.0 hop moves 14 validators out of
+# .claude/bin/ and 3 hooks out of .claude/hooks/, and a blind verification of a
+# real 0.1→0.4 upgrade found both surviving as empty directories a clean install
+# never creates.
+#
+# `rmdir` REFUSES a non-empty directory, so nothing of the operator's can be lost
+# — one file of theirs in .claude/bin/ and the container stays, with their file
+# in it. That is the same safety argument hop_rm_owned's prune rests on, and it is
+# why this is never `rm -rf` and never recursive upward: one level, the parent the
+# move actually emptied.
+#
+# A TOP-LEVEL source (.inspire_kb) is skipped outright — its "parent" is the
+# project root, which is never ours to remove.
+#
+# Nothing is journalled. An empty directory silently disappearing needs no
+# forewarning, and record mode cannot foresee it without simulating the whole
+# tree's emptiness; see the superset caveat in hop_mv.
+_hop_prune_parent() {
+  case "$1" in */*) ;; *) return 0 ;; esac
+  local parent="${1%/*}"
+  [ -n "$parent" ] || return 0
+  [ "$parent" = "." ] && return 0
+  rmdir "$PROJECT_ROOT/$parent" 2>/dev/null
+  return 0
+}
+
 # A missing source is a SILENT NO-OP. Operator deletion is expected — INSPIRE
 # is a methodology, not a framework — and this is also what makes a
 # half-completed hop safe to re-run: a finished move skips itself.
@@ -124,6 +153,14 @@ hop_mv() {
   #      optimistic about it and act mode reports the truth and returns non-zero;
   #   3. a directory removal record mode forecasts and act mode's prune cannot
   #      complete (see hop_rm_owned).
+  #   4. the reverse of 3, and the ONLY case where the preview under-reports: act
+  #      mode prunes the parent directory its own moves emptied (see
+  #      _hop_prune_parent) and record mode does not forecast it. Forecasting it
+  #      would mean simulating, per directory, which of its entries the whole
+  #      remaining chain will remove — and being wrong about that would tell the
+  #      operator a directory disappears when it stays, or the reverse. An empty
+  #      directory silently going away needs no forewarning; a wrong forecast
+  #      would be worse than none.
   # It does NOT license disagreeing about anything observable on disk: those the
   # preview must get right, and a miss is a defect.
   if [ "$HOP_RECORD" = 1 ]; then
@@ -134,6 +171,9 @@ hop_mv() {
   err="$(mv "$PROJECT_ROOT/$src" "$PROJECT_ROOT/$dst" 2>&1)"
   if [ ! -e "$PROJECT_ROOT/$src" ] && [ -e "$PROJECT_ROOT/$dst" ]; then
     _hop_journal move "$src" "$dst"
+    # Only after a move that demonstrably happened: pruning on the failure path
+    # would attack a directory that still holds the file we could not move.
+    _hop_prune_parent "$src"
     return 0
   fi
   reason="$(_hop_reason "$err")"

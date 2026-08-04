@@ -212,6 +212,36 @@ hop_mv .claude/bin/definitely-absent.sh .inspire/bin/definitely-absent.sh
 eq "hop_mv on a missing source is a silent no-op" "$?" "0"
 check "hop_mv created nothing from nothing" "[ ! -e '$p/.inspire/bin/definitely-absent.sh' ]"
 
+# A move that EMPTIES its source directory must take the container with it. The
+# 0.3.0 hop drains .claude/bin/ and .claude/hooks/ completely, and without this
+# both survived as empty directories a clean install never creates (A2/A3 of the
+# blind 0.1→0.4 verification).
+#
+# Probe paths the pre-0.3 installer could never have staged, so neither the
+# assertion nor its premise can be satisfied by fixture residue.
+mkdir -p "$p/.claude/prune-solo"
+printf 'ONLY\n' > "$p/.claude/prune-solo/only.txt"
+prune_j_before="$(wc -l < "$HOP_JOURNAL" | tr -d ' ')"
+hop_mv .claude/prune-solo/only.txt .inspire/pruned/only.txt
+eq "the emptying move succeeded" "$?" "0"
+check "hop_mv removed the directory its move emptied" "[ ! -e '$p/.claude/prune-solo' ]"
+check "the moved file is at its destination" "[ -f '$p/.inspire/pruned/only.txt' ]"
+# The prune is deliberately silent — an empty directory disappearing needs no
+# forewarning, and record mode cannot forecast it. So exactly ONE line was added:
+# the move. Nothing may claim the directory removal.
+eq "a pruning move journals only its move line" \
+  "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$((prune_j_before + 1))"
+
+# ...and stops dead at anything of the operator's: rmdir refuses a non-empty
+# directory, which is the whole safety argument for doing this at all.
+mkdir -p "$p/.claude/prune-shared"
+printf 'OURS\n'  > "$p/.claude/prune-shared/ours.txt"
+printf 'THEIRS\n' > "$p/.claude/prune-shared/theirs.txt"
+hop_mv .claude/prune-shared/ours.txt .inspire/pruned/ours.txt
+check "a directory still holding a file is left alone" "[ -d '$p/.claude/prune-shared' ]"
+eq "the file that blocked the prune is untouched" \
+  "$(cat "$p/.claude/prune-shared/theirs.txt" 2>/dev/null)" "THEIRS"
+
 # hop_rm_owned deletes only what the manifest says we shipped.
 printf 'mine\n' > "$p/.claude/bin/test/my-fixture.sh"
 owned_before="$(jq -r '[.files|keys[]|select(startswith(".claude/bin/test/"))]|length' "$mf")"
@@ -297,13 +327,25 @@ fixture_cleanup "$w"
 
 # --- record mode writes nothing ---
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
-before="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
 hop_ops_init "$p" "$mf" 1
+# A source directory holding exactly one file: in ACT mode this move prunes it.
+mkdir -p "$p/.claude/rec-prune"
+printf 'REC\n' > "$p/.claude/rec-prune/only.txt"
+before="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+# DIRECTORIES too, not only files: act mode now prunes a directory its own move
+# empties, and a file-only fingerprint cannot see an empty directory vanish. If
+# record mode ever grew that prune, this is the assertion that catches it.
+dirs_before="$(find "$p" -type d | LC_ALL=C sort | shasum -a 256)"
+hop_mv .claude/rec-prune/only.txt .inspire/rec-pruned/only.txt
 hop_mv .claude/bin/review.sh .inspire/bin/review.sh
 hop_rm_owned .claude/bin/test
 hop_rm .inspire/install.sh
 after="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
 eq "record mode wrote nothing" "$before" "$after"
+eq "record mode removed no directory either" \
+  "$(find "$p" -type d | LC_ALL=C sort | shasum -a 256)" "$dirs_before"
+check "record mode left the would-be-pruned directory in place" \
+  "[ -d '$p/.claude/rec-prune' ] && [ -f '$p/.claude/rec-prune/only.txt' ]"
 check "record mode journalled the move" \
   "grep -q \$'move\t.claude/bin/review.sh' '$HOP_JOURNAL'"
 eq "record mode journalled 114 deletions" "$(hop_deletes "$HOP_JOURNAL")" "114"
@@ -821,6 +863,63 @@ check "a directory in the way is left alone, not nested into" \
    "[ -d '$sp/.inspire/bin/README.md' ] && [ -z \"\$(ls -A '$sp/.inspire/bin/README.md')\" ]"
 rm -rf "$sw"
 
+# --- pass 2's prune walks UP, not one level ---------------------------------
+# A4 of the blind 0.1→0.4 verification: 0.1 shipped inspire-learn/SKILL.md AND
+# inspire-learn/references/learnings-format.md, both dropped since. Removing
+# SKILL.md cannot prune inspire-learn/ while references/ is still there, and when
+# references/ was emptied a moment later nothing retried the grandparent — so the
+# upgrade left an empty .claude/skills/inspire-learn/ that a clean install never
+# creates. The prune must therefore ascend, and must stop at the layout's own
+# destination root and at the first directory that is not empty.
+pw="$(mktemp -d)"; pb="$pw/base"; pp="$pw/proj"
+mkdir -p "$pb/skills" "$pp/.claude/skills/gone/deep" "$pp/.claude/skills/stay/deep"
+printf 'kept upstream\n' > "$pb/skills/live.md"       # the target still ships this
+printf 'kept upstream\n' > "$pp/.claude/skills/live.md"
+printf 'dropped deep\n'  > "$pp/.claude/skills/gone/deep/x.md"
+printf 'dropped mid\n'   > "$pp/.claude/skills/gone/y.md"
+printf 'dropped deep2\n' > "$pp/.claude/skills/stay/deep/x2.md"
+printf 'MINE\n'          > "$pp/.claude/skills/stay/deep/mine.md"   # never shipped
+pmf="$pw/m.json"
+jq -n --arg l "$(sha256_of "$pp/.claude/skills/live.md")" \
+      --arg x "$(sha256_of "$pp/.claude/skills/gone/deep/x.md")" \
+      --arg y "$(sha256_of "$pp/.claude/skills/gone/y.md")" \
+      --arg x2 "$(sha256_of "$pp/.claude/skills/stay/deep/x2.md")" \
+   '{version:"0.0.1",layout:"0.3",files:{
+      ".claude/skills/live.md":$l,
+      ".claude/skills/gone/deep/x.md":$x,
+      ".claude/skills/gone/y.md":$y,
+      ".claude/skills/stay/deep/x2.md":$x2}}' > "$pmf"
+: > "$pw/keep"
+apply_base "$pw/keep" "$pmf" "$pp" "$pb" "skills:.claude/skills" "skills:.claude/skills" 1
+check "record mode pruned no directory" \
+   "[ -d '$pp/.claude/skills/gone/deep' ] && [ -d '$pp/.claude/skills/gone' ]"
+apply_base "$pw/keep" "$pmf" "$pp" "$pb" "skills:.claude/skills" "skills:.claude/skills" 0
+eq "deep-prune applier exit status" "$?" "0"
+check "premise: the dropped files really were removed" \
+   "[ ! -e '$pp/.claude/skills/gone/deep/x.md' ] && [ ! -e '$pp/.claude/skills/gone/y.md' ]"
+check "the prune ascends past the immediate parent" "[ ! -e '$pp/.claude/skills/gone' ]"
+check "the prune stops at a directory holding the operator's file" \
+   "[ -f '$pp/.claude/skills/stay/deep/mine.md' ]"
+check "the prune never removes the layout's own destination root" \
+   "[ -d '$pp/.claude/skills' ] && [ -f '$pp/.claude/skills/live.md' ]"
+
+# The stop, asserted where it actually bites: a project whose whole destination
+# root is dropped content, so the ascent reaches the root itself. The root is the
+# layout's own container — pass 1 fills it on the very next run — and removing it
+# would be the applier deleting a directory the target version owns.
+rp="$pw/proj2"; mkdir -p "$rp/.claude/skills/only"
+rb="$pw/base2"; mkdir -p "$rb/skills"   # ships nothing, so the root ends up empty
+printf 'dropped\n' > "$rp/.claude/skills/only/z.md"
+rmf="$pw/m2.json"
+jq -n --arg z "$(sha256_of "$rp/.claude/skills/only/z.md")" \
+   '{version:"0.0.1",layout:"0.3",files:{".claude/skills/only/z.md":$z}}' > "$rmf"
+apply_base "$pw/keep" "$rmf" "$rp" "$rb" "skills:.claude/skills" "skills:.claude/skills" 0
+check "premise: the only file under the root was removed" \
+   "[ ! -e '$rp/.claude/skills/only/z.md' ]"
+check "the emptied subdirectory went" "[ ! -e '$rp/.claude/skills/only' ]"
+check "the destination root itself survives, even emptied" "[ -d '$rp/.claude/skills' ]"
+rm -rf "$pw"
+
 # ---- the grouped report -------------------------------------------------
 . "$PLUGIN_ROOT/scripts/lib/report.sh"
 
@@ -1082,6 +1181,106 @@ eq "staged source residue is never claimed as the operator's" \
 check "a genuinely project-authored file is still reported as theirs" \
    "awk -F'\t' '\$1==\"keep\" && \$3 ~ /yours/' '$rv' | grep -q 'go-best-practices.md'"
 rm -f "$rv"
+fixture_cleanup "$w"
+
+# ---- end to end: 0.1.0 → current, the longest chain there is ---------------
+# The tree the blind verification actually ran on. Three findings came out of it,
+# all of them empty containers a clean install never creates:
+#   A2 .claude/bin/                     — drained by 14 hop_mv, never pruned
+#   A3 .claude/hooks/                   — drained by 3 hop_mv, never pruned
+#   A4 .claude/skills/inspire-learn/    — a 0.1-only skill whose files pass 2
+#                                         removed, leaving the container (0.1 is
+#                                         the only release that shipped it, so
+#                                         no other fixture reproduces A4 at all)
+# and one process finding: nothing about the migration persisted anywhere, so
+# afterwards there was no way to tell what it had done (§6).
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.1.0 "$w" "$REPO")"
+check "premise: 0.1.0 shipped the inspire-learn skill" \
+  "[ -f '$p/.claude/skills/inspire-learn/SKILL.md' ] && \
+   [ -f '$p/.claude/skills/inspire-learn/references/learnings-format.md' ]"
+e2e1_bin="$(find "$p/.claude/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')"
+eq "premise: 0.1.0 staged 14 validators under .claude/bin" "$e2e1_bin" "14"
+e2e1_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+eq "0.1.0 → current exits 0" "$?" "0"
+
+check "A2: no empty .claude/bin survives"   "[ ! -e '$p/.claude/bin' ]"
+check "A3: no empty .claude/hooks survives" "[ ! -e '$p/.claude/hooks' ]"
+check "A4: no empty inspire-learn survives" "[ ! -e '$p/.claude/skills/inspire-learn' ]"
+
+# The pruning must not have cost anything the migration exists to deliver.
+eq "all 14 validators landed at .inspire/bin" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "14"
+check "the relocated hooks are all three there" \
+   "[ -f '$p/.claude/inspire/hooks/session-start.sh' ] && \
+    [ -f '$p/.claude/inspire/hooks/pre-commit.sh' ] && \
+    [ -f '$p/.claude/inspire/hooks/pre-pr.sh' ]"
+# hops/0.3.0.sh declares these NOT deleted — they may hold un-reinstalled edits.
+check "the pre-0.3 staging source is preserved" \
+   "[ -d '$p/.inspire/skills' ] && [ -d '$p/.inspire/templates' ]"
+check "the surviving skill of the rename is the new one" \
+   "[ -f '$p/.claude/skills/inspire-lesson/SKILL.md' ]"
+eq "lock reports the target after the longest chain" \
+   "$(jq -r .inspire_version "$p/.inspire.lock")" "$target"
+
+# §6: the report is persisted, so an upgrade stays auditable after the session.
+check "the report was saved to .inspire/last-upgrade.log" \
+   "[ -f '$p/.inspire/last-upgrade.log' ]"
+check "the saved report is the report, not a stub" \
+   "grep -q 'INSPIRE upgrade — 0.1.0' '$p/.inspire/last-upgrade.log' && \
+    grep -q 'decision(s) needed' '$p/.inspire/last-upgrade.log'"
+check "the report tells the operator where it was saved" \
+   "printf '%s' \"\$e2e1_err\" | grep -q '.inspire/last-upgrade.log'"
+# Outside every dest_map root, or classify's pass 3 would report our own log back
+# to the operator as project-authored on the next run — forever.
+inlog_n="$(classify "$PLUGIN_ROOT/manifests/0.4.0.json" "$p" "$base" "$MAP_03" "$MAP_03" \
+           | grep -c 'last-upgrade.log')"
+eq "the log is never classified as project-authored" "$inlog_n" "0"
+# One file, overwritten — not a growing log directory.
+e2e1_lines="$(wc -l < "$p/.inspire/last-upgrade.log" | tr -d ' ')"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
+check "the log is overwritten, never appended to" \
+   "[ \"\$(wc -l < '$p/.inspire/last-upgrade.log' | tr -d ' ')\" -lt '$e2e1_lines' ]"
+eq "no second log artifact appeared" \
+   "$(find "$p/.inspire" -maxdepth 1 -name '*.log' | wc -l | tr -d ' ')" "1"
+fixture_cleanup "$w"
+
+# The prune is rmdir, so ONE file of the operator's keeps the whole container —
+# and the drain still happens around it. Nothing of theirs may be lost to a
+# cleanup whose entire justification is that it cannot lose anything.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.1.0 "$w" "$REPO")"
+printf 'MY VALIDATOR\n' > "$p/.claude/bin/my-check.sh"
+printf 'MY HOOK\n'      > "$p/.claude/hooks/my-hook.sh"
+printf 'MY NOTE\n'      > "$p/.claude/skills/inspire-learn/references/my-note.md"
+bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
+eq "0.1.0 → current exits 0 with operator files in the way" "$?" "0"
+eq "the operator's validator is untouched" \
+   "$(cat "$p/.claude/bin/my-check.sh" 2>/dev/null)" "MY VALIDATOR"
+eq "the operator's hook is untouched" \
+   "$(cat "$p/.claude/hooks/my-hook.sh" 2>/dev/null)" "MY HOOK"
+eq "the operator's note inside the renamed skill is untouched" \
+   "$(cat "$p/.claude/skills/inspire-learn/references/my-note.md" 2>/dev/null)" "MY NOTE"
+# ...and the containers were genuinely drained, so the prune was reached and
+# REFUSED rather than never attempted: only their file is left.
+eq "the blocked .claude/bin holds nothing but their file" \
+   "$(ls -A "$p/.claude/bin" | tr '\n' ' ')" "my-check.sh "
+eq "the blocked .claude/hooks holds nothing but their file" \
+   "$(ls -A "$p/.claude/hooks" | tr '\n' ' ')" "my-hook.sh "
+eq "all 14 validators still landed" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "14"
+fixture_cleanup "$w"
+
+# --mode plan on the longest chain must still write NOTHING — directories
+# included, which a file-only fingerprint cannot see now that act mode prunes.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.1.0 "$w" "$REPO")"
+plan01_f="$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+plan01_d="$(find "$p" -type d | LC_ALL=C sort | shasum -a 256)"
+bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
+eq "plan on a 0.1.0 tree exits 0" "$?" "0"
+eq "plan wrote no file" "$plan01_f" \
+   "$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "plan removed no directory either" "$plan01_d" \
+   "$(find "$p" -type d | LC_ALL=C sort | shasum -a 256)"
+check "plan wrote no upgrade log" "[ ! -e '$p/.inspire/last-upgrade.log' ]"
 fixture_cleanup "$w"
 
 # --take-base overrides a conflict.

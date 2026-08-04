@@ -35,6 +35,24 @@ hop_mv .inspire_kb inspire_kb
 # called out explicitly in the report so the operator knows it is inert
 # residue, not a leftover the runtime still depends on.
 
+# bin/test/ never materialises from 0.3 on. Per file: an operator may have
+# added fixtures of their own, and those survive and get reported.
+#
+# IT MUST RUN BEFORE THE 14 MOVES BELOW, and the order is load-bearing. hop_mv
+# prunes the directory a move empties, so the container goes when the last
+# validator leaves .claude/bin/ — but only if it is genuinely empty by then. With
+# this line placed AFTER the moves, .claude/bin/ still held test/ at that moment,
+# the prune failed, and the upgrade left an empty .claude/bin/ behind that a clean
+# install never creates (found by a blind verification of a real 0.1→0.4 run).
+#
+# Reordering is safe because the two operate on DISJOINT paths: this one on
+# .claude/bin/test/**, the moves on the 14 .claude/bin/*.sh + README.md.
+# hop_rm_owned's deletions come from the manifest filtered to its own prefix, and
+# its survivor scan (`find <prefix>`) never looks at a sibling — so it can neither
+# see nor touch a validator, before or after. Only the journal's line ORDER
+# changes, and the report groups by concept, not by sequence.
+hop_rm_owned .claude/bin/test
+
 hop_mv .claude/bin/_lib.sh                     .inspire/bin/_lib.sh
 hop_mv .claude/bin/README.md                   .inspire/bin/README.md
 hop_mv .claude/bin/review.sh                   .inspire/bin/review.sh
@@ -50,10 +68,6 @@ hop_mv .claude/bin/stable-blockers.sh          .inspire/bin/stable-blockers.sh
 hop_mv .claude/bin/touched-entity-lifecycle.sh .inspire/bin/touched-entity-lifecycle.sh
 hop_mv .claude/bin/wikilinks-resolve.sh        .inspire/bin/wikilinks-resolve.sh
 
-# bin/test/ never materialises from 0.3 on. Per file: an operator may have
-# added fixtures of their own, and those survive and get reported.
-hop_rm_owned .claude/bin/test
-
 hop_mv .claude/hooks/session-start.sh .claude/inspire/hooks/session-start.sh
 hop_mv .claude/hooks/pre-commit.sh    .claude/inspire/hooks/pre-commit.sh
 hop_mv .claude/hooks/pre-pr.sh        .claude/inspire/hooks/pre-pr.sh
@@ -67,10 +81,20 @@ hop_rm .inspire/README.md
 # INSPIRE-MANAGED marker, so the marker-scoped re-merge cannot see them.
 hop_unregister_hook '.claude/hooks/'
 
-# NOT deleted. At 0.2 these were the operator's staging source: they edited
-# here and ran install.sh. An edit never re-installed exists nowhere else, so
-# deleting them can destroy work with no other copy. .inspire/bin/ joins this
-# report for the reason argued above — it is also 0.2 staging residue, its
-# stale bin/test/ fixture tree included, and nothing reads any of it any more.
-hop_report '.inspire/skills/, .inspire/templates/ and .inspire/bin/ (including its stale bin/test/ fixture tree) were your 0.2 staging source — left untouched. Nothing reads them any more; remove them when you are satisfied the runtime is correct.'
-hop_report '.manual/ and docs/adr/ came from the template fork — left untouched.'
+# These report lines STATE FACTS. They must never suggest a deletion.
+#
+# An earlier version of this file lumped `.inspire/bin/` in with the pre-0.3
+# staging source and told the operator to "remove them when you are satisfied the
+# runtime is correct." That was catastrophically wrong: the 14 `hop_mv` lines above
+# move every validator INTO `.inspire/bin/` — at 0.3+ it is the LIVE destination,
+# not residue. A blind verification of a skill-driven 0.1→0.4 upgrade found all 14
+# validators gone, `.inspire/skills/` and `.inspire/templates/` destroyed too, and
+# `.claude/bin/` correctly drained: the hop had done its job, then the agent read
+# this report and did exactly what it said.
+#
+# So: no imperative verbs about disposal, and never name a live path as residue.
+# What to do with genuinely dead paths is the operator's call, and they do not need
+# telling twice — the paths are named, which is enough.
+hop_report '.inspire/bin/ now holds your validators — that is where they live from 0.3 onward. It also still contains a test/ directory the pre-0.3 installer copied there, which nothing reads.'
+hop_report '.inspire/skills/ and .inspire/templates/ are the pre-0.3 staging source the old installer copied FROM. Nothing reads them now, and they may hold edits you never re-installed.'
+hop_report '.manual/, docs/adr/ and LICENSE came with the template fork. Left untouched.'

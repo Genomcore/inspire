@@ -292,6 +292,32 @@ _apply_write() {
   return 1
 }
 
+# _prune_up <dir_abs> <stop_abs>
+#
+# Remove <dir_abs> and then each ancestor, while empty, stopping BEFORE <stop_abs>
+# — the layout's own destination root, which the target version owns and fills.
+#
+# Bottom-up and ancestor-aware because one rmdir on the immediate parent is not
+# enough: removing .claude/skills/inspire-learn/SKILL.md cannot prune
+# inspire-learn/ while references/ is still there, and when references/ is emptied
+# a moment later nothing retried the grandparent — so the 0.1 skill rename left an
+# empty .claude/skills/inspire-learn/ behind that a clean install never creates
+# (found by a blind verification of a real 0.1→0.4 run). Order within pass 2 does
+# not matter: whichever deletion empties a subtree last is the one whose walk
+# collapses the whole chain.
+#
+# `rmdir` refuses a non-empty directory, so this stops dead at anything of the
+# operator's and can never be an `rm -rf`. `break` on the first refusal, because
+# once a directory stays every ancestor of it stays too.
+_prune_up() {
+  local d="$1" stop="$2"
+  while [ -n "$d" ] && [ "$d" != "$stop" ] && [ "$d" != "/" ] && [ "$d" != "." ]; do
+    rmdir "$d" 2>/dev/null || break
+    d="$(dirname "$d")"
+  done
+  return 0
+}
+
 # apply_base <keepset> <source_manifest> <project_root> <base_dir> \
 #            <src_map> <tgt_map> <record>
 #
@@ -310,9 +336,12 @@ _apply_write() {
 #     happens to be byte-identical to some OTHER stale file of ours, that other
 #     file is left stale too. It is never lost, only not updated, and content
 #     collision is the price of surviving the hops at all.
-#   · pass 2 prunes only the immediate parent directory of a file it removed,
-#     and only if that leaves it empty. Deeper empty scaffolding may remain;
-#     nothing claims otherwise, and hop_rm_owned owns the deep prune.
+#   · pass 2's prune walks UP from each file it removed, stopping at the layout's
+#     own destination root and at the first directory that is not empty. It
+#     therefore clears scaffolding we emptied at any depth, and touches no
+#     directory it did not empty — an operator's empty directory elsewhere under
+#     an INSPIRE-owned root is not ours to remove, and a directory sitting where
+#     we ship a FILE is reported `keep` by classify and must survive.
 apply_base() {
   local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
   local pair name dest abs rel target h rc=0
@@ -357,7 +386,7 @@ apply_base() {
   # That hash test is strictly stronger than consulting the keep-set here, which
   # is why it does not: every keep/ask verdict at a manifest path implies a hash
   # that differs from the manifest's, so an operator's file can never satisfy it.
-  local path hash mid found
+  local path hash mid found tgt_root
   while IFS=$'\t' read -r path hash; do
     [ -n "$path" ] || continue
     # Source path → base-relative middle → where the target layout puts it.
@@ -385,7 +414,13 @@ apply_base() {
     # Best effort, and nothing claims it succeeded: rmdir refuses a non-empty
     # directory, so this clears our own emptied scaffolding and stops dead at
     # anything of theirs. Never rm -rf.
-    rmdir "$(dirname "$root/$found")" 2>/dev/null
+    #
+    # The stop is this map entry's own destination root, derived by string math
+    # from the two halves we already hold: `found` is <dest>/<rel> and `rel` is
+    # `mid` minus its base/ directory name, so stripping the one from the other
+    # leaves <dest> with no second lookup to keep in step.
+    tgt_root="${found%"/${mid#*/}"}"
+    _prune_up "$(dirname "$root/$found")" "$root/$tgt_root"
   done < <(manifest_paths "$mf")
 
   return "$rc"

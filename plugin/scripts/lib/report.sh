@@ -86,9 +86,64 @@ _emit_group() {
   done < "$merged"
 }
 
-# render_report <from> <to> <hop_journal> <verdicts> <dry_run>
+# Where the rendered report is persisted, relative to the project root.
+#
+# ONE file, overwritten every run — not appended, not rotated, not timestamped.
+# An upgrade that accumulated a log directory would be a new thing for the
+# operator to maintain; the question this answers is only ever "what did the last
+# upgrade do to this project", which the previous release could not answer at all
+# (the grouped report went to stderr and nothing persisted, so a blind
+# verification of a real 0.1→0.4 migration had to ask the operator what they ran).
+#
+# .inspire/ ROOT, deliberately, and never inside a dest_map root
+# (.inspire/bin, .claude/inspire/hooks, .claude/skills): classify's pass 3 walks
+# every dest_map root looking for project-authored files, so a log placed in one
+# would come back on the NEXT run as `keep … yours — INSPIRE never shipped this`.
+# That claim would be false, and it would repeat forever.
+REPORT_LOG_REL='.inspire/last-upgrade.log'
+
+# render_report <from> <to> <hop_journal> <verdicts> <dry_run> [<project_root>]
+#
+# With a project root, and in ACT MODE ONLY, the rendered report is also written
+# to <project_root>/.inspire/last-upgrade.log. RECORD MODE WRITES NOTHING — that
+# is its whole contract, asserted by a whole-tree hash taken before and after
+# `--mode plan` — so the log is skipped there, and a caller that passes no root
+# (the report's own unit tests) gets stderr only.
+#
+# The body is rendered with its stderr captured so the file and the terminal get
+# the SAME bytes: a second rendering pass, or a tee of a subset of the lines, is
+# how a persisted audit trail starts disagreeing with what the operator read.
 render_report() {
-  local from="$1" to="$2" j="$3" v="$4" dry="$5"
+  local from="$1" to="$2" j="$3" v="$4" dry="$5" root="${6:-}"
+  local tmp=""
+
+  if [ "$dry" != 1 ] && [ -n "$root" ]; then
+    tmp="$(mktemp 2>/dev/null)" || tmp=""
+  fi
+
+  if [ -z "$tmp" ]; then
+    _render_report "$from" "$to" "$j" "$v" "$dry" ""
+    return 0
+  fi
+
+  _render_report "$from" "$to" "$j" "$v" "$dry" "$REPORT_LOG_REL" 2> "$tmp"
+  cat "$tmp" >&2
+  mkdir -p "$(dirname "$root/$REPORT_LOG_REL")" 2>/dev/null
+  # 644 explicitly: mktemp's 0600 would be a surprising mode for a plain audit
+  # log, and `cp` onto an existing file keeps whatever mode is already there.
+  if cp "$tmp" "$root/$REPORT_LOG_REL" 2>/dev/null; then
+    chmod 644 "$root/$REPORT_LOG_REL" 2>/dev/null
+  else
+    log "INSPIRE: the report above could not be saved to $REPORT_LOG_REL."
+    log "  Nothing else is affected — the upgrade itself is unchanged."
+  fi
+  rm -f "$tmp"
+  return 0
+}
+
+# _render_report <from> <to> <hop_journal> <verdicts> <dry_run> <log_rel_or_empty>
+_render_report() {
+  local from="$1" to="$2" j="$3" v="$4" dry="$5" logrel="${6:-}"
   local banner=""
   [ "$dry" = 1 ] && banner="        DRY RUN · nothing will be written"
 
@@ -160,9 +215,17 @@ render_report() {
 
   rm -f "$merged"
 
+  # Named inside the report itself, so an operator who reads this once knows where
+  # to find it afterwards without being told separately.
+  [ -n "$logrel" ] && \
+    printf '\nThis report was also saved to %s (overwritten by the next run).\n' "$logrel" >&2
+
   if [ "$dry" = 1 ]; then
     printf '%s\n' \
       'Note: a move whose source is already absent is skipped silently, so this' \
-      'list is a superset — some moves above may turn out to be no-ops.' >&2
+      'list is a superset — some moves above may turn out to be no-ops. In one' \
+      'narrow way it is also an under-report: the real run removes a directory its' \
+      'own moves and deletions leave empty, which is not forecast here.' >&2
   fi
+  return 0
 }

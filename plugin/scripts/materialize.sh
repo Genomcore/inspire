@@ -887,7 +887,9 @@ run_materialize() {
   merge_settings "$HOP_JOURNAL"
   write_lock "$target"
 
-  render_report "$src" "$target" "$HOP_JOURNAL" "$verdicts" "$DRY_RUN"
+  # The project root is what lets render_report persist the report to
+  # .inspire/last-upgrade.log — act mode only; it writes nothing when DRY_RUN=1.
+  render_report "$src" "$target" "$HOP_JOURNAL" "$verdicts" "$DRY_RUN" "$PROJECT_ROOT"
 
   local created_json warnings_json
   if [ "${#CREATED[@]}" -gt 0 ]; then created_json="$(arr_to_json "${CREATED[@]}")"; else created_json="[]"; fi

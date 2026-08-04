@@ -50,7 +50,9 @@ the target version ships, and emits:
   `ask`/`create`/`restore`/`delete`), and `ask` (the array of paths that actually need a
   decision).
 - **stderr** — the grouped human report (RUNTIME / KNOWLEDGE BASE / HARNESS / PRODUCT /
-  LEFT ALONE).
+  LEFT ALONE). In `--mode update` (never in `--mode plan`, which writes nothing at all)
+  the same report is also saved to `.inspire/last-upgrade.log`, overwritten on each run —
+  so what an upgrade did stays auditable after the session ends.
 
 **Relay the stderr report verbatim.** If it exits 1, relay the refusal and stop — do not
 attempt a workaround. Exit 1 means a precondition failed (an unidentifiable project, a
