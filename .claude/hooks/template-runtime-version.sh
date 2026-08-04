@@ -41,7 +41,102 @@ MARKETPLACE=".claude-plugin/marketplace.json"
 # and test/, which never materialize into a project. plugin/scripts/ is NOT
 # exempt: it is the materialization script that determines how every install
 # behaves, so a change to it must require a version bump like everything else.
+#
+# plugin/manifests/ is deliberately NOT exempt either. A manifest is the only
+# record of what INSPIRE shipped at a version, and every upgrade decides whether
+# a file is the operator's edit or merely stale by asking it. Editing one changes
+# what every future install believes we shipped, which is as load-bearing as
+# changing the payload itself.
 EXEMPT_RE="^plugin/(\.claude-plugin/plugin\.json|base/bin/test/.*|test/.*)$"
+
+GEN="plugin/scripts/gen-manifest.sh"
+
+# The version being released must ship its own manifest, and that manifest must
+# describe the tree it ships with. Without this, a release can go out whose
+# manifest is absent or stale — and a stale manifest lies in the direction that
+# loses work: it reports an operator's edit as a file INSPIRE never shipped, or a
+# file we did ship as one we didn't.
+#
+# WHY THE `commit` FIELD IS EXCLUDED FROM THE COMPARISON — this is the whole
+# trick, and getting it wrong makes the guard unsatisfiable. The manifest for the
+# release being prepared is generated from the commit carrying the version bump,
+# because the tag does not exist yet: it is only cut once this PR merges. So
+# `commit` records whatever HEAD was at generation time — and committing the
+# manifest itself moves HEAD past that point. Compare the field and the guard
+# demands a regeneration whose own commit invalidates it, forever. Everything
+# else (version, released, layout, and the files map that actually matters) is
+# invariant under that, because none of it lives under plugin/base/.
+#
+# Returns 0 pass / 1 fail; prints its own report on failure.
+check_manifest() {
+  local head="$1" version="$2" changed="$3" want have
+  # Split from the line above deliberately: `local` is a builtin, so every one of
+  # its assignment words is expanded BEFORE any assignment takes effect. Deriving
+  # `path` from `$version` in the same command reads an unset variable, which under
+  # `set -u` aborts the function outright.
+  local path="plugin/manifests/$version.json"
+
+  if ! git cat-file -e "$head:$GEN" 2>/dev/null; then
+    echo "  (no $GEN at $head — manifest check skipped)"
+    return 0
+  fi
+
+  if ! git cat-file -e "$head:$path" 2>/dev/null; then
+    {
+      echo ""
+      echo "Release $version ships no manifest — blocking the PR."
+      echo ""
+      echo "  missing: $path"
+      echo ""
+      echo "  Every released version needs one: it is the only record of what"
+      echo "  INSPIRE shipped, and the next upgrade uses it to tell an operator's"
+      echo "  edit apart from a file that is merely stale. .inspire.lock cannot"
+      echo "  answer that — it lives on the operator's machine."
+      echo ""
+      echo "  Generate it from the commit carrying the bump (the tag comes later,"
+      echo "  on merge):"
+      echo ""
+      echo "    bash $GEN --tag HEAD --repo . > $path"
+      echo ""
+    }
+    return 1
+  fi
+
+  want="$(bash "$GEN" --tag "$head" --repo . 2>/dev/null | jq -S 'del(.commit)' 2>/dev/null)"
+  have="$(git show "$head:$path" 2>/dev/null | jq -S 'del(.commit)' 2>/dev/null)"
+
+  if [ -z "$want" ]; then
+    echo "  (cannot regenerate $path at $head — manifest check inconclusive)"
+    return 0
+  fi
+
+  if [ "$want" != "$have" ]; then
+    {
+      echo ""
+      echo "$path does not describe the tree it ships with — blocking the PR."
+      echo ""
+      echo "  Changed runtime files:"
+      printf '%s\n' "$changed" | sed 's/^/    · /'
+      echo ""
+      echo "  The manifest was generated before some of these landed, so it now"
+      echo "  claims a set of hashes INSPIRE does not actually ship. An upgrade"
+      echo "  reading it would misattribute those files — reporting our own stale"
+      echo "  content as the operator's edit, or their edit as content we shipped."
+      echo ""
+      echo "  Regenerate and commit it:"
+      echo ""
+      echo "    bash $GEN --tag HEAD --repo . > $path"
+      echo ""
+      echo "  (The \`commit\` field is not compared — it necessarily names the"
+      echo "  commit before the manifest's own, so it can never match HEAD.)"
+      echo ""
+    }
+    return 1
+  fi
+
+  echo "✓ $path matches the tree"
+  return 0
+}
 
 # Prints the failure report on stdout; returns 0 pass / 1 fail.
 check_versions() {
@@ -109,6 +204,7 @@ check_versions() {
   fi
 
   if [ -z "$base_version" ]; then
+    check_manifest "$head" "$head_version" "$runtime_changed" || return 1
     echo "✓ runtime changed and version bumped: <none> → $head_version"
     return 0
   fi
@@ -157,6 +253,8 @@ check_versions() {
     }
     return 1
   fi
+
+  check_manifest "$head" "$head_version" "$runtime_changed" || return 1
 
   echo "✓ runtime changed and version bumped: $base_version → $head_version"
   return 0
