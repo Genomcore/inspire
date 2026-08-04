@@ -71,7 +71,7 @@
       <p class="eyebrow reveal">Updates &amp; Lessons</p>
       <h1 class="reveal d1">Teach it once. It <span class="grad-text">remembers</span> across every release.</h1>
       <p class="lede reveal d2">The runtime evolves; your customizations shouldn't have to be re-fought on every upgrade. INSPIRE records how you've taught a skill as <b>lessons</b>, and re-applies them to each new release — never a line-by-line merge, never a wipe.</p>
-      <p class="note reveal d2"><b>Status.</b> The lessons journal ships today. The one-line declarative format, materialization into the skills, and the automated update flow described below are the design for <b>v1</b> — captured in the runtime-lifecycle ADR. This page documents the model, not yet a released command.</p>
+      <p class="note reveal d2"><b>Status.</b> Two things ship today: the <b>lessons catalog</b>, with the write-once one-line format, and <code>/inspire:update</code> — a real command that upgrades a project from any released version, replaying the layout changes and reconciling content file by file. What remains the design for <b>v1</b> is the <i>semantic</i> half: materializing a lesson into the skill it teaches, and re-deriving your lessons onto a new base rather than merging text. So the sections below split — the upgrade mechanics are released; the four-outcome lesson classification is still the model.</p>
     </div>
   </section>
 
@@ -103,7 +103,7 @@
   <section class="workflow" id="updates">
     <div class="wrap">
       <div class="sec-head reveal">
-        <p class="eyebrow">The model · roadmap</p>
+        <p class="eyebrow">The model · lesson re-derivation is roadmap</p>
         <h2>An update rebuilds. It never merges line-by-line.</h2>
         <p>Skills are natural language, not code — a textual three-way merge can stitch two edits together into a skill that reads fine and means the wrong thing. So an update takes the new base and re-applies your surviving lessons onto it, from scratch.</p>
       </div>
@@ -145,7 +145,7 @@
   <section class="enforcement" id="install">
     <div class="wrap">
       <div class="sec-head reveal">
-        <p class="eyebrow">Getting it in · roadmap</p>
+        <p class="eyebrow">Getting it in</p>
         <h2>INSPIRE touches only what it owns.</h2>
         <p>Installing or updating the runtime is surgical: it reconciles the files INSPIRE placed and nothing else. Whatever else lives in your workspace is yours, and stays untouched.</p>
       </div>
@@ -161,7 +161,7 @@
           <span class="dot" aria-hidden="true"></span>
           <div>
             <h4>Two ways in</h4>
-            <p><b>Greenfield</b> — clone the template and go. <b>Brownfield</b> — drop the runtime into an existing repo in place; point it at the code you already have, and onboard it with <code>/inspire_extract</code>. No restructuring, no second repo.</p>
+            <p>Both are the same command. Install the plugin once, then run <code>/inspire:init</code> in the target repo. <b>Greenfield</b> — an empty repo gets the whole scaffold. <b>Brownfield</b> — an existing repo gets the runtime in place; point it at the code you already have, and onboard it with <code>/inspire_extract</code>. No forking the template, no restructuring, no second repo.</p>
           </div>
         </div>
         <div class="row">
