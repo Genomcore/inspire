@@ -7,6 +7,11 @@ GEN="$HERE/../scripts/gen-manifest.sh"
 pass=0; fail=0
 ok(){ echo "PASS $1"; pass=$((pass+1)); }
 bad(){ echo "FAIL $1"; fail=$((fail+1)); }
+# A SKIP is counted and printed in the summary. A skip that does not surface is
+# indistinguishable from coverage, which is how a permanently-skipped check turns
+# into false confidence.
+skipped=0
+skip(){ echo "SKIP $1"; skipped=$((skipped+1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
@@ -54,10 +59,20 @@ rm -f "$m21" "$m31"
 # cannot be regenerated means the release is broken — this is the only thing
 # keeping the content baseline honest.
 mf_count=0
+mf_pending=0
 for f in "$HERE/../manifests"/*.json; do
   [ -f "$f" ] || continue
   mf_count=$((mf_count+1))
   v="$(basename "$f" .json)"
+  # An in-flight release has a manifest but no tag yet: the bump and the manifest
+  # land in one PR and the tag is cut when it merges. That is PENDING, not passing
+  # and not failing — a red suite everyone expects to be red trains people to
+  # ignore red, and a silent pass would hide the regeneration step entirely.
+  if ! git -C "$REPO" rev-parse -q --verify "refs/tags/v$v" >/dev/null 2>&1; then
+    skip "manifest $v — no v$v tag yet; REGENERATE FROM THE TAG once it is cut"
+    mf_pending=$((mf_pending+1))
+    continue
+  fi
   live="$(bash "$GEN" --tag "v$v" --repo "$REPO")"
   if [ "$live" = "$(cat "$f")" ]; then
     ok "manifest $v reproduces from tag"
@@ -65,11 +80,12 @@ for f in "$HERE/../manifests"/*.json; do
     bad "manifest $v does NOT reproduce from tag"
   fi
 done
+[ "$mf_pending" -eq 0 ] || echo "  NOTE: $mf_pending manifest(s) await their tag — regenerate before opening the PR."
 if [ "$mf_count" -eq 0 ]; then
   bad "no manifests found under plugin/manifests — the sweep cannot pass vacuously"
 else
   ok "sweep covered $mf_count manifest(s)"
 fi
 
-echo ""; echo "Passed: $pass · Failed: $fail"
+echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skipped"
 [ "$fail" -eq 0 ]
