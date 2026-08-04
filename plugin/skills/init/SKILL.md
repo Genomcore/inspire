@@ -20,10 +20,13 @@ committed, the runtime travels with the repo: teammates and CI need no plugin.
    project root, stop: this is the INSPIRE template itself, and installing here would
    activate the runtime against it.
 5. **Not an unmigrated pre-0.3 project.** If `.inspire_kb/` exists and `inspire_kb/` does
-   not, stop: this is a v0.2 layout that has not been migrated. `materialize.sh` refuses
-   this too (exit 1, with the migration steps), but say it here rather than surfacing it
-   as an error — initializing over it would strand the entire knowledge base at
-   `.inspire_kb/`, where no v0.3 skill looks.
+   not, stop: this is a v0.2 layout that has not been migrated, and `/inspire:init` never
+   migrates — it only installs fresh. `materialize.sh` refuses this too (exit 1), but say
+   it here rather than surfacing it as an error — initializing over it would strand the
+   entire knowledge base at `.inspire_kb/`, where no v0.3 skill looks. The remedy is to
+   run `/inspire:update`, which migrates a pre-0.3 project: it detects the old layout and
+   runs the hop chain to bring it forward, then applies the current base around whatever
+   survives.
 
 ## Step 1 — Detect the shape
 

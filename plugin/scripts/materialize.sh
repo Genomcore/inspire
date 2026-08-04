@@ -631,69 +631,43 @@ write_lock() {
 # `drift-check` is a deprecated alias (see validate_args).
 # ---------------------------------------------------------------------------
 
-# A pre-0.3 (install.sh-era) project is no longer refused here: detect_version
-# and the hop chain treat it as simply the longest chain there is. The one
-# remaining hand-migration guard is require_migrated_layout below, for the one
-# shape detect_version cannot recover from on its own (see its comment).
+# A pre-0.3 (install.sh-era) project is no longer refused by `plan` or
+# `update` — detect_version and the hop chain treat it as simply the longest
+# chain there is, and run_materialize/run_plan migrate it automatically. The
+# one remaining hand-migration guard is require_migrated_layout below, and it
+# guards `init` only, for the one shape that command cannot recover from on
+# its own (see its comment) — `init` never runs the hop chain, so it must
+# refuse rather than attempt to migrate.
 #
-# The migration text itself, used by `init` against an unmigrated v0.2 tree
-# (require_migrated_layout). $1 opens, $2 says what is being refused; both may
-# be multi-line.
-print_v02_migration() {
-  local why="$1" refusal="$2"
-  {
-    echo ""
-    printf '%s\n' "$why"
-    echo ""
-    echo "    .inspire_kb/      →  inspire_kb/"
-    echo "    .claude/bin/      →  .inspire/bin/"
-    echo "    .claude/hooks/    →  .claude/inspire/hooks/"
-    echo "    .inspire/{skills,install.sh,manifest.json}  →  removed (now the plugin)"
-    echo ""
-    echo "Migrate by hand once, then re-run:"
-    echo ""
-    echo "  1. git mv .inspire_kb inspire_kb"
-    echo "  2. Untrack the v0.2 runtime that WAS committed:"
-    echo "       git rm -r --cached --ignore-unmatch \\"
-    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
-    echo "     then delete the v0.2 runtime that was NOT (v0.2 gitignored"
-    echo "     /.claude, so these were never tracked — 'git rm' would abort on"
-    echo "     them and take the whole command with it):"
-    echo "       rm -rf .claude/bin .claude/hooks \\"
-    echo "         .inspire/skills .inspire/install.sh .inspire/manifest.json"
-    echo "  3. Remove the three INSPIRE hook entries from .claude/settings.json"
-    echo "     (they point at .claude/hooks/ and carry no INSPIRE-MANAGED marker)"
-    echo "  4. Remove the '/.claude' line your v0.2 install wrote into .gitignore."
-    echo "     v0.3 expects .claude/skills/ and .claude/inspire/hooks/ to be"
-    echo "     COMMITTED — that is what makes the runtime travel with the repo."
-    echo "     Left in place it hides the entire new runtime from git, silently."
-    echo "  5. rm .inspire.lock"
-    echo "  6. Run /inspire:init — it will materialize the v0.3 layout and seed a"
-    echo "     lock with drift tracking. Your inspire_kb/ is left alone: init only"
-    echo "     adds skeleton files your KB does not already have."
-    echo ""
-    printf '%s\n' "$refusal"
-    echo ""
-  } >&2
-}
-
 # An unmigrated v0.2 tree: .inspire_kb/ present, inspire_kb/ absent. Detection
-# cannot catch this one on its own — the operator may have already reached
-# step 5 (`rm .inspire.lock`) without doing step 1 (`git mv`), or never had a
-# lock to begin with. Without this guard init exits 0 reporting a clean
-# install, having seeded an EMPTY inspire_kb/ beside the real one: the whole
-# knowledge base left at a path no v0.3 skill ever reads, and nothing in the
-# output saying so.
+# cannot catch this one on its own — the operator may have deleted the lock by
+# hand, or never had one to begin with. Without this guard init exits 0
+# reporting a clean install, having seeded an EMPTY inspire_kb/ beside the
+# real one: the whole knowledge base left at a path no v0.3 skill ever reads,
+# and nothing in the output saying so. The remedy is /inspire:update, not a
+# hand-migration: it runs the same hop chain init cannot, moving
+# .inspire_kb/ → inspire_kb/, .claude/bin/ → .inspire/bin/ and
+# .claude/hooks/ → .claude/inspire/hooks/, then applies the current base
+# around whatever survives.
 require_migrated_layout() {
   [ -d "$PROJECT_ROOT/.inspire_kb" ] || return 0
   [ -d "$PROJECT_ROOT/inspire_kb" ] && return 0
 
-  print_v02_migration \
-"This project still has the pre-0.3 layout — .inspire_kb/ is present and
-inspire_kb/ is not — and v0.3 moved the runtime:" \
-"Refusing to proceed: an init here would strand your knowledge base at
-.inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/
-beside it. Start at step 1."
+  {
+    echo ""
+    echo "This project still has the pre-0.3 layout — .inspire_kb/ is present and"
+    echo "inspire_kb/ is not — and v0.3 moved the runtime. /inspire:init does not"
+    echo "migrate an existing project; it only installs fresh."
+    echo ""
+    echo "Run /inspire:update instead: it detects the pre-0.3 layout and runs the"
+    echo "migration chain for you, then applies the current base around whatever"
+    echo "you already have. Your inspire_kb/ is never replaced, only seeded."
+    echo ""
+    echo "Refusing to proceed: an init here would strand your knowledge base at"
+    echo ".inspire_kb/, where no v0.3 skill looks, and seed an empty inspire_kb/"
+    echo "beside it."
+    echo ""
+  } >&2
   exit 1
 }
 

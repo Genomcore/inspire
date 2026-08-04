@@ -312,10 +312,12 @@ rm -rf "$(dirname "$frk")"
 # ---------------------------------------------------------------------------
 # An UNMIGRATED v0.2 tree (.inspire_kb/ present, inspire_kb/ absent) must be
 # refused by init. The lock guard cannot catch it: the operator may have
-# reached migration step 5 (`rm .inspire.lock`) without doing step 1
-# (`git mv`), or never had a lock. Unguarded, init exits 0 reporting a clean
-# install while the entire knowledge base sits at .inspire_kb/, a path no v0.3
-# skill reads, with an empty inspire_kb/ seeded beside it.
+# deleted the lock by hand, or never had one. Unguarded, init exits 0
+# reporting a clean install while the entire knowledge base sits at
+# .inspire_kb/, a path no v0.3 skill reads, with an empty inspire_kb/ seeded
+# beside it. `/inspire:init` never migrates a project in place — the remedy
+# is `/inspire:update`, which runs the hop chain this fixture would otherwise
+# need by hand.
 # ---------------------------------------------------------------------------
 um="$(mktemp -d)/umproj"; mkdir -p "$um/.inspire_kb/03_features"; ( cd "$um" && git init -q )
 printf -- '# Login\n\nThe real, only copy.\n' > "$um/.inspire_kb/03_features/feat-login.md"
@@ -323,13 +325,13 @@ umerr="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um"
   --source-root source --prototype-root prototype 2>&1 >/dev/null)"
 rc_um=$?
 check "unmigrated v0.2: init exits 1"                 "[ '$rc_um' = 1 ]"
-check "unmigrated v0.2: names the git mv step"        "printf '%s' \"\$umerr\" | grep -q 'git mv .inspire_kb inspire_kb'"
+check "unmigrated v0.2: points at /inspire:update"    "printf '%s' \"\$umerr\" | grep -q '/inspire:update'"
 check "unmigrated v0.2: no empty KB seeded beside it" "[ ! -e '$um/inspire_kb' ]"
 check "unmigrated v0.2: nothing written at all"       "[ ! -d '$um/.claude/skills' ] && [ ! -f '$um/.inspire.lock' ]"
 check "unmigrated v0.2: the old KB is untouched"      "[ -f '$um/.inspire_kb/03_features/feat-login.md' ]"
 
-# Once step 1 is done the guard must stand down — otherwise it blocks the very
-# migration it prescribes.
+# Once the layout is actually moved the guard must stand down — otherwise it
+# blocks the very migration it points the operator at.
 ( cd "$um" && mv .inspire_kb inspire_kb )
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
