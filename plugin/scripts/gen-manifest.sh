@@ -38,14 +38,27 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$TAG" ] || { log "gen-manifest.sh: --tag is required"; exit 1; }
 
-git -C "$REPO" rev-parse -q --verify "refs/tags/$TAG" >/dev/null \
-  || { log "gen-manifest.sh: no such tag '$TAG'"; exit 1; }
-
-commit="$(git -C "$REPO" rev-list -n1 "$TAG")"
+# Accept a TAG by preference, but fall back to any resolvable revision. A release
+# has to be generated BEFORE its tag exists — the version bump and the manifest land
+# in the same PR, and the tag is only cut once that merges. Requiring a tag here made
+# `--tag HEAD` impossible and left `template_sha` as the literal "unknown" for the
+# whole pre-tag window, which is precisely the provenance hole this field exists to
+# close. Regenerate from the real tag once it is cut; test-manifest.sh's sweep marks
+# any manifest whose tag does not exist yet as SKIPPED so the pending step stays
+# visible rather than silently passing.
+if git -C "$REPO" rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  commit="$(git -C "$REPO" rev-list -n1 "refs/tags/$TAG")"
+elif git -C "$REPO" rev-parse -q --verify "$TAG^{commit}" >/dev/null; then
+  commit="$(git -C "$REPO" rev-parse "$TAG^{commit}")"
+  log "gen-manifest.sh: '$TAG' is not a tag — generating from revision $commit"
+else
+  log "gen-manifest.sh: cannot resolve '$TAG' to a tag or a commit"
+  exit 1
+fi
 
 # Release identity moved from .inspire/manifest.json (pre-0.3) to
 # plugin/.claude-plugin/plugin.json (0.3+).
-if git -C "$REPO" cat-file -e "$TAG:plugin/.claude-plugin/plugin.json" 2>/dev/null; then
+if git -C "$REPO" cat-file -e "$commit:plugin/.claude-plugin/plugin.json" 2>/dev/null; then
   LAYOUT="0.3"
   IDENTITY_PATH="plugin/.claude-plugin/plugin.json"
   SRC_PREFIX="plugin/base"
@@ -63,7 +76,7 @@ fi
 # existed) must fail loudly, not fall through to an empty-but-well-formed
 # manifest — that is worse than no manifest, because a caller cannot tell it
 # apart from a real one.
-identity="$(git -C "$REPO" show "$TAG:$IDENTITY_PATH" 2>/dev/null)" \
+identity="$(git -C "$REPO" show "$commit:$IDENTITY_PATH" 2>/dev/null)" \
   || { log "gen-manifest.sh: cannot read $IDENTITY_PATH at $TAG — no release identity, refusing to emit a manifest"; exit 1; }
 
 version="$(printf '%s' "$identity"  | jq -r '.version  // "unknown"')"
@@ -89,11 +102,11 @@ for name in $MAP_NAMES; do
     if [ "$LAYOUT" = "0.3" ]; then
       _base_excluded "$name" "$rel" && continue
     fi
-    git -C "$REPO" show "$TAG:$path" > "$blobtmp" \
+    git -C "$REPO" show "$commit:$path" > "$blobtmp" \
       || { log "gen-manifest.sh: cannot read $path at $TAG"; exit 1; }
     h="$(sha256_of "$blobtmp")"
     printf '%s\t%s\n' "$dest/$rel" "$h" >> "$tmp"
-  done < <(git -C "$REPO" ls-tree -r --name-only "$TAG" -- "$SRC_PREFIX/$name")
+  done < <(git -C "$REPO" ls-tree -r --name-only "$commit" -- "$SRC_PREFIX/$name")
 done
 
 files_json="$(LC_ALL=C sort "$tmp" | jq -R -s '
