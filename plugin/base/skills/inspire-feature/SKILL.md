@@ -33,14 +33,21 @@ Reviews one feature across all layers. Runs inline (no agents).
    `inspire_kb/03_features/{module}/`. Read: description, actor/personas,
    dependencies, priority, state, ADRs referenced. Identify the module from the
    folder.
-2. **screen spec coverage.** In `inspire_kb/05_screens/{module}/`, search each screen's
-   `**Features:**` line for this feature ID; cross-reference the screen spec `_index.md`
-   coverage table. Flag if no screen covers a UI-facing feature; note "No UI
-   expected" for backend/infrastructure features.
+2. **screen spec coverage.** Search each screen's `**Features:**` line for this
+   feature ID; cross-reference the screen spec `_index.md` coverage table. Where to
+   look follows the shape of the screens tree, which
+   [`_references/surface-scope.md`](../_references/surface-scope.md) keys to the
+   roster: `inspire_kb/05_screens/{module}/` while the suite has at most one UI
+   surface; `05_screens/{surface}/{module}/` plus `05_screens/shared/{module}/`,
+   walked once per UI surface in the feature's blast radius, once it has two or
+   more. Flag if no screen covers a UI-facing feature — per surface, since a
+   feature can be covered in one and uncovered in another; note "No UI expected"
+   for backend/infrastructure features.
 3. **Prototype coverage.** For each covering screen, verify it is reflected in the
-   horizontal prototype at `/prototype`, and note drift (pending component
-   adoption, hardcoded data, ADR gaps). Insights land in the specs / screens / ADRs,
-   not a prototype learnings file.
+   horizontal prototype at `/prototype` — under the shell of the surface whose tree
+   the screen sits in, once the prototype runs one shell per UI surface — and note
+   drift (pending component adoption, hardcoded data, ADR gaps). Insights land in
+   the specs / screens / ADRs, not a prototype learnings file.
 4. **Specs (SDD) coverage.** Find action descriptors whose `## Why` wikilinks back
    to this feature. Search `inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
@@ -75,6 +82,11 @@ Reviews one feature across all layers. Runs inline (no agents).
 
 ## OK
 ```
+
+The screen-spec line is **one row per UI surface in the feature's blast radius** —
+`screen spec ({surface})`, listing what that surface's tree covers plus the
+`shared/{module}/` screens it inherits. When the blast radius is a single UI
+surface that is the one unqualified row shown above, exactly as before.
 
 ### Batch mode (module)
 
@@ -155,7 +167,9 @@ Create a new feature/use-case file in a module. **Required arg:**
 1. **Verify** the module exists (`inspire_kb/02_modules/{module}.md`).
 2. **Ask** the user: name, description (2–5 sentences), actor/personas,
    dependencies (other feature IDs), priority (Core / Important / Nice-to-have),
-   state (🟡 Planned default), ADRs to reference.
+   state (🟡 Planned default), ADRs to reference, and the blast radius (the
+   `surfaces:` frontmatter of the template below — resolved, and only ever asked
+   about, per [`_references/surface-scope.md`](../_references/surface-scope.md)).
 3. **Run the acceptance-criteria quality gate** (below) on the criteria before
    writing, then **create the use-case file**
    `inspire_kb/03_features/{module}/{feature-id}.md` from the template below.
@@ -203,9 +217,18 @@ Remove a feature and clean up all references.
 
 ## Use case template
 
-Use this template at `inspire_kb/03_features/{module}/{feature-id}.md`:
+Use this template at `inspire_kb/03_features/{module}/{feature-id}.md`. Its
+frontmatter declares the feature's **blast radius** — the surfaces this use case
+affects. What an absent field means, when the field becomes mandatory and how a
+surface id resolves are defined in
+[`_references/surface-scope.md`](../_references/surface-scope.md); read them
+there, they are not restated here.
 
 ```markdown
+---
+surfaces: [portal, admin]   # blast radius — list of roster ids, or `all`
+---
+
 # {FEATURE-ID}: {Feature Name}
 
 > Source: [[../../02_modules/{module}]]
