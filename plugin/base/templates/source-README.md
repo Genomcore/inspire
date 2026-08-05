@@ -22,7 +22,14 @@ the knowledge base and de-risked in prototypes, then **realized here**.
 
 > Template note: this folder starts empty (just this README). Scaffold the
 > production monorepo here — packages/apps, build tooling, and its own tech-stack
-> docs — when the project moves from prototype to build.
+> docs — when the project moves from prototype to build. In a suite (two or more
+> declared surfaces), packages map onto the roster's `Package` paths in
+> [`inspire_kb/00_bootstrap/surfaces.md`](../inspire_kb/00_bootstrap/surfaces.md):
+> surfaces never import each other directly, and sharing flows through `lib`
+> packages instead. A suite-of-one has no roster and this distinction doesn't
+> apply. See
+> [`.claude/skills/_references/surface-scope.md`](../.claude/skills/_references/surface-scope.md)
+> for the full rules.
 >
 > Location is configurable: this is `source_root` (default `source/`) in
 > [`00_bootstrap/stack.md`](../inspire_kb/00_bootstrap/stack.md). A brownfield project
