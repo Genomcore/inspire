@@ -36,8 +36,8 @@ What this skill does **not** own:
 
 - the **shape** of `05_screens/` day to day — `inspire-screens` creates surface and
   module directories lazily as screens land. This skill touches that tree only
-  inside a sweep the operator has classified entry by entry: the one-time promote
-  split, and the moves a later split performs.
+  inside a sweep the operator has classified entry by entry: the one-time split the
+  roster's second UI surface triggers, and the moves a later split performs.
 - the `surfaces:` field on individual artifacts — `inspire-adr`, `inspire-feature`
   and `inspire-task` stamp their own.
 - the packages themselves — the roster records a `Package` path; `inspire-code`
@@ -60,6 +60,10 @@ Whatever the shape, `add` must end with the roster naming the new surface, the
 frontmatter list mirroring it, and the operator knowing what moved. It may never
 leave the roster half-written, invent an id, or move an artifact the operator has
 not classified.
+
+One further obligation is keyed to the roster rather than to the arrival shape:
+**the `add` that takes the roster's `kind: ui` count from 1 to 2 performs the
+screens split** (below). Which `add` came first has no bearing on it.
 
 ### Greenfield
 
@@ -98,6 +102,9 @@ growing out of the main UI. The roster entry is cheap; the sweep is the work.
 4. **Only then, perform** the classified result:
    - screens marked *moves* go to `05_screens/{surface}/{module}/`; *both* goes to
      `05_screens/shared/{module}/`. Move with `git mv` so history follows the file.
+   - screens marked *stays* move too when this `add` is the one crossing to a
+     second UI surface — the whole tree is reshaping, so they land in the
+     incumbent's tree rather than staying flat. Otherwise they are untouched.
    - re-prefix the `**Target:**` routes in every moved screen spec, and the
      corresponding routes in the prototype shells, to the new shell prefix.
    - hand `/inspire_feature` the list of features that now need per-surface
@@ -125,22 +132,35 @@ An existing codebase joins the suite as a surface.
 
 ### The promote ceremony — the first `add`
 
-The first `add` in a project with no roster is also the moment the existing product
-stops being implicit. It does everything a normal `add` does, plus three things
-that happen exactly once:
+The first `add` in a project with no roster is the moment the existing product
+stops being implicit. It does everything a normal `add` does, plus two things that
+happen exactly once:
 
 1. **Name the incumbent.** Interview what the existing product is called *as a
    surface*, and write both entries. The roster file is created here — not seeded
    earlier, not created by an upgrade.
-2. **Split the screens tree.** Run the split sweep over the existing flat tree,
-   with the incumbent as the default classification. This is the one time
-   `05_screens/` is reshaped, and it happens with the operator's consent, per
-   entry. The two tree shapes and which one now applies are in
-   [`_references/surface-scope.md`](../_references/surface-scope.md).
-3. **Offer a backfill** stamping `surfaces:` onto existing ADRs and features —
+2. **Offer a backfill** stamping `surfaces:` onto existing ADRs and features —
    offer it, never force it, and never make it a precondition for the promote.
    Declining leaves every existing artifact correct, by the absent-field rule in
-   that same reference.
+   [`_references/surface-scope.md`](../_references/surface-scope.md).
+
+### The screens split
+
+The split of `05_screens/` belongs to whichever `add` takes the roster's `kind: ui`
+count from 1 to 2 — the sweep from *split* above, run over the existing flat tree
+with the incumbent UI surface as the default classification, every entry confirmed
+by the operator. The shape the tree must end in is derived from the roster's UI
+count, in [`_references/surface-scope.md`](../_references/surface-scope.md), never
+from what the tree used to be or from which `add` came first.
+
+Usually that is the promote ceremony, but the two are separate obligations and
+conflating them breaks in both directions:
+
+- A promote that declares a `headless` or `lib` surface leaves the UI count at 1.
+  The tree stays flat — reshaping it there would put it in a shape the roster does
+  not imply.
+- The later `add` that introduces a second UI surface is ordinary in every other
+  respect — no roster to create, no incumbent to name — and still owes the split.
 
 ## Subcommand: retire
 
@@ -181,10 +201,14 @@ Checks, in order:
    literal `source/`. A recorded path with no directory yet is a warning, not an
    error: the package is scaffolded on first emanation.
 4. **Shell prefixes are unique among UI surfaces**, and absent on every non-UI one.
-5. **The screens tree matches the roster.** A flat `05_screens/{module}/` directory
-   sitting beside surface trees with 2+ UI surfaces is a pre-split leftover. Offer
-   to finish the move — the split sweep, with the operator classifying each entry —
-   and do nothing until they accept.
+5. **The screens tree is in the shape the roster's UI count implies** — derive it
+   from [`_references/surface-scope.md`](../_references/surface-scope.md), never
+   from what the tree used to be. Two instances to name: a flat
+   `05_screens/{module}/` directory under 2+ UI surfaces, whether it sits beside
+   surface trees or the whole tree is still flat (a split that never happened, or
+   never finished); and a surface-first tree standing under a single UI surface,
+   typically left by a retire. Either way, offer the corrective sweep — the
+   operator classifying each entry — and do nothing until they accept.
 6. **Every `surfaces:` value KB-wide resolves** to a roster id or to `all`. An
    unknown id is an error; an absent field is not a finding.
 
