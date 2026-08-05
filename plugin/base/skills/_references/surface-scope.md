@@ -97,7 +97,8 @@ surface: `05_screens/shared/{module}/{screen}.md`, meaning all UI surfaces unles
 `components/` — sit beside the surface trees at top level, never inside one.
 
 The split shape preserves path↔route symmetry: `{surface}/{module}/{screen}.md` ↔
-`/{shell}/{module}/{screen}`, where `{shell}` is that surface's roster shell prefix.
+`{shell}/{module}/{screen}`, where `{shell}` is that surface's `Shell` value in the
+roster and carries its own leading slash — `/admin` gives `/admin/billing/list`.
 Walking one surface's tree is walking that surface end to end. A flat `{module}/`
 directory sitting beside surface trees is a pre-split leftover, not a second
 convention.

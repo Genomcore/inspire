@@ -53,7 +53,7 @@ components.
 # {Screen Title} — `/{path}`
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[../patterns/{pattern-name}]]
+**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
 
 ## Instantiation
 
@@ -107,8 +107,10 @@ most one UI surface; `05_screens/{surface}/{module}/{screen}.md` — or
 declares two or more. The shape is deterministic from the roster's `kind: ui`
 count, never from what the tree happens to hold: derive it from
 [`_references/surface-scope.md`](../_references/surface-scope.md) rather than
-copying a neighbouring path. Catalog wikilinks are relative and gain a level in the
-split shape (`[[../../patterns/{name}]]`); what matters is that they resolve.
+copying a neighbouring path. Catalog wikilinks are relative, so their `../` depth
+follows the screen's own: what they must land on is the one suite-wide
+`05_screens/patterns/` or `05_screens/components/`, never a copy inside a surface
+tree.
 
 ## Which surface a screen belongs to
 
@@ -142,7 +144,8 @@ being invented.
    the pattern's API in its file.
 4. **Deviations only.** Do NOT redescribe the structure the pattern already
    defines.
-5. **Reference components** — link, don't re-describe: `[[../components/{name}]]`.
+5. **Reference components** — link, don't re-describe: a relative wikilink into
+   `05_screens/components/` (`[[{rel-to-05_screens}/components/{name}]]`).
 6. **No ASCII layout diagrams** unless the screen is bespoke and can't be
    expressed textually.
 7. **No inline mock data.** Reference the data source.
@@ -181,8 +184,8 @@ When uncertain which layer a finding belongs to, ask the user.
    `03_features`.
 3. **No redundant structure.** The screen doesn't redescribe what the pattern
    already specifies.
-4. **Component references resolve.** All `[[../components/X]]` wikilinks point to
-   existing files.
+4. **Component references resolve.** Every component wikilink resolves to a file in
+   `05_screens/components/`, whatever its `../` depth.
 5. **Data reference is valid.**
 6. **No ASCII layout diagrams** unless bespoke.
 7. **No inline mock data.**
@@ -305,10 +308,11 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 7. **No inline mock data** — reference the data source.
 8. **No historical language** — specs describe the present.
 9. **Route convention** — `/{module}/...` while the suite has at most one UI
-   surface; `/{shell}/{module}/...` once it declares two or more, `{shell}` being
-   that surface's prefix from the roster. Nested routes for detail/edit/new either
-   way. The route mirrors the file's path: `{surface}/{module}/{screen}.md` ↔
-   `/{shell}/{module}/{screen}`, so a route and a location can never disagree.
+   surface; `{shell}/{module}/...` once it declares two or more, `{shell}` being
+   that surface's roster `Shell` value (`/admin` → `/admin/billing/list`). Nested
+   routes for detail/edit/new either way. The route mirrors the file's path:
+   `{surface}/{module}/{screen}.md` ↔ `{shell}/{module}/{screen}`, so a route and a
+   location can never disagree.
 10. **Validate before merge** — run `/inspire_module review` before any PR that
     modifies screen spec files.
 11. **Respect accepted UX ADRs.** Screens must not contradict an accepted UX
