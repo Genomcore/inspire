@@ -104,10 +104,18 @@ Define or update `stack.md` — the official application stack, including its
       yet**? On *not sure*, record the platform as `undecided`, proceed with the
       leanest reasonable assumption, and flag it to revisit once the prototype
       clarifies — never force the choice.
-   2. **If there is a frontend** — **[1] web-only**, **[2] mobile-only**, or
+   2. **One surface or several?** — does the product deliver a single surface,
+      or several (several UIs, several APIs, shared libs)? Default is one. On
+      *several*, delegate **each** declaration to `/inspire_surface add`: that
+      skill owns the roster and this one never writes it, and its first `add` is
+      the promote ceremony that brings the roster into existence and names the
+      surface that already existed. On *one*, nothing is created — a suite-of-one
+      is the default and has no roster file
+      ([`_references/surface-scope.md`](../_references/surface-scope.md)).
+   3. **If there is a frontend** — **[1] web-only**, **[2] mobile-only**, or
       **[3] web + mobile**? Mobile adds a mobile UI stack (e.g. React Native /
       Expo); web + mobile means both, ideally sharing types/logic.
-   3. **If there is a backend** — two questions:
+   4. **If there is a backend** — two questions:
       - **Database:** do we **deploy** a database as part of the platform, or
         **connect to an existing external** one? If connecting, record it as
         external (connection config only, no provisioning); if deploying, it's the
@@ -116,7 +124,7 @@ Define or update `stack.md` — the official application stack, including its
         running it via Docker** — a container like any other local service — and
         fall back to deploying it directly on the host only when Docker isn't
         available. If no, note that dev runs against a shared/remote DB.
-   4. **Product roots** — where production code and the horizontal prototype live.
+   5. **Product roots** — where production code and the horizontal prototype live.
       Default `source_root: source`, `prototype_root: prototype` (greenfield). For a
       **brownfield** install into an existing repo, set `source_root: .` (the repo root
       *is* the code) and usually `prototype_root: none`. Write both to the `stack.md`
@@ -200,9 +208,31 @@ default `theme.md`. Distinct from `theme` above: `theme.md` is the reusable defa
 3. **Propagate.** A token change ripples to every screen and to the prototype —
    surface it (offer `/inspire_prototype`); screens must not hard-code values that
    belong here.
-4. Keep token **roles** stable (primary, accent, status keys) even when values
+4. **One design system for the whole suite.** There is exactly one
+   `design-system.md`, sitting above the surface trees, whatever the roster says.
+   Four things a surface might want from it, and what each gets:
+   - **Extension** — vocabulary only one surface uses (a data grid only the admin
+     console has): a `patterns/` or `components/` entry scoped with `surfaces:`.
+     Welcome and cheap; nothing shared is redefined, so nothing has to be
+     reconciled later.
+   - **Variance** — platform or context fit (mobile density, touch targets):
+     **named variant axes this file defines and a surface selects**, written as
+     clearly-marked per-surface sections *inside* it (e.g. `## Density — mobile`),
+     the way mature systems handle density and dark mode. Rare, visible and
+     countable — `/inspire_workspace` reports how many there are as a drift signal.
+   - **Override** — a surface redefining, from its own side, what a shared token or
+     component means: **no channel exists, deliberately.** Never create a
+     per-surface design-system file under any name. Per-consumer overrides invert
+     in practice: every change becomes a design-system change *plus* an override in
+     each consumer, and the agents that emanate code would have to answer "which
+     spec wins?" once per surface.
+   - **Divergence** — a surface that is genuinely its own brand: the honest form is
+     a declared fork that consumes no suite design system at all, out of scope
+     today; name it as such rather than approximating it with variant sections.
+5. Keep token **roles** stable (primary, accent, status keys) even when values
    change — downstream skills (screens, prototype) depend on the roles, not the
-   hexes.
+   hexes. Roles are never overridden per surface either: a variant axis may give a
+   role a different value for one surface, never a different meaning.
 
 ## Subcommand: readme
 
@@ -286,6 +316,12 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 - `05_screens/design-system.md` exists (it should have been seeded from `theme.md`
   at install); flag if missing. It is expected to **diverge** from the default
   `theme.md` as the project evolves — divergence is not drift.
+- **No `design-system.*.md` sibling exists**, anywhere under `05_screens/`. One is
+  an override attempt by another name; flag it and offer to fold what it holds back
+  into the one file as a named variant section (see `design-system` above).
+- If `inspire_kb/00_bootstrap/surfaces.md` exists, the roster's own coherence is
+  `/inspire_surface review`'s check, not this one — point there rather than
+  duplicating it.
 - Flag any stack layer still on the seeded default when the project has clearly
   moved past it.
 
