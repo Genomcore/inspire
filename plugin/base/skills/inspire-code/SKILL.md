@@ -45,10 +45,9 @@ values, longest prefix first. An explicit surface argument still wins, and a pat
 that falls under no declared package is a question for the operator, not a guess.
 Then load that surface's `Profiles`, falling back to the suite's global `profiles:`
 in `stack.md` when the surface declares none. With a roster, the **surface** — not
-the layer — selects the profile: a package's layer follows from its surface's kind
-(the layer↔kind pairing in `surface-scope.md`), so resolving the surface has already
-resolved the layer. Every subcommand states the surface and the profile set it
-resolved.
+the layer — selects the profile: the surface's `Profiles` field is the selector, and
+the by-layer rule applies only when no roster exists. Every subcommand states the
+surface and the profile set it resolved.
 
 **Scaffolding is lazy.** `/inspire_surface add` records a `Package` path; it does not
 create the directory. The first emanation into a surface whose package is not on disk
