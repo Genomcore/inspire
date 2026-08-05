@@ -130,6 +130,8 @@ loop stay the user's.
 - Every horizontal screen traces to a screen spec (or declares "not implemented yet").
 - No reinvented UI that duplicates the shared component catalog.
 - The affected route **runs**, not just builds.
+- With 2+ UI surfaces, the suite landing exists, lists every UI surface's shell,
+  and stays synced with the roster.
 - Every insight the session surfaced landed in a real vault artifact
   (feature/screen/component/ADR/design-system/task).
 

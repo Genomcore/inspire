@@ -41,7 +41,8 @@ behaves exactly as it did before surfaces existed.
 **Resolving the target surface.** The shared scope-resolution rule applies here as
 everywhere; what is specific to this skill is that the code's own location pins the
 answer. Match the emanation path within `source_root` against the roster's `Package`
-values, longest prefix first. An explicit surface argument still wins, and a path
+values, longest prefix first, matched on whole path segments — `apps/portal` never
+matches `apps/portal-admin`. An explicit surface argument still wins, and a path
 that falls under no declared package is a question for the operator, not a guess.
 Then load that surface's `Profiles`, falling back to the suite's global `profiles:`
 in `stack.md` when the surface declares none. With a roster, the **surface** — not

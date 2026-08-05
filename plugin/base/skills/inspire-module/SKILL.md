@@ -51,7 +51,12 @@ files under `inspire_kb/03_features/{module}/`.
 
 ### 2. screen spec structure
 
-- Folder `inspire_kb/05_screens/{module}/` with `_index.md` + one file per screen.
+- Folder location follows the shape of the screens tree, which
+  [`_references/surface-scope.md`](../_references/surface-scope.md) keys to the
+  roster: `inspire_kb/05_screens/{module}/` while the suite has at most one UI
+  surface; `05_screens/{surface}/{module}/` plus `05_screens/shared/{module}/`
+  once it has two or more. Each such folder carries `_index.md` + one file per
+  screen.
 - `_index.md` contains the route map + feature-coverage table; every screen in
   the map exists on disk, and every screen file is referenced in the map.
 - Every screen header carries `**Features:**` and `**Pattern:**`; every pattern

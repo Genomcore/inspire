@@ -73,9 +73,9 @@ service serves which modules* is one architectural decision, and it is recorded 
 one **API-partition ADR** — never scattered across the domain, which stays a
 single untagged truth. The partition is **module-granular** ("the admin service
 serves `tenancy` and `quotas`; the platform service serves the rest"), with
-`surfaces:` listing the services it partitions between (the roster's `headless`
-entries). Overlap is allowed — a read path may be served by both. One service
-serving everything needs no such ADR at all; the partition is a
+`surfaces:` listing the services it partitions between (capability-owning
+`headless` roster entries). Overlap is allowed — a read path may be served by
+both. One service serving everything needs no such ADR at all; the partition is a
 deployment-topology choice, free to change without touching the KB's knowledge.
 
 Action-granular partition pressure — one module's actions splitting across
