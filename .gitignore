@@ -7,3 +7,4 @@ node_modules/
 # .git/info/exclude, which protects one machine and is not shared on clone.
 .obsidian/
 .impeccable/
+.superpowers/
