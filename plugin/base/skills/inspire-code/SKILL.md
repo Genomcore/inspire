@@ -25,6 +25,51 @@ mechanical checks — those belong to the project's linters, formatters, and hoo
 The single most important thing it does is refuse to treat code as the source of
 truth: the KB is, and every operation here re-anchors to it.
 
+## Surfaces and the monorepo
+
+A suite may realize its capabilities across several **surfaces**, each one a package
+inside the single `source_root`. What a surface is, and how a skill resolves which
+one a write applies to, are defined in
+[`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md); the
+roster fields this skill reads — `Package` and `Profiles`, with their defaults — are
+specified in
+[`inspire-surface/references/roster-format.md`](../inspire-surface/references/roster-format.md).
+Read both before emanating code into a suite that has a roster. **No roster means
+suite-of-one**: everything below collapses to "the one package", and the skill
+behaves exactly as it did before surfaces existed.
+
+**Resolving the target surface.** The shared scope-resolution rule applies here as
+everywhere; what is specific to this skill is that the code's own location pins the
+answer. Match the emanation path within `source_root` against the roster's `Package`
+values, longest prefix first. An explicit surface argument still wins, and a path
+that falls under no declared package is a question for the operator, not a guess.
+Then load that surface's `Profiles`, falling back to the suite's global `profiles:`
+in `stack.md` when the surface declares none. With a roster, the **surface** — not
+the layer — selects the profile: a package's layer follows from its surface's kind
+(the layer↔kind pairing in `surface-scope.md`), so resolving the surface has already
+resolved the layer. Every subcommand states the surface and the profile set it
+resolved.
+
+**Scaffolding is lazy.** `/inspire_surface add` records a `Package` path; it does not
+create the directory. The first emanation into a surface whose package is not on disk
+scaffolds it — the package, per its profiles' conventions, and the workspace manifest
+itself (`pnpm-workspace.yaml`, `turbo.json`, `nx.json` — whichever the stack profile
+names) on first need, never before. A project with one materialized package stays
+that way until a second surface actually receives code.
+
+**Build and verify per package.** Run the target surface's package-scoped commands,
+never the workspace-wide form when a filtered one exists — each profile's
+`## Build & verify` gives the concrete shape. `tdd`, `fix-build` and `debug` verify
+the package under work; widening to the whole workspace is a step the operator asks
+for, because a green build elsewhere is not evidence about this surface.
+
+**Dependency discipline.** Surfaces never import each other. Whatever two surfaces
+share moves into a `lib` surface and is imported from there — the ui-kit realizes
+`05_screens/components/`, and a contracts/types package is the usual second one. This
+is what stops one domain truth from fragmenting into per-surface copies. `review`
+checks imports against the roster: an import reaching from one surface's `Package`
+into another's is a finding, and its fix is a `lib`, not an exception.
+
 ## Scope
 
 **Owns:** implementing features test-first against their acceptance criteria and
@@ -104,7 +149,9 @@ maps onto the generic flow: `## Layering` → review Phase 1 / implementation sh
 `## Test conventions` → `tdd` + review Phase 4; `## Forbidden patterns` → review +
 authoring rules; `## Review focus` → extra review dimensions; `## Build & verify` →
 the real build/test commands. Profiles are **composable** (a React + NestJS repo
-loads both).
+loads both). When the suite has a surface roster, the resolution above is the
+fallback: the target surface's `Profiles` field selects the set instead — see
+*Surfaces and the monorepo*.
 
 If a declared framework has **no** profile file, run purely generic and say so —
 offer `/inspire_bootstrap` to scaffold one. Missing profiles never block. Profiles
@@ -169,6 +216,8 @@ stack-agnostic. Contract: [`profiles/README.md`](profiles/README.md).
   to when a code problem turns out to be a spec problem.
 - `/inspire_module` — its `review` audits the KB before a PR; `inspire-code review`
   audits the *code* that realizes it. Run both before landing a change.
+- `/inspire_surface` — owns the roster this skill resolves packages and profiles
+  from; the only skill that adds or retires a surface.
 - `/inspire_adr` — ADR lifecycle; an ADR reaches `implemented` maturity via this
   skill's work. `/inspire_task` — the tracker; consult it and file skill-feedback.
 - `/inspire_workspace` — the pre-PR global review and vault structure.
