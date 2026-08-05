@@ -1,6 +1,6 @@
 # ADR — Suites and surfaces: one domain, many deliverables
 
-- **Status:** Accepted — 2026-08-05 (shipping in 0.5.0)
+- **Status:** Accepted — 2026-08-05 (shipped in 0.5.0)
 - **Builds on:** [[adr-plugin-delivery]] **D4e** (the KB is `inspire_kb/`, visible and
   the operator's). Upholds [[adr-upgrade-path]] **D10** (the KB is additive in both
   init and update) — this ADR adds no delete outcome to it and no layout hop.
