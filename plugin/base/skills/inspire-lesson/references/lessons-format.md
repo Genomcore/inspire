@@ -92,8 +92,8 @@ observer, keyed by `id` and the date prefix, not inside the fork.
 ## Enums
 
 - **`skill`**: `bootstrap | module | feature | domain | screens | prototype | spike |
-  adr | code | extract | task | workspace | lesson`, or `runtime` for cross-cutting
-  lessons (install, hooks, validators, the methodology itself).
+  adr | code | extract | task | workspace | lesson | surface`, or `runtime` for
+  cross-cutting lessons (install, hooks, validators, the methodology itself).
 - **`category`** — why the lesson exists (descriptive, for the observer's clustering):
   - `preference` — a house convention / the way this project wants it done.
   - `improvement` — the skill works, but should do better here.
