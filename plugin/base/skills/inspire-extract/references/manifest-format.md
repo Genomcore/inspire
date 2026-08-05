@@ -47,6 +47,13 @@ modules_inferred:
   - slug: billing
     prefix: BIL
     source_roots: [src/billing, apps/web/src/pages/billing]
+surfaces_inferred:
+  - id: admin
+    kind: ui
+    evidence: [apps/admin/src]
+  - id: api
+    kind: headless
+    evidence: [apps/api/src]
 ---
 
 ## Module: billing
@@ -132,6 +139,12 @@ modules_inferred:
   gap: derive/create the feature first (upstream invariant).
 - **`realized_by`** (features) — the screens + actions the feature was derived from;
   drives the authoring order and the cross-layer links.
+- **`surfaces_inferred`** — surface candidates read off `apps/*` and package
+  boundaries, `kind` being one of the three in
+  [`_references/surface-scope.md`](../../_references/surface-scope.md) (`ui` ·
+  `headless` · `lib`). They hand off to `/inspire_surface add` in its *adopt* arrival,
+  which interviews each candidate into the roster; until that add records one, no
+  surface id exists and nothing in the KB may be scoped to it.
 
 ## Provenance in authored artifacts
 
