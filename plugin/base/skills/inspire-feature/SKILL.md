@@ -45,9 +45,10 @@ Reviews one feature across all layers. Runs inline (no agents).
    for backend/infrastructure features.
 3. **Prototype coverage.** For each covering screen, verify it is reflected in the
    horizontal prototype at `/prototype` — under the shell of the surface whose tree
-   the screen sits in, once the prototype runs one shell per UI surface — and note
-   drift (pending component adoption, hardcoded data, ADR gaps). Insights land in
-   the specs / screens / ADRs, not a prototype learnings file.
+   the screen sits in, a `shared/` screen under every shell that serves it, once
+   the prototype runs one shell per UI surface — and note drift (pending component
+   adoption, hardcoded data, ADR gaps). Insights land in the specs / screens /
+   ADRs, not a prototype learnings file.
 4. **Specs (SDD) coverage.** Find action descriptors whose `## Why` wikilinks back
    to this feature. Search `inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
