@@ -32,6 +32,7 @@ skills: [prototype, screens]            # which layer skills execute the work
 status: Open                       # Open | Done | Cancelled
 blocked_by: []                     # list of ticket / feature / ADR IDs
 related_to: [TASK-xxx]             # list of IDs
+surfaces: [portal, admin]          # optional — see enum below
 ---
 
 ## Description
@@ -50,8 +51,12 @@ related_to: [TASK-xxx]             # list of IDs
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  domain | screens | prototype | workspace | adr | task | code` — which skills cover
-  the work. `[]` means the work doesn't map to a skill (tooling, ops, packaging).
+  domain | screens | prototype | workspace | adr | task | code | surface` — which
+  skills cover the work. `[]` means the work doesn't map to a skill (tooling, ops,
+  packaging).
+- **`surfaces`**: optional — a list of roster ids or `all`; useful for filtering suite
+  work, never required. Semantics per
+  [`_references/surface-scope.md`](../../_references/surface-scope.md).
 
 ## ID scheme
 

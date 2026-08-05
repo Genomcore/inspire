@@ -75,6 +75,21 @@ session surfaces something worth teaching a skill, record it with \
 \`/inspire_lesson note\`; it is stamped with this runtime version."
 fi
 
+# Surface roster (best-effort): if the project declares suite surfaces, inject a
+# one-line roster so every session knows the suite shape. Absent roster = suite-of-one;
+# inject nothing — sessions stay byte-identical to pre-suite behavior.
+SURFACES_FILE="$PROJECT_ROOT/inspire_kb/00_bootstrap/surfaces.md"
+if [ -f "$SURFACES_FILE" ] && command -v yq >/dev/null 2>&1; then
+  ROSTER="$(yq --front-matter=extract '.surfaces // [] | join(", ")' "$SURFACES_FILE" 2>/dev/null || true)"
+  if [ -n "$ROSTER" ] && [ "$ROSTER" != "null" ]; then
+    CONTEXT="${CONTEXT}
+
+Suite surfaces — \`${ROSTER}\` (see \`inspire_kb/00_bootstrap/surfaces.md\`). Surface-scoped \
+skills resolve scope per \`.claude/skills/_references/surface-scope.md\`: explicit argument \
+wins; with several surfaces and no argument, ask before writing."
+  fi
+fi
+
 # Emit the SessionStart context. Prefer jq for safe JSON escaping; fall back to a
 # minimal python escaper if jq is somehow unavailable.
 if command -v jq >/dev/null 2>&1; then

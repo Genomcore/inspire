@@ -64,7 +64,7 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 13 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 14 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
@@ -77,11 +77,14 @@ repo is both its source and its own marketplace.
         profiles** (`inspire-code/profiles/`, resolved on demand from
         `00_bootstrap/stack.md`) — the template ships lean `react` + `nestjs`
         defaults; a project adds its own.
-      - **Housekeeping** (5) — set up and keep the workspace coherent: `bootstrap`
+      - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
-        `extract` (brownfield onboarding — fan out scanners over an existing
-        codebase into KB candidates), `task` (the ticket tracker), `workspace`
-        (the pre-PR global review + vault structure), `lesson` (the lessons
+        `surface` (the suite's surface roster and its lifecycle — `add`
+        greenfield/split/adopt · `retire` · `review`; owns
+        `00_bootstrap/surfaces.md`), `extract` (brownfield onboarding — fan out
+        scanners over an existing codebase into KB candidates), `task` (the ticket
+        tracker), `workspace` (the pre-PR global review + vault structure),
+        `lesson` (the lessons
         catalog — write-once, timestamp-named, version-stamped one-line
         instructions that teach the skills how to behave in this project;
         relevant locally, distilled upstream by the observer). `base/skills/`
@@ -105,7 +108,19 @@ repo is both its source and its own marketplace.
       graph a project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
       `02_modules`, `03_features`, `04_domain`, `05_screens`, `06_spikes`,
       `98_lessons`, `99_tracker`); each folder carries a README explaining its
-      purpose and layout.
+      purpose and layout. The KB has a **second scoping axis besides the module**:
+      a product delivered through several UIs and/or services is a **suite** of
+      **surfaces** (`ui` · `headless` · `lib`), declared in the authored — never
+      seeded — roster `00_bootstrap/surfaces.md`. Artifacts that *span* surfaces
+      (ADRs, features, pattern/component entries, tickets) declare a blast radius
+      in a `surfaces:` frontmatter field, where absent means suite-wide; screens
+      instead scope *positionally*, splitting to
+      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist. The
+      `04_domain` tree is never surface-scoped — one domain truth spans the whole
+      suite — and a project that declares no surfaces is a suite-of-one whose KB is
+      byte-identical to one written before surfaces existed. See
+      [docs/adr/adr-suites-and-surfaces.md](docs/adr/adr-suites-and-surfaces.md);
+      the runtime rules live in `base/skills/_references/surface-scope.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
       in afterwards by `/inspire_bootstrap init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.

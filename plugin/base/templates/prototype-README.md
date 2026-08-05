@@ -2,7 +2,8 @@
 
 This is the **horizontal prototype**: a wide, shallow, mocked working model of the
 **whole product**. It is real, runnable code and it lives here at the repo root
-(product side, not under `inspire_kb/`) — one per project.
+(product side, not under `inspire_kb/`) — one per project — in a
+multi-surface suite it hosts one shell per UI surface behind a suite landing.
 
 It answers *"is this the right thing to build?"* by making the shape of the system
 legible end to end, without real backends or production depth.

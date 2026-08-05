@@ -20,8 +20,14 @@ reads before working — the base context the rest of the KB assumes.
     to [`05_screens/design-system.md`](../05_screens) (the project's live design
     system, edited via `/inspire_bootstrap design-system`); `theme.md` stays as the
     reusable default.
+  - [`surfaces.md`](surfaces.md) — the **surface roster**, a fourth, optional
+    file: absent in a suite-of-one (the default a bare template ships with), it is
+    authored — never seeded — by `/inspire_surface add` the moment a second surface
+    is declared. Owned entirely by `inspire-surface`. See
+    [`.claude/skills/_references/surface-scope.md`](../../.claude/skills/_references/surface-scope.md)
+    for what a surface is and how scope resolves.
 
-Both start seeded with a **sensible default** (the stack + theme of the OpenBIMS
+Both `stack.md` and `theme.md` start seeded with a **sensible default** (the stack + theme of the OpenBIMS
 reference implementation). Reconfigure them for your project with
 `/inspire_bootstrap` — every downstream layer (specs, screen specs, the prototype,
 production code) builds on what is declared here.

@@ -136,9 +136,20 @@ Merge the four slices into one manifest and do the work no single scanner can:
    candidate **feature** (`03_features`). Features are *derived here*, each linking
    the screen(s) and action(s) that realize it. Backend-only flows (no screen) are
    features too; infra-only endpoints usually are not.
-3. **Infer modules.** Cluster the cross-linked artifacts into modules (source
+3. **Infer modules and surfaces.** Cluster the cross-linked artifacts into modules (source
    folders, API path prefixes, bounded contexts, monorepo packages); propose slugs +
    id prefixes.
+   The same boundary signals answer a second, independent question: **which surfaces
+   the source delivers.** A deployable `apps/*` entry, or a package with its own build
+   and entry point, is a **surface candidate** — kind read from what it serves
+   (rendered views → `ui`, an HTTP/worker/consumer entry point → `headless`, a package
+   only other packages import → `lib`), id proposed from the directory name. Record
+   them as `surfaces_inferred`
+   ([`references/manifest-format.md`](references/manifest-format.md)). Surfaces are
+   orthogonal to modules, not a second decomposition of them: one package is usually
+   both a surface and the home of several modules, and those modules stay in the one
+   registry. A candidate is a proposal — nothing here becomes a surface id; the
+   *adopt* arrival of `/inspire_surface add` records one, outside the Phase 4 chain.
 4. **Bootstrap verdicts.** Fold the **A** and **D** elaboration signals into
    migrate-or-keep recommendations via
    [`references/bootstrap-comparison.md`](references/bootstrap-comparison.md) — never
@@ -212,6 +223,7 @@ Extract never writes these files — it feeds each authoring skill:
 | Layer | Skill | Extract supplies |
 |-------|-------|------------------|
 | Bootstrap | `/inspire_bootstrap stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
+| Surface | `/inspire_surface add` (*adopt* arrival) | the `surfaces_inferred` candidates: proposed id, kind, evidence — one interview each, confirmed field by field |
 | Module | `/inspire_module create {module}` | inferred slug, id prefix, one-line description, members |
 | Feature | `/inspire_feature create {module}/{id}` | derived flow (screen ↔ action ↔ entity), candidate actor, `file:line` evidence |
 | Screen | `/inspire_screens create {module}/{screen}` | route, covered feature ids, consolidated pattern, data source; evidence |
@@ -264,5 +276,7 @@ Extract never writes these files — it feeds each authoring skill:
   extract delegates to; they own the interview and the KB writes.
 - `/inspire_bootstrap` — owns `stack.md` / `theme.md`; the stack + styles scanners
   feed its `stack` / `theme` flows when a migration is recommended.
+- `/inspire_surface` — owns the roster; its *adopt* arrival delegates the reading of a
+  joining codebase here and consumes the `surfaces_inferred` candidates back.
 - `/inspire_workspace` — the tracker (durable record of extraction) and the ADR
   ladder (for load-bearing stack/theme migrations).

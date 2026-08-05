@@ -23,13 +23,25 @@ Four levels under `inspire_kb/05_screens/`:
 | 1 | `design-system.md` | tokens, colors, typography, global layout | one file |
 | 2 | `patterns/` | reusable screen structures | `patterns/_index.md` |
 | 3 | `components/` | shared component specs | `components/_index.md` |
-| 4 | `{module}/` | module-specific screens | `{module}/_index.md` per module |
+| 4 | `{module}/` | module-specific screens | `_index.md` per module directory |
 
 `design-system.md` is **seeded at install** from the default template
 `00_bootstrap/theme.md`, and owned by
 [`/inspire_bootstrap design-system`](../inspire-bootstrap/SKILL.md) — screens
 **read** its tokens (they are the source of truth for colors, typography, layout)
 but never edit them.
+
+Level 4 carries a second dimension: **surface**. Once the suite declares two or
+more UI surfaces, module screens split positionally into
+`05_screens/{surface}/{module}/`, with a reserved `shared/{module}/` for screens
+more than one UI surface uses. Levels 1–3 do not split — `design-system.md`,
+`patterns/` and `components/` stay suite-wide, beside the surface trees at top
+level, never inside one. Which shape applies, what `shared/` means and how a
+surface id resolves are defined in
+[`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md);
+read it before writing anywhere under `05_screens/`. This skill works with the
+shape the roster implies — the one-time reshaping from flat to split is
+[`/inspire_surface`](../inspire-surface/SKILL.md)'s sweep, not this skill's.
 
 **Screens are lightweight** — they instantiate a pattern and describe only
 deviations. They do NOT redefine colors, typography, layout, or re-describe
@@ -41,7 +53,7 @@ components.
 # {Screen Title} — `/{path}`
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[../patterns/{pattern-name}]]
+**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
 
 ## Instantiation
 
@@ -55,7 +67,7 @@ components.
 
 ## Current prototype
 
-- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}` — or `none yet`}
+- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}`, shell-prefixed in a multi-UI suite — or `none yet`}
 - **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
   - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
 
@@ -69,7 +81,10 @@ and tracks **drift** — misalignments between the prototype and this spec, grou
 type (`ADR alignment` · `data wiring` · `component adoption` · `gap` · `cosmetic`).
 Drift is **informational**: it never blocks a PR unless it contradicts an accepted
 ADR, and it drives the propagation check below. Omit the section only until a
-prototype target exists.
+prototype target exists. With two or more UI surfaces each target carries its
+surface's shell prefix — the route lives inside that surface's shell rather than at
+the prototype root — and a `shared/` screen names one target per shell that serves
+it.
 
 ## Granularity rule: one file per screen
 
@@ -86,6 +101,37 @@ sub-sections of a single settings form.
 **File naming:** kebab-case, matching the screen's conceptual name
 (`agents-list.md`, `agent-detail.md`, not `agents.md`).
 
+**Where the file goes:** `05_screens/{module}/{screen}.md` while the suite has at
+most one UI surface; `05_screens/{surface}/{module}/{screen}.md` — or
+`shared/{module}/` for a screen more than one UI surface uses — once the roster
+declares two or more. The shape is deterministic from the roster's `kind: ui`
+count, never from what the tree happens to hold: derive it from
+[`_references/surface-scope.md`](../_references/surface-scope.md) rather than
+copying a neighbouring path. Catalog wikilinks are relative, so their `../` depth
+follows the screen's own: what they must land on is the one suite-wide
+`05_screens/patterns/` or `05_screens/components/`, never a copy inside a surface
+tree.
+
+## Which surface a screen belongs to
+
+The directory **is** the scope declaration, which is why screens carry no
+`surfaces:` frontmatter. Resolve the surface with the algorithm in
+[`_references/surface-scope.md`](../_references/surface-scope.md) and state the
+tree being written to in the turn's output. Surface ids come from the roster at
+`00_bootstrap/surfaces.md`; an id that is not there stops the write rather than
+being invented.
+
+- **`shared/{module}/`** holds screens more than one UI surface uses. These are the
+  only screens that may carry `surfaces:` — an optional list narrowing which UI
+  surfaces they serve; absent means all of them.
+- **Directories are created lazily.** A surface or module directory comes into
+  existence when the first screen lands in it, never ahead of one.
+- **Reshaping the tree is not this skill's work.** The flat→split move belongs to
+  [`/inspire_surface add`](../inspire-surface/SKILL.md), which performs it as a
+  sweep the operator classifies entry by entry. The one reshaping this skill
+  performs is consolidating back to the flat shape after a `retire` — and only when
+  `/inspire_surface` hands it over.
+
 ## When creating a new screen
 
 1. **Identify the feature.** Every screen references at least one feature ID from
@@ -98,11 +144,13 @@ sub-sections of a single settings form.
    the pattern's API in its file.
 4. **Deviations only.** Do NOT redescribe the structure the pattern already
    defines.
-5. **Reference components** — link, don't re-describe: `[[../components/{name}]]`.
+5. **Reference components** — link, don't re-describe: a relative wikilink into
+   `05_screens/components/` (`[[{rel-to-05_screens}/components/{name}]]`).
 6. **No ASCII layout diagrams** unless the screen is bespoke and can't be
    expressed textually.
 7. **No inline mock data.** Reference the data source.
-8. **Register in the module's `_index.md`** (nav, route map, feature coverage).
+8. **Register in the module's `_index.md`** — the one in the directory the screen
+   lands in (nav, route map, feature coverage).
 
 ## When validating an existing screen
 
@@ -136,14 +184,15 @@ When uncertain which layer a finding belongs to, ask the user.
    `03_features`.
 3. **No redundant structure.** The screen doesn't redescribe what the pattern
    already specifies.
-4. **Component references resolve.** All `[[../components/X]]` wikilinks point to
-   existing files.
+4. **Component references resolve.** Every component wikilink resolves to a file in
+   `05_screens/components/`, whatever its `../` depth.
 5. **Data reference is valid.**
 6. **No ASCII layout diagrams** unless bespoke.
 7. **No inline mock data.**
 8. **Historical language is absent** ("previously", "replaces", "removed",
    strikethrough).
-9. **Route follows convention** (`/{module}/...`).
+9. **Route follows convention** — the form Rule 9 gives for the suite's UI count,
+   and it matches the screen's own path.
 10. **Live prototype check.** When the prototype can be run, navigate every route
     the screen describes and compare it against the spec — see below.
 
@@ -163,8 +212,13 @@ drift** (prototype ahead of spec).
 
 1. **Run the prototype** (use the `run` / `verify` skills to launch `/prototype`).
    If it can't be launched, skip this section and note it — don't block the audit.
-2. **Enumerate routes** from the spec being audited (each screen's route; each tab
-   variant; a representative id for detail pages).
+   With two or more UI surfaces the prototype is one shell per surface behind a
+   suite landing: start the browse at that landing and walk the shell owning the
+   tree being audited, every shell in turn when the audit spans the suite.
+2. **Enumerate routes** from the spec being audited (each screen's route,
+   shell-prefixed per Rule 9; each tab variant; a representative id for detail
+   pages). A `shared/` screen is browsed in every shell that serves it — the same
+   spec, one visit per shell, since a shell can drift on its own.
 3. **For each route:** navigate and read what renders (prefer the accessibility
    tree; screenshots only when layout matters).
 4. **Compare** against the spec, applying the triangulation matrix:
@@ -217,6 +271,15 @@ New shared artifacts require evidence:
 - **Pattern:** appears in ≥2 actual or planned screens.
 - **Component:** appears in ≥2 pages (≥3 if trivial).
 
+In a suite with two or more UI surfaces that evidence is also **structural** —
+where the instances sit is what the promoted artifact is scoped to, and nothing
+else needs to be inferred. The same screen present in two or more surface trees, or
+sitting in `shared/`, is cross-surface evidence: promote with `surfaces: all`.
+Evidence confined to one surface tree promotes with `surfaces: [{that-surface}]`,
+and widens only when a second tree earns it. Pattern and component entries carry
+the field per [`_references/surface-scope.md`](../_references/surface-scope.md);
+the catalogs holding them stay suite-wide however their entries are scoped.
+
 Process: draft the file in `patterns/` or `components/`; document purpose, API/slots,
 structure (textual), variants, instances; if the underlying prototype component
 doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
@@ -244,7 +307,12 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 6. **No ASCII art for common layouts** — patterns describe layouts textually.
 7. **No inline mock data** — reference the data source.
 8. **No historical language** — specs describe the present.
-9. **Route convention** — `/{module}/...`, nested routes for detail/edit/new.
+9. **Route convention** — `/{module}/...` while the suite has at most one UI
+   surface; `{shell}/{module}/...` once it declares two or more, `{shell}` being
+   that surface's roster `Shell` value (`/admin` → `/admin/billing/list`). Nested
+   routes for detail/edit/new either way. The route mirrors the file's path:
+   `{surface}/{module}/{screen}.md` ↔ `{shell}/{module}/{screen}`, so a route and a
+   location can never disagree.
 10. **Validate before merge** — run `/inspire_module review` before any PR that
     modifies screen spec files.
 11. **Respect accepted UX ADRs.** Screens must not contradict an accepted UX

@@ -51,7 +51,12 @@ files under `inspire_kb/03_features/{module}/`.
 
 ### 2. screen spec structure
 
-- Folder `inspire_kb/05_screens/{module}/` with `_index.md` + one file per screen.
+- Folder location follows the shape of the screens tree, which
+  [`_references/surface-scope.md`](../_references/surface-scope.md) keys to the
+  roster: `inspire_kb/05_screens/{module}/` while the suite has at most one UI
+  surface; `05_screens/{surface}/{module}/` plus `05_screens/shared/{module}/`
+  once it has two or more. Each such folder carries `_index.md` + one file per
+  screen.
 - `_index.md` contains the route map + feature-coverage table; every screen in
   the map exists on disk, and every screen file is referenced in the map.
 - Every screen header carries `**Features:**` and `**Pattern:**`; every pattern
@@ -151,8 +156,12 @@ prefix (e.g. `MYM`), and a description.
 2. **Register** it in `inspire_kb/02_modules/_index.md` (the module registry).
 3. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
    added via `/inspire_feature create` and indexed back in the hub.
-4. **screen spec folder:** `inspire_kb/05_screens/{module}/_index.md` — empty route map +
-   feature-coverage tables. No screens yet.
+4. **screen spec:** not created here. `inspire_kb/05_screens/{module}/` (flat or
+   surface-first per the roster's UI count — see
+   [`_references/surface-scope.md`](../_references/surface-scope.md)) is created
+   lazily by [`/inspire_screens`](../inspire-screens/SKILL.md), per surface, on the
+   module's first screen. `create` never pre-guesses which surfaces the module will
+   reach.
 5. Point the user to `/inspire_feature create` for the first use cases, and
    `/inspire_prototype` once screens exist.
 
@@ -243,9 +252,15 @@ Remove a module across all layers. Use with caution.
 2. **Hub:** delete `inspire_kb/02_modules/{module}.md` and its entry in
    `inspire_kb/02_modules/_index.md`.
 3. **Features:** delete `inspire_kb/03_features/{module}/`.
-4. **screen spec:** delete `inspire_kb/05_screens/{module}/`.
+4. **screen spec:** sweep every surface tree, not just one — delete
+   `inspire_kb/05_screens/*/{module}/` (every surface directory, including
+   `05_screens/shared/{module}/`) under a surface-first shape, or the flat
+   `inspire_kb/05_screens/{module}/` while the suite is still flat (see
+   [`_references/surface-scope.md`](../_references/surface-scope.md)). A module
+   reaches the suite as a whole, so its deletion does too.
 5. **Specs:** delete `inspire_kb/04_domain/{module}/`.
-6. **Prototype:** remove the module's screens and routes from `/prototype`; note
+6. **Prototype:** remove the module's screens and routes from every shell that
+   serves it (all shells in a multi-surface suite, the one root otherwise); note
    any `inspire_kb/06_spikes/` entry that referenced this module.
 7. **Cross-references:**
    - Grep the whole `inspire_kb/` for `[[{module}]]` or feature-ID references —

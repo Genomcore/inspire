@@ -92,6 +92,7 @@ row format below. The dimensions:
 | tests | Coverage of new logic, edge cases, mocking correctness, a regression test for each fix |
 | duplication | Copy-pasted / >70%-similar logic across files; propose unification |
 | dead-code | Unused exports/vars/types, orphaned files, commented-out blocks left behind by the change |
+| surface-boundaries | Only when a surface roster exists (`00_bootstrap/surfaces.md`): an import reaching from one surface's `Package` path into another's — cross-surface sharing belongs in a `lib` package |
 
 **Add one agent per active stack profile's `## Review focus` entry** (e.g.
 api-contract, styling, a11y, security) — the stack-concrete lenses layered on top of

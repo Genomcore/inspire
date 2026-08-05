@@ -28,6 +28,29 @@ clarity lands in the vault.
 > their own external repos answering *"can we build it as we think?"* →
 > [`/inspire_spike`](../inspire-spike/SKILL.md).
 
+## Multi-surface suites
+
+`/prototype` stays **one root, one running artifact** no matter how many
+surfaces the suite declares — it never forks into separate prototype projects.
+What changes is what lives inside it: once the roster carries 2+ `kind: ui`
+entries (see
+[`_references/surface-scope.md`](../_references/surface-scope.md)), the
+prototype holds **one shell per UI surface**, each mounted at that surface's
+roster `Shell` prefix, behind a **suite landing** — a branded entry page that
+presents the suite as one product and routes into each shell.
+
+The landing is **prototype chrome by default**: this skill derives it from the
+roster (each UI surface's display name, kind, and shell link) and renders it
+under the suite design system, re-syncing it whenever the roster changes —
+there is no separate spec for it to drift from. If the product genuinely ships
+its own launcher, spec it as a normal screen — typically under
+`05_screens/shared/` — and it replaces the chrome landing; the roster remains
+this skill's source for the chrome fallback either way.
+
+Mobile UI surfaces mock as **framed web shells** — a phone-frame wrapper
+around the same web stack, not a native build. Still "wide, shallow, mocked":
+adding surfaces widens the prototype, it doesn't deepen it.
+
 ## Building the prototype
 
 Build it **pattern-driven from the KB**. Before writing code, read the layers that
@@ -107,6 +130,8 @@ loop stay the user's.
 - Every horizontal screen traces to a screen spec (or declares "not implemented yet").
 - No reinvented UI that duplicates the shared component catalog.
 - The affected route **runs**, not just builds.
+- With 2+ UI surfaces, the suite landing exists, lists every UI surface's shell,
+  and stays synced with the roster.
 - Every insight the session surfaced landed in a real vault artifact
   (feature/screen/component/ADR/design-system/task).
 

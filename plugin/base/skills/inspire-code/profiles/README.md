@@ -22,7 +22,9 @@ subcommand runs **purely generic** and says so — offering `/inspire_bootstrap`
 scaffold one. Missing profiles never block.
 
 Profiles are **composable**: a React + NestJS monorepo loads both, and each
-subcommand applies whichever profile owns the layer it is working in.
+subcommand applies whichever profile owns the layer it is working in — or, when a
+surface roster exists, whichever profile the target surface declares in its
+`Profiles` field (`inspire-code` SKILL.md, *Surfaces and the monorepo*).
 
 ## File format
 
@@ -81,14 +83,12 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
   dropping `profiles/{id}.md` here — inside the runtime, at
   `.claude/skills/inspire-code/profiles/`.
 
-> **Back up a profile you author here before running `/inspire:update`.**
-> This directory lives inside a skill directory INSPIRE owns and replaces
-> wholesale, so a profile you add is **deleted on update** and is not reported as
-> drift (drift tracking covers only files INSPIRE shipped — see
-> `.inspire.lock`'s `files` map). The same was true of `install.sh` before v0.3;
-> making project-authored profiles survive is on the v0.4 roadmap, along with
-> revisiting where profiles live. Until then: keep yours in version control (a
-> committed profile is restored with `git checkout`), or keep a copy outside
-> `.claude/`.
+> **A profile you author here survives `/inspire:update`.** This directory sits
+> inside a skill directory INSPIRE owns, but an update classifies content against
+> the manifest of the version it is upgrading *from* — and a profile INSPIRE never
+> shipped appears in no manifest, so it classifies as yours and is neither replaced
+> nor deleted. Pre-0.3 `install.sh` did destroy these files; that is fixed, not a
+> roadmap item. Keep yours in version control anyway, as you would any other source
+> file.
 
 See [`_example.md`](_example.md) for an annotated skeleton.
