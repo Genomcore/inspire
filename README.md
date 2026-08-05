@@ -129,8 +129,8 @@ history and never clobbers existing content.
 
 `/reload-skills` picks up the newly materialized `inspire-*` skills — no restart
 needed. `/inspire_bootstrap init` then sets the project's output language,
-configures the stack + theme and its shape (frontend / backend / monorepo · web /
-mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
+configures the stack + theme and its shape (frontend / backend / monorepo · one
+surface or several · web / mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
 `README.md`, and optionally wires your git remote. Then start filling in
 `inspire_kb/` — your modules, features, screens and specs. The foundation
 (`00_bootstrap`) and starter screen patterns ship with sensible defaults; the
@@ -149,6 +149,14 @@ at init and is yours from then on.
 > `install.sh` did before v0.3. Keep such files committed; v0.4 revisits it.
 > Migrating a pre-0.3 install is a one-time manual step, which `/inspire:update`
 > prints and refuses to guess at.
+
+> **Suites.** A product delivered through several UIs and/or services is a *suite* of
+> *surfaces* — `ui`, `headless` (any service without a face) and `lib` (shared
+> packages) — sharing **one** domain, one design system and one prototype. Declare them
+> with `/inspire_surface add`; the roster at `inspire_kb/00_bootstrap/surfaces.md` then
+> scopes screens by directory, gives spanning artifacts a `surfaces:` blast radius, and
+> tells `/inspire_code` which package it is emanating into. A project that declares none
+> is a suite of one, and its KB looks exactly as it always did.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
 > language (`inspire_kb/00_bootstrap/project.md`, default English) —
