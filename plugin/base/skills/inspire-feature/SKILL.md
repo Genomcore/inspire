@@ -54,8 +54,9 @@ Reviews one feature across all layers. Runs inline (no agents).
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
    one-line `## Why` summary.
 5. **ADR alignment.** If the feature references an ADR (`[[adr-xxx]]`), verify it
-   exists and is `accepted`. Surface prototype drift items that reference
-   unimplemented ADR requirements.
+   exists and is not superseded or rejected — an ADR present is the current decision
+   at its maturity. Surface prototype drift items that reference unimplemented ADR
+   requirements.
 
 **Output format (single):**
 
@@ -312,7 +313,7 @@ depends on a behavioral contract, chain to `/inspire_domain`.
 6. **N/A is valid.** Not every feature needs every layer — infrastructure features
    may have no UI.
 7. **Drift is informational.** `## Current prototype` drift items don't block
-   reviews unless they contradict an accepted ADR.
+   reviews unless they contradict a current ADR (one not superseded or rejected).
 8. **Batch synthesis.** In batch review, identify patterns and produce a
    prioritized correction plan grouped by fix skill.
 9. **Consult the task tracker** (`/inspire_task list`, or

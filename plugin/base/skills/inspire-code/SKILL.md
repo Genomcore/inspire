@@ -1,6 +1,6 @@
 ---
 name: inspire-code
-description: "Coding-stage lifecycle: realize the knowledge base as production code in source/, and keep it honest. Use when implementing an accepted ADR / action descriptor test-first, reviewing a diff against the KB, debugging a failure to root cause, fixing a broken build, or remediating dependency vulnerabilities."
+description: "Coding-stage lifecycle: realize the knowledge base as production code in source/, and keep it honest. Use when implementing an ADR / action descriptor test-first, reviewing a diff against the KB, debugging a failure to root cause, fixing a broken build, or remediating dependency vulnerabilities."
 argument-hint: "<subcommand> [<target>] [args]"
 user-invocable: true
 ---
@@ -117,9 +117,9 @@ subcommand, read its reference file** — the table below is an index, not the f
 
 `review` and `debug` always re-anchor to the KB before judging code. Concretely:
 
-- **ADRs (`01_adr`).** Does the diff contradict an `accepted` ADR within its
-  maturity's reach? An ADR at `implemented` maturity is *claimed* to be realized by
-  code — verify the claim.
+- **ADRs (`01_adr`).** Does the diff contradict a current ADR — one present and not
+  superseded or rejected — within its maturity's reach? An ADR at `implemented`
+  maturity is *claimed* to be realized by code — verify the claim.
 - **Action descriptors (`04_domain/{module}/{entity}/`).** Does the code satisfy
   the behavioral contract (inputs, outputs, touched entities, invariants, error
   set)? Search for the descriptor whose `## Why` back-sources to the feature.

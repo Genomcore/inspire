@@ -312,7 +312,8 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 - The project's root `README.md` exists and is the project's own (not the
   template's methodology README, which install removes). Flag if missing and offer
   to run the `readme` flow.
-- No load-bearing stack choice contradicts an accepted ADR in `01_adr`.
+- No load-bearing stack choice contradicts a current ADR in `01_adr` — one present
+  and not superseded or rejected.
 - `05_screens/design-system.md` exists (it should have been seeded from `theme.md`
   at install); flag if missing. It is expected to **diverge** from the default
   `theme.md` as the project evolves — divergence is not drift.

@@ -30,8 +30,9 @@ terms, judge it against what the KB says it must be:
 - **Action descriptor** (`04_domain/{module}/{entity}/`) — does the code satisfy
   the contract: inputs, outputs, touched entities, invariants, declared error set?
   Flag behavior that exceeds or contradicts the descriptor.
-- **ADR** (`01_adr`) — does the diff contradict an `accepted` ADR within its
-  maturity's reach? If it claims to move an ADR to `implemented`, is the claim true?
+- **ADR** (`01_adr`) — does the diff contradict a current ADR (present, not
+  superseded or rejected) within its maturity's reach? If it claims to move an ADR to
+  `implemented`, is the claim true?
 
 A disagreement here is not automatically a code bug — it may be a spec gap. Classify
 it: **code wrong → fix in the diff; spec wrong/missing → hand back** to
