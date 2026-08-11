@@ -33,7 +33,7 @@ if [ ! -x "$TRUST" ]; then
   exit 1
 fi
 
-ROOT="$(mktemp -d -t inspire-trust-test)"
+ROOT="$(mktemp -d -t inspire-trust-test.XXXXXX)" || exit 1
 trap 'rm -rf "$ROOT"' EXIT
 
 # Everything after the frontmatter's closing `---`. Used to prove a stamp never
@@ -42,7 +42,12 @@ body_after_fm(){ awk 'BEGIN{n=0}{ if(n<2 && $0=="---"){n++; next} if(n==2) print
 
 fm(){ yq --front-matter=extract -r "$2 // \"\"" "$1" 2>/dev/null; }
 
-mkskill(){ mkdir -p "$1"; printf '# skill\n\nrules.\n' > "$1/SKILL.md"; }
+# Content is unique per skill, and deliberately so: the hash is path-independent,
+# so byte-identical skill dirs would all hash the SAME. Every assertion that a
+# stamp was compared against the RIGHT owner's directory would then pass whether
+# the ownership map was consulted or not — the vacuous-assertion trap this repo
+# documents. Unique content is what makes those assertions mean anything.
+mkskill(){ mkdir -p "$1"; printf '# skill %s\n\nrules for %s.\n' "${1##*/}" "${1##*/}" > "$1/SKILL.md"; }
 
 # The block of a group in the full report, header excluded. Group headers are
 # the only ALL-CAPS lines that start at column 0.
@@ -227,6 +232,11 @@ R_SCR="$("$TRUST" skill-sha "$R/.claude/skills/inspire-screens")"
 R_BOOT="$("$TRUST" skill-sha "$R/.claude/skills/inspire-bootstrap")"
 R_REFS="$("$TRUST" skill-sha "$R/.claude/skills/_references")"
 
+# Guard on the fixture itself: every owner must hash distinctly, or every
+# "compared against the right owner" assertion below is vacuous.
+eq "fixture: all six skill dirs hash distinctly" \
+  "$(printf '%s\n' "$R_ADR" "$R_MOD" "$R_DOM" "$R_SCR" "$R_BOOT" "$R_REFS" | LC_ALL=C sort -u | grep -c .)" "6"
+
 mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_adr" "$R/inspire_kb/02_modules" \
          "$R/inspire_kb/03_features" "$R/inspire_kb/04_domain/auth/user" \
          "$R/inspire_kb/05_screens/patterns"
@@ -259,13 +269,33 @@ art 05_screens/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — D
 art 05_screens/login.md       no                                  # UNENDORSED + PRE-PROVENANCE
 art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # produced-checked, never UNENDORSED
 
+# An artifact with NO frontmatter whose BODY contains `endorsed:` and `produced:`
+# at column 0 — a KB artifact documenting the stamp format is the obvious way to
+# write one. yq's --front-matter=extract happily parses such a file as YAML (a
+# markdown `# Heading` is a valid YAML comment) and hands back a real `by`, so
+# without a frontmatter guard this file is silently counted as human-endorsed and
+# machine-stamped. It must land in UNENDORSED and PRE-PROVENANCE.
+cat > "$R/inspire_kb/01_adr/adr-stamp-format.md" <<'EOF'
+# ADR — the artifact trust stamp format
+
+endorsed:
+  by: "@nobody"
+  at: 2026-01-01
+produced:
+  skill: adr
+  skill_sha: "deadbee"
+  refs_sha: "deadbee"
+  inspire: 0.6.0
+  at: 2026-01-01
+EOF
+
 rc=0; FULL="$(cd "$R" && "$TRUST" report)" || rc=$?
 eq "report: exits 0 with findings" "$rc" "0"
 
-eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "2"
+eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "3"
 eq "report: STALE count"             "$(group_count STALE "$FULL")"                 "1"
 eq "report: REFS-CHANGED count"      "$(group_count REFS-CHANGED "$FULL")"          "1"
-eq "report: PRE-PROVENANCE count"    "$(group_count PRE-PROVENANCE "$FULL")"        "2"
+eq "report: PRE-PROVENANCE count"    "$(group_count PRE-PROVENANCE "$FULL")"        "3"
 eq "report: OWNER NOT INSTALLED count" "$(group_count 'OWNER NOT INSTALLED' "$FULL")" "1"
 eq "report: MISROUTED count"         "$(group_count MISROUTED "$FULL")"             "1"
 
@@ -275,11 +305,22 @@ hasnt "report: endorsed stack.md is not UNENDORSED" 'stack.md' "$(group_block UN
 hasnt "report: _index.md is never UNENDORSED" '_index.md'   "$(group_block UNENDORSED "$FULL")"
 hasnt "report: catalog entries are never UNENDORSED" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
 
-has "report: STALE keyed by owner and stamped sha" 'adr' "$(group_block STALE "$FULL")"
-has "report: STALE names the stamped sha"          '0000000' "$(group_block STALE "$FULL")"
-has "report: STALE names the current owner hash"   "$R_ADR" "$(group_block STALE "$FULL")"
+# A body is not frontmatter: an `endorsed:` line in prose must never be mistaken
+# for a human vouch, nor a `produced:` line for a stamp.
+has "report: a body 'endorsed:' is not an endorsement" \
+  'inspire_kb/01_adr/adr-stamp-format.md' "$(group_block UNENDORSED "$FULL")"
+eq  "report: a body 'produced:' is not a stamp" \
+  "$(printf '%s\n' "$FULL" | grep -c 'adr-stamp-format.md')" "1"
+hasnt "report: the fabricated handle is never read out of a body" '@nobody' "$FULL"
+hasnt "report: the fabricated sha is never read out of a body"    'deadbee' "$FULL"
+
+has "report: STALE keyed by owner and stamped sha" \
+  "adr stamped 0000000, now $R_ADR (1)" "$(group_block STALE "$FULL")"
 has "report: STALE lists the artifact"             'inspire_kb/01_adr/adr-stale.md' "$(group_block STALE "$FULL")"
 hasnt "report: an uninstalled owner is not STALE"  'checkout.md' "$(group_block STALE "$FULL")"
+# Real only because every skill dir hashes distinctly: design-system.md is stamped
+# with inspire-bootstrap's hash, so comparing it against inspire-screens (the
+# positional owner) would put it in STALE.
 hasnt "report: design-system.md compared against bootstrap, not screens" \
   'design-system.md' "$(group_block STALE "$FULL")"
 has "report: STALE names the remedy"               'owning skill' "$FULL"
@@ -291,9 +332,11 @@ eq  "report: REFS-CHANGED is one line" \
 has "report: OWNER NOT INSTALLED names the skill dir" 'inspire-feature' "$(group_block 'OWNER NOT INSTALLED' "$FULL")"
 has "report: OWNER NOT INSTALLED lists the artifact"  'inspire_kb/03_features/checkout.md' "$(group_block 'OWNER NOT INSTALLED' "$FULL")"
 
-has "report: MISROUTED names the artifact" 'inspire_kb/04_domain/auth/user/auth.user.md' "$(group_block MISROUTED "$FULL")"
-has "report: MISROUTED names the stamped skill" 'module' "$(group_block MISROUTED "$FULL")"
-has "report: MISROUTED names the map owner"     'domain' "$(group_block MISROUTED "$FULL")"
+# The full phrase, not the bare words: `module` and `domain` both already appear
+# in the artifact's own path on that same line.
+has "report: MISROUTED names the artifact, the stamped skill and the map owner" \
+  "inspire_kb/04_domain/auth/user/auth.user.md — stamped skill 'module', the layer's owner is 'domain'" \
+  "$(group_block MISROUTED "$FULL")"
 
 hasnt "report: theme.md skipped by filename"     'theme.md'     "$FULL"
 hasnt "report: README.md skipped by filename"    'README.md'    "$FULL"
@@ -305,7 +348,7 @@ rc=0; SUM="$(cd "$R" && "$TRUST" report --summary)" || rc=$?
 eq "report --summary: exits 0" "$rc" "0"
 eq "report --summary: exactly one line" "$(printf '%s\n' "$SUM" | grep -c .)" "1"
 eq "report --summary: counts match the full report" "$SUM" \
-  "trust: 2 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 2 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
+  "trust: 3 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
 
 # ── stamping the stale artifact clears it ─────────────────────────────────
 ( cd "$R" && "$TRUST" stamp inspire_kb/01_adr/adr-stale.md --skill adr ) >/dev/null

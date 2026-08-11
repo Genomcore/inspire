@@ -109,22 +109,32 @@ trust_dir_sha_short() {
 # detected here and an empty block created before yq is handed the file.
 # ─────────────────────────────────────────────────────────────────────────────
 
-fm_value() {
-  yq --front-matter=extract -r "$2 // \"\"" "$1" 2>/dev/null || true
-}
-
-# fm_has_block <file> <key> — true only when the key exists and is a mapping.
-fm_has_block() {
-  local tag
-  tag="$(yq --front-matter=extract -r ".$2 | tag" "$1" 2>/dev/null || true)"
-  [ "$tag" = "!!map" ]
-}
-
+# Whether a file opens with a frontmatter block at all. Every read below is
+# guarded on this, because `yq --front-matter=extract` does NOT fail on a file
+# that has none — it parses the whole document as YAML, and a markdown `# Title`
+# is a valid YAML comment. So a body with `endorsed:` at column 0 (a KB artifact
+# documenting the stamp format, say) reads back as a real endorsement with a real
+# `by`. A fabricated endorsement is the one error class this whole feature exists
+# to prevent, so the guard is load-bearing rather than defensive.
 has_frontmatter() {
   local first
   IFS= read -r first < "$1" 2>/dev/null || return 1
   [ "$first" = "---" ] || return 1
   awk 'NR==1 { next } $0 == "---" { found = 1; exit } END { exit !found }' "$1"
+}
+
+fm_value() {
+  has_frontmatter "$1" || return 0
+  yq --front-matter=extract -r "$2 // \"\"" "$1" 2>/dev/null || true
+}
+
+# fm_has_block <file> <key> — true only when the file has frontmatter AND the key
+# exists in it as a mapping.
+fm_has_block() {
+  local tag
+  has_frontmatter "$1" || return 1
+  tag="$(yq --front-matter=extract -r ".$2 | tag" "$1" 2>/dev/null || true)"
+  [ "$tag" = "!!map" ]
 }
 
 # Screens ship without frontmatter deliberately, and most ADRs and features do
@@ -375,7 +385,7 @@ cmd_report() {
 
   # The scratch dir is a global, not a local: the EXIT trap runs after the
   # function has returned and its locals are gone.
-  REPORT_WORK="$(mktemp -d -t inspire-trust-report)" || die "cannot create a temp dir"
+  REPORT_WORK="$(mktemp -d -t inspire-trust-report.XXXXXX)" || die "cannot create a temp dir"
   trap 'rm -rf "${REPORT_WORK:-}"' EXIT
   local work="$REPORT_WORK"
   OWNER_CACHE="$work/owners"; : > "$OWNER_CACHE"
@@ -391,7 +401,7 @@ cmd_report() {
   local refs_now=""
   [ -d "$skills_root/_references" ] && refs_now="$(trust_dir_sha_short "$skills_root/_references")"
 
-  local rel file disp owner st_skill st_sha st_refs cur
+  local rel file disp owner st_skill st_sha st_refs cur endorsed produced
   while IFS= read -r rel; do
     [ -n "$rel" ] || continue
     skip_artifact "$rel" && continue
@@ -399,13 +409,23 @@ cmd_report() {
     disp="$kb/$rel"
     owner="$(owner_for "$rel")"
 
-    if endorsement_checked "$rel" && ! fm_has_block "$file" endorsed; then
+    # A file with no frontmatter carries no blocks, full stop — decided once here
+    # rather than trusting yq, which would read a body line as a stamp. Screens
+    # ship this way by design and most ADRs and features do in practice, so this
+    # is the common case, not the edge one.
+    endorsed=0; produced=0
+    if has_frontmatter "$file"; then
+      fm_has_block "$file" endorsed && endorsed=1
+      fm_has_block "$file" produced && produced=1
+    fi
+
+    if endorsement_checked "$rel" && [ "$endorsed" = 0 ]; then
       printf '%s\n' "$disp" >> "$g_unend"
     fi
 
     produced_checked "$rel" || continue
 
-    if ! fm_has_block "$file" produced; then
+    if [ "$produced" = 0 ]; then
       printf '%s\n' "$disp" >> "$g_prep"
       continue
     fi
