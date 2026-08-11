@@ -9,6 +9,7 @@ chronology a numeric prefix used to imply. Newest first.
 
 | Date | ADR | Status |
 |------|-----|--------|
+| 2026-08-11 | [adr-artifact-trust](adr-artifact-trust.md) | Accepted — shipped in 0.6.0 |
 | 2026-08-05 | [adr-suites-and-surfaces](adr-suites-and-surfaces.md) | Accepted — shipped in 0.5.0 |
 | 2026-08-04 | [adr-upgrade-path](adr-upgrade-path.md) | Accepted — shipped in 0.4.0 |
 | 2026-07-29 | [adr-plugin-delivery](adr-plugin-delivery.md) | Accepted |
