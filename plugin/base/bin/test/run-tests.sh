@@ -81,6 +81,23 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   rm -f "$actual_stderr"
 done
 
+# trust.sh is a tool, not a review rule: it emits no findings, so it has no
+# fixtures/{rule}/{scenario}/ directory for the loop above to discover and needs
+# its own test script wired in by hand. Guarded on an empty filter so that
+# `run-tests.sh <rule-name>` still narrows to that one rule.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  trust_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-trust.sh" >"$trust_out" 2>&1; then
+    echo "PASS trust.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL trust.sh/behaviour" >&2
+    cat "$trust_out" >&2
+  fi
+  rm -f "$trust_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]
