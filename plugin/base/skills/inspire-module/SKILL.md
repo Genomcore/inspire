@@ -298,3 +298,8 @@ Remove a module across all layers. Use with caution.
    - Feature-level work → `/inspire_feature`
    - ADR misalignment → `/inspire_adr`
    - Global / vault concerns → `/inspire_workspace`
+8. **Stamp every write.** After `create`, `update`, or `delete` writes the hub,
+   run `.inspire/bin/trust.sh stamp <file> --skill module`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting a hub
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).

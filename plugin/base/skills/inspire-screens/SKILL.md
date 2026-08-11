@@ -320,6 +320,12 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
     conventions live in `patterns/` + `design-system.md`, not in this skill.)
 12. **Propagation check after spec edits.** Ask the user before ending the turn
     whether to propagate visible UI changes to the prototype.
+13. **Stamp every write.** After `create`, `validate`, or `extract` writes a
+    screen or catalog file, run
+    `.inspire/bin/trust.sh stamp <file> --skill screens`
+    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+    that carries `endorsed:` is disclosed to the operator first
+    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Skill invocations
 

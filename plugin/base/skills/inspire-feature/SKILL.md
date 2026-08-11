@@ -322,3 +322,8 @@ depends on a behavioral contract, chain to `/inspire_domain`.
     `update` run the gate above; criteria that can't be made testable signal a
     spec/design gap to resolve (here or via `/inspire_domain`), not something to
     write as-is.
+11. **Stamp every write.** After `create`, `update`, or `delete` writes the
+    use-case file, run `.inspire/bin/trust.sh stamp <file> --skill feature`
+    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+    that carries `endorsed:` is disclosed to the operator first
+    ([trust-stamps](../_references/trust-stamps.md#endorsement)).

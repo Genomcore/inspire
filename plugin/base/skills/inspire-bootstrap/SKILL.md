@@ -345,6 +345,16 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    accent, status keys) — keep them stable even when values change.
 5. **Consult the task tracker** (`/inspire_task list`) for tracked
    bootstrap work.
+6. **`project.md`/`stack.md` are endorsed-only.** They are interview-generated,
+   not skill-produced, so writes to them carry no `produced` stamp; on an
+   explicit operator yes they may be endorsed via
+   `.inspire/bin/trust.sh endorse <file>`
+   ([trust-stamps](../_references/trust-stamps.md#scope)).
+7. **`design-system.md` is stamped.** After the `design-system` subcommand
+   writes it, run `.inspire/bin/trust.sh stamp <file> --skill bootstrap`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Related skills
 

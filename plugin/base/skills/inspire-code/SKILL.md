@@ -126,6 +126,11 @@ subcommand, read its reference file** — the table below is an index, not the f
 - **Acceptance criteria (`03_features/{module}/{feature-id}.md`).** Is every
   testable criterion covered by a test?
 
+**Anchor check.** If a spec this work builds from carries no `endorsed:`
+block, tell the operator — "building from a spec no human endorsed" — and
+continue ([trust-stamps](../_references/trust-stamps.md#endorsement)). Warn,
+never refuse.
+
 When code and KB disagree, the fix has a home: **code wrong → fix here; spec wrong
 or missing → hand back** to `/inspire_domain` / `/inspire_feature`. Never
 silently "correct" the KB to match the code, and never bend the code around a spec
