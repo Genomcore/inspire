@@ -73,8 +73,9 @@ answers *who is the last human that put their name on this?*
 
 Absence is the honest default and reads truthfully: no block means "never endorsed" /
 "provenance unknown". **Nothing migrates** — stamps accrue as artifacts are touched, and
-a vault upgraded to 0.6.0 is byte-identical until a skill next writes to it. Neither
-field name collides with anything the KB already uses, so no rename rides along.
+this design changes no byte of an existing vault: no stamp appears until a skill next
+writes to it. Neither field name collides with anything the KB already uses, so no
+rename rides along.
 
 ### D2 — `endorsed` is attestation, not content-pinning
 
@@ -179,15 +180,17 @@ Endorsement lives with the owning skills' ceremonies and **never** in
 rebaseline, exit 0 always. Six groups, keyed by producer transition rather than
 per-artifact, because "23 artifacts under a different `inspire-feature`" is one judgment
 and not 23: `UNENDORSED`, `STALE`, `REFS-CHANGED`, `PRE-PROVENANCE`, `OWNER NOT INSTALLED`
-and `MISROUTED`. Every group names its remedy — for a stale artifact, its **owning
-skill**: invoke that skill's update or review flow. No batch re-derivation machinery
-ships. `OWNER NOT INSTALLED` is its own verdict and never stale, because deleting a skill
-is legitimate use.
+and `MISROUTED`. Every group that has a remedy names it — for a stale artifact, its
+**owning skill**: invoke that skill's update or review flow. No batch re-derivation
+machinery ships. `OWNER NOT INSTALLED` is its own verdict and never stale, because
+deleting a skill is legitimate use.
 
 Surfacing splits by cost. `pre-pr.sh` — reached through `dispatch.sh` at `gh pr create` —
-runs `report --summary` and prints **one counts-only line**, informational, never
-affecting the hook's exit. Counts and never lists: a full report at every PR would be the
-same wall of true-but-unchanged lines each run, the exact noise failure the reviews
+runs `report --summary` unconditionally and prints **one counts-only line** to stdout —
+whether the operator sees it is harness-dependent, since a hook's stdout on exit 0 may be
+transcript-only — informational either way, never affecting the hook's exit. Counts and
+never lists: a full report at every PR would be the same wall of true-but-unchanged
+lines each run, the exact noise failure the reviews
 flagged, whereas a count that jumped since the last PR is precisely the signal worth an
 unconditional line. The full grouped report stays operator-invoked — the `## Signals`
 section of `/inspire_workspace review`, which is the methodology's actual pre-PR ritual,

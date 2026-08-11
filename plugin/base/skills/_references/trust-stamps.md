@@ -69,7 +69,7 @@ Position decides the owning skill — `01_adr` → adr, `02_modules` → module,
 `trust.sh report [--summary]` recomputes everything on every run — no ledger, nothing to
 rebaseline; `trust.sh skill-sha <dir>` gives one directory's composite hash. Six groups,
 keyed by producer transition, since "23 artifacts under a different `inspire-feature`" is
-one judgement and not 23:
+one judgment and not 23:
 
 | Group | What it means |
 |---|---|
