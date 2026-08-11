@@ -193,8 +193,8 @@ via `create`).
    time it was made; don't narrate migration history.
 6. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
-7. **Stamp every write.** After `create`, `update`, or `supersede` writes the
-   file, run `.inspire/bin/trust.sh stamp <file> --skill adr`
+7. **Stamp every write.** After an ADR is written, run
+   `.inspire/bin/trust.sh stamp <file> --skill adr`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
