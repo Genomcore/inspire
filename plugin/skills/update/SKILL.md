@@ -154,6 +154,12 @@ for the lesson-reconciliation half (D6) that does not exist yet.
 For each kept **validator** edit: there is no capture mechanism for it — a lesson has no
 category for bash. Say it belongs upstream: open an issue or a PR against INSPIRE.
 
+## Step 6 — Trust report
+
+If `.inspire/bin/trust.sh` exists, offer — never run unprompted — `.inspire/bin/trust.sh
+report`. What its groups mean is explained at
+`.claude/skills/_references/trust-stamps.md`; point there rather than restating it.
+
 ## What this skill is, and what is missing from it
 
 Update has two halves, and only one of them can be a script:
