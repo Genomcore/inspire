@@ -19,7 +19,8 @@ repo is both its source and its own marketplace.
     and `/inspire:update` (**upgrade from any released version**, in one command —
     it detects the installed version, replays the layout hops between there and
     here, and merges content per file, never overwriting a locally-edited one).
-    A pre-0.3 project is no longer refused; it is simply the longest chain.
+    A pre-0.3 project is no longer refused; it is simply the longest chain. The
+    run ends by offering the trust report: an upgrade diverges skills en masse.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
@@ -83,17 +84,22 @@ repo is both its source and its own marketplace.
         greenfield/split/adopt · `retire` · `review`; owns
         `00_bootstrap/surfaces.md`), `extract` (brownfield onboarding — fan out
         scanners over an existing codebase into KB candidates), `task` (the ticket
-        tracker), `workspace` (the pre-PR global review + vault structure),
-        `lesson` (the lessons
+        tracker), `workspace` (the pre-PR global review + vault structure; its
+        report's `## Signals` section carries the trust report — measurements,
+        never findings), `lesson` (the lessons
         catalog — write-once, timestamp-named, version-stamped one-line
         instructions that teach the skills how to behave in this project;
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
-        `inspire-*` skill dirs; it is **not** matched by an `inspire-*` glob.
+        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`); it is
+        **not** matched by an `inspire-*` glob.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
-      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`).
+      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`). `trust.sh` is here as a
+      **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
+      stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
+      [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`.

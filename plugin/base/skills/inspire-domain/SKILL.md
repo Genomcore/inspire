@@ -130,7 +130,10 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > stay verbatim.
 
 1. **`review`, `show`, `source`, `graph` are read-only.** They report, resolve, and visualize — never write files.
-2. **`define`, `update`, `refactor`, `delete`, `promote`, `demote` require operator approval** of each proposed change before writing.
+2. **`define`, `update`, `refactor`, `delete`, `promote`, `demote` require operator approval** of each proposed change before writing. At `promote`, the
+   skill may also propose endorsing the object; on an explicit yes, run
+   `.inspire/bin/trust.sh endorse <file>`
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 3. **Back-sourcing is not optional.** Every claim in a body requires an inline prosaic wikilink. The agent prompts for the source; it never invents a link. Enforced at `review` time.
 4. **`delete` refuses dependents.** If any action lists the target in `requires:`, delete is blocked — resolve consumers first, or supersede.
 5. **`update` refuses stable.** Modifying a stable object requires `demote` → `update` → `promote`. The regression is an explicit, traceable act.
@@ -139,6 +142,11 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_task` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
 10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire_feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
+11. **Stamp every write.** After a descriptor or entity document is written,
+    run `.inspire/bin/trust.sh stamp <file> --skill domain`
+    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+    that carries `endorsed:` is disclosed to the operator first
+    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## References
 

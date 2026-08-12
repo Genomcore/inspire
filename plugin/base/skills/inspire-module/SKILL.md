@@ -86,8 +86,9 @@ files under `inspire_kb/03_features/{module}/`.
   realizing action descriptor in `inspire_kb/04_domain/{module}/` (flag gaps as
   `important`); every action's `## Why` back-sources to a feature via
   `[[wikilink]]` (flag orphan actions as `important`).
-- **ADR alignment:** flag anything that contradicts an **accepted** ADR within its
-  maturity's reach (see `inspire_kb/01_adr/`).
+- **ADR alignment:** flag anything that contradicts a **current** ADR — one present
+  and not superseded or rejected — within its maturity's reach (see
+  `inspire_kb/01_adr/`).
 
 ### 5. Spec-layer (SDD) checks
 
@@ -287,7 +288,8 @@ Remove a module across all layers. Use with caution.
    operation that updates one but leaves the others inconsistent is a bug. This is
    the skill's core invariant; `review` enforces it.
 5. **Pending drift is acceptable.** Drift items in `## Current prototype` sections
-   are informational; don't block PRs unless they contradict an accepted ADR.
+   are informational; don't block PRs unless they contradict a current ADR (one not
+   superseded or rejected).
 6. **Consult the task tracker** at the start of each invocation
    (`/inspire_task list`, or open the Kanban via
    `node inspire_kb/99_tracker/serve.mjs`). Known items in
@@ -298,3 +300,8 @@ Remove a module across all layers. Use with caution.
    - Feature-level work → `/inspire_feature`
    - ADR misalignment → `/inspire_adr`
    - Global / vault concerns → `/inspire_workspace`
+8. **Stamp every write.** After `create`, `update`, or `delete` writes the hub,
+   run `.inspire/bin/trust.sh stamp <file> --skill module`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting a hub
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).

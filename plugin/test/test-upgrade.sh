@@ -1208,8 +1208,8 @@ check "A3: no empty .claude/hooks survives" "[ ! -e '$p/.claude/hooks' ]"
 check "A4: no empty inspire-learn survives" "[ ! -e '$p/.claude/skills/inspire-learn' ]"
 
 # The pruning must not have cost anything the migration exists to deliver.
-eq "all 14 validators landed at .inspire/bin" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "14"
+eq "all 14 validators + the trust tool landed at .inspire/bin" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
 check "the relocated hooks are all three there" \
    "[ -f '$p/.claude/inspire/hooks/session-start.sh' ] && \
     [ -f '$p/.claude/inspire/hooks/pre-commit.sh' ] && \
@@ -1265,8 +1265,8 @@ eq "the blocked .claude/bin holds nothing but their file" \
    "$(ls -A "$p/.claude/bin" | tr '\n' ' ')" "my-check.sh "
 eq "the blocked .claude/hooks holds nothing but their file" \
    "$(ls -A "$p/.claude/hooks" | tr '\n' ' ')" "my-hook.sh "
-eq "all 14 validators still landed" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "14"
+eq "all 14 validators + the trust tool still landed" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
 fixture_cleanup "$w"
 
 # --mode plan on the longest chain must still write NOTHING — directories

@@ -166,6 +166,13 @@ For each module in scope, the module review performs:
   counting. **Informational only** — it carries no severity, is reported even when
   nothing is wrong, and never blocks the gate.
 
+### Signals
+
+Alongside the findings above, this review runs `.inspire/bin/trust.sh report` and pastes
+its output verbatim — the artifact-trust groups, machine-computed; see
+[trust-stamps](../_references/trust-stamps.md#report) for what each group means. The
+design-system variance count (Phase 6) is reported here too, not under Catalog Coherence.
+
 ### Output format
 
 ```markdown
@@ -192,7 +199,11 @@ Drift items pending: {N}
 ## Catalog Coherence
 - Patterns: {total} defined, {used}, {orphan}
 - Components: {total} defined, {used}, {orphan}
-- Design system: {N} per-surface variant section(s), {L} lines (informational)
+- Design system variance: reported under Signals
+
+## Signals
+{`.inspire/bin/trust.sh report` output, verbatim}
+- Design system: {N} per-surface variant section(s), {L} lines
 
 ## OK
 ```
@@ -212,10 +223,13 @@ Drift items pending: {N}
    are `important`, not `critical`, unless they contradict an ADR within its
    maturity's reach. The design-system variance count is weaker still: a signal, not
    a finding — reported every run, never blocking.
-8. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
+8. **Signals are measurements, not findings.** No fix routing beyond the owning
+   skill, severity never above important, they re-appear as long as true; never
+   file tickets from signals; never block the pre-PR gate on them.
+9. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
    are flagged `(tracked: TASK-{id})`. Use `/inspire_task list` or open the Kanban
    via `node inspire_kb/99_tracker/serve.mjs`.
-9. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
+10. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
    - screen spec drift → `/inspire_screens`
    - Feature drift → `/inspire_module update` or `/inspire_feature update`

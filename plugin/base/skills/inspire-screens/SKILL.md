@@ -79,9 +79,10 @@ components.
 The **Current prototype** section names the prototype route(s) realizing the screen
 and tracks **drift** — misalignments between the prototype and this spec, grouped by
 type (`ADR alignment` · `data wiring` · `component adoption` · `gap` · `cosmetic`).
-Drift is **informational**: it never blocks a PR unless it contradicts an accepted
-ADR, and it drives the propagation check below. Omit the section only until a
-prototype target exists. With two or more UI surfaces each target carries its
+Drift is **informational**: it never blocks a PR unless it contradicts a current ADR
+(one present and not superseded or rejected), and it drives the propagation check
+below. Omit the section only until a prototype target exists. With two or more UI
+surfaces each target carries its
 surface's shell prefix — the route lives inside that surface's shell rather than at
 the prototype root — and a `shared/` screen names one target per shell that serves
 it.
@@ -164,7 +165,7 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 | **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire_feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
 | **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_screens validate`. Do NOT change the prototype — risks losing iterations. |
 | **screen spec ↔ Prototype** | Prototype renders UI not in the screen spec | Prototype | Spec stale (reverse drift). Update the spec. |
-| **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + accepted UX ADRs are authoritative for visual/structural conventions. |
+| **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + current UX ADRs are authoritative for visual/structural conventions. |
 
 **Why the prototype wins on functional drift:** prototypes evolve through user
 iterations. The screen spec captures intent at write-time; the prototype captures it at
@@ -172,7 +173,7 @@ last-touch. Removing user-validated functionality by "fixing" the prototype to
 match a stale spec is riskier than updating the spec.
 
 **Why the skill wins on UI conventions:** patterns, components, design tokens and
-accepted UX ADRs are project-wide invariants. A prototype that violates them is a
+current UX ADRs are project-wide invariants. A prototype that violates them is a
 regression to fix in the prototype, not in the spec.
 
 When uncertain which layer a finding belongs to, ask the user.
@@ -315,11 +316,18 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
    location can never disagree.
 10. **Validate before merge** — run `/inspire_module review` before any PR that
     modifies screen spec files.
-11. **Respect accepted UX ADRs.** Screens must not contradict an accepted UX
-    decision in `inspire_kb/01_adr/`; flag any that do. (Project-specific screen
-    conventions live in `patterns/` + `design-system.md`, not in this skill.)
+11. **Respect current UX ADRs.** Screens must not contradict a UX decision in
+    `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
+    (Project-specific screen conventions live in `patterns/` + `design-system.md`,
+    not in this skill.)
 12. **Propagation check after spec edits.** Ask the user before ending the turn
     whether to propagate visible UI changes to the prototype.
+13. **Stamp every write.** After `create`, `validate`, or `extract` writes a
+    screen or catalog file, run
+    `.inspire/bin/trust.sh stamp <file> --skill screens`
+    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+    that carries `endorsed:` is disclosed to the operator first
+    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Skill invocations
 

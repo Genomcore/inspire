@@ -155,6 +155,9 @@ consequences to the layers the new maturity reaches.
    decision, then for each affected module invoke `/inspire_module review {module}`
    to detect where the ADR's consequences are not yet reflected. Surface the gaps
    as follow-up actions.
+4. **Propose endorsement.** Ask the operator whether to endorse the promoted
+   ADR; on an explicit yes, run `.inspire/bin/trust.sh endorse <file>`
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Subcommand: supersede {id} {new-id}
 
@@ -190,6 +193,11 @@ via `create`).
    time it was made; don't narrate migration history.
 6. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
+7. **Stamp every write.** After an ADR is written, run
+   `.inspire/bin/trust.sh stamp <file> --skill adr`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Related skills
 

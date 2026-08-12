@@ -246,6 +246,11 @@ Render findings in the shared operator-facing format from
 7. **Never create the roster for a single surface.** The file comes into existence
    at the promote ceremony and nowhere else; creating it earlier would make the
    reading of its absence wrong for every skill that depends on it.
+8. **Stamp every write.** After `add` or `retire` writes the roster, run
+   `.inspire/bin/trust.sh stamp <file> --skill surface`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting a
+   roster that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Related skills
 
