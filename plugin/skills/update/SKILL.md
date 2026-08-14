@@ -47,8 +47,11 @@ the target version ships, and emits:
 
 - **stdout** — JSON: `source_version`, `target_version`, `score`, `layout`, `chain` (the
   hop versions that would run), `verdicts` (a count per verdict — `noop`/`replace`/`keep`/
-  `ask`/`create`/`restore`/`delete`), and `ask` (the array of paths that actually need a
-  decision).
+  `ask`/`create`/`restore`/`delete` — tallied over the *merged* hop-journal + classify
+  stream, the same union the stderr footer counts, never a classify-only tally), and `ask`
+  (the array of paths that actually need a decision, the same union). `--mode update`'s own
+  stdout carries the identical `ask` field: whatever a hop asked and no `--take-base`/
+  `--take-mine` answered is still listed there once the run is done (Step 3).
 - **stderr** — the grouped human report (RUNTIME / KNOWLEDGE BASE / HARNESS / PRODUCT /
   LEFT ALONE). In `--mode update` (never in `--mode plan`, which writes nothing at all)
   the same report is also saved to `.inspire/last-upgrade.log`, overwritten on each run —
@@ -68,8 +71,12 @@ code.
 
 A newer release's brand-new KB layer file (a new README, a new starter template) is
 delivered automatically too: KB seeding runs additively in **both** `init` and `update` —
-a path already on disk is left alone, only a path the project lacks is added. There is
-nothing manual to tell the operator about that any more.
+a path already on disk is left alone, only a path the project lacks is added. That
+direction stays fully automatic. As of 0.7.0 a versioned hop can also go the other way and
+*retire* a KB seed file the project no longer needs — a proven-derivable one is deleted
+silently, a diverged one lands in `ask` like any other conflict (Step 2). So "nothing
+manual" no longer covers the whole picture: seeding is still silent, retirement sometimes
+is not.
 
 ## Step 2 — Decide
 
@@ -79,9 +86,17 @@ is empty, skip straight to Step 3.
 
 Otherwise, one `AskUserQuestion` covering the whole batch: **keep mine** (every `ask`
 path keeps the operator's file), **keep base** (every `ask` path takes the new version),
-or **go one by one**.
+or **go one by one**. **Retirement asks are excluded from both batch shortcuts.** Every
+`ask` path under `inspire_kb/` is one — content classification never runs against
+`inspire_kb/` at all (Rule 2; no shipped manifest lists a KB path), so a KB-rooted `ask`
+has no source but a hop proposing to retire a seed file it could not prove derivable. A
+batch "keep base" must never delete a KB index as a side effect of accepting ordinary
+skill/hook updates, and a batch "keep mine" must not wave a retirement through unseen
+either — the operator sees what they are declining, not just the safe outcome by accident.
+Itemize every retirement ask instead, one by one, below.
 
-For one-by-one, ask per file: **mine** / **base** / **merge**.
+For a content `ask` (anywhere outside `inspire_kb/`), ask per file: **mine** / **base** /
+**merge**.
 - `mine` / `base` resolve exactly like the batch choice, scoped to that file.
 - **`merge` is the one case where your judgement is legitimate.** Read both the
   operator's file and the matching file under `${CLAUDE_PLUGIN_ROOT}/base/...`, write a
@@ -89,6 +104,13 @@ For one-by-one, ask per file: **mine** / **base** / **merge**.
   resolve that path as `mine` in Step 3 (the file now on disk — the merged one — is the
   one to keep). Nowhere else in this flow should you edit file content: everywhere else
   the resolution is "pick one side," and the script performs it.
+
+For a retirement `ask` (any path under `inspire_kb/` — see the batch note above for the
+discriminator), the choice is **keep** / **retire** only. There is no `merge`: there is no
+base-side file to merge against either way — the index seeds left `base/kb/` in this same
+release, and the ADR index (`01_adr/_index.md`) never shipped one to begin with. **keep**
+leaves the file on disk untouched (the default if left unresolved); **retire** deletes it.
+Hand both back the same way, as `--take-mine` / `--take-base` in Step 3.
 
 Leaving a path unresolved is a valid choice, not an error: an unresolved `ask` defaults to
 **keeping the operator's file** — `materialize.sh` does this itself if you pass nothing
@@ -109,6 +131,16 @@ resolved `ask` path — paths come straight back from the plan's `ask` array
   --source-root "<from stack.md>" --prototype-root "<from stack.md>" \
   [--take-base <path>]... [--take-mine <path>]...
 ```
+
+The two flags mean different things depending on which kind of `ask` they resolve. For a
+content `ask`, `--take-base <path>` replaces the file with the new base version and
+`--take-mine <path>` keeps the operator's. For a retirement `ask`, there is no base file to
+take, so `--take-base <path>` retires it instead — it deletes the file — and
+`--take-mine <path>` keeps it (`hops/0.7.0.sh`'s `_h7_settle`: an explicit `--take-mine`
+outranks everything, an explicit `--take-base` outranks the verdict and calls the hop's own
+`rm`, and anything left unmatched falls through to `hop_ask`). Either kind left unresolved
+defaults to keeping the operator's file — `_apply_resolutions` for a content `ask`, the
+same fallthrough for a retirement one — doing nothing is always the safe choice.
 
 Read `source_root` and `prototype_root` from `inspire_kb/00_bootstrap/stack.md` — update
 never re-asks; those were settled at init and changing them is a Shape change owned by
@@ -145,8 +177,10 @@ git diff and commit.
 
 ## Step 5 — Nudge
 
-For each kept **skill** edit (an `ask` resolved to `mine`, or a plain `keep` verdict):
-tell the operator the customization belongs in `/inspire_lesson note`. Say plainly that
+For each kept **skill** edit (an `ask` resolved to `mine`, or a plain `keep` verdict —
+never a kept `inspire_kb/` retirement ask: that is the operator declining to retire a seed
+file, not a skill edit, and it earns no lesson-capture suggestion): tell the operator the
+customization belongs in `/inspire_lesson note`. Say plainly that
 nothing is remembered by this flow — the same file will be classified as `ask` (or
 `keep`) again on the next upgrade, and that recurrence is deliberate: it is what stands in
 for the lesson-reconciliation half (D6) that does not exist yet.
@@ -209,10 +243,15 @@ semantic half will call.
    directory — but a file left there by mistake now survives rather than being silently
    destroyed.
 
-   `inspire_kb/` is out of scope for replacement — `--mode update` never *replaces or
-   deletes* anything under it, and content classification never runs against it at all; KB
+   `inspire_kb/` is out of scope for *classification* — content classification never runs
+   against it at all, because no shipped manifest lists a KB path in the first place. KB
    seeding is a separate, purely additive path that runs in both `init` and `update` (see
-   Step 1). Two exceptions are additive and never clobber: `seed_design_system` creates
+   Step 1): a path already on disk is never replaced, only a missing one is added.
+   `--mode update` is **not**, though, flatly non-destructive under `inspire_kb/` as of
+   0.7.0: a versioned hop may retire a KB seed file the project no longer needs to keep —
+   a proven-derivable one is deleted silently, and any divergence from the derivation lands
+   in `ask` rather than a silent delete (Step 2's retirement branch). Two further exceptions
+   are purely additive and never clobber: `seed_design_system` creates
    `05_screens/design-system.md`, and `seed_claude_md` creates `CLAUDE.md`, **only if
    absent**.
 3. **No writes happen before Step 2's decisions are gathered.** `--mode plan` itself
