@@ -18,8 +18,10 @@
 # stripped before resolution; display text is ignored.
 #
 # Severity: lifecycle-progressive.
-#   - object at lifecycle: draft     → warning
-#   - object at lifecycle: accepted+ → error
+#   - object at lifecycle: draft              → warning
+#   - object at lifecycle: accepted or stable → error
+#   - object at lifecycle: superseded         → warning (terminal: the object
+#     is history, and history does not block a commit)
 #
 # Usage:
 #   .inspire/bin/wikilinks-resolve.sh                  # scan whole tree

@@ -357,12 +357,78 @@ sdd_count_by_severity() {
 #   Frontmatter is a real block, not a toggle. It exists only when line 1 is
 #   `---`, it closes at the next `---`, and it never reopens. A `---` used as a
 #   thematic break in the body is body content, and a file written without
-#   frontmatter (screens, by design) is read in full.
+#   frontmatter (screens, by design) is read in full. Known limitation: a file
+#   whose line 1 opens frontmatter that is never closed reads as frontmatter to
+#   EOF, so every helper sees an empty body. That is the one shape where a
+#   malformed file goes quiet rather than loud, and it is left as is — the file
+#   is broken YAML that `sdd_frontmatter` cannot parse either.
 #
-#   A header inside a fenced code block is not a header. Fenced regions
-#   (``` or ~~~) are tracked so that documentation *about* a section never
-#   registers as that section, and never terminates the section it sits in.
+#   A header inside a fenced code block is not a header. Fences are tracked the
+#   way CommonMark defines them, not as a boolean toggle: the opening marker's
+#   character (` or ~) and run length are recorded, and only a line that is
+#   nothing but a run of the SAME character, at least as long, closes it. A
+#   boolean toggle gets three common shapes wrong — a four-backtick fence
+#   quoting a three-backtick one, a fence quoting the other marker character,
+#   and any fence containing an odd number of inner fence-looking lines (which
+#   leaves the flag stuck on and erases the rest of the file). All three appear
+#   in documentation about markdown, which is exactly what a KB contains.
 # ─────────────────────────────────────────────────────────────────────────────
+
+# The two readers above, as awk source. Every helper in this section composes
+# its program from these fragments so that there is exactly one implementation
+# of each rule: a prologue (frontmatter + fences), the helper's own rules, and
+# the fence functions. Two fence prologues exist because a helper either drops
+# fenced lines or passes them through to a caller that wants them verbatim.
+SDD_AWK_FM_READER='
+  NR == 1 && $0 == "---" { fm = 1; next }
+  fm { if ($0 == "---") fm = 0; next }
+'
+
+SDD_AWK_FENCE_SKIP='
+  sdd_fence($0) { next }
+  sdd_in_fence() { next }
+'
+
+SDD_AWK_FENCE_KEEP='
+  sdd_fence($0) { if (capture) print; next }
+  sdd_in_fence() { if (capture) print; next }
+'
+
+# sdd_fence(line) — returns 1 when the line is a fence delimiter (opening or
+# closing) and updates the tracked state; 0 otherwise. sdd_in_fence() reports
+# whether the reader is currently inside a fenced block. Interval expressions
+# and capture groups are avoided: BSD awk is a supported host.
+SDD_AWK_FENCE_FUNCS='
+  function sdd_fence(line,   indent, s, ch, n, rest) {
+    indent = 0
+    while (substr(line, indent + 1, 1) == " ") indent++
+    if (indent > 3) return 0          # 4+ spaces is an indented code block
+    s = substr(line, indent + 1)
+    ch = substr(s, 1, 1)
+    if (ch != "`" && ch != "~") return 0
+    n = 0
+    while (substr(s, n + 1, 1) == ch) n++
+    if (n < 3) return 0
+    rest = substr(s, n + 1)
+    if (sdd_fence_ch == "") {
+      # Opening fence. A backtick fence may not carry a backtick in its info
+      # string, so such a line is not a fence at all.
+      if (ch == "`" && index(rest, "`") > 0) return 0
+      sdd_fence_ch = ch
+      sdd_fence_len = n
+      return 1
+    }
+    # Closing fence: same character, run at least as long as the opener, and
+    # nothing but that run on the line.
+    if (ch == sdd_fence_ch && n >= sdd_fence_len && rest ~ /^[[:space:]]*$/) {
+      sdd_fence_ch = ""
+      sdd_fence_len = 0
+      return 1
+    }
+    return 0
+  }
+  function sdd_in_fence() { return sdd_fence_ch != "" }
+'
 
 # sdd_body_section <file> <header_name>
 #   Prints the body section content to stdout, verbatim (fenced blocks and
@@ -370,15 +436,12 @@ sdd_count_by_severity() {
 sdd_body_section() {
   local file="$1"
   local header="$2"
-  awk -v header="## $header" '
-    NR == 1 && $0 == "---" { fm = 1; next }
-    fm { if ($0 == "---") fm = 0; next }
-    /^[[:space:]]*(```|~~~)/ { fence = !fence; if (capture) print; next }
-    fence { if (capture) print; next }
-    $0 == header { capture = 1; next }
-    /^## / && capture { exit }
-    capture { print }
-  ' "$file"
+  awk -v header="## $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
+      $0 == header { capture = 1; next }
+      /^## / && capture { exit }
+      capture { print }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
 }
 
 # sdd_body_prose <file> <header_name>
@@ -391,13 +454,13 @@ sdd_body_section() {
 sdd_body_prose() {
   local file="$1"
   local header="$2"
+  # No frontmatter reader here: the input is a section body, so a leading `---`
+  # is a thematic break, never a frontmatter opener.
   sdd_body_section "$file" "$header" \
-    | awk '
-        /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
-        fence { next }
+    | awk "${SDD_AWK_FENCE_SKIP}"'
         /^[[:space:]]*\|/ { next }
         { print }
-      ' \
+      '"${SDD_AWK_FENCE_FUNCS}" \
     | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g'
 }
 
@@ -415,14 +478,11 @@ sdd_has_section() {
     3) prefix="### " ;;
     *) echo "error: sdd_has_section: unsupported header level: $level" >&2; return 2 ;;
   esac
-  awk -v hdr="${prefix}${header}" '
-    NR == 1 && $0 == "---" { fm = 1; next }
-    fm { if ($0 == "---") fm = 0; next }
-    /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
-    fence { next }
-    $0 == hdr { found = 1; exit }
-    END { exit !found }
-  ' "$file"
+  awk -v hdr="${prefix}${header}" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      $0 == hdr { found = 1; exit }
+      END { exit !found }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
 }
 
 # sdd_has_subsection <file> <parent_h2> <header_h3>
@@ -433,36 +493,33 @@ sdd_has_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" '
-    NR == 1 && $0 == "---" { fm = 1; next }
-    fm { if ($0 == "---") fm = 0; next }
-    /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
-    fence { next }
-    $0 == ph { inparent = 1; next }
-    /^## / { inparent = 0; next }
-    inparent && $0 == sh { found = 1; exit }
-    END { exit !found }
-  ' "$file"
+  awk -v ph="## $parent" -v sh="### $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      $0 == ph { inparent = 1; next }
+      /^## / { inparent = 0; next }
+      inparent && $0 == sh { found = 1; exit }
+      END { exit !found }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
 }
 
 # sdd_body_subsection <file> <parent_h2> <header_h3>
 #   Prints the content under `### header_h3` inside `## parent_h2`, up to the
-#   next H3, the next H2, or EOF. Empty if the subsection is not there.
+#   next H3, the next H2, or EOF. Empty if the subsection is not there. The
+#   FIRST match wins: the parent rule is gated on `!capture` so that a repeated
+#   `## parent` later in the file cannot re-arm the scan and concatenate two
+#   subsection bodies into one answer.
 sdd_body_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" '
-    NR == 1 && $0 == "---" { fm = 1; next }
-    fm { if ($0 == "---") fm = 0; next }
-    /^[[:space:]]*(```|~~~)/ { fence = !fence; if (capture) print; next }
-    fence { if (capture) print; next }
-    $0 == ph { inparent = 1; next }
-    /^## / { if (capture) exit; inparent = 0; next }
-    inparent && $0 == sh { capture = 1; next }
-    /^### / && capture { exit }
-    capture { print }
-  ' "$file"
+  awk -v ph="## $parent" -v sh="### $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
+      !capture && $0 == ph { inparent = 1; next }
+      /^## / { if (capture) exit; inparent = 0; next }
+      inparent && $0 == sh { capture = 1; next }
+      /^### / && capture { exit }
+      capture { print }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
 }
 
 # sdd_entities_touched <file>

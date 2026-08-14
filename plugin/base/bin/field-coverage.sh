@@ -15,8 +15,10 @@
 #     no action touches it at all (entity → action coverage).
 #
 # Severity: lifecycle-progressive.
-#   - entity at lifecycle: draft     → warning
-#   - entity at lifecycle: accepted+ → error
+#   - entity at lifecycle: draft              → warning
+#   - entity at lifecycle: accepted or stable → error
+#   - entity at lifecycle: superseded         → warning (terminal: the entity
+#     is history, and history does not block a commit)
 #
 # Usage:
 #   .inspire/bin/field-coverage.sh                  # scan whole tree
