@@ -7,8 +7,22 @@
 #
 # Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
-#   - spec/sdd/...  the test SDD tree to scan
-#   - expect.json   { "exit": N, "findings": [{rule, target_glob, message_substring}, ...] }
+#   - spec/sdd/...  the domain tree to scan (exported as SDD_SPEC_ROOT)
+#   - spec/kb/...   the KB tree to scan, for the KB-wide rules that check
+#                   features / ADRs / screens (exported as SDD_KB_ROOT)
+#   - expect.json   {
+#                     "exit": N,
+#                     "findings":  [{rule, message_substring, severity?}, ...],
+#                     "forbidden": ["substring", ...]
+#                   }
+#
+# `severity` is optional; when given, the finding must carry that severity —
+# this is what makes a severity claim testable rather than merely asserted.
+# `forbidden` lists substrings that must NOT appear in the captured stderr. It
+# exists because a fixture expecting nothing passes vacuously otherwise: exit 0
+# plus an empty `findings` list matches any output at all, including the wrong
+# findings. Any fixture whose point is that something does *not* fire states so
+# in `forbidden`.
 #
 # Exit 0 if all tests pass, 1 otherwise.
 
@@ -53,7 +67,7 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     ( cd "$fixture" && bash setup.sh ) 2>/dev/null
   fi
   actual_stderr="$(mktemp)"
-  SDD_SPEC_ROOT="spec/sdd" "$script" 2>"$actual_stderr"
+  SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" "$script" 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null
 
@@ -66,11 +80,30 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   while IFS= read -r exp_finding; do
     rule_match="$(echo "$exp_finding" | jq -r '.rule')"
     msg_substr="$(echo "$exp_finding" | jq -r '.message_substring')"
-    if ! grep -q "\"rule\":\"$rule_match\".*$msg_substr" "$actual_stderr"; then
+    sev_match="$(echo "$exp_finding" | jq -r '.severity // ""')"
+    # sdd_finding emits severity before rule (_lib.sh), so a severity claim
+    # anchors to the left of the rule id in the same JSON line.
+    if [ -n "$sev_match" ]; then
+      pattern="\"severity\":\"$sev_match\".*\"rule\":\"$rule_match\".*$msg_substr"
+      label="severity=$sev_match, rule=$rule_match"
+    else
+      pattern="\"rule\":\"$rule_match\".*$msg_substr"
+      label="rule=$rule_match"
+    fi
+    if ! grep -q "$pattern" "$actual_stderr"; then
       pass=false
-      echo "FAIL $rule/$scenario (missing finding: rule=$rule_match, msg~='$msg_substr')" >&2
+      echo "FAIL $rule/$scenario (missing finding: $label, msg~='$msg_substr')" >&2
     fi
   done < <(jq -c '.findings[]?' "$expect_file")
+
+  # Absence assertions: each entry is a literal substring that must not appear.
+  while IFS= read -r forbidden; do
+    [ -z "$forbidden" ] && continue
+    if grep -Fq "$forbidden" "$actual_stderr"; then
+      pass=false
+      echo "FAIL $rule/$scenario (forbidden output present: '$forbidden')" >&2
+    fi
+  done < <(jq -r '.forbidden[]?' "$expect_file")
 
   if $pass; then
     echo "PASS $rule/$scenario"

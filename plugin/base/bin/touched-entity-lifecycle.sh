@@ -30,6 +30,13 @@ SCOPE="${1:-$SDD_SPEC_ROOT}"
 # A touched entity passes the gate iff it is at "accepted" or "stable"
 # (or "superseded" — terminal, treated as ≥ accepted by historical fiat).
 # Anything else (empty / "draft" / unknown) fails the gate.
+#
+# This is not the same use of "superseded" as sdd_progressive_severity's, and
+# the two disagreeing is deliberate. Here the value gates *which entities are
+# accepted as touch targets*: an entity that retired after reaching accepted
+# was never unspecified, so a stable action may still point at it. There it
+# grades *how loudly to complain about the object itself*, and a retired
+# object is history — it de-escalates to a warning.
 lifecycle_ge_accepted() {
   case "$1" in
     accepted|stable|superseded) return 0 ;;

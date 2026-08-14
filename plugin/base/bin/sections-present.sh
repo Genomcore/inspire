@@ -20,7 +20,9 @@
 #     ## Invariants
 #     ## Fields
 #
-# A section is "present" when an H2 header with the exact name exists.
+# A section is "present" when an H2 header with the exact name exists in the
+# body — not inside frontmatter, and not inside a fenced code block (a template
+# quoted in a fence documents a section, it does not declare one).
 # A section is "non-empty" when at least one line of body content (other than
 # whitespace and section-only structural noise) appears under it.
 #
@@ -71,13 +73,10 @@ check_action() {
   local missing=() empty=()
   local section
   for section in "${ACTION_SECTIONS[@]}"; do
-    # Section header presence: re-extract from body looking for ^## $section$.
-    if ! awk -v hdr="## $section" '
-          /^---$/ { fm = !fm; next }
-          fm { next }
-          $0 == hdr { found = 1; exit }
-          END { exit !found }
-        ' "$file"; then
+    # Section header presence, read the same way the body extractor reads it:
+    # frontmatter only when line 1 opens it, and a header inside a fenced
+    # block is documentation, not a section.
+    if ! sdd_has_section "$file" "$section"; then
       missing+=("$section")
       continue
     fi
@@ -105,12 +104,7 @@ check_entity() {
   local missing=() empty=()
   local section
   for section in "${ENTITY_SECTIONS[@]}"; do
-    if ! awk -v hdr="## $section" '
-          /^---$/ { fm = !fm; next }
-          fm { next }
-          $0 == hdr { found = 1; exit }
-          END { exit !found }
-        ' "$file"; then
+    if ! sdd_has_section "$file" "$section"; then
       missing+=("$section")
       continue
     fi
