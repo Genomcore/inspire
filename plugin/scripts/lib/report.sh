@@ -3,17 +3,26 @@
 #
 # Grouped by CONCEPT first, operation within. Operation-first says what
 # happens; concept-first says whose files are being touched, which is the
-# operator's actual question. Five sections, in order: RUNTIME (INSPIRE-
-# owned), KNOWLEDGE BASE (theirs, additive only), HARNESS, PRODUCT (theirs,
-# outside the runtime entirely — source/, prototype/, root CLAUDE.md — a
-# fourth _group_of bucket that needs its own _emit_group call precisely
-# because it is a legitimate answer to "whose files", not a catch-all to
-# drop), and LEFT ALONE (report-verb notes with no path at all).
+# operator's actual question. Five sections, in order:
+#   · RUNTIME — INSPIRE-owned;
+#   · KNOWLEDGE BASE — theirs; additive, except where a versioned hop retires
+#     a file it can prove derivable or asks before touching one it cannot, and
+#     the group's own title says which of the two this run is;
+#   · HARNESS;
+#   · PRODUCT — theirs, outside the runtime entirely (source/, prototype/,
+#     root CLAUDE.md): a fourth _group_of bucket with its own _emit_group call
+#     precisely because it is a legitimate answer to "whose files", not a
+#     catch-all to drop;
+#   · LEFT ALONE — report-verb notes with no path at all.
 #
 # Consumes two `<verb>\t<path>\t<detail>` files (see lib/hop-ops.sh and
 # lib/merge.sh's classify): the hop journal (verbs move|delete|keep|
-# unregister|report) and the verdict file (verbs noop|replace|keep|ask|
-# create|restore|delete). `noop` lines mean nothing needs to change and are
+# unregister|report|ask) and the verdict file (verbs noop|replace|keep|ask|
+# create|restore|delete). `ask` is the one verb BOTH streams emit — classify
+# asks about a file both sides changed, a hop asks before retiring one it
+# cannot prove derivable — and they render and tally identically, so the
+# renderer needs no idea which half a question came from. `noop` lines mean
+# nothing needs to change and are
 # deliberately not surfaced — the operator does not need a line for every
 # file INSPIRE chose not to touch.
 #
@@ -174,8 +183,30 @@ _render_report() {
   local merged; merged="$(mktemp)"
   cat "$j" "$v" 2>/dev/null | awk -F'\t' '$2=="" || !seen[$1 FS $2]++' > "$merged"
 
+  # THE KB TITLE IS A CLAIM, so it is decided by this run's contents rather than
+  # written once and hoped for. "additive only" was true while the KB was seeded
+  # and never otherwise touched; as of 0.7.0 a versioned hop retires an index it
+  # can prove derivable, and asks before touching one it cannot — and an
+  # "additive only" heading printed directly above a `delete` row is the report
+  # claiming what did not happen, which is the failure mode this renderer exists
+  # to prevent. A hop_report note cannot carry the qualification instead: notes
+  # render at the bottom, under LEFT ALONE — structurally distant and
+  # semantically opposite.
+  #
+  # The predicate mirrors _group_of's kb case rather than matching `inspire_kb/`
+  # alone: a pre-0.3 tree's `.inspire_kb/…` rows group here too, and a delete row
+  # under a title that denies deletions is the same lie either way.
+  # No version literal in the string: the predicate is version-agnostic (any
+  # release's hop can retire a KB file), so a title naming one release would be
+  # the same write-once-and-hope defect one layer in.
+  local kb_title='KNOWLEDGE BASE — yours, additive only'
+  if awk -F'\t' '($1=="delete" || $1=="ask") && $2 ~ /^\.?inspire_kb(\/|$)/ {found=1}
+                 END {exit !found}' "$merged"; then
+    kb_title='KNOWLEDGE BASE — yours; additive, except the index retirements below'
+  fi
+
   _emit_group 'RUNTIME — INSPIRE-owned'                          runtime "$merged"
-  _emit_group 'KNOWLEDGE BASE — yours, additive only'            kb      "$merged"
+  _emit_group "$kb_title"                                        kb      "$merged"
   _emit_group 'HARNESS'                                          harness "$merged"
   _emit_group 'PRODUCT — yours, outside the INSPIRE runtime'     product "$merged"
 
