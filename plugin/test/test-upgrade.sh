@@ -1142,11 +1142,13 @@ mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 
 # seed_kb must run on UPGRADE, not just init — a 0.2 project has to finally
 # receive the KB layers and files added since. Proving that needs care: 0.2.1's
-# skeleton happens to have the SAME 21-file list as today's base/kb, so the
-# hop's `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file is
-# present" and the check below passes with seed_kb stubbed to a no-op. Remove
-# one whole layer and one file inside a layer that stays, so only a seed can
-# put them back.
+# 21-file skeleton is a superset of today's 16-file base/kb (0.7.0 stopped
+# shipping the three _index.md seeds and the two _template.md seeds: 21 − 5 =
+# 16; glossary.md arrives later in this release, making 17), so the hop's
+# `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file is present"
+# and the check below passes with seed_kb stubbed to a no-op. Remove one whole
+# layer and one file inside a layer that stays, so only a seed can put them
+# back.
 rm -rf "$p/.inspire_kb/98_lessons"
 rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
 kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
@@ -1396,6 +1398,247 @@ check "half-migrated tree: the 0.2 hook registrations are left as they were" \
 check "half-migrated tree: no lock was rewritten" \
   "[ \"\$(jq -r .inspire_version '$p/.inspire.lock')\" = '0.2.1' ]"
 fixture_cleanup "$w"
+
+# ---- the 0.7.0 hop: derive-then-diff index retirement --------------------
+# ALL of these run against a version-patched FAKE plugin root, and must, until
+# the release is cut: with plugin.json at 0.6.0 the real root can never source
+# hops/0.7.0.sh — run_chain skips versions above the target (chain.sh:41-42),
+# and the no-manifest fallback (chain.sh:60-63) looks only for hops/<target>.sh.
+# Patching .version to 0.7.0 in a COPY makes that fallback fire, because the
+# copied manifests/ has no 0.7.0.json. Two pinned consequences: template_sha in
+# these updates is honestly "unknown" (write_lock finds no manifest for the
+# target), so nothing here asserts otherwise; and nothing here claims anything
+# about the real root's hop effects, which do not exist before the bump.
+fake7="$(mktemp -d)"
+cp -R "$PLUGIN_ROOT/." "$fake7/plugin"
+jq '.version="0.7.0"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" \
+  > "$fake7/plugin/.claude-plugin/plugin.json"
+FP7="$fake7/plugin"
+hop7="$PLUGIN_ROOT/scripts/hops/0.7.0.sh"
+seeds7="$HERE/fixtures/retired-seeds"
+
+# The blob fixtures pin the hop's constants: the seeds left base/kb in this
+# release, so these are the only in-tree copies of the shipped bytes. Each
+# constant is read out of the hop file itself — the left side is always a real
+# hash, so a renamed or missing constant fails loudly, never vacuously.
+eq "modules seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/02_modules__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_modules=/{print $2; exit}' "$hop7")"
+eq "patterns seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/05_screens-patterns__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_patterns=/{print $2; exit}' "$hop7")"
+eq "components seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/05_screens-components__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_components=/{print $2; exit}' "$hop7")"
+check "the five retired seeds are gone from base/kb (nothing to resurrect)" \
+   "[ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/patterns/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/components/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_template.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/06_spikes/_template.md' ]"
+
+# Pristine seeds: plan predicts 3 silent deletes and no questions, writes
+# nothing (record/act parity, files AND directories), and the subsequent real
+# update lands exactly the predicted split — the three files disappear and
+# NOTHING else does. The premise is asserted first: on drifted fixture seeds
+# every retire-verdict below would pass for the wrong reason.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+h7_pristine=0
+for h7_pair in \
+  "inspire_kb/02_modules/_index.md:02_modules__index.md" \
+  "inspire_kb/05_screens/patterns/_index.md:05_screens-patterns__index.md" \
+  "inspire_kb/05_screens/components/_index.md:05_screens-components__index.md"; do
+  [ "$(sha256_of "$p/${h7_pair%%:*}")" = "$(sha256_of "$seeds7/${h7_pair#*:}")" ] \
+    && h7_pristine=$((h7_pristine+1))
+done
+eq "premise: the v0.6.0 fixture carries all three seeds pristine" "$h7_pristine" "3"
+
+h7_before_f="$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+h7_before_d="$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+h7_list_before="$(cd "$p" && find . -type f | LC_ALL=C sort)"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+h7_rc=$?
+eq "fake-root plan exits 0" "$h7_rc" "0"
+check "plan's chain reaches 0.7.0 via the no-manifest fallback" \
+  "[ \"\$(printf '%s' \"\$h7_plan\" | jq -r '.chain|index(\"0.7.0\")')\" != null ]"
+eq "plan predicts exactly the 3 retirements (delete count)" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "3"
+eq "plan predicts no questions (merged ask count)" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "0"
+eq "plan predicts no questions (ask[])" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|length')" "0"
+check "plan names all three retirements in the post-hop space" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/patterns/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/components/_index.md' '$h7_plan_log'"
+eq "plan wrote no file" "$h7_before_f" \
+   "$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "plan removed no directory" "$h7_before_d" \
+   "$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_rc=$?
+eq "fake-root update exits 0" "$h7_rc" "0"
+check "the three retired indexes are gone" \
+  "[ ! -e '$p/inspire_kb/02_modules/_index.md' ] && \
+   [ ! -e '$p/inspire_kb/05_screens/patterns/_index.md' ] && \
+   [ ! -e '$p/inspire_kb/05_screens/components/_index.md' ]"
+# Record/act parity on the whole tree: the set of files that DISAPPEARED is
+# exactly the set the plan predicted — additions (lock, log, seeds) are the
+# update's normal business and are not losses.
+h7_lost="$(comm -23 <(printf '%s\n' "$h7_list_before") <(cd "$p" && find . -type f | LC_ALL=C sort))"
+eq "only the three predicted files disappeared" "$h7_lost" \
+"./inspire_kb/02_modules/_index.md
+./inspire_kb/05_screens/components/_index.md
+./inspire_kb/05_screens/patterns/_index.md"
+eq "update leaves no question open" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+
+# A diverged registry and a project-created ADR index are QUESTIONS, in the
+# plan and in an unresolved update alike — and the unresolved default keeps
+# both files while the two provably-pristine TOCs still retire around them.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+printf '# ADR index\n' > "$p/inspire_kb/01_adr/_index.md"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+eq "diverged plan asks about both files (ask[])" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|sort|join(" ")')" \
+   "inspire_kb/01_adr/_index.md inspire_kb/02_modules/_index.md"
+eq "diverged plan's merged ask count agrees" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "2"
+eq "the two pristine TOCs still retire around the questions" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "2"
+check "the footer counts the same two decisions" \
+  "grep -q '2 decision(s) needed' '$h7_plan_log'"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+check "unresolved update keeps the diverged registry and the ADR index" \
+  "[ -f '$p/inspire_kb/02_modules/_index.md' ] && [ -f '$p/inspire_kb/01_adr/_index.md' ]"
+eq "both questions are still open in the update's ask[]" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|sort|join(" ")')" \
+   "inspire_kb/01_adr/_index.md inspire_kb/02_modules/_index.md"
+check "the persisted report carries the ASK rows" \
+  "grep -q 'ASK      inspire_kb/02_modules/_index.md' '$p/.inspire/last-upgrade.log' && \
+   grep -q 'ASK      inspire_kb/01_adr/_index.md' '$p/.inspire/last-upgrade.log'"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+
+# --take-base retires the diverged file on the operator's word (journalled as
+# the delete it is), and a misspelled path warns on BOTH channels — warnings[]
+# and stderr — because silent-keep is exactly what a typo would otherwise look
+# like.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+h7_up_log="$(mktemp)"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" \
+         --take-base inspire_kb/02_modules/_index.md \
+         --take-base inspire_kb/02_moduelz/_index.md 2>"$h7_up_log")"
+h7_rc=$?
+eq "update with --take-base exits 0" "$h7_rc" "0"
+check "--take-base retired the diverged registry" \
+  "[ ! -e '$p/inspire_kb/02_modules/_index.md' ]"
+check "the resolution is journalled as the delete it became" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$p/.inspire/last-upgrade.log'"
+eq "no question stays open once resolved" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "exactly the misspelled path warns in warnings[]" \
+   "$(printf '%s' "$h7_up" | jq -r '[.warnings[]|select(contains("matched nothing"))]|length')" "1"
+check "the warning names the misspelled path, not the consumed one" \
+  "printf '%s' \"\$h7_up\" | jq -r '.warnings[]' | grep 'matched nothing' | grep -q '02_moduelz'"
+check "the same warning reached stderr" \
+  "grep -q '02_moduelz.*matched nothing' '$h7_up_log'"
+rm -f "$h7_up_log"
+fixture_cleanup "$w"
+
+# --take-mine keeps — and it must be journalled as a keep even when the
+# verdict would have retired the file silently (the pristine patterns TOC
+# here): a consumed resolution must appear in the journal under SOME verb, or
+# the unmatched-resolution warning would fire about an answer that was
+# honoured (the contract pinned in _warn_unmatched_resolutions).
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" \
+         --take-mine inspire_kb/02_modules/_index.md \
+         --take-mine inspire_kb/05_screens/patterns/_index.md 2>/dev/null)"
+check "--take-mine kept the diverged registry" \
+  "[ -f '$p/inspire_kb/02_modules/_index.md' ] && grep -q 'AUTH' '$p/inspire_kb/02_modules/_index.md'"
+check "--take-mine kept the pristine TOC the verdict would have retired" \
+  "[ -f '$p/inspire_kb/05_screens/patterns/_index.md' ]"
+check "the unresolved pristine TOC still retired around them" \
+  "[ ! -e '$p/inspire_kb/05_screens/components/_index.md' ]"
+check "both keeps are journalled as the operator's instruction" \
+  "grep -q 'keep     inspire_kb/02_modules/_index.md.*your instruction' '$p/.inspire/last-upgrade.log' && \
+   grep -q 'keep     inspire_kb/05_screens/patterns/_index.md.*your instruction' '$p/.inspire/last-upgrade.log'"
+eq "a consumed resolution is not an open question" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "a consumed resolution draws no unmatched warning" \
+   "$(printf '%s' "$h7_up" | jq -r '[.warnings[]|select(contains("matched nothing"))]|length')" "0"
+fixture_cleanup "$w"
+
+# Pre-0.3 parity — the case the whole root-resolution design exists for. In
+# record mode the 0.3.0 hop has journalled its moves but NOT performed them
+# (hop_mv's record branch returns before the mv), so when this hop is sourced
+# in the same ascending pass the KB is still at .inspire_kb/ — yet every path
+# it journals must already be in the POST-hop space, or the plan's ask[] hands
+# the operator a path no --take-* flag could ever match. The act run then has
+# to land exactly the split the record run predicted.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.1.0 "$w" "$REPO")"
+h7_pristine=0
+for h7_pair in \
+  ".inspire_kb/02_modules/_index.md:02_modules__index.md" \
+  ".inspire_kb/05_screens/patterns/_index.md:05_screens-patterns__index.md" \
+  ".inspire_kb/05_screens/components/_index.md:05_screens-components__index.md"; do
+  [ "$(sha256_of "$p/${h7_pair%%:*}")" = "$(sha256_of "$seeds7/${h7_pair#*:}")" ] \
+    && h7_pristine=$((h7_pristine+1))
+done
+eq "premise: the v0.1.0 fixture carries all three seeds pristine at .inspire_kb" \
+   "$h7_pristine" "3"
+h7_before_f="$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+h7_before_d="$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+h7_kb_before="$(cd "$p/.inspire_kb" && find . -type f | LC_ALL=C sort)"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+h7_rc=$?
+eq "pre-0.3 fake-root plan exits 0" "$h7_rc" "0"
+eq "the chain runs 0.3.0 then 0.7.0 in one pass" \
+   "$(printf '%s' "$h7_plan" | jq -cr '.chain')" '["0.3.0","0.7.0"]'
+eq "pre-0.3 plan predicts no questions" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|length')" "0"
+check "the predicted retirements are in the POST-hop path space" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/patterns/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/components/_index.md' '$h7_plan_log'"
+check "no retirement leaks the pre-hop path space" \
+  "! grep -q 'delete   \.inspire_kb/' '$h7_plan_log'"
+eq "pre-0.3 plan wrote no file" "$h7_before_f" \
+   "$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "pre-0.3 plan removed no directory" "$h7_before_d" \
+   "$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_rc=$?
+eq "pre-0.3 fake-root update exits 0" "$h7_rc" "0"
+check "the KB moved and the old root is gone" \
+  "[ -d '$p/inspire_kb' ] && [ ! -e '$p/.inspire_kb' ]"
+# Same subtree, same comparison as the 0.6.0 case: within the KB, the act run
+# lost exactly what the record run predicted — the rename is factored out by
+# comparing the two roots' relative trees, and seed additions are not losses.
+h7_lost="$(comm -23 <(printf '%s\n' "$h7_kb_before") <(cd "$p/inspire_kb" && find . -type f | LC_ALL=C sort))"
+eq "the KB lost exactly the three predicted files, nothing else" "$h7_lost" \
+"./02_modules/_index.md
+./05_screens/components/_index.md
+./05_screens/patterns/_index.md"
+eq "pre-0.3 update leaves no question open" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "the lock stamps 0.7.0 after the longest chain" \
+   "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+rm -rf "$fake7"
 
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]
