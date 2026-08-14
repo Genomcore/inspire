@@ -9,12 +9,16 @@
 #
 # What 0.7.0 retires, and on what evidence (one source of truth on disk —
 # the files ARE the index now):
-#   · 02_modules/_index.md          — pristine seed, or derivable: the registry
-#     table's row-set must equal what the module hubs themselves yield
-#     (H1 → Module, frontmatter `prefix:` → Prefix, basename → hub wikilink;
-#     hubs are 02_modules/*.md minus _*.md and README.md). Match → retire.
-#     A hub missing its H1 or `prefix:`, or any parse doubt → not provable →
-#     ask. Diverging rows → ask.
+#   · 02_modules/_index.md          — pristine seed, or derivable behind TWO
+#     gates, both required: the registry table's row-set must equal what the
+#     module hubs themselves yield (H1 → Module, frontmatter `prefix:` →
+#     Prefix, basename → hub wikilink; hubs are 02_modules/*.md minus _*.md
+#     and README.md), AND everything that is NOT a table row must still hash
+#     to the seed's own non-row remainder — authored prose around a
+#     perfectly-synced table is content the row compare cannot see, and
+#     content we cannot see is content we never delete. Both gates hold →
+#     retire. A hub missing its H1 or `prefix:`, zero hubs to derive from, or
+#     any parse doubt → not provable → ask. Diverging rows or prose → ask.
 #   · 05_screens/patterns/_index.md   — pristine seed only. The Purpose column
 #   · 05_screens/components/_index.md — is authored prose (State too), so a
 #     TOC that is not byte-identical to what we shipped is never "derived" at
@@ -25,13 +29,16 @@
 #     every other KB path are untouched by construction — they are simply not
 #     in the list above.
 #
-# THE THREE CONSTANTS are the sha256 of the seeds as shipped — byte-identical
-# from v0.1.0 through v0.6.0 (verified against every tag). The seeds leave
-# base/kb/ in this same release, so seed_kb cannot resurrect what this hop
-# retires, and the constants lose their in-tree source: the shipped bytes are
-# preserved as fixtures under plugin/test/fixtures/retired-seeds/, and
-# test-upgrade.sh asserts fixture hash == constant, so a drift in either is
-# caught.
+# THE FIRST THREE CONSTANTS are the sha256 of the seeds as shipped —
+# byte-identical from v0.1.0 through v0.6.0 (verified against every tag). The
+# FOURTH is the sha256 of the modules seed's NON-ROW remainder (every line
+# that is not a table row, extracted by the exact complement of the row
+# filter below) — the second gate of the derive-equal verdict. The seeds
+# leave base/kb/ in this same release, so seed_kb cannot resurrect what this
+# hop retires, and the constants lose their in-tree source: the shipped bytes
+# are preserved as fixtures under plugin/test/fixtures/retired-seeds/, and
+# test-upgrade.sh asserts fixture hash == constant for all four, so a drift
+# in either is caught.
 #
 # ROOT RESOLUTION IS EXISTENCE-FIRST AND MODE-BLIND, and must be: in record
 # mode on a pre-0.3 project, hop 0.3.0 has journalled its moves but NOT
@@ -61,6 +68,7 @@
 _h7_sha_modules='db10676e1219546074e6e8cbaef5e33b1a0c78c4e7166331a791b0502c19b724'
 _h7_sha_patterns='217d01a71ac258a06c1ea32eaf378d29872a3282d57d0afc2d1f303ecbb586e6'
 _h7_sha_components='b899a06e4614bafe0996dad1027659cb6219cd0dc80db899cb09bc1ecca9f213'
+_h7_sha_modules_prose='6e1bd27f4495caa4f0450f633302e510aae85eaab8f603f3f3ca73a788af09a2'
 
 _h7_root='inspire_kb'
 [ -d "$PROJECT_ROOT/inspire_kb" ] || _h7_root='.inspire_kb'
@@ -69,26 +77,61 @@ _h7_root='inspire_kb'
 # derive-then-diff must pass through the SAME funnel or the comparison tests
 # formatting instead of content. Backticks are presentation (`AUTH` and AUTH
 # are one prefix), wikilink display text is presentation ([[auth|Auth]] and
-# [[auth]] are one link), whitespace runs are presentation. Anything this
-# funnel does NOT normalize (markdown links instead of wikilinks, escaped
-# pipes, reordered columns) makes the sets differ, and differing sets ASK —
-# the safe direction, never a silent delete.
+# [[auth]] are one link), whitespace runs and CR line endings are
+# presentation. The funnel is only HALF the safety argument, though: it sees
+# table rows and nothing else, so the derive-equal verdict stands on TWO
+# gates — row-set equality through this funnel, AND the file's non-row
+# remainder hashing to the seed's (see _h7_nonrow_sha). Within the rows,
+# anything the funnel does not normalize (markdown links instead of
+# wikilinks, escaped pipes, reordered columns) makes the sets differ, and
+# differing sets ASK — the safe direction, never a silent delete. Plain
+# `sort`, never `sort -u`: the derived side cannot produce duplicates (two
+# hubs cannot share a basename), so a duplicated on-disk row must survive to
+# diverge, not collapse into the single row it duplicates.
 _h7_norm_rows() {
   sed -e 's/`//g' -e 's/\[\[\([^]|]*\)|[^]]*\]\]/[[\1]]/g' \
-    | awk '{ gsub(/[ \t]+/," "); sub(/^ +/,""); sub(/ +$/,""); if ($0 != "") print }' \
-    | LC_ALL=C sort -u
+    | awk '{ gsub(/[ \t\r]+/," "); sub(/^ +/,""); sub(/ +$/,""); if ($0 != "") print }' \
+    | LC_ALL=C sort
 }
 
 # The on-disk half: every table row in the file, minus separator rows and the
-# canonical header. A reshaped header is deliberately NOT dropped — it lands in
-# the row-set, the sets diverge, and the file is asked about rather than
-# misread.
+# canonical header. A separator is recognised by its SHAPE — at least one
+# cell, every non-empty cell nothing but dashes with optional alignment
+# colons — never by its character set alone: a loose class like [|: -]+ also
+# swallowed rows of empty cells, and anything this filter eats is invisible
+# to the compare, which only ever errs toward a silent delete. A reshaped
+# header is deliberately NOT dropped either — it lands in the row-set, the
+# sets diverge, and the file is asked about rather than misread.
 _h7_disk_rows() {
   awk '/^[ \t]*\|/' "$1" | _h7_norm_rows | awk '
-    /^[|: -]+$/ { next }
+    {
+      _h7_a_sep = 1; _h7_a_cells = 0
+      _h7_a_n = split($0, _h7_a_c, "|")
+      for (_h7_a_i = 1; _h7_a_i <= _h7_a_n; _h7_a_i++) {
+        _h7_a_cell = _h7_a_c[_h7_a_i]
+        gsub(/^[ \t]+|[ \t]+$/, "", _h7_a_cell)
+        if (_h7_a_cell == "") continue
+        _h7_a_cells++
+        if (_h7_a_cell !~ /^:?-+:?$/) { _h7_a_sep = 0; break }
+      }
+      if (_h7_a_sep && _h7_a_cells > 0) next
+    }
     tolower($0) == "| module | prefix | hub |" { next }
     { print }'
 }
+
+# The non-row remainder — the exact complement of _h7_disk_rows' extraction,
+# so rows and remainder partition the file with nothing in between. Hashed
+# from a pipe (mirroring lib/common.sh's tool choice) because record mode
+# writes no file anywhere, temp files included.
+_h7_sha_stdin() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print $1}'
+  else
+    shasum -a 256 | awk '{print $1}'
+  fi
+}
+_h7_nonrow_sha() { awk '!/^[ \t]*\|/' "$1" | _h7_sha_stdin; }
 
 # The derived half: one row per hub file. Returns 1 — not provable — the
 # moment any hub lacks a usable H1 or `prefix:`; a registry we cannot fully
@@ -118,6 +161,11 @@ _h7_derive_registry() {
     _h7_d_rows="${_h7_d_rows}| ${_h7_d_h1} | ${_h7_d_prefix} | [[${_h7_d_base%.md}]] |
 "
   done
+  # Zero rows is NOT a proof — it is nothing to prove WITH. An empty derived
+  # set compares equal to any table-less file (the example row deleted, the
+  # registry rewritten as a notes page), and "equal to nothing" must never
+  # retire anything. No hubs → not provable → ask, like every other doubt.
+  [ -n "$_h7_d_rows" ] || return 1
   printf '%s' "$_h7_d_rows" | _h7_norm_rows
   return 0
 }
@@ -144,7 +192,22 @@ _h7_rm() {
     _hop_journal delete "$_h7_r_rel"
     return 0
   fi
-  hop_rm "$_h7_r_actual"
+  # Act mode only ever reaches this hop through the post-hop root:
+  # verify_layout refuses a tree where both roots exist (lib/manifest.sh's
+  # ambiguity branch; layouts.tsv lists .inspire_kb under the 0.3 layout's
+  # must_not_exist), and a pre-0.3 chain arrives here only after 0.3.0's
+  # moves really happened. That argument lives three files away, though, so
+  # it is CHECKED rather than assumed: hop_rm journals exactly the path it is
+  # given, and handing it a pre-hop path would put an unanswerable path in
+  # the operator's report.
+  if [ "$_h7_r_actual" != "$_h7_r_rel" ]; then
+    log "INSPIRE: refusing to delete '$_h7_r_rel' — act mode resolved the KB at"
+    log "  '$_h7_root/', which is not the post-hop root. This is a bug in the"
+    log "  hop or the chain, not in your project. Nothing was deleted."
+    _hop_failed
+    return 1
+  fi
+  hop_rm "$_h7_r_rel"
 }
 
 # One decision per file, in the one order that honours both the operator and
@@ -179,10 +242,15 @@ if [ -e "$_h7_abs" ]; then
   if [ -f "$_h7_abs" ] && [ "$(sha256_of "$_h7_abs")" = "$_h7_sha_modules" ]; then
     _h7_verdict=retire
   elif [ -f "$_h7_abs" ] && _h7_derived="$(_h7_derive_registry "$PROJECT_ROOT/$_h7_root/02_modules")"; then
-    if [ "$_h7_derived" = "$(_h7_disk_rows "$_h7_abs")" ]; then
+    # BOTH gates, and only then: rows the hubs re-derive, around prose that is
+    # still the seed's. The row compare is blind to everything that is not a
+    # table row, so authored content above or below a perfectly-synced table
+    # would otherwise be deleted unseen.
+    if [ "$_h7_derived" = "$(_h7_disk_rows "$_h7_abs")" ] \
+       && [ "$(_h7_nonrow_sha "$_h7_abs")" = "$_h7_sha_modules_prose" ]; then
       _h7_verdict=retire
     else
-      _h7_detail='edited: its rows differ from what the module hubs derive — keep (default) or retire with --take-base; as of 0.7.0 the hub files themselves are the registry'
+      _h7_detail='edited: its rows or its prose differ from the seeded registry the module hubs derive — keep (default) or retire with --take-base; as of 0.7.0 the hub files themselves are the registry'
     fi
   fi
   _h7_settle 'inspire_kb/02_modules/_index.md' "$_h7_verdict" "$_h7_detail"
@@ -220,11 +288,10 @@ fi
 # are their own lines above, and their absence is itself the answer when a
 # project already carries none of these. No imperative verbs (see 0.3.0's
 # lesson): what to do with a KEPT index is the operator's call.
+#
+# The _h7_* helpers stay defined after the source, deliberately: the prefix
+# means they collide with nothing (see the header rule in lib/hop-ops.sh), and
+# test-upgrade.sh drives the derive/normalize layer through them directly.
+# hop_report always returns 0, which is what a sourced hop's LAST command must
+# do — the real failure channel is HOP_FAILED, never the exit status.
 hop_report 'As of 0.7.0 the KB keeps no index mirrors: module hubs are enumerated by glob (inspire_kb/02_modules/*.md minus _*.md and README.md), and pattern/component entries carry their own Purpose and State.'
-
-# The chain sources every hop into one shell; the helpers are single-use and
-# prefixed, so this is hygiene, not correctness. `unset` returns 0, which is
-# also what a sourced hop's LAST command must do (see HOP_FAILED in
-# lib/hop-ops.sh — the real failure channel is the counter, never the status).
-unset -f _h7_norm_rows _h7_disk_rows _h7_derive_registry _h7_rm _h7_settle
-unset _h7_sha_modules _h7_sha_patterns _h7_sha_components _h7_root _h7_abs _h7_verdict _h7_detail _h7_derived

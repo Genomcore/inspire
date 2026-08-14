@@ -61,6 +61,30 @@ check "CLAUDE.md is the stub"         "grep -q 'Provisional stub' '$proj/CLAUDE.
 check ".gitignore created"            "[ -f '$proj/.gitignore' ]"
 check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local.json' '$proj/.gitignore'"
 
+# Directory shipping is a GIT property, not a working-tree one: git tracks
+# files only, so a base/kb directory whose last tracked file was deleted still
+# exists in the checkout that deleted it while a fresh clone ships without it —
+# and seed_kb can only materialize what exists. The 0.7.0 seed retirement
+# emptied 05_screens/components/ exactly this way (kept only by a .gitkeep,
+# precedent 99_tracker/tickets/.gitkeep). Two halves, or either goes vacuous:
+# every on-disk base/kb directory must hold at least one TRACKED file, and
+# every tracked base/kb directory must have materialized into the project.
+kb_untracked_dirs=0
+while IFS= read -r d; do
+  rel="${d#"$PLUGIN_ROOT"/}"
+  [ -n "$(git -C "$PLUGIN_ROOT" ls-files -- "$rel" 2>/dev/null)" ] \
+    || kb_untracked_dirs=$((kb_untracked_dirs+1))
+done < <(find "$PLUGIN_ROOT/base/kb" -type d)
+check "every on-disk base/kb directory ships at least one tracked file" \
+  "[ '$kb_untracked_dirs' = 0 ]"
+kb_missing_dirs=0
+while IFS= read -r d; do
+  [ -d "$proj/inspire_kb/$d" ] || kb_missing_dirs=$((kb_missing_dirs+1))
+done < <(git -C "$PLUGIN_ROOT" ls-files -- base/kb \
+         | sed -e 's|/[^/]*$||' -e 's|^base/kb||' -e 's|^/||' | sort -u)
+check "every git-tracked base/kb directory materialized on init" \
+  "[ '$kb_missing_dirs' = 0 ]"
+
 # Idempotency: a second init must not duplicate the settings block.
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype >/dev/null 2>&1

@@ -1142,13 +1142,13 @@ mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 
 # seed_kb must run on UPGRADE, not just init — a 0.2 project has to finally
 # receive the KB layers and files added since. Proving that needs care: 0.2.1's
-# 21-file skeleton is a superset of today's 16-file base/kb (0.7.0 stopped
-# shipping the three _index.md seeds and the two _template.md seeds: 21 − 5 =
-# 16; glossary.md arrives later in this release, making 17), so the hop's
-# `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file is present"
-# and the check below passes with seed_kb stubbed to a no-op. Remove one whole
-# layer and one file inside a layer that stays, so only a seed can put them
-# back.
+# 21-file skeleton covers nearly all of today's 17-file base/kb (0.7.0 stopped
+# shipping the three _index.md seeds and the two _template.md seeds, and added
+# 05_screens/components/.gitkeep to keep the emptied directory shipping:
+# 21 − 5 + 1 = 17; glossary.md arrives later in this release, making 18), so
+# the hop's `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file
+# is present" for everything but that .gitkeep. Remove one whole layer and one
+# file inside a layer that stays, so only a seed can put them back.
 rm -rf "$p/.inspire_kb/98_lessons"
 rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
 kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
@@ -1430,12 +1430,124 @@ eq "patterns seed blob matches the hop's pinned constant" \
 eq "components seed blob matches the hop's pinned constant" \
    "$(sha256_of "$seeds7/05_screens-components__index.md")" \
    "$(awk -F"'" '/^_h7_sha_components=/{print $2; exit}' "$hop7")"
+# The fourth constant — the seed's NON-ROW remainder, the second gate of the
+# derive-equal verdict — pinned the same way, via the same extraction the hop
+# itself uses (the exact complement of its row filter).
+eq "the modules seed's non-row remainder matches the hop's prose constant" \
+   "$(awk '!/^[ \t]*\|/' "$seeds7/02_modules__index.md" | shasum -a 256 | awk '{print $1}')" \
+   "$(awk -F"'" '/^_h7_sha_modules_prose=/{print $2; exit}' "$hop7")"
 check "the five retired seeds are gone from base/kb (nothing to resurrect)" \
    "[ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_index.md' ] && \
     [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/patterns/_index.md' ] && \
     [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/components/_index.md' ] && \
     [ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_template.md' ] && \
     [ ! -e '$PLUGIN_ROOT/base/kb/06_spikes/_template.md' ]"
+
+# ---- unit: the derive/normalize layer, driven directly --------------------
+# Sourcing the hop against an empty project performs no operation (neither KB
+# root exists, so every per-file driver skips) and leaves the _h7_* helpers
+# defined for direct calls — the same direct-drive precedent as the
+# hop_ops_init/run_chain section above. The doctrine hop_report is the one
+# journal row a no-op source produces.
+u7="$(mktemp -d)"; mkdir -p "$u7/proj"
+unset HOP_JOURNAL
+hop_ops_init "$u7/proj" /dev/null 1
+. "$PLUGIN_ROOT/scripts/hops/0.7.0.sh"
+eq "sourcing against an empty project journals nothing but the doctrine note" \
+   "$(awk -F'\t' '$1!="report"' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "0"
+
+eq "norm: backticks and whitespace runs are presentation" \
+   "$(printf '|  Auth  |  `AUTH`  |  [[auth]]  |\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: wikilink display text is presentation" \
+   "$(printf '| Auth | AUTH | [[auth|Auth]] |\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: CR line endings are presentation" \
+   "$(printf '| Auth | AUTH | [[auth]] |\r\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: duplicate rows survive to diverge (no sort -u)" \
+   "$(printf '| A | A | [[a]] |\n| A | A | [[a]] |\n' | _h7_norm_rows | wc -l | tr -d ' ')" "2"
+
+# The separator filter is shape-based: |---| rows (alignment colons included)
+# drop; the canonical header drops; a row of EMPTY cells and a reshaped header
+# both SURVIVE into the row-set, where they diverge and ask — the filter must
+# never eat content, because everything it eats is invisible to the compare.
+cat > "$u7/reg.md" <<'EOF'
+# Modules — registry
+
+| Module | Prefix | Hub |
+|--------|--------|-----|
+| Auth | `AUTH` | [[auth]] |
+| :--- | ---: | - |
+|  |  |  |
+| Hub | Module | Prefix |
+EOF
+eq "disk rows: separators and header drop; empty-cell and reshaped rows survive" \
+   "$(_h7_disk_rows "$u7/reg.md")" \
+"| Auth | AUTH | [[auth]] |
+| Hub | Module | Prefix |
+| | | |"
+
+mkdir -p "$u7/hubs"
+printf -- '---\nkind: module-hub\nprefix: AUTH              # trailing comment must strip\n---\n\n# Auth\n' > "$u7/hubs/auth.md"
+printf -- '---\nprefix: `BILL`\n---\n\n# Billing\n' > "$u7/hubs/billing.md"
+printf 'never a hub\n' > "$u7/hubs/_template.md"
+printf 'never a hub\n' > "$u7/hubs/README.md"
+eq "derive: H1 + prefix per hub; comment stripped; backticks normalized; _* and README skipped" \
+   "$(_h7_derive_registry "$u7/hubs")" \
+"| Auth | AUTH | [[auth]] |
+| Billing | BILL | [[billing]] |"
+
+mkdir -p "$u7/noh1"
+printf -- '---\nprefix: X\n---\nno heading here\n' > "$u7/noh1/x.md"
+_h7_derive_registry "$u7/noh1" >/dev/null 2>&1
+eq "derive: a hub missing its H1 is not provable (rc 1)" "$?" "1"
+
+mkdir -p "$u7/nopfx"
+printf -- '---\nkind: module-hub\n---\n\n# X\n' > "$u7/nopfx/x.md"
+_h7_derive_registry "$u7/nopfx" >/dev/null 2>&1
+eq "derive: a hub missing its prefix is not provable (rc 1)" "$?" "1"
+
+mkdir -p "$u7/nohubs"
+_h7_derive_registry "$u7/nohubs" >/dev/null 2>&1
+eq "derive: zero hubs prove nothing (rc 1)" "$?" "1"
+rm -rf "$u7"
+
+# ---- the derive-equal branch, end to end -----------------------------------
+# The branch a pristine fixture can never exercise: two real hubs, a registry
+# whose rows are exactly their derivation (in reverse order, one row
+# backticked, one carrying display text — so the equality is normalized and
+# order-insensitive, not byte-lucky), and the seed's own prose around the
+# table. Both gates hold → all three indexes retire, no questions.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf -- '---\nkind: module-hub\nprefix: AUTH              # the module'"'"'s feature / use-case ID prefix\n---\n\n# Auth\n' \
+  > "$p/inspire_kb/02_modules/auth.md"
+printf -- '---\nkind: module-hub\nprefix: BILL\n---\n\n# Billing\n' \
+  > "$p/inspire_kb/02_modules/billing.md"
+h7_reg="$p/inspire_kb/02_modules/_index.md"
+grep -v '_e\.g\._' "$h7_reg" > "$h7_reg.tmp" && mv "$h7_reg.tmp" "$h7_reg"
+printf '| Billing | `BILL` | [[billing]] |\n| Auth | AUTH | [[auth|Auth]] |\n' >> "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "derive-equal: hub-backed rows behind pristine prose retire silently" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, (.ask|length)]')" "[3,0]"
+
+# BLOCKER-1 regression: authored prose around a PERFECTLY-synced table is
+# content the row compare cannot see — the non-row gate must route it to ask.
+printf '\nTeam note: check with Ops before renaming modules.\n' >> "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "derive-equal is gated on pristine prose: an added note asks instead" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   '[2,["inspire_kb/02_modules/_index.md"]]'
+
+# BLOCKER-2 regression: zero hubs and a deleted example row must not compare
+# "equal to nothing" and retire — nothing to derive from is not a proof.
+rm -f "$p/inspire_kb/02_modules/auth.md" "$p/inspire_kb/02_modules/billing.md"
+grep -v '_e\.g\._' "$seeds7/02_modules__index.md" > "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "an empty derivation proves nothing: table-less registry asks" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   '[2,["inspire_kb/02_modules/_index.md"]]'
+fixture_cleanup "$w"
 
 # Pristine seeds: plan predicts 3 silent deletes and no questions, writes
 # nothing (record/act parity, files AND directories), and the subsequent real
@@ -1504,6 +1616,8 @@ fixture_cleanup "$w"
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
 printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
 printf '# ADR index\n' > "$p/inspire_kb/01_adr/_index.md"
+h7_reg_sha="$(sha256_of "$p/inspire_kb/02_modules/_index.md")"
+h7_adr_sha="$(sha256_of "$p/inspire_kb/01_adr/_index.md")"
 h7_plan_log="$(mktemp)"
 h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
 eq "diverged plan asks about both files (ask[])" \
@@ -1518,6 +1632,12 @@ check "the footer counts the same two decisions" \
 h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
 check "unresolved update keeps the diverged registry and the ADR index" \
   "[ -f '$p/inspire_kb/02_modules/_index.md' ] && [ -f '$p/inspire_kb/01_adr/_index.md' ]"
+# Kept means BYTE-untouched, not merely present — "keep" that rewrites is the
+# failure the whole default exists to rule out.
+eq "the kept registry is byte-identical" \
+   "$(sha256_of "$p/inspire_kb/02_modules/_index.md")" "$h7_reg_sha"
+eq "the kept ADR index is byte-identical" \
+   "$(sha256_of "$p/inspire_kb/01_adr/_index.md")" "$h7_adr_sha"
 eq "both questions are still open in the update's ask[]" \
    "$(printf '%s' "$h7_up" | jq -r '.ask|sort|join(" ")')" \
    "inspire_kb/01_adr/_index.md inspire_kb/02_modules/_index.md"
@@ -1561,11 +1681,14 @@ fixture_cleanup "$w"
 # honoured (the contract pinned in _warn_unmatched_resolutions).
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
 printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+h7_reg_sha="$(sha256_of "$p/inspire_kb/02_modules/_index.md")"
 h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" \
          --take-mine inspire_kb/02_modules/_index.md \
          --take-mine inspire_kb/05_screens/patterns/_index.md 2>/dev/null)"
 check "--take-mine kept the diverged registry" \
-  "[ -f '$p/inspire_kb/02_modules/_index.md' ] && grep -q 'AUTH' '$p/inspire_kb/02_modules/_index.md'"
+  "[ -f '$p/inspire_kb/02_modules/_index.md' ]"
+eq "--take-mine kept it byte-identical" \
+   "$(sha256_of "$p/inspire_kb/02_modules/_index.md")" "$h7_reg_sha"
 check "--take-mine kept the pristine TOC the verdict would have retired" \
   "[ -f '$p/inspire_kb/05_screens/patterns/_index.md' ]"
 check "the unresolved pristine TOC still retired around them" \
