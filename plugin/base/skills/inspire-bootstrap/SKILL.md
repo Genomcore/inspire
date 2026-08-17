@@ -302,6 +302,13 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 
 - `project.md`, `stack.md` and `theme.md` exist and parse.
 - `project.md` declares a valid `output_language`. Flag if missing/empty.
+- `glossary.md` exists and parses — a header row and its separator, then zero or more
+  data rows. That is the shape R4 of
+  [`_references/writing-style.md`](../_references/writing-style.md) consumes. **Zero
+  data rows is valid**, not a finding: an empty term list binds nothing and is the
+  honest state of a project that has settled no naming question yet. Flag a missing
+  file, a broken table, or a row whose approved term also appears in another row's
+  rejected synonyms.
 - `stack.md` has a `## Shape` section, and the declared layers are coherent with
   it (no frontend stack on a backend-only product; a data layer iff the shape
   deploys a database; a mobile stack iff mobile is in scope). Flag a `shape:
@@ -338,8 +345,9 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > project README follow
 > [`_references/writing-style.md`](../_references/writing-style.md). Their prose
 > sections are normative (R1–R6); token, shape and roster tables are structured
-> sections (R3, R4, R6). `glossary.md` is R4's own term list: this skill writes it from
-> the interview, every other skill reads it.
+> sections (R3, R4, R6). `glossary.md` is R4's own term list and sits in this layer, so
+> this skill owns writes to it: a row lands when an interview settles a naming
+> question, carrying the operator's own word. Every other skill reads it.
 
 1. **`review` is read-only.** `init` / `stack` / `theme` / `language` present a
    plan before writing.

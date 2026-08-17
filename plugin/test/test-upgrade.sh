@@ -1142,13 +1142,14 @@ mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 
 # seed_kb must run on UPGRADE, not just init — a 0.2 project has to finally
 # receive the KB layers and files added since. Proving that needs care: 0.2.1's
-# 21-file skeleton covers nearly all of today's 17-file base/kb (0.7.0 stopped
-# shipping the three _index.md seeds and the two _template.md seeds, and added
-# 05_screens/components/.gitkeep to keep the emptied directory shipping:
-# 21 − 5 + 1 = 17; glossary.md arrives later in this release, making 18), so
-# the hop's `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file
-# is present" for everything but that .gitkeep. Remove one whole layer and one
-# file inside a layer that stays, so only a seed can put them back.
+# 21-file skeleton covers nearly all of today's 18-file base/kb (0.7.0 stopped
+# shipping the three _index.md seeds and the two _template.md seeds, added
+# 05_screens/components/.gitkeep to keep the emptied directory shipping, and
+# added 00_bootstrap/glossary.md: 21 − 5 + 1 + 1 = 18), so the hop's
+# `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file
+# is present" for everything but that .gitkeep and the glossary. Remove one
+# whole layer and one file inside a layer that stays, so only a seed can put
+# them back.
 rm -rf "$p/.inspire_kb/98_lessons"
 rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
 kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
@@ -1607,6 +1608,15 @@ eq "only the three predicted files disappeared" "$h7_lost" \
 eq "update leaves no question open" \
    "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
 eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+# The release does not only RETIRE KB files, it adds one: 00_bootstrap/glossary.md,
+# which a v0.6.0 project cannot already have. This is the cross-version proof that
+# seed_kb's additive half still runs alongside the hop's deletions — and it is
+# asserted on the FAKE-root tree, never the real root: with plugin.json still at
+# 0.6.0 the real root has no 0.7.0 hop effects to assert (see the section header).
+check "the release's new KB file arrived (glossary seeded on upgrade)" \
+  "[ -f '$p/inspire_kb/00_bootstrap/glossary.md' ]"
+check "the seeded glossary carries the R4-consumable shape, zero data rows" \
+  "[ \"\$(grep -c '^|' '$p/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
 rm -f "$h7_plan_log"
 fixture_cleanup "$w"
 

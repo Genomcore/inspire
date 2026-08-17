@@ -266,6 +266,48 @@ check "KB regression: drifted skill still skipped, not overwritten" \
 rm -rf "$(dirname "$kbp")"
 
 # ---------------------------------------------------------------------------
+# 00_bootstrap/glossary.md is the KB file this release adds, so it is the one
+# file that exercises seed_kb's additive contract in both directions at once.
+# A project that predates it — every project upgrading INTO this release — must
+# RECEIVE it from an update; a project that already authored one must KEEP its
+# bytes. Removing the seeded copy and re-running update drives the exact code
+# path a cross-version upgrade takes (seed_kb runs unconditionally in both
+# modes, materialize.sh:963, and its "already on disk" branch adds only what is
+# missing beneath an existing layer); the genuine cross-version proof, on a
+# v0.6.0 fixture, lives in test-upgrade.sh's fake-root section.
+# ---------------------------------------------------------------------------
+gl="$(mktemp -d)/glproj"; mkdir -p "$gl"; ( cd "$gl" && git init -q )
+"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+check "GLOSSARY: seeded by init" \
+  "[ -f '$gl/inspire_kb/00_bootstrap/glossary.md' ]"
+# Ships EMPTY — header + separator and no data row. That is R4's no-op
+# condition, so the shape is the assertion, not merely the file's presence.
+check "GLOSSARY: ships with zero data rows" \
+  "[ \"\$(grep -c '^|' '$gl/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
+
+# Direction 1 — a project WITHOUT the file receives it from an update.
+rm -f "$gl/inspire_kb/00_bootstrap/glossary.md"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+check "GLOSSARY: an update seeds it into a project that lacks it" \
+  "[ -f '$gl/inspire_kb/00_bootstrap/glossary.md' ]"
+
+# Direction 2 — an operator's own glossary is never replaced. Assert on the
+# BYTES: "the file exists afterwards" passes even if update overwrote it with
+# the skeleton, which is precisely the failure this guards against.
+printf -- '# Glossary\n\n| Term | Rejected synonyms | Definition |\n|---|---|---|\n| tenant | organization, workspace | The billing account. |\n' \
+  > "$gl/inspire_kb/00_bootstrap/glossary.md"
+gl_before="$(shasum -a 256 "$gl/inspire_kb/00_bootstrap/glossary.md" | cut -d' ' -f1)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
+  --source-root source --prototype-root prototype >/dev/null 2>&1
+check "GLOSSARY: an operator's own glossary survives update byte-identical" \
+  "[ '$gl_before' = \"\$(shasum -a 256 '$gl/inspire_kb/00_bootstrap/glossary.md' | cut -d' ' -f1)\" ]"
+check "GLOSSARY: the operator's own row is still there" \
+  "grep -q 'organization, workspace' '$gl/inspire_kb/00_bootstrap/glossary.md'"
+rm -rf "$(dirname "$gl")"
+
+# ---------------------------------------------------------------------------
 # Regression: /inspire:init over a repo that ALREADY has an inspire_kb/ must
 # seed around it, never through it. The historical bug: init treated each
 # top-level KB layer as an INSPIRE-owned entry and `rm -rf`'d it before
