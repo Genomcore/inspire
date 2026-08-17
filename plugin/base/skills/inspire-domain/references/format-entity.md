@@ -47,6 +47,10 @@ Opt-in per-field H3 sub-section. Use for fields that need rationale, design note
 
 ## Externally populated entities
 
+_Reference material about the `population: external` frontmatter marker below — not
+a section of an entity document; the entity document's own section list is the six
+in [Section conventions](#section-conventions)._
+
 Some entities' rows are populated outside the SDD action layer — build-time catalogs (e.g. [[platform.action]]), sync mirrors of external systems, vendor feeds. Set `population: external` in frontmatter to mark these:
 
 ```markdown

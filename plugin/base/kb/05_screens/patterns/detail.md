@@ -1,5 +1,7 @@
 # Pattern: detail
 
+**Purpose:** show everything about one entity instance, on its own route.
+
 A **single-record view** — everything about one entity instance, on its own route
 (`/{module}/{resource}/:id`). Reached by clicking a row in a [`list`](list.md).
 

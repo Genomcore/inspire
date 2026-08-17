@@ -4,6 +4,8 @@ The format spec for action descriptors. SKILL.md owns the interview cadence and 
 
 An action descriptor lives at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`. The full-dotted-id filename (e.g. `auth/user/auth.user.create.md`) disambiguates Obsidian tabs and Quick Switcher, where bare verb filenames like `create.md` recur across entities. Dots — not `::` — because Windows forbids `:` in filenames.
 
+A ready-to-copy template of this shape ships at [`../templates/action.md.template`](../templates/action.md.template).
+
 ## Canonical shape
 
 ```markdown

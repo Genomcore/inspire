@@ -12,7 +12,7 @@ product; this layer holds its **hub**, decoupled from the layers it links.
                   # features (03_features/), screens (05_screens/), specs
                   # (04_domain/), spikes (06_spikes/) and module-scoped ADRs
     _index.md     # the module registry (list of all modules)
-    _template.md  # copy this for a new module hub
+    # new hub: copy from `.claude/skills/inspire-module/templates/module-hub.md.template`
     README.md     # this file
   ```
 

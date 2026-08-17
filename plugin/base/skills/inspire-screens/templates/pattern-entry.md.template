@@ -1,0 +1,33 @@
+---
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+---
+
+<!-- `list` and `detail` are the two shipped starters — starting points, not a closed
+     set. Add a new pattern entry whenever a screen's structure doesn't fit either. -->
+# Pattern: {pattern-name}
+
+**Purpose:** {one-line description of what this pattern is for — first body line, greppable}
+
+{One-paragraph description of the pattern.}
+
+## Structure
+
+1. {Structural element 1}
+2. {Structural element 2}
+
+Tokens (spacing, type, colors, density) come from the design system
+([`../design-system.md`](../design-system.md)) — do not restate them here.
+
+## Slots
+
+| Slot | What the screen provides |
+|------|--------------------------|
+| `{slot}` | {what it carries} |
+
+## Variants
+
+- **{Variant name}** — {when to use it}.
+
+## Notes
+
+- {caveats, related patterns, navigation rules}

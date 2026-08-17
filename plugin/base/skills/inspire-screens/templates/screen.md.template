@@ -1,0 +1,30 @@
+<!-- Required: H1, **Features:**, **Pattern:**, ## Instantiation.
+     Optional / presence-free: ## Module-specific deviations, ## Current prototype, ## Notes.
+     This split is the single source of truth for the two lists the validator encodes. -->
+# {Screen Title} — `/{path}`
+
+**Features:** FEAT-01, FEAT-02
+**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
+
+## Instantiation
+
+- **Data:** {the data source — a spec entity or the prototype's mock table}
+- **Primary action:** `[+ New X]` → `/{path}/new`
+- {other pattern slots per the pattern's API}
+
+<!-- Optional — only when the screen deviates from the pattern's defaults. -->
+## Module-specific deviations
+
+- {describe only what deviates from the pattern defaults}
+
+<!-- Optional — leave empty when aligned; omit the section entirely until a prototype target exists. -->
+## Current prototype
+
+- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}`, shell-prefixed in a multi-UI suite — or `none yet`}
+- **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
+  - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
+
+<!-- Optional — presence-free. -->
+## Notes
+
+- {domain-specific behavior, edge cases, user feedback that informed the design}

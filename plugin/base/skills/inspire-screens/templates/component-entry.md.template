@@ -1,0 +1,34 @@
+---
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+---
+
+# Component: {component-name}
+
+**Purpose:** {one-line description of what this component is for — first body line, greppable}
+**State:** implemented | to-extract
+
+{One-paragraph description of the component.}
+
+## Structure
+
+1. {Structural element 1}
+2. {Structural element 2}
+
+Tokens (spacing, type, colors, density) come from the design system
+([`../design-system.md`](../design-system.md)) — do not restate them here.
+
+## API / Slots
+
+| Prop / slot | What it carries |
+|------|--------------------------|
+| `{prop}` | {what it carries} |
+
+## Variants
+
+- **{Variant name}** — {when to use it}.
+
+## Instances
+
+<!-- While **State** is `to-extract`, list the adopters — the screens/prototype
+     routes still holding their own copy — this entry will absorb. -->
+- {screen or prototype route using this component}

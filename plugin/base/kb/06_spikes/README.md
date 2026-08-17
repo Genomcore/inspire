@@ -16,14 +16,15 @@ survives after the spike repo goes stale or is archived.
   ```
   06_spikes/
     {name}.md        # one per spike: repo link + imported learnings + gap analysis
-    _template.md     # copy this for a new spike
+    # new spike: copy from `.claude/skills/inspire-spike/templates/spike.md.template`
     README.md        # this file + the spike index below
   ```
 
 ## Adding a spike
 
-1. `/inspire_spike register {name}` copies `_template.md` → `{name}.md` and fills the
-   repo link, the question, scope, and covered features.
+1. `/inspire_spike register {name}` copies
+   `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md` and
+   fills the repo link, the question, scope, and covered features.
 2. `/inspire_spike capture {name}` harvests its learnings as a **gap analysis**
    against the vault — importing the signal it de-risked, leaving its rough shortcuts
    behind.

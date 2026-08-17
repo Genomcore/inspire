@@ -85,38 +85,10 @@ never appear in the partition.
 
 ### Template
 
-```markdown
----
-surfaces: [portal, admin]   # blast radius — list of roster ids, or `all`
----
-
-# {Title}
-
-**Status:** design
-**Modules affected:** [[module-a]], [[module-b]]
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
-     design = the design workspace (features + screen spec + horizontal prototype + specs).
-     prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
-       NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
-
-## Context
-What problem or question prompted this decision.
-
-## Decision
-What we decided and why.
-
-## Consequences
-What follows — positive and negative. Include breaking changes.
-
-### Breaking changes
-- ...
-
-## Alternatives considered
-1. **{alternative}.** Why rejected.
-
-## Related ADRs
-- [[adr-xxx]] — {relation}
-```
+Template: [`templates/adr.md.template`](templates/adr.md.template) — the
+`Supersedes:` header line is optional (add only when superseding, per the
+`supersede` subcommand below); the `surfaces:` frontmatter defaults suite-wide by
+omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
 
 ### Steps
 

@@ -226,38 +226,9 @@ surface id resolves are defined in
 [`_references/surface-scope.md`](../_references/surface-scope.md); read them
 there, they are not restated here.
 
-```markdown
----
-surfaces: [portal, admin]   # blast radius — list of roster ids, or `all`
----
-
-# {FEATURE-ID}: {Feature Name}
-
-> Source: [[../../02_modules/{module}]]
-
-## Actor
-{Primary persona}
-
-## Preconditions
-{What must be true before this flow starts}
-
-## Main flow
-1. {Step 1}
-2. {Step 2}
-
-## Alternative flows
-### AF-1: {Description}
-
-## Error flows
-### EF-1: {Description}
-
-## Postconditions
-{What is true after successful completion}
-
-## Acceptance criteria
-- [ ] {Testable criterion 1}
-- [ ] {Testable criterion 2}
-```
+Template: [`templates/use-case.md.template`](templates/use-case.md.template) —
+description, the `**State:**` / `**Priority:**` / `**Depends on:**` lines, and the
+acceptance-criteria id contract are documented there.
 
 ## Acceptance-criteria quality gate
 

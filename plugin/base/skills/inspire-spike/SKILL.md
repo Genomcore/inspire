@@ -27,9 +27,9 @@ asymmetry is central to `capture` below.
 Give the spike an identity in the vault and set up its learnings hygiene.
 
 1. **Identify + reference.** Create `06_spikes/{name}.md` from
-   `06_spikes/_template.md` (kebab-case): the **repo link**, the question it probes,
-   its scope, and the feature ids it covers. Add a one-line entry to the index in
-   `06_spikes/README.md`.
+   [`templates/spike.md.template`](templates/spike.md.template) (kebab-case): the
+   **repo link**, the question it probes, its scope, and the feature ids it covers.
+   Add a one-line entry to the index in `06_spikes/README.md`.
 2. **Inspect the spike repo's learnings hygiene.** Look at its `CLAUDE.md` (or
    equivalent) for a **structured way to record learnings**. If there is one, note
    where the learnings live so `capture` can find them.

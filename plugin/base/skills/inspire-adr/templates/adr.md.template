@@ -1,0 +1,31 @@
+---
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+---
+
+# {Title}
+
+**Status:** design
+**Modules affected:** [[module-a]], [[module-b]]
+<!-- Supersedes: [[old-adr-id]] — optional; add only when this ADR supersedes a prior one. -->
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+     design = the design workspace (features + screen spec + horizontal prototype + specs).
+     prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
+       NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
+
+## Context
+What problem or question prompted this decision.
+
+## Decision
+What we decided and why.
+
+## Consequences
+What follows — positive and negative. Include breaking changes.
+
+### Breaking changes
+- ...
+
+## Alternatives considered
+1. **{alternative}.** Why rejected.
+
+## Related ADRs
+- [[adr-xxx]] — {relation}

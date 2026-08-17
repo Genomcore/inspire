@@ -49,32 +49,10 @@ components.
 
 ## Screen file structure
 
-```markdown
-# {Screen Title} — `/{path}`
-
-**Features:** FEAT-01, FEAT-02
-**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
-
-## Instantiation
-
-- **Data:** {the data source — a spec entity or the prototype's mock table}
-- **Primary action:** `[+ New X]` → `/{path}/new`
-- {other pattern slots per the pattern's API}
-
-## Module-specific deviations
-
-- {describe only what deviates from the pattern defaults}
-
-## Current prototype
-
-- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}`, shell-prefixed in a multi-UI suite — or `none yet`}
-- **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
-  - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
-
-## Notes
-
-- {domain-specific behavior, edge cases, user feedback that informed the design}
-```
+Template: [`templates/screen.md.template`](templates/screen.md.template) — the
+template is the single source of which sections are required (H1, `**Features:**`,
+`**Pattern:**`, `## Instantiation`) versus optional/presence-free
+(`## Module-specific deviations`, `## Current prototype`, `## Notes`).
 
 The **Current prototype** section names the prototype route(s) realizing the screen
 and tracks **drift** — misalignments between the prototype and this spec, grouped by
@@ -283,8 +261,8 @@ the catalogs holding them stay suite-wide however their entries are scoped.
 
 Process: draft the file in `patterns/` or `components/`; document purpose, API/slots,
 structure (textual), variants, instances; if the underlying prototype component
-doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
-`_index.md`. Prefer adding a variant to an existing pattern over creating a new one.
+doesn't exist yet, set the entry's `**State:** to-extract` and list adopters.
+Prefer adding a variant to an existing pattern over creating a new one.
 
 ## Rules
 

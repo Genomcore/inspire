@@ -30,4 +30,4 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 ## Hard rules that apply here
 
 - **feature is upstream; no escape hatch.** `define` refuses an action descriptor with no feature wikilink in `## Purpose`. If the verb has no feature home, the operator runs `/inspire_feature create` first.
-- **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.
+- **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md), with copyable shapes at [`../../templates/action.md.template`](../../templates/action.md.template) / [`../../templates/entity.md.template`](../../templates/entity.md.template). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.

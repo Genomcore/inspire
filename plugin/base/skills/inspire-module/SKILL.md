@@ -151,7 +151,8 @@ component adoption > cosmetic.
 Scaffold a new module across the layers. The user provides the module name, an ID
 prefix (e.g. `MYM`), and a description.
 
-1. **Module hub:** `inspire_kb/02_modules/{module}.md` from the hub template —
+1. **Module hub:** `inspire_kb/02_modules/{module}.md` from the hub template
+   ([`templates/module-hub.md.template`](templates/module-hub.md.template)) —
    overview, relationships, the ID prefix, and empty link sections (features,
    screens, specs, ADRs). This is the module's home.
 2. **Register** it in `inspire_kb/02_modules/_index.md` (the module registry).

@@ -116,8 +116,10 @@ After any descriptor change, the agent reconciles the affected entity document �
 
 On-disk shape specs (consult when authoring; they govern the file, not the cadence):
 
-- Action descriptor → [`references/format-action.md`](references/format-action.md)
-- Entity document → [`references/format-entity.md`](references/format-entity.md)
+- Action descriptor → [`references/format-action.md`](references/format-action.md);
+  copyable shape at [`templates/action.md.template`](templates/action.md.template)
+- Entity document → [`references/format-entity.md`](references/format-entity.md);
+  copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
 - Externally populated entities use `population: external` — see `references/format-entity.md`.
 
 ## Rules
