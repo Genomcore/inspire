@@ -3,11 +3,52 @@
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
+REPO="$(cd -P "$HERE/../.." && pwd -P)"
 SCRIPT="$PLUGIN_ROOT/scripts/materialize.sh"
+. "$HERE/lib/fixtures.sh"
 pass=0; fail=0
 ok()   { echo "PASS $1"; pass=$((pass+1)); }
 bad()  { echo "FAIL $1"; fail=$((fail+1)); }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+
+# ---------------------------------------------------------------------------
+# The released baseline every DETECTING block runs against.
+#
+# `--mode update` and `--mode drift-check` both begin by identifying the
+# project's version, and identification is a fingerprint of the tree against the
+# shipped manifests — nothing else, deliberately, since a lock can lie. A
+# project built from the CURRENT tree cannot satisfy that premise mid-release:
+# the working tree diverges from the last released manifest a little further
+# with every commit. Measured on this commit, a current-root init scores exactly
+# 50% against manifests/0.6.0.json — the floor itself — and 47% once a block
+# edits one manifest-listed file and deletes another, which is a refusal, an
+# empty stdout, and a cascade of failures that say nothing about the code under
+# test.
+#
+# A RELEASE-built project has no such drift: v0.6.0 fingerprints 100% against
+# its own manifest today and at every future commit, and 97% after those same
+# two mutations. So every detecting block runs on a v0.6.0 fixture, exactly as
+# test-upgrade.sh does everywhere. The blocks that only ever call `--mode init`
+# stay on the current tree: init never detects, and testing init against the
+# current tree is the whole point of it.
+#
+# The builder runs `git archive` plus a full materialize, so it runs ONCE here
+# and each block takes a private copy to mutate. Chaining two updates onto one
+# copy is deliberately avoided: the first update reconciles the project to the
+# current tree, which lands it back on the same 50% knife-edge this exists to
+# leave behind.
+# ---------------------------------------------------------------------------
+FIXTURE_VERSION="0.6.0"
+FIXTURE_MANIFEST="$PLUGIN_ROOT/manifests/$FIXTURE_VERSION.json"
+FIXTURE_WORK="$(mktemp -d)"
+FIXTURE_BASE="$(fixture_from_tag "v$FIXTURE_VERSION" "$FIXTURE_WORK" "$REPO")"
+check "fixture: the v$FIXTURE_VERSION baseline built" \
+  "[ -n '$FIXTURE_BASE' ] && [ -f '$FIXTURE_BASE/.inspire.lock' ] && [ -d '$FIXTURE_BASE/inspire_kb' ]"
+check "fixture: its manifest ships, so detection has something to match" \
+  "[ -f '$FIXTURE_MANIFEST' ]"
+
+# fixture_copy <dest> — a private copy of the baseline, for one block to mutate.
+fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
 
 proj="$(mktemp -d)/proj"; mkdir -p "$proj"
 ( cd "$proj" && git init -q )
@@ -97,54 +138,70 @@ check "idempotent foreign key"        "jq -e '.permissions.allow[0]' '$proj/.cla
 # `keep` ("you changed it, we did not"), a deleted-but-still-shipped file
 # comes back `restore` ("you deleted this; restoring at the new version") —
 # both visible in the stderr report, rolled up as counts in the JSON.
-# Must run BEFORE the --skip test below: an update with --skip rebaselines the lock to
-# the drifted hash, after which a re-plan would correctly report it as unchanged.
 #
-# The fixture file is picked at RUN TIME, from the manifest for the installed
-# version: the verdict under test is "you changed it, we did not", so the file
-# must be one this release did not change either. A hardcoded pick goes red
-# whenever a release edits that particular file — the classifier then honestly
-# says "both changed", and a true statement about the release is reported as a
-# false statement about the classifier.
+# It runs on a v0.6.0 FIXTURE, not on the project init'd above: drift-check
+# detects, and a current-tree project cannot be identified once this block has
+# mutated two of the files the manifest lists (see the baseline note at the top).
+#
+# The two fixture files are picked at RUN TIME, from the manifest for the
+# baseline the project actually is: the verdict under test is "you changed it,
+# we did not", so the file must be one this release did not change either. A
+# hardcoded pick goes red whenever a release edits that particular file — the
+# classifier then honestly says "both changed", and a true statement about the
+# release is reported as a false statement about the classifier. The second pick
+# is the no-op witness: left untouched, it must stay unmentioned in the report,
+# because the report names every path it would act on and nothing else.
+dproj="$(mktemp -d)/dproj"
+fixture_copy "$dproj"
 drift_rel=""
+noop_witness=""
 while IFS="$(printf '\t')" read -r cand chash; do
   case "$cand" in .claude/skills/*.md) ;; *) continue ;; esac
   src="$PLUGIN_ROOT/base/skills/${cand#.claude/skills/}"
-  [ -f "$src" ] && [ -f "$proj/$cand" ] || continue
+  [ -f "$src" ] && [ -f "$dproj/$cand" ] || continue
   [ "$(shasum -a 256 "$src" | cut -d' ' -f1)" = "$chash" ] || continue
-  [ "$(shasum -a 256 "$proj/$cand" | cut -d' ' -f1)" = "$chash" ] || continue
-  drift_rel="$cand"
+  [ "$(shasum -a 256 "$dproj/$cand" | cut -d' ' -f1)" = "$chash" ] || continue
+  if [ -z "$drift_rel" ]; then drift_rel="$cand"; continue; fi
+  noop_witness="$cand"
   break
-done < <(jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' \
-           "$PLUGIN_ROOT/manifests/$manifest_version.json")
-check "dynamic drift fixture found a manifest-pristine candidate" \
-  "[ -n '$drift_rel' ]"
-drift="$proj/$drift_rel"
+done < <(jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' "$FIXTURE_MANIFEST")
+check "dynamic drift fixture found two manifest-pristine candidates" \
+  "[ -n '$drift_rel' ] && [ -n '$noop_witness' ]"
+check "premise: the validator this block deletes is one the baseline shipped" \
+  "jq -e '.files[\".inspire/bin/no-todos.sh\"]' '$FIXTURE_MANIFEST' >/dev/null"
+drift="$dproj/$drift_rel"
 printf '\nLOCAL EDIT\n' >> "$drift"
-rm -f "$proj/.inspire/bin/no-todos.sh"
-lock_before="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
+drift_edited="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
+rm -f "$dproj/.inspire/bin/no-todos.sh"
+lock_before="$(shasum -a 256 "$dproj/.inspire.lock" | cut -d' ' -f1)"
 dc_err="$(mktemp)"
-dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>"$dc_err")"
-lock_after="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
+dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$dproj" 2>"$dc_err")"
+lock_after="$(shasum -a 256 "$dproj/.inspire.lock" | cut -d' ' -f1)"
 check "drift-check parses"             "printf '%s' \"\$dc\" | jq -e . >/dev/null"
+# The baseline is asserted from the run itself, so a fixture-builder regression
+# is loud here rather than mysterious three assertions later.
+check "drift-check identified the project as v$FIXTURE_VERSION" \
+  "grep -q 'INSPIRE upgrade — $FIXTURE_VERSION' '$dc_err'"
 check "drift-check finds the edit"     "grep -q '$drift_rel.*you changed it, we did not' '$dc_err'"
 check "drift-check finds the deletion" "grep -q 'no-todos.sh.*restoring at the new version' '$dc_err'"
 check "drift-check lists unchanged"    "[ \"\$(printf '%s' \"\$dc\" | jq '.verdicts.noop')\" -gt 0 ]"
+check "the untouched pristine file is one of the unchanged (never named)" \
+  "! grep -q '$noop_witness' '$dc_err'"
 check "drift-check is read-only"       "[ '$lock_before' = \"\$lock_after\" ]"
 rm -f "$dc_err"
-# Restore the deleted validator so the --skip test below starts from a known state.
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
-  --source-root source --prototype-root prototype \
-  --skip "$drift_rel" >/dev/null 2>&1
-check "missing file restored"          "[ -x '$proj/.inspire/bin/no-todos.sh' ]"
 
-# --skip must not overwrite a drifted file.
-before="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+# One update does both jobs: it restores what the operator deleted and leaves
+# what they edited alone. The second update this block used to run is gone on
+# purpose — it started from a project the first update had already reconciled to
+# the current tree, which is exactly the unidentifiable state the fixture exists
+# to avoid.
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$dproj" \
   --source-root source --prototype-root prototype \
   --skip "$drift_rel" >/dev/null 2>&1
-after="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
-check "SKIPPED FILE UNTOUCHED"        "[ '$before' = '$after' ]"
+check "missing file restored"          "[ -x '$dproj/.inspire/bin/no-todos.sh' ]"
+check "SKIPPED FILE UNTOUCHED" \
+  "[ '$drift_edited' = \"\$(shasum -a 256 '$drift' | cut -d' ' -f1)\" ]"
+rm -rf "$(dirname "$dproj")"
 
 # --dry-run writes nothing.
 clean="$(mktemp -d)/p2"; mkdir -p "$clean"; ( cd "$clean" && git init -q )
@@ -194,9 +251,13 @@ rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname 
 # exactly the way update/SKILL.md tells the skill to — drift-check first,
 # --skip each drifted path — and assert nothing under inspire_kb/ moved.
 # ---------------------------------------------------------------------------
-kbp="$(mktemp -d)/kbproj"; mkdir -p "$kbp"; ( cd "$kbp" && git init -q )
-"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
-  --source-root source --prototype-root prototype >/dev/null 2>&1
+#
+# On a v0.6.0 fixture, for the reason in the baseline note: this block ends in
+# an `update`, and an update identifies the project first. That also makes it a
+# genuine cross-version run rather than a same-version no-op — which is what an
+# operator's `/inspire:update` actually is.
+kbp="$(mktemp -d)/kbproj"
+fixture_copy "$kbp"
 
 # Author realistic project content across several KB layers.
 mkdir -p "$kbp/inspire_kb/02_modules/billing"
@@ -227,6 +288,22 @@ lesson_before="$(shasum -a 256 "$kbp/inspire_kb/98_lessons/20260715_example-less
 ticket_before="$(shasum -a 256 "$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md" | cut -d' ' -f1)"
 design_before="$(shasum -a 256 "$kbp/inspire_kb/05_screens/design-system.md" | cut -d' ' -f1)"
 kb_count_before="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
+kb_list_before="$(mktemp)"
+( cd "$kbp/inspire_kb" && find . -type f | LC_ALL=C sort ) > "$kb_list_before"
+
+# What a cross-version update OWES this KB: seed_kb is strictly additive, so the
+# arithmetic is exactly "every skeleton file base/kb ships that this baseline
+# lacks, and nothing else". Deriving it from the tree rather than naming a
+# number keeps the assertion true across releases — a v0.6.0 project predates
+# both of the files this release adds, and the next release will add others.
+kb_seeds_owed=""
+while IFS= read -r rel; do
+  [ -z "$rel" ] && continue
+  [ -f "$kbp/inspire_kb/$rel" ] || kb_seeds_owed="$kb_seeds_owed$rel "
+done < <(cd "$PLUGIN_ROOT/base/kb" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)
+kb_seeds_n="$(printf '%s' "$kb_seeds_owed" | wc -w | tr -d ' ')"
+check "premise: the baseline predates at least one KB seed this release ships" \
+  "[ '$kb_seeds_n' -gt 0 ]"
 
 # Also drift a runtime file and delete another, so the update call below
 # mirrors a real operator run against a divergent runtime.
@@ -267,8 +344,31 @@ check "KB regression: customized design-system.md survives update" \
   "[ -f '$kbp/inspire_kb/05_screens/design-system.md' ] && [ '$design_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/05_screens/design-system.md' | cut -d' ' -f1)\" ]"
 
 kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
-check "KB regression: no KB files added or removed by update" \
-  "[ \"\$kb_count_before\" = \"\$kb_count_after\" ]"
+# The old form of this assertion — "no KB files added or removed" — was true
+# only because the project was init'd from the same tree it then updated from.
+# Across versions the honest claim is narrower and stronger: the update adds
+# EXACTLY the seeds the baseline lacks, and removes nothing at all.
+kb_seeds_missing_after=0
+for rel in $kb_seeds_owed; do
+  [ -f "$kbp/inspire_kb/$rel" ] || kb_seeds_missing_after=$((kb_seeds_missing_after+1))
+done
+check "KB regression: every owed KB seed arrived ($kb_seeds_n of them)" \
+  "[ '$kb_seeds_missing_after' = 0 ]"
+check "KB regression: the release's own new KB seed is one of them" \
+  "[ -f '$kbp/inspire_kb/00_bootstrap/glossary.md' ]"
+check "KB regression: update added exactly those seeds, no more" \
+  "[ \"\$kb_count_after\" = \"\$((kb_count_before + kb_seeds_n))\" ]"
+# Counts alone cannot see a removal that an addition cancels out, and losing a
+# KB file is the entire failure this block exists to catch — so the paths are
+# compared, not just tallied.
+kb_lost=0
+while IFS= read -r rel; do
+  [ -z "$rel" ] && continue
+  [ -f "$kbp/inspire_kb/$rel" ] || kb_lost=$((kb_lost+1))
+done < "$kb_list_before"
+check "KB regression: not one KB file present before the update went missing" \
+  "[ '$kb_lost' = 0 ]"
+rm -f "$kb_list_before"
 # The lock no longer carries a `files` map at all (Task 13), which is the
 # strongest possible form of "no inspire_kb entries in it": there is nothing in
 # the lock that could name a KB path, so no future --take-mine round-trip can
@@ -296,6 +396,12 @@ rm -rf "$(dirname "$kbp")"
 # missing beneath an existing layer); the genuine cross-version proof, on a
 # v0.6.0 fixture, lives in test-upgrade.sh's fake-root section.
 # ---------------------------------------------------------------------------
+#
+# The init half stays on the current tree — init never detects, and "does THIS
+# release's init seed the file" is the question. Both update directions run on
+# their own v0.6.0 fixture copy: they detect, and a v0.6.0 KB genuinely predates
+# the file, so direction 1 became the real cross-version proof rather than a
+# delete-and-recreate against the same tree it was seeded from.
 gl="$(mktemp -d)/glproj"; mkdir -p "$gl"; ( cd "$gl" && git init -q )
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
@@ -305,27 +411,40 @@ check "GLOSSARY: seeded by init" \
 # condition, so the shape is the assertion, not merely the file's presence.
 check "GLOSSARY: ships with zero data rows" \
   "[ \"\$(grep -c '^|' '$gl/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
+rm -rf "$(dirname "$gl")"
 
-# Direction 1 — a project WITHOUT the file receives it from an update.
-rm -f "$gl/inspire_kb/00_bootstrap/glossary.md"
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
+# Direction 1 — a project from BEFORE the file existed receives it from an
+# update. The premise is asserted, because a baseline that already carried the
+# file would make the direction vacuous.
+gl1="$(mktemp -d)/gl1"
+fixture_copy "$gl1"
+check "GLOSSARY: premise — the v$FIXTURE_VERSION baseline predates the file" \
+  "[ ! -f '$gl1/inspire_kb/00_bootstrap/glossary.md' ]"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl1" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
 check "GLOSSARY: an update seeds it into a project that lacks it" \
-  "[ -f '$gl/inspire_kb/00_bootstrap/glossary.md' ]"
+  "[ -f '$gl1/inspire_kb/00_bootstrap/glossary.md' ]"
+check "GLOSSARY: what the update seeded has zero data rows too" \
+  "[ \"\$(grep -c '^|' '$gl1/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
+rm -rf "$(dirname "$gl1")"
 
 # Direction 2 — an operator's own glossary is never replaced. Assert on the
 # BYTES: "the file exists afterwards" passes even if update overwrote it with
-# the skeleton, which is precisely the failure this guards against.
+# the skeleton, which is precisely the failure this guards against. Its own
+# fixture copy, because an update already run is an update that has reconciled
+# the project to the current tree.
+gl2="$(mktemp -d)/gl2"
+fixture_copy "$gl2"
 printf -- '# Glossary\n\n| Term | Rejected synonyms | Definition |\n|---|---|---|\n| tenant | organization, workspace | The billing account. |\n' \
-  > "$gl/inspire_kb/00_bootstrap/glossary.md"
-gl_before="$(shasum -a 256 "$gl/inspire_kb/00_bootstrap/glossary.md" | cut -d' ' -f1)"
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl" \
+  > "$gl2/inspire_kb/00_bootstrap/glossary.md"
+gl_before="$(shasum -a 256 "$gl2/inspire_kb/00_bootstrap/glossary.md" | cut -d' ' -f1)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gl2" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
 check "GLOSSARY: an operator's own glossary survives update byte-identical" \
-  "[ '$gl_before' = \"\$(shasum -a 256 '$gl/inspire_kb/00_bootstrap/glossary.md' | cut -d' ' -f1)\" ]"
+  "[ '$gl_before' = \"\$(shasum -a 256 '$gl2/inspire_kb/00_bootstrap/glossary.md' | cut -d' ' -f1)\" ]"
 check "GLOSSARY: the operator's own row is still there" \
-  "grep -q 'organization, workspace' '$gl/inspire_kb/00_bootstrap/glossary.md'"
-rm -rf "$(dirname "$gl")"
+  "grep -q 'organization, workspace' '$gl2/inspire_kb/00_bootstrap/glossary.md'"
+rm -rf "$(dirname "$gl2")"
 
 # ---------------------------------------------------------------------------
 # Regression: /inspire:init over a repo that ALREADY has an inspire_kb/ must
@@ -580,11 +699,14 @@ check "guard: pre-0.3 lock — update did not rewrite the lock" \
   "[ '$v2lock_before' = \"\$(shasum -a 256 '$v2p/.inspire.lock' | cut -d' ' -f1)\" ]"
 check "guard: pre-0.3 lock — update seeded no KB beside it" "[ ! -e '$v2p/inspire_kb' ]"
 
-# The guard must not fire on a real v0.3 lock — a false positive here would
-# break every legitimate update. Needs its own sandbox: $proj is gone by now.
-okp="$(mktemp -d)/proj"; mkdir -p "$okp"; ( cd "$okp" && git init -q )
-"$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$okp" \
-  --source-root source --prototype-root prototype >/dev/null 2>&1
+# The guard must not fire on a real post-0.3 lock — a false positive here would
+# break every legitimate update. A v0.6.0 fixture IS that project: a real
+# release, a real lock, and a tree its own manifest identifies at 100%. Init'ing
+# from the current tree instead put this pair on the 50% floor, one added
+# base/ file away from failing for a reason that has nothing to do with the
+# guard under test.
+okp="$(mktemp -d)/proj"
+fixture_copy "$okp"
 "$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
 rc_okdrift=$?
 check "guard: real v0.3 lock still drift-checks" "[ '$rc_okdrift' = 0 ]"
@@ -596,6 +718,7 @@ check "guard: real v0.3 update kept the KB" \
   "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" -ge '$kb_expect' ]"
 
 rm -rf "$(dirname "$gp")" "$(dirname "$v2p")" "$(dirname "$okp")" "$notplugin"
+fixture_cleanup "$FIXTURE_WORK"
 
 echo ""; echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
