@@ -226,6 +226,9 @@ Render findings in the shared operator-facing format from
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames,
 > surface ids) stay verbatim.
 
+> **Writing contract.** The roster's prose and every review report follow
+> [`_references/writing-style.md`](../_references/writing-style.md).
+
 1. **This skill writes surface ids; every other skill only reads them.** The
    never-invent rule in
    [`_references/surface-scope.md`](../_references/surface-scope.md) binds here too

@@ -273,6 +273,13 @@ depends on a behavioral contract, chain to `/inspire_domain`.
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
 
+> **Writing contract.** Use-case files follow
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Preconditions`,
+> `## Main flow`, `## Alternative flows`, `## Error flows` and `## Postconditions` are
+> normative prose (R1–R6). `## Acceptance criteria` binds R1–R4 and R6, and each
+> criterion states an observable outcome — no *fast*, *intuitive*, *appropriate*.
+> Referenced, never restated — read the rules there.
+
 1. **The use-case file is the source of truth.** Everything else (screen spec,
    prototype, specs) references or realizes it.
 2. **One file per use case.** The filename matches the feature ID.

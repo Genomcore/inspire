@@ -66,9 +66,10 @@ files under `inspire_kb/03_features/{module}/`.
 
 ### 3. Quality checks
 
-- **No historical language** anywhere (`"previously"`, `"used to"`,
-  `"replaces"`, `"removed"`, `"migrated from"`, strikethrough `~~text~~`, …). The
-  KB describes the present state, not its history.
+- **The writing contract holds** — R1–R6 of
+  [`_references/writing-style.md`](../_references/writing-style.md), R6 (present
+  state, never history) above all. The closed token list and its section-scoped
+  exemptions live there.
 - No embedded ADR content (>~10 lines of rationale without an ADR link).
 - All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `components/`,
   `01_adr/`, `design-system.md`).
@@ -276,6 +277,12 @@ Remove a module across all layers. Use with caution.
 > whatever language the conversation is in, and independently of the product's own
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
+
+> **Writing contract.** Module hubs follow
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Overview` and
+> `## Relationships` are normative prose (R1–R6); the `## Use cases`, `## Screens`,
+> `## Domain` and `## Module ADRs` tables are structured sections (R3, R4, R6).
+> Referenced, never restated — read the rules there.
 
 1. **`review` is read-only.** It reports, suggests fixes, and recommends other
    skills; it never edits files.

@@ -91,8 +91,8 @@ cross-cutting rather than one feature/screen has a higher-level home: a **decisi
 design pattern** → the design system (`/inspire_bootstrap design-system`); a **stack
 pitfall** → `00_bootstrap`; **future work** → a task (`/inspire_task`); a question the
 horizontal **can't resolve** → a spike (`/inspire_spike`). Nothing accumulates in a
-`03_*` file for the horizontal — a running learnings log would fight INSPIRE's
-"present state, not history" rule anyway.
+`03_*` file for the horizontal — a running learnings log would fight R6 of the
+[writing contract](../_references/writing-style.md) anyway.
 
 **Surface, don't silently edit.** Propose each vault change to the user before
 writing shared artifacts (components, ADRs, design tokens); let the interactive
@@ -104,6 +104,9 @@ loop stay the user's.
 > learnings — in the project's declared `output_language` (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Machine-read
 > tokens (frontmatter keys/values, wikilink slugs, filenames) stay verbatim.
+
+> **Writing contract.** Vault edits and prototype learnings follow
+> [`_references/writing-style.md`](../_references/writing-style.md).
 
 1. **Specs are the source of truth.** Build what the screen spec says — no extra
    screens, tabs, or features "for completeness". If something's missing, evolve the

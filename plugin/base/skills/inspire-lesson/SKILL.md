@@ -150,6 +150,13 @@ Today this skill **captures** lessons. Applying them — the half that makes a l
 > [`_references/output-language.md`](../_references/output-language.md) still holds —
 > machine-read tokens stay verbatim.
 
+> **Writing contract.** Lessons follow
+> [`_references/writing-style.md`](../_references/writing-style.md) in full. Because
+> lessons are always `en`, R1–R6 apply here whatever the fork's `output_language` is.
+> The mechanical checks follow the *project's* declared language, so in a non-`en` fork
+> this contract lives entirely in your judgment. Atomicity is this layer's own local
+> rule, Rule 3 below.
+
 1. **Write-once.** Never edit a lesson after `note`. Revise by writing a new one with
    `--supersedes`; retire old ones only in bulk via `purge` on the archive.
 2. **One file per lesson**, named `YYYYMMDD_<slug>.md`; `id` = the stem.

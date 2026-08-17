@@ -147,6 +147,12 @@ via `create`).
 > whatever language the conversation is in; machine-read tokens (frontmatter
 > keys/values, wikilink slugs, filenames) stay verbatim.
 
+> **Writing contract.** ADR prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Context`,
+> `## Decision`, `## Consequences` and `## Alternatives considered` are normative prose
+> (R1–R6); `**Modules affected:**` and any tabular section are structured (R3, R4, R6).
+> R6 carries section-scoped exemptions this skill relies on — see Rule 5 below.
+
 1. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
    requires `promote`; `create` defaults to `design`.
 2. **Only `implemented` ADRs are immutable in content.** Supersede to change their
@@ -157,8 +163,13 @@ via `create`).
    codebase reference. Surface gaps within that reach.
 4. **Grep references on rename/supersede.** Always scan the vault when renaming an
    ADR or changing its ID.
-5. **No historical language in ADRs.** ADRs describe the decision context at the
-   time it was made; don't narrate migration history.
+5. **No historical language, per the writing contract.** R6 of
+   [`_references/writing-style.md`](../_references/writing-style.md): an ADR describes
+   the decision context, never a migration narrative. This rule is **deliberately
+   narrower than unconditional** — the contract exempts `### Breaking changes`
+   content, `## Related ADRs`, the `**Status:**` line and a `Supersedes:` header,
+   because this skill mandates those sections and a ban on their content would ban a
+   required section.
 6. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
 7. **Stamp every write.** After an ADR is written, run

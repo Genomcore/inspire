@@ -77,6 +77,11 @@ here?
 > [`_references/output-language.md`](../_references/output-language.md). Machine-read
 > tokens (frontmatter keys/values, wikilink slugs, filenames) stay verbatim.
 
+> **Writing contract.** Spike notes follow
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Question`,
+> `## Scope`, `## Learnings` and `## Outcome` are normative prose (R1–R6). R6 bites
+> hardest here: a learning states what is true, never what the spike tried first.
+
 1. **Never build the spike here.** The code lives in its external repo; this skill
    only registers and harvests. Building is the spike author's job (or `/inspire_code`
    for real implementation).

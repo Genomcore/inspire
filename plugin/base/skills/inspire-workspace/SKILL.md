@@ -74,7 +74,9 @@ and the output uses the exact skeleton in **Output format** below.
 For each module in scope, the module review performs:
 - Features structure (use-case files under `03_features/{module}/`)
 - screen spec structure (pattern/component compliance)
-- Quality checks (no historical language, IDs correct, wikilinks resolve)
+- Quality checks (the writing contract in
+  [`_references/writing-style.md`](../_references/writing-style.md) holds, IDs
+  correct, wikilinks resolve)
 - Cross-layer coverage (features ↔ screen spec ↔ prototype ↔ specs)
 - Drift consolidation and overengineering detection
 
@@ -298,6 +300,9 @@ Validate the vault structure at the top level (not module-scoped).
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in; machine-read tokens (frontmatter
 > keys/values, wikilink slugs, filenames) stay verbatim.
+
+> **Writing contract.** Review reports and findings follow
+> [`_references/writing-style.md`](../_references/writing-style.md).
 
 1. **`review` and `structure` are read-only.** They suggest and flag; they never
    edit files or invoke a fix-skill.

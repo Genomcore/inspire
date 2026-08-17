@@ -131,6 +131,13 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
 
+> **Writing contract.** Descriptor prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Purpose`,
+> `## Rationale` and `## Behavior` are normative prose (R1–R6); the `## Inputs`,
+> `## Outputs`, `## Entities` and `## Fields` tables are structured sections
+> (R3, R4, R6). Prosaic back-sourcing is stated there as a principle; the per-section
+> mechanics stay in [`references/format-action.md`](references/format-action.md).
+
 1. **`review`, `show`, `source`, `graph` are read-only.** They report, resolve, and visualize — never write files.
 2. **`define`, `update`, `refactor`, `delete`, `promote`, `demote` require operator approval** of each proposed change before writing. At `promote`, the
    skill may also propose endorsing the object; on an explicit yes, run

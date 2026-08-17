@@ -126,8 +126,7 @@ being invented.
    defines.
 5. **Reference components** — link, don't re-describe: a relative wikilink into
    `05_screens/components/` (`[[{rel-to-05_screens}/components/{name}]]`).
-6. **No ASCII layout diagrams** unless the screen is bespoke and can't be
-   expressed textually.
+6. **No ASCII layout diagrams** — stated once as Rule 6 under `## Rules`.
 7. **No inline mock data.** Reference the data source.
 8. **Register in the module's `_index.md`** — the one in the directory the screen
    lands in (nav, route map, feature coverage).
@@ -167,10 +166,11 @@ When uncertain which layer a finding belongs to, ask the user.
 4. **Component references resolve.** Every component wikilink resolves to a file in
    `05_screens/components/`, whatever its `../` depth.
 5. **Data reference is valid.**
-6. **No ASCII layout diagrams** unless bespoke.
+6. **No ASCII layout diagrams** — checked against Rule 6 under `## Rules`.
 7. **No inline mock data.**
-8. **Historical language is absent** ("previously", "replaces", "removed",
-   strikethrough).
+8. **The writing contract holds** — R1–R6 of
+   [`_references/writing-style.md`](../_references/writing-style.md), R6 (historical
+   language) first among them.
 9. **Route follows convention** — the form Rule 9 gives for the suite's UI count,
    and it matches the screen's own path.
 10. **Live prototype check.** When the prototype can be run, navigate every route
@@ -281,6 +281,13 @@ existing pattern over creating a new one.
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
 
+> **Writing contract.** Screens, pattern entries and component entries follow
+> [`_references/writing-style.md`](../_references/writing-style.md).
+> `## Instantiation`, `## Module-specific deviations` and `## Notes` are normative
+> prose (R1–R6); route, coverage and API tables are structured sections (R3, R4, R6).
+> Rule 6 below is this layer's own local contract — the writing contract points at it
+> rather than restating it.
+
 1. **Features are the source of truth for what exists.** Every screen traces to one
    or more features in `03_features`.
 2. **`design-system.md` is the source of truth for tokens.** No module redefines
@@ -291,9 +298,16 @@ existing pattern over creating a new one.
    don't redefine.
 5. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
    a screen grows.
-6. **No ASCII art for common layouts** — patterns describe layouts textually.
+6. **No ASCII layout diagrams in screen, pattern or component files, unless the
+   screen is bespoke and its layout cannot be expressed textually.** This is the
+   single statement of the rule for this layer; the create flow and the validate
+   checks reference it, and
+   [`_references/writing-style.md`](../_references/writing-style.md) points here
+   rather than restating it.
 7. **No inline mock data** — reference the data source.
-8. **No historical language** — specs describe the present.
+8. **The writing contract holds** — R1–R6 of
+   [`_references/writing-style.md`](../_references/writing-style.md), R6 (present
+   state, never history) above all.
 9. **Route convention** — `/{module}/...` while the suite has at most one UI
    surface; `{shell}/{module}/...` once it declares two or more, `{shell}` being
    that surface's roster `Shell` value (`/admin` → `/admin/billing/list`). Nested

@@ -334,6 +334,13 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > of the conversation language and of the product's own i18n; machine-read tokens
 > (frontmatter keys/values, slugs, filenames) stay verbatim.
 
+> **Writing contract.** `project.md`, `stack.md`, `theme.md`, `glossary.md` and the
+> project README follow
+> [`_references/writing-style.md`](../_references/writing-style.md). Their prose
+> sections are normative (R1–R6); token, shape and roster tables are structured
+> sections (R3, R4, R6). `glossary.md` is R4's own term list: this skill writes it from
+> the interview, every other skill reads it.
+
 1. **`review` is read-only.** `init` / `stack` / `theme` / `language` present a
    plan before writing.
 2. **Bootstrap is upstream of everything.** A change here can ripple to specs,

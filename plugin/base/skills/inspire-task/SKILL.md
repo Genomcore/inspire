@@ -105,6 +105,9 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 > tokens (frontmatter keys/values, enum values, `TASK-` IDs, filenames) stay
 > verbatim.
 
+> **Writing contract.** Ticket prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md).
+
 1. **One file per ticket.** Filename = `TASK-{id}.md`; the `id` field matches.
 2. **IDs never reused.** Don't delete files — archive them.
 3. **Open vs archived location is derived from `status`.** Keep the location
