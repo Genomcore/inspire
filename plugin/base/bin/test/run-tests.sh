@@ -12,9 +12,15 @@
 #                   features / ADRs / screens (exported as SDD_KB_ROOT)
 #   - expect.json   {
 #                     "exit": N,
+#                     "args":      ["scope", ...],
 #                     "findings":  [{rule, message_substring, severity?}, ...],
 #                     "forbidden": ["substring", ...]
 #                   }
+#
+# `args` is optional and defaults to none — the same argv-free invocation every
+# fixture used before it existed. It is the scope argument `review.sh` forwards
+# to every rule, and it exists so the scope contract (a rule checks `$1 ∩ its
+# own layers`, and nothing else) is testable rather than merely asserted.
 #
 # `severity` is optional; when given, the finding must carry that severity —
 # this is what makes a severity claim testable rather than merely asserted.
@@ -53,6 +59,12 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   fi
 
   expected_exit="$(jq -r '.exit' "$expect_file")"
+  # Optional argv. Read before the pushd so the expect file is found by the
+  # absolute path it already has.
+  fixture_args=()
+  while IFS= read -r fixture_arg; do
+    fixture_args+=("$fixture_arg")
+  done < <(jq -r '.args[]?' "$expect_file")
   script="$BIN_DIR/${rule}.sh"
   if [ ! -x "$script" ]; then
     echo "FAIL $rule/$scenario (rule script not executable: $script)" >&2
@@ -67,7 +79,8 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     ( cd "$fixture" && bash setup.sh ) 2>/dev/null
   fi
   actual_stderr="$(mktemp)"
-  SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" "$script" 2>"$actual_stderr"
+  SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \
+    "$script" ${fixture_args[@]+"${fixture_args[@]}"} 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null
 
@@ -113,6 +126,22 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   fi
   rm -f "$actual_stderr"
 done
+
+# _lib.sh is a library, not a rule: it emits no findings and has no fixture
+# directory either. Its readers are asserted directly by lib-tests.sh, wired in
+# here by hand for the same reason trust.sh is below.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  lib_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/lib-tests.sh" >"$lib_out" 2>&1; then
+    echo "PASS _lib.sh/readers"
+  else
+    failed=$((failed + 1))
+    echo "FAIL _lib.sh/readers" >&2
+    cat "$lib_out" >&2
+  fi
+  rm -f "$lib_out"
+fi
 
 # trust.sh is a tool, not a review rule: it emits no findings, so it has no
 # fixtures/{rule}/{scenario}/ directory for the loop above to discover and needs

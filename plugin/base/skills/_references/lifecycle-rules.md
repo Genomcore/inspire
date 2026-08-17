@@ -48,12 +48,28 @@ The quality gate (D24) — rule families across three severity tiers running at 
 
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
-| `sections-present` (mandatory body sections present + non-empty) | error | error | error | error |
+| `sections-present` (mandatory body sections present + non-empty; `## Touched by` presence-only) | error | error | error | error |
+| `sections-present` (canonical section ORDER, `04_domain` only) | warning | error | error | warning |
 | `no-todos` (no TODO/FIXME markers — D19) | error | error | error | error |
 | `action-fields-in-entity` (action touch declarations match entity Fields table) | error | error | error | error |
 | `entity-coherence` (field-conflict, unsourced — error; orphan-write — warning) | enforced | enforced | enforced | enforced |
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
+
+`sections-present` is the one rule that splits its severity by **layer**, because
+this table's four columns only exist in `04_domain`: a use-case file, an ADR and
+a screen file carry no `lifecycle:` at all, so nothing there can ramp. The rule
+checks their shapes too — sections, the `AC-N` id format, `### Breaking changes`,
+the screen's required parts — and every finding it makes outside `04_domain` is a
+**warning**, at every moment of that artifact's life. The table above is the
+`04_domain` half. Its second row is the exception within the exception: the order
+check *does* ramp, because what a draft may still be reshaping an accepted or
+stable object has fixed.
+
+Two shapes are deliberately presence-only rather than non-empty: an entity's
+`## Touched by` (consolidation owns its body, and a zero-toucher entity
+legitimately has none — `field-coverage` already reports that fact at tier 3),
+and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 
 ### Tier 3 — Lifecycle-progressive (warning at draft, error at accepted+)
 

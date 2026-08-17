@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "args": ["spec/kb"],
+  "findings": [],
+  "forbidden": ["severity", "lifecycle-valid", "requires-resolves", "superseded-by-resolves"]
+}

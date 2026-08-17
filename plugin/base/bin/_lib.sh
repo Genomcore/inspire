@@ -445,9 +445,9 @@ sdd_body_section() {
 }
 
 # sdd_body_prose <file> <header_name>
-#   sdd_body_section reduced to prose: fenced code blocks and table rows are
-#   dropped, and wikilinks are unwrapped to their display text (the same
-#   right-of-the-pipe reading sdd_unwrap_wikilink applies, so
+#   sdd_body_section reduced to prose: fenced code blocks, table rows and bare
+#   thematic breaks are dropped, and wikilinks are unwrapped to their display
+#   text (the same right-of-the-pipe reading sdd_unwrap_wikilink applies, so
 #   `[[auth.user|auth::user]]` reads as `auth::user` and `[[adr-x]]` as
 #   `adr-x`). What is left is the text a human reads, which is what the
 #   prose-style checks measure.
@@ -455,10 +455,14 @@ sdd_body_prose() {
   local file="$1"
   local header="$2"
   # No frontmatter reader here: the input is a section body, so a leading `---`
-  # is a thematic break, never a frontmatter opener.
+  # is a thematic break, never a frontmatter opener — and a thematic break is
+  # structure, not prose, so it is dropped rather than counted as content.
+  # (Three-or-more `-` written without an interval expression: BSD awk is a
+  # supported host.)
   sdd_body_section "$file" "$header" \
     | awk "${SDD_AWK_FENCE_SKIP}"'
         /^[[:space:]]*\|/ { next }
+        /^[[:space:]]*---+[[:space:]]*$/ { next }
         { print }
       '"${SDD_AWK_FENCE_FUNCS}" \
     | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g'

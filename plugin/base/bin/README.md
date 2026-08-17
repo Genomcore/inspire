@@ -35,7 +35,7 @@ The library implements the **quality gate** (per D24 in the SDD V3 reframe adden
 
 | Script | Checks | Notes |
 |---|---|---|
-| `sections-present.sh` | (5) All mandatory body sections present + non-empty (actions: Purpose / Inputs / Outputs / Entities / Behavior / Errors; entities: Purpose / Rationale / Invariants / Fields). | Header-only sections fail. |
+| `sections-present.sh` | (5) All mandatory body sections present + non-empty (actions: Purpose / Inputs / Outputs / Entities / Behavior / Errors; entities: Purpose / Rationale / Invariants / Fields / Touched by), in the order their format spec fixes. Also checks the shape of the other three KB layers: use-case files under `03_features/` (their sections plus the `AC-N:` id format and its within-file uniqueness), ADRs under `01_adr/` (their sections plus `### Breaking changes` under `## Consequences`), and screen files under `05_screens/` (H1, the `**Features:**` and `**Pattern:**` lines, `## Instantiation`). | Header-only sections fail. `## Touched by` is presence-only — consolidation writes it, and a zero-toucher entity legitimately has it empty. Order is checked in `04_domain` only, and ramps with the object's lifecycle. **The three non-domain layers are warning-severity** and their optional screen sections (`## Module-specific deviations`, `## Current prototype`, `## Notes`) are never flagged, present or absent. |
 | `no-todos.sh` | (6) No `TODO` / `FIXME` / `XXX` / `HACK` markers in body. | Per D19: files state present truth only. |
 | `action-fields-in-entity.sh` | (7) Every field declared in an action's `## Entities` touch table appears in the touched entity document's `## Fields` table. | Catches drift when consolidation is skipped. |
 | `entity-coherence.sh` | Field-conflict (error), field-unsourced (error), field-orphan-write (warning) across actions sharing an entity. | Distinct from #7 — these check read/write coherence *across actions*; #7 checks action ↔ entity-doc shape. |
@@ -76,6 +76,19 @@ they want to format findings for conversational presentation).
 ## Scope
 
 The library targets action descriptors under `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` and the per-entity documents at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` (one fewer dotted segment than the action filenames — the segment count is how discovery distinguishes them). Surface bindings (HTTP routes, CLI commands, MCP tools) live in surface-binding artifacts owned by their respective modules and are not produced by anything in this library.
+
+`sections-present.sh` reaches past the domain tree into three more KB layers — `03_features/`, `01_adr/` and `05_screens/` — which makes the scope argument a contract rather than a convention.
+
+**The scope contract.** `review.sh` forwards its single `$1` to every rule unchanged, and a rule checks exactly `$1 ∩ its own layers`. Intersection has three cases: the scope lies inside a layer (scan the scope, within that layer); the layer lies inside the scope (scan the whole layer); neither (skip that layer entirely). With no `$1` at all, every layer scans its own full root.
+
+Two roots name those layers, and they mean different things on purpose:
+
+- `SDD_SPEC_ROOT` (default `inspire_kb/04_domain`) — the domain tree, with exactly the meaning it has always had. Every domain rule is rooted here.
+- `SDD_KB_ROOT` (default `inspire_kb`) — the KB as a whole, under which the three non-domain layers sit (`$SDD_KB_ROOT/03_features`, `$SDD_KB_ROOT/01_adr`, `$SDD_KB_ROOT/05_screens`).
+
+Two consequences follow, both by construction rather than by special case. A scoped domain run — `sections-present.sh inspire_kb/04_domain/auth`, which is what `promote` and a module review issue — intersects none of the three new layers and therefore checks exactly what it checked before they existed. And a KB-wide scope is a no-op for the domain rules, whose discovery is filtered on the dotted-filename shape a feature, ADR or screen file never has.
+
+**When the new layers are checked.** `pre-pr.sh` passes `inspire_kb`, so the whole KB is checked when a PR is opened. `pre-commit.sh` is untouched: the per-commit gate stays domain-scoped, and nothing in the three new layers can block a commit.
 
 ## Manual invocation
 

@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "use-case file missing required section(s)"
+    }
+  ]
+}

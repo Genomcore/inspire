@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "error",
+      "message_substring": "action descriptor section order"
+    }
+  ],
+  "forbidden": ["missing required section", "empty section(s)"]
+}

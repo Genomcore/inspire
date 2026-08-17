@@ -19,7 +19,7 @@
 set -uo pipefail
 PROJECT_ROOT="$(pwd -P)"   # dispatcher cd'd here
 
-"$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb/04_domain || exit 2
+"$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb || exit 2
 
 # Trust is a signal, never a gate: a project without the tool (pre-0.6) prints
 # nothing, and no outcome here may change this hook's own exit code.

@@ -54,8 +54,8 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `missing required section(s)` | sections-present | One or more mandatory `## Section` headers absent from the body. |
-| `empty section(s)` | sections-present | Section header present but body has no non-blank content. |
+| `missing required section(s)` | sections-present | One or more mandatory `## Section` headers absent from the body. Error in `04_domain`; the other KB layers emit the warning variants below. `## Touched by` counts as present when the header is there — consolidation owns its body, so an empty one is not a finding. |
+| `empty section(s)` | sections-present | Section header present but body has no non-blank content. Error in `04_domain`; warning elsewhere. |
 | `body contains TODO marker` / `FIXME` / `XXX` / `HACK` | no-todos | Outstanding-work marker in body. Move to `inspire_kb/99_tracker/tickets/`. |
 | `the entity document's '## Fields' table does not declare it` | action-fields-in-entity | Action touches a field the entity doc has not declared. |
 | `no entity document found at expected path` | action-fields-in-entity | Action touches an entity id but no `{module}.{entity}.md` exists. |
@@ -69,6 +69,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
+| `{kind} section order` | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
 | `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
 | `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. |
@@ -78,6 +79,12 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | Type | Rule | Meaning |
 |---|---|---|
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
+| `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `03_features/` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
+| `AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
+| `AC-id duplicate` | sections-present | One `AC-N` id is used by two criteria in the same use-case file. Gaps in the numbering are never a finding: ids are stable, never renumbered and never reused. |
+| `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
+| `ADR missing required subsection` | sections-present | `### Breaking changes` is absent from (or present outside) `## Consequences`. Presence-only: an ADR that breaks nothing still says so. |
+| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, its `**Pattern:**` line or `## Instantiation`, or has an empty `## Instantiation`. `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
 
 ### Info
 
