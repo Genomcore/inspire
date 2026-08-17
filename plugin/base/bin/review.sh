@@ -27,8 +27,9 @@ SCOPE="${1:-$SDD_SPEC_ROOT}"
 # subset.
 #
 # Ordering: cheap mechanical blockers first, then coherence blockers,
-# then lifecycle-progressive (warning-then-blocker). Within each tier
-# order is arbitrary but stable.
+# then lifecycle-progressive (warning-then-blocker), and the advisory
+# style checks last — they are the only ones a reader can disagree with.
+# Within each tier order is arbitrary but stable.
 DEFAULT_RULES="\
 frontmatter-mechanics.sh \
 acyclic-deps.sh \
@@ -40,7 +41,8 @@ stable-blockers.sh \
 touched-entity-lifecycle.sh \
 field-coverage.sh \
 rationale-wikilink.sh \
-wikilinks-resolve.sh"
+wikilinks-resolve.sh \
+prose-style.sh"
 read -r -a RULES <<< "${SDD_REVIEW_RULES:-$DEFAULT_RULES}"
 
 EXIT_CODE=0

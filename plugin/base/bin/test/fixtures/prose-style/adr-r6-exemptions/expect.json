@@ -1,0 +1,17 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: 'migrated from' in '## Context'"
+    }
+  ],
+  "forbidden": [
+    "R6 historical language: 'previously'",
+    "R6 historical language: 'used to'",
+    "R6 historical language: '~~strikethrough~~'",
+    "'## Breaking changes'",
+    "in '## Related ADRs'"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "error",
+      "message_substring": "R5 paragraph length: paragraph of 7 sentences exceeds 6"
+    }
+  ],
+  "forbidden": ["R2 sentence cap"]
+}

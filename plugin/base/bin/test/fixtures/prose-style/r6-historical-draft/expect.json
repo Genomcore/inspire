@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R6 historical language: 'previously'" },
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R6 historical language: 'used to'" },
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R6 historical language: 'migrated from'" },
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R6 historical language: '~~strikethrough~~'" }
+  ],
+  "forbidden": ["\"severity\":\"error\"", "'replaces'", "'removed'"]
+}

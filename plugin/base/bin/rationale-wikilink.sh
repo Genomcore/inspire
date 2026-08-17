@@ -15,8 +15,8 @@
 # resolution (that is `wikilinks-resolve`'s job).
 #
 # Severity: lifecycle-progressive.
-#   - object at lifecycle: draft     → warning
-#   - object at lifecycle: accepted+ → error
+#   - object at lifecycle: draft or superseded → warning
+#   - object at lifecycle: accepted or stable  → error
 #
 # Usage:
 #   .inspire/bin/rationale-wikilink.sh                  # scan whole tree

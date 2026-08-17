@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "error",
+      "message_substring": "R2 sentence cap: sentence of 28 words exceeds 25 in '## Rationale'"
+    }
+  ],
+  "forbidden": ["'## Purpose'", "'## Fields'", "'## Touched by'"]
+}

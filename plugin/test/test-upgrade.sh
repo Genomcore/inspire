@@ -652,8 +652,27 @@ before="$(tree_print "$p")"
 out="$(classify "$mf" "$p" "$base" "$MAP_03" "$MAP_03")"
 after="$(tree_print "$p")"
 
+# The no-op row needs a file that is pristine on all three sides at once: the
+# project's copy matches the manifest AND base/ still ships it byte-identical.
+# Naming one goes red the moment a release edits that particular file — a true
+# statement about the release, reported as a false statement about the
+# classifier. So the file is picked at run time, and the run says loudly when no
+# candidate is left rather than asserting on nothing.
+noop_path=""
+while IFS="$(printf '\t')" read -r cand mhash; do
+  [ -n "$cand" ] && [ -n "$mhash" ] || continue
+  [ -f "$p/$cand" ] || continue
+  csrc="$(_base_src "$base" "$MAP_03" "$cand")" || continue
+  [ -n "$csrc" ] || continue
+  [ "$(sha256_of "$p/$cand")" = "$mhash" ] || continue
+  [ "$(sha256_of "$csrc")" = "$mhash" ] || continue
+  noop_path="$cand"
+  break
+done < <(jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' "$mf")
+check "the no-op row found a manifest-pristine file to assert on" \
+   "[ -n '$noop_path' ]"
 eq "unmodified file is a no-op" \
-   "$(verdict_for "$out" .inspire/bin/review.sh)" "noop"
+   "$(verdict_for "$out" "$noop_path")" "noop"
 eq "operator edit is kept" \
    "$(verdict_for "$out" .inspire/bin/no-todos.sh)" "keep"
 eq "operator deletion is restored" \
@@ -1248,8 +1267,8 @@ check "A3: no empty .claude/hooks survives" "[ ! -e '$p/.claude/hooks' ]"
 check "A4: no empty inspire-learn survives" "[ ! -e '$p/.claude/skills/inspire-learn' ]"
 
 # The pruning must not have cost anything the migration exists to deliver.
-eq "all 14 validators + the trust tool landed at .inspire/bin" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
+eq "all 15 validators + the trust tool landed at .inspire/bin" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
 check "the relocated hooks are all three there" \
    "[ -f '$p/.claude/inspire/hooks/session-start.sh' ] && \
     [ -f '$p/.claude/inspire/hooks/pre-commit.sh' ] && \
@@ -1305,8 +1324,8 @@ eq "the blocked .claude/bin holds nothing but their file" \
    "$(ls -A "$p/.claude/bin" | tr '\n' ' ')" "my-check.sh "
 eq "the blocked .claude/hooks holds nothing but their file" \
    "$(ls -A "$p/.claude/hooks" | tr '\n' ' ')" "my-hook.sh "
-eq "all 14 validators + the trust tool still landed" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
+eq "all 15 validators + the trust tool still landed" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
 fixture_cleanup "$w"
 
 # --mode plan on the longest chain must still write NOTHING — directories

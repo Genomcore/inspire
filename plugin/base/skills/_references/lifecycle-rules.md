@@ -33,7 +33,7 @@ Forward progression: `draft → accepted → stable`. Regression (`stable → ac
 
 ## Per-state rule gates
 
-The quality gate (D24) — rule families across three severity tiers running at every commit:
+The quality gate (D24) — rule families across three severity tiers, plus the style checks below them, running at every commit:
 
 ### Tier 1 — Mechanical blockers (always error)
 
@@ -44,7 +44,7 @@ The quality gate (D24) — rule families across three severity tiers running at 
 | `superseded-by-resolves` (`superseded_by:` resolves when set) | error | error | error | error |
 | `acyclic-deps` (no self-loop, no cycle) | error | error | error | error |
 
-### Tier 2 — Coherence blockers (error from draft+)
+### Tier 2 — Coherence blockers (error from draft+, except where a row says otherwise)
 
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ Some shapes are deliberately presence-only rather than non-empty: an entity's
 legitimately has none — `field-coverage` already reports that fact at tier 3),
 and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 
-### Tier 3 — Lifecycle-progressive (warning at draft, error at accepted+)
+### Tier 3 — Lifecycle-progressive (draft → warning, accepted / stable → error, superseded → warning)
 
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
@@ -79,7 +79,23 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | `rationale-wikilink` (≥1 wikilink in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `wikilinks-resolve` (every `[[wikilink]]` resolves to a file) | warning | error | error | warning |
 
-The three tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion.
+The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
+
+### Style — the mechanical subset of the writing contract
+
+| Rule | draft | accepted | stable | superseded |
+|---|---|---|---|---|
+| `prose-style` R2 sentence cap · R4 glossary synonyms · R5 paragraph length · R6 historical language | warning | error | error | warning |
+| `prose-style` R1 passive voice · R3 noun clusters | warning | warning | warning | warning |
+
+`prose-style` checks the greppable half of
+[`writing-style.md`](writing-style.md); the authoring skills carry the whole
+contract as judgment. R1 and R3 are heuristics, so they are warnings at every
+state and never ramp — a guess does not block a commit. The other four ramp with
+this table's columns in `04_domain`, and are flat warnings in `03_features`,
+`01_adr` and `05_screens`, which carry no `lifecycle:` for the columns to read.
+The checks are **English-only in 0.7**: a project whose `output_language` is not
+`en` gets one info-level note and no findings at all.
 
 Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`, `touched-entity-lifecycle`) but the mechanical and coherence tiers apply unconditionally — type drift, broken references, missing sections, and TODO sludge silently break later promotion otherwise.
 

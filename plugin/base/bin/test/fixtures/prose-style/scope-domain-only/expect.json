@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "args": ["spec/sdd"],
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: 'previously'"
+    }
+  ],
+  "forbidden": ["FEAT-01-login.md", "adr-auth-sessions.md"]
+}

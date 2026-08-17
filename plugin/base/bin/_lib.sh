@@ -402,7 +402,8 @@ sdd_exit_with_counters() {
 # sdd_progressive_severity <lifecycle>
 #   Maps an object's lifecycle to the severity tier for lifecycle-
 #   progressive rules. Used by field-coverage, rationale-wikilink,
-#   wikilinks-resolve.
+#   wikilinks-resolve, sections-present (its order check) and prose-style
+#   (its four non-heuristic checks).
 #     draft (and empty / unknown) → warning
 #     accepted, stable            → error
 #     superseded                  → warning

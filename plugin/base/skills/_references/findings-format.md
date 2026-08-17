@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -65,7 +65,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `stable action requires X which is at lifecycle: Y` | stable-blockers | A stable action lists a non-stable target in `requires`. |
 | `stable action touches entity X which is at lifecycle: Y` | touched-entity-lifecycle | A stable action touches an entity below `accepted`. |
 
-### Lifecycle-progressive (warning at draft, error at accepted+)
+### Lifecycle-progressive (draft → warning, accepted / stable → error, superseded → warning)
 
 | Type | Rule | Meaning |
 |---|---|---|
@@ -87,9 +87,31 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `ADR subsection … is present but not under …` | sections-present | `### Breaking changes` exists but sits under some other `## Section`, where it answers a different question. Distinct from the type above so the operator is told to move a heading rather than write one. |
 | `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, its `**Pattern:**` line or `## Instantiation`, or has an empty `## Instantiation`. `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
 
+### Style — the mechanical subset of the writing contract
+
+Every one of these carries the rule id `prose-style`. Each names its contract
+rule, the section it was found in and the line, so the message is enough to act
+on without re-running anything. R1 and R3 are heuristics and stay warnings at
+every lifecycle; R2, R4, R5 and R6 ramp with the object's lifecycle in
+`04_domain` and are warnings everywhere else.
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `R1 passive voice` | prose-style | A be-verb plus a past participle, where the sentence never says who acts. Heuristic — warning always. |
+| `R2 sentence cap` | prose-style | A sentence longer than 25 words. The message carries the count and the first words of the sentence. |
+| `R3 noun cluster` | prose-style | Four or more stacked nouns, where a preposition would name the relationship. Heuristic — warning always. |
+| `R4 glossary synonym` | prose-style | A term the glossary lists as rejected, used in prose. The message names the approved term. Silent when `00_bootstrap/glossary.md` is absent or has no data rows. |
+| `R5 paragraph length` | prose-style | A paragraph of more than 6 sentences. A list is not a paragraph: each item is measured on its own. |
+| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt. |
+
 ### Info
 
-Reserved. Not currently emitted by any rule.
+One emitter, one message. `prose-style` announces that a project is outside its
+reach and stops:
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than `en`. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
 
 ## Exit codes
 

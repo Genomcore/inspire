@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "prose-style", "severity": "error", "message_substring": "R2 sentence cap" },
+    { "rule": "prose-style", "severity": "error", "message_substring": "R6 historical language: 'previously'" }
+  ],
+  "forbidden": ["en-only in 0.7"]
+}

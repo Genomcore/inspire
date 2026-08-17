@@ -106,7 +106,7 @@ Each subcommand's full flow lives at `references/subcommands/{name}.md`. **Befor
 | [`delete`](references/subcommands/delete.md) | Remove an action (refuses if dependents exist) |
 | [`promote`](references/subcommands/promote.md) | Walk lifecycle forward (draft → accepted → stable / superseded) |
 | [`demote`](references/subcommands/demote.md) | Walk lifecycle backwards (refuses with cascade preview) |
-| [`review`](references/subcommands/review.md) | Read-only quality_lib check (10-rule gate) |
+| [`review`](references/subcommands/review.md) | Read-only quality_lib check (the whole gate) |
 | [`source`](references/subcommands/source.md) | Show the back-source trail for every claim (read-only) |
 | [`graph`](references/subcommands/graph.md) | Print action→action requires graph + supersession edges (read-only) |
 

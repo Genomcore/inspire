@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R2 sentence cap: sentence of 33 words exceeds 25" },
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R6 historical language: 'previously'" }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}
