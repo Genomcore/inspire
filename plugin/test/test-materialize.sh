@@ -99,7 +99,27 @@ check "idempotent foreign key"        "jq -e '.permissions.allow[0]' '$proj/.cla
 # both visible in the stderr report, rolled up as counts in the JSON.
 # Must run BEFORE the --skip test below: an update with --skip rebaselines the lock to
 # the drifted hash, after which a re-plan would correctly report it as unchanged.
-drift="$proj/.claude/skills/inspire-domain/SKILL.md"
+#
+# The fixture file is picked at RUN TIME, from the manifest for the installed
+# version: the verdict under test is "you changed it, we did not", so the file
+# must be one this release did not change either. A hardcoded pick goes red
+# whenever a release edits that particular file — the classifier then honestly
+# says "both changed", and a true statement about the release is reported as a
+# false statement about the classifier.
+drift_rel=""
+while IFS="$(printf '\t')" read -r cand chash; do
+  case "$cand" in .claude/skills/*.md) ;; *) continue ;; esac
+  src="$PLUGIN_ROOT/base/skills/${cand#.claude/skills/}"
+  [ -f "$src" ] && [ -f "$proj/$cand" ] || continue
+  [ "$(shasum -a 256 "$src" | cut -d' ' -f1)" = "$chash" ] || continue
+  [ "$(shasum -a 256 "$proj/$cand" | cut -d' ' -f1)" = "$chash" ] || continue
+  drift_rel="$cand"
+  break
+done < <(jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' \
+           "$PLUGIN_ROOT/manifests/$manifest_version.json")
+check "dynamic drift fixture found a manifest-pristine candidate" \
+  "[ -n '$drift_rel' ]"
+drift="$proj/$drift_rel"
 printf '\nLOCAL EDIT\n' >> "$drift"
 rm -f "$proj/.inspire/bin/no-todos.sh"
 lock_before="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
@@ -107,7 +127,7 @@ dc_err="$(mktemp)"
 dc="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>"$dc_err")"
 lock_after="$(shasum -a 256 "$proj/.inspire.lock" | cut -d' ' -f1)"
 check "drift-check parses"             "printf '%s' \"\$dc\" | jq -e . >/dev/null"
-check "drift-check finds the edit"     "grep -q 'SKILL.md.*you changed it, we did not' '$dc_err'"
+check "drift-check finds the edit"     "grep -q '$drift_rel.*you changed it, we did not' '$dc_err'"
 check "drift-check finds the deletion" "grep -q 'no-todos.sh.*restoring at the new version' '$dc_err'"
 check "drift-check lists unchanged"    "[ \"\$(printf '%s' \"\$dc\" | jq '.verdicts.noop')\" -gt 0 ]"
 check "drift-check is read-only"       "[ '$lock_before' = \"\$lock_after\" ]"
@@ -115,14 +135,14 @@ rm -f "$dc_err"
 # Restore the deleted validator so the --skip test below starts from a known state.
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype \
-  --skip .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+  --skip "$drift_rel" >/dev/null 2>&1
 check "missing file restored"          "[ -x '$proj/.inspire/bin/no-todos.sh' ]"
 
 # --skip must not overwrite a drifted file.
 before="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype \
-  --skip .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+  --skip "$drift_rel" >/dev/null 2>&1
 after="$(shasum -a 256 "$drift" | cut -d' ' -f1)"
 check "SKIPPED FILE UNTOUCHED"        "[ '$before' = '$after' ]"
 
