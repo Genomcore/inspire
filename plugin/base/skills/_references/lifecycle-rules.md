@@ -33,7 +33,7 @@ Forward progression: `draft → accepted → stable`. Regression (`stable → ac
 
 ## Per-state rule gates
 
-The quality gate (D24) — 9 rule families across three severity tiers running at every commit:
+The quality gate (D24) — rule families across three severity tiers running at every commit:
 
 ### Tier 1 — Mechanical blockers (always error)
 
@@ -51,7 +51,7 @@ The quality gate (D24) — 9 rule families across three severity tiers running a
 | `sections-present` (mandatory body sections present + non-empty) | error | error | error | error |
 | `no-todos` (no TODO/FIXME markers — D19) | error | error | error | error |
 | `action-fields-in-entity` (action touch declarations match entity Fields table) | error | error | error | error |
-| `entity-coherence` (field-conflict, unsourced — error; orphan-write — warning) | enforced | enforced | enforced | exempt |
+| `entity-coherence` (field-conflict, unsourced — error; orphan-write — warning) | enforced | enforced | enforced | enforced |
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 

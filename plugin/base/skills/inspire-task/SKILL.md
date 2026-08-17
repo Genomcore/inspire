@@ -11,8 +11,7 @@ A plain-file ticket tracker under
 [`inspire_kb/99_tracker/`](../../../inspire_kb/99_tracker): **one Markdown file
 per ticket**, the only source of truth — no external tool, no generated cache. Open
 tickets live at `tickets/*.md`; closed ones are archived under `tickets/archive/*.md`
-so default scans see only active work. A read-only Kanban web view is available via
-`node inspire_kb/99_tracker/serve.mjs`.
+so default scans see only active work.
 
 The on-disk contract — storage layout, frontmatter schema, enums, ID scheme — lives
 in [`references/tracker-format.md`](references/tracker-format.md). **Read it before
@@ -114,8 +113,6 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 5. **`closed_by` / `closed_at` only when status ∈ {Done, Cancelled}.**
 6. **Body markdown is free.** Description / Acceptance criteria / Notes suggested.
 7. **Concurrent edits are safe** — random IDs, no locking.
-8. **Server is read-only.** `inspire_kb/99_tracker/serve.mjs` never writes; it
-   scans both `tickets/` and `tickets/archive/`.
 
 ## Related skills
 

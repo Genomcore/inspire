@@ -2,7 +2,7 @@
 
 Reference for valid `**As input:**` × `**Effect:**` × `Touch` combinations in the `## Entities` h3 sub-sections of an action descriptor.
 
-`**As input:**` says how the entity is identified for this action (`id`, `shape`, `—`, a specific field, etc.). `**Effect:**` says what the action does to the entity (`create`, `read`, `update`, `delete`, `append`, `replace`). `Touch` on each field is `read` or `written`.
+`**As input:**` says how the entity is identified for this action (`id`, `shape`, `—`, a specific field, etc.). `**Effect:**` says what the action does to the entity (`create`, `read`, `read-whole`, `update`, `delete`, `append`, `replace`). `Touch` on each field is `read` or `written`.
 
 Most actions follow a small number of well-formed shapes. This matrix documents them so the operator and agent can lean on convention rather than re-deriving the table each time.
 
@@ -21,7 +21,7 @@ Most actions follow a small number of well-formed shapes. This matrix documents 
 
 ## Mixed-entity actions (orchestrators)
 
-A single action may declare multiple `### [[module::entity]]` sub-sections, one per touched entity. Each sub-section follows the canonical shapes independently. Typical pattern:
+A single action may declare multiple `### [[module.entity|module::entity]]` sub-sections, one per touched entity. Each sub-section follows the canonical shapes independently. Typical pattern:
 
 - A primary write entity (`create` or `update` Effect)
 - One or more event log entities (`append` Effect, with metadata fields like `event_type`, `actor_id`, `at`)
@@ -32,7 +32,7 @@ The orchestrator example in `examples/orchestrator.md` shows the canonical multi
 ## Edge cases
 
 - **`read` action with `Touch=written` field** — this is the canonical shape for derived/computed read responses where the action persists a denormalized cache row. Document the cache rationale in the action's `## Purpose` section.
-- **Pure validators** — an action that only validates (no entity side-effect) declares no `## Entities` sub-sections. `Effect: validated` is allowed for completeness in feature-traceability, but is rare; usually a validator is a step in a larger action's `## Behavior`, not its own descriptor.
+- **Pure validators** — an action that only validates (no entity side-effect) declares no `## Entities` sub-sections; usually a validator is a step in a larger action's `## Behavior`, not its own descriptor.
 
 ## How the matrix is enforced
 

@@ -41,7 +41,7 @@ Ask what the caller gets back, and which of the three output patterns applies: w
 ## Entities prompts
 
 ### Categorical
-Ask which entities the action touches and how — for each: the effect verb (`create` / `read` / `update` / `delete` / `append`) and which fields are read or written. The answer becomes the `## Entities` sub-sections and their field-touch tables.
+Ask which entities the action touches and how — for each: the effect verb (`create` / `read` / `read-whole` / `update` / `delete` / `append` / `replace`) and which fields are read or written. The answer becomes the `## Entities` sub-sections and their field-touch tables.
 
 ### Probes
 - **Multi-entity probe.** "Does the action touch more than one entity? Audit events, lookup tables, allow-lists are easy to miss — anything outside the headline entity?" Always ask; orchestrators routinely touch 3+ entities.

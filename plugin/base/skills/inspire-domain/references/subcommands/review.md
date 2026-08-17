@@ -13,7 +13,7 @@ Read-only quality check. Runs the quality_lib rules against the scope and surfac
 
 ## The quality gate (per D24)
 
-The gate composes 10 rule families across three severity tiers. `review` runs every check regardless of the current lifecycle; severity scales by tier and by the object's own state.
+The gate composes rule families across three severity tiers. `review` runs every check regardless of the current lifecycle; severity scales by tier and by the object's own state.
 
 **Tier 1 — Mechanical blockers (always error, any lifecycle):**
 

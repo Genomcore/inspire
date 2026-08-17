@@ -84,7 +84,7 @@ files under `inspire_kb/03_features/{module}/`.
   specs / screens / ADRs (the horizontal keeps no learnings file).
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
   realizing action descriptor in `inspire_kb/04_domain/{module}/` (flag gaps as
-  `important`); every action's `## Why` back-sources to a feature via
+  `important`); every action's `## Purpose` back-sources to a feature via
   `[[wikilink]]` (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts a **current** ADR — one present
   and not superseded or rejected — within its maturity's reach (see

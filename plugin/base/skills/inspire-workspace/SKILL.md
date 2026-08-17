@@ -227,8 +227,7 @@ Drift items pending: {N}
    skill, severity never above important, they re-appear as long as true; never
    file tickets from signals; never block the pre-PR gate on them.
 9. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
-   are flagged `(tracked: TASK-{id})`. Use `/inspire_task list` or open the Kanban
-   via `node inspire_kb/99_tracker/serve.mjs`.
+   are flagged `(tracked: TASK-{id})`. Use `/inspire_task list`.
 10. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire_prototype`
    - screen spec drift → `/inspire_screens`
@@ -254,7 +253,6 @@ Validate the vault structure at the top level (not module-scoped).
    - `id` matches filename; no duplicate IDs across `tickets/` and `archive/`.
    - **Location ↔ status invariant:** every top-level ticket is `Open`; every
      archived ticket is `Done`/`Cancelled`.
-   - `inspire_kb/99_tracker/serve.mjs` present.
    - `blocked_by` / `related_to` references to other `TASK-*` IDs resolve (warning
      if not).
 4. **No orphan files:** no stale `.md` at `inspire_kb/` root (except
@@ -275,7 +273,6 @@ Validate the vault structure at the top level (not module-scoped).
 ## Task tracker
 - tickets/: {N} open
 - tickets/archive/: {N} closed ({Done: N, Cancelled: N})
-- serve.mjs: {present | missing}
 
 ## Issues
 - [{severity}] {description}

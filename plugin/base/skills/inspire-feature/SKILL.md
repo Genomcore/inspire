@@ -49,10 +49,10 @@ Reviews one feature across all layers. Runs inline (no agents).
    the prototype runs one shell per UI surface — and note drift (pending component
    adoption, hardcoded data, ADR gaps). Insights land in the specs / screens /
    ADRs, not a prototype learnings file.
-4. **Specs (SDD) coverage.** Find action descriptors whose `## Why` wikilinks back
+4. **Specs (SDD) coverage.** Find action descriptors whose `## Purpose` wikilinks back
    to this feature. Search `inspire_kb/04_domain/**/*.md` for `[[{feature-id}]]`.
    Flag if zero realizing actions exist. For each, report `id`, `lifecycle`, and a
-   one-line `## Why` summary.
+   one-line `## Purpose` summary.
 5. **ADR alignment.** If the feature references an ADR (`[[adr-xxx]]`), verify it
    exists and is not superseded or rejected — an ADR present is the current decision
    at its maturity. Surface prototype drift items that reference unimplemented ADR

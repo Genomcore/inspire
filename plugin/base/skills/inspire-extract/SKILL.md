@@ -188,7 +188,7 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
    **features are upstream of specs**.
 4. **Screens** (`05_screens`) — reference the derived features; adopt the
    consolidated patterns/components from scanner B.
-5. **Domain** (`04_domain`) — actions wire `## Why` to the derived **feature**, never
+5. **Domain** (`04_domain`) — actions wire `## Purpose` to the derived **feature**, never
    to a source file; entities adopt scanner C's reconciled field set.
 
 ## Provenance & staging
@@ -200,7 +200,7 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
   structure.
 - **Authored artifacts carry a lightweight, non-authoritative provenance marker** —
   a `> Extracted from: {source-path}` note + `file:line` evidence in `## Notes`, a
-  prompt to verify on promotion, never a `## Why`/`## Purpose` back-source.
+  prompt to verify on promotion, never a `## Purpose` back-source.
 
 ## Lifecycle of extracted artifacts
 
@@ -250,7 +250,7 @@ Extract never writes these files — it feeds each authoring skill:
 6. **Features are derived, not scanned** — from the B↔C correlation — and authored
    before domain (upstream invariant, no escape hatch).
 7. **Evidence is provenance, not back-source.** `file:line` justifies *why a
-   candidate surfaced*; a `## Why`/`## Purpose` must point to a feature.
+   candidate surfaced*; a `## Purpose` must point to a feature.
 8. **Everything enters at the lowest lifecycle.** Promotion is a separate act.
 9. **Compare before migrating bootstrap.** Never seed stack/theme downward from a
    throwaway source; recommend, ask, route load-bearing changes through an ADR.

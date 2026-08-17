@@ -122,9 +122,10 @@ subcommand, read its reference file** — the table below is an index, not the f
   maturity is *claimed* to be realized by code — verify the claim.
 - **Action descriptors (`04_domain/{module}/{entity}/`).** Does the code satisfy
   the behavioral contract (inputs, outputs, touched entities, invariants, error
-  set)? Search for the descriptor whose `## Why` back-sources to the feature.
+  set)? Search for the descriptor whose `## Purpose` back-sources to the feature.
 - **Acceptance criteria (`03_features/{module}/{feature-id}.md`).** Is every
-  testable criterion covered by a test?
+  testable criterion covered by a test? Criteria carry stable ids (`AC-n`) — cite
+  them literally.
 
 **Anchor check.** If a spec this work builds from carries no `endorsed:`
 block, tell the operator — "building from a spec no human endorsed" — and

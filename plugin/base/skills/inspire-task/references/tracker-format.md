@@ -32,7 +32,7 @@ skills: [prototype, screens]            # which layer skills execute the work
 status: Open                       # Open | Done | Cancelled
 blocked_by: []                     # list of ticket / feature / ADR IDs
 related_to: [TASK-xxx]             # list of IDs
-surfaces: [portal, admin]          # optional — see enum below
+# surfaces: [id-a, id-b]           # optional — list of roster ids or `all`; omit = suite-wide; see enum below
 ---
 
 ## Description

@@ -158,7 +158,7 @@ When a `keep` candidate is authored (Phase 4), the created KB artifact carries a
 > Evidence: `src/billing/invoice.service.ts:88`, `prisma/schema.prisma:120`.
 ```
 
-Lives in `## Notes` — never in a `## Why` / `## Purpose` / `## Rationale`, which must
+Lives in `## Notes` — never in a `## Purpose` / `## Rationale`, which must
 carry a real feature wikilink. It is a prompt to verify, not authority; it resolves
 as the artifact is promoted.
 

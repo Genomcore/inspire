@@ -18,7 +18,7 @@ Author a new object from scratch — interview-driven first authoring. Objects a
    - **Action**: Purpose → Inputs → Outputs → Entities (effect verb + field touches) → Behavior → requires → Errors.
    - **Entity**: Purpose → Rationale → Invariants → Fields → per-field H3.
    Capture each resolved section incrementally (see Conversation capture in SKILL.md) — write as the dialogue settles, not in a big-bang at the end.
-6. **Use `AskUserQuestion`** only for genuinely closed-set choices after dialogue has narrowed them: lifecycle target (draft by default), effect verb per entity (create / read / update / delete / append / replace). Never as an opening move.
+6. **Use `AskUserQuestion`** only for genuinely closed-set choices after dialogue has narrowed them: lifecycle target (draft by default), effect verb per entity (create / read / read-whole / update / delete / append / replace). Never as an opening move.
 7. **On approval:** the object is written incrementally during the walk; once the operator confirms the whole shape, run the [consolidation step](../consolidation.md) (for actions that touch an entity).
 
 ## What gets written
