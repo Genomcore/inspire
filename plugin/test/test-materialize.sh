@@ -650,14 +650,38 @@ check "guard: non-plugin --plugin-root copies nothing" "[ ! -d '$gp/.claude/skil
 
 # --skip is fed from drift-check echoing the lock's keys verbatim, so a
 # corrupted lock must not become an rm -rf outside the project root.
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+#
+# On a v0.6.0 fixture rather than on $gp. $gp carries no runtime at all — the
+# init above was refused — so its version cannot be identified and `update`
+# exits 1 there whatever --skip says, a BENIGN one included (measured). Both
+# assertions passed without the guard ever running. On a project that updates
+# cleanly the rc-1 has one remaining explanation, and the benign call below says
+# so out loud rather than leaving it implied.
+skp="$(mktemp -d)/skproj"
+fixture_copy "$skp"
+sk_lock_before="$(shasum -a 256 "$skp/.inspire.lock" | cut -d' ' -f1)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$skp" \
+  --source-root source --prototype-root prototype \
   --skip '.claude/skills/../../../ESCAPE' >/dev/null 2>&1
 rc_traverse=$?
 check "guard: --skip containing .. is rejected" "[ '$rc_traverse' = 1 ]"
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$gp" \
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$skp" \
+  --source-root source --prototype-root prototype \
   --skip '/etc/passwd' >/dev/null 2>&1
 rc_abs=$?
 check "guard: absolute --skip is rejected"      "[ '$rc_abs' = 1 ]"
+# A guard that refused after clobbering would still exit 1. It must refuse
+# BEFORE anything is written — which is also what leaves the project pristine
+# for the control call below, so the three runs differ in their argument alone.
+check "guard: a rejected --skip wrote nothing" \
+  "[ '$sk_lock_before' = \"\$(shasum -a 256 '$skp/.inspire.lock' | cut -d' ' -f1)\" ]"
+# The control: same project, same command, a --skip the guard must accept.
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$skp" \
+  --source-root source --prototype-root prototype \
+  --skip '.claude/skills/inspire-domain/SKILL.md' >/dev/null 2>&1
+rc_benign=$?
+check "guard: a benign --skip on the same project exits 0" "[ '$rc_benign' = 0 ]"
+rm -rf "$(dirname "$skp")"
 
 # A pre-0.3 *lock* (no `files` map, no actual v0.2 tree behind it — just the
 # lock file itself) used to be refused outright by require_v03_lock. Task 12
