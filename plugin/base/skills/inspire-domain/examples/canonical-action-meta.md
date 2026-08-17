@@ -27,7 +27,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Resolve a registered action's manifest by id. The [[platform-action-catalog|action catalog]] is the runtime source of truth for which capabilities the platform exposes, as defined in [[adr-plt-06-action-catalog]]; this verb is its read entry point.
+Resolve a registered action's manifest by id. The [[platform-action-catalog|action catalog]] is the runtime source of truth for the capabilities the platform exposes, as [[adr-plt-06-action-catalog]] defines. This verb is its read entry point.
 
 ## Inputs
 

@@ -17,7 +17,7 @@ superseded_by: null             # ← required iff lifecycle == superseded.
 ---
 
 ## Purpose
-Provision a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the single entrypoint for user creation — agents must not write the `auth::user` row directly. The identity model, scopes, and the auth-provider integration are grounded in [[adr-auth-01-identity-model]].
+Provision a new user account for the platform from an email and password pair. The [[auth-user-management|user-management subsystem]] is the single entrypoint for user creation — agents must not write the `auth::user` row directly. [[adr-auth-01-identity-model]] grounds the identity model, the scopes and the auth-provider integration.
 
 ## Inputs
 
