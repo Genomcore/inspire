@@ -12,9 +12,8 @@ don't belong to a single module or feature:
 
 - **Global review** — the pre-merge gate, orchestrating module-level and
   cross-module checks.
-- **Vault structure** — top-level indexes (`inspire_kb/02_modules/_index.md`,
-  `inspire_kb/01_adr/_index.md`), folder conventions, and the tracker's on-disk
-  invariants.
+- **Vault structure** — module hubs and ADR files, folder conventions, and the
+  tracker's on-disk invariants.
 
 It does **not** own the artifacts it validates the coherence of: **ADR lifecycle**
 is [`/inspire_adr`](../inspire-adr/SKILL.md) and the **task tracker** is
@@ -32,7 +31,7 @@ every check below reads exactly as it did before surfaces existed.
 
 - `/inspire_workspace review` — full vault review
 - `/inspire_workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
-- `/inspire_workspace structure` — validate top-level indexes, task tracker, vault conventions
+- `/inspire_workspace structure` — validate module hubs, ADR files, task tracker, vault conventions
 
 ## Subcommand: review (global)
 
@@ -65,14 +64,15 @@ and the output uses the exact skeleton in **Output format** below.
 
 ### Phase 1 — Identify scope
 
-- If modules are specified, use those. Otherwise, enumerate all modules listed in
-  `inspire_kb/02_modules/_index.md`.
+- If modules are specified, use those. Otherwise, enumerate module hubs:
+  `inspire_kb/02_modules/*.md` excluding `_*.md` and `README.md` — the glob is
+  the index.
 - For each module in scope, delegate to `/inspire_module review {module}`.
 
 ### Phase 2 — Module reviews
 
 For each module in scope, the module review performs:
-- Features structure (pure `_index.md`, use-case files, index completeness)
+- Features structure (use-case files under `03_features/{module}/`)
 - screen spec structure (pattern/component compliance)
 - Quality checks (no historical language, IDs correct, wikilinks resolve)
 - Cross-layer coverage (features ↔ screen spec ↔ prototype ↔ specs)
@@ -109,12 +109,13 @@ For each module in scope, the module review performs:
   surface-first screens tree a module's screens live in one or more
   `{surface}/{module}/` directories: it owes at least one, never one per surface —
   a module realized on a single surface is normal.
-- `inspire_kb/01_adr/_index.md` lists all ADR files (no orphans, no phantoms).
-- `inspire_kb/02_modules/_index.md` lists all modules.
+- ADR files are `inspire_kb/01_adr/adr-*.md` (no orphans, no phantoms).
+- Modules are the module hubs: `inspire_kb/02_modules/*.md` excluding `_*.md`
+  and `README.md`.
 
 **screen spec tree:**
 - `inspire_kb/05_screens/design-system.md` exists.
-- `inspire_kb/05_screens/patterns/` and `components/` exist with `_index.md` + files,
+- `inspire_kb/05_screens/patterns/` and `components/` exist with entry files,
   at top level — beside any surface trees, never inside one.
 - **The tree is in the shape the roster implies.** Both shapes are legitimate: flat
   `{module}/` with no roster or a single `kind: ui` surface, surface-first
@@ -242,9 +243,10 @@ Validate the vault structure at the top level (not module-scoped).
 ### Checks
 
 1. **CLAUDE.md** is present at the workspace root.
-2. **Top-level indexes:**
-   - `inspire_kb/02_modules/_index.md` lists every module.
-   - `inspire_kb/01_adr/_index.md` lists every ADR.
+2. **Module hubs and ADR files:**
+   - Module hubs are `inspire_kb/02_modules/*.md` excluding `_*.md` and
+     `README.md` — the glob is the module registry.
+   - ADR files are `inspire_kb/01_adr/adr-*.md` — the glob is the ADR catalog.
    - Each module has a hub `02_modules/{module}.md`.
 3. **Task tracker:**
    - `inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
@@ -263,12 +265,12 @@ Validate the vault structure at the top level (not module-scoped).
 ```markdown
 # Vault Structure | {date}
 
-## Top-level indexes
-- inspire_kb/02_modules/_index.md: {ok | N issues}
-- inspire_kb/01_adr/_index.md: {ok | N issues}
+## Module hubs and ADR files
+- Module hubs: {ok | N issues}
+- ADR files: {ok | N issues}
 
-## Module folders
-- Modules with _index.md: {N}/{total}
+## Screens module directories
+- Screens module dirs with _index.md coverage: {N}/{total}
 
 ## Task tracker
 - tickets/: {N} open

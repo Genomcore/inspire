@@ -8,7 +8,7 @@ description: "Lifecycle of a module and its 02_modules hub: create / review / up
 ## Scope
 
 A **module** is the organizing unit of the product. Its **hub** is
-`inspire_kb/02_modules/{module}.md` — the second-level index (after `00_bootstrap`):
+`inspire_kb/02_modules/{module}.md` — the second-level artifact (after `00_bootstrap`):
 overview, relationships to other modules, and links to everything the module owns
 across the layers. Its use cases live in `inspire_kb/03_features/{module}/` (**one
 file per use case**). This skill owns the hub and its propagation across the KB
@@ -35,17 +35,16 @@ files under `inspire_kb/03_features/{module}/`.
 
 **Hub (`02_modules/{module}.md`):**
 - Exists — one file per module (the file *is* the module's entry in `02_modules/`).
-- Is a **pure hub**: overview, relationships to other modules, a **use-case index**
-  linking each use case in `03_features/{module}/` via `[[wikilinks]]`, and links to
-  the module's screens, specs, spikes and module-scoped ADRs. **No full use-case
+- Is a **pure hub**: overview, relationships to other modules, and links to
+  the module's screens, specs, spikes and module-scoped ADRs. Its use cases live
+  in `03_features/{module}/` — the glob is the index. **No full use-case
   bodies inline.**
-- Its use-case index totals match the actual number of use-case files.
+- **Legacy check:** a hand-maintained use-case index block still sitting in the
+  hub is operator-owned; suggest removing it on next touch — never auto-edit it.
 
 **Use-case files (`03_features/{module}/`):**
 - One file per use case (`{use-case}.md`); each carries a back-link to the hub
   `[[../../02_modules/{module}|ModuleName]]` in its intro.
-- No orphans (file on disk, not in the hub index) and no phantoms (in the index, no
-  file).
 - Feature / use-case IDs are unique within the module and use the module's ID
   prefix (declared in the hub / the project's `00_bootstrap` conventions).
 
@@ -129,7 +128,6 @@ component adoption > cosmetic.
 
 ## Module hub + features
 - Use-case files: {list}
-- Hub index accuracy: {ok | N mismatches}
 - Sub-layer sync: {ok | N drifted}
 
 ## screen spec Structure
@@ -154,17 +152,18 @@ prefix (e.g. `MYM`), and a description.
 1. **Module hub:** `inspire_kb/02_modules/{module}.md` from the hub template
    ([`templates/module-hub.md.template`](templates/module-hub.md.template)) —
    overview, relationships, the ID prefix, and empty link sections (features,
-   screens, specs, ADRs). This is the module's home.
-2. **Register** it in `inspire_kb/02_modules/_index.md` (the module registry).
-3. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
-   added via `/inspire_feature create` and indexed back in the hub.
-4. **screen spec:** not created here. `inspire_kb/05_screens/{module}/` (flat or
+   screens, specs, ADRs). This is the module's home; writing it here **is** the
+   registration (module hubs are `inspire_kb/02_modules/*.md` excluding `_*.md`
+   and `README.md` — the glob is the registry).
+2. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
+   added via `/inspire_feature create`.
+3. **screen spec:** not created here. `inspire_kb/05_screens/{module}/` (flat or
    surface-first per the roster's UI count — see
    [`_references/surface-scope.md`](../_references/surface-scope.md)) is created
    lazily by [`/inspire_screens`](../inspire-screens/SKILL.md), per surface, on the
    module's first screen. `create` never pre-guesses which surfaces the module will
    reach.
-5. Point the user to `/inspire_feature create` for the first use cases, and
+4. Point the user to `/inspire_feature create` for the first use cases, and
    `/inspire_prototype` once screens exist.
 
 Report what was created and the next steps.
@@ -203,7 +202,7 @@ stay portable.
 ### Phase 2 — Candidate surfacing + narrowing
 
 Read the module's features:
-- `inspire_kb/02_modules/{module}.md` — the hub's use-case index and any action
+- `inspire_kb/02_modules/{module}.md` — the hub's overview and any action
   declarations.
 - `inspire_kb/03_features/{module}/{use-case}.md` — feature descriptions and the
   actions they declare.
@@ -244,15 +243,14 @@ coherence conflicts (via `entity-coherence`). Render via
 [`_references/findings-format.md`](../_references/findings-format.md).
 
 `scan {module}` batches over one module; `scan` without args batches over every
-module registered in `inspire_kb/02_modules/`.
+module present in `inspire_kb/02_modules/`.
 
 ## Subcommand: delete
 
 Remove a module across all layers. Use with caution.
 
 1. **Confirm** with the user: list every file and feature about to be deleted.
-2. **Hub:** delete `inspire_kb/02_modules/{module}.md` and its entry in
-   `inspire_kb/02_modules/_index.md`.
+2. **Hub:** delete `inspire_kb/02_modules/{module}.md`.
 3. **Features:** delete `inspire_kb/03_features/{module}/`.
 4. **screen spec:** sweep every surface tree, not just one — delete
    `inspire_kb/05_screens/*/{module}/` (every surface directory, including
