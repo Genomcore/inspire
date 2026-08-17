@@ -12,8 +12,8 @@ system does and for whom.
     {module}/              # in sync with the module's hub in 02_modules/
       {use-case}.md        # one file per use case; back-links to the hub
   ```
-- One **subfolder per module** — indexed from `02_modules/{module}.md` (the module
-  hub), not by a local `_index`; inside, **one file per use case**.
+- One **subfolder per module**, linked from `02_modules/{module}.md` (the module
+  hub) — the folder glob is the enumeration; inside, **one file per use case**.
 
 Features reference decisions in [`01_adr`](../01_adr), are realised as specs in
 [`04_domain`](../04_domain) and screens in [`05_screens`](../05_screens), and are explored

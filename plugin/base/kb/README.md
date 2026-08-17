@@ -11,8 +11,8 @@ Each numbered folder is a layer of the graph, operated by a matching skill in
 |--------|-------|-------|
 | [`00_bootstrap`](00_bootstrap) | The foundation: tech `stack.md` + design-system `theme.md` (base context for all skills), plus the optional surface roster `surfaces.md` (owned by `inspire-surface`) | `inspire-bootstrap` |
 | [`01_adr`](01_adr) | Architecture Decision Records | `inspire-adr` |
-| [`02_modules`](02_modules) | Module **hubs + registry** — the per-module second-level index linking its features, screens, specs and module ADRs | `inspire-module` |
-| [`03_features`](03_features) | Product intent — one file per use case, per module (indexed from `02_modules`) | `inspire-feature` |
+| [`02_modules`](02_modules) | Module **hubs** — the per-module second-level artifact linking its features, screens, specs and module ADRs | `inspire-module` |
+| [`03_features`](03_features) | Product intent — one file per use case, per module (linked from `02_modules`) | `inspire-feature` |
 | [`04_domain`](04_domain) | The logical domain — data model (entities) + behavior (actions), coupled | `inspire-domain` |
 | [`05_screens`](05_screens) | screen specs + the shared component catalog | `inspire-screens` |
 | [`06_spikes`](06_spikes) | External vertical-spike **knowledge**: repo links + imported learnings + gap analysis (the horizontal prototype keeps no file here — its insights land in the other layers) | `inspire-spike` |

@@ -16,7 +16,7 @@ survives after the spike repo goes stale or is archived.
   ```
   06_spikes/
     {name}.md        # one per spike: repo link + imported learnings + gap analysis
-    README.md        # this file + the spike index below
+    README.md        # this file
   ```
 
   New spike: `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md`.
@@ -33,9 +33,3 @@ survives after the spike repo goes stale or is archived.
 Every entry's learnings are written to **stand on their own** and feed back into
 [`03_features`](../03_features), [`04_domain`](../04_domain),
 [`05_screens`](../05_screens) and [`01_adr`](../01_adr).
-
-## Index
-
-_List each spike here with a one-line summary and its repo link:_
-
-- _e.g._ `realtime-sync` — spike on live collaboration — `github.com/org/spike-realtime-sync`
