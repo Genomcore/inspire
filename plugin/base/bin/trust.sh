@@ -199,8 +199,8 @@ skip_artifact() {
   return 1
 }
 
-# `_index.md` hubs and the pattern/component catalog are rebuilt content:
-# endorsing them is drift by construction. They still carry provenance.
+# Screens `_index.md` files and the pattern/component catalog are rebuilt
+# content: endorsing them is drift by construction. They still carry provenance.
 endorsement_checked() {
   case "$1" in
     _index.md|*/_index.md)                         return 1 ;;

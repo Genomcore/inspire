@@ -46,7 +46,7 @@ by machinery: nothing checks that anyone was asked, so the discipline lives in p
 | Where | `endorsed` | `produced` |
 |---|---|---|
 | `01_adr` – `05_screens` artifacts, `design-system.md` included | yes | yes |
-| `_index.md` hubs; `patterns/` + `components/` entries | no — rebuilt content, so endorsing it is drift by construction | yes |
+| Screens `_index.md`; `patterns/` + `components/` entries | no — rebuilt content, so endorsing it is drift by construction | yes |
 | `00_bootstrap/project.md`, `stack.md` | yes | no — the operator interview generated them, not a skill run |
 | `theme.md`, `_template.md`, `README.md` | no | no |
 | `06_spikes`, `98_lessons`, `99_tracker` | no | no — meta layers; lessons keep their own version stamping |

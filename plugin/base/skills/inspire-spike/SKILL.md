@@ -29,7 +29,6 @@ Give the spike an identity in the vault and set up its learnings hygiene.
 1. **Identify + reference.** Create `06_spikes/{name}.md` from
    [`templates/spike.md.template`](templates/spike.md.template) (kebab-case): the
    **repo link**, the question it probes, its scope, and the feature ids it covers.
-   Add a one-line entry to the index in `06_spikes/README.md`.
 2. **Inspect the spike repo's learnings hygiene.** Look at its `CLAUDE.md` (or
    equivalent) for a **structured way to record learnings**. If there is one, note
    where the learnings live so `capture` can find them.
@@ -38,6 +37,8 @@ Give the spike an identity in the vault and set up its learnings hygiene.
    captured *as the spike runs* rather than reconstructed later. **It's someone
    else's repo** — offer to add it from this session only with **explicit
    permission**, and never write there otherwise.
+4. **Legacy check.** A hand-maintained index block still in `06_spikes/README.md`
+   is operator-owned; suggest removing it (operator's call) — never edit it in.
 
 `register` does not judge the spike; it just wires it in and prepares the harvest.
 
@@ -88,7 +89,7 @@ here?
    de-risked); leave the *roughness* (its throwaway shortcuts) behind. Ask when
    unsure whether a piece applies to this project.
 5. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
-   for tracked spikes; don't re-register what's already indexed.
+   for tracked spikes; don't re-register what's already tracked.
 
 ## Related skills
 

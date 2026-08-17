@@ -8,7 +8,7 @@ description: "Lifecycle of a feature / use case: create / review / update / dele
 ## Scope
 
 A **feature** is a use case, captured as a file
-`inspire_kb/03_features/{module}/{use-case}.md` and indexed in that module's hub
+`inspire_kb/03_features/{module}/{use-case}.md`, linked from that module's hub
 `02_modules/{module}.md`. This skill owns feature-scoped operations and their propagation
 across the KB layers: screens (`05_screens`), prototype (`/prototype`),
 specs (`04_domain`), and ADRs (`01_adr`).
@@ -17,7 +17,7 @@ specs (`04_domain`), and ADRs (`01_adr`).
 
 - `/inspire_feature review {feature-id}` — single feature, all layers
 - `/inspire_feature review {module}` — batch mode, all features of a module (parallel agents)
-- `/inspire_feature create {module}/{feature-id}` — new use-case file + index entry
+- `/inspire_feature create {module}/{feature-id}` — new use-case file
 - `/inspire_feature update {feature-id}` — modify description, dependencies, priority
 - `/inspire_feature delete {feature-id}` — remove + orphan checks across layers
 - `/inspire_feature scan {feature-id}` — SDD layer alignment for one feature (fast)
@@ -94,8 +94,8 @@ surface that is the one unqualified row shown above, exactly as before.
 
 Reviews ALL features of a module in parallel.
 
-1. Read the module's hub `02_modules/{module}.md` and extract all feature/use-case IDs from its
-   use-case index.
+1. Enumerate `inspire_kb/03_features/{module}/*.md` — the glob is the index — for
+   all feature/use-case IDs.
 2. Present the list to the user and **ask for confirmation** before proceeding.
 3. On confirmation, **launch one Agent per feature in parallel** — each runs the
    single-feature review.
@@ -176,9 +176,7 @@ Create a new feature/use-case file in a module. **Required arg:**
    writing, assigning each new criterion the next free `AC-n` id, then **create
    the use-case file** `inspire_kb/03_features/{module}/{feature-id}.md` from the
    template below.
-4. **Update the module hub** (`02_modules/{module}.md`) — add the row to its
-   use-case index and fix the totals.
-5. **Report next steps:**
+4. **Report next steps:**
    - If UI-facing → `/inspire_screens` to add a screen spec.
    - If it describes a behavior/endpoint → `/inspire_domain define
      {module}::{entity}::{verb}` to author the action descriptor.
@@ -200,8 +198,8 @@ dependencies, promoting priority, changing state
    existing AC ids are preserved, a new criterion takes the next free id, never
    renumbered, never reusing a deleted id.
 3. On approval, apply it.
-4. If renamed: update the module hub `02_modules/{module}.md`, and grep `inspire_kb/` (and any
-   project code) for references to the old ID and offer fixes.
+4. If renamed: grep `inspire_kb/` (and any project code) for references to the
+   old ID and offer fixes.
 5. Run `review {feature-id}` to verify no drift.
 
 ## Subcommand: delete
@@ -211,13 +209,12 @@ Remove a feature and clean up all references.
 1. **Confirm** with the user: list every file touching this feature.
 2. Delete the use-case file
    (`inspire_kb/03_features/{module}/{feature-id}.md`).
-3. Remove its row from the module hub `02_modules/{module}.md` and fix the totals.
-4. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
+3. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
    screen's only feature was this one, flag it for removal (that's `/inspire_screens`'s
    job) and update the screen spec `_index.md` coverage table.
-5. **Prototype:** remove references in `/prototype`; note any
+4. **Prototype:** remove references in `/prototype`; note any
    `inspire_kb/06_spikes/` entry that referenced this feature.
-6. **ADRs:** grep `inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
+5. **ADRs:** grep `inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
    may need an ADR update.
 
 ## Use case template

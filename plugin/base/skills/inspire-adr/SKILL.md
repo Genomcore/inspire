@@ -96,11 +96,9 @@ omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
    field — see Conventions; a suite-of-one is never asked), context, the decision,
    key consequences, alternatives considered.
 2. **Write the ADR file** at the computed path.
-3. **Update `inspire_kb/01_adr/_index.md`** — add a row to the appropriate module
-   section (or Transversales for cross-cutting).
-4. **Propose ADR references** in the feature files that should link to it: list
+3. **Propose ADR references** in the feature files that should link to it: list
    files to edit, wait for approval.
-5. Set `**Status:** design` by default. Use `promote` later to advance.
+4. Set `**Status:** design` by default. Use `promote` later to advance.
 
 ## Subcommand: update {id}
 
@@ -140,8 +138,6 @@ via `create`).
 2. Update the old ADR: `**Status:** superseded by [[{new-id}]]`.
 3. Update the new ADR's header: `Supersedes: [[{old-id}]]`.
 4. Grep `inspire_kb/` for references to the old ADR; propose updates.
-5. Update `inspire_kb/01_adr/_index.md` (move the old entry to the superseded
-   section).
 
 ## Rules
 

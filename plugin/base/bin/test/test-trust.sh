@@ -239,7 +239,7 @@ eq "fixture: all six skill dirs hash distinctly" \
 
 mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_adr" "$R/inspire_kb/02_modules" \
          "$R/inspire_kb/03_features" "$R/inspire_kb/04_domain/auth/user" \
-         "$R/inspire_kb/05_screens/patterns"
+         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/auth"
 
 art(){ # art <path> <endorsed:yes|no> [skill sha refs]
   local path="$R/inspire_kb/$1" e="$2" skill="${3:-}" sha="${4:-}" refs="${5:-}"
@@ -261,7 +261,7 @@ art 01_adr/README.md          no                                  # skipped by f
 art 01_adr/adr-stale.md       yes adr     0000000   "$R_REFS"      # STALE
 art 01_adr/adr-refs.md        yes adr     "$R_ADR"  0000000        # REFS-CHANGED
 art 02_modules/_template.md   no                                  # skipped by filename
-art 02_modules/_index.md      no  module  "$R_MOD"  "$R_REFS"      # produced-checked, never UNENDORSED
+art 05_screens/auth/_index.md no  screens "$R_SCR"  "$R_REFS"      # produced-checked, never UNENDORSED
 art 02_modules/billing.md     yes                                 # PRE-PROVENANCE
 art 03_features/checkout.md   yes feature 0000000   "$R_REFS"      # OWNER NOT INSTALLED, not STALE
 art 04_domain/auth/user/auth.user.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)

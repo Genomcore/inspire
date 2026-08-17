@@ -21,8 +21,8 @@ Four levels under `inspire_kb/05_screens/`:
 | Level | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|
 | 1 | `design-system.md` | tokens, colors, typography, global layout | one file |
-| 2 | `patterns/` | reusable screen structures | `patterns/_index.md` |
-| 3 | `components/` | shared component specs | `components/_index.md` |
+| 2 | `patterns/` | reusable screen structures | entry files (`patterns/[!_]*.md`) |
+| 3 | `components/` | shared component specs | entry files (`components/[!_]*.md`) |
 | 4 | `{module}/` | module-specific screens | `_index.md` per module directory |
 
 `design-system.md` is **seeded at install** from the default template
@@ -115,8 +115,9 @@ being invented.
 
 1. **Identify the feature.** Every screen references at least one feature ID from
    the module's `03_features`.
-2. **Pick a pattern.** Read `patterns/_index.md` and choose the one that matches
-   the screen's purpose. Only mark `**Pattern:** bespoke` if truly unique. The
+2. **Pick a pattern.** Read the `**Purpose:**` first lines of `patterns/[!_]*.md`
+   (one-line-per-file) and choose the one that matches the screen's purpose. Only
+   mark `**Pattern:** bespoke` if truly unique. The
    project's own screen conventions (default list pattern, header layout, tabs,
    toolbar rules) live in the patterns and `design-system.md` — follow them.
 3. **Instantiate.** Describe the screen by filling the pattern's slots. Refer to
@@ -265,6 +266,11 @@ for a component; document purpose, API/slots, structure (textual), variants,
 instances; if the underlying prototype component doesn't exist yet, set the
 entry's `**State:** to-extract` and list adopters. Prefer adding a variant to an
 existing pattern over creating a new one.
+
+**Legacy check.** A kept legacy `patterns/` or `components/` `_index.md` is
+operator-owned — the skill no longer reads or maintains it. An entry missing its
+`**Purpose:**` line (or, for components, its `**State:**` line) draws a
+suggest-on-next-touch note; never machine-edit it in.
 
 ## Rules
 
