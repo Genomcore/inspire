@@ -173,8 +173,9 @@ Create a new feature/use-case file in a module. **Required arg:**
    `surfaces:` frontmatter of the template below — resolved, and only ever asked
    about, per [`_references/surface-scope.md`](../_references/surface-scope.md)).
 3. **Run the acceptance-criteria quality gate** (below) on the criteria before
-   writing, then **create the use-case file**
-   `inspire_kb/03_features/{module}/{feature-id}.md` from the template below.
+   writing, assigning each new criterion the next free `AC-n` id, then **create
+   the use-case file** `inspire_kb/03_features/{module}/{feature-id}.md` from the
+   template below.
 4. **Update the module hub** (`02_modules/{module}.md`) — add the row to its
    use-case index and fix the totals.
 5. **Report next steps:**
@@ -195,7 +196,9 @@ dependencies, promoting priority, changing state
 
 1. Read the current use-case file.
 2. Present a diff proposal to the user. If the `## Acceptance criteria` change, run
-   them through the acceptance-criteria quality gate (below) before proposing.
+   them through the acceptance-criteria quality gate (below) before proposing —
+   existing AC ids are preserved, a new criterion takes the next free id, never
+   renumbered, never reusing a deleted id.
 3. On approval, apply it.
 4. If renamed: update the module hub `02_modules/{module}.md`, and grep `inspire_kb/` (and any
    project code) for references to the old ID and offer fixes.
@@ -287,9 +290,8 @@ depends on a behavioral contract, chain to `/inspire_domain`.
    reviews unless they contradict a current ADR (one not superseded or rejected).
 8. **Batch synthesis.** In batch review, identify patterns and produce a
    prioritized correction plan grouped by fix skill.
-9. **Consult the task tracker** (`/inspire_task list`, or
-   `node inspire_kb/99_tracker/serve.mjs`) for tracked drift; don't re-surface it
-   as new.
+9. **Consult the task tracker** (`/inspire_task list`) for tracked drift; don't
+   re-surface it as new.
 10. **Acceptance criteria pass the quality gate before they land.** `create` and
     `update` run the gate above; criteria that can't be made testable signal a
     spec/design gap to resolve (here or via `/inspire_domain`), not something to

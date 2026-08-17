@@ -1,9 +1,10 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
 ---
 
-<!-- `list` and `detail` are the two shipped starters — starting points, not a closed
-     set. Add a new pattern entry whenever a screen's structure doesn't fit either. -->
+<!-- `list` and `detail` are the two shipped starters (generic, brand-agnostic) —
+     starting points, not a closed set. Add a new pattern entry whenever a screen's
+     structure doesn't fit either. -->
 # Pattern: {pattern-name}
 
 **Purpose:** {one-line description of what this pattern is for — first body line, greppable}

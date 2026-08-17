@@ -16,9 +16,10 @@ survives after the spike repo goes stale or is archived.
   ```
   06_spikes/
     {name}.md        # one per spike: repo link + imported learnings + gap analysis
-    # new spike: copy from `.claude/skills/inspire-spike/templates/spike.md.template`
     README.md        # this file + the spike index below
   ```
+
+  New spike: `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md`.
 
 ## Adding a spike
 

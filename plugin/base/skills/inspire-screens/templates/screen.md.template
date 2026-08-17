@@ -1,4 +1,4 @@
-<!-- Required: H1, **Features:**, **Pattern:**, ## Instantiation.
+<!-- Required: H1, the Features and Pattern header lines, ## Instantiation.
      Optional / presence-free: ## Module-specific deviations, ## Current prototype, ## Notes.
      This split is the single source of truth for the two lists the validator encodes. -->
 # {Screen Title} — `/{path}`

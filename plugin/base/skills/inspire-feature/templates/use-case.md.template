@@ -1,5 +1,5 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
 ---
 
 # {FEATURE-ID}: {Feature Name}
@@ -9,8 +9,10 @@
 {One-paragraph description of the feature.}
 
 **State:** 🟡 Planned
+<!-- State ladder: 🟡 Planned → 🔵 In progress → 🟢 Implemented. -->
 **Priority:** {Core | Important | Nice-to-have}
-<!-- **Depends on:** [[{feature-id}]], [[{feature-id}]] — omit this line entirely when there are no dependencies -->
+**Depends on:** [[{feature-id}]], [[{feature-id}]]
+<!-- omit the Depends on line entirely when there are no dependencies -->
 
 ## Actor
 {Primary persona}

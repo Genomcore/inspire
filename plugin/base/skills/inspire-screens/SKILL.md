@@ -259,10 +259,12 @@ and widens only when a second tree earns it. Pattern and component entries carry
 the field per [`_references/surface-scope.md`](../_references/surface-scope.md);
 the catalogs holding them stay suite-wide however their entries are scoped.
 
-Process: draft the file in `patterns/` or `components/`; document purpose, API/slots,
-structure (textual), variants, instances; if the underlying prototype component
-doesn't exist yet, set the entry's `**State:** to-extract` and list adopters.
-Prefer adding a variant to an existing pattern over creating a new one.
+Process: draft the file in `patterns/` or `components/` — copy
+`templates/pattern-entry.md.template` for a pattern, `templates/component-entry.md.template`
+for a component; document purpose, API/slots, structure (textual), variants,
+instances; if the underlying prototype component doesn't exist yet, set the
+entry's `**State:** to-extract` and list adopters. Prefer adding a variant to an
+existing pattern over creating a new one.
 
 ## Rules
 

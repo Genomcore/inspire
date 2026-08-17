@@ -10,8 +10,7 @@ truth** — no generated indexes or caches.
   `inspire_kb/99_tracker/tickets/archive/TASK-{id}.md`
 
 The archive subfolder keeps the active set lean: agents scanning "what's pending"
-read only `inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). The
-Kanban web (`inspire_kb/99_tracker/serve.mjs`) reads both locations. `close`
+read only `inspire_kb/99_tracker/tickets/*.md` (top-level, non-recursive). `close`
 moves the file; `show` / `update` look in `tickets/` first, then `tickets/archive/`.
 
 ## Frontmatter schema

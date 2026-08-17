@@ -1,5 +1,5 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `_references/surface-scope.md`
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
 ---
 
 # Component: {component-name}
