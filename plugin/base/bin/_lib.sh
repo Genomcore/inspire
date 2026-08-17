@@ -355,7 +355,7 @@ sdd_find_screens() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 # sdd_finding <severity> <rule> <target> <message>
-#   severity: "error" | "warning"
+#   severity: "error" | "warning" | "info" (a note about the run, not an artifact)
 #   rule:     short rule id (e.g. "entity-coherence")
 #   target:   path or id the finding applies to
 #   message:  human-readable description
@@ -540,7 +540,8 @@ sdd_body_prose() {
   # is a thematic break, never a frontmatter opener — and a thematic break is
   # structure, not prose, so it is dropped rather than counted as content.
   # (Three-or-more `-` written without an interval expression: BSD awk is a
-  # supported host.)
+  # supported host.) Only the `---` spelling is dropped: CommonMark's other two
+  # thematic breaks, `***` and `___`, pass through as prose lines.
   sdd_body_section "$file" "$header" \
     | awk "${SDD_AWK_FENCE_SKIP}"'
         /^[[:space:]]*\|/ { next }

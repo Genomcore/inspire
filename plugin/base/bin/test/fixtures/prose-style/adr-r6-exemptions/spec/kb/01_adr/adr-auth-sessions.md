@@ -5,8 +5,8 @@ Supersedes: [[adr-auth-cookies]]
 
 ## Context
 
-**Status:** the route migrated from a cookie, and this Status line is exempt.
-Supersedes: [[adr-auth-cookies]] — the token migrated from a cookie here too.
+**Status:** the route used to serve a cookie, and the header is written by the gateway.
+Supersedes: [[adr-auth-cookies]] — the token used to live there.
 The identifier migrated from the query string, and this line is not exempt.
 
 ## Decision

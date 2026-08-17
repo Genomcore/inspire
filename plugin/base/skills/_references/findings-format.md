@@ -93,7 +93,10 @@ Every one of these carries the rule id `prose-style`. Each names its contract
 rule, the section it was found in and the line, so the message is enough to act
 on without re-running anything. R1 and R3 are heuristics and stay warnings at
 every lifecycle; R2, R4, R5 and R6 ramp with the object's lifecycle in
-`04_domain` and are warnings everywhere else.
+`04_domain` and are warnings everywhere else. R1, R3, R4 and R6 read the line
+with its `` `code spans` `` blanked out — a token quoted as a token is not a
+claim about the system — while R2 keeps them, because a code span is still a
+word the reader reads.
 
 | Type | Rule | Meaning |
 |---|---|---|
@@ -102,7 +105,7 @@ every lifecycle; R2, R4, R5 and R6 ramp with the object's lifecycle in
 | `R3 noun cluster` | prose-style | Four or more stacked nouns, where a preposition would name the relationship. Heuristic — warning always. |
 | `R4 glossary synonym` | prose-style | A term the glossary lists as rejected, used in prose. The message names the approved term. Silent when `00_bootstrap/glossary.md` is absent or has no data rows. |
 | `R5 paragraph length` | prose-style | A paragraph of more than 6 sentences. A list is not a paragraph: each item is measured on its own. |
-| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt. |
+| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. |
 
 ### Info
 
@@ -111,7 +114,7 @@ reach and stops:
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than `en`. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
+| `prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
 
 ## Exit codes
 

@@ -61,7 +61,8 @@ blocking a commit over (`sdd_progressive_severity` in `_lib.sh`).
 | `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence cap (25 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (6 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | R1 and R3 are heuristics: **warning at every lifecycle, never ramping**. R2, R4, R5 and R6 ramp with the object's own lifecycle where one exists (`04_domain`) and are flat warnings in the three layers that carry no `lifecycle:` at all. |
 
 **English-only in 0.7, and it says so.** When `00_bootstrap/project.md` declares
-an `output_language` other than `en`, `prose-style.sh` emits one **info**-level
+an `output_language` other than English — `en`, `en-*`/`en_*` and `english` are
+all read as English, case-insensitively — `prose-style.sh` emits one **info**-level
 note — *prose-style mechanical checks are en-only in 0.7; the writing contract
 still binds as authoring judgment* — and exits without checking anything. The
 contract still binds everywhere; only the mechanics are `en`-shaped, because R1,

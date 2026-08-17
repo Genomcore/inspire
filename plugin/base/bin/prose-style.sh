@@ -13,8 +13,14 @@
 # headers — headers are prose, not machine-read tokens — so even the
 # language-independent rules would have no section kind to bind to. When
 # `$SDD_KB_ROOT/00_bootstrap/project.md` declares an `output_language` other
-# than `en`, this script emits ONE info-level note and exits 0. Absent or empty
-# `output_language` reads as `en`, exactly as `session-start.sh` reads it.
+# than English, this script emits ONE info-level note and exits 0. Absent or
+# empty `output_language` reads as `en`, exactly as `session-start.sh` reads it.
+#
+# The field is authored by a human and project.md invites a code OR a plain name,
+# so English is recognised case-insensitively as `en`, `en-*`/`en_*` (`en-US`,
+# `en_GB`) or `english`. Reading only the byte string `en` would silently skip
+# checking on every one of those spellings, and a checker that quietly checks
+# nothing is worse than one that says out loud it cannot.
 #
 # ─── The checks ──────────────────────────────────────────────────────────────
 #
@@ -26,7 +32,12 @@
 #                             and `removed` are deliberately NOT checked: both
 #                             have legitimate present-tense uses in this vault,
 #                             and a check that flagged them would train
-#                             operators to ignore it.
+#                             operators to ignore it. `used to` is narrowed the
+#                             same way — it fires on the historical construction
+#                             ("the caller used to send a cookie") and not on the
+#                             passive-purpose one ("the salt is used to derive
+#                             the key"), which a be-verb immediately before the
+#                             phrase distinguishes.
 #   R1  passive voice       — be-verb + past participle, heuristic
 #   R3  noun clusters       — 4+ consecutive content nouns, heuristic
 #
@@ -76,13 +87,19 @@
 #   - R4 MATCHES WHOLE WORDS ONLY. Boundary matching misses inflections: a
 #     glossary rejecting `organization` does not catch `organizations`. Exact
 #     word, or nothing — judgment owns the rest.
-#   - A THEMATIC BREAK ARRIVES ALREADY STRIPPED. `sdd_body_prose` drops a bare
-#     `---`, so a break written with blank lines around it — the normal shape —
-#     still separates two paragraphs, and R5 measures them separately. Written
-#     with NO blank line above and below, the two paragraphs merge into one
-#     measurement unit and R5 counts them as one. That shape is a setext H2
-#     underline in markdown rather than a break, so it is left as is.
-#   - A NON-`en` PROJECT IS NOT CHECKED AT ALL (see the language gate above).
+#   - A THEMATIC BREAK ARRIVES ALREADY STRIPPED, AND ONLY THE `---` SHAPE.
+#     `sdd_body_prose` drops a bare `---`; the other two thematic breaks
+#     CommonMark allows, `***` and `___`, reach this script as prose lines and
+#     are measured as words. A `---` written with blank lines around it — the
+#     normal shape — still separates two paragraphs, and R5 measures them
+#     separately. Written with NO blank line above and below, the two paragraphs
+#     merge into one measurement unit and R5 counts them as one; that shape is a
+#     setext H2 underline in markdown rather than a break, so it is left as is.
+#   - INLINE CODE IS NOT PROSE for R1, R3, R4 and R6: their line is read with
+#     `` `code spans` `` blanked out, so a token quoted as a token is not a claim
+#     about the system. R2 keeps them — a code span is still a word the reader
+#     reads, and dropping it would under-count the sentence.
+#   - A NON-ENGLISH PROJECT IS NOT CHECKED AT ALL (see the language gate above).
 #
 # ─── R6 exemptions (contract § Historical language) ─────────────────────────
 #
@@ -94,6 +111,11 @@
 # The last two are checked line-wise wherever they appear, not only in the
 # preamble the reader never sees, so the exemption holds if such a line is
 # written inside a section body.
+#
+# The exemptions are R6's alone. An exempt line is ordinary prose for R1, R2, R3
+# and R5 — it still carries a sentence, and it still belongs to the paragraph it
+# sits in. Widening them to every rule would silently un-check whole lines on the
+# strength of a rule about history.
 #
 # ─── R4, in one pass ─────────────────────────────────────────────────────────
 #
@@ -141,23 +163,34 @@ if [ -f "$PROJECT_FILE" ]; then
 fi
 [ -n "$OUTPUT_LANGUAGE" ] && [ "$OUTPUT_LANGUAGE" != "null" ] || OUTPUT_LANGUAGE="en"
 
-if [ "$OUTPUT_LANGUAGE" != "en" ]; then
-  sdd_finding "info" "prose-style" "$PROJECT_FILE" \
-    "output_language: $OUTPUT_LANGUAGE — prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment"
-  exit 0
-fi
+# `output_language` is authored by a human, and project.md's own comment invites
+# a plain name as much as a code. `EN`, `en-US`, `en_GB` and `English` all
+# declare English, and reading only the byte string `en` would silently skip
+# every one of them — a checker that quietly checks nothing is worse than one
+# that says it cannot. Anything else is another language and stops the run.
+PS_LANG="$(printf '%s' "$OUTPUT_LANGUAGE" | tr '[:upper:]' '[:lower:]')"
+case "$PS_LANG" in
+  en|en-*|en_*|english) ;;
+  *)
+    sdd_finding "info" "prose-style" "$PROJECT_FILE" \
+      "output_language: $OUTPUT_LANGUAGE — prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment"
+    exit 0
+    ;;
+esac
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Scratch files — one set for the whole run, removed by the EXIT trap
 # ─────────────────────────────────────────────────────────────────────────────
 
 PS_TMP=""        # comment-stripped copy of the file being read
+PS_FLAT=""       # the same copy with wikilinks unwrapped — the locator's source
 R4_STREAM=""     # concatenated prose, cleaned, one line per collected line
 R4_INDEX=""      # parallel index: file<TAB>section<TAB>layer<TAB>original line
 
 ps_cleanup() {
   local rc=$?
   [ -n "$PS_TMP" ] && rm -f "$PS_TMP"
+  [ -n "$PS_FLAT" ] && rm -f "$PS_FLAT"
   [ -n "$R4_STREAM" ] && rm -f "$R4_STREAM"
   [ -n "$R4_INDEX" ] && rm -f "$R4_INDEX"
   [ -n "${R4_TERMS:-}" ] && rm -f "$R4_TERMS"
@@ -401,6 +434,10 @@ prose_scan() {
       # `sdd_body_prose` has unwrapped it (`auth::user`, `auth.user.create`,
       # `adr-some-slug`). Those are machine-read tokens, which the contract
       # exempts; matching a synonym inside one would be a finding about a link.
+      # Known limit of the id stripper: a glossary synonym that itself contains a
+      # dot or a `::` can never match, because the id shapes are eaten first. A
+      # rejected synonym is a word the team says out loud, so this costs nothing
+      # in practice — but it is a silent miss, not a decision.
       if (r4stream != "") {
         c = tolower(raw)
         gsub(/`[^`]*`/, " ", c)
@@ -433,26 +470,46 @@ prose_scan() {
         sub(/^\[[ xX]\][[:space:]]+/, "", body)
       }
 
-      exempt_line = (bc == 1) \
+      # The contract scopes these exemptions to R6 and to nothing else
+      # (writing-style.md § Historical language). A `**Status:**` line is still
+      # prose for every other rule, and it still belongs to the paragraph it
+      # sits in.
+      exempt_r6 = (bc == 1) \
         || line ~ /^[[:space:]]*\*\*Status:\*\*/ \
         || line ~ /^[[:space:]]*(\*\*)?Supersedes:/
 
-      if (do_r1 && !exempt_line) {
-        if (match(line, passive_ed) || match(line, passive_irr))
-          emit("R1", raw, trim(substr(line, RSTART, RLENGTH)))
+      # Inline code is not prose. R1 and R6 measure the line with its code spans
+      # blanked, so a `previously` quoted as a token — or a wikilink that
+      # unwrapped into one — is not read as a claim about the system. R3 blanks
+      # them itself, with a placeholder that also breaks the noun run. R2 keeps
+      # them: a code span is still a word the reader reads.
+      nocode = line
+      gsub(/`[^`]*`/, " ", nocode)
+
+      if (do_r1) {
+        if (match(nocode, passive_ed) || match(nocode, passive_irr))
+          emit("R1", raw, trim(substr(nocode, RSTART, RLENGTH)))
       }
 
-      if (do_r3 && !exempt_line) check_r3(line)
+      if (do_r3) check_r3(line)
 
-      if (do_r6 && !exempt_line) {
-        lc = tolower(line)
+      if (do_r6 && !exempt_r6) {
+        lc = tolower(nocode)
         if (match(lc, /(^|[^a-z])previously([^a-z]|$)/)) emit("R6", raw, "previously")
-        if (match(lc, /(^|[^a-z])used to([^a-z]|$)/)) emit("R6", raw, "used to")
+        # `used to` is history only in the historical construction. "The caller
+        # used to send a cookie" narrates the past; "the salt is used to derive
+        # the key" states present behavior, and a be-verb immediately before the
+        # phrase is what separates them. The narrowing is deliberate: flagging
+        # the passive-purpose form would train operators to ignore the rule, the
+        # same reasoning that keeps `replaces` and `removed` off the token list.
+        # A line carrying both constructions reads as the passive one and is not
+        # flagged — under-reporting is the safe direction for a closed list.
+        if (match(lc, /(^|[^a-z])used to([^a-z]|$)/) \
+            && !match(lc, /(^|[^a-z])(is|are|was|were|be|been|being|am)[[:space:]]+used to([^a-z]|$)/))
+          emit("R6", raw, "used to")
         if (match(lc, /(^|[^a-z])migrated from([^a-z]|$)/)) emit("R6", raw, "migrated from")
-        if (line ~ /~~[^~]+~~/) emit("R6", raw, "~~strikethrough~~")
+        if (nocode ~ /~~[^~]+~~/) emit("R6", raw, "~~strikethrough~~")
       }
-
-      if (exempt_line) { unit_end(); next }
 
       if (uanchor == "") uanchor = raw
       if (cur == "") curanchor = raw
@@ -495,12 +552,27 @@ ramp_sev() {
   esac
 }
 
+# flatten_copy <file> <dest>
+#   The locator's source: the file with HTML comments blanked and wikilinks
+#   unwrapped exactly the way `sdd_body_prose` unwraps them. Both passes are
+#   line-preserving — comments become blank lines, the unwrap is a per-line
+#   substitution — so line N of this copy is line N of the artifact.
+#
+#   It exists because the anchor a finding carries has ALREADY been unwrapped:
+#   looking `auth::user` up in a file that says `[[auth.user|auth::user]]` fails
+#   on every wikilink-bearing line, which in a back-sourced KB is most of the
+#   normative prose. Without this the common case silently degraded to the
+#   section header's line number.
+flatten_copy() {
+  strip_html_comments "$1" \
+    | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g' > "$2"
+}
+
 # locate_line <read_file> <section> <anchor text>
-#   The line the finding points at. The anchor is a prose line, so it is looked
-#   up verbatim in the comment-stripped copy — whose line numbering is the
-#   original file's, because stripping blanks comments rather than deleting
-#   them. A line whose wikilinks were unwrapped no longer matches verbatim; the
-#   fallback is the section header's own line, which always resolves.
+#   The line the finding points at, looked up verbatim in the flattened copy.
+#   The fallback is the section header's own line, which always resolves: an
+#   anchor can still miss when the prose reader changed the text some other way
+#   (a table row folded out from between two prose lines, say).
 locate_line() {
   local read_file="$1" section="$2" anchor="$3" n=""
   if [ -n "$anchor" ]; then
@@ -611,16 +683,19 @@ run_r4() {
     if [ "$file" != "$CUR_FILE" ]; then
       CUR_FILE="$file"
       CUR_LAYER="$layer"
-      CUR_READ="$file"
       RAMP_SEV=""
+      # The walk's flattened copy is long gone by now — R4 runs after every file
+      # — so it is rebuilt here, once per file that actually has a hit.
+      CUR_READ="$file"
+      if [ -n "$PS_FLAT" ] && flatten_copy "$file" "$PS_FLAT"; then
+        CUR_READ="$PS_FLAT"
+      fi
     fi
     CUR_LAYER="$layer"
     CUR_SECTION="$section"
     ramp_sev
     sev="$RAMP_SEV"
-    # The comment-stripped copy is long gone by now, so the anchor is looked up
-    # in the artifact itself. Same numbering: stripping never removed a line.
-    line="$(locate_line "$file" "$section" "$anchor")"
+    line="$(locate_line "$CUR_READ" "$section" "$anchor")"
     msg="R4 glossary synonym: '$syn' in '## $section' (line $line) — the glossary's approved term is '$term'"
     sdd_finding "$sev" "prose-style" "$file" "$msg"
     sdd_count_by_severity "$sev"
@@ -654,8 +729,14 @@ check_file() {
   if [ -z "$PS_TMP" ]; then
     PS_TMP="$(mktemp -t sdd-prose.XXXXXX)" || return 0
   fi
+  if [ -z "$PS_FLAT" ]; then
+    PS_FLAT="$(mktemp -t sdd-prose-flat.XXXXXX)" || return 0
+  fi
   strip_html_comments "$file" > "$PS_TMP" || return 0
-  CUR_READ="$PS_TMP"
+  # The parsed copy keeps its wikilinks (the body readers unwrap their own); the
+  # locator's copy does not. Same line numbering, two different jobs.
+  flatten_copy "$file" "$PS_FLAT" || return 0
+  CUR_READ="$PS_FLAT"
 
   local header kind skipbc exempt6 prose check anchor detail
   while IFS= read -r header; do

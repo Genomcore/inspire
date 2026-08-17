@@ -1,5 +1,7 @@
 {
   "exit": 0,
-  "findings": [],
+  "findings": [
+    { "rule": "prose-style", "severity": "warning", "message_substring": "R2 sentence cap" }
+  ],
   "forbidden": ["R4 glossary synonym"]
 }

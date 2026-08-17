@@ -691,7 +691,7 @@ check "keepset carries the operator's edited validator" \
    "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/no-todos.sh')\""
 check "keepset carries the project-authored file" \
    "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.claude/skills/inspire-code/references/go-best-practices.md')\""
-check "keepset does not carry an untouched shipped file" \
+check "keepset does not carry a shipped file the operator did not touch" \
    "! printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/review.sh')\""
 check "keepset is deduplicated and hash-shaped" \
    "[ -z \"\$(printf '%s\n' \"\$ks\" | grep -vE '^[0-9a-f]{64}\$')\" ]"
