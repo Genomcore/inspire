@@ -99,9 +99,8 @@ narrowed a choice to 2–4 options. The consolidated manifest is a large surface
 Resolve `{path}`; confirm it is **external** (not `inspire_kb/`, `/prototype`,
 `/source`). Read the current KB (module hubs — `02_modules/*.md` excluding
 `_*.md` and `README.md` — screens, domain tree, `00_bootstrap`) so the run
-**merges, not clobbers**. Confirm the scanner set
-(`--only`, default all four). **Consult the task tracker** so tracked extraction
-work isn't re-surfaced.
+**merges, not clobbers**. Confirm the scanner set (`--only`, default all four).
+**Consult the task tracker** so tracked extraction work isn't re-surfaced.
 
 ### Phase 1 — Fan out the four scanners (parallel)
 

@@ -94,8 +94,8 @@ surface that is the one unqualified row shown above, exactly as before.
 
 Reviews ALL features of a module in parallel.
 
-1. Enumerate `inspire_kb/03_features/{module}/*.md` — the glob is the index — for
-   all feature/use-case IDs.
+1. Enumerate `inspire_kb/03_features/{module}/*.md` — excluding `_*.md` and
+   `README.md` — for all feature/use-case IDs; the glob is the index.
 2. Present the list to the user and **ask for confirmation** before proceeding.
 3. On confirmation, **launch one Agent per feature in parallel** — each runs the
    single-feature review.
@@ -152,7 +152,8 @@ feature or one module's features:
 
 Scan is read-only with respect to `inspire_kb/04_domain/`; authoring lives in
 `/inspire_domain`. Pure exploration leaves no tasks created. **Batch mode**
-(`scan {module}`) expands this over every feature in the module's hub `02_modules/{module}.md`.
+(`scan {module}`) expands this over every feature file in
+`inspire_kb/03_features/{module}/`.
 
 ### Phase 4 — Audit report
 

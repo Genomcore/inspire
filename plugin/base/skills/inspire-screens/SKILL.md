@@ -117,9 +117,9 @@ being invented.
    the module's `03_features`.
 2. **Pick a pattern.** Read the `**Purpose:**` first lines of `patterns/[!_]*.md`
    (one-line-per-file) and choose the one that matches the screen's purpose. Only
-   mark `**Pattern:** bespoke` if truly unique. The
-   project's own screen conventions (default list pattern, header layout, tabs,
-   toolbar rules) live in the patterns and `design-system.md` — follow them.
+   mark `**Pattern:** bespoke` if truly unique. The project's own screen
+   conventions (default list pattern, header layout, tabs, toolbar rules) live in
+   the patterns and `design-system.md` — follow them.
 3. **Instantiate.** Describe the screen by filling the pattern's slots. Refer to
    the pattern's API in its file.
 4. **Deviations only.** Do NOT redescribe the structure the pattern already
@@ -183,6 +183,11 @@ When uncertain which layer a finding belongs to, ask the user.
   `bespoke`.
 - **Component drift:** the screen describes behavior that contradicts a
   component's canonical spec → update the component spec or fix the screen.
+
+**Legacy check.** A kept legacy `patterns/` or `components/` `_index.md` is
+operator-owned — the skill no longer reads or maintains it. An entry missing its
+`**Purpose:**` line (or, for components, its `**State:**` line) draws a
+suggest-on-next-touch note; never machine-edit it in.
 
 ### Live prototype browse — reverse-drift detection
 
@@ -266,11 +271,6 @@ for a component; document purpose, API/slots, structure (textual), variants,
 instances; if the underlying prototype component doesn't exist yet, set the
 entry's `**State:** to-extract` and list adopters. Prefer adding a variant to an
 existing pattern over creating a new one.
-
-**Legacy check.** A kept legacy `patterns/` or `components/` `_index.md` is
-operator-owned — the skill no longer reads or maintains it. An entry missing its
-`**Purpose:**` line (or, for components, its `**State:**` line) draws a
-suggest-on-next-touch note; never machine-edit it in.
 
 ## Rules
 
