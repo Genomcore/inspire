@@ -1,0 +1,12 @@
+{
+  "exit": 1,
+  "args": ["spec/sdd"],
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "error",
+      "message_substring": "entity document missing required section(s): Touched by"
+    }
+  ],
+  "forbidden": ["use-case file", "ADR missing", "screen file"]
+}

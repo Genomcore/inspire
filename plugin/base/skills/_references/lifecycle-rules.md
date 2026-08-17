@@ -57,8 +57,8 @@ The quality gate (D24) — rule families across three severity tiers running at 
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 
 `sections-present` is the one rule that splits its severity by **layer**, because
-this table's four columns only exist in `04_domain`: a use-case file, an ADR and
-a screen file carry no `lifecycle:` at all, so nothing there can ramp. The rule
+this table's columns only exist in `04_domain`: a use-case file, an ADR and a
+screen file carry no `lifecycle:` at all, so nothing there can ramp. The rule
 checks their shapes too — sections, the `AC-N` id format, `### Breaking changes`,
 the screen's required parts — and every finding it makes outside `04_domain` is a
 **warning**, at every moment of that artifact's life. The table above is the
@@ -66,7 +66,7 @@ the screen's required parts — and every finding it makes outside `04_domain` i
 check *does* ramp, because what a draft may still be reshaping an accepted or
 stable object has fixed.
 
-Two shapes are deliberately presence-only rather than non-empty: an entity's
+Some shapes are deliberately presence-only rather than non-empty: an entity's
 `## Touched by` (consolidation owns its body, and a zero-toucher entity
 legitimately has none — `field-coverage` already reports that fact at tier 3),
 and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).

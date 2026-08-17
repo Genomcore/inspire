@@ -120,6 +120,75 @@ sdd_resolve_id() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Scope intersection
+#
+# The scope contract, in one place: a rule receives one `$1` and checks exactly
+# `$1 ∩ its own layers`. Every layer — the domain tree and the three KB layers
+# below — resolves its slice of the scope through this one helper, because two
+# implementations of "does this scope reach that layer" would eventually answer
+# differently and one of them would be a gate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# sdd_scope_norm <path>
+#   Lexical normalization: repeated leading `./` removed, runs of `/` squeezed,
+#   trailing `/` dropped. `./inspire_kb//04_domain/` and `inspire_kb/04_domain`
+#   name the same directory and must compare equal, or a scope spelled the
+#   second way silently checks nothing.
+sdd_scope_norm() {
+  local p="$1"
+  # The separators come from variables: written inline, the replacement half of
+  # `${p//…/…}` keeps the backslash of an escaped `/` and the "normalization"
+  # would corrupt the path it was meant to clean.
+  local dbl='//' one='/'
+  while [ "$p" != "${p//$dbl/$one}" ]; do p="${p//$dbl/$one}"; done
+  while [ "${p#./}" != "$p" ]; do p="${p#./}"; done
+  while [ "$p" != "/" ] && [ "${p%/}" != "$p" ]; do p="${p%/}"; done
+  printf '%s\n' "$p"
+}
+
+# sdd_scope_intersect <scope> <layer_root>
+#   Prints the directory a rule should scan for that layer, or nothing at all
+#   when the scope and the layer are disjoint. The cases:
+#     - empty scope         → the whole layer
+#     - scope inside layer  → the scope
+#     - layer inside scope  → the whole layer
+#     - otherwise           → nothing (skip the layer)
+#   Comparison is lexical first, then physical: when both sides exist on disk,
+#   an absolute and a relative spelling of the same directory must intersect,
+#   and only `pwd -P` can tell. A scope that does not exist keeps the
+#   silent-skip semantics — there is nothing there to check either way.
+sdd_scope_intersect() {
+  local scope="$1"
+  local root
+  root="$(sdd_scope_norm "$2")"
+
+  if [ -z "$scope" ]; then
+    printf '%s\n' "$root"
+    return 0
+  fi
+  scope="$(sdd_scope_norm "$scope")"
+
+  case "$scope" in
+    "$root" | "$root"/*) printf '%s\n' "$scope"; return 0 ;;
+  esac
+  case "$root" in
+    "$scope"/*) printf '%s\n' "$root"; return 0 ;;
+  esac
+
+  if [ -d "$scope" ] && [ -d "$root" ]; then
+    local pscope proot
+    pscope="$(cd "$scope" 2>/dev/null && pwd -P)" || return 0
+    proot="$(cd "$root" 2>/dev/null && pwd -P)" || return 0
+    case "$pscope" in
+      "$proot" | "$proot"/*) printf '%s\n' "$scope"; return 0 ;;
+    esac
+    case "$proot" in
+      "$pscope"/*) printf '%s\n' "$root"; return 0 ;;
+    esac
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Artifact discovery
 #
 # Layout: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md
@@ -127,13 +196,23 @@ sdd_resolve_id() {
 # Per-entity documents sit alongside actions at the same path with one
 # fewer segment: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md (2
 # dotted segments). Action discovery uses segment count to distinguish them.
+#
+# Both finders intersect their scope with $SDD_SPEC_ROOT first. The dotted-leaf
+# filename shape is a discriminator WITHIN the domain tree, never a claim about
+# the rest of the KB: a screen at `05_screens/auth/user.profile.md` carries the
+# same shape and is not a domain object. Without the intersection, a KB-wide
+# scope would hand that file to every domain rule and its lifecycle-valid error
+# would block the PR — a gate firing on an artifact whose format it does not
+# own.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # All action descriptor files under inspire_kb/04_domain/. Actions have 3-segment dotted
 # leaf filenames ({module}.{entity}.{action}.md); entity documents
 # ({module}.{entity}.md) have 2 segments and are excluded.
 sdd_find_actions() {
-  local scope="${1:-$SDD_SPEC_ROOT}"
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
+  [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
@@ -145,7 +224,9 @@ sdd_find_actions() {
 # descriptors ({module}.{entity}.{action}.md) have 3 segments and are
 # excluded.
 sdd_find_entities() {
-  local scope="${1:-$SDD_SPEC_ROOT}"
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
+  [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \

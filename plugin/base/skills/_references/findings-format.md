@@ -81,9 +81,10 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
 | `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `03_features/` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
 | `AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
-| `AC-id duplicate` | sections-present | One `AC-N` id is used by two criteria in the same use-case file. Gaps in the numbering are never a finding: ids are stable, never renumbered and never reused. |
+| `AC-id duplicate` | sections-present | One `AC-N` id is used by two criteria in the same use-case file. Gaps in the numbering are never a finding: ids are stable, never renumbered and never reused. Numbers compare as written, so `AC-01` and `AC-1` are two distinct ids rather than a duplicate. |
 | `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
-| `ADR missing required subsection` | sections-present | `### Breaking changes` is absent from (or present outside) `## Consequences`. Presence-only: an ADR that breaks nothing still says so. |
+| `ADR missing required subsection` | sections-present | `### Breaking changes` is nowhere in the ADR. Presence-only: an ADR that breaks nothing still says so. |
+| `ADR subsection … is present but not under …` | sections-present | `### Breaking changes` exists but sits under some other `## Section`, where it answers a different question. Distinct from the type above so the operator is told to move a heading rather than write one. |
 | `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, its `**Pattern:**` line or `## Instantiation`, or has an empty `## Instantiation`. `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
 
 ### Info

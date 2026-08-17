@@ -5,7 +5,7 @@
 # that shape — the mandatory sections present, and (where the section is
 # operator-authored) non-empty. A header alone is insufficient.
 #
-# Four layers are checked, each against the format spec that owns it:
+# Every layer below is checked against the format spec that owns it:
 #
 #   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
 #     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Behavior · ## Errors
@@ -87,33 +87,10 @@ ADR_SECTIONS=("Context" "Decision" "Consequences" "Alternatives considered" \
 # The canonical orders are the section arrays themselves: the format specs
 # state one list, in order, and a second copy here could only drift from it.
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Scope intersection
-# ─────────────────────────────────────────────────────────────────────────────
-
-# layer_scope <scope> <layer_root>
-#   Prints the directory this rule should scan for one layer, or nothing at all
-#   when the scope and the layer do not intersect. Three cases, and the third
-#   is the one that keeps a scoped domain run domain-scoped:
-#     - no scope            → the whole layer
-#     - scope inside layer  → the scope
-#     - layer inside scope  → the whole layer
-#     - otherwise           → empty (skip this layer)
-layer_scope() {
-  local scope="$1"
-  local root="${2%/}"
-  if [ -z "$scope" ]; then
-    printf '%s\n' "$root"
-    return 0
-  fi
-  scope="${scope%/}"
-  case "$scope" in
-    "$root" | "$root"/*) printf '%s\n' "$scope"; return 0 ;;
-  esac
-  case "$root" in
-    "$scope"/*) printf '%s\n' "$root"; return 0 ;;
-  esac
-}
+# Each layer's slice of the scope is resolved by `sdd_scope_intersect` in
+# _lib.sh — the same helper the domain finders use, so this rule and the ten
+# domain-shaped ones cannot drift on what a scope means. See the dispatch at
+# the foot of this file.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Readers
@@ -248,8 +225,11 @@ join_list() {
 # check_order <file> <kind> <canonical section...>
 #   Subsequence match over the H2 stream: the file's KNOWN sections must appear
 #   in the canonical relative order. Unknown or optional H2s are skipped, so a
-#   file that adds a section is not penalised for it; a repeated section is
-#   tolerated in place and only a genuine reordering trips the check.
+#   file that adds a section is not penalised for it. The comparison is
+#   non-decreasing rather than strictly increasing, so a section repeated
+#   ADJACENTLY passes; a section repeated later in the file reads as a jump
+#   backwards and does trip the check, which is the honest reading — by then
+#   the H2 stream genuinely is out of canonical order.
 #   Lifecycle-progressive: what a draft may still be reshaping, an accepted or
 #   stable object has fixed.
 check_order() {
@@ -352,20 +332,40 @@ check_acceptance_criteria() {
   fi
 }
 
+# One scratch file for the whole run, created on first use and removed by the
+# EXIT trap — an interrupted run leaves nothing behind, which a per-file
+# `mktemp` + `rm` could not promise.
+SP_TMP=""
+sp_cleanup() {
+  local rc=$?
+  [ -n "$SP_TMP" ] && rm -f "$SP_TMP"
+  return $rc
+}
+trap sp_cleanup EXIT
+
+# sp_strip_to_tmp <file> — writes the comment-stripped copy to $SP_TMP.
+# Sets a global rather than printing a path: a command substitution would run
+# the mktemp in a subshell, stranding the file the trap is meant to remove.
+sp_strip_to_tmp() {
+  if [ -z "$SP_TMP" ]; then
+    SP_TMP="$(mktemp -t sdd-sections.XXXXXX)" || return 1
+  fi
+  strip_html_comments "$1" > "$SP_TMP"
+}
+
 check_feature() {
-  local file="$1" tmp
-  tmp="$(mktemp -t sdd-sections.XXXXXX)" || return 0
-  strip_html_comments "$file" > "$tmp"
+  local file="$1"
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
   sections_report "$tmp" "$file" "use-case file" "warning" "" \
     "${FEATURE_SECTIONS[@]}"
   check_acceptance_criteria "$tmp" "$file"
-  rm -f "$tmp"
 }
 
 check_adr() {
-  local file="$1" tmp
-  tmp="$(mktemp -t sdd-sections.XXXXXX)" || return 0
-  strip_html_comments "$file" > "$tmp"
+  local file="$1"
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
   sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
 
   # `### Breaking changes` is presence-only — an ADR that breaks nothing still
@@ -383,13 +383,12 @@ check_adr() {
       sdd_count_warning
     fi
   fi
-  rm -f "$tmp"
 }
 
 check_screen() {
-  local file="$1" tmp missing=""
-  tmp="$(mktemp -t sdd-sections.XXXXXX)" || return 0
-  strip_html_comments "$file" > "$tmp"
+  local file="$1" missing=""
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
 
   has_line_prefix "$tmp" "# "            || missing="${missing:+$missing,}H1 title"
   has_line_prefix "$tmp" "**Features:**" || missing="${missing:+$missing,}**Features:** line"
@@ -410,17 +409,16 @@ check_screen() {
       "screen file missing required part(s): $missing"
     sdd_count_warning
   fi
-  rm -f "$tmp"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dispatch — one pass per layer, each over its own slice of the scope
 # ─────────────────────────────────────────────────────────────────────────────
 
-DOMAIN_SCOPE="$(layer_scope "$SCOPE" "$SDD_SPEC_ROOT")"
-FEATURE_SCOPE="$(layer_scope "$SCOPE" "$SDD_KB_ROOT/03_features")"
-ADR_SCOPE="$(layer_scope "$SCOPE" "$SDD_KB_ROOT/01_adr")"
-SCREEN_SCOPE="$(layer_scope "$SCOPE" "$SDD_KB_ROOT/05_screens")"
+DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
+FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
+ADR_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/01_adr")"
+SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/05_screens")"
 
 if [ -n "$DOMAIN_SCOPE" ]; then
   while IFS= read -r action; do

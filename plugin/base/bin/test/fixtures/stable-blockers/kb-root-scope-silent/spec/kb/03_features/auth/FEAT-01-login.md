@@ -1,5 +1,5 @@
 ---
-id: auth.session.create
+id: auth::session::create
 module: auth
 entity: session
 action: create

@@ -112,6 +112,9 @@ What follows.
 ### Breaking changes
 - an H3 of the same name under the wrong parent
 
+### Only under alternatives
+- an H3 that exists in the file but never under Consequences
+
 ## Consequences
 ### Breaking changes
 - a second parent must not concatenate onto the first
@@ -126,7 +129,13 @@ eq  "has_section rejects an unsupported level" "$?" "2"
 
 yes "has_subsection finds the H3 under its parent" \
     sdd_has_subsection "$ROOT/sections.md" "Consequences" "Breaking changes"
-no  "has_subsection rejects an H3 under another parent" \
+# The parent EXISTS and precedes the H3 being looked for, so answering "no"
+# requires the reader to have left the parent section at the next H2. A parent
+# that is simply absent would never reach that branch and would pass whether or
+# not the reset is there.
+no  "has_subsection rejects an H3 that follows the parent's section" \
+    sdd_has_subsection "$ROOT/sections.md" "Consequences" "Only under alternatives"
+no  "has_subsection rejects an absent parent" \
     sdd_has_subsection "$ROOT/sections.md" "Context" "Breaking changes"
 
 sub="$(sdd_body_subsection "$ROOT/sections.md" "Consequences" "Breaking changes")"
@@ -208,6 +217,74 @@ eq "find_screens is empty on a domain scope"  "$(sdd_find_screens  "$KB/04_domai
 eq "find_features is empty on the ADR layer"  "$(sdd_find_features "$KB/01_adr")"    ""
 has "find_features narrows to a module scope" "FEAT-01-login.md" \
     "$(sdd_find_features "$KB/03_features/auth")"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# sdd_scope_intersect — the shared scope contract
+#
+# One helper answers "what should this layer scan" for the domain finders and
+# for sections-present alike. Two things it must get right: the four cases, and
+# the fact that a directory has many spellings.
+# ─────────────────────────────────────────────────────────────────────────────
+
+eq "scope_norm squeezes // runs"        "$(sdd_scope_norm 'a//b')"      "a/b"
+eq "scope_norm strips leading ./"       "$(sdd_scope_norm './a/b')"     "a/b"
+eq "scope_norm strips repeated ./"      "$(sdd_scope_norm './/./a/b')"  "a/b"
+eq "scope_norm strips a trailing /"     "$(sdd_scope_norm 'a/b/')"      "a/b"
+eq "scope_norm leaves a clean path be"  "$(sdd_scope_norm 'a/b')"       "a/b"
+eq "scope_norm keeps an absolute path"  "$(sdd_scope_norm '/a//b/')"    "/a/b"
+
+eq "intersect: empty scope means the whole layer" \
+   "$(sdd_scope_intersect "" "kb/04_domain")" "kb/04_domain"
+eq "intersect: scope inside the layer scans the scope" \
+   "$(sdd_scope_intersect "kb/04_domain/auth" "kb/04_domain")" "kb/04_domain/auth"
+eq "intersect: layer inside the scope scans the layer" \
+   "$(sdd_scope_intersect "kb" "kb/04_domain")" "kb/04_domain"
+eq "intersect: scope equal to the layer" \
+   "$(sdd_scope_intersect "kb/04_domain" "kb/04_domain")" "kb/04_domain"
+eq "intersect: disjoint scope yields nothing" \
+   "$(sdd_scope_intersect "kb/03_features" "kb/04_domain")" ""
+eq "intersect: a nonexistent scope stays silent" \
+   "$(sdd_scope_intersect "no/such/place" "kb/04_domain")" ""
+
+# Spelling independence. The first two are lexical; the third needs the
+# physical comparison, since no amount of string work relates an absolute
+# spelling to a relative one.
+eq "intersect: a ./-prefixed scope behaves like the canonical one" \
+   "$(sdd_scope_intersect "./kb/04_domain" "kb/04_domain")" "kb/04_domain"
+eq "intersect: a //-carrying scope behaves like the canonical one" \
+   "$(sdd_scope_intersect "kb//04_domain/" "kb/04_domain")" "kb/04_domain"
+(
+  cd "$ROOT" || exit 1
+  abs_in="$(sdd_scope_intersect "$KB/04_domain/auth" "kb/04_domain")"
+  abs_out="$(sdd_scope_intersect "$KB" "kb/04_domain")"
+  printf '%s\n%s\n' "$abs_in" "$abs_out"
+) > "$ROOT/abs.out"
+eq "intersect: an absolute scope inside a relative layer" \
+   "$(sed -n 1p "$ROOT/abs.out")" "$KB/04_domain/auth"
+eq "intersect: an absolute scope containing a relative layer" \
+   "$(sed -n 2p "$ROOT/abs.out")" "kb/04_domain"
+
+# The gate-integrity case: a screen file that happens to carry a dotted
+# basename is not a domain object, and a KB-wide scope must not make it one.
+mkdir -p "$KB/04_domain/auth/user"
+: > "$KB/05_screens/auth/user.profile.md"
+: > "$KB/05_screens/auth/user.profile.edit.md"
+: > "$KB/04_domain/auth/user/auth.user.md"
+: > "$KB/04_domain/auth/user/auth.user.create.md"
+(
+  cd "$ROOT" || exit 1
+  SDD_SPEC_ROOT="kb/04_domain"
+  printf 'ENT %s\n' $(sdd_find_entities "kb")
+  printf 'ACT %s\n' $(sdd_find_actions  "kb")
+) > "$ROOT/shape.out"
+has   "find_entities keeps its own layer's entity on a KB-wide scope" \
+      "04_domain/auth/user/auth.user.md" "$(cat "$ROOT/shape.out")"
+has   "find_actions keeps its own layer's action on a KB-wide scope" \
+      "04_domain/auth/user/auth.user.create.md" "$(cat "$ROOT/shape.out")"
+hasnt "find_entities ignores a dotted-basename screen file" \
+      "user.profile.md" "$(cat "$ROOT/shape.out")"
+hasnt "find_actions ignores a dotted-basename screen file" \
+      "user.profile.edit.md" "$(cat "$ROOT/shape.out")"
 
 echo ""
 echo "Passed: $pass · Failed: $fail"

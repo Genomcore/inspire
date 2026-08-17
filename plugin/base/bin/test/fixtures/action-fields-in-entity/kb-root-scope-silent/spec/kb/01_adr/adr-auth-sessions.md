@@ -1,5 +1,5 @@
 ---
-id: auth.session.rotate
+id: auth::session::rotate
 module: auth
 entity: session
 action: rotate
