@@ -12,6 +12,7 @@
    way. Leave the rest of the file (the INSPIRE orientation, KB layer list,
    skills, validators, lock note) untouched — that part is generic and correct
    as shipped.
+
 ## Subcommand: readme
 
 Create (or update) the **project's root `README.md`** — the product's own front

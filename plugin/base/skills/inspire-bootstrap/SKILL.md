@@ -69,7 +69,7 @@ at least the stack.
    run the `theme` flow (or derive it from a mockup's CSS).
 4. **Refine the project's `CLAUDE.md`** — replace `/inspire:init`'s marked
    placeholders (name, purpose, stack) **in place**, leaving the orientation
-   content alone; full procedure in
+   content alone; read the full procedure in
    [`references/bootstrap-identity.md`](references/bootstrap-identity.md).
 5. **Create the project's root `README.md`** by running the `readme` flow. A project
    materialized from the plugin never carries the template's own methodology README, so
@@ -86,9 +86,10 @@ Confirm the outcome and point the operator at the next layer (usually
 
 ## Flows in `references/`
 
-Four of this skill's flows carry long procedures of their own. Each flow's full
-procedure lives under `references/`. **Before executing any flow, read every
-reference file its index row names** — the table below is an index, not the flow.
+Four of this skill's flows keep their full procedure in a reference file of their
+own. Each flow's full procedure lives under `references/`. **Before executing any
+flow, read every reference file its index row names** — the table below is an
+index, not the flow.
 
 | Flow | What it does |
 |---|---|

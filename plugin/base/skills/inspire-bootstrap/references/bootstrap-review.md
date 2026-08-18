@@ -1,6 +1,8 @@
 # Bootstrap — review checklist
 > Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here.
 
+## Subcommand: review
+
 - `project.md`, `stack.md` and `theme.md` exist and parse.
 - `project.md` declares a valid `output_language`. Flag if missing/empty.
 - `glossary.md` exists and parses — a header row and its separator, then zero or more
