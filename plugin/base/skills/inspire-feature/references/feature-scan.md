@@ -4,27 +4,20 @@
 ## Subcommand: scan
 
 The feature-level entry point for SDD-layer work. Same three phases as
-[`/inspire_module scan`](../../inspire-module/references/module-scan.md), scoped to one
-feature or one module's features:
+[`/inspire_module scan`](../../inspire-module/references/module-scan.md), scoped to
+one feature or one module's features. The worktree check, the plural→singular
+canonicalization on action ids, the existence check at
+`inspire_kb/04_domain/{module}/{entity}/{action}.md`, the one-question-at-a-time
+dialogue, and the chained-authoring handoff to `/inspire_domain define` are that
+file's protocol, unchanged for a feature — read it there rather than here.
 
-1. **Environment setup** — confirm a clean worktree on the right branch, or offer
-   to bootstrap one (direct `git worktree add`; do NOT defer to a third-party
-   worktree skill — the `inspire-*` family must stay portable).
-2. **Candidate surfacing + narrowing** — read the feature file, infer the actions
-   that would realize it (most features map to 1–3), apply plural→singular
-   canonicalization on action ids silently, check whether each already exists at
-   `inspire_kb/04_domain/{module}/{entity}/{action}.md`, and dialogue with the
-   operator to pick a set. One focused question at a time; follow the
-   conversational conventions of [`/inspire_domain`](../../inspire-domain/SKILL.md).
-3. **Chained authoring** (only on an explicit "start" signal) — create one
-   `TaskCreate` per chosen action, mark the first `in_progress`, and invoke
-   `/inspire_domain define {id}` via the Skill tool; `inspire-domain` runs its
-   socratic interview and may co-evolve the action + entity documents in one flow.
+The one candidate-surfacing delta: scan reads the feature file and infers the
+actions that would realize it (most features map to 1–3), rather than reading a
+module hub's declared actions.
 
 Scan is read-only with respect to `inspire_kb/04_domain/`; authoring lives in
-`/inspire_domain`. Pure exploration leaves no tasks created. **Batch mode**
-(`scan {module}`) expands this over every feature file in
-`inspire_kb/03_features/{module}/`.
+`/inspire_domain`. **Batch mode** (`scan {module}`) expands this over every
+feature file in `inspire_kb/03_features/{module}/`.
 
 ### Phase 4 — Audit report
 
