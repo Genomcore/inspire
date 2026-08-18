@@ -294,4 +294,4 @@ fi
 # test-upgrade.sh drives the derive/normalize layer through them directly.
 # hop_report always returns 0, which is what a sourced hop's LAST command must
 # do — the real failure channel is HOP_FAILED, never the exit status.
-hop_report 'As of 0.7.0 the KB keeps no index mirrors: module hubs are enumerated by glob (inspire_kb/02_modules/*.md minus _*.md and README.md), and pattern/component entries carry their own Purpose and State.'
+hop_report 'As of 0.7.0 the KB keeps no index mirrors: module hubs are enumerated by glob (inspire_kb/02_modules/*.md minus _*.md and README.md), and pattern/component entries carry their own Purpose and State. 0.7.0 also restructured the skills, so an ASK on a SKILL.md means part of its content now lives in new references/ files beside it — shipped as create rows in this same run.'

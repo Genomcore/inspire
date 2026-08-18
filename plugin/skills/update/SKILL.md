@@ -6,10 +6,10 @@ description: "Update this project's INSPIRE runtime to the installed plugin's ve
 # /inspire:update — re-materialize the runtime
 
 Brings a project's materialized runtime up to the plugin's current base. This is the
-**materialize-only** stage: it does not yet reconcile lessons. Lesson classification and
+**materialize-only** stage: it does not reconcile lessons. Lesson classification and
 skill rebuilding are specified in
 [`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md)
-D6 and land at v1.
+D6, and building them is future work — nothing here approximates them in the meantime.
 
 ## Preconditions
 
@@ -104,6 +104,26 @@ For a content `ask` (anywhere outside `inspire_kb/`), ask per file: **mine** / *
   resolve that path as `mine` in Step 3 (the file now on disk — the merged one — is the
   one to keep). Nowhere else in this flow should you edit file content: everywhere else
   the resolution is "pick one side," and the script performs it.
+
+**The split case — an `ask` on a `SKILL.md` with `create` rows under the same skill's
+`references/`.** Read that pairing off the grouped **stderr** report, which lists both
+kinds of row; update-mode stdout carries `ask` but no verdict tally, so it cannot show
+you the `create` side. The pairing means the monolith's content has a new home: the
+operator's divergent edit may belong in one of the new reference files rather than in
+`SKILL.md`. Say so when you ask, and name the shape of keeping mine — a **kept monolith
+with the new references beside it**, two live copies of the same guidance — so the choice
+is made with that in view.
+
+Taking the split is a `merge` whose combined content lands at a *different* path than the
+conflicted one, and **the sequencing is load-bearing: place content only after
+`--mode update` has finished.** That run reclassifies from disk before it writes, so a
+file you create at a `create` path stops being a creation — it becomes an `ask` ("new in
+this release, and you already have a different file here"), the unresolved default keeps
+*your* file, and the reference INSPIRE ships never lands at all. So: resolve the
+`SKILL.md` itself as `--take-base`, let the run install the new references, then write the
+operator's content into the appropriate one and tell them where it went. Never pass
+`--take-base` / `--take-mine` for a `create` path: it matches no `ask` row, and the script
+warns that the resolution "matched nothing" while changing nothing.
 
 For a retirement `ask` (any path under `inspire_kb/` — see the batch note above for the
 discriminator), the choice is **keep** / **retire** only. There is no `merge`: there is no
@@ -201,7 +221,7 @@ Update has two halves, and only one of them can be a script:
 | Half | Nature | Where it lives | Status |
 |---|---|---|---|
 | Version compare, manifest-driven content classification, the hop chain, copying, settings merge, lock rewrite | **deterministic** | `materialize.sh` | **complete** |
-| Re-deriving each skill as `new base + surviving lessons` | **semantic** — a judgement about meaning, not a file operation | this skill | **not built (v1)** |
+| Re-deriving each skill as `new base + surviving lessons` | **semantic** — a judgement about meaning, not a file operation | this skill | **not built** |
 
 The second half is `adr-runtime-lifecycle-and-lessons` D6: classify every lesson against the
 new base (absorbed / untouched / partial / contradicted), then rebuild each affected skill
@@ -217,8 +237,9 @@ genuinely useful on its own — it brings validators, hooks and untouched skills
 safely, migrating even a pre-0.3 project in the process — and it is the substrate the
 semantic half will call.
 
-**Refining that second half is a dedicated spike**, scheduled after Release B. See
-*Follow-up: the update-process spike* at the end of this plan.
+**Refining that second half is future work**, specified by D6 of the ADR linked at the
+top of this file and tracked by the operator rather than promised here. Nothing in this
+skill waits on it: everything above is what the current release actually does.
 
 ## Rules
 
@@ -230,18 +251,27 @@ semantic half will call.
    `--take-base` moves a conflicted path to the new base version; only a `merge` you write
    yourself combines the two.
 
-   **The guarantee's exact scope: files INSPIRE shipped.** Classification compares disk
-   against the SOURCE version's manifest (`plugin/manifests/<version>.json`) and the
-   current `base/` — not against any lock; the lock's old `files` map is gone. A file the
-   *project* authored **inside** a skill directory INSPIRE owns — e.g.
-   `.claude/skills/inspire-code/profiles/mystack.md`, or `inspire-*/references/*.md` — was
-   never in any manifest, so it always classifies as `keep` ("yours — INSPIRE never
-   shipped this") and is never touched or deleted. This is the fix for the pre-0.3
-   behaviour (`install.sh` used to `rm -rf` a whole owned entry, destroying exactly these
-   files) — already shipped, not a roadmap item. Project content still belongs in the KB,
-   in a `98_lessons` node, or in the project's `CLAUDE.md` — not inside an `inspire-*`
-   directory — but a file left there by mistake now survives rather than being silently
-   destroyed.
+   **The guarantee's exact scope: a path the target version does not ship.**
+   Classification compares disk against the SOURCE version's manifest
+   (`plugin/manifests/<version>.json`) and the current `base/` — not against any lock;
+   the lock's old `files` map is gone. A file the *project* authored at a path no
+   manifest lists and the new base does not carry — e.g.
+   `.claude/skills/inspire-code/profiles/mystack.md` — always classifies as `keep`
+   ("yours — INSPIRE never shipped this") and is never touched or deleted, even though it
+   sits inside a skill directory INSPIRE owns. This is the fix for the pre-0.3 behaviour
+   (`install.sh` used to `rm -rf` a whole owned entry, destroying exactly these files) —
+   already shipped, not a roadmap item.
+
+   **Where the target version does ship that path, the guarantee is narrower — and a
+   skill's `references/` is exactly such a place.** INSPIRE ships reference files under
+   `inspire-*/references/`, and 0.7.0 ships a batch of new ones, so a file the project
+   authored there can **collide** with a newly shipped one. It then classifies `ask` —
+   "new in this release, and you already have a different file here" — and an unresolved
+   `ask` keeps the operator's file, exactly as everywhere else. It is still never silently
+   touched or deleted; what changes is that the operator gets a question where before there was
+   nothing to ask. Project content still belongs in the KB, in a `98_lessons` node, or in
+   the project's `CLAUDE.md` — not inside an `inspire-*` directory — but a file left there
+   by mistake survives rather than being silently destroyed.
 
    `inspire_kb/` is out of scope for *classification* — content classification never runs
    against it at all, because no shipped manifest lists a KB path in the first place. KB
@@ -260,8 +290,8 @@ semantic half will call.
 4. **Never downgrade.** A plugin older than the project's detected version is an error, not
    an update — enforced by `version_cmp` in the script, in both `--mode plan` and
    `--mode update`.
-5. **No lesson reconciliation here.** Classification, archiving and skill rebuilding are v1
-   (D6). This skill does not read `98_lessons/`. Do not approximate it — telling the operator
-   an edit was kept is truthful; silently merging it is not.
+5. **No lesson reconciliation here.** Classification, archiving and skill rebuilding are
+   D6, and unbuilt. This skill does not read `98_lessons/`. Do not approximate it — telling
+   the operator an edit was kept is truthful; silently merging it is not.
 6. **Do not re-ask the product roots.** Read them from `stack.md`; changing them is a Shape
    change owned by `/inspire_bootstrap stack`.
