@@ -1,5 +1,7 @@
 # Pattern: list
 
+**Purpose:** show many records of one kind and let the user find, filter and act on them.
+
 A **collection view** — the canonical way to show many records of one kind and let
 the user find, filter and act on them. Most module landing screens instantiate
 this.

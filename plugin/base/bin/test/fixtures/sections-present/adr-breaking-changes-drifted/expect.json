@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "present but not under"
+    }
+  ],
+  "forbidden": ["missing required section", "missing required subsection", "empty section(s)"]
+}

@@ -16,14 +16,16 @@ survives after the spike repo goes stale or is archived.
   ```
   06_spikes/
     {name}.md        # one per spike: repo link + imported learnings + gap analysis
-    _template.md     # copy this for a new spike
-    README.md        # this file + the spike index below
+    README.md        # this file
   ```
+
+  New spike: `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md`.
 
 ## Adding a spike
 
-1. `/inspire_spike register {name}` copies `_template.md` → `{name}.md` and fills the
-   repo link, the question, scope, and covered features.
+1. `/inspire_spike register {name}` copies
+   `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md` and
+   fills the repo link, the question, scope, and covered features.
 2. `/inspire_spike capture {name}` harvests its learnings as a **gap analysis**
    against the vault — importing the signal it de-risked, leaving its rough shortcuts
    behind.
@@ -31,9 +33,3 @@ survives after the spike repo goes stale or is archived.
 Every entry's learnings are written to **stand on their own** and feed back into
 [`03_features`](../03_features), [`04_domain`](../04_domain),
 [`05_screens`](../05_screens) and [`01_adr`](../01_adr).
-
-## Index
-
-_List each spike here with a one-line summary and its repo link:_
-
-- _e.g._ `realtime-sync` — spike on live collaboration — `github.com/org/spike-realtime-sync`

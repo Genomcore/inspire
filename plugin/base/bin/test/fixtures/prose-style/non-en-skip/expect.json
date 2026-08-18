@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "info",
+      "message_substring": "prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment"
+    }
+  ],
+  "forbidden": ["R2 sentence cap", "R6 historical language"]
+}

@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R3 noun cluster: stacked nouns 'invoice payment capture retry' in '## Inputs'"
+    }
+  ],
+  "forbidden": ["R2 sentence cap", "R5 paragraph length", "R1 passive voice", "R6 historical language"]
+}

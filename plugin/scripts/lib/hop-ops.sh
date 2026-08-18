@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
-# The five operations a hop script may perform. Sourced, never executed.
+# The six operations a hop script may perform. Sourced, never executed.
 #
-# Each one computes exactly what it would act on, then either ACTS or RECORDS,
-# depending on HOP_RECORD. That is one implementation with a terminal switch —
-# not a dry-run mirror that can drift from the real behaviour. (The current
-# materialize.sh checks DRY_RUN in ~11 separate functions, each independently
-# responsible for describing itself; that is the shape being replaced.)
+# Five of them MUTATE, and each one computes exactly what it would act on, then
+# either ACTS or RECORDS, depending on HOP_RECORD. That is one implementation
+# with a terminal switch — not a dry-run mirror that can drift from the real
+# behaviour. (The current materialize.sh checks DRY_RUN in ~11 separate
+# functions, each independently responsible for describing itself; that is the
+# shape being replaced.) The sixth, hop_ask, mutates nothing and is therefore
+# mode-blind: see it at the bottom, beside the other unconditional op.
 #
 # Journal format:  <verb>\t<path>\t<detail>
+#   verbs: move | delete | keep | unregister | report | ask
+#
+# HOP-LOCAL VARIABLES MUST CARRY A PER-HOP PREFIX (`_h7_` in hops/0.7.0.sh).
+# A hop is SOURCED inside run_chain's own function frame, so a bare `local
+# before=` / `v=` / `hop=` rebinds the chain driver's variables — clobbering
+# `before` blinds _hop_failure_since and lets a failed migration stamp the lock.
+# For the same reason a hop reading one of the resolution arrays must use the
+# `set -u` guard idiom ${TAKE_BASE[@]+"${TAKE_BASE[@]}"}: those arrays are
+# legitimately empty on most runs, and a bare "${ARR[@]}" aborts bash 3.2
+# mid-chain — after an earlier hop has already moved the tree.
 #
 # Requires lib/common.sh (sha256_of) and lib/manifest.sh (manifest_paths) to
 # have been sourced by the caller.
@@ -382,3 +394,30 @@ hop_rm_owned() {
 # no regex escaping, and a jq `contains()` filter is trivially correct.
 hop_unregister_hook() { _hop_journal unregister "$1" "retire stale hook registration"; }
 hop_report()          { _hop_journal report "" "$1"; }
+
+# hop_ask <path> <detail> — put a decision to the operator.
+#
+# JOURNALLED UNCONDITIONALLY, IN BOTH MODES, exactly like hop_report and for the
+# same reason: an ask is a question, not a mutation. There is nothing here that
+# act mode does and record mode must only predict, so the HOP_RECORD switch the
+# other five ops carry would be a switch between two identical branches — and a
+# plan that omitted the question would be a plan the operator cannot answer,
+# which is the one thing --mode plan exists to make possible.
+#
+# <path> is in the POST-HOP path space, whatever root the hop actually read: the
+# operator hands it straight back as --take-base/--take-mine, and a resolution
+# in the wrong space silently matches nothing.
+#
+# A path is REQUIRED — a question with no path cannot be answered by the flags
+# it exists to feed, and the report's four readers disagree about a path-less
+# ask (the footer counts it, the group renderer drops it). A hop that calls
+# this without one is buggy and must hear so.
+hop_ask() {
+  [ -n "${1:-}" ] || {
+    log "hop_ask: called with no path — nothing journalled. This is a bug in the"
+    log "  hop script: an ask with no path is a question the operator cannot answer."
+    _hop_failed
+    return 1
+  }
+  _hop_journal ask "$1" "${2:-}"
+}

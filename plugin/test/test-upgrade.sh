@@ -634,6 +634,7 @@ mf="$PLUGIN_ROOT/manifests/0.3.1.json"
 base="$PLUGIN_ROOT/base"
 
 verdict_for() { printf '%s' "$1" | awk -F'\t' -v t="$2" '$2==t{print $1; exit}'; }
+detail_for()  { printf '%s' "$1" | awk -F'\t' -v t="$2" '$2==t{print $3; exit}'; }
 # A content fingerprint of the whole project: path + hash of every file. classify
 # must leave this byte-identical — it is the only assertion that actually proves
 # "writes nothing" (a per-file existence check cannot see a rewrite).
@@ -648,18 +649,79 @@ rm -f "$p/.inspire/bin/acyclic-deps.sh"
 # Row: project-authored file inside an owned dir → keep. THE rm -rf REGRESSION.
 printf 'go rules\n' > "$p/.claude/skills/inspire-code/references/go-best-practices.md"
 
+# ---- pass 2 collision: base ships a target the SOURCE manifest never listed
+# (merge.sh:161-184). Eligibility mirrors the no-op-row selection below, but
+# against pass 2's own test — a base/-shipped, non-excluded file whose target
+# path is absent from mf's `files` map — rather than pass 1's already-shipped
+# set. Picked at runtime: hardcoding one path goes stale the moment an
+# intervening manifest ships it, a fact about releases, not the classifier.
+collision_candidates=""
+for pair in $MAP_03; do
+  cname="${pair%%:*}"; cdest="${pair#*:}"
+  [ -d "$base/$cname" ] || continue
+  while IFS= read -r cabs; do
+    crel="${cabs#"$base/$cname"/}"
+    _base_excluded "$cname" "$crel" && continue
+    ctgt="$cdest/$crel"
+    jq -e --arg t "$ctgt" '.files | has($t)' "$mf" >/dev/null 2>&1 && continue
+    [ -e "$p/$ctgt" ] && continue
+    collision_candidates="$collision_candidates
+$ctgt"
+  done < <(find "$base/$cname" -type f)
+done
+collision_candidates="$(printf '%s\n' "$collision_candidates" | awk 'NF' | LC_ALL=C sort -u)"
+check "at least two pass-2 collision candidates exist (base ships a target 0.3.1 never listed)" \
+   "[ \"\$(printf '%s\n' \"\$collision_candidates\" | awk 'NF' | wc -l | tr -d ' ')\" -ge 2 ]"
+ask_path="$(printf '%s\n' "$collision_candidates" | sed -n '1p')"
+noop2_path="$(printf '%s\n' "$collision_candidates" | sed -n '2p')"
+
+# Row: base ships it, 0.3.1 never did, operator already has a DIFFERENT file
+# there → ask (merge.sh:178), with its exact wording.
+mkdir -p "$(dirname "$p/$ask_path")"
+printf 'operator content, deliberately different from base\n' > "$p/$ask_path"
+# Row: same shape, but the operator's copy is byte-identical to base's → noop
+# (merge.sh:176).
+noop2_src="$(_base_src "$base" "$MAP_03" "$noop2_path")"
+mkdir -p "$(dirname "$p/$noop2_path")"
+cp "$noop2_src" "$p/$noop2_path"
+
 before="$(tree_print "$p")"
 out="$(classify "$mf" "$p" "$base" "$MAP_03" "$MAP_03")"
 after="$(tree_print "$p")"
 
+# The no-op row needs a file that is pristine on all three sides at once: the
+# project's copy matches the manifest AND base/ still ships it byte-identical.
+# Naming one goes red the moment a release edits that particular file — a true
+# statement about the release, reported as a false statement about the
+# classifier. So the file is picked at run time, and the run says loudly when no
+# candidate is left rather than asserting on nothing.
+noop_path=""
+while IFS="$(printf '\t')" read -r cand mhash; do
+  [ -n "$cand" ] && [ -n "$mhash" ] || continue
+  [ -f "$p/$cand" ] || continue
+  csrc="$(_base_src "$base" "$MAP_03" "$cand")" || continue
+  [ -n "$csrc" ] || continue
+  [ "$(sha256_of "$p/$cand")" = "$mhash" ] || continue
+  [ "$(sha256_of "$csrc")" = "$mhash" ] || continue
+  noop_path="$cand"
+  break
+done < <(jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' "$mf")
+check "the no-op row found a manifest-pristine file to assert on" \
+   "[ -n '$noop_path' ]"
 eq "unmodified file is a no-op" \
-   "$(verdict_for "$out" .inspire/bin/review.sh)" "noop"
+   "$(verdict_for "$out" "$noop_path")" "noop"
 eq "operator edit is kept" \
    "$(verdict_for "$out" .inspire/bin/no-todos.sh)" "keep"
 eq "operator deletion is restored" \
    "$(verdict_for "$out" .inspire/bin/acyclic-deps.sh)" "restore"
 eq "project-authored file is kept" \
    "$(verdict_for "$out" .claude/skills/inspire-code/references/go-best-practices.md)" "keep"
+eq "pass-2 collision: a different operator file at an unshipped-in-source target asks" \
+   "$(verdict_for "$out" "$ask_path")" "ask"
+eq "pass-2 collision: ask detail matches merge.sh's exact wording" \
+   "$(detail_for "$out" "$ask_path")" "new in this release, and you already have a different file here"
+eq "pass-2 collision: a byte-identical operator file at a second unshipped target is a no-op" \
+   "$(verdict_for "$out" "$noop2_path")" "noop"
 check "classify wrote nothing" "[ -f '$p/.inspire/bin/no-todos.sh' ]"
 check "classify did not restore anything itself" \
    "[ ! -e '$p/.inspire/bin/acyclic-deps.sh' ]"
@@ -672,8 +734,10 @@ check "keepset carries the operator's edited validator" \
    "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/no-todos.sh')\""
 check "keepset carries the project-authored file" \
    "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.claude/skills/inspire-code/references/go-best-practices.md')\""
-check "keepset does not carry an untouched shipped file" \
+check "keepset does not carry a shipped file the operator did not touch" \
    "! printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/review.sh')\""
+check "keepset carries the operator's differing file from the pass-2 collision (ask defaults to keep)" \
+   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/$ask_path')\""
 check "keepset is deduplicated and hash-shaped" \
    "[ -z \"\$(printf '%s\n' \"\$ks\" | grep -vE '^[0-9a-f]{64}\$')\" ]"
 fixture_cleanup "$w"
@@ -1017,6 +1081,12 @@ check "plan lists the 0.3.0 hop" \
   "[ \"\$(printf '%s' \"\$out\" | jq -r '.chain|index(\"0.3.0\")')\" != null ]"
 check "plan counts verdicts" \
   "[ \"\$(printf '%s' \"\$out\" | jq -r '.verdicts.replace')\" -ge 0 ]"
+# The counts are a tally over the MERGED stream (hop journal + verdicts), not
+# verdicts alone: on this pre-0.3 fixture the 0.3.0 hop journals 114 bin/test
+# deletions in record mode, which classify alone could never produce. This pins
+# "the JSON agrees with the stderr footer" with no 0.7.0 hop needed.
+check "plan's delete count includes the hop journal (>= 114)" \
+  "[ \"\$(printf '%s' \"\$out\" | jq -r '.verdicts.delete')\" -ge 114 ]"
 fixture_cleanup "$w"
 
 # A pre-0.3 project must no longer be refused.
@@ -1032,6 +1102,37 @@ jq '.version="0.1.0"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" > "$fake/plugin/
 bash "$MZ" --mode plan --plugin-root "$fake/plugin" --project-root "$p" >/dev/null 2>&1
 eq "a downgrade is refused" "$?" "1"
 rm -rf "$fake"; fixture_cleanup "$w"
+
+# ---- plan and the resolution flags --------------------------------------
+# Plan predicts the UNRESOLVED split, so it refuses the flags rather than honour
+# them in one half of the run and not the other: run_plan never calls
+# _apply_resolutions, so a --take-base the classify half ignored while a hop
+# consulted it would put two answers in one JSON document.
+#
+# The pair matters together. The arrays are legitimately EMPTY on every plan
+# run, and under `set -u` on bash 3.2 a bare "${ARR[@]}" expansion of an empty
+# array aborts the shell outright (the ${#ARR[@]} form the guard uses today is
+# safe) — so the flagless run is asserted first, on the newest layout, as the
+# standing regression guard for any future edit that touches how the arrays are
+# read.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+plan_out="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>/dev/null)"
+eq "plan with no resolution flags exits 0" "$?" "0"
+check "plan with no resolution flags still emits its JSON" \
+  "printf '%s' \"\$plan_out\" | jq -e '.ask|type==\"array\"' >/dev/null"
+
+rej_err="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" \
+             --take-base .claude/skills/inspire-domain/SKILL.md 2>&1 >/dev/null)"
+eq "plan rejects --take-base (rc)" "$?" "1"
+check "plan's rejection says why, and where the flag belongs" \
+  "printf '%s' \"\$rej_err\" | grep -q 'UNRESOLVED' && printf '%s' \"\$rej_err\" | grep -q 'mode update --dry-run'"
+bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" \
+     --take-mine .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+eq "plan rejects --take-mine too" "$?" "1"
+bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" \
+     --skip .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
+eq "plan rejects the deprecated --skip alias as well" "$?" "1"
+fixture_cleanup "$w"
 
 # ---- a failed hop must propagate, and must never stamp the version ---------
 # `. "$hop" || return 2` CANNOT see this: a sourced script's exit status is its
@@ -1105,11 +1206,14 @@ mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 
 # seed_kb must run on UPGRADE, not just init — a 0.2 project has to finally
 # receive the KB layers and files added since. Proving that needs care: 0.2.1's
-# skeleton happens to have the SAME 21-file list as today's base/kb, so the
-# hop's `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file is
-# present" and the check below passes with seed_kb stubbed to a no-op. Remove
-# one whole layer and one file inside a layer that stays, so only a seed can
-# put them back.
+# 21-file skeleton covers nearly all of today's 18-file base/kb (0.7.0 stopped
+# shipping the three _index.md seeds and the two _template.md seeds, added
+# 05_screens/components/.gitkeep to keep the emptied directory shipping, and
+# added 00_bootstrap/glossary.md: 21 − 5 + 1 + 1 = 18), so the hop's
+# `mv .inspire_kb inspire_kb` alone satisfies "every skeleton file
+# is present" for everything but that .gitkeep and the glossary. Remove one
+# whole layer and one file inside a layer that stays, so only a seed can put
+# them back.
 rm -rf "$p/.inspire_kb/98_lessons"
 rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
 kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
@@ -1154,9 +1258,45 @@ eq "no .claude/hooks registrations remain" \
    "$(jq '[.. | objects | select(has("command")) | select(.command|contains(".claude/hooks/"))] | length' \
       "$p/.claude/settings.json")" "0"
 
-# Re-running converges.
-bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
-eq "update is re-runnable" "$?" "0"
+# Re-running converges — WHEN THE TREE IT JUST WROTE CAN STILL BE DETECTED.
+#
+# THE PREMISE, and it is not a constant: a second `update` re-detects the project
+# from scratch, and detect_version nominates nothing below MANIFEST_FLOOR_PCT. A
+# post-update tree is a copy of today's plugin/base/, so it only scores above that
+# floor against the NEWEST SHIPPED manifest while base/ is still byte-identical to
+# what that manifest recorded. Mid-release it is not: the version being prepared
+# has no manifest yet — it is generated from the version-bump commit, at release
+# step T11-3 — and every base/ file this release legitimately edits drags the score
+# against the last shipped one further down. So mid-release the second run refuses,
+# and that refusal IS the design: detect_version would rather stop than upgrade
+# from a baseline it had to guess.
+#
+# Asserting only "exits 0" would therefore be a test unfulfillable at every commit;
+# asserting only the refusal would go stale the hour the manifest lands. So the
+# outcome is DERIVED from the machinery instead — re-detect with the same function
+# materialize.sh calls, and pin whichever of the two behaviours it predicts. Both
+# are pinned below; T11-3 flips the branch with no edit here.
+#
+# Two vacuity guards, because "it refused" is worthless if it refused for some
+# other reason: the refusal must be DETECTION's (its own wording), and it must name
+# the floor by the value the constant actually holds — not merely have failed.
+detect_version "$PLUGIN_ROOT" "$p" >/dev/null 2>&1; rerun_detectable=$?
+rerun_lock="$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')"
+rerun_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+rerun_rc=$?
+if [ "$rerun_detectable" -eq 0 ]; then
+  eq "released state: update is re-runnable" "$rerun_rc" "0"
+else
+  eq "mid-release: the 0.2.1 tree's second run refuses (rc)" "$rerun_rc" "1"
+  eq "mid-release: the refusal is detection's own" \
+     "$(printf '%s\n' "$rerun_err" | grep -c "cannot identify this project's INSPIRE version")" "1"
+  eq "mid-release: the refusal names the score floor it fell under" \
+     "$(printf '%s\n' "$rerun_err" | grep -c "floor ${MANIFEST_FLOOR_PCT}%")" "1"
+  eq "mid-release: a refused run restamps no lock" \
+     "$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')" "$rerun_lock"
+fi
+# Unconditional: whether the second run converged or refused, the operator's edit
+# is still theirs. A refusal that damaged the tree would be no better than a guess.
 eq "edit still kept after a second run" \
    "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$mine_hash"
 
@@ -1208,8 +1348,8 @@ check "A3: no empty .claude/hooks survives" "[ ! -e '$p/.claude/hooks' ]"
 check "A4: no empty inspire-learn survives" "[ ! -e '$p/.claude/skills/inspire-learn' ]"
 
 # The pruning must not have cost anything the migration exists to deliver.
-eq "all 14 validators + the trust tool landed at .inspire/bin" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
+eq "all 15 validators + the trust tool landed at .inspire/bin" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
 check "the relocated hooks are all three there" \
    "[ -f '$p/.claude/inspire/hooks/session-start.sh' ] && \
     [ -f '$p/.claude/inspire/hooks/pre-commit.sh' ] && \
@@ -1235,11 +1375,41 @@ check "the report tells the operator where it was saved" \
 inlog_n="$(classify "$PLUGIN_ROOT/manifests/0.4.0.json" "$p" "$base" "$MAP_03" "$MAP_03" \
            | grep -c 'last-upgrade.log')"
 eq "the log is never classified as project-authored" "$inlog_n" "0"
-# One file, overwritten — not a growing log directory.
+# One file, overwritten — not a growing log directory. Dual-state, for exactly the
+# reason spelled out at the 0.2.1 block's second run above: a post-update tree only
+# re-detects while plugin/base/ still matches the newest SHIPPED manifest at or
+# above MANIFEST_FLOOR_PCT, and mid-release — before release step T11-3 generates
+# the manifest for the version being prepared — it does not, so detection refuses
+# rather than guess a baseline. Both behaviours are pinned:
+#   RELEASED    — the run converges and rewrites the log SHORTER (a converged pass
+#                 has almost nothing left to report).
+#   MID-RELEASE — detection refuses before a byte is written, so the log must come
+#                 out BYTE-identical. "Not longer" would be satisfied by a partial
+#                 rewrite, which is precisely what an aborted run must never leave
+#                 behind, so the refusal branch compares hashes and not line counts.
+# The log is known non-empty here: "the saved report is the report, not a stub"
+# above asserts its content, so neither branch is comparing against nothing.
 e2e1_lines="$(wc -l < "$p/.inspire/last-upgrade.log" | tr -d ' ')"
-bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
-check "the log is overwritten, never appended to" \
-   "[ \"\$(wc -l < '$p/.inspire/last-upgrade.log' | tr -d ' ')\" -lt '$e2e1_lines' ]"
+e2e1_log_sha="$(shasum -a 256 "$p/.inspire/last-upgrade.log" | awk '{print $1}')"
+e2e1_lock_sha="$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')"
+detect_version "$PLUGIN_ROOT" "$p" >/dev/null 2>&1; e2e1_detectable=$?
+e2e1_rerun_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+e2e1_rerun_rc=$?
+if [ "$e2e1_detectable" -eq 0 ]; then
+  eq "released state: the second run converges (rc)" "$e2e1_rerun_rc" "0"
+  check "the log is overwritten, never appended to" \
+     "[ \"\$(wc -l < '$p/.inspire/last-upgrade.log' | tr -d ' ')\" -lt '$e2e1_lines' ]"
+else
+  eq "mid-release: the 0.1.0 tree's second run refuses (rc)" "$e2e1_rerun_rc" "1"
+  eq "mid-release: the refusal is detection's own" \
+     "$(printf '%s\n' "$e2e1_rerun_err" | grep -c "cannot identify this project's INSPIRE version")" "1"
+  eq "mid-release: a refused run leaves the log byte-identical" \
+     "$(shasum -a 256 "$p/.inspire/last-upgrade.log" | awk '{print $1}')" "$e2e1_log_sha"
+  eq "mid-release: a refused run restamps no lock" \
+     "$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')" "$e2e1_lock_sha"
+fi
+# Unconditional: one log file either way — a refusal must not fork a second one any
+# more than a converging run may.
 eq "no second log artifact appeared" \
    "$(find "$p/.inspire" -maxdepth 1 -name '*.log' | wc -l | tr -d ' ')" "1"
 fixture_cleanup "$w"
@@ -1265,8 +1435,8 @@ eq "the blocked .claude/bin holds nothing but their file" \
    "$(ls -A "$p/.claude/bin" | tr '\n' ' ')" "my-check.sh "
 eq "the blocked .claude/hooks holds nothing but their file" \
    "$(ls -A "$p/.claude/hooks" | tr '\n' ' ')" "my-hook.sh "
-eq "all 14 validators + the trust tool still landed" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "15"
+eq "all 15 validators + the trust tool still landed" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
 fixture_cleanup "$w"
 
 # --mode plan on the longest chain must still write NOTHING — directories
@@ -1359,6 +1529,392 @@ check "half-migrated tree: the 0.2 hook registrations are left as they were" \
 check "half-migrated tree: no lock was rewritten" \
   "[ \"\$(jq -r .inspire_version '$p/.inspire.lock')\" = '0.2.1' ]"
 fixture_cleanup "$w"
+
+# ---- the 0.7.0 hop: derive-then-diff index retirement --------------------
+# These blocks ran against a version-patched FAKE plugin root while the release
+# was being prepared (pre-bump, the real root could never source hops/0.7.0.sh
+# and the copied manifests/ had no 0.7.0.json). Since the 0.7.0 bump + manifest
+# the patch is a byte-identical no-op — but the FAKE root stays: it pins these
+# blocks' TARGET at 0.7.0 regardless of where plugin.json moves next, so they
+# survive future bumps unedited. manifests/0.7.0.json ships, the chain comes
+# from the main loop (no fallback fires), and write_lock finds the target's
+# manifest, so template_sha in these updates is real, never "unknown". The
+# end-to-end retirement block below runs on the REAL root — the per-file
+# assertions T2 deferred until the hop's effects existed.
+fake7="$(mktemp -d)"
+cp -R "$PLUGIN_ROOT/." "$fake7/plugin"
+jq '.version="0.7.0"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" \
+  > "$fake7/plugin/.claude-plugin/plugin.json"
+FP7="$fake7/plugin"
+hop7="$PLUGIN_ROOT/scripts/hops/0.7.0.sh"
+seeds7="$HERE/fixtures/retired-seeds"
+
+# The blob fixtures pin the hop's constants: the seeds left base/kb in this
+# release, so these are the only in-tree copies of the shipped bytes. Each
+# constant is read out of the hop file itself — the left side is always a real
+# hash, so a renamed or missing constant fails loudly, never vacuously.
+eq "modules seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/02_modules__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_modules=/{print $2; exit}' "$hop7")"
+eq "patterns seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/05_screens-patterns__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_patterns=/{print $2; exit}' "$hop7")"
+eq "components seed blob matches the hop's pinned constant" \
+   "$(sha256_of "$seeds7/05_screens-components__index.md")" \
+   "$(awk -F"'" '/^_h7_sha_components=/{print $2; exit}' "$hop7")"
+# The fourth constant — the seed's NON-ROW remainder, the second gate of the
+# derive-equal verdict — pinned the same way, via the same extraction the hop
+# itself uses (the exact complement of its row filter).
+eq "the modules seed's non-row remainder matches the hop's prose constant" \
+   "$(awk '!/^[ \t]*\|/' "$seeds7/02_modules__index.md" | shasum -a 256 | awk '{print $1}')" \
+   "$(awk -F"'" '/^_h7_sha_modules_prose=/{print $2; exit}' "$hop7")"
+check "the five retired seeds are gone from base/kb (nothing to resurrect)" \
+   "[ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/patterns/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/05_screens/components/_index.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/02_modules/_template.md' ] && \
+    [ ! -e '$PLUGIN_ROOT/base/kb/06_spikes/_template.md' ]"
+
+# ---- unit: the derive/normalize layer, driven directly --------------------
+# Sourcing the hop against an empty project performs no operation (neither KB
+# root exists, so every per-file driver skips) and leaves the _h7_* helpers
+# defined for direct calls — the same direct-drive precedent as the
+# hop_ops_init/run_chain section above. The doctrine hop_report is the one
+# journal row a no-op source produces.
+u7="$(mktemp -d)"; mkdir -p "$u7/proj"
+unset HOP_JOURNAL
+hop_ops_init "$u7/proj" /dev/null 1
+. "$PLUGIN_ROOT/scripts/hops/0.7.0.sh"
+eq "sourcing against an empty project journals nothing but the doctrine note" \
+   "$(awk -F'\t' '$1!="report"' "$HOP_JOURNAL" | wc -l | tr -d ' ')" "0"
+
+eq "norm: backticks and whitespace runs are presentation" \
+   "$(printf '|  Auth  |  `AUTH`  |  [[auth]]  |\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: wikilink display text is presentation" \
+   "$(printf '| Auth | AUTH | [[auth|Auth]] |\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: CR line endings are presentation" \
+   "$(printf '| Auth | AUTH | [[auth]] |\r\n' | _h7_norm_rows)" \
+   "| Auth | AUTH | [[auth]] |"
+eq "norm: duplicate rows survive to diverge (no sort -u)" \
+   "$(printf '| A | A | [[a]] |\n| A | A | [[a]] |\n' | _h7_norm_rows | wc -l | tr -d ' ')" "2"
+
+# The separator filter is shape-based: |---| rows (alignment colons included)
+# drop; the canonical header drops; a row of EMPTY cells and a reshaped header
+# both SURVIVE into the row-set, where they diverge and ask — the filter must
+# never eat content, because everything it eats is invisible to the compare.
+cat > "$u7/reg.md" <<'EOF'
+# Modules — registry
+
+| Module | Prefix | Hub |
+|--------|--------|-----|
+| Auth | `AUTH` | [[auth]] |
+| :--- | ---: | - |
+|  |  |  |
+| Hub | Module | Prefix |
+EOF
+eq "disk rows: separators and header drop; empty-cell and reshaped rows survive" \
+   "$(_h7_disk_rows "$u7/reg.md")" \
+"| Auth | AUTH | [[auth]] |
+| Hub | Module | Prefix |
+| | | |"
+
+mkdir -p "$u7/hubs"
+printf -- '---\nkind: module-hub\nprefix: AUTH              # trailing comment must strip\n---\n\n# Auth\n' > "$u7/hubs/auth.md"
+printf -- '---\nprefix: `BILL`\n---\n\n# Billing\n' > "$u7/hubs/billing.md"
+printf 'never a hub\n' > "$u7/hubs/_template.md"
+printf 'never a hub\n' > "$u7/hubs/README.md"
+eq "derive: H1 + prefix per hub; comment stripped; backticks normalized; _* and README skipped" \
+   "$(_h7_derive_registry "$u7/hubs")" \
+"| Auth | AUTH | [[auth]] |
+| Billing | BILL | [[billing]] |"
+
+mkdir -p "$u7/noh1"
+printf -- '---\nprefix: X\n---\nno heading here\n' > "$u7/noh1/x.md"
+_h7_derive_registry "$u7/noh1" >/dev/null 2>&1
+eq "derive: a hub missing its H1 is not provable (rc 1)" "$?" "1"
+
+mkdir -p "$u7/nopfx"
+printf -- '---\nkind: module-hub\n---\n\n# X\n' > "$u7/nopfx/x.md"
+_h7_derive_registry "$u7/nopfx" >/dev/null 2>&1
+eq "derive: a hub missing its prefix is not provable (rc 1)" "$?" "1"
+
+mkdir -p "$u7/nohubs"
+_h7_derive_registry "$u7/nohubs" >/dev/null 2>&1
+eq "derive: zero hubs prove nothing (rc 1)" "$?" "1"
+rm -rf "$u7"
+
+# ---- the derive-equal branch, end to end -----------------------------------
+# The branch a pristine fixture can never exercise: two real hubs, a registry
+# whose rows are exactly their derivation (in reverse order, one row
+# backticked, one carrying display text — so the equality is normalized and
+# order-insensitive, not byte-lucky), and the seed's own prose around the
+# table. Both gates hold → all three indexes retire, no questions.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf -- '---\nkind: module-hub\nprefix: AUTH              # the module'"'"'s feature / use-case ID prefix\n---\n\n# Auth\n' \
+  > "$p/inspire_kb/02_modules/auth.md"
+printf -- '---\nkind: module-hub\nprefix: BILL\n---\n\n# Billing\n' \
+  > "$p/inspire_kb/02_modules/billing.md"
+h7_reg="$p/inspire_kb/02_modules/_index.md"
+grep -v '_e\.g\._' "$h7_reg" > "$h7_reg.tmp" && mv "$h7_reg.tmp" "$h7_reg"
+printf '| Billing | `BILL` | [[billing]] |\n| Auth | AUTH | [[auth|Auth]] |\n' >> "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "derive-equal: hub-backed rows behind pristine prose retire silently" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, (.ask|length)]')" "[3,0]"
+
+# BLOCKER-1 regression: authored prose around a PERFECTLY-synced table is
+# content the row compare cannot see — the non-row gate must route it to ask.
+printf '\nTeam note: check with Ops before renaming modules.\n' >> "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "derive-equal is gated on pristine prose: an added note asks instead" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   '[2,["inspire_kb/02_modules/_index.md"]]'
+
+# BLOCKER-2 regression: zero hubs and a deleted example row must not compare
+# "equal to nothing" and retire — nothing to derive from is not a proof.
+rm -f "$p/inspire_kb/02_modules/auth.md" "$p/inspire_kb/02_modules/billing.md"
+grep -v '_e\.g\._' "$seeds7/02_modules__index.md" > "$h7_reg"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+eq "an empty derivation proves nothing: table-less registry asks" \
+   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   '[2,["inspire_kb/02_modules/_index.md"]]'
+fixture_cleanup "$w"
+
+# Pristine seeds, REAL plugin root (the T2-deferred swap, landed post-bump):
+# plan predicts 3 silent deletes and no questions, writes nothing (record/act
+# parity, files AND directories), and the subsequent real update lands exactly
+# the predicted split — the three files disappear and NOTHING else does, while
+# the release's new reference files arrive as creates (sampled by name, never
+# counted). The premise is asserted first: on drifted fixture seeds every
+# retire-verdict below would pass for the wrong reason.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+h7_pristine=0
+for h7_pair in \
+  "inspire_kb/02_modules/_index.md:02_modules__index.md" \
+  "inspire_kb/05_screens/patterns/_index.md:05_screens-patterns__index.md" \
+  "inspire_kb/05_screens/components/_index.md:05_screens-components__index.md"; do
+  [ "$(sha256_of "$p/${h7_pair%%:*}")" = "$(sha256_of "$seeds7/${h7_pair#*:}")" ] \
+    && h7_pristine=$((h7_pristine+1))
+done
+eq "premise: the v0.6.0 fixture carries all three seeds pristine" "$h7_pristine" "3"
+
+h7_before_f="$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+h7_before_d="$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+h7_list_before="$(cd "$p" && find . -type f | LC_ALL=C sort)"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>"$h7_plan_log")"
+h7_rc=$?
+eq "real-root plan exits 0" "$h7_rc" "0"
+check "plan's chain reaches 0.7.0 from the shipped manifest" \
+  "[ \"\$(printf '%s' \"\$h7_plan\" | jq -r '.chain|index(\"0.7.0\")')\" != null ]"
+# The release's new reference files show up as creates — sampled BY NAME (one
+# per family: a split skill's reference, the shared capture reference, a second
+# split skill), never a count or tree enumeration.
+check "plan names the new references as creates (sampled by name)" \
+  "grep -q 'create   .claude/skills/inspire-module/references/module-review.md' '$h7_plan_log' && \
+   grep -q 'create   .claude/skills/_references/lesson-capture.md' '$h7_plan_log' && \
+   grep -q 'create   .claude/skills/inspire-screens/references/screen-validate.md' '$h7_plan_log'"
+eq "plan predicts exactly the 3 retirements (delete count)" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "3"
+eq "plan predicts no questions (merged ask count)" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "0"
+eq "plan predicts no questions (ask[])" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|length')" "0"
+check "plan names all three retirements in the post-hop space" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/patterns/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/components/_index.md' '$h7_plan_log'"
+eq "plan wrote no file" "$h7_before_f" \
+   "$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "plan removed no directory" "$h7_before_d" \
+   "$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+
+h7_up="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>/dev/null)"
+h7_rc=$?
+eq "real-root update exits 0" "$h7_rc" "0"
+check "the three retired indexes are gone" \
+  "[ ! -e '$p/inspire_kb/02_modules/_index.md' ] && \
+   [ ! -e '$p/inspire_kb/05_screens/patterns/_index.md' ] && \
+   [ ! -e '$p/inspire_kb/05_screens/components/_index.md' ]"
+# Record/act parity on the whole tree: the set of files that DISAPPEARED is
+# exactly the set the plan predicted — additions (lock, log, seeds) are the
+# update's normal business and are not losses.
+h7_lost="$(comm -23 <(printf '%s\n' "$h7_list_before") <(cd "$p" && find . -type f | LC_ALL=C sort))"
+eq "only the three predicted files disappeared" "$h7_lost" \
+"./inspire_kb/02_modules/_index.md
+./inspire_kb/05_screens/components/_index.md
+./inspire_kb/05_screens/patterns/_index.md"
+eq "update leaves no question open" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+check "the lock's template_sha is real (the shipped manifest names the release commit)" \
+  "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
+# The release does not only RETIRE KB files, it adds two: 00_bootstrap/glossary.md
+# and 05_screens/components/.gitkeep, which a v0.6.0 project cannot already have.
+# This is the cross-version proof that seed_kb's additive half still runs
+# alongside the hop's deletions — asserted on the REAL root, both files by name.
+check "the release's new KB file arrived (glossary seeded on upgrade)" \
+  "[ -f '$p/inspire_kb/00_bootstrap/glossary.md' ]"
+check "the seeded glossary carries the R4-consumable shape, zero data rows" \
+  "[ \"\$(grep -c '^|' '$p/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
+check "the components .gitkeep arrived (the release's second KB seed)" \
+  "[ -f '$p/inspire_kb/05_screens/components/.gitkeep' ]"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+
+# A diverged registry and a project-created ADR index are QUESTIONS, in the
+# plan and in an unresolved update alike — and the unresolved default keeps
+# both files while the two provably-pristine TOCs still retire around them.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+printf '# ADR index\n' > "$p/inspire_kb/01_adr/_index.md"
+h7_reg_sha="$(sha256_of "$p/inspire_kb/02_modules/_index.md")"
+h7_adr_sha="$(sha256_of "$p/inspire_kb/01_adr/_index.md")"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+eq "diverged plan asks about both files (ask[])" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|sort|join(" ")')" \
+   "inspire_kb/01_adr/_index.md inspire_kb/02_modules/_index.md"
+eq "diverged plan's merged ask count agrees" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "2"
+eq "the two pristine TOCs still retire around the questions" \
+   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "2"
+check "the footer counts the same two decisions" \
+  "grep -q '2 decision(s) needed' '$h7_plan_log'"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+check "unresolved update keeps the diverged registry and the ADR index" \
+  "[ -f '$p/inspire_kb/02_modules/_index.md' ] && [ -f '$p/inspire_kb/01_adr/_index.md' ]"
+# Kept means BYTE-untouched, not merely present — "keep" that rewrites is the
+# failure the whole default exists to rule out.
+eq "the kept registry is byte-identical" \
+   "$(sha256_of "$p/inspire_kb/02_modules/_index.md")" "$h7_reg_sha"
+eq "the kept ADR index is byte-identical" \
+   "$(sha256_of "$p/inspire_kb/01_adr/_index.md")" "$h7_adr_sha"
+eq "both questions are still open in the update's ask[]" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|sort|join(" ")')" \
+   "inspire_kb/01_adr/_index.md inspire_kb/02_modules/_index.md"
+check "the persisted report carries the ASK rows" \
+  "grep -q 'ASK      inspire_kb/02_modules/_index.md' '$p/.inspire/last-upgrade.log' && \
+   grep -q 'ASK      inspire_kb/01_adr/_index.md' '$p/.inspire/last-upgrade.log'"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+
+# --take-base retires the diverged file on the operator's word (journalled as
+# the delete it is), and a misspelled path warns on BOTH channels — warnings[]
+# and stderr — because silent-keep is exactly what a typo would otherwise look
+# like.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+h7_up_log="$(mktemp)"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" \
+         --take-base inspire_kb/02_modules/_index.md \
+         --take-base inspire_kb/02_moduelz/_index.md 2>"$h7_up_log")"
+h7_rc=$?
+eq "update with --take-base exits 0" "$h7_rc" "0"
+check "--take-base retired the diverged registry" \
+  "[ ! -e '$p/inspire_kb/02_modules/_index.md' ]"
+check "the resolution is journalled as the delete it became" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$p/.inspire/last-upgrade.log'"
+eq "no question stays open once resolved" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "exactly the misspelled path warns in warnings[]" \
+   "$(printf '%s' "$h7_up" | jq -r '[.warnings[]|select(contains("matched nothing"))]|length')" "1"
+check "the warning names the misspelled path, not the consumed one" \
+  "printf '%s' \"\$h7_up\" | jq -r '.warnings[]' | grep 'matched nothing' | grep -q '02_moduelz'"
+check "the same warning reached stderr" \
+  "grep -q '02_moduelz.*matched nothing' '$h7_up_log'"
+rm -f "$h7_up_log"
+fixture_cleanup "$w"
+
+# --take-mine keeps — and it must be journalled as a keep even when the
+# verdict would have retired the file silently (the pristine patterns TOC
+# here): a consumed resolution must appear in the journal under SOME verb, or
+# the unmatched-resolution warning would fire about an answer that was
+# honoured (the contract pinned in _warn_unmatched_resolutions).
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
+printf '| Auth | `AUTH` | [[auth]] |\n' >> "$p/inspire_kb/02_modules/_index.md"
+h7_reg_sha="$(sha256_of "$p/inspire_kb/02_modules/_index.md")"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" \
+         --take-mine inspire_kb/02_modules/_index.md \
+         --take-mine inspire_kb/05_screens/patterns/_index.md 2>/dev/null)"
+check "--take-mine kept the diverged registry" \
+  "[ -f '$p/inspire_kb/02_modules/_index.md' ]"
+eq "--take-mine kept it byte-identical" \
+   "$(sha256_of "$p/inspire_kb/02_modules/_index.md")" "$h7_reg_sha"
+check "--take-mine kept the pristine TOC the verdict would have retired" \
+  "[ -f '$p/inspire_kb/05_screens/patterns/_index.md' ]"
+check "the unresolved pristine TOC still retired around them" \
+  "[ ! -e '$p/inspire_kb/05_screens/components/_index.md' ]"
+check "both keeps are journalled as the operator's instruction" \
+  "grep -q 'keep     inspire_kb/02_modules/_index.md.*your instruction' '$p/.inspire/last-upgrade.log' && \
+   grep -q 'keep     inspire_kb/05_screens/patterns/_index.md.*your instruction' '$p/.inspire/last-upgrade.log'"
+eq "a consumed resolution is not an open question" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "a consumed resolution draws no unmatched warning" \
+   "$(printf '%s' "$h7_up" | jq -r '[.warnings[]|select(contains("matched nothing"))]|length')" "0"
+fixture_cleanup "$w"
+
+# Pre-0.3 parity — the case the whole root-resolution design exists for. In
+# record mode the 0.3.0 hop has journalled its moves but NOT performed them
+# (hop_mv's record branch returns before the mv), so when this hop is sourced
+# in the same ascending pass the KB is still at .inspire_kb/ — yet every path
+# it journals must already be in the POST-hop space, or the plan's ask[] hands
+# the operator a path no --take-* flag could ever match. The act run then has
+# to land exactly the split the record run predicted.
+w="$(mktemp -d)"; p="$(fixture_from_tag v0.1.0 "$w" "$REPO")"
+h7_pristine=0
+for h7_pair in \
+  ".inspire_kb/02_modules/_index.md:02_modules__index.md" \
+  ".inspire_kb/05_screens/patterns/_index.md:05_screens-patterns__index.md" \
+  ".inspire_kb/05_screens/components/_index.md:05_screens-components__index.md"; do
+  [ "$(sha256_of "$p/${h7_pair%%:*}")" = "$(sha256_of "$seeds7/${h7_pair#*:}")" ] \
+    && h7_pristine=$((h7_pristine+1))
+done
+eq "premise: the v0.1.0 fixture carries all three seeds pristine at .inspire_kb" \
+   "$h7_pristine" "3"
+h7_before_f="$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+h7_before_d="$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+h7_kb_before="$(cd "$p/.inspire_kb" && find . -type f | LC_ALL=C sort)"
+h7_plan_log="$(mktemp)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+h7_rc=$?
+eq "pre-0.3 fake-root plan exits 0" "$h7_rc" "0"
+eq "the chain runs 0.3.0 then 0.7.0 in one pass" \
+   "$(printf '%s' "$h7_plan" | jq -cr '.chain')" '["0.3.0","0.7.0"]'
+eq "pre-0.3 plan predicts no questions" \
+   "$(printf '%s' "$h7_plan" | jq -r '.ask|length')" "0"
+check "the predicted retirements are in the POST-hop path space" \
+  "grep -q 'delete   inspire_kb/02_modules/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/patterns/_index.md' '$h7_plan_log' && \
+   grep -q 'delete   inspire_kb/05_screens/components/_index.md' '$h7_plan_log'"
+check "no retirement leaks the pre-hop path space" \
+  "! grep -q 'delete   \.inspire_kb/' '$h7_plan_log'"
+eq "pre-0.3 plan wrote no file" "$h7_before_f" \
+   "$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
+eq "pre-0.3 plan removed no directory" "$h7_before_d" \
+   "$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
+
+h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_rc=$?
+eq "pre-0.3 fake-root update exits 0" "$h7_rc" "0"
+check "the KB moved and the old root is gone" \
+  "[ -d '$p/inspire_kb' ] && [ ! -e '$p/.inspire_kb' ]"
+# Same subtree, same comparison as the 0.6.0 case: within the KB, the act run
+# lost exactly what the record run predicted — the rename is factored out by
+# comparing the two roots' relative trees, and seed additions are not losses.
+h7_lost="$(comm -23 <(printf '%s\n' "$h7_kb_before") <(cd "$p/inspire_kb" && find . -type f | LC_ALL=C sort))"
+eq "the KB lost exactly the three predicted files, nothing else" "$h7_lost" \
+"./02_modules/_index.md
+./05_screens/components/_index.md
+./05_screens/patterns/_index.md"
+eq "pre-0.3 update leaves no question open" \
+   "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
+eq "the lock stamps 0.7.0 after the longest chain" \
+   "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+rm -f "$h7_plan_log"
+fixture_cleanup "$w"
+rm -rf "$fake7"
 
 echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
 [ "$fail" -eq 0 ]

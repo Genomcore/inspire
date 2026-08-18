@@ -47,7 +47,7 @@ says `uuid`, DTO says `string`).
 **Per action, extract:** proposed id `module::entity::verb` (**plural → singular** on
 the entity segment — apply silently), `touches` (`entity: read|written|list|deleted`
 inferred from data access), `requires` (other extracted actions it calls), and the
-`endpoint` that exposes it. The `## Why` back-source to a feature is **not** yours —
+`endpoint` that exposes it. The `## Purpose` back-source to a feature is **not** yours —
 the synthesis step derives features and wires them.
 
 ## Analogous artifacts & consolidation (your second job)

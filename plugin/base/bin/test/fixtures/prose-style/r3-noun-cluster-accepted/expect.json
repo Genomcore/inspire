@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R3 noun cluster: stacked nouns"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}

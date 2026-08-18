@@ -19,3 +19,9 @@ None beyond Fields constraints.
 | Field | Type | Notes        |
 |-------|------|--------------|
 | `id`  | uuid | Primary key. |
+
+## Touched by
+
+| Action                                  | Touch   | Notes             |
+|-----------------------------------------|---------|-------------------|
+| [[auth.user.create|auth::user::create]] | write   | Inserts the row.  |

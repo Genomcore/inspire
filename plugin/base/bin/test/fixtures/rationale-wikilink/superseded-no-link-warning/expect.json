@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "rationale-wikilink",
+      "severity": "warning",
+      "message_substring": "has no wikilink"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}

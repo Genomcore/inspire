@@ -15,13 +15,22 @@ reads before working — the base context the rest of the KB assumes.
     prototype's mock-data stack, plus how the product is laid out
     (frontend / backend / monorepo · web / mobile · database provisioning +
     local dev DB). What the product is built with.
+  - [`glossary.md`](glossary.md) — the **term list**: one concept, one word. Each
+    row carries the approved term, the synonyms it displaces and a one-line
+    definition. The approved term is the operator's own language, written here by
+    `/inspire_bootstrap` when an interview settles a naming question — never the
+    agent's taxonomy. It ships **empty**, meaning header + separator and zero data
+    rows; an empty list binds nothing, which is the honest state of a project that
+    has settled no naming question yet. R4 of
+    [`.claude/skills/_references/writing-style.md`](../../.claude/skills/_references/writing-style.md)
+    binds every layer's prose to it.
   - [`theme.md`](theme.md) — the **default design-system template**: fonts, the
     color palette + status map, density and layout tokens. At install it is copied
     to [`05_screens/design-system.md`](../05_screens) (the project's live design
     system, edited via `/inspire_bootstrap design-system`); `theme.md` stays as the
     reusable default.
-  - [`surfaces.md`](surfaces.md) — the **surface roster**, a fourth, optional
-    file: absent in a suite-of-one (the default a bare template ships with), it is
+  - [`surfaces.md`](surfaces.md) — the **surface roster**, the one optional file
+    here: absent in a suite-of-one (the default a bare template ships with), it is
     authored — never seeded — by `/inspire_surface add` the moment a second surface
     is declared. Owned entirely by `inspire-surface`. See
     [`.claude/skills/_references/surface-scope.md`](../../.claude/skills/_references/surface-scope.md)

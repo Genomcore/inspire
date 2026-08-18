@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R5 paragraph length: paragraph of 8 sentences exceeds 6 in '## Instantiation'"
+    }
+  ],
+  "forbidden": ["'## Notes'"]
+}

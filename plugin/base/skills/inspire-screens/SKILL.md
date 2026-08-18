@@ -21,8 +21,8 @@ Four levels under `inspire_kb/05_screens/`:
 | Level | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|
 | 1 | `design-system.md` | tokens, colors, typography, global layout | one file |
-| 2 | `patterns/` | reusable screen structures | `patterns/_index.md` |
-| 3 | `components/` | shared component specs | `components/_index.md` |
+| 2 | `patterns/` | reusable screen structures | entry files (`patterns/[!_]*.md`) |
+| 3 | `components/` | shared component specs | entry files (`components/[!_]*.md`) |
 | 4 | `{module}/` | module-specific screens | `_index.md` per module directory |
 
 `design-system.md` is **seeded at install** from the default template
@@ -49,39 +49,18 @@ components.
 
 ## Screen file structure
 
-```markdown
-# {Screen Title} — `/{path}`
-
-**Features:** FEAT-01, FEAT-02
-**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
-
-## Instantiation
-
-- **Data:** {the data source — a spec entity or the prototype's mock table}
-- **Primary action:** `[+ New X]` → `/{path}/new`
-- {other pattern slots per the pattern's API}
-
-## Module-specific deviations
-
-- {describe only what deviates from the pattern defaults}
-
-## Current prototype
-
-- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}`, shell-prefixed in a multi-UI suite — or `none yet`}
-- **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
-  - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
-
-## Notes
-
-- {domain-specific behavior, edge cases, user feedback that informed the design}
-```
+Template: [`templates/screen.md.template`](templates/screen.md.template) — the
+template is the single source of which sections are required (H1, `**Features:**`,
+`**Pattern:**`, `## Instantiation`) versus optional/presence-free
+(`## Module-specific deviations`, `## Current prototype`, `## Notes`).
 
 The **Current prototype** section names the prototype route(s) realizing the screen
 and tracks **drift** — misalignments between the prototype and this spec, grouped by
 type (`ADR alignment` · `data wiring` · `component adoption` · `gap` · `cosmetic`).
 Drift is **informational**: it never blocks a PR unless it contradicts a current ADR
 (one present and not superseded or rejected), and it drives the propagation check
-below. Omit the section only until a prototype target exists. With two or more UI
+([`references/screen-propagation.md`](references/screen-propagation.md)). Omit the
+section only until a prototype target exists. With two or more UI
 surfaces each target carries its
 surface's shell prefix — the route lives inside that surface's shell rather than at
 the prototype root — and a `shared/` screen names one target per shell that serves
@@ -133,27 +112,25 @@ being invented.
   performs is consolidating back to the flat shape after a `retire` — and only when
   `/inspire_surface` hands it over.
 
-## When creating a new screen
+## Flows in `references/`
 
-1. **Identify the feature.** Every screen references at least one feature ID from
-   the module's `03_features`.
-2. **Pick a pattern.** Read `patterns/_index.md` and choose the one that matches
-   the screen's purpose. Only mark `**Pattern:** bespoke` if truly unique. The
-   project's own screen conventions (default list pattern, header layout, tabs,
-   toolbar rules) live in the patterns and `design-system.md` — follow them.
-3. **Instantiate.** Describe the screen by filling the pattern's slots. Refer to
-   the pattern's API in its file.
-4. **Deviations only.** Do NOT redescribe the structure the pattern already
-   defines.
-5. **Reference components** — link, don't re-describe: a relative wikilink into
-   `05_screens/components/` (`[[{rel-to-05_screens}/components/{name}]]`).
-6. **No ASCII layout diagrams** unless the screen is bespoke and can't be
-   expressed textually.
-7. **No inline mock data.** Reference the data source.
-8. **Register in the module's `_index.md`** — the one in the directory the screen
-   lands in (nav, route map, feature coverage).
+Each flow's full procedure lives in a reference file. **Before executing any
+flow, read every reference file its index row names** — the table below is an
+index, not the flow.
+
+| Flow | Read | Invocation |
+|---|---|---|
+| Create a screen | [`references/screen-create.md`](references/screen-create.md) | `create {module}/{screen}` |
+| Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
+| Extract a pattern/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|component} {name}` |
+| Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) — it owns which edits trigger the ask | a duty, not an invocation |
 
 ## When validating an existing screen
+
+The validate / audit procedure lives in
+[`references/screen-validate.md`](references/screen-validate.md) and
+[`references/screen-checks.md`](references/screen-checks.md), applying the
+triangulation matrix below.
 
 ### Triangulation matrix — Features ↔ screen spec ↔ Prototype
 
@@ -178,114 +155,6 @@ regression to fix in the prototype, not in the spec.
 
 When uncertain which layer a finding belongs to, ask the user.
 
-### Checks
-
-1. **Pattern exists.** The `**Pattern:**` link resolves.
-2. **Feature IDs exist.** All referenced features exist in the module's
-   `03_features`.
-3. **No redundant structure.** The screen doesn't redescribe what the pattern
-   already specifies.
-4. **Component references resolve.** Every component wikilink resolves to a file in
-   `05_screens/components/`, whatever its `../` depth.
-5. **Data reference is valid.**
-6. **No ASCII layout diagrams** unless bespoke.
-7. **No inline mock data.**
-8. **Historical language is absent** ("previously", "replaces", "removed",
-   strikethrough).
-9. **Route follows convention** — the form Rule 9 gives for the suite's UI count,
-   and it matches the screen's own path.
-10. **Live prototype check.** When the prototype can be run, navigate every route
-    the screen describes and compare it against the spec — see below.
-
-### Pattern / component drift
-
-- **Pattern drift:** the screen claims pattern X but its deviations would
-  fundamentally change it → update the pattern's "Variants" or mark the screen
-  `bespoke`.
-- **Component drift:** the screen describes behavior that contradicts a
-  component's canonical spec → update the component spec or fix the screen.
-
-### Live prototype browse — reverse-drift detection
-
-Features often land in the prototype before the screen spec catches up. `validate` and
-`audit` should **run the prototype** when possible to surface this **reverse
-drift** (prototype ahead of spec).
-
-1. **Run the prototype** (use the `run` / `verify` skills to launch `/prototype`).
-   If it can't be launched, skip this section and note it — don't block the audit.
-   With two or more UI surfaces the prototype is one shell per surface behind a
-   suite landing: start the browse at that landing and walk the shell owning the
-   tree being audited, every shell in turn when the audit spans the suite.
-2. **Enumerate routes** from the spec being audited (each screen's route,
-   shell-prefixed per Rule 9; each tab variant; a representative id for detail
-   pages). A `shared/` screen is browsed in every shell that serves it — the same
-   spec, one visit per shell, since a shell can drift on its own.
-3. **For each route:** navigate and read what renders (prefer the accessibility
-   tree; screenshots only when layout matters).
-4. **Compare** against the spec, applying the triangulation matrix:
-   - Tabs/sections/controls in the prototype but absent from the spec → spec stale.
-   - Spec describes UI not rendered → prototype regression, or spec ahead of code.
-   - A prototype feature not traceable to any feature file → **WARN**, ask the user.
-   - A prototype violating a canonical pattern/component/UX ADR → code regression;
-     suggest `/inspire_prototype`.
-5. **Report reverse drift separately** from forward drift, with severity
-   (Important = a whole feature/tab missing from the spec; Minor = a column, label,
-   or control).
-6. **Resolution:** reverse-drift findings suggest `/inspire_screens validate`
-   to update the spec (the prototype is already correct) — the spec catches up to
-   the code, not the other way around.
-
-Preview snapshots are point-in-time — re-run navigation after every prototype
-change.
-
-### Cross-screen coherence
-
-- Instances of the same pattern in a module share their UX (control positions,
-  search placement, tab ordering).
-- Similar resources across modules share status vocabulary.
-
-## After modifying a screen spec — propagation check
-
-Whenever a `create` / `update` / `extract` changes a screen in a way
-that affects the UI (new pattern, new slot, renamed data source, added/removed
-section or tab), the skill MUST ask the user whether to propagate the change to the
-prototype before ending the turn.
-
-1. **Detect the prototype target** from the screen's `## Current prototype` section.
-2. **Classify the change** — structural (propagation strongly recommended),
-   cosmetic (mention, don't insist), or no-prototype-yet (skip, note it's ready).
-3. **Ask, don't assume.** Close the turn with a clear question, e.g.:
-
-   > The screen spec for `{module}/{screen}` has changed: {summary}. The prototype is
-   > now misaligned on: {drift}. Shall I propagate now with `/inspire_prototype`, or
-   > in another turn?
-
-4. **If confirmed:** invoke `/inspire_prototype` with a concrete prompt (the
-   updated screen + the drift items to resolve).
-5. **If declined:** create a tracker ticket via `/inspire_task create` so
-   it isn't lost.
-
-## When adding a new pattern or component
-
-New shared artifacts require evidence:
-
-- **Pattern:** appears in ≥2 actual or planned screens.
-- **Component:** appears in ≥2 pages (≥3 if trivial).
-
-In a suite with two or more UI surfaces that evidence is also **structural** —
-where the instances sit is what the promoted artifact is scoped to, and nothing
-else needs to be inferred. The same screen present in two or more surface trees, or
-sitting in `shared/`, is cross-surface evidence: promote with `surfaces: all`.
-Evidence confined to one surface tree promotes with `surfaces: [{that-surface}]`,
-and widens only when a second tree earns it. Pattern and component entries carry
-the field per [`_references/surface-scope.md`](../_references/surface-scope.md);
-the catalogs holding them stay suite-wide however their entries are scoped.
-
-Process: draft the file in `patterns/` or `components/`; document purpose, API/slots,
-structure (textual), variants, instances; if the underlying prototype component
-doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
-`_index.md`. Prefer adding a variant to an existing pattern over creating a new one.
-
 ## Rules
 
 > **Output language.** Write every artifact you produce in the project's declared
@@ -295,39 +164,54 @@ doesn't exist yet, mark it `To-extract` and list adopters; update the relevant
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
 
+> **Writing contract.** Screens, pattern entries and component entries follow
+> [`_references/writing-style.md`](../_references/writing-style.md).
+> `## Instantiation`, `## Module-specific deviations` and `## Notes` are normative
+> prose (R1–R6); route, coverage and API tables are structured sections (R3, R4, R6).
+> The no-ASCII rule below is this layer's own local contract — the writing contract
+> points at it rather than restating it.
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **Features are the source of truth for what exists.** Every screen traces to one
    or more features in `03_features`.
-2. **`design-system.md` is the source of truth for tokens.** No module redefines
-   colors, typography, density.
-3. **`patterns/` is the source of truth for screen structure.** Screens
-   instantiate; they don't redescribe.
-4. **`components/` is the source of truth for shared UI.** Screens reference; they
-   don't redefine.
-5. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
+2. **Each level owns its truth** — the *Source of truth for* column of the
+   § Architecture table above: `design-system.md` for tokens (colors, typography,
+   density, layout), `patterns/` for screen structure, `components/` for shared UI.
+   Screens instantiate and reference; they never redefine a token, nor redescribe a
+   pattern or a component. Project-specific screen conventions live in those
+   artifacts, not in this skill.
+3. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
    a screen grows.
-6. **No ASCII art for common layouts** — patterns describe layouts textually.
-7. **No inline mock data** — reference the data source.
-8. **No historical language** — specs describe the present.
-9. **Route convention** — `/{module}/...` while the suite has at most one UI
+4. **No ASCII layout diagrams in screen, pattern or component files, unless the
+   screen is bespoke and its layout cannot be expressed textually.** This is the
+   single statement of the rule for this layer; the create flow and the validate
+   checks reference it, and
+   [`_references/writing-style.md`](../_references/writing-style.md) points here
+   rather than restating it.
+5. **Route convention** — `/{module}/...` while the suite has at most one UI
    surface; `{shell}/{module}/...` once it declares two or more, `{shell}` being
    that surface's roster `Shell` value (`/admin` → `/admin/billing/list`). Nested
    routes for detail/edit/new either way. The route mirrors the file's path:
    `{surface}/{module}/{screen}.md` ↔ `{shell}/{module}/{screen}`, so a route and a
    location can never disagree.
-10. **Validate before merge** — run `/inspire_module review` before any PR that
-    modifies screen spec files.
-11. **Respect current UX ADRs.** Screens must not contradict a UX decision in
-    `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
-    (Project-specific screen conventions live in `patterns/` + `design-system.md`,
-    not in this skill.)
-12. **Propagation check after spec edits.** Ask the user before ending the turn
-    whether to propagate visible UI changes to the prototype.
-13. **Stamp every write.** After `create`, `validate`, or `extract` writes a
-    screen or catalog file, run
-    `.inspire/bin/trust.sh stamp <file> --skill screens`
-    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
-    that carries `endorsed:` is disclosed to the operator first
-    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
+6. **Validate before merge** — run `/inspire_module review` before any PR that
+   modifies screen spec files.
+7. **Respect current UX ADRs.** Screens must not contradict a UX decision in
+   `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
+8. **Propagation check after spec edits.** Ask the operator before ending the turn
+   whether to propagate visible UI changes to the prototype — which edits trigger
+   the ask, and what each answer leads to, are
+   [`references/screen-propagation.md`](references/screen-propagation.md)'s.
+9. **Stamp every write.** After `create`, `validate`, or `extract` writes a
+   screen or catalog file, run
+   `.inspire/bin/trust.sh stamp <file> --skill screens`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Skill invocations
 

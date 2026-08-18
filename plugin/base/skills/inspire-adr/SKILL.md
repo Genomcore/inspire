@@ -23,8 +23,11 @@ propagated (the *propagation contract*):
 
 - `design` — design reasoning. Reach: the whole **design workspace** — features
   (`03_features`) + screens (`05_screens`) + the **horizontal prototype**
-  (`/prototype`, a *non-functional* interactive mock) + specs (`04_domain`).
-  Refined **in place** on new evidence.
+  (`/prototype` by default, a *non-functional* interactive mock — resolve
+  `prototype_root` per
+  [`_references/product-roots.md`](../_references/product-roots.md), where `none`
+  means this project has no horizontal prototype for a decision to reach) + specs
+  (`04_domain`). Refined **in place** on new evidence.
 - `prototyped` — additionally **validated in an external functional prototype**:
   real running code in a vertical spike repo has proven the architecture works
   (record it with a `**Prototype:**` pointer to that repo). The horizontal
@@ -85,38 +88,10 @@ never appear in the partition.
 
 ### Template
 
-```markdown
----
-surfaces: [portal, admin]   # blast radius — list of roster ids, or `all`
----
-
-# {Title}
-
-**Status:** design
-**Modules affected:** [[module-a]], [[module-b]]
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
-     design = the design workspace (features + screen spec + horizontal prototype + specs).
-     prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
-       NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
-
-## Context
-What problem or question prompted this decision.
-
-## Decision
-What we decided and why.
-
-## Consequences
-What follows — positive and negative. Include breaking changes.
-
-### Breaking changes
-- ...
-
-## Alternatives considered
-1. **{alternative}.** Why rejected.
-
-## Related ADRs
-- [[adr-xxx]] — {relation}
-```
+Template: [`templates/adr.md.template`](templates/adr.md.template) — the
+`Supersedes:` header line is optional (add only when superseding, per the
+`supersede` subcommand below); the `surfaces:` frontmatter defaults suite-wide by
+omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
 
 ### Steps
 
@@ -124,11 +99,9 @@ What follows — positive and negative. Include breaking changes.
    field — see Conventions; a suite-of-one is never asked), context, the decision,
    key consequences, alternatives considered.
 2. **Write the ADR file** at the computed path.
-3. **Update `inspire_kb/01_adr/_index.md`** — add a row to the appropriate module
-   section (or Transversales for cross-cutting).
-4. **Propose ADR references** in the feature files that should link to it: list
+3. **Propose ADR references** in the feature files that should link to it: list
    files to edit, wait for approval.
-5. Set `**Status:** design` by default. Use `promote` later to advance.
+4. Set `**Status:** design` by default. Use `promote` later to advance.
 
 ## Subcommand: update {id}
 
@@ -168,8 +141,6 @@ via `create`).
 2. Update the old ADR: `**Status:** superseded by [[{new-id}]]`.
 3. Update the new ADR's header: `Supersedes: [[{old-id}]]`.
 4. Grep `inspire_kb/` for references to the old ADR; propose updates.
-5. Update `inspire_kb/01_adr/_index.md` (move the old entry to the superseded
-   section).
 
 ## Rules
 
@@ -179,21 +150,38 @@ via `create`).
 > whatever language the conversation is in; machine-read tokens (frontmatter
 > keys/values, wikilink slugs, filenames) stay verbatim.
 
-1. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
-   requires `promote`; `create` defaults to `design`.
-2. **Only `implemented` ADRs are immutable in content.** Supersede to change their
-   `Decision`; `design` / `prototyped` ADRs are refined in place with `update`.
-3. **Propagate to the maturity's reach.** Design-workspace coherence (features +
+> **Writing contract.** ADR prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Context`,
+> `## Decision`, `## Consequences` and `## Alternatives considered` are normative prose
+> (R1–R6); `**Modules affected:**` and any tabular section are structured (R3, R4, R6).
+> R6 carries section-scoped exemptions this skill relies on — see the
+> *no historical language* rule below.
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
+1. **Maturity is explicit, and only `implemented` is immutable.** `create` defaults
+   to `design` and `promote` is the only way forward; a `design` / `prototyped` ADR
+   is refined in place with `update`, while changing an `implemented` ADR's
+   `Decision` requires `supersede`.
+2. **Propagate to the maturity's reach.** Design-workspace coherence (features +
    screen spec + horizontal prototype + specs) is required at every maturity;
    `prototyped` adds a pointer to an external functional prototype, `implemented` a
    codebase reference. Surface gaps within that reach.
-4. **Grep references on rename/supersede.** Always scan the vault when renaming an
+3. **Grep references on rename/supersede.** Always scan the vault when renaming an
    ADR or changing its ID.
-5. **No historical language in ADRs.** ADRs describe the decision context at the
-   time it was made; don't narrate migration history.
-6. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
+4. **No historical language, per the writing contract.** R6 of
+   [`_references/writing-style.md`](../_references/writing-style.md): an ADR describes
+   the decision context, never a migration narrative. This rule is **deliberately
+   narrower than unconditional** — the contract exempts `### Breaking changes`
+   content, `## Related ADRs`, the `**Status:**` line and a `Supersedes:` header,
+   because this skill mandates those sections and a ban on their content would ban a
+   required section.
+5. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
-7. **Stamp every write.** After an ADR is written, run
+6. **Stamp every write.** After an ADR is written, run
    `.inspire/bin/trust.sh stamp <file> --skill adr`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
    that carries `endorsed:` is disclosed to the operator first

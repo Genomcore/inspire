@@ -122,9 +122,10 @@ subcommand, read its reference file** — the table below is an index, not the f
   maturity is *claimed* to be realized by code — verify the claim.
 - **Action descriptors (`04_domain/{module}/{entity}/`).** Does the code satisfy
   the behavioral contract (inputs, outputs, touched entities, invariants, error
-  set)? Search for the descriptor whose `## Why` back-sources to the feature.
+  set)? Search for the descriptor whose `## Purpose` back-sources to the feature.
 - **Acceptance criteria (`03_features/{module}/{feature-id}.md`).** Is every
-  testable criterion covered by a test?
+  testable criterion covered by a test? Criteria carry stable ids (`AC-n`) — cite
+  them literally.
 
 **Anchor check.** If a spec this work builds from carries no `endorsed:`
 block, tell the operator — "building from a spec no human endorsed" — and
@@ -139,29 +140,20 @@ you believe is wrong — surface the disagreement.
 ## Stack profiles (on-demand)
 
 This skill is stack-agnostic; a **stack profile** layers a framework's concrete
-conventions onto its generic dimensions. At the start of any subcommand, resolve
-the active profile set from
-[`00_bootstrap/stack.md`](../../../inspire_kb/00_bootstrap/stack.md):
+conventions onto its generic dimensions. At the start of any subcommand, resolve the
+active profile set per [`profiles/README.md`](profiles/README.md) § Resolution. That
+contract is also where the load rules live — which files a resolved set reads from
+[`profiles/`](profiles/), that profiles compose, and that a declared framework with no
+profile file runs purely generic instead of blocking — so read it there rather than
+from here. When the suite has a surface roster, the target surface's `Profiles` field
+is the selector instead; see *Surfaces and the monorepo* above.
 
-1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
-   use that set.
-2. **Inference fallback** — otherwise infer from the stack sections
-   (`## Frontend: React` → `react`; `## Backend: NestJS` → `nestjs`; …).
-
-Read **only** the resolved profiles' files ([`profiles/{id}.md`](profiles/)), and
-only now — a framework the project doesn't use never loads. Each profile section
-maps onto the generic flow: `## Layering` → review Phase 1 / implementation shape;
-`## Test conventions` → `tdd` + review Phase 4; `## Forbidden patterns` → review +
-authoring rules; `## Review focus` → extra review dimensions; `## Build & verify` →
-the real build/test commands. Profiles are **composable** (a React + NestJS repo
-loads both). When the suite has a surface roster, the resolution above is the
-fallback: the target surface's `Profiles` field selects the set instead — see
-*Surfaces and the monorepo*.
-
-If a declared framework has **no** profile file, run purely generic and say so —
-offer `/inspire_bootstrap` to scaffold one. Missing profiles never block. Profiles
-are data this skill reads; the KB stays the source of truth and the template stays
-stack-agnostic. Contract: [`profiles/README.md`](profiles/README.md).
+What this skill adds is where a profile's sections land in its own flow:
+`## Layering` → review Phase 1 / implementation shape; `## Test conventions` → `tdd`
++ review Phase 4; `## Forbidden patterns` → review + authoring rules;
+`## Review focus` → extra review dimensions; `## Build & verify` → the real
+build/test commands. When a framework the project declared has no profile, say so in
+the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
 
 ## Rules
 
@@ -172,6 +164,14 @@ stack-agnostic. Contract: [`profiles/README.md`](profiles/README.md).
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim. Review reports and debug write-ups addressed to the operator are
 > prose — write them in `output_language` too.
+
+> **Writing contract.** Review reports, debug write-ups and any KB text you propose
+> follow [`_references/writing-style.md`](../_references/writing-style.md).
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review`, `debug` (analysis phase) are read-only until a fix is agreed.**
    `review` never edits code — it reports, ranks, and names the fix. `fix-build`,

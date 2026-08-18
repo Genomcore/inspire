@@ -11,8 +11,7 @@ A plain-file ticket tracker under
 [`inspire_kb/99_tracker/`](../../../inspire_kb/99_tracker): **one Markdown file
 per ticket**, the only source of truth — no external tool, no generated cache. Open
 tickets live at `tickets/*.md`; closed ones are archived under `tickets/archive/*.md`
-so default scans see only active work. A read-only Kanban web view is available via
-`node inspire_kb/99_tracker/serve.mjs`.
+so default scans see only active work.
 
 The on-disk contract — storage layout, frontmatter schema, enums, ID scheme — lives
 in [`references/tracker-format.md`](references/tracker-format.md). **Read it before
@@ -92,11 +91,11 @@ importance: Low
 standard ticket infrastructure — no new tooling; the operator decides when an
 observation deserves a ticket, and skills surface candidates conversationally.
 
-A ticket captures **local, actionable** friction. When the same signal should change
-how a skill behaves, it **graduates** into a `98_lessons` node via `/inspire_lesson` —
-the ticket tracks the local fix, the lesson carries the durable instruction (and, via
-the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
-`inspire-lesson`.
+A ticket captures **local, actionable** friction. The ticket-vs-lesson routing and the
+offer protocol live in
+[`_references/lesson-capture.md`](../_references/lesson-capture.md); the rule for a
+confirmed ticket **graduating** into a lesson lives in
+[`inspire-lesson/SKILL.md`](../inspire-lesson/SKILL.md) § Relationship to the tracker.
 
 ## Rules
 
@@ -106,6 +105,14 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 > tokens (frontmatter keys/values, enum values, `TASK-` IDs, filenames) stay
 > verbatim.
 
+> **Writing contract.** Ticket prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md).
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **One file per ticket.** Filename = `TASK-{id}.md`; the `id` field matches.
 2. **IDs never reused.** Don't delete files — archive them.
 3. **Open vs archived location is derived from `status`.** Keep the location
@@ -114,8 +121,6 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 5. **`closed_by` / `closed_at` only when status ∈ {Done, Cancelled}.**
 6. **Body markdown is free.** Description / Acceptance criteria / Notes suggested.
 7. **Concurrent edits are safe** — random IDs, no locking.
-8. **Server is read-only.** `inspire_kb/99_tracker/serve.mjs` never writes; it
-   scans both `tickets/` and `tickets/archive/`.
 
 ## Related skills
 

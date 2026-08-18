@@ -18,7 +18,11 @@ lifecycle: accepted             # ← symmetric with action lifecycle; promotion
 The `auth::user` entity is the platform's single source of truth for a user account — the row that represents an authenticated principal in the [[auth-user-management|user-management subsystem]]. Every authenticated session, every audit-event actor reference, and every permission-set binding ultimately resolves back to a row in this entity.
 
 ## Rationale
-The entity exists as a discrete object because the identity model defined in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple — the auth subsystem cannot delegate that uniqueness invariant to downstream consumers. The field shape is the minimum needed for the auth-provider integration plus the platform's local metadata: `email` is the canonical identity handle described in [[auth-identity-model|the identity-model feature]], `password_hash` carries credential material whose algorithm is a system-wide setting (see field-level rationale below), and `created_at` anchors the row to the platform audit timeline per [[adr-audit-01-centralized-logging]]. New fields land here only after `## Rationale` justifies them — the discussion-forcing discipline is what keeps the entity shape an act of design rather than a residue of action authoring.
+The identity model in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple, so the entity exists as a discrete object. The auth subsystem must not delegate that uniqueness invariant to a downstream consumer.
+
+The field shape carries the minimum the auth-provider integration needs, plus the platform's own metadata. `email` is the canonical identity handle that [[auth-identity-model|the identity-model feature]] describes. `password_hash` carries credential material whose algorithm is a system-wide setting (see the field-level rationale below). `created_at` anchors the row to the platform audit timeline that [[adr-audit-01-centralized-logging]] defines.
+
+A new field lands here only after `## Rationale` justifies it. The discussion-forcing discipline keeps the entity shape an act of design rather than a residue of action authoring.
 
 ## Invariants
 - `email` is unique within the entity — no two rows may share the same email value. Enforced at the database level and required by the identity model in [[adr-auth-01-identity-model]].

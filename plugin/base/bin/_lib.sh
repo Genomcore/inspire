@@ -10,7 +10,14 @@ set -uo pipefail
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
+# The domain root — the scope of the nine domain-shaped rules. Its meaning is
+# exactly what it has always been: the root of the `04_domain` tree.
 SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-inspire_kb/04_domain}"
+
+# The KB root — the scope of the KB-wide rules (the ones that check features,
+# ADRs and screens as well as domain files). Kept separate from
+# SDD_SPEC_ROOT so that a domain-scoped run stays domain-scoped.
+SDD_KB_ROOT="${SDD_KB_ROOT:-inspire_kb}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dependency checks
@@ -113,6 +120,75 @@ sdd_resolve_id() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Scope intersection
+#
+# The scope contract, in one place: a rule receives one `$1` and checks exactly
+# `$1 ∩ its own layers`. Every layer — the domain tree and the three KB layers
+# below — resolves its slice of the scope through this one helper, because two
+# implementations of "does this scope reach that layer" would eventually answer
+# differently and one of them would be a gate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# sdd_scope_norm <path>
+#   Lexical normalization: repeated leading `./` removed, runs of `/` squeezed,
+#   trailing `/` dropped. `./inspire_kb//04_domain/` and `inspire_kb/04_domain`
+#   name the same directory and must compare equal, or a scope spelled the
+#   second way silently checks nothing.
+sdd_scope_norm() {
+  local p="$1"
+  # The separators come from variables: written inline, the replacement half of
+  # `${p//…/…}` keeps the backslash of an escaped `/` and the "normalization"
+  # would corrupt the path it was meant to clean.
+  local dbl='//' one='/'
+  while [ "$p" != "${p//$dbl/$one}" ]; do p="${p//$dbl/$one}"; done
+  while [ "${p#./}" != "$p" ]; do p="${p#./}"; done
+  while [ "$p" != "/" ] && [ "${p%/}" != "$p" ]; do p="${p%/}"; done
+  printf '%s\n' "$p"
+}
+
+# sdd_scope_intersect <scope> <layer_root>
+#   Prints the directory a rule should scan for that layer, or nothing at all
+#   when the scope and the layer are disjoint. The cases:
+#     - empty scope         → the whole layer
+#     - scope inside layer  → the scope
+#     - layer inside scope  → the whole layer
+#     - otherwise           → nothing (skip the layer)
+#   Comparison is lexical first, then physical: when both sides exist on disk,
+#   an absolute and a relative spelling of the same directory must intersect,
+#   and only `pwd -P` can tell. A scope that does not exist keeps the
+#   silent-skip semantics — there is nothing there to check either way.
+sdd_scope_intersect() {
+  local scope="$1"
+  local root
+  root="$(sdd_scope_norm "$2")"
+
+  if [ -z "$scope" ]; then
+    printf '%s\n' "$root"
+    return 0
+  fi
+  scope="$(sdd_scope_norm "$scope")"
+
+  case "$scope" in
+    "$root" | "$root"/*) printf '%s\n' "$scope"; return 0 ;;
+  esac
+  case "$root" in
+    "$scope"/*) printf '%s\n' "$root"; return 0 ;;
+  esac
+
+  if [ -d "$scope" ] && [ -d "$root" ]; then
+    local pscope proot
+    pscope="$(cd "$scope" 2>/dev/null && pwd -P)" || return 0
+    proot="$(cd "$root" 2>/dev/null && pwd -P)" || return 0
+    case "$pscope" in
+      "$proot" | "$proot"/*) printf '%s\n' "$scope"; return 0 ;;
+    esac
+    case "$proot" in
+      "$pscope"/*) printf '%s\n' "$root"; return 0 ;;
+    esac
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Artifact discovery
 #
 # Layout: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md
@@ -120,13 +196,23 @@ sdd_resolve_id() {
 # Per-entity documents sit alongside actions at the same path with one
 # fewer segment: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md (2
 # dotted segments). Action discovery uses segment count to distinguish them.
+#
+# Both finders intersect their scope with $SDD_SPEC_ROOT first. The dotted-leaf
+# filename shape is a discriminator WITHIN the domain tree, never a claim about
+# the rest of the KB: a screen at `05_screens/auth/user.profile.md` carries the
+# same shape and is not a domain object. Without the intersection, a KB-wide
+# scope would hand that file to every domain rule and its lifecycle-valid error
+# would block the PR — a gate firing on an artifact whose format it does not
+# own.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # All action descriptor files under inspire_kb/04_domain/. Actions have 3-segment dotted
 # leaf filenames ({module}.{entity}.{action}.md); entity documents
 # ({module}.{entity}.md) have 2 segments and are excluded.
 sdd_find_actions() {
-  local scope="${1:-$SDD_SPEC_ROOT}"
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
+  [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
@@ -138,7 +224,9 @@ sdd_find_actions() {
 # descriptors ({module}.{entity}.{action}.md) have 3 segments and are
 # excluded.
 sdd_find_entities() {
-  local scope="${1:-$SDD_SPEC_ROOT}"
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
+  [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
@@ -197,20 +285,67 @@ sdd_entity_population() {
   fi
 }
 
-# Module name extracted from an action descriptor path. The path layout is
-# inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md, so the
-# module segment is the directory after `sdd/`. E.g.
-# inspire_kb/04_domain/auth/user/auth.user.create.md → "auth".
-sdd_action_module() {
-  local path="$1"
-  echo "$path" | awk -F'/' '{ for(i=1;i<=NF;i++) if($i=="sdd"){print $(i+1); exit} }'
+# ─────────────────────────────────────────────────────────────────────────────
+# KB layer discovery
+#
+# Every helper below takes a scope and returns the files that lie in both the
+# scope and its own layer — the scope contract from bin/README.md §Scope: a
+# rule receives one `$1` and checks only `$1 ∩ its layers`. Matching is on the
+# layer directory name anywhere in the path, so all three of
+# `inspire_kb`, `inspire_kb/03_features` and `inspire_kb/03_features/auth`
+# behave as expected, and a domain-scoped run (`inspire_kb/04_domain`) yields
+# nothing at all from these helpers.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Use-case files under 03_features/: 03_features/{module}/{use-case}.md.
+# Layer READMEs and any `_index.md` are excluded — they are navigation, not
+# use cases.
+sdd_find_features() {
+  local scope="${1:-$SDD_KB_ROOT}"
+  [ -d "$scope" ] || return 0
+  find "$scope" -type f -name "*.md" 2>/dev/null \
+    | awk -F'(^|/)03_features/' '
+        NF > 1 {
+          n = split($NF, seg, "/")
+          if (n != 2) next
+          if (seg[n] == "_index.md" || seg[n] == "README.md") next
+          print
+        }
+      ' \
+    | sort
 }
 
-# Entity name extracted from an action descriptor path. E.g.,
-# inspire_kb/04_domain/auth/user/auth.user.create.md → "user".
-sdd_action_entity() {
-  local path="$1"
-  echo "$path" | awk -F'/' '{ for(i=1;i<=NF;i++) if($i=="sdd"){print $(i+2); exit} }'
+# ADR files under 01_adr/: one `adr-{slug}.md` per decision. The `adr-` prefix
+# is the discriminator, so READMEs and index files never match.
+sdd_find_adrs() {
+  local scope="${1:-$SDD_KB_ROOT}"
+  [ -d "$scope" ] || return 0
+  find "$scope" -type f -name "adr-*.md" 2>/dev/null \
+    | grep -E '(^|/)01_adr/' \
+    | sort
+}
+
+# Screen files under 05_screens/. Discovery is POSITIVE — the two accepted
+# shapes are 05_screens/{module}/{screen}.md (flat / suite-of-one) and
+# 05_screens/{surface}/{module}/{screen}.md (surface-first). `patterns/` and
+# `components/` are excluded by top-level path prefix (they never move: they
+# sit beside the surface trees in both shapes), and `_index.md` / `README.md`
+# basenames are excluded everywhere. Top-level files (`design-system.md`) fall
+# outside both shapes and are therefore not screens.
+sdd_find_screens() {
+  local scope="${1:-$SDD_KB_ROOT}"
+  [ -d "$scope" ] || return 0
+  find "$scope" -type f -name "*.md" 2>/dev/null \
+    | awk -F'(^|/)05_screens/' '
+        NF > 1 {
+          n = split($NF, seg, "/")
+          if (n < 2 || n > 3) next
+          if (seg[1] == "patterns" || seg[1] == "components") next
+          if (seg[n] == "_index.md" || seg[n] == "README.md") next
+          print
+        }
+      ' \
+    | sort
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,7 +355,7 @@ sdd_action_entity() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 # sdd_finding <severity> <rule> <target> <message>
-#   severity: "error" | "warning"
+#   severity: "error" | "warning" | "info" (a note about the run, not an artifact)
 #   rule:     short rule id (e.g. "entity-coherence")
 #   target:   path or id the finding applies to
 #   message:  human-readable description
@@ -266,12 +401,18 @@ sdd_exit_with_counters() {
 
 # sdd_progressive_severity <lifecycle>
 #   Maps an object's lifecycle to the severity tier for lifecycle-
-#   progressive rules (warning at draft, error at accepted+). Used by
-#   field-coverage, rationale-wikilink, wikilinks-resolve.
-#   Returns "warning" for draft (and empty/unknown), "error" for accepted+.
+#   progressive rules. Used by field-coverage, rationale-wikilink,
+#   wikilinks-resolve, sections-present (its order check) and prose-style
+#   (its four non-heuristic checks).
+#     draft (and empty / unknown) → warning
+#     accepted, stable            → error
+#     superseded                  → warning
+#   `superseded` is terminal: the object is history, kept for the pointer to
+#   what replaced it, and no longer worth blocking a commit over. It therefore
+#   de-escalates rather than staying at the tier it retired from.
 sdd_progressive_severity() {
   case "$1" in
-    accepted|stable|superseded) printf 'error\n' ;;
+    accepted|stable) printf 'error\n' ;;
     *) printf 'warning\n' ;;
   esac
 }
@@ -291,20 +432,181 @@ sdd_count_by_severity() {
 #
 # Extracts the content under a markdown H2 header (## SectionName) up to the
 # next H2 or EOF. Frontmatter and prose above the first H2 are ignored.
+#
+# Two structures are read the same way by every helper below, because getting
+# either wrong silently erases the rest of a file from a check:
+#
+#   Frontmatter is a real block, not a toggle. It exists only when line 1 is
+#   `---`, it closes at the next `---`, and it never reopens. A `---` used as a
+#   thematic break in the body is body content, and a file written without
+#   frontmatter (screens, by design) is read in full. Known limitation: a file
+#   whose line 1 opens frontmatter that is never closed reads as frontmatter to
+#   EOF, so every helper sees an empty body. That is the one shape where a
+#   malformed file goes quiet rather than loud, and it is left as is — the file
+#   is broken YAML that `sdd_frontmatter` cannot parse either.
+#
+#   A header inside a fenced code block is not a header. Fences are tracked the
+#   way CommonMark defines them, not as a boolean toggle: the opening marker's
+#   character (` or ~) and run length are recorded, and only a line that is
+#   nothing but a run of the SAME character, at least as long, closes it. A
+#   boolean toggle gets three common shapes wrong — a four-backtick fence
+#   quoting a three-backtick one, a fence quoting the other marker character,
+#   and any fence containing an odd number of inner fence-looking lines (which
+#   leaves the flag stuck on and erases the rest of the file). All three appear
+#   in documentation about markdown, which is exactly what a KB contains.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# The two readers above, as awk source. Every helper in this section composes
+# its program from these fragments so that there is exactly one implementation
+# of each rule: a prologue (frontmatter + fences), the helper's own rules, and
+# the fence functions. Two fence prologues exist because a helper either drops
+# fenced lines or passes them through to a caller that wants them verbatim.
+SDD_AWK_FM_READER='
+  NR == 1 && $0 == "---" { fm = 1; next }
+  fm { if ($0 == "---") fm = 0; next }
+'
+
+SDD_AWK_FENCE_SKIP='
+  sdd_fence($0) { next }
+  sdd_in_fence() { next }
+'
+
+SDD_AWK_FENCE_KEEP='
+  sdd_fence($0) { if (capture) print; next }
+  sdd_in_fence() { if (capture) print; next }
+'
+
+# sdd_fence(line) — returns 1 when the line is a fence delimiter (opening or
+# closing) and updates the tracked state; 0 otherwise. sdd_in_fence() reports
+# whether the reader is currently inside a fenced block. Interval expressions
+# and capture groups are avoided: BSD awk is a supported host.
+SDD_AWK_FENCE_FUNCS='
+  function sdd_fence(line,   indent, s, ch, n, rest) {
+    indent = 0
+    while (substr(line, indent + 1, 1) == " ") indent++
+    if (indent > 3) return 0          # 4+ spaces is an indented code block
+    s = substr(line, indent + 1)
+    ch = substr(s, 1, 1)
+    if (ch != "`" && ch != "~") return 0
+    n = 0
+    while (substr(s, n + 1, 1) == ch) n++
+    if (n < 3) return 0
+    rest = substr(s, n + 1)
+    if (sdd_fence_ch == "") {
+      # Opening fence. A backtick fence may not carry a backtick in its info
+      # string, so such a line is not a fence at all.
+      if (ch == "`" && index(rest, "`") > 0) return 0
+      sdd_fence_ch = ch
+      sdd_fence_len = n
+      return 1
+    }
+    # Closing fence: same character, run at least as long as the opener, and
+    # nothing but that run on the line.
+    if (ch == sdd_fence_ch && n >= sdd_fence_len && rest ~ /^[[:space:]]*$/) {
+      sdd_fence_ch = ""
+      sdd_fence_len = 0
+      return 1
+    }
+    return 0
+  }
+  function sdd_in_fence() { return sdd_fence_ch != "" }
+'
+
 # sdd_body_section <file> <header_name>
-#   Prints the body section content to stdout. Empty if not found.
+#   Prints the body section content to stdout, verbatim (fenced blocks and
+#   tables included). Empty if not found.
 sdd_body_section() {
   local file="$1"
   local header="$2"
-  awk -v header="## $header" '
-    /^---$/ { fm = !fm; next }
-    fm { next }
-    $0 == header { capture = 1; next }
-    /^## / && capture { exit }
-    capture { print }
-  ' "$file"
+  awk -v header="## $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
+      $0 == header { capture = 1; next }
+      /^## / && capture { exit }
+      capture { print }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+}
+
+# sdd_body_prose <file> <header_name>
+#   sdd_body_section reduced to prose: fenced code blocks, table rows and bare
+#   thematic breaks are dropped, and wikilinks are unwrapped to their display
+#   text (the same right-of-the-pipe reading sdd_unwrap_wikilink applies, so
+#   `[[auth.user|auth::user]]` reads as `auth::user` and `[[adr-x]]` as
+#   `adr-x`). What is left is the text a human reads, which is what the
+#   prose-style checks measure.
+sdd_body_prose() {
+  local file="$1"
+  local header="$2"
+  # No frontmatter reader here: the input is a section body, so a leading `---`
+  # is a thematic break, never a frontmatter opener — and a thematic break is
+  # structure, not prose, so it is dropped rather than counted as content.
+  # (Three-or-more `-` written without an interval expression: BSD awk is a
+  # supported host.) Only the `---` spelling is dropped: CommonMark's other two
+  # thematic breaks, `***` and `___`, pass through as prose lines.
+  sdd_body_section "$file" "$header" \
+    | awk "${SDD_AWK_FENCE_SKIP}"'
+        /^[[:space:]]*\|/ { next }
+        /^[[:space:]]*---+[[:space:]]*$/ { next }
+        { print }
+      '"${SDD_AWK_FENCE_FUNCS}" \
+    | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g'
+}
+
+# sdd_has_section <file> <header_name> [level]
+#   Exit 0 if the file declares that header outside frontmatter and outside
+#   every fenced block. `level` is 2 (default, `## Header`) or 3
+#   (`### Header`); any other value is a usage error.
+sdd_has_section() {
+  local file="$1"
+  local header="$2"
+  local level="${3:-2}"
+  local prefix
+  case "$level" in
+    2) prefix="## " ;;
+    3) prefix="### " ;;
+    *) echo "error: sdd_has_section: unsupported header level: $level" >&2; return 2 ;;
+  esac
+  awk -v hdr="${prefix}${header}" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      $0 == hdr { found = 1; exit }
+      END { exit !found }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+}
+
+# sdd_has_subsection <file> <parent_h2> <header_h3>
+#   Exit 0 if the file declares `### header_h3` *within* the `## parent_h2`
+#   section. This is the "sits under" form: an H3 that has drifted to another
+#   H2 does not satisfy it.
+sdd_has_subsection() {
+  local file="$1"
+  local parent="$2"
+  local header="$3"
+  awk -v ph="## $parent" -v sh="### $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      $0 == ph { inparent = 1; next }
+      /^## / { inparent = 0; next }
+      inparent && $0 == sh { found = 1; exit }
+      END { exit !found }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+}
+
+# sdd_body_subsection <file> <parent_h2> <header_h3>
+#   Prints the content under `### header_h3` inside `## parent_h2`, up to the
+#   next H3, the next H2, or EOF. Empty if the subsection is not there. The
+#   FIRST match wins: the parent rule is gated on `!capture` so that a repeated
+#   `## parent` later in the file cannot re-arm the scan and concatenate two
+#   subsection bodies into one answer.
+sdd_body_subsection() {
+  local file="$1"
+  local parent="$2"
+  local header="$3"
+  awk -v ph="## $parent" -v sh="### $header" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
+      !capture && $0 == ph { inparent = 1; next }
+      /^## / { if (capture) exit; inparent = 0; next }
+      inparent && $0 == sh { capture = 1; next }
+      /^### / && capture { exit }
+      capture { print }
+    '"${SDD_AWK_FENCE_FUNCS}" "$file"
 }
 
 # sdd_entities_touched <file>

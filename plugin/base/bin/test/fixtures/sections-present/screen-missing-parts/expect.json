@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "screen file missing required part"
+    }
+  ],
+  "forbidden": ["empty section(s)", "Notes"]
+}

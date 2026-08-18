@@ -106,7 +106,7 @@ Each subcommand's full flow lives at `references/subcommands/{name}.md`. **Befor
 | [`delete`](references/subcommands/delete.md) | Remove an action (refuses if dependents exist) |
 | [`promote`](references/subcommands/promote.md) | Walk lifecycle forward (draft → accepted → stable / superseded) |
 | [`demote`](references/subcommands/demote.md) | Walk lifecycle backwards (refuses with cascade preview) |
-| [`review`](references/subcommands/review.md) | Read-only quality_lib check (10-rule gate) |
+| [`review`](references/subcommands/review.md) | Read-only quality_lib check (the whole gate) |
 | [`source`](references/subcommands/source.md) | Show the back-source trail for every claim (read-only) |
 | [`graph`](references/subcommands/graph.md) | Print action→action requires graph + supersession edges (read-only) |
 
@@ -116,8 +116,12 @@ After any descriptor change, the agent reconciles the affected entity document �
 
 On-disk shape specs (consult when authoring; they govern the file, not the cadence):
 
-- Action descriptor → [`references/format-action.md`](references/format-action.md)
-- Entity document → [`references/format-entity.md`](references/format-entity.md)
+- Action descriptor → [`references/format-action.md`](references/format-action.md);
+  copyable shape at [`templates/action.md.template`](templates/action.md.template)
+- Entity document → [`references/format-entity.md`](references/format-entity.md);
+  copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
+- Semantic types → [`references/type-mapping.md`](references/type-mapping.md) — the
+  authority for the `Type` vocabulary and `Mapping` tokens used by both formats.
 - Externally populated entities use `population: external` — see `references/format-entity.md`.
 
 ## Rules
@@ -128,6 +132,18 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > whatever language the conversation is in, and independently of the product's own
 > i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
 > stay verbatim.
+
+> **Writing contract.** Descriptor prose follows
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Purpose`,
+> `## Rationale` and `## Behavior` are normative prose (R1–R6); the `## Inputs`,
+> `## Outputs`, `## Entities` and `## Fields` tables are structured sections
+> (R3, R4, R6). Prosaic back-sourcing is stated there as a principle; the per-section
+> mechanics stay in [`references/format-action.md`](references/format-action.md).
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review`, `show`, `source`, `graph` are read-only.** They report, resolve, and visualize — never write files.
 2. **`define`, `update`, `refactor`, `delete`, `promote`, `demote` require operator approval** of each proposed change before writing. At `promote`, the
@@ -157,6 +173,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - [`_references/lifecycle-rules.md`](../_references/lifecycle-rules.md) — 4-state lifecycle, per-state gate table, regression + supersession rules.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared finding rendering format used by `review`.
 - [`examples/define-interview.md`](examples/define-interview.md) — annotated interview walkthrough.
+- [`examples/canonical-action.md`](examples/canonical-action.md) / [`examples/canonical-action-meta.md`](examples/canonical-action-meta.md) / [`examples/canonical-entity.md`](examples/canonical-entity.md) / [`examples/orchestrator.md`](examples/orchestrator.md) — worked examples: a canonical action descriptor, its meta/dispatch variant, the entity document they touch, and a multi-entity orchestrator.
 
 ## Related skills
 

@@ -18,9 +18,7 @@ prefix: MYM              # the module's feature / use-case ID prefix
 
 ## Use cases
 
-_Index of the features in [`../03_features/{module}/`](../03_features/{module}):_
-
-- [[../03_features/{module}/{use-case}|{USE-CASE-ID}]] — {one line}
+Features live in [`../03_features/{module}/`](../03_features/{module}) — the glob is the index.
 
 ## Screens
 

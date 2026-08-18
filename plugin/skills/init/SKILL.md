@@ -128,9 +128,9 @@ teammates and CI.
    fix the script — do not work around it in prose.
 2. **Report the script's JSON, not your assumptions.** The summary on stdout is the record
    of what happened.
-3. **Stop rather than guess.** A missing `yq`/`jq`, a non-git directory, an existing
-   `.inspire.lock`, or the template repo itself are all hard stops with a clear message. A
-   non-zero exit from the script is a stop, not something to patch up by hand.
+3. **Stop rather than guess.** Every *Precondition* above is a hard stop with a clear
+   message, never a thing to work around — and a non-zero exit from the script is a stop
+   too, not something to patch up by hand.
 4. **This skill does not author content.** Language, stack, theme and the project README
    belong to `/inspire_bootstrap init`.
 5. **Instruct, don't chain.** Report the handoff and stop; `/reload-skills` and

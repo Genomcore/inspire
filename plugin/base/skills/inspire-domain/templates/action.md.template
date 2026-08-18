@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-{{ONE_PARAGRAPH_RATIONALE}} The claim is grounded in [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]].
+{{ONE_PARAGRAPH_RATIONALE}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds that claim.
 
 ## Inputs
 

@@ -13,7 +13,7 @@ Read-only quality check. Runs the quality_lib rules against the scope and surfac
 
 ## The quality gate (per D24)
 
-The gate composes 10 rule families across three severity tiers. `review` runs every check regardless of the current lifecycle; severity scales by tier and by the object's own state.
+The gate composes rule families across three severity tiers, plus the style checks below them. `review` runs every check regardless of the current lifecycle; severity scales by tier and by the object's own state.
 
 **Tier 1 — Mechanical blockers (always error, any lifecycle):**
 
@@ -35,7 +35,7 @@ The gate composes 10 rule families across three severity tiers. `review` runs ev
 | `stable-blockers` | `stable` actions whose `requires:` targets are not yet stable |
 | `touched-entity-lifecycle` | `stable` action touching an entity below `accepted` |
 
-**Tier 3 — Lifecycle-progressive (warning at draft, error at accepted+):**
+**Tier 3 — Lifecycle-progressive (draft → warning, accepted / stable → error, superseded → warning):**
 
 | Rule | What it catches |
 |---|---|
@@ -43,4 +43,17 @@ The gate composes 10 rule families across three severity tiers. `review` runs ev
 | `rationale-wikilink` | Entity `## Rationale` (or action `## Purpose` ∪ `## Behavior`) has no `[[wikilink]]` back-source |
 | `wikilinks-resolve` | A `[[wikilink]]` in body does not resolve to an existing file |
 
-The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../bin/README.md) for the script catalog).
+**Style — the mechanical subset of the writing contract:**
+
+| Rule | What it catches |
+|---|---|
+| `prose-style` R2 · R4 · R5 · R6 | A sentence over 25 words; a synonym the glossary rejects; a paragraph over 6 sentences; one of the closed historical-language tokens. Same ramp as tier 3 — these read the object's own `lifecycle:`. |
+| `prose-style` R1 · R3 | Passive voice; a run of four or more stacked nouns. Heuristics: **warning at every lifecycle, never ramping.** |
+
+The checks are English-only in 0.7. A project whose `output_language` is not
+`en` gets a single info-level note and no findings — report that note as it
+stands, and do not present it as a clean bill of health: the contract in
+[`writing-style.md`](../../../_references/writing-style.md) still binds as
+authoring judgment.
+
+The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../../.inspire/bin/README.md) for the script catalog).

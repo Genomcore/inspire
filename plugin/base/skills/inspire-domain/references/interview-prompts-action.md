@@ -1,10 +1,10 @@
 # Interview prompts — action descriptor
 
-A **categorical prompt catalogue** for the action-descriptor socratic interview. The skill loads this file at the start of any `create` / `update` subcommand and uses it as the backbone of the dialogue: one categorical question per section, then 1–3 design-probing follow-ups when the operator's answer surfaces an implicit decision.
+A **categorical prompt catalogue** for the action-descriptor socratic interview. The skill loads this file at the start of any `define` / `update` subcommand and uses it as the backbone of the dialogue: one categorical question per section, then 1–3 design-probing follow-ups when the operator's answer surfaces an implicit decision.
 
 These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (action id, entity names, feature anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
 
-Section structure here mirrors the action descriptor format defined in [`../SKILL.md`](../SKILL.md) under *Action descriptor format*. If sections are added or renamed there, update this catalogue.
+Section structure here mirrors the action descriptor format defined in [`format-action.md`](format-action.md). If sections are added or renamed there, update this catalogue.
 
 The interview cadence is **one question at a time**. Never present a numbered decision tree or a "before drafting we must resolve X, Y, Z" wall. When two probes are both relevant, pick the one that blocks progress and defer the other. `AskUserQuestion` is reserved for closed-set choices that natural dialogue has already narrowed (typically: lifecycle target, effect verb per entity).
 
@@ -41,7 +41,7 @@ Ask what the caller gets back, and which of the three output patterns applies: w
 ## Entities prompts
 
 ### Categorical
-Ask which entities the action touches and how — for each: the effect verb (`create` / `read` / `update` / `delete` / `append`) and which fields are read or written. The answer becomes the `## Entities` sub-sections and their field-touch tables.
+Ask which entities the action touches and how — for each: the effect verb (`create` / `read` / `read-whole` / `update` / `delete` / `append` / `replace`) and which fields are read or written. The answer becomes the `## Entities` sub-sections and their field-touch tables.
 
 ### Probes
 - **Multi-entity probe.** "Does the action touch more than one entity? Audit events, lookup tables, allow-lists are easy to miss — anything outside the headline entity?" Always ask; orchestrators routinely touch 3+ entities.

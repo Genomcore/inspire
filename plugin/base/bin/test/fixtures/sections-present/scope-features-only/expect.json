@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "args": ["spec/kb/03_features"],
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "use-case file missing required section(s)"
+    }
+  ],
+  "forbidden": ["entity document", "action descriptor", "ADR missing", "screen file"]
+}

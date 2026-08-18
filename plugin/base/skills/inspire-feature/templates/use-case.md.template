@@ -1,0 +1,39 @@
+---
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+---
+
+# {FEATURE-ID}: {Feature Name}
+
+> Source: [[../../02_modules/{module}]]
+
+{One-paragraph description of the feature.}
+
+**State:** 🟡 Planned
+<!-- State ladder: 🟡 Planned → 🔵 In progress → 🟢 Implemented. -->
+**Priority:** {Core | Important | Nice-to-have}
+**Depends on:** [[{feature-id}]], [[{feature-id}]]
+<!-- omit the Depends on line entirely when there are no dependencies -->
+
+## Actor
+{Primary persona}
+
+## Preconditions
+{What must be true before this flow starts}
+
+## Main flow
+1. {Step 1}
+2. {Step 2}
+
+## Alternative flows
+### AF-1: {Description}
+
+## Error flows
+### EF-1: {Description}
+
+## Postconditions
+{What is true after successful completion}
+
+## Acceptance criteria
+<!-- ids are stable: never renumber; a new criterion takes the next free id; never reuse a deleted id; gaps are legal -->
+- [ ] AC-1: {Testable criterion 1}
+- [ ] AC-2: {Testable criterion 2}

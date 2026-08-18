@@ -10,7 +10,6 @@ re-discovered as new findings on every review.
   ```
   99_tracker/
     tickets/         # one file per ticket
-    serve.mjs        # local Kanban server (node serve.mjs)
   ```
 
 The tracker is cross-cutting: any skill that finds actionable work can file a

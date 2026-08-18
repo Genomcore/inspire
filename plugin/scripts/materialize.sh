@@ -157,6 +157,21 @@ validate_args() {
     drift-check) MODE=plan ;;   # deprecated alias
     *) log "materialize.sh: --mode must be init, update or plan (got '${MODE:-<missing>}')"; usage; exit 1 ;;
   esac
+  # A resolution outside --mode update is either inconsistent or inert, and both
+  # deserve a refusal rather than silence. In plan mode, run_plan never calls
+  # _apply_resolutions, so the classify half would report the unresolved split
+  # while a hop consulting the same arrays reported the resolved one — one JSON
+  # document answering the same question two ways. In init mode nothing consults
+  # the arrays at all, and a flag that is accepted and ignored is the silent
+  # failure _warn_unmatched_resolutions exists to close.
+  if [ "$MODE" != "update" ] \
+     && { [ "${#TAKE_BASE[@]}" -gt 0 ] || [ "${#TAKE_MINE[@]}" -gt 0 ]; }; then
+    log "materialize.sh: --take-base/--take-mine (and the deprecated --skip) belong"
+    log "  to --mode update only. Plan predicts the UNRESOLVED split, and init has"
+    log "  nothing to resolve; '--mode update --dry-run' previews resolutions"
+    log "  without writing anything."
+    usage; exit 1
+  fi
   [ -n "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root is required"; usage; exit 1; }
   [ -n "$PROJECT_ROOT" ] || { log "materialize.sh: --project-root is required"; usage; exit 1; }
   [ -d "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root '$PLUGIN_ROOT' is not a directory"; exit 1; }
@@ -699,9 +714,53 @@ detect_existing_kb() {
   log "  · inspire_kb/ already exists ($n file(s)) — adopting it: seeding only what is missing"
 }
 
+# _ask_paths <tsv>... → the ask channel: one project-relative path per line,
+# stream order, de-duplicated.
+#
+# THE ASK CHANNEL HAS TWO SOURCES AND ONE SHAPE. classify asks about a file both
+# sides changed (lib/merge.sh); a hop asks before retiring a file it cannot prove
+# derivable (hop_ask in lib/hop-ops.sh). Both write `ask\t<path>\t<detail>`, so
+# the union is a concatenation and needs no translation — and it must BE a union,
+# because the operator answers with one flag set and the count they read must
+# cover every question they were asked.
+#
+# De-duplicated on the path alone, not verb+path: every row here is already an
+# `ask`, and one path asked about twice is still one decision. Path-less rows are
+# dropped — a question with no path is not answerable by --take-base/--take-mine.
+_ask_paths() {
+  awk -F'\t' '$1=="ask" && $2!="" && !seen[$2]++ {print $2}' "$@"
+}
+
+# _counts_json <tsv>... → the {noop,replace,keep,ask,create,restore,delete}
+# tally, over the SAME de-duplicated union render_report's footer counts.
+#
+# Deliberately not verdicts-only. The footer already counts both streams
+# (lib/report.sh), so a verdicts-only tally makes the JSON say `ask: 0` while the
+# report under it says "2 decision(s) needed" and `ask[]` lists two paths. Three
+# answers to one question is worse than any of them being wrong.
+#
+# The de-duplication key is verb+path, matching report.sh exactly: the hop and
+# classify legitimately reach the same verdict about the same path, and counting
+# that twice inflates the number the operator judges the risk by. Verbs the JSON
+# object has no slot for (move, unregister, report) are simply not tallied here;
+# they are in the footer, which is the fuller instrument.
+_counts_json() {
+  cat "$@" 2>/dev/null | awk -F'\t' '
+    $2=="" || !seen[$1 FS $2]++ { c[$1]++ }
+    END {
+      printf "{\"noop\":%d,\"replace\":%d,\"keep\":%d,\"ask\":%d,\"create\":%d,\"restore\":%d,\"delete\":%d}",
+        c["noop"]+0,c["replace"]+0,c["keep"]+0,c["ask"]+0,c["create"]+0,c["restore"]+0,c["delete"]+0
+    }'
+}
+
 # run_plan — detect, verify, enumerate the hop chain in RECORD mode, classify,
 # report. Never writes: hop_ops_init/run_chain run with HOP_RECORD=1, and
 # classify itself only ever emits verdicts on stdout (see lib/merge.sh).
+#
+# PLAN PREDICTS THE UNRESOLVED SPLIT. --take-base/--take-mine are rejected up in
+# validate_args, so nothing here applies a resolution and every ask this reports
+# is still open. `--mode update --dry-run` is the run that predicts the RESOLVED
+# split.
 run_plan() {
   local target hint src score layout
   target="$(jq -r '.version // "unknown"' "$PLUGIN_JSON")"
@@ -755,13 +814,13 @@ run_plan() {
   # CHAIN_RAN is SPACE-separated (see lib/chain.sh), not newline-separated.
   local chain_json ask_json
   chain_json="$(printf '%s' "$CHAIN_RAN" | jq -R -s 'split(" ")|map(select(length>0))')"
-  ask_json="$(awk -F'\t' '$1=="ask"{print $2}' "$verdicts" \
+  # The journal first, the verdicts second — the order render_report merges them
+  # in, so a path both halves ask about keeps the hop's position in the list.
+  ask_json="$(_ask_paths "$HOP_JOURNAL" "$verdicts" \
     | jq -R -s 'split("\n")|map(select(length>0))')"
 
   local counts_json
-  counts_json="$(awk -F'\t' '{c[$1]++} END{
-        printf "{\"noop\":%d,\"replace\":%d,\"keep\":%d,\"ask\":%d,\"create\":%d,\"restore\":%d,\"delete\":%d}",
-        c["noop"]+0,c["replace"]+0,c["keep"]+0,c["ask"]+0,c["create"]+0,c["restore"]+0,c["delete"]+0}' "$verdicts")"
+  counts_json="$(_counts_json "$HOP_JOURNAL" "$verdicts")"
 
   jq -n \
     --arg src "$src" --arg tgt "$target" --arg sc "$score" --arg ly "$layout" \
@@ -792,8 +851,21 @@ run_plan() {
 #
 # Get 1 and 4 the wrong way round and either nothing matches or an operator's
 # edit is silently overwritten.
+#
+# RESOLUTIONS ARE APPLIED BEFORE THE HOPS, and this ordering is stated here —
+# in run_materialize only — because it is false of run_plan, which rejects
+# --take-* outright rather than applying it. _apply_resolutions rewrites the
+# VERDICT FILE and nothing else: TAKE_BASE and TAKE_MINE are left intact, so a
+# hop sourced afterwards reads the operator's answers itself and decides its own
+# operations from them (--take-base = retire, --take-mine = keep, unresolved =
+# keep, matching the classify half's default exactly). A hop doing so must use
+# the `set -u` guard ${TAKE_BASE[@]+"${TAKE_BASE[@]}"}: both arrays are
+# legitimately empty on most runs, and a bare "${ARR[@]}" aborts bash 3.2
+# mid-chain — after an earlier hop has moved the tree and before write_lock.
 run_materialize() {
-  local target src layout verdicts
+  # `asked` stays empty in init mode: there is no source manifest, so classify
+  # emits no ask row and there is nothing to resolve against.
+  local target src layout verdicts asked=""
   target="$(jq -r '.version // "unknown"' "$PLUGIN_JSON")"
 
   local keepset src_map tgt_map src_manifest
@@ -845,6 +917,13 @@ run_materialize() {
     verdicts="$(mktemp)"
     classify "$src_manifest" "$PROJECT_ROOT" "$PLUGIN_ROOT/base" \
              "$src_map" "$tgt_map" > "$verdicts"
+    # Snapshot the classify half of the ask channel BEFORE resolving it.
+    # _apply_resolutions rewrites every ask row it reads (an unresolved one
+    # defaults to keep), so this is the last moment at which "which paths did we
+    # actually ask about" is answerable from the verdict file — and the
+    # unmatched-resolution warning below has to know.
+    asked="$(mktemp)"
+    _ask_paths "$verdicts" > "$asked"
     _apply_resolutions "$verdicts"
     keepset_of "$verdicts" "$PROJECT_ROOT" > "$keepset"
 
@@ -870,8 +949,12 @@ run_materialize() {
       log "  we had to move or remove is the usual one) and run the update again:"
       log "  every hop operation is re-runnable, and the ones that succeeded are"
       log "  no-ops the second time."
+      rm -f "$asked"
       exit 2
     }
+    # Only now are BOTH halves of the ask channel known: classify's (snapshotted
+    # above) and the hops' (journalled as they ran).
+    _warn_unmatched_resolutions "$asked" "$HOP_JOURNAL"
   fi
 
   apply_base "$keepset" "$src_manifest" "$PROJECT_ROOT" \
@@ -895,6 +978,19 @@ run_materialize() {
   if [ "${#CREATED[@]}" -gt 0 ]; then created_json="$(arr_to_json "${CREATED[@]}")"; else created_json="[]"; fi
   if [ "${#WARNINGS[@]}" -gt 0 ]; then warnings_json="$(arr_to_json "${WARNINGS[@]}")"; else warnings_json="[]"; fi
 
+  # EVERY QUESTION STILL OPEN AFTER THIS RUN, machine-readable. Read from the two
+  # files exactly as render_report is about to read them, so this array, the
+  # report's ASK lines and its footer count are one fact stated three ways rather
+  # than three chances to disagree. The classify half is empty by construction
+  # here — _apply_resolutions resolved it, unresolved rows to `keep` — so what
+  # remains is what a hop asked and no flag answered. `--mode update --dry-run` is
+  # therefore the only run that shows an operator the resolved split before it
+  # happens, and a --take-* path that answered nothing is visible as the ask that
+  # is still standing (the warning above names it directly).
+  local ask_json
+  ask_json="$(_ask_paths "$HOP_JOURNAL" "$verdicts" \
+    | jq -R -s 'split("\n")|map(select(length>0))')"
+
   local dry_bool="false"
   [ "$DRY_RUN" = 1 ] && dry_bool="true"
 
@@ -905,14 +1001,17 @@ run_materialize() {
     --arg mode "$MODE" --arg src "$src" --arg tgt "$target" \
     --argjson created "$created_json" \
     --argjson warnings "$warnings_json" \
+    --argjson ask "$ask_json" \
     --argjson existing_kb "$existing_kb_bool" \
     --arg settings "$SETTINGS_STATUS" --arg lock "$LOCK_STATUS" \
     --argjson dry_run "$dry_bool" \
     '{mode:$mode, source_version:$src, version:$tgt, created:$created,
-      warnings:$warnings, existing_kb:$existing_kb, settings:$settings, lock:$lock}
+      warnings:$warnings, ask:$ask, existing_kb:$existing_kb,
+      settings:$settings, lock:$lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
   rm -f "$verdicts" "$HOP_JOURNAL" "$keepset"
+  [ -n "$asked" ] && rm -f "$asked"
 
   log "INSPIRE · materialize ($MODE) done."
 }
@@ -948,6 +1047,55 @@ _apply_resolutions() {
     printf '%s\t%s\t%s\n' "$verdict" "$vpath" "$detail" >> "$tmp"
   done < "$vf"
   mv "$tmp" "$vf"
+}
+
+# _warn_unmatched_resolutions <asked-paths-file> <hop journal>
+#
+# THE ONLY SIGNAL A MISSPELLED RESOLUTION EVER GETS. Both halves of the merge
+# fail SILENTLY and in the safe-looking direction when a --take-* path matches
+# nothing: the classify half leaves the ask unresolved and keeps the operator's
+# file, a hop leaves its file in place. Nothing errors, the run exits 0, and the
+# operator reads "keep" as their answer being honoured when it was never seen —
+# so a typo, or a path handed back in the wrong space (a hop journals in the
+# POST-hop space; see hop_ask), is indistinguishable from a deliberate keep.
+#
+# The two halves are matched DIFFERENTLY, and the asymmetry is the contract:
+#   · classify side — the pre-resolution ask snapshot. Ask rows only: naming a
+#     verdict path that was never in question changes nothing, and saying so is
+#     the same service.
+#   · journal side — EVERY journalled path, whatever the verb. A hop that
+#     HONOURS a resolution journals the resulting operation (`delete` for
+#     --take-base, `keep` for --take-mine), not the `ask` it would have raised —
+#     so matching journal ask rows only would print "nothing was changed" about
+#     the very file the hop just retired on the operator's word. This is a
+#     contract on hops, pinned here for 0.7.0's and every later one: a hop that
+#     consumes a --take-* path MUST journal that path, whichever verb applies.
+#
+# Carried on BOTH channels: WARNINGS[] — the one array update/SKILL.md Step 4
+# instructs the agent to relay verbatim, and the only channel that survives into
+# the JSON — and log, so a human watching stderr sees it in place. A warning
+# only one reader can see is a coin-flip, and this is the sole signal a
+# misspelled resolution ever gets.
+_warn_unmatched_resolutions() {
+  # Flagless runs are the overwhelming majority; no temp files for a zero-pass loop.
+  [ "${#TAKE_BASE[@]}" -gt 0 ] || [ "${#TAKE_MINE[@]}" -gt 0 ] || return 0
+  local asked="$1" journal="$2" p all warned
+  all="$(mktemp)"; warned="$(mktemp)"
+  cat "$asked" 2>/dev/null > "$all"
+  awk -F'\t' '$2!="" && !seen[$2]++ {print $2}' "$journal" 2>/dev/null >> "$all"
+
+  for p in ${TAKE_BASE[@]+"${TAKE_BASE[@]}"} ${TAKE_MINE[@]+"${TAKE_MINE[@]}"}; do
+    grep -qxF -- "$p" "$all" 2>/dev/null && continue
+    # A file, not a shell string, so a path containing spaces is still one key.
+    grep -qxF -- "$p" "$warned" 2>/dev/null && continue
+    printf '%s\n' "$p" >> "$warned"
+    WARNINGS+=("resolution path '$p' matched nothing — nothing was resolved by it, and nothing was changed because of it; check it against the plan's ask[]")
+    log "INSPIRE: '$p' — resolution path matched nothing. Nothing was resolved by"
+    log "  it, and nothing was changed because of it. Check the path against the"
+    log "  plan's ask[] — it is reported exactly as it must be handed back."
+  done
+  rm -f "$all" "$warned"
+  return 0
 }
 
 # ---------------------------------------------------------------------------

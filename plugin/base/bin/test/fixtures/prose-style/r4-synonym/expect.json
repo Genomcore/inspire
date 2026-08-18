@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R4 glossary synonym: 'organization' in '## Purpose' .* the glossary's approved term is 'tenant'"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}
