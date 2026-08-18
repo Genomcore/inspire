@@ -56,8 +56,11 @@ files under `inspire_kb/03_features/{module}/`.
   screen's `**Features:**` line references features that exist in `03_features`;
   the screen spec `_index.md` coverage table aligns with the actual screens.
 - **Features ↔ Prototype:** features meant to appear in the horizontal prototype
-  are reflected at `/prototype`, and what building them taught has landed in the
-  specs / screens / ADRs (the horizontal keeps no learnings file).
+  are reflected at the prototype root (`/prototype` by default — resolve
+  `prototype_root` per
+  [`_references/product-roots.md`](../../_references/product-roots.md), and treat
+  `none` as "no prototype to check"), and what building them taught has landed in
+  the specs / screens / ADRs (the horizontal keeps no learnings file).
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
   realizing action descriptor in `inspire_kb/04_domain/{module}/` (flag gaps as
   `important`); every action's `## Purpose` back-sources to a feature via

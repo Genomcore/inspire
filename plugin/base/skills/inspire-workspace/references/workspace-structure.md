@@ -34,6 +34,10 @@ Validate the vault structure at the top level (not module-scoped).
 
 ### Output
 
+`{severity}` is the same vocabulary the review uses — `critical` · `important` ·
+`minor`, and `verify` when a check is inconclusive — per the `### Review rules` in
+[`../SKILL.md`](../SKILL.md).
+
 ```markdown
 # Vault Structure | {date}
 

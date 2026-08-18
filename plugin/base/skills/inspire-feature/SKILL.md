@@ -1,6 +1,6 @@
 ---
 name: inspire-feature
-description: "Lifecycle of a feature / use case: create / review / update / delete a use-case file in a module and propagate across the KB layers. Use when adding, auditing, or removing features."
+description: "Lifecycle of a feature / use case: create / review / update / scan / delete a use-case file in a module and propagate across the KB layers. Use when adding, auditing, or removing features."
 ---
 
 # /inspire_feature — Feature-level Operations
@@ -10,8 +10,10 @@ description: "Lifecycle of a feature / use case: create / review / update / dele
 A **feature** is a use case, captured as a file
 `inspire_kb/03_features/{module}/{use-case}.md`, linked from that module's hub
 `02_modules/{module}.md`. This skill owns feature-scoped operations and their propagation
-across the KB layers: screens (`05_screens`), prototype (`/prototype`),
-specs (`04_domain`), and ADRs (`01_adr`).
+across the KB layers: screens (`05_screens`), prototype (`/prototype` by default —
+resolve `prototype_root` per
+[`_references/product-roots.md`](../_references/product-roots.md)), specs
+(`04_domain`), and ADRs (`01_adr`).
 
 ## Invocation
 
@@ -83,16 +85,13 @@ acceptance-criteria id contract are documented there.
    may have no UI.
 7. **Drift is informational.** `## Current prototype` drift items don't block
    reviews unless they contradict a current ADR (one not superseded or rejected).
-8. **Batch synthesis.** In batch review, identify patterns and produce a
-   prioritized correction plan grouped by fix skill.
-9. **Consult the task tracker** (`/inspire_task list`) for tracked drift; don't
+8. **Consult the task tracker** (`/inspire_task list`) for tracked drift; don't
    re-surface it as new.
-10. **Acceptance criteria pass the quality gate before they land.** `create` and
-    `update` run the gate in
-    [`references/feature-ac-gate.md`](references/feature-ac-gate.md); criteria
-    that can't be made testable signal a spec/design gap to resolve (here or via
-    `/inspire_domain`), not something to write as-is.
-11. **Stamp every write.** After `create`, `update`, or `delete` writes the
+9. **Acceptance criteria pass the quality gate before they land.** `create` and
+   `update` run it inline — what the gate checks, and what a criterion that cannot
+   be made testable means, are
+   [`references/feature-ac-gate.md`](references/feature-ac-gate.md)'s.
+10. **Stamp every write.** After `create`, `update`, or `delete` writes the
     use-case file, run `.inspire/bin/trust.sh stamp <file> --skill feature`
     ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
     that carries `endorsed:` is disclosed to the operator first

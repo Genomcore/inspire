@@ -13,7 +13,9 @@ overview, relationships to other modules, and links to everything the module own
 across the layers. Its use cases live in `inspire_kb/03_features/{module}/` (**one
 file per use case**). This skill owns the hub and its propagation across the KB
 layers it links: features (`03_features`), screen specs (`05_screens`), the prototype
-(`/prototype`), specs (`04_domain`), spikes (`06_spikes`), and ADRs (`01_adr`). The
+(`/prototype` by default — resolve `prototype_root` per
+[`_references/product-roots.md`](../_references/product-roots.md)), specs
+(`04_domain`), spikes (`06_spikes`), and ADRs (`01_adr`). The
 per-layer subfolders stay **in sync** with the hub — that is this skill's core
 invariant.
 
@@ -22,7 +24,8 @@ invariant.
 - `/inspire_module review {module}` — full consistency review before PR
 - `/inspire_module create {module}` — scaffold a new module across the layers
 - `/inspire_module update {module}` — add/remove use cases, restructure, propagate
-- `/inspire_module scan {module}` — SDD-layer entry point (surface + author specs)
+- `/inspire_module scan {module}` — SDD-layer entry point: surface the features that
+  lack realizing specs, then chain authoring into `/inspire_domain` (read-only itself)
 - `/inspire_module delete {module}` — remove the module and clean every cross-reference
 
 ## Subcommands in `references/`
@@ -60,27 +63,25 @@ below is an index, not the flow.
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review` is read-only.** It reports, suggests fixes, and recommends other
-   skills; it never edits files.
-2. **`create` requires user input** for module name, ID prefix, and description.
-3. **`update` and `delete` require an explicit plan** presented to the user before
-   any edit.
-4. **Hub ↔ layers stay in sync.** The `02_modules/{module}.md` hub and its per-layer
+   skills; it never edits files. `create` / `update` / `delete` present a plan and
+   write only on the operator's approval.
+2. **Hub ↔ layers stay in sync.** The `02_modules/{module}.md` hub and its per-layer
    subfolders (`03_features`, `05_screens`, `04_domain`) must agree — a module
    operation that updates one but leaves the others inconsistent is a bug. This is
    the skill's core invariant; `review` enforces it.
-5. **Pending drift is acceptable.** Drift items in `## Current prototype` sections
+3. **Pending drift is acceptable.** Drift items in `## Current prototype` sections
    are informational; don't block PRs unless they contradict a current ADR (one not
    superseded or rejected).
-6. **Consult the task tracker** at the start of each invocation
+4. **Consult the task tracker** at the start of each invocation
    (`/inspire_task list`). Known items in
    `inspire_kb/99_tracker/tickets/` are surfaced as `(tracked: TASK-{id})`.
-7. **Actionable findings.** Every issue names the skill to invoke for the fix:
+5. **Actionable findings.** Every issue names the skill to invoke for the fix:
    - screen spec drift → `/inspire_screens`
    - Prototype drift → `/inspire_prototype`
    - Feature-level work → `/inspire_feature`
    - ADR misalignment → `/inspire_adr`
    - Global / vault concerns → `/inspire_workspace`
-8. **Stamp every write.** After `create`, `update`, or `delete` writes the hub,
+6. **Stamp every write.** After `create`, `update`, or `delete` writes the hub,
    run `.inspire/bin/trust.sh stamp <file> --skill module`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting a hub
    that carries `endorsed:` is disclosed to the operator first

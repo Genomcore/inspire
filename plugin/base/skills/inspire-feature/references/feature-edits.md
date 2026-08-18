@@ -55,7 +55,10 @@ Remove a feature and clean up all references.
 3. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
    screen's only feature was this one, flag it for removal (that's `/inspire_screens`'s
    job) and update the screen spec `_index.md` coverage table.
-4. **Prototype:** remove references in `/prototype`; note any
+4. **Prototype:** remove references in the prototype root (`/prototype` by default —
+   resolve `prototype_root` per
+   [`_references/product-roots.md`](../../_references/product-roots.md); nothing to do
+   when it is `none`); note any
    `inspire_kb/06_spikes/` entry that referenced this feature.
 5. **ADRs:** grep `inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
    may need an ADR update.

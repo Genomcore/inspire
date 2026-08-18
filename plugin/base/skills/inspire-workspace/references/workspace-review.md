@@ -58,8 +58,11 @@
 ### Phase 5 — Prototype component adoption
 
 - Enumerate the shared components catalogued in `inspire_kb/05_screens/components/`.
-- For each, count adoption in the horizontal prototype (`/prototype`): pages using
-  the canonical component vs pages still inlining an equivalent.
+- For each, count adoption in the horizontal prototype at its configured root
+  (`/prototype` by default — resolve `prototype_root` per
+  [`_references/product-roots.md`](../../_references/product-roots.md); `none` means
+  this phase has nothing to count and reports so): pages using the canonical
+  component vs pages still inlining an equivalent.
 - **From two UI surfaces on, count per shell.** The prototype holds one shell per UI
   surface, so report one line per shell rather than a single suite-wide ratio: a
   component adopted throughout one shell and absent from another is a different
@@ -87,8 +90,8 @@
   [`/inspire_bootstrap design-system`](../../inspire-bootstrap/SKILL.md), which allows
   them deliberately and expects them to stay rare; a count that keeps climbing is the
   early shape of a design system splitting in place, which is why it is worth
-  counting. **Informational only** — it carries no severity, is reported even when
-  nothing is wrong, and never blocks the gate.
+  counting. It is a **signal, not a finding**, and is treated as every signal is —
+  see the signals rule in [`../SKILL.md`](../SKILL.md) § Review rules.
 
 ### Signals
 

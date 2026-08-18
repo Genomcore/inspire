@@ -1,7 +1,7 @@
 # Screens — validate
 > Part of [inspire-screens](../SKILL.md). Read when the entry's index routes here, together with [`screen-checks.md`](screen-checks.md).
 
-### Pattern / component drift
+## Pattern / component drift
 
 - **Pattern drift:** the screen claims pattern X but its deviations would
   fundamentally change it → update the pattern's "Variants" or mark the screen
@@ -14,14 +14,17 @@ operator-owned — the skill no longer reads or maintains it. An entry missing i
 `**Purpose:**` line (or, for components, its `**State:**` line) draws a
 suggest-on-next-touch note; never machine-edit it in.
 
-### Live prototype browse — reverse-drift detection
+## Live prototype browse — reverse-drift detection
 
 Features often land in the prototype before the screen spec catches up. `validate` and
 `audit` should **run the prototype** when possible to surface this **reverse
 drift** (prototype ahead of spec).
 
-1. **Run the prototype** (use the `run` / `verify` skills to launch `/prototype`).
-   If it can't be launched, skip this section and note it — don't block the audit.
+1. **Run the prototype** (use the `run` / `verify` skills to launch it at the
+   project's prototype root — `/prototype` by default; resolve `prototype_root` per
+   [`_references/product-roots.md`](../../_references/product-roots.md), and treat
+   `none` as nothing to browse). If it can't be launched, skip this section and note
+   it — don't block the audit.
    With two or more UI surfaces the prototype is one shell per surface behind a
    suite landing: start the browse at that landing and walk the shell owning the
    tree being audited, every shell in turn when the audit spans the suite.
@@ -50,7 +53,7 @@ drift** (prototype ahead of spec).
 Preview snapshots are point-in-time — re-run navigation after every prototype
 change.
 
-### Cross-screen coherence
+## Cross-screen coherence
 
 - Instances of the same pattern in a module share their UX (control positions,
   search placement, tab ordering).

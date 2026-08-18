@@ -22,7 +22,10 @@ Reviews one feature across all layers. Runs inline (no agents).
    feature can be covered in one and uncovered in another; note "No UI expected"
    for backend/infrastructure features.
 3. **Prototype coverage.** For each covering screen, verify it is reflected in the
-   horizontal prototype at `/prototype` — under the shell of the surface whose tree
+   horizontal prototype at the project's prototype root (`/prototype` by default;
+   resolve `prototype_root` per
+   [`_references/product-roots.md`](../../_references/product-roots.md), and report
+   the layer `N/A` when it is `none`) — under the shell of the surface whose tree
    the screen sits in, a `shared/` screen under every shell that serves it, once
    the prototype runs one shell per UI surface — and note drift (pending component
    adoption, hardcoded data, ADR gaps). Insights land in the specs / screens /

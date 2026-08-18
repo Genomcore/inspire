@@ -127,7 +127,8 @@ Drift items pending: {N}
 
 1. **Be thorough.** This is the pre-merge gate.
 2. **Be specific.** Every finding includes a file path + line number.
-3. **Prioritize by impact.** Critical = broken refs, missing files, ADR
+3. **Prioritize by impact.** Critical = broken refs, missing files, a module review
+   that did not complete (`review-incomplete`, see **Execution mode**), ADR
    consequences not reflected within their maturity's reach. Important = stale
    content, missing coverage, legacy structure. Minor = naming, formatting.
 4. **No false positives.** If unsure, note as "verify".
@@ -136,11 +137,14 @@ Drift items pending: {N}
    `/inspire_feature review {id}`.
 7. **Pending drift is not failure.** Prototype drift and pending component adoption
    are `important`, not `critical`, unless they contradict an ADR within its
-   maturity's reach. The design-system variance count is weaker still: a signal, not
-   a finding — reported every run, never blocking.
-8. **Signals are measurements, not findings.** No fix routing beyond the owning
-   skill, severity never above important, they re-appear as long as true; never
-   file tickets from signals; never block the pre-PR gate on them.
+   maturity's reach.
+8. **Signals are measurements, not findings.** This is the single statement of how
+   every signal is treated — the trust report's groups and the design-system
+   variance count alike. They are reported every run, including when nothing is
+   wrong; they carry no severity of their own, and never above `important` where one
+   is shown; no fix routing beyond the owning skill; never file a ticket from one;
+   never block the pre-PR gate on one. They re-appear for as long as they stay true
+   ([trust-stamps](../_references/trust-stamps.md#report)).
 9. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
    are flagged `(tracked: TASK-{id})`. Use `/inspire_task list`.
 10. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
@@ -173,14 +177,10 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
 
 1. **`review` and `structure` are read-only.** They suggest and flag; they never
    edit files or invoke a fix-skill.
-2. **ADR propagation is judged, not authored.** Review checks that an ADR's
-   consequences cohere within its maturity's reach (design workspace at every
-   maturity; external pointers at higher ones) — authoring/advancing ADRs is
-   `/inspire_adr`.
-3. **Consult the task tracker.** Known items live in
+2. **Consult the task tracker.** Known items live in
    `inspire_kb/99_tracker/tickets/` (`/inspire_task list`); don't re-report them as
    new findings.
-4. **Git discipline is shared.** Branch/commit/PR conventions, merge-conflict
+3. **Git discipline is shared.** Branch/commit/PR conventions, merge-conflict
    auditing, and the git safety protocol live in
    [`_references/git-conventions.md`](../_references/git-conventions.md) (sensible
    defaults; the project's `CLAUDE.md` overrides). Follow it whenever the operator

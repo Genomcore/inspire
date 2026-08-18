@@ -123,7 +123,7 @@ index, not the flow.
 | Create a screen | [`references/screen-create.md`](references/screen-create.md) | `create {module}/{screen}` |
 | Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
 | Extract a pattern/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|component} {name}` |
-| Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) | duty after any create/validate/extract that changes UI |
+| Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) — it owns which edits trigger the ask | a duty, not an invocation |
 
 ## When validating an existing screen
 
@@ -178,44 +178,39 @@ When uncertain which layer a finding belongs to, ask the user.
 
 1. **Features are the source of truth for what exists.** Every screen traces to one
    or more features in `03_features`.
-2. **`design-system.md` is the source of truth for tokens.** No module redefines
-   colors, typography, density.
-3. **`patterns/` is the source of truth for screen structure.** Screens
-   instantiate; they don't redescribe.
-4. **`components/` is the source of truth for shared UI.** Screens reference; they
-   don't redefine.
-5. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
+2. **Each level owns its truth** — the *Source of truth for* column of the
+   § Architecture table above: `design-system.md` for tokens (colors, typography,
+   density, layout), `patterns/` for screen structure, `components/` for shared UI.
+   Screens instantiate and reference; they never redefine a token, nor redescribe a
+   pattern or a component.
+3. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
    a screen grows.
-6. **No ASCII layout diagrams in screen, pattern or component files, unless the
+4. **No ASCII layout diagrams in screen, pattern or component files, unless the
    screen is bespoke and its layout cannot be expressed textually.** This is the
    single statement of the rule for this layer; the create flow and the validate
    checks reference it, and
    [`_references/writing-style.md`](../_references/writing-style.md) points here
    rather than restating it.
-7. **No inline mock data** — reference the data source.
-8. **The writing contract holds** — R1–R6 of
-   [`_references/writing-style.md`](../_references/writing-style.md), R6 (present
-   state, never history) above all.
-9. **Route convention** — `/{module}/...` while the suite has at most one UI
+5. **Route convention** — `/{module}/...` while the suite has at most one UI
    surface; `{shell}/{module}/...` once it declares two or more, `{shell}` being
    that surface's roster `Shell` value (`/admin` → `/admin/billing/list`). Nested
    routes for detail/edit/new either way. The route mirrors the file's path:
    `{surface}/{module}/{screen}.md` ↔ `{shell}/{module}/{screen}`, so a route and a
    location can never disagree.
-10. **Validate before merge** — run `/inspire_module review` before any PR that
-    modifies screen spec files.
-11. **Respect current UX ADRs.** Screens must not contradict a UX decision in
-    `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
-    (Project-specific screen conventions live in `patterns/` + `design-system.md`,
-    not in this skill.)
-12. **Propagation check after spec edits.** Ask the user before ending the turn
-    whether to propagate visible UI changes to the prototype.
-13. **Stamp every write.** After `create`, `validate`, or `extract` writes a
-    screen or catalog file, run
-    `.inspire/bin/trust.sh stamp <file> --skill screens`
-    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
-    that carries `endorsed:` is disclosed to the operator first
-    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
+6. **Validate before merge** — run `/inspire_module review` before any PR that
+   modifies screen spec files.
+7. **Respect current UX ADRs.** Screens must not contradict a UX decision in
+   `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
+8. **Propagation check after spec edits.** Ask the operator before ending the turn
+   whether to propagate visible UI changes to the prototype — which edits trigger
+   the ask, and what each answer leads to, are
+   [`references/screen-propagation.md`](references/screen-propagation.md)'s.
+9. **Stamp every write.** After `create`, `validate`, or `extract` writes a
+   screen or catalog file, run
+   `.inspire/bin/trust.sh stamp <file> --skill screens`
+   ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
+   that carries `endorsed:` is disclosed to the operator first
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Skill invocations
 

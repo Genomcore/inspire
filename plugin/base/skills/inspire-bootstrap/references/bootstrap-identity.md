@@ -1,17 +1,18 @@
 # Bootstrap — project identity
 > Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here; `init` step 4's long form comes first, then the `readme` flow.
 
-4. **Refine the project's `CLAUDE.md`.** `/inspire:init` seeds a provisional stub
-   (project name, purpose and stack left as placeholders, clearly marked). Replace
-   those placeholders **in place** with the project's real name, a one- or
-   two-line purpose, and a short summary of the `stack.md` just confirmed — never
-   append a second copy of the orientation content below it. If no `CLAUDE.md`
-   exists (a brownfield adopter removed it, or `/inspire:init` was never run),
-   create one carrying the same INSPIRE-orientation content as the stub
-   `/inspire:init` seeds as the project's `CLAUDE.md`, then refine it the same
-   way. Leave the rest of the file (the INSPIRE orientation, KB layer list,
-   skills, validators, lock note) untouched — that part is generic and correct
-   as shipped.
+## `init` step 4 — refine the project's `CLAUDE.md`
+
+`/inspire:init` seeds a provisional stub (project name, purpose and stack left as
+placeholders, clearly marked). Replace those placeholders **in place** with the
+project's real name, a one- or two-line purpose, and a short summary of the
+`stack.md` just confirmed — never append a second copy of the orientation content
+below it. If no `CLAUDE.md` exists (a brownfield adopter removed it, or
+`/inspire:init` was never run), create one carrying the same INSPIRE-orientation
+content as the stub `/inspire:init` seeds as the project's `CLAUDE.md`, then refine
+it the same way. Leave the rest of the file (the INSPIRE orientation, KB layer
+list, skills, validators, lock note) untouched — that part is generic and correct
+as shipped.
 
 ## Subcommand: readme
 
@@ -49,9 +50,9 @@ project's `output_language` (default English).
    `{CLAUDE.md pointer}` is `" (see [`CLAUDE.md`](CLAUDE.md))"` when `CLAUDE.md`
    exists at the project root — the normal case, since `/inspire:init` seeds it
    and the `init` flow's CLAUDE.md step ([`../SKILL.md`](../SKILL.md) §
-   Subcommand: init, long form above) runs before `readme` and refines
-   it — otherwise the empty string, so the README never links a file that isn't
-   there.
+   Subcommand: init, long form in § `init` step 4 above) runs before `readme` and
+   refines it — otherwise the empty string, so the README never links a file that
+   isn't there.
 
    Drop any section whose input was skipped. If everything was skipped, write just
    the title heading plus the `## Development` note.

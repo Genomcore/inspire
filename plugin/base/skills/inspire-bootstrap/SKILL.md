@@ -26,7 +26,9 @@ This skill owns the **bootstrap layer** —
 
 These are the foundation every other layer reads: specs ([`04_domain`](../../../inspire_kb/04_domain)),
 screen specs ([`05_screens`](../../../inspire_kb/05_screens)), the prototype ([`/prototype`](../../../prototype))
-and production code ([`/source`](../../../source)) all build on what is declared here.
+and production code ([`/source`](../../../source)) all build on what is declared here —
+those last two named at their defaults, the operative roots being the
+`prototype_root` / `source_root` this skill records above.
 The template seeds all three with a sensible default (English + the OpenBIMS
 reference stack + theme); a new project reconfigures them here.
 
@@ -189,16 +191,14 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 3. **Load-bearing choices are ADRs.** Replacing a framework or the primary color is
    an architectural decision recorded in `01_adr` (update to add, supersede to
    replace), kept in sync with `stack.md` / `theme.md`.
-4. **Roles over values.** Downstream skills depend on token *roles* (primary,
-   accent, status keys) — keep them stable even when values change.
-5. **Consult the task tracker** (`/inspire_task list`) for tracked
+4. **Consult the task tracker** (`/inspire_task list`) for tracked
    bootstrap work.
-6. **`project.md`/`stack.md` are endorsed-only.** They are interview-generated,
+5. **`project.md`/`stack.md` are endorsed-only.** They are interview-generated,
    not skill-produced, so writes to them carry no `produced` stamp; on an
    explicit operator yes they may be endorsed via
    `.inspire/bin/trust.sh endorse <file>`
    ([trust-stamps](../_references/trust-stamps.md#scope)).
-7. **`design-system.md` is stamped.** After the `design-system` subcommand
+6. **`design-system.md` is stamped.** After the `design-system` subcommand
    writes it, run `.inspire/bin/trust.sh stamp <file> --skill bootstrap`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first

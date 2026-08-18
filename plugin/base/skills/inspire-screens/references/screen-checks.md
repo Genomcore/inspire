@@ -1,7 +1,7 @@
 # Screens — checks
 > Part of [inspire-screens](../SKILL.md). Read when the entry's index routes here.
 
-### Checks
+## Checks
 
 1. **Pattern exists.** The `**Pattern:**` link resolves.
 2. **Feature IDs exist.** All referenced features exist in the module's
@@ -17,9 +17,9 @@
 8. **The writing contract holds** — R1–R6 of
    [`_references/writing-style.md`](../../_references/writing-style.md), R6 (historical
    language) first among them.
-9. **Route follows convention** — the form the Route-convention rule in
-   [`inspire-screens/SKILL.md`](../SKILL.md) § Rules gives for the suite's UI
-   count, and it matches the screen's own path.
+9. **Route follows convention** — the route takes the form the Route-convention rule
+   in [`inspire-screens/SKILL.md`](../SKILL.md) § Rules gives for the suite's
+   UI-surface count, and it matches the screen's own path.
 10. **Live prototype check.** When the prototype can be run, navigate every route
     the screen describes and compare it against the spec — see the live prototype
     browse in [`screen-validate.md`](screen-validate.md).

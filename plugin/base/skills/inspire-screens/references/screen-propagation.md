@@ -3,7 +3,7 @@
 
 ## After modifying a screen spec — propagation check
 
-Whenever a `create` / `update` / `extract` changes a screen in a way
+Whenever a `create` / `validate` / `extract` changes a screen in a way
 that affects the UI (new pattern, new slot, renamed data source, added/removed
 section or tab), the skill MUST ask the user whether to propagate the change to the
 prototype before ending the turn.
