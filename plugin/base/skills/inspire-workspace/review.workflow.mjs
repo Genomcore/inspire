@@ -53,7 +53,7 @@ phase('Module reviews')
 log(`Fan-out: ${modules.length} module reviews (${modules.join(', ')})`)
 const moduleResults = await parallel(modules.map((m) => () =>
   agent(
-    `In the current repository (the project working directory), perform a consistency review of the "${m}" module by following the \`review\` subcommand procedure documented in \`.claude/skills/inspire-module/SKILL.md\` (steps: features structure, screen spec structure, quality checks, cross-layer coverage features↔screen spec↔prototypes↔specs, drift consolidation, overengineering detection). ${READ_ONLY}\n\n` +
+    `In the current repository (the project working directory), perform a consistency review of the "${m}" module by following the \`review\` subcommand procedure documented in \`.claude/skills/inspire-module/references/module-review.md\`. ${READ_ONLY}\n\n` +
     `Return: module="${m}", reviewed=true ONLY if you actually opened and inspected the module's features/screen spec/prototype/specs files (report files_read = how many you opened), the extracted feature_ids and entities (reused downstream), and findings[] (each with severity, description, file, line, fix_skill).`,
     { label: `review:${m}`, phase: 'Module reviews', schema: MODULE_RESULT },
   ),

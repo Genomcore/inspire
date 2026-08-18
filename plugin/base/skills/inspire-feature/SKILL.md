@@ -133,7 +133,7 @@ Reviews ALL features of a module in parallel.
 ## Subcommand: scan
 
 The feature-level entry point for SDD-layer work. Same three phases as
-[`/inspire_module scan`](../inspire-module/SKILL.md#subcommand-scan), scoped to one
+[`/inspire_module scan`](../inspire-module/references/module-scan.md), scoped to one
 feature or one module's features:
 
 1. **Environment setup** — confirm a clean worktree on the right branch, or offer
