@@ -95,6 +95,15 @@ skill/hook updates, and a batch "keep mine" must not wave a retirement through u
 either — the operator sees what they are declining, not just the safe outcome by accident.
 Itemize every retirement ask instead, one by one, below.
 
+**Two more kinds of `ask` are excluded from both shortcuts, for that same reason.** A
+**collision** ask — a path the target version newly ships where the operator already has
+a file — carries the file Rule 2 protects, so a batch "keep base" must not replace it as a
+side effect of accepting ordinary skill updates. A **split-case** ask — a `SKILL.md` with
+`create` rows beside it under the same skill's `references/` — needs the two-copies and
+new-home disclosure below, which neither batch answer can give. Itemize both one by one
+too; the batch shortcuts are for asks whose two outcomes an operator can weigh from the
+path alone.
+
 For a content `ask` (anywhere outside `inspire_kb/`), ask per file: **mine** / **base** /
 **merge**.
 - `mine` / `base` resolve exactly like the batch choice, scoped to that file.
@@ -107,10 +116,11 @@ For a content `ask` (anywhere outside `inspire_kb/`), ask per file: **mine** / *
 
 **The split case — an `ask` on a `SKILL.md` with `create` rows under the same skill's
 `references/`.** Read that pairing off the grouped **stderr** report, which lists both
-kinds of row; update-mode stdout carries `ask` but no verdict tally, so it cannot show
-you the `create` side. The pairing means the monolith's content has a new home: the
-operator's divergent edit may belong in one of the new reference files rather than in
-`SKILL.md`. Say so when you ask, and name the shape of keeping mine — a **kept monolith
+kinds of row: the plan JSON's `verdicts` is a tally, not a path list, and update-mode
+stdout carries only `ask`, so neither one tells you which paths are the `create` side.
+The pairing means the monolith's content has a new home: the operator's divergent edit
+may belong in one of the new reference files rather than in `SKILL.md`. Say so when you
+ask, and name the shape of keeping mine — a **kept monolith
 with the new references beside it**, two live copies of the same guidance — so the choice
 is made with that in view.
 
