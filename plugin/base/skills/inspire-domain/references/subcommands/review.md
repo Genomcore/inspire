@@ -56,4 +56,4 @@ stands, and do not present it as a clean bill of health: the contract in
 [`writing-style.md`](../../../_references/writing-style.md) still binds as
 authoring judgment.
 
-The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../bin/README.md) for the script catalog).
+The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../../.inspire/bin/README.md) for the script catalog).

@@ -91,10 +91,11 @@ importance: Low
 standard ticket infrastructure — no new tooling; the operator decides when an
 observation deserves a ticket, and skills surface candidates conversationally.
 
-A ticket captures **local, actionable** friction; the ticket-vs-lesson routing and
-the graduation rule live in [`inspire-lesson/SKILL.md`](../inspire-lesson/SKILL.md)
-§ Relationship to the tracker, and the offer protocol in
-[`_references/lesson-capture.md`](../_references/lesson-capture.md).
+A ticket captures **local, actionable** friction. The ticket-vs-lesson routing and the
+offer protocol live in
+[`_references/lesson-capture.md`](../_references/lesson-capture.md); the rule for a
+confirmed ticket **graduating** into a lesson lives in
+[`inspire-lesson/SKILL.md`](../inspire-lesson/SKILL.md) § Relationship to the tracker.
 
 ## Rules
 

@@ -140,23 +140,20 @@ you believe is wrong — surface the disagreement.
 ## Stack profiles (on-demand)
 
 This skill is stack-agnostic; a **stack profile** layers a framework's concrete
-conventions onto its generic dimensions. At the start of any subcommand, resolve
-the active profile set per [`profiles/README.md`](profiles/README.md) § Resolution.
+conventions onto its generic dimensions. At the start of any subcommand, resolve the
+active profile set per [`profiles/README.md`](profiles/README.md) § Resolution. That
+contract is also where the load rules live — which files a resolved set reads from
+[`profiles/`](profiles/), that profiles compose, and that a declared framework with no
+profile file runs purely generic instead of blocking — so read it there rather than
+from here. When the suite has a surface roster, the target surface's `Profiles` field
+is the selector instead; see *Surfaces and the monorepo* above.
 
-Read **only** the resolved profiles' files ([`profiles/{id}.md`](profiles/)), and
-only now — a framework the project doesn't use never loads. Each profile section
-maps onto the generic flow: `## Layering` → review Phase 1 / implementation shape;
-`## Test conventions` → `tdd` + review Phase 4; `## Forbidden patterns` → review +
-authoring rules; `## Review focus` → extra review dimensions; `## Build & verify` →
-the real build/test commands. Profiles are **composable** (a React + NestJS repo
-loads both). When the suite has a surface roster, that resolution is the
-fallback: the target surface's `Profiles` field selects the set instead — see
-*Surfaces and the monorepo*.
-
-If a declared framework has **no** profile file, run purely generic and say so —
-offer `/inspire_bootstrap` to scaffold one. Missing profiles never block. Profiles
-are data this skill reads; the KB stays the source of truth and the template stays
-stack-agnostic. Contract: [`profiles/README.md`](profiles/README.md).
+What this skill adds is where a profile's sections land in its own flow:
+`## Layering` → review Phase 1 / implementation shape; `## Test conventions` → `tdd`
++ review Phase 4; `## Forbidden patterns` → review + authoring rules;
+`## Review focus` → extra review dimensions; `## Build & verify` → the real
+build/test commands. When a framework the project declared has no profile, say so in
+the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
 
 ## Rules
 

@@ -16,10 +16,13 @@ lessons** this project holds.
 
 Two audiences read the catalog:
 
-1. **This project, across releases** — on update, your lessons are re-applied to the
-   new base so the agents keep behaving as you taught them (the materialization /
-   update model — roadmap, v1; see *Materialization & updates* and
-   [`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../docs/adr/adr-runtime-lifecycle-and-lessons.md)).
+1. **This project, across releases** — the catalog is what keeps the agents behaving
+   as you taught them once a release moves the base underneath them. The flow that
+   writes lessons into a skill, and re-derives them against a new base, is **not
+   built**: its design is D5 and D6 of
+   [`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md),
+   and building it is future work the operator tracks. Capturing still pays now —
+   a lesson written today is one that flow will find.
 2. **INSPIRE core, via the observer** — an external pull-from-above reads the catalog
    across many forks and distills the patterns worth folding into the next release.
    The fork only ever **writes** lessons and is unaware of any central system.
@@ -53,8 +56,9 @@ or `purge`.**
   lessons form. Capture asks only *"is this worth keeping?"*
 - **Materialized, not consulted.** The intent is that a lesson is written *into* the
   skill so the taught behavior **becomes** the behavior — the agent acts on it, it does
-  not check a footnote and apply it if it happens to notice. Lessons are the source of
-  truth; the skill file is the result (Terraform's desired-state model — see below).
+  not check a footnote and apply it if it happens to notice. The model is Terraform's
+  **desired state**: the lessons are the source of truth a run declares, and the skill
+  file is the result it reconciles to them.
 
 ## When to capture a lesson
 
@@ -126,22 +130,6 @@ deleted files remain recoverable from git history. Purge only ever removes whole
 it never edits one, so the write-once contract holds. (Until the update flow exists,
 `archive/` is empty and purge is a no-op — archiving is populated by an update.)
 
-## Materialization & updates (roadmap · v1)
-
-Today this skill **captures** lessons. Applying them — the half that makes a lesson
-*materialized, not consulted* — is the v1 update flow, recorded in
-[`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../docs/adr/adr-runtime-lifecycle-and-lessons.md):
-
-- **`apply`** reconciles a skill to `base + lessons` (Terraform's desired-state). A
-  hand edit to a skill you did **not** capture as a lesson is **drift** — overwritten on
-  the next apply. To persist a change, write the lesson.
-- **Update = rebuild, not merge.** On a new release each lesson is classified against
-  the new base — **absorbed** (→ `archive/`, the base learned it) · **untouched**
-  (kept, re-applied) · **partial** (superseded; a new lesson keeps the residual) ·
-  **contradicted** (you decide; local wins by default). The skill is rebuilt as *new
-  base + surviving lessons*, with a plan + drift-check gate. The teaching debt shrinks
-  every release.
-
 ## Rules
 
 > **Output language — the one exception.** Lessons are authored in **English**,
@@ -162,23 +150,26 @@ Today this skill **captures** lessons. Applying them — the half that makes a l
 2. **One file per lesson**, named `YYYYMMDD_<slug>.md`; `id` = the stem.
 3. **One line, atomic.** The body is a single imperative (+ optional `Not:` / example);
    split anything compound into separate lessons.
-4. **Relevance is local.** Capture what matters here; never pre-judge generalizability
-   — that is the observer's call.
-5. **`inspire_version` / `template_sha` are frozen at capture** — the whole point is
+4. **`inspire_version` / `template_sha` are frozen at capture** — the whole point is
    knowing which release a lesson was based on.
-6. **No `status`, no `updated`.** Processing state lives centrally, keyed by `id` and
+5. **No `status`, no `updated`.** Processing state lives centrally, keyed by `id` and
    the date prefix — not inside the fork.
-7. **A lesson is about a skill, not the product.** Product work → `inspire-task`. Spike
+6. **A lesson is about a skill, not the product.** Product work → `inspire-task`. Spike
    / prototype **learnings** are a different thing (product insight) — not lessons.
-8. **Concurrent captures are safe** — distinct filenames, no locking, no shared mutation.
+7. **Concurrent captures are safe** — distinct filenames, no locking, no shared mutation.
 
 ## Relationship to the tracker (`inspire-task`)
 
 `99_tracker` skill-feedback tickets and `98_lessons` nodes are two records for two
-audiences: a ticket tracks **local, actionable** friction for this project's team; a
-lesson carries a **durable, version-stamped** instruction for the skill (and, via the
-observer, for INSPIRE core). A confirmed friction ticket graduates into a lesson — the
-ticket tracks the local fix, the lesson links back with `[[TASK-…]]`.
+audiences, and which signal goes where is the routing stated once in
+[`_references/lesson-capture.md`](../_references/lesson-capture.md) § Ticket vs. lesson
+— applied above under *When to capture a lesson*.
+
+What this section owns is the **graduation**. A friction ticket the team has confirmed,
+and that should durably change how a skill behaves, becomes a lesson: the ticket keeps
+tracking the local fix, while the new lesson carries the instruction and links back
+with `[[TASK-…]]`. Both records stay: the ticket is the local work, and the lesson is
+what the skill learns from it — and, via the observer, what INSPIRE core may learn.
 
 ## Related skills
 

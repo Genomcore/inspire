@@ -126,8 +126,8 @@ An existing codebase joins the suite as a surface.
    proposal, not a fact. It becomes a greenfield interview (steps 1–3) with the
    fields pre-filled and confirmed one by one.
 3. Everything else the scan produced — modules, screens, stack findings — lands
-   through extract's own consolidation into the **one** domain. A joining codebase
-   brings a surface, never a second module registry.
+   through extract's own consolidation, under the one-domain rule (Rule 6): a
+   joining codebase brings a **surface**, and nothing else about the suite's shape.
 4. **Propose the ADR** (`surfaces: all`).
 
 ### The promote ceremony — the first `add`
@@ -204,11 +204,11 @@ Checks, in order:
 5. **The screens tree is in the shape the roster's UI count implies** — derive it
    from [`_references/surface-scope.md`](../_references/surface-scope.md), never
    from what the tree used to be. Two instances to name: a flat
-   `05_screens/{module}/` directory under 2+ UI surfaces, whether it sits beside
-   surface trees or the whole tree is still flat (a split that never happened, or
-   never finished); and a surface-first tree standing under a single UI surface,
-   typically left by a retire. Either way, offer the corrective sweep — the
-   operator classifying each entry — and do nothing until they accept.
+   `05_screens/{module}/` directory under 2+ UI surfaces — a **pre-split leftover**,
+   whether it sits beside surface trees or the whole tree is still flat (a split that
+   never happened, or never finished); and a surface-first tree standing under a
+   single UI surface, typically left by a retire. Either way, offer the corrective
+   sweep — the operator classifying each entry — and do nothing until they accept.
 6. **Every `surfaces:` value KB-wide resolves** to a roster id or to `all`. An
    unknown id is an error; an absent field is not a finding.
 

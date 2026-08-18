@@ -4,7 +4,7 @@ A **categorical prompt catalogue** for the entity-document socratic interview. T
 
 These prompts are **not verbatim scripts**. The skill never reads them out as-is. Claude generates *specific* probes from these categorical templates during a real interview, weaving the operator's own language (entity id, field names, neighboring entities, feature anchors) into the question. The catalogue's role is to guarantee no section is skipped and every section gets at least one design-forcing pass.
 
-Section structure here mirrors the entity document format defined in [`../SKILL.md`](../SKILL.md) under *Entity document format*. The four operator-authored sections (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`) plus per-field H3 sub-sections are what the interview shapes; `## Touched by` is auto-populated by consolidation and is **not** interviewed.
+Section structure here mirrors the entity document format defined in [`format-entity.md`](format-entity.md). The four operator-authored sections (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`) plus per-field H3 sub-sections are what the interview shapes; `## Touched by` is auto-populated by consolidation and is **not** interviewed.
 
 The interview cadence is **one question at a time**. Entity docs are where the discussion-forcing discipline lives — particularly the field-addition probe — so the skill must be willing to pause an action-descriptor authoring flow to interview the entity doc before letting a new field row land. Never present a numbered decision tree.
 

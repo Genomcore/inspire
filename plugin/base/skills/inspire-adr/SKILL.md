@@ -23,8 +23,11 @@ propagated (the *propagation contract*):
 
 - `design` — design reasoning. Reach: the whole **design workspace** — features
   (`03_features`) + screens (`05_screens`) + the **horizontal prototype**
-  (`/prototype`, a *non-functional* interactive mock) + specs (`04_domain`).
-  Refined **in place** on new evidence.
+  (`/prototype` by default, a *non-functional* interactive mock — resolve
+  `prototype_root` per
+  [`_references/product-roots.md`](../_references/product-roots.md), where `none`
+  means this project has no horizontal prototype for a decision to reach) + specs
+  (`04_domain`). Refined **in place** on new evidence.
 - `prototyped` — additionally **validated in an external functional prototype**:
   real running code in a vertical spike repo has proven the architecture works
   (record it with a `**Prototype:**` pointer to that repo). The horizontal
@@ -151,33 +154,34 @@ via `create`).
 > [`_references/writing-style.md`](../_references/writing-style.md). `## Context`,
 > `## Decision`, `## Consequences` and `## Alternatives considered` are normative prose
 > (R1–R6); `**Modules affected:**` and any tabular section are structured (R3, R4, R6).
-> R6 carries section-scoped exemptions this skill relies on — see Rule 5 below.
+> R6 carries section-scoped exemptions this skill relies on — see the
+> *no historical language* rule below.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
 > change how this skill behaves, offer `/inspire_lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
-1. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
-   requires `promote`; `create` defaults to `design`.
-2. **Only `implemented` ADRs are immutable in content.** Supersede to change their
-   `Decision`; `design` / `prototyped` ADRs are refined in place with `update`.
-3. **Propagate to the maturity's reach.** Design-workspace coherence (features +
+1. **Maturity is explicit, and only `implemented` is immutable.** `create` defaults
+   to `design` and `promote` is the only way forward; a `design` / `prototyped` ADR
+   is refined in place with `update`, while changing an `implemented` ADR's
+   `Decision` requires `supersede`.
+2. **Propagate to the maturity's reach.** Design-workspace coherence (features +
    screen spec + horizontal prototype + specs) is required at every maturity;
    `prototyped` adds a pointer to an external functional prototype, `implemented` a
    codebase reference. Surface gaps within that reach.
-4. **Grep references on rename/supersede.** Always scan the vault when renaming an
+3. **Grep references on rename/supersede.** Always scan the vault when renaming an
    ADR or changing its ID.
-5. **No historical language, per the writing contract.** R6 of
+4. **No historical language, per the writing contract.** R6 of
    [`_references/writing-style.md`](../_references/writing-style.md): an ADR describes
    the decision context, never a migration narrative. This rule is **deliberately
    narrower than unconditional** — the contract exempts `### Breaking changes`
    content, `## Related ADRs`, the `**Status:**` line and a `Supersedes:` header,
    because this skill mandates those sections and a ban on their content would ban a
    required section.
-6. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
+5. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
-7. **Stamp every write.** After an ADR is written, run
+6. **Stamp every write.** After an ADR is written, run
    `.inspire/bin/trust.sh stamp <file> --skill adr`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
    that carries `endorsed:` is disclosed to the operator first

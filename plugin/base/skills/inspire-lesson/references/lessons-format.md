@@ -117,8 +117,9 @@ An update classifies each lesson against the new base. A lesson the base has **a
 new versions, but kept as durable provenance (and as confirmation, for the observer,
 that a generalization landed). Archiving is a **move, never an edit**. A **partially**
 absorbed lesson is superseded: the original moves to `archive/` and a new lesson carries
-only the residual. (Archiving is performed by the v1 update flow — see
-[`docs/adr/adr-runtime-lifecycle-and-lessons`](../../../../docs/adr/adr-runtime-lifecycle-and-lessons.md).)
+only the residual. (Archiving is performed by the update flow that does not exist yet —
+its design is D6 of
+[`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md).)
 
 ## Sweeping by date (org level)
 
