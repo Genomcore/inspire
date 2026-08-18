@@ -27,7 +27,7 @@ A single action may declare multiple `### [[module.entity|module::entity]]` sub-
 - One or more event log entities (`append` Effect, with metadata fields like `event_type`, `actor_id`, `at`)
 - Zero or more lookup entities (`read` Effect; PKs `read`, fields `read` for the data the action needs)
 
-The orchestrator example in `examples/orchestrator.md` shows the canonical multi-entity form.
+The orchestrator example in [`examples/orchestrator.md`](../examples/orchestrator.md) shows the canonical multi-entity form.
 
 ## Edge cases
 

@@ -62,8 +62,8 @@ generic coding-stage checks. After confirming the layers:
 1. **Maintain the `profiles:` frontmatter line** — the set of framework ids that
    have (or should have) a profile, derived from the chosen frontend/backend
    frameworks (React → `react`, NestJS → `nestjs`, …). It is `/inspire_code`'s
-   deterministic resolution key; without it, `/inspire_code` infers from the stack
-   sections.
+   deterministic resolution key — the resolution rules live in
+   [`profiles/README.md`](../../inspire-code/profiles/README.md) § Resolution.
 2. **Offer to scaffold missing profiles.** For any id in `profiles:` with no file at
    `.claude/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
    from the contract ([`profiles/README.md`](../../inspire-code/profiles/README.md)) so

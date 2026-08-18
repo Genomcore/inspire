@@ -141,13 +141,7 @@ you believe is wrong — surface the disagreement.
 
 This skill is stack-agnostic; a **stack profile** layers a framework's concrete
 conventions onto its generic dimensions. At the start of any subcommand, resolve
-the active profile set from
-[`00_bootstrap/stack.md`](../../../inspire_kb/00_bootstrap/stack.md):
-
-1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
-   use that set.
-2. **Inference fallback** — otherwise infer from the stack sections
-   (`## Frontend: React` → `react`; `## Backend: NestJS` → `nestjs`; …).
+the active profile set per [`profiles/README.md`](profiles/README.md) § Resolution.
 
 Read **only** the resolved profiles' files ([`profiles/{id}.md`](profiles/)), and
 only now — a framework the project doesn't use never loads. Each profile section
@@ -155,7 +149,7 @@ maps onto the generic flow: `## Layering` → review Phase 1 / implementation sh
 `## Test conventions` → `tdd` + review Phase 4; `## Forbidden patterns` → review +
 authoring rules; `## Review focus` → extra review dimensions; `## Build & verify` →
 the real build/test commands. Profiles are **composable** (a React + NestJS repo
-loads both). When the suite has a surface roster, the resolution above is the
+loads both). When the suite has a surface roster, that resolution is the
 fallback: the target surface's `Profiles` field selects the set instead — see
 *Surfaces and the monorepo*.
 

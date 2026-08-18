@@ -120,6 +120,8 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
   copyable shape at [`templates/action.md.template`](templates/action.md.template)
 - Entity document → [`references/format-entity.md`](references/format-entity.md);
   copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
+- Semantic types → [`references/type-mapping.md`](references/type-mapping.md) — the
+  authority for the `Type` vocabulary and `Mapping` tokens used by both formats.
 - Externally populated entities use `population: external` — see `references/format-entity.md`.
 
 ## Rules
@@ -166,6 +168,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - [`_references/lifecycle-rules.md`](../_references/lifecycle-rules.md) — 4-state lifecycle, per-state gate table, regression + supersession rules.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared finding rendering format used by `review`.
 - [`examples/define-interview.md`](examples/define-interview.md) — annotated interview walkthrough.
+- [`examples/canonical-action.md`](examples/canonical-action.md) / [`examples/canonical-action-meta.md`](examples/canonical-action-meta.md) / [`examples/canonical-entity.md`](examples/canonical-entity.md) / [`examples/orchestrator.md`](examples/orchestrator.md) — the canonical worked examples the format specs and templates point at.
 
 ## Related skills
 
