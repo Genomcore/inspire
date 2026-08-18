@@ -48,7 +48,8 @@ it('describes one behavior', () => {
   use the real thing and mock only the outermost external HTTP.
 
 Which tools, which levels, and how they run are the active profile's
-`## Test conventions`.
+`## Test conventions`; with no profile, match the test to the layer under test, not
+the file.
 
 ## Non-negotiable authoring rules
 
@@ -68,13 +69,15 @@ generic, stack-agnostic core — the toolchain enforces the mechanical rest.
 - **Validate input at the boundary that owns it** — the entry DTO/schema where there
   is one, the application/service layer where there isn't. Data-access code assumes
   valid input; pushing validation into it couples storage to domain rules and hides
-  it from callers.
+  it from callers. A type signature cannot prove external data (JSON, request
+  bodies, DB rows) — the boundary check stays even where the type system already
+  encodes the invariant.
 - **Never commit commented-out code.** Git history is the archive; the exception is
   a short comment explaining *why* something non-obvious was removed.
 - **Never leave anonymous TODOs.** Every deferred item names an owner **and** a
   closing trigger — and in INSPIRE the trigger is a real ticket:
-  `/inspire_task create`. If you can name neither, it isn't deferred, it's
-  forgotten: do it now, or open the ticket first.
+  `/inspire_task create`. If you can't name an owner or a trigger, it isn't
+  deferred, it's forgotten: do it now, or open the ticket first.
 
 ## Anchoring back to the KB
 

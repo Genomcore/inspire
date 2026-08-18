@@ -77,8 +77,9 @@ acceptance-criteria id contract are documented there.
 2. **One file per use case.** The filename matches the feature ID.
 3. **Use cases are functional, not technical.** They describe WHAT from the user's
    perspective, not HOW — no SQL, no API paths, no component names.
-4. **`review` is read-only.** `create` / `update` / `delete` require user approval
-   of the plan before writing.
+4. **`review` is read-only.** `update` / `delete` require user approval of the plan
+   before writing; `create` gathers its inputs from the operator and runs the
+   acceptance-criteria gate before writing.
 5. **Propagation is mandatory.** Deleting or renaming a feature without cleaning
    references is drift.
 6. **N/A is valid.** Not every feature needs every layer — infrastructure features

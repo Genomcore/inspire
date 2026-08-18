@@ -11,7 +11,9 @@
    conventions (default list pattern, header layout, tabs, toolbar rules) live in
    the patterns and `design-system.md` — follow them.
 3. **Instantiate.** Describe the screen by filling the pattern's slots. Refer to
-   the pattern's API in its file.
+   the pattern's API in its file. Write in present state — R6 of the
+   [writing contract](../../_references/writing-style.md) (never history) applies
+   from the first draft.
 4. **Deviations only.** Do NOT redescribe the structure the pattern already
    defines.
 5. **Reference components** — link, don't re-describe: a relative wikilink into

@@ -63,8 +63,8 @@ below is an index, not the flow.
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review` is read-only.** It reports, suggests fixes, and recommends other
-   skills; it never edits files. `create` / `update` / `delete` present a plan and
-   write only on the operator's approval.
+   skills; it never edits files. `update` / `delete` present a plan and write only on
+   the operator's approval; `create` writes from the inputs the operator provides.
 2. **Hub ↔ layers stay in sync.** The `02_modules/{module}.md` hub and its per-layer
    subfolders (`03_features`, `05_screens`, `04_domain`) must agree — a module
    operation that updates one but leaves the others inconsistent is a bug. This is

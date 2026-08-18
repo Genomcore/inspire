@@ -182,7 +182,8 @@ When uncertain which layer a finding belongs to, ask the user.
    § Architecture table above: `design-system.md` for tokens (colors, typography,
    density, layout), `patterns/` for screen structure, `components/` for shared UI.
    Screens instantiate and reference; they never redefine a token, nor redescribe a
-   pattern or a component.
+   pattern or a component. Project-specific screen conventions live in those
+   artifacts, not in this skill.
 3. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
    a screen grows.
 4. **No ASCII layout diagrams in screen, pattern or component files, unless the
