@@ -33,7 +33,7 @@ below is an index, not the flow.
 
 | Subcommand | What it does |
 |---|---|
-| [`review`](references/module-review.md) | Full consistency review before any PR touching the hub or its features |
+| [`review`](references/module-review.md) | Full consistency review before any PR that modifies the hub or its features |
 | [`create`](references/module-edits.md) | Scaffold a new module across the layers |
 | [`update`](references/module-edits.md) | Add/remove use cases, restructure, propagate |
 | [`scan`](references/module-scan.md) | SDD-layer entry point — surface candidates and chain into `/inspire_domain` |

@@ -34,7 +34,7 @@ Operate transactionally:
 1. Read the current state (features + screen spec + specs).
 2. Present the diff proposal to the user.
 3. On approval, apply edits across the affected layers.
-4. Run `review {module}` to verify no drift was introduced.
+4. Run [`review {module}`](module-review.md) to verify no drift was introduced.
 
 ## Subcommand: delete
 
