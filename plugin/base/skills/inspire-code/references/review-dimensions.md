@@ -1,10 +1,10 @@
 # /inspire_code review — judgment review of a diff
 
 Review a working diff (or a scoped target) for the things a linter **cannot** catch.
-Mechanical checks — formatting, unused imports, `any`/return-type rules, naming,
-line length, import order, promise handling — are the toolchain's job; if they are
-slipping through, that is a tooling gap to fix, not a thing to review by hand. This
-skill spends its tokens only on judgment.
+Mechanical checks belong to the toolchain, and one slipping through is a tooling gap
+to fix rather than a thing to review by hand — the mechanical-checks rule in
+[`../SKILL.md`](../SKILL.md) § Rules lists them. This skill spends its tokens only
+on judgment.
 
 `review` is **read-only**: it reports, ranks, and names the fix (and the skill to
 run for it). It never edits code.
@@ -41,43 +41,39 @@ format in [`../../_references/findings-format.md`](../../_references/findings-fo
 
 ## Phases 1–4 — universal quality (judgment only)
 
+One phase, one lens. The active stack profile sharpens them where its sections say
+it does — the section → generic-dimension mapping in
+[`profiles/README.md`](../profiles/README.md).
+
 ### Phase 1 · Architecture & design
-- Code sits in the correct layer (business logic out of controllers/components).
-- Shared logic lives in a shared place — not duplicated across features.
-- New abstractions are justified — no premature generalization.
-- Units are single-responsibility; boundaries validate their input.
+Layering (business logic out of controllers/components), shared logic living in a
+shared place, abstractions justified rather than premature, single-responsibility
+units whose boundaries validate their input.
 
 ### Phase 2 · Logic & correctness
-- No semantic duplication the linter can't see (>~70% overlap across files).
-- The algorithm is correct for the use case — not merely "it compiles."
-- Edge cases handled: null, empty, boundary values, concurrent access.
-- Error handling is specific and at the right level; async paths handle failure and
-  timeout.
+Semantic duplication no linter sees (>~70% overlap across files); an algorithm
+correct for *this* use case, not merely compiling; edge cases (null, empty, boundary,
+concurrent access); error handling specific and at the right level, async paths
+handling both failure and timeout.
 
 ### Phase 3 · Security
-- No hardcoded secrets, keys, or credentials.
-- No injection / XSS vectors (unsanitized input into DOM, `eval`, dynamic queries);
-  external URLs sanitized before use.
-- Input validated at the boundary with correct constraints — not just "a validator
-  exists."
-- No sensitive data in logs or error responses.
-- **Authorization** checked, not only authentication.
+Hardcoded secrets; injection / XSS vectors (unsanitized input into the DOM, `eval`,
+dynamic queries, external URLs used unsanitized); input validated at the boundary
+with the *correct* constraints, not merely "a validator exists"; sensitive data in
+logs or error responses; **authorization** checked, not only authentication.
 
 ### Phase 4 · Testing strategy
-- New code has tests of the right type for its layer.
-- Tests follow GIVEN/WHEN/THEN and verify behavior, not implementation.
-- Meaningful edge cases covered — not just the happy path.
-- One test = one scenario; mocks are at the right boundary, not over-mocked.
-  (Conventions in [`tdd.md`](tdd.md).)
+Tests of the right type for the layer, covering meaningful edge cases and not just
+the happy path, following the conventions in [`tdd.md`](tdd.md) — GIVEN/WHEN/THEN,
+behavior over implementation, one test = one scenario, mocks at the right boundary.
 
 ## Build verification
 
 Confirm the change builds and tests pass, using the active stack profile's
-`## Build & verify` commands when present, else the project's own (e.g. `lint`, a
-type-only check, `build`, `test`). If the project uses a private package registry
-and install fails with 401/403, authenticate first — the command is project-specific
-(see [`fix-build.md`](fix-build.md)). Report pass/fail per step; don't inline the
-raw output.
+`## Build & verify` commands when present, else the project's own. If the project
+uses a private package registry and install fails with 401/403, authenticate first —
+the command is project-specific (see [`fix-build.md`](fix-build.md)). Report
+pass/fail per step; don't inline the raw output.
 
 ## Fan-out (thorough mode)
 

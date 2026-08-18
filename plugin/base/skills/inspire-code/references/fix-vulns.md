@@ -144,4 +144,5 @@ Use the smallest number of overrides that satisfies the severity bar.
 - Work in the project the operator points you at (cwd). Re-run `npm install` after
   every `package.json` edit.
 - Prefer `npm pkg set/delete` for surgical edits; otherwise edit `package.json`.
-- Never push or commit unless asked (Rule 7 of the skill).
+- Never push or commit unless asked — the commits-and-pushes-stay-operator-only rule
+  in [`inspire-code/SKILL.md`](../SKILL.md) § Rules.
