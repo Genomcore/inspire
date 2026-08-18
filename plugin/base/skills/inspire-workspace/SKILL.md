@@ -41,7 +41,7 @@ below is an index, not the flow.
 
 | Subcommand | What its reference holds |
 |---|---|
-| [`review`](references/workspace-review.md) | Phases 3–6 + Signals — the cross-cutting checks; the Execution mode, Phases 1–2, the Output format skeleton and the `### Review rules` stay in this file |
+| [`review`](references/workspace-review.md) | Phases 3–6 + Signals — the cross-cutting checks; the Execution mode, Phases 1–2, the Output format skeleton and the `### Review rules` stay in this file; Phase 2 additionally reads [`inspire-module/references/module-review.md`](../inspire-module/references/module-review.md) |
 | [`structure`](references/workspace-structure.md) | The full top-level vault checks + their output skeleton |
 
 ## Subcommand: review (global)
@@ -151,6 +151,9 @@ Drift items pending: {N}
    - Screens tree out of shape, or an unresolved `surfaces:` id → `/inspire_surface review`
 
 ## Subcommand: structure
+
+The full procedure — the top-level vault checks and their output skeleton —
+lives in [`references/workspace-structure.md`](references/workspace-structure.md).
 
 ## Rules
 
