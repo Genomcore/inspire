@@ -171,6 +171,11 @@ When uncertain which layer a finding belongs to, ask the user.
 > The no-ASCII rule below is this layer's own local contract — the writing contract
 > points at it rather than restating it.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **Features are the source of truth for what exists.** Every screen traces to one
    or more features in `03_features`.
 2. **`design-system.md` is the source of truth for tokens.** No module redefines

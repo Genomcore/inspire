@@ -91,11 +91,10 @@ importance: Low
 standard ticket infrastructure — no new tooling; the operator decides when an
 observation deserves a ticket, and skills surface candidates conversationally.
 
-A ticket captures **local, actionable** friction. When the same signal should change
-how a skill behaves, it **graduates** into a `98_lessons` node via `/inspire_lesson` —
-the ticket tracks the local fix, the lesson carries the durable instruction (and, via
-the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
-`inspire-lesson`.
+A ticket captures **local, actionable** friction; the ticket-vs-lesson routing and
+the graduation rule live in [`inspire-lesson/SKILL.md`](../inspire-lesson/SKILL.md)
+§ Relationship to the tracker, and the offer protocol in
+[`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 ## Rules
 
@@ -107,6 +106,11 @@ the observer, reaches INSPIRE core) and links back with `[[TASK-…]]`. See
 
 > **Writing contract.** Ticket prose follows
 > [`_references/writing-style.md`](../_references/writing-style.md).
+
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **One file per ticket.** Filename = `TASK-{id}.md`; the `id` field matches.
 2. **IDs never reused.** Don't delete files — archive them.

@@ -229,6 +229,11 @@ Render findings in the shared operator-facing format from
 > **Writing contract.** The roster's prose and every review report follow
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **This skill writes surface ids; every other skill only reads them.** The
    never-invent rule in
    [`_references/surface-scope.md`](../_references/surface-scope.md) binds here too

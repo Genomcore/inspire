@@ -182,7 +182,7 @@ ticket tracks the local fix, the lesson links back with `[[TASK-…]]`.
 
 ## Related skills
 
-- By convention, an `inspire-*` skill **offers** `/inspire_lesson note` when the
-  operator's feedback would change how the skill should behave — the operator decides
-  when the insight is worth keeping (mirrors how skills surface skill-feedback tickets).
+- The offer protocol the other skills follow lives in
+  [`_references/lesson-capture.md`](../_references/lesson-capture.md) — they offer
+  `/inspire_lesson note`; the operator decides.
 - `/inspire_task` handles the local, closeable side of the same feedback signal.

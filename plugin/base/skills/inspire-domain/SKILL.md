@@ -140,6 +140,11 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > (R3, R4, R6). Prosaic back-sourcing is stated there as a principle; the per-section
 > mechanics stay in [`references/format-action.md`](references/format-action.md).
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **`review`, `show`, `source`, `graph` are read-only.** They report, resolve, and visualize — never write files.
 2. **`define`, `update`, `refactor`, `delete`, `promote`, `demote` require operator approval** of each proposed change before writing. At `promote`, the
    skill may also propose endorsing the object; on an explicit yes, run

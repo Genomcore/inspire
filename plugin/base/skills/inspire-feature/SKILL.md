@@ -65,6 +65,11 @@ acceptance-criteria id contract are documented there.
 > criterion states an observable outcome — no *fast*, *intuitive*, *appropriate*.
 > Referenced, never restated — read the rules there.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **The use-case file is the source of truth.** Everything else (screen spec,
    prototype, specs) references or realizes it.
 2. **One file per use case.** The filename matches the feature ID.

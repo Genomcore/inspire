@@ -54,6 +54,11 @@ below is an index, not the flow.
 > `## Domain` and `## Module ADRs` tables are structured sections (R3, R4, R6).
 > Referenced, never restated — read the rules there.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **`review` is read-only.** It reports, suggests fixes, and recommends other
    skills; it never edits files.
 2. **`create` requires user input** for module name, ID prefix, and description.

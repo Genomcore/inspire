@@ -108,6 +108,11 @@ loop stay the user's.
 > **Writing contract.** Vault edits and prototype learnings follow
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **Specs are the source of truth.** Build what the screen spec says — no extra
    screens, tabs, or features "for completeness". If something's missing, evolve the
    spec (via the owning skill), don't invent scope in the prototype.

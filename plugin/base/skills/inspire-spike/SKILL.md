@@ -82,6 +82,11 @@ here?
 > `## Scope`, `## Learnings` and `## Outcome` are normative prose (R1–R6). R6 bites
 > hardest here: a learning states what is true, never what the spike tried first.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **Never build the spike here.** The code lives in its external repo; this skill
    only registers and harvests. Building is the spike author's job (or `/inspire_code`
    for real implementation).

@@ -153,6 +153,11 @@ via `create`).
 > (R1–R6); `**Modules affected:**` and any tabular section are structured (R3, R4, R6).
 > R6 carries section-scoped exemptions this skill relies on — see Rule 5 below.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **ADR maturity is explicit.** Advancing `design → prototyped → implemented`
    requires `promote`; `create` defaults to `design`.
 2. **Only `implemented` ADRs are immutable in content.** Supersede to change their

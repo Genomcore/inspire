@@ -242,6 +242,11 @@ Extract never writes these files — it feeds each authoring skill:
 > [`_references/writing-style.md`](../_references/writing-style.md), exactly as if the
 > owning skill had authored it.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **`fingerprint` and `review` are read-only.** `scan` is read-only until "start",
    then writes only through the authoring skills.
 2. **Candidates, not commits.** Extract surfaces and delegates — no invariant

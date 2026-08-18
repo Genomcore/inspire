@@ -171,6 +171,11 @@ stack-agnostic. Contract: [`profiles/README.md`](profiles/README.md).
 > **Writing contract.** Review reports, debug write-ups and any KB text you propose
 > follow [`_references/writing-style.md`](../_references/writing-style.md).
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **`review`, `debug` (analysis phase) are read-only until a fix is agreed.**
    `review` never edits code — it reports, ranks, and names the fix. `fix-build`,
    `fix-vulns`, and `tdd` do edit, but only source/test files, never the KB.

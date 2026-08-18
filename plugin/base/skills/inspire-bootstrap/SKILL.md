@@ -176,6 +176,11 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > this skill owns writes to it: a row lands when an interview settles a naming
 > question, carrying the operator's own word. Every other skill reads it.
 
+> **Lesson capture.** At a natural pause, when the operator's feedback should
+> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> a lesson. Protocol and ticket-vs-lesson routing:
+> [`_references/lesson-capture.md`](../_references/lesson-capture.md).
+
 1. **`review` is read-only.** `init` / `stack` / `theme` / `language` present a
    plan before writing.
 2. **Bootstrap is upstream of everything.** A change here can ripple to specs,
