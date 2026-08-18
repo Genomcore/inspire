@@ -305,6 +305,22 @@ kb_seeds_n="$(printf '%s' "$kb_seeds_owed" | wc -w | tr -d ' ')"
 check "premise: the baseline predates at least one KB seed this release ships" \
   "[ '$kb_seeds_n' -gt 0 ]"
 
+# What a cross-version update may REMOVE: the chain's hops retire the KB seeds
+# they can prove pristine. From a v0.6.0 baseline that is the 0.7.0 hop's three
+# index mirrors — asserted pristine here FIRST, so the silent-retire branch
+# below fires for the right reason (an edited copy would ask and stay instead).
+kb_retire_n=0
+for kb_pair in \
+  "02_modules/_index.md:02_modules__index.md" \
+  "05_screens/components/_index.md:05_screens-components__index.md" \
+  "05_screens/patterns/_index.md:05_screens-patterns__index.md"; do
+  [ "$(shasum -a 256 "$kbp/inspire_kb/${kb_pair%%:*}" 2>/dev/null | cut -d' ' -f1)" = \
+    "$(shasum -a 256 "$HERE/fixtures/retired-seeds/${kb_pair#*:}" | cut -d' ' -f1)" ] \
+    && kb_retire_n=$((kb_retire_n+1))
+done
+check "premise: the baseline carries all three retire-candidates pristine" \
+  "[ '$kb_retire_n' = 3 ]"
+
 # Also drift a runtime file and delete another, so the update call below
 # mirrors a real operator run against a divergent runtime.
 #
@@ -346,8 +362,9 @@ check "KB regression: customized design-system.md survives update" \
 kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
 # The old form of this assertion — "no KB files added or removed" — was true
 # only because the project was init'd from the same tree it then updated from.
-# Across versions the honest claim is narrower and stronger: the update adds
-# EXACTLY the seeds the baseline lacks, and removes nothing at all.
+# Across versions the honest claim is: the update adds EXACTLY the seeds the
+# baseline lacks and removes EXACTLY what the chain's hops provably retire —
+# from v0.6.0, the three pristine index mirrors — and nothing else either way.
 kb_seeds_missing_after=0
 for rel in $kb_seeds_owed; do
   [ -f "$kbp/inspire_kb/$rel" ] || kb_seeds_missing_after=$((kb_seeds_missing_after+1))
@@ -356,18 +373,20 @@ check "KB regression: every owed KB seed arrived ($kb_seeds_n of them)" \
   "[ '$kb_seeds_missing_after' = 0 ]"
 check "KB regression: the release's own new KB seed is one of them" \
   "[ -f '$kbp/inspire_kb/00_bootstrap/glossary.md' ]"
-check "KB regression: update added exactly those seeds, no more" \
-  "[ \"\$kb_count_after\" = \"\$((kb_count_before + kb_seeds_n))\" ]"
+check "KB regression: update added exactly the owed seeds, removed exactly the retired mirrors (count)" \
+  "[ \"\$kb_count_after\" = \"\$((kb_count_before + kb_seeds_n - kb_retire_n))\" ]"
 # Counts alone cannot see a removal that an addition cancels out, and losing a
-# KB file is the entire failure this block exists to catch — so the paths are
-# compared, not just tallied.
-kb_lost=0
+# KB file the release did NOT provably retire is the entire failure this block
+# exists to catch — so the paths are compared as a set, not just tallied.
+kb_lost_list=""
 while IFS= read -r rel; do
   [ -z "$rel" ] && continue
-  [ -f "$kbp/inspire_kb/$rel" ] || kb_lost=$((kb_lost+1))
+  [ -f "$kbp/inspire_kb/$rel" ] || kb_lost_list="${kb_lost_list}${rel}
+"
 done < "$kb_list_before"
-check "KB regression: not one KB file present before the update went missing" \
-  "[ '$kb_lost' = 0 ]"
+kb_lost_sorted="$(printf '%s' "$kb_lost_list" | LC_ALL=C sort | tr '\n' ' ')"
+check "KB regression: the only KB files gone are the three the hop provably retired" \
+  "[ '$kb_lost_sorted' = './02_modules/_index.md ./05_screens/components/_index.md ./05_screens/patterns/_index.md ' ]"
 rm -f "$kb_list_before"
 # The lock no longer carries a `files` map at all (Task 13), which is the
 # strongest possible form of "no inspire_kb entries in it": there is nothing in
