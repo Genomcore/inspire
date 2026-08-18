@@ -43,7 +43,7 @@ dependencies, promoting priority, changing state
 3. On approval, apply it.
 4. If renamed: grep `inspire_kb/` (and any project code) for references to the
    old ID and offer fixes.
-5. Run `review {feature-id}` to verify no drift.
+5. Run [`review {feature-id}`](feature-review.md) to verify no drift.
 
 ## Subcommand: delete
 
