@@ -1531,15 +1531,16 @@ check "half-migrated tree: no lock was rewritten" \
 fixture_cleanup "$w"
 
 # ---- the 0.7.0 hop: derive-then-diff index retirement --------------------
-# ALL of these run against a version-patched FAKE plugin root, and must, until
-# the release is cut: with plugin.json at 0.6.0 the real root can never source
-# hops/0.7.0.sh — run_chain skips versions above the target (chain.sh:41-42),
-# and the no-manifest fallback (chain.sh:60-63) looks only for hops/<target>.sh.
-# Patching .version to 0.7.0 in a COPY makes that fallback fire, because the
-# copied manifests/ has no 0.7.0.json. Two pinned consequences: template_sha in
-# these updates is honestly "unknown" (write_lock finds no manifest for the
-# target), so nothing here asserts otherwise; and nothing here claims anything
-# about the real root's hop effects, which do not exist before the bump.
+# These blocks ran against a version-patched FAKE plugin root while the release
+# was being prepared (pre-bump, the real root could never source hops/0.7.0.sh
+# and the copied manifests/ had no 0.7.0.json). Since the 0.7.0 bump + manifest
+# the patch is a byte-identical no-op — but the FAKE root stays: it pins these
+# blocks' TARGET at 0.7.0 regardless of where plugin.json moves next, so they
+# survive future bumps unedited. manifests/0.7.0.json ships, the chain comes
+# from the main loop (no fallback fires), and write_lock finds the target's
+# manifest, so template_sha in these updates is real, never "unknown". The
+# end-to-end retirement block below runs on the REAL root — the per-file
+# assertions T2 deferred until the hop's effects existed.
 fake7="$(mktemp -d)"
 cp -R "$PLUGIN_ROOT/." "$fake7/plugin"
 jq '.version="0.7.0"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" \
@@ -1680,11 +1681,13 @@ eq "an empty derivation proves nothing: table-less registry asks" \
    '[2,["inspire_kb/02_modules/_index.md"]]'
 fixture_cleanup "$w"
 
-# Pristine seeds: plan predicts 3 silent deletes and no questions, writes
-# nothing (record/act parity, files AND directories), and the subsequent real
-# update lands exactly the predicted split — the three files disappear and
-# NOTHING else does. The premise is asserted first: on drifted fixture seeds
-# every retire-verdict below would pass for the wrong reason.
+# Pristine seeds, REAL plugin root (the T2-deferred swap, landed post-bump):
+# plan predicts 3 silent deletes and no questions, writes nothing (record/act
+# parity, files AND directories), and the subsequent real update lands exactly
+# the predicted split — the three files disappear and NOTHING else does, while
+# the release's new reference files arrive as creates (sampled by name, never
+# counted). The premise is asserted first: on drifted fixture seeds every
+# retire-verdict below would pass for the wrong reason.
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.6.0 "$w" "$REPO")"
 h7_pristine=0
 for h7_pair in \
@@ -1700,11 +1703,18 @@ h7_before_f="$(cd "$p" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2
 h7_before_d="$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
 h7_list_before="$(cd "$p" && find . -type f | LC_ALL=C sort)"
 h7_plan_log="$(mktemp)"
-h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$h7_plan_log")"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>"$h7_plan_log")"
 h7_rc=$?
-eq "fake-root plan exits 0" "$h7_rc" "0"
-check "plan's chain reaches 0.7.0 via the no-manifest fallback" \
+eq "real-root plan exits 0" "$h7_rc" "0"
+check "plan's chain reaches 0.7.0 from the shipped manifest" \
   "[ \"\$(printf '%s' \"\$h7_plan\" | jq -r '.chain|index(\"0.7.0\")')\" != null ]"
+# The release's new reference files show up as creates — sampled BY NAME (one
+# per family: a split skill's reference, the shared capture reference, a second
+# split skill), never a count or tree enumeration.
+check "plan names the new references as creates (sampled by name)" \
+  "grep -q 'create   .claude/skills/inspire-module/references/module-review.md' '$h7_plan_log' && \
+   grep -q 'create   .claude/skills/_references/lesson-capture.md' '$h7_plan_log' && \
+   grep -q 'create   .claude/skills/inspire-screens/references/screen-validate.md' '$h7_plan_log'"
 eq "plan predicts exactly the 3 retirements (delete count)" \
    "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "3"
 eq "plan predicts no questions (merged ask count)" \
@@ -1720,9 +1730,9 @@ eq "plan wrote no file" "$h7_before_f" \
 eq "plan removed no directory" "$h7_before_d" \
    "$(cd "$p" && find . -type d | LC_ALL=C sort | shasum -a 256)"
 
-h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_up="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>/dev/null)"
 h7_rc=$?
-eq "fake-root update exits 0" "$h7_rc" "0"
+eq "real-root update exits 0" "$h7_rc" "0"
 check "the three retired indexes are gone" \
   "[ ! -e '$p/inspire_kb/02_modules/_index.md' ] && \
    [ ! -e '$p/inspire_kb/05_screens/patterns/_index.md' ] && \
@@ -1738,15 +1748,18 @@ eq "only the three predicted files disappeared" "$h7_lost" \
 eq "update leaves no question open" \
    "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
 eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
-# The release does not only RETIRE KB files, it adds one: 00_bootstrap/glossary.md,
-# which a v0.6.0 project cannot already have. This is the cross-version proof that
-# seed_kb's additive half still runs alongside the hop's deletions — and it is
-# asserted on the FAKE-root tree, never the real root: with plugin.json still at
-# 0.6.0 the real root has no 0.7.0 hop effects to assert (see the section header).
+check "the lock's template_sha is real (the shipped manifest names the release commit)" \
+  "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
+# The release does not only RETIRE KB files, it adds two: 00_bootstrap/glossary.md
+# and 05_screens/components/.gitkeep, which a v0.6.0 project cannot already have.
+# This is the cross-version proof that seed_kb's additive half still runs
+# alongside the hop's deletions — asserted on the REAL root, both files by name.
 check "the release's new KB file arrived (glossary seeded on upgrade)" \
   "[ -f '$p/inspire_kb/00_bootstrap/glossary.md' ]"
 check "the seeded glossary carries the R4-consumable shape, zero data rows" \
   "[ \"\$(grep -c '^|' '$p/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
+check "the components .gitkeep arrived (the release's second KB seed)" \
+  "[ -f '$p/inspire_kb/05_screens/components/.gitkeep' ]"
 rm -f "$h7_plan_log"
 fixture_cleanup "$w"
 
