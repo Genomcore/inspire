@@ -173,7 +173,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - [`_references/lifecycle-rules.md`](../_references/lifecycle-rules.md) — 4-state lifecycle, per-state gate table, regression + supersession rules.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared finding rendering format used by `review`.
 - [`examples/define-interview.md`](examples/define-interview.md) — annotated interview walkthrough.
-- [`examples/canonical-action.md`](examples/canonical-action.md) / [`examples/canonical-action-meta.md`](examples/canonical-action-meta.md) / [`examples/canonical-entity.md`](examples/canonical-entity.md) / [`examples/orchestrator.md`](examples/orchestrator.md) — the canonical worked examples the format specs and templates point at.
+- [`examples/canonical-action.md`](examples/canonical-action.md) / [`examples/canonical-action-meta.md`](examples/canonical-action-meta.md) / [`examples/canonical-entity.md`](examples/canonical-entity.md) / [`examples/orchestrator.md`](examples/orchestrator.md) — worked examples: a canonical action descriptor, its meta/dispatch variant, the entity document they touch, and a multi-entity orchestrator.
 
 ## Related skills
 
