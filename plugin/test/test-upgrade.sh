@@ -1258,9 +1258,45 @@ eq "no .claude/hooks registrations remain" \
    "$(jq '[.. | objects | select(has("command")) | select(.command|contains(".claude/hooks/"))] | length' \
       "$p/.claude/settings.json")" "0"
 
-# Re-running converges.
-bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
-eq "update is re-runnable" "$?" "0"
+# Re-running converges — WHEN THE TREE IT JUST WROTE CAN STILL BE DETECTED.
+#
+# THE PREMISE, and it is not a constant: a second `update` re-detects the project
+# from scratch, and detect_version nominates nothing below MANIFEST_FLOOR_PCT. A
+# post-update tree is a copy of today's plugin/base/, so it only scores above that
+# floor against the NEWEST SHIPPED manifest while base/ is still byte-identical to
+# what that manifest recorded. Mid-release it is not: the version being prepared
+# has no manifest yet — it is generated from the version-bump commit, at release
+# step T11-3 — and every base/ file this release legitimately edits drags the score
+# against the last shipped one further down. So mid-release the second run refuses,
+# and that refusal IS the design: detect_version would rather stop than upgrade
+# from a baseline it had to guess.
+#
+# Asserting only "exits 0" would therefore be a test unfulfillable at every commit;
+# asserting only the refusal would go stale the hour the manifest lands. So the
+# outcome is DERIVED from the machinery instead — re-detect with the same function
+# materialize.sh calls, and pin whichever of the two behaviours it predicts. Both
+# are pinned below; T11-3 flips the branch with no edit here.
+#
+# Two vacuity guards, because "it refused" is worthless if it refused for some
+# other reason: the refusal must be DETECTION's (its own wording), and it must name
+# the floor by the value the constant actually holds — not merely have failed.
+detect_version "$PLUGIN_ROOT" "$p" >/dev/null 2>&1; rerun_detectable=$?
+rerun_lock="$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')"
+rerun_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+rerun_rc=$?
+if [ "$rerun_detectable" -eq 0 ]; then
+  eq "released state: update is re-runnable" "$rerun_rc" "0"
+else
+  eq "mid-release: the 0.2.1 tree's second run refuses (rc)" "$rerun_rc" "1"
+  eq "mid-release: the refusal is detection's own" \
+     "$(printf '%s\n' "$rerun_err" | grep -c "cannot identify this project's INSPIRE version")" "1"
+  eq "mid-release: the refusal names the score floor it fell under" \
+     "$(printf '%s\n' "$rerun_err" | grep -c "floor ${MANIFEST_FLOOR_PCT}%")" "1"
+  eq "mid-release: a refused run restamps no lock" \
+     "$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')" "$rerun_lock"
+fi
+# Unconditional: whether the second run converged or refused, the operator's edit
+# is still theirs. A refusal that damaged the tree would be no better than a guess.
 eq "edit still kept after a second run" \
    "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$mine_hash"
 
@@ -1339,11 +1375,41 @@ check "the report tells the operator where it was saved" \
 inlog_n="$(classify "$PLUGIN_ROOT/manifests/0.4.0.json" "$p" "$base" "$MAP_03" "$MAP_03" \
            | grep -c 'last-upgrade.log')"
 eq "the log is never classified as project-authored" "$inlog_n" "0"
-# One file, overwritten — not a growing log directory.
+# One file, overwritten — not a growing log directory. Dual-state, for exactly the
+# reason spelled out at the 0.2.1 block's second run above: a post-update tree only
+# re-detects while plugin/base/ still matches the newest SHIPPED manifest at or
+# above MANIFEST_FLOOR_PCT, and mid-release — before release step T11-3 generates
+# the manifest for the version being prepared — it does not, so detection refuses
+# rather than guess a baseline. Both behaviours are pinned:
+#   RELEASED    — the run converges and rewrites the log SHORTER (a converged pass
+#                 has almost nothing left to report).
+#   MID-RELEASE — detection refuses before a byte is written, so the log must come
+#                 out BYTE-identical. "Not longer" would be satisfied by a partial
+#                 rewrite, which is precisely what an aborted run must never leave
+#                 behind, so the refusal branch compares hashes and not line counts.
+# The log is known non-empty here: "the saved report is the report, not a stub"
+# above asserts its content, so neither branch is comparing against nothing.
 e2e1_lines="$(wc -l < "$p/.inspire/last-upgrade.log" | tr -d ' ')"
-bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
-check "the log is overwritten, never appended to" \
-   "[ \"\$(wc -l < '$p/.inspire/last-upgrade.log' | tr -d ' ')\" -lt '$e2e1_lines' ]"
+e2e1_log_sha="$(shasum -a 256 "$p/.inspire/last-upgrade.log" | awk '{print $1}')"
+e2e1_lock_sha="$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')"
+detect_version "$PLUGIN_ROOT" "$p" >/dev/null 2>&1; e2e1_detectable=$?
+e2e1_rerun_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
+e2e1_rerun_rc=$?
+if [ "$e2e1_detectable" -eq 0 ]; then
+  eq "released state: the second run converges (rc)" "$e2e1_rerun_rc" "0"
+  check "the log is overwritten, never appended to" \
+     "[ \"\$(wc -l < '$p/.inspire/last-upgrade.log' | tr -d ' ')\" -lt '$e2e1_lines' ]"
+else
+  eq "mid-release: the 0.1.0 tree's second run refuses (rc)" "$e2e1_rerun_rc" "1"
+  eq "mid-release: the refusal is detection's own" \
+     "$(printf '%s\n' "$e2e1_rerun_err" | grep -c "cannot identify this project's INSPIRE version")" "1"
+  eq "mid-release: a refused run leaves the log byte-identical" \
+     "$(shasum -a 256 "$p/.inspire/last-upgrade.log" | awk '{print $1}')" "$e2e1_log_sha"
+  eq "mid-release: a refused run restamps no lock" \
+     "$(shasum -a 256 "$p/.inspire.lock" | awk '{print $1}')" "$e2e1_lock_sha"
+fi
+# Unconditional: one log file either way — a refusal must not fork a second one any
+# more than a converging run may.
 eq "no second log artifact appeared" \
    "$(find "$p/.inspire" -maxdepth 1 -name '*.log' | wc -l | tr -d ' ')" "1"
 fixture_cleanup "$w"
