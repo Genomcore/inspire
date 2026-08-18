@@ -121,11 +121,16 @@ index, not the flow.
 | Flow | Read | Invocation |
 |---|---|---|
 | Create a screen | [`references/screen-create.md`](references/screen-create.md) | `create {module}/{screen}` |
-| Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md); `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
+| Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
 | Extract a pattern/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|component} {name}` |
 | Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) | duty after any create/validate/extract that changes UI |
 
 ## When validating an existing screen
+
+The validate / audit procedure lives in
+[`references/screen-validate.md`](references/screen-validate.md) and
+[`references/screen-checks.md`](references/screen-checks.md), applying the
+triangulation matrix below.
 
 ### Triangulation matrix — Features ↔ screen spec ↔ Prototype
 
