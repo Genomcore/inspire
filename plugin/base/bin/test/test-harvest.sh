@@ -310,6 +310,11 @@ sed 's#^git diff --no-renames --name-only "\$cut_sha" "\$worktree_tree" -- "\${P
 chmod +x "$STUB_ACCEPT_ALL"
 ne "stub-guard: accept-all stub actually differs from the real script" \
   "$(diff -q "$STUB_ACCEPT_ALL" "$HARVEST" >/dev/null 2>&1; echo $?)" "0"
+if bash -n "$STUB_ACCEPT_ALL" 2>/dev/null; then
+  ok "stub-guard: accept-all stub is syntactically valid (a real behaviour change, not a crash)"
+else
+  bad "stub-guard: accept-all stub failed to parse — it would prove nothing"
+fi
 
 R="$ROOT/rstub1"; WT="$ROOT/wtstub1"
 fresh_repo "$R"
@@ -324,12 +329,23 @@ else
 fi
 
 # --- stub 2: the final ref update is a no-op (the commit never lands) ------
+# The trailing "\\" in the replacement is load-bearing: it preserves the
+# line-continuation onto the `|| die_code ...` line below, so the stub is a
+# true semantic no-op (git update-ref -> true, everything else unchanged) —
+# not a syntax error that merely crashes before doing anything. The bash -n
+# check right after is what makes that distinction testable rather than
+# assumed.
 STUB_NOOP_UPDATE="$ROOT/harvest-stub-noop-update.sh"
-sed 's#^git update-ref "refs/heads/\$BRANCH" "\$new_commit" "\$old_tip" \\$#true "refs/heads/$BRANCH" "$new_commit" "$old_tip" #' \
+sed 's#^git update-ref "refs/heads/\$BRANCH" "\$new_commit" "\$old_tip" \\$#true "refs/heads/$BRANCH" "$new_commit" "$old_tip" \\#' \
   "$HARVEST" > "$STUB_NOOP_UPDATE"
 chmod +x "$STUB_NOOP_UPDATE"
 ne "stub-guard: noop-update stub actually differs from the real script" \
   "$(diff -q "$STUB_NOOP_UPDATE" "$HARVEST" >/dev/null 2>&1; echo $?)" "0"
+if bash -n "$STUB_NOOP_UPDATE" 2>/dev/null; then
+  ok "stub-guard: noop-update stub is syntactically valid (a real no-op, not a crash)"
+else
+  bad "stub-guard: noop-update stub failed to parse — it would prove nothing"
+fi
 
 R="$ROOT/rstub2"; WT="$ROOT/wtstub2"
 fresh_repo "$R"
