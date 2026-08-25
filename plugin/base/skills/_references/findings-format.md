@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -69,18 +69,23 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `{kind} section order` | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
+| `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
 | `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
 | `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. A path is never resolved relative to the linking file: the name is what the link means, so a `../` depth that shifted with a surface split still names the right file. Screen files are checked alongside `04_domain` objects, so a dangling navigation target is reported here, and both indexes are built vault-wide whatever the scope. |
+| `OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6` | keys-present | A keyed entry is there but wrong: a step key that is not `B{n}`, a section holding neither a declared-none body nor keyed entries, a head outside its closed vocabulary or at the wrong arity, a key used twice in one keyspace. |
+| `OS-E2` · `OS-E4` · `OS-E8` | constraints-mechanics | A `Constraints:` line is wrong: no `id` row to carry the marker, a word outside vocabulary V1 or at the wrong arity (`nonnull` on an input line included), or a line that is not its H3's first content line. |
+| `OS-E7` · `OS-X1` · `OS-X2` · `OS-X3` · `OS-X4` | head-referents | A name a head mentions does not exist: an unresolvable `references(...)`, a written `unique` field with no matching `unique(...)` error head, an invariant head naming a non-field, a `P`/`Q` head naming an untouched entity, `returns(...)` naming a non-output. |
 
 ### Standalone warnings
 
 | Type | Rule | Meaning |
 |---|---|---|
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
+| `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.8** — the shapes an upgrade inherits — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
+| `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |
 | `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `03_features/` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
-| `AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
+| `OS-F5: AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
 | `AC-id duplicate` | sections-present | One `AC-N` id is used by two criteria in the same use-case file. Gaps in the numbering are never a finding: ids are stable, never renumbered and never reused. Numbers compare as written, so `AC-01` and `AC-1` are two distinct ids rather than a duplicate. |
 | `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
 | `ADR missing required subsection` | sections-present | `### Breaking changes` is nowhere in the ADR. Presence-only: an ADR that breaks nothing still says so. |

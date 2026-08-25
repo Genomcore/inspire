@@ -91,12 +91,15 @@ repo is both its source and its own marketplace.
         instructions that teach the skills how to behave in this project;
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
-        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`); it is
+        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
+        `keyed-heads.md`); it is
         **not** matched by an `inspire-*` glob.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
-      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`). `trust.sh` is here as a
+      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`); the rules that check the
+      other KB layers read `SDD_KB_ROOT` instead, `screen-coherence.sh` among them —
+      screen identity, keyed bindings and the screen↔layout join. `trust.sh` is here as a
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
@@ -121,7 +124,10 @@ repo is both its source and its own marketplace.
       (ADRs, features, pattern/component entries, tickets) declare a blast radius
       in a `surfaces:` frontmatter field, where absent means suite-wide; screens
       instead scope *positionally*, splitting to
-      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist. The
+      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist — while
+      their identity does not move with them: a screen carries a write-once
+      `id`/`module`/`screen`/`lifecycle` block, declares its own keyed `## Bindings`,
+      and derives its route from `module` + `screen`, so a move is free. The
       `04_domain` tree is never surface-scoped — one domain truth spans the whole
       suite — and a project that declares no surfaces is a suite-of-one whose KB is
       byte-identical to one written before surfaces existed. See

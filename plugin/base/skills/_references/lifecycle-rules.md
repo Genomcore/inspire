@@ -77,8 +77,13 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | `field-coverage` (every entity Fields row touched by ≥1 action) | warning | error | error | warning |
 | `rationale-wikilink` (≥1 wikilink in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `wikilinks-resolve` (every `[[wikilink]]` resolves to a file) | warning | error | error | warning |
+| `keys-present` — what a keyed entry says (`OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6`) | warning | error | error | warning |
+| `constraints-mechanics` — vocabulary, arity and placement (`OS-E2` · `OS-E4` · `OS-E8`) | warning | error | error | warning |
+| `head-referents` — every name a head mentions exists (`OS-E7` · `OS-X1`–`OS-X4`) | warning | error | error | warning |
 
 The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
+
+Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.8, columns and all. "New but unkeyed" and "pre-0.8" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote`. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.8. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
 
 ### Screens — the same columns, read in `05_screens`
 
