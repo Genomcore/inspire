@@ -20,12 +20,14 @@ skipped(){ echo "SKIP $2 ($1 assertions)"; skip=$((skip+$1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
-# Scratch trees that spend part of their life chmod 555 — `rm -rf` cannot unlink
-# out of a directory it may not write to, so an abort between the chmod and the
-# inline restore would strand an undeletable tree in $TMPDIR forever (the old
+# Scratch trees that spend part of their life read-only — chmod 555 or 500, so that
+# a deletion or a move fails the way it would on a read-only mount. `rm -rf` cannot
+# unlink out of a directory it may not write to, so an abort between the chmod and
+# the inline restore would strand an undeletable tree in $TMPDIR forever (the old
 # fixed /tmp paths at least got a `rm -rf` attempt from the next run; a private
 # mktemp tree gets none). Register them here and the EXIT trap restores the mode
-# before removing. The trap runs no `exit`, so the suite's own status stands.
+# before removing. The trap runs no `exit`, so the suite's own status stands, and
+# its `[ -d ]` guard means a tree already cleaned up inline costs nothing.
 HOPOPS_SCRATCH=()
 hopops_scratch(){ HOPOPS_SCRATCH=( ${HOPOPS_SCRATCH+"${HOPOPS_SCRATCH[@]}"} "$1" ); }
 hopops_scratch_cleanup(){
@@ -1165,7 +1167,13 @@ fixture_cleanup "$w"
 # validator moves failed, every failure was honestly journalled, the run exited
 # 0 — and .inspire.lock went 0.2.1 → 0.3.1, claiming a migration that did not
 # happen. HOP_FAILED, compared across each hop, is what makes it observable.
-w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+#
+# chmod 500 again, so the fixture is registered for the same reason the hop-ops
+# scratch trees are: `rm -rf` cannot unlink out of a directory it may not write
+# to, and the restore below is on the happy path only. fixture_cleanup still does
+# the removing when the block completes; the trap only covers an abort inside the
+# window, and its `[ -d ]` guard makes the double-up a no-op.
+w="$(mktemp -d)"; hopops_scratch "$w"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
 chmod 500 "$p/.claude/bin"
 if touch "$p/.claude/bin/probe" 2>/dev/null; then
   rm -f "$p/.claude/bin/probe"; chmod 755 "$p/.claude/bin"
@@ -1187,8 +1195,10 @@ else
   # End to end: exit 2, and the lock still reads the OLD version. A stale lock is
   # recoverable — the next run re-detects 0.2.1 and re-runs the hop; a lock that
   # claims 0.3.1 would make detection score the project as already migrated and
-  # the migration would never be retried.
-  w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+  # the migration would never be retried. Registered for the same reason as the
+  # tree above — this one's restore sits after a materialize.sh call, so the
+  # unwritable window spans a whole subprocess.
+  w="$(mktemp -d)"; hopops_scratch "$w"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
   chmod 500 "$p/.claude/bin"
   hf_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
   hf_rc=$?
