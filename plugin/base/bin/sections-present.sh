@@ -14,10 +14,11 @@
 #
 #     Six of those eight are checked for PRESENCE here, at flat error severity:
 #     the pre-0.8 core. `## Preconditions` and `## Postconditions` are 0.8
-#     additions, and their presence is checked by `keys-present.sh` instead, at
-#     lifecycle-progressive severity — a vault upgraded to 0.8 must not have
-#     every descriptor it already had blocking every commit on the day the
-#     runtime moves. Both names are still in the ORDER list, because an order
+#     additions, and their presence is checked by `keys-present.sh` instead,
+#     where in 0.8 it is a FLAT WARNING at every lifecycle state (`OS-A3` /
+#     `OS-A4` are two of the five graced presence classes) — a vault upgraded to
+#     0.8 must not go red at pre-PR and at `promote` on every descriptor it
+#     already had. Both names are still in the ORDER list, because an order
 #     check is a subsequence match: a descriptor that has not gained them yet
 #     skips them cleanly, and one that has gained them in the wrong place is
 #     genuinely out of canonical order.
