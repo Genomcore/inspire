@@ -68,8 +68,10 @@ surfaces: all               # explicitly suite-wide
 - **Spanning kinds:** ADRs, features, pattern and component entries; tickets
   optionally.
 - **Domain files never carry it.** Nothing under `04_domain/` takes `surfaces:`.
-- **Screens never carry it either** — a screen's surface is positional. The one
-  exception is the optional narrowing list on a `05_screens/shared/` screen.
+- **Screens never carry it either** — a screen's surface is positional. Their
+  frontmatter carries identity and lifecycle (`id` · `module` · `screen` ·
+  `lifecycle`) and no `surfaces:` field. The one exception is the optional
+  narrowing list on a `05_screens/shared/` screen.
 
 ## Scope resolution
 
@@ -96,12 +98,24 @@ surface: `05_screens/shared/{module}/{screen}.md`, meaning all UI surfaces unles
 `surfaces:` list narrows it. Suite-wide catalogs — `design-system.md`, `patterns/`,
 `components/` — sit beside the surface trees at top level, never inside one.
 
-The split shape preserves path↔route symmetry: `{surface}/{module}/{screen}.md` ↔
-`{shell}/{module}/{screen}`, where `{shell}` is that surface's `Shell` value in the
-roster and carries its own leading slash — `/admin` gives `/admin/billing/list`.
-Walking one surface's tree is walking that surface end to end. A flat `{module}/`
-directory sitting beside surface trees is a pre-split leftover, not a second
-convention.
+**A route is derived, never positional.** It comes from the screen's declared
+`module:` and `screen:` frontmatter fields — `/{module}/{screen}` — prefixed by
+that surface's `Shell` value from the roster, which carries its own leading slash:
+`/admin` gives `/admin/billing/list`. The **surface contributes only the shell
+prefix**; the screen's `id` contributes nothing at all, so a collision-minted
+`admin.users.list` (`module: users`, `screen: list`) still renders `/users/list`
+under the admin shell, with no doubled surface segment. The exact rendering belongs
+to the framework profile, like every other binding convention.
+
+For a screen minted the default way the derived route still mirrors its location,
+which is why the two read as symmetric — but the derivation runs from the declared
+fields, and only from them. Nothing in a screen file authors a route, so a route
+and a location cannot disagree, and moving a screen between surface trees changes
+its shell prefix and nothing else: same id, same claims, same file.
+
+Walking one surface's tree is still walking that surface end to end. A flat
+`{module}/` directory sitting beside surface trees is a pre-split leftover, not a
+second convention.
 
 ## Reserved ids
 

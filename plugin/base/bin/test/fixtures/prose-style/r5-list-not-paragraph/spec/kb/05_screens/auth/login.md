@@ -1,9 +1,24 @@
-# Sign in — `/login`
+---
+id: auth.login
+module: auth
+screen: login
+lifecycle: draft
+---
+
+# Sign in
 
 **Features:** FEAT-01
 **Pattern:** [[../patterns/form]]
 
-## Instantiation
+## Bindings
+
+### Data
+
+| Key | Action | Notes |
+|---|---|---|
+| `main` | [[auth.session.read\|auth::session::read]] | the current session |
+
+## Module-specific deviations
 
 - The first row of the list.
 - The second row of the list.

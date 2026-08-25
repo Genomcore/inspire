@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "state not anchored: 'sparkly'"
+    }
+  ],
+  "forbidden": ["state not anchored: 'empty'", "state not anchored: 'offline'"]
+}

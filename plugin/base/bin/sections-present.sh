@@ -24,14 +24,19 @@
 #     ## Context · ## Decision · ## Consequences · ## Alternatives considered ·
 #     ## Related ADRs, plus `### Breaking changes` under ## Consequences.
 #
-#   Screen — `05_screens/**` (severity: warning)
-#     an H1 title, the `**Features:**` and `**Pattern:**` header lines, and
-#     ## Instantiation. `## Module-specific deviations`, `## Current prototype`
-#     and `## Notes` are optional and presence-free: never flagged either way.
+#   Screen — `05_screens/**` (severity: lifecycle-progressive)
+#     an H1 title, the `**Features:**` header line, and a non-empty
+#     ## Bindings. `**Pattern:**`, `**Components:**`, `## Module-specific
+#     deviations`, `## Current prototype` and `## Notes` are optional and
+#     presence-free: never flagged either way. A lingering `## Instantiation` is
+#     reported as a retired section — its declarations belong in keyed
+#     ## Bindings rows.
 #
-# The three non-domain layers carry no `lifecycle:` field, so nothing there can
-# ramp: their findings are warnings at every moment of their life. Only the
-# domain layer's order check ramps, by the checked object's own lifecycle.
+# `03_features` and `01_adr` carry no `lifecycle:` field, so nothing there can
+# ramp: their findings are warnings at every moment of their life. The domain
+# layer's order check and every screen finding ramp with the checked object's own
+# lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
+# file written before the identity block existed starts blocking a commit.
 #
 # A section is "present" when an H2 header with the exact name exists in the
 # body — not inside frontmatter, not inside a fenced code block (a template
@@ -386,28 +391,41 @@ check_adr() {
 }
 
 check_screen() {
-  local file="$1" missing=""
+  local file="$1" missing="" sev
   sp_strip_to_tmp "$file" || return 0
   local tmp="$SP_TMP"
 
+  # Screens carry `lifecycle:`, so their findings ramp with it like a domain
+  # object's. A screen with no frontmatter at all — every screen written before
+  # the identity block existed — reads as draft and keeps emitting warnings.
+  sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
+
   has_line_prefix "$tmp" "# "            || missing="${missing:+$missing,}H1 title"
   has_line_prefix "$tmp" "**Features:**" || missing="${missing:+$missing,}**Features:** line"
-  has_line_prefix "$tmp" "**Pattern:**"  || missing="${missing:+$missing,}**Pattern:** line"
 
-  if sdd_has_section "$tmp" "Instantiation"; then
-    if [ "$(section_has_content "$tmp" "Instantiation")" != "1" ]; then
-      sdd_finding "warning" "sections-present" "$file" \
-        "screen file has empty section(s) (header present but no body content): Instantiation"
-      sdd_count_warning
+  if sdd_has_section "$tmp" "Bindings"; then
+    if [ "$(section_has_content "$tmp" "Bindings")" != "1" ]; then
+      sdd_finding "$sev" "sections-present" "$file" \
+        "screen file has empty section(s) (header present but no body content): Bindings"
+      sdd_count_by_severity "$sev"
     fi
   else
-    missing="${missing:+$missing,}## Instantiation"
+    missing="${missing:+$missing,}## Bindings"
   fi
 
   if [ -n "$missing" ]; then
-    sdd_finding "warning" "sections-present" "$file" \
+    sdd_finding "$sev" "sections-present" "$file" \
       "screen file missing required part(s): $missing"
-    sdd_count_warning
+    sdd_count_by_severity "$sev"
+  fi
+
+  # `## Instantiation` retired into `## Bindings`: its declarations became keyed
+  # rows. Reported as its own type, so the operator is told to MOVE
+  # declarations rather than to write a section that is already there.
+  if sdd_has_section "$tmp" "Instantiation"; then
+    sdd_finding "$sev" "sections-present" "$file" \
+      "screen file carries a retired section: ## Instantiation — its declarations move to keyed ## Bindings rows"
+    sdd_count_by_severity "$sev"
   fi
 }
 

@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "duplicate screen id: 'users.list' is also declared by"
+    }
+  ],
+  "forbidden": ["screen id shape", "route collision", "module mismatch"]
+}

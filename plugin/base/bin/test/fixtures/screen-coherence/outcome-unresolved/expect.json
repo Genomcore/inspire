@@ -1,0 +1,21 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "unresolved outcome: state 'nope' is not declared"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "unresolved outcome: 'flash the toast' is none of"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "unresolved outcome: data key 'secondary' is not declared"
+    }
+  ],
+  "forbidden": ["refresh `main`", "state not anchored"]
+}

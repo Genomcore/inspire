@@ -2,8 +2,8 @@
 
 **Purpose:** show everything about one entity instance, on its own route.
 
-A **single-record view** — everything about one entity instance, on its own route
-(`/{module}/{resource}/:id`). Reached by clicking a row in a [`list`](list.md).
+A **single-record view** — everything about one entity instance, on its own route.
+Reached by clicking a row in a [`list`](list.md).
 
 ## Structure
 
@@ -14,20 +14,24 @@ A **single-record view** — everything about one entity instance, on its own ro
 
 Tokens come from the design system ([`../design-system.md`](../design-system.md)).
 
-## Slots
+## Regions
 
-| Slot | What the screen provides |
-|------|--------------------------|
-| `title` / `meta` | the record's name and identifying fields |
-| `data` | the source record (a `04_domain` entity, resolved by id) |
-| `actions` | edit / delete / domain actions on this record |
-| `tabs` | the facets (Overview, related lists, Settings, …) |
-| `back` | the list route to return to |
+| Region | Fill | Accepts | What it holds |
+|---|---|---|---|
+| `header` | required | static | the record's name and its identifying meta |
+| `header-actions` | optional | dispatch | the actions available on this record |
+| `tabs` | optional | nav | the record's facets |
+| `body` | required | data | the record itself, as instantiated components |
+| `back` | optional | nav | the way back to the collection |
+
+A region is a hole: it says what kind of content it takes, never which fields that
+content shows. Which fields the body renders belongs to the components filling it —
+the screen wires its data binding into them.
 
 ## Variants
 
 - **Single-page** — no tabs (small records).
-- **Editor** — the detail in an editable mode (or a dedicated `/edit` route).
+- **Editor** — the detail in an editable mode (or a dedicated edit screen of its own).
 
 ## Notes
 

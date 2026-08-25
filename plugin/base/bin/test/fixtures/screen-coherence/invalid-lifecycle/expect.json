@@ -1,0 +1,16 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "invalid screen lifecycle value: 'acceptd'"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "screen id shape: 'users.roster'"
+    }
+  ],
+  "forbidden": ["missing frontmatter field"]
+}

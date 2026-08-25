@@ -20,7 +20,21 @@ the catalogs holding them stay suite-wide however their entries are scoped.
 Process: draft the file in `patterns/` or `components/` — copy
 [`pattern-entry.md.template`](../templates/pattern-entry.md.template) for a pattern,
 [`component-entry.md.template`](../templates/component-entry.md.template) for a
-component; document purpose, API/slots, structure (textual), variants,
-instances; if the underlying prototype component doesn't exist yet, set the
-entry's `**State:** to-extract` and list adopters. Prefer adding a variant to an
-existing pattern over creating a new one.
+component; document purpose, structure (textual), variants and instances; if the
+underlying prototype component doesn't exist yet, set the entry's
+`**State:** to-extract` and list adopters. Prefer adding a variant to an existing
+pattern over creating a new one.
+
+**What each entry declares is not the same thing.** A pattern declares
+`## Regions`: named holes, each with a `Fill` (`required` | `optional`) and an
+`Accepts` (`data` · `dispatch` · `nav` · `static`) — geometry and nothing more. A
+component declares `## API / Slots`: its own props. The two never mirror each
+other. A region called `columns`, or any region naming the fields its content
+shows, is a component prop that leaked into a layout: put it back in the
+component's entry, where the screen's wiring can reach it.
+
+Extracting a pattern out of screens that already declare bindings changes nothing
+about those bindings — they are screen-owned, and the promoted layout only gains
+the regions their content sits in. The screens do re-enter the emanation frontier,
+because their composition changed; their unchanged claims stay covered
+([`screen-lifecycle.md`](screen-lifecycle.md) § How the frontier reads it).

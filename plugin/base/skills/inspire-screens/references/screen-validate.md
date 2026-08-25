@@ -3,11 +3,18 @@
 
 ## Pattern / component drift
 
-- **Pattern drift:** the screen claims pattern X but its deviations would
-  fundamentally change it → update the pattern's "Variants" or mark the screen
-  `bespoke`.
+- **Pattern drift:** the screen names pattern X but its deviations would
+  fundamentally change that layout → add a variant to the pattern, or drop the
+  `**Pattern:**` line: a screen with no shared layout is an ordinary screen, and
+  its bindings stand unchanged either way.
+- **Region drift:** the pattern's regions and the screen's bindings no longer meet
+  — a required region accepting data with no data binding behind it, or a binding
+  no region can hold. Fix whichever side is wrong; the join is a check, never a
+  transfer of ownership.
 - **Component drift:** the screen describes behavior that contradicts a
-  component's canonical spec → update the component spec or fix the screen.
+  component's canonical spec → update the component spec or fix the screen. A
+  binding table restating a component's props is drift in the screen: props belong
+  to the component's entry.
 
 **Legacy check.** A kept legacy `patterns/` or `components/` `_index.md` is
 operator-owned — the skill no longer reads or maintains it. An entry missing its
@@ -28,10 +35,9 @@ drift** (prototype ahead of spec).
    With two or more UI surfaces the prototype is one shell per surface behind a
    suite landing: start the browse at that landing and walk the shell owning the
    tree being audited, every shell in turn when the audit spans the suite.
-2. **Enumerate routes** from the spec being audited (each screen's route,
-   shell-prefixed per the Route-convention rule in
-   [`inspire-screens/SKILL.md`](../SKILL.md) § Rules; each tab variant; a
-   representative id for detail pages). A `shared/` screen is browsed in every
+2. **Enumerate routes** by deriving them — `/inspire_screens routes` over the
+   scope being audited ([`screen-routes.md`](screen-routes.md)), plus each tab
+   variant and a representative record for a detail screen. A `shared/` screen is browsed in every
    shell that serves it — the same spec, one visit per shell, since a shell can
    drift on its own.
 3. **For each route:** navigate and read what renders (prefer the accessibility
@@ -55,6 +61,10 @@ change.
 
 ## Cross-screen coherence
 
-- Instances of the same pattern in a module share their UX (control positions,
+- Screens naming the same pattern in a module share their UX (control positions,
   search placement, tab ordering).
-- Similar resources across modules share status vocabulary.
+- Similar resources across modules share status vocabulary — and, where the same
+  state recurs, the same state **key**.
+- Transitions form a connected graph: every screen a user can reach is targeted by
+  some navigation binding or dispatch outcome, by id. `routes` reports the
+  unreachable ones ([`screen-routes.md`](screen-routes.md)).

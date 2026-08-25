@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -72,7 +72,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `{kind} section order` | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
 | `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
-| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. |
+| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, a path relative to the linking file, and a bare basename. Screen files are checked alongside `04_domain` objects, so a dangling navigation target is reported here. |
 
 ### Standalone warnings
 
@@ -85,7 +85,37 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
 | `ADR missing required subsection` | sections-present | `### Breaking changes` is nowhere in the ADR. Presence-only: an ADR that breaks nothing still says so. |
 | `ADR subsection … is present but not under …` | sections-present | `### Breaking changes` exists but sits under some other `## Section`, where it answers a different question. Distinct from the type above so the operator is told to move a heading rather than write one. |
-| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, its `**Pattern:**` line or `## Instantiation`, or has an empty `## Instantiation`. `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
+
+### Screens (draft → warning, accepted / stable → error, superseded → warning)
+
+Screen files carry `lifecycle:`, so their shape and coherence findings ramp with
+it. A screen with no frontmatter at all reads as `draft`: warnings only.
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line or `## Bindings`, or has an empty `## Bindings`. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
+| `screen file carries a retired section` | sections-present | `## Instantiation` is still there. Its declarations belong in keyed `## Bindings` rows — see `inspire-screens/references/format-screen.md` § Old shape → new shape. |
+| `screen missing frontmatter field` | screen-coherence | One of `id` · `module` · `screen` · `lifecycle` is absent. On a file with no frontmatter at all this is the whole old-shape story, reported once per missing field. |
+| `invalid screen lifecycle value` | screen-coherence | `lifecycle:` is set but is not one of `draft / accepted / stable / superseded`. |
+| `screen id shape` | screen-coherence | `id` is neither `{module}.{screen}` nor `{surface}.{module}.{screen}` for this file's own declared `module:` and `screen:`. |
+| `screen module mismatch` | screen-coherence | `module:` and the module directory in the path name different modules. The module is referent, not position: one of the two is wrong. |
+| `screen carries an authored route` | screen-coherence | The H1 holds a path-shaped code span. Routes derive from `module:` + `screen:`, so a written one is a second source of truth. Heuristic, and a **flat warning** at every state. |
+| `screen superseded without superseded_by` / `superseded_by target does not resolve` | screen-coherence | A `superseded` screen must point at the screen id that replaced it, and that id must exist. |
+| `unknown bindings subsection` | screen-coherence | An H3 under `## Bindings` outside the closed set `Data` · `Dispatches` · `Navigation` · `States`. |
+| `binding row has no key` | screen-coherence | A binding table row whose first cell is empty. Every declaration is keyed. |
+| `duplicate binding key` | screen-coherence | One key used twice in the same subsection. Keys are screen-local and unique per subsection; a second dispatch of the same action needs its own key. |
+| `unresolved outcome` | screen-coherence | A dispatch's `On success` / `On error` is not one of `→ [[{screen-id}]]`, `state \`{key}\``, or `refresh \`{key}\`` — or names a state/data key the screen does not declare. |
+| `state not anchored` | screen-coherence | A state's `When` references no declared data key, no dispatch key and no deviation. A free-floating state has nothing to observe. |
+| `pattern join` | screen-coherence | The named pattern has a required region accepting `data`, `dispatch` or `nav`, and the screen declares no binding of that kind — a `list` layout with no data binding. |
+| `stable screen declares a to-extract component` | screen-coherence | Error at `stable` only, exempt elsewhere: a component still to extract is a promise, not a dependency. |
+
+Two screen findings never ramp, because both need declared frontmatter on both
+sides and neither can fire on a pre-0.8 file — they are **errors at every state**:
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `duplicate screen id` | screen-coherence | Two screen files declare the same `id`. Ids are unique KB-wide; the newcomer mints `{surface}.{module}.{screen}` instead. |
+| `route collision` | screen-coherence | Two screens derive the same route in the same shell — same `module:` + `screen:` in one surface tree, or one of them under `shared/`. |
 
 ### Style — the mechanical subset of the writing contract
 

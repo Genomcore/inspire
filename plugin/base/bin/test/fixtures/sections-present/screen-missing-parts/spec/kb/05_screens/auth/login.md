@@ -1,5 +1,7 @@
+# Sign in
+
 **Pattern:** [[../patterns/form]]
 
-## Notes
+## Module-specific deviations
 
-- Presence-free: a screen may carry Notes and nothing else optional.
+- The password field carries no strength meter here.
