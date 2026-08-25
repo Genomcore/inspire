@@ -68,7 +68,9 @@ built — in the prototype ([`/prototype`](../../prototype)) or in production.
   makes a different screen.
 - **Its own `## Bindings`** — the data sources, dispatches, navigation targets and
   states it declares, each keyed screen-locally. These stand whether or not a
-  pattern is named, and each row is one claim the emanation loop can cover.
+  pattern is named, and each row is one claim the emanation loop can cover. A
+  transition a dispatch causes is that dispatch's outcome, never also a
+  navigation row: one transition, one declaration, one claim.
 - **Optional dependencies** — a `**Pattern:**` line naming one shared layout and a
   `**Components:**` line naming the shared components it instantiates. Peer
   dependencies, both of them: they constrain presentation and gate promotion,

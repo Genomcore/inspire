@@ -43,12 +43,12 @@ some component's props.
 **read** its tokens (they are the source of truth for colors, typography, layout)
 but never edit them.
 
-Level 4 carries a second dimension: **surface**. Once the suite declares two or
+Tier 3 carries a second dimension: **surface**. Once the suite declares two or
 more UI surfaces, module screens split positionally into
 `05_screens/{surface}/{module}/`, with a reserved `shared/{module}/` for screens
-more than one UI surface uses. Levels 1–3 do not split — `design-system.md`,
-`patterns/` and `components/` stay suite-wide, beside the surface trees at top
-level, never inside one. Which shape applies, what `shared/` means and how a
+more than one UI surface uses. Tiers 1, 2a and 2b do not split —
+`design-system.md`, `patterns/` and `components/` stay suite-wide, beside the
+surface trees at top level, never inside one. Which shape applies, what `shared/` means and how a
 surface id resolves are defined in
 [`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md);
 read it before writing anywhere under `05_screens/`. This skill works with the
@@ -79,7 +79,10 @@ Three facts about that shape carry the rest of this skill:
 - **The screen owns its semantics.** `## Bindings` declares the data sources,
   dispatches, navigation and states, keyed screen-locally, and generates claims
   whether or not a pattern is named. `**Pattern:**` is a peer dependency
-  constraining presentation, never the screen's definition.
+  constraining presentation, never the screen's definition. One transition, one
+  declaration, one claim: a transition a dispatch causes is that dispatch's
+  outcome and never also a `### Navigation` row, which declares only the
+  transitions no dispatch on this screen causes.
 - **Routes derive** from `module:` + `screen:`, so no screen file authors one.
   `routes` renders the map.
 

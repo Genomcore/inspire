@@ -72,7 +72,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `{kind} section order` | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
 | `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
-| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, a path relative to the linking file, and a bare basename. Screen files are checked alongside `04_domain` objects, so a dangling navigation target is reported here. |
+| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. A path is never resolved relative to the linking file: the name is what the link means, so a `../` depth that shifted with a surface split still names the right file. Screen files are checked alongside `04_domain` objects, so a dangling navigation target is reported here, and both indexes are built vault-wide whatever the scope. |
 
 ### Standalone warnings
 

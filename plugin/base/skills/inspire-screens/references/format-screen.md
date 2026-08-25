@@ -131,7 +131,7 @@ a screen-local key**:
 |---|---|---|
 | `### Data` | Key, Action, Notes | which actions feed this screen |
 | `### Dispatches` | Key, Action, Trigger, On success, On error | which actions this screen invokes, and what follows |
-| `### Navigation` | Key, Target, Trigger | the transitions this screen offers |
+| `### Navigation` | Key, Target, Trigger | the transitions **no dispatch on this screen causes** |
 | `### States` | Key, When, Presentation | the keyed states this screen can be in |
 
 - **Keys are declared, screen-local, and unique per subsection** — not action ids,
@@ -143,11 +143,25 @@ a screen-local key**:
   `→ [[{screen-id}]]` (navigate), `state \`{key}\`` (a key declared in
   `### States`), or `refresh \`{key}\`` (a key declared in `### Data`). A dash
   means the dispatch has no declared outcome on that side.
+- **One transition, one declaration, one claim.** A transition a dispatch causes
+  is that dispatch's `On success` / `On error` outcome, **never** a Navigation
+  row. `### Navigation` declares only the transitions no dispatch on this screen
+  causes: a row click, a menu link, a back link, a tab. Declaring a
+  post-dispatch transition in both places mints two claims for one fact — the
+  dispatch's fingerprint *and* `{id}/nav/{key}` — which is exactly the
+  double-keying that outcomes-as-attributes exists to prevent. Nothing checks
+  this mechanically, because the same target screen may legitimately be reached
+  both ways: one row click and one dispatch outcome are two transitions, not a
+  duplicate.
 - **Navigation targets name screens by id**, never by route or path. Screen-id
   wikilinks resolve through the id index in `.inspire/bin/wikilinks-resolve.sh`,
   so a positional file name never has to match one.
 - **A state's `When` must reference something declared** — a data key, a dispatch
-  key, or a deviation. A free-floating state is a finding.
+  key, or a deviation. A free-floating state is a finding. The reference anchors
+  **only through backticks**: `` `main` returns zero rows `` anchors on the data
+  key `main`, while the same sentence written `main returns zero rows` does not
+  and is reported as unanchored. The backticks are what separate a declared key
+  from an English word that happens to spell it.
 - **A pipe-syntax wikilink inside a table cell escapes its pipe** (`\|`), or the
   cell ends early. A bare colon-form link (`[[auth::user::list]]`) is equally
   valid and needs no escape.

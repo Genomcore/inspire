@@ -1,6 +1,6 @@
 # T2 — screens substrate · registration notes
 
-Five insertions into three shared registration points, for the main session to
+Eight insertions into three shared registration points, for the main session to
 apply in the wave-close integration commit. Every edit is a literal
 find-and-replace; nothing here needs judgement. Branch: `emanation/t02-screens`.
 
@@ -88,7 +88,26 @@ REPLACE WITH:
 | `wikilinks-resolve.sh` | (10) Every `[[wikilink]]` in body resolves to an existing file, across `04_domain` **and** `05_screens`. Four routes, in order: SDD object id, screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. | Warning at draft; error at accepted and stable; warning again at superseded. A screen with no frontmatter reads as draft. Screen file names stay positional, so a screen link resolves by id and never by path. |
 ```
 
-## 6 · `CLAUDE.md` — the `base/bin/` paragraph
+## 6 · `plugin/base/bin/README.md` — the `prose-style.sh` row
+
+Its severity note counts the layers that carry no `lifecycle:`. `05_screens` was
+one of them and is not any more, so the count is wrong even though `prose-style`
+still stays flat there. The twin claim in `_references/lifecycle-rules.md` was
+already corrected on this branch; this is the README half of the same sentence.
+
+FIND (the `prose-style.sh` row, one line):
+
+```
+| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence cap (25 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (6 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | R1 and R3 are heuristics: **warning at every lifecycle, never ramping**. R2, R4, R5 and R6 ramp with the object's own lifecycle where one exists (`04_domain`) and are flat warnings in the three layers that carry no `lifecycle:` at all. |
+```
+
+REPLACE WITH:
+
+```
+| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence cap (25 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (6 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | R1 and R3 are heuristics: **warning at every lifecycle, never ramping**. R2, R4, R5 and R6 ramp with the object's own lifecycle in `04_domain` and are flat warnings in every other layer: `03_features` and `01_adr` carry no `lifecycle:` for the columns to read, and `05_screens` carries one these checks deliberately do not read — a screen ramps on its contract, never on its prose. |
+```
+
+## 7 · `CLAUDE.md` — the `base/bin/` paragraph
 
 FIND:
 
@@ -104,7 +123,7 @@ REPLACE WITH:
       screen identity, keyed bindings and the screen↔layout join. `trust.sh` is here as a
 ```
 
-## 7 · `CLAUDE.md` — the `base/kb/` paragraph
+## 8 · `CLAUDE.md` — the `base/kb/` paragraph
 
 FIND:
 

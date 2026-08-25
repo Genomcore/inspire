@@ -30,7 +30,16 @@ lifecycle: draft
      claim ({id}/data/{key} · {id}/dispatch/{key} · {id}/nav/{key} ·
      {id}/state/{key}). Drop a subsection this screen has nothing to declare in.
      A pipe-syntax wikilink inside a table cell escapes its pipe (`\|`) — an
-     unescaped one would end the cell. A bare colon-form link is equally valid. -->
+     unescaped one would end the cell. A bare colon-form link is equally valid.
+
+     One transition, one declaration, one claim: a transition a dispatch causes
+     is that dispatch's `On success`/`On error` outcome and never also a
+     Navigation row. ### Navigation declares only the transitions no dispatch on
+     this screen causes — a row click, a menu link, a back link, a tab.
+
+     A state's `When` anchors by naming a declared key in BACKTICKS
+     (`main` returns zero rows) — an unbackticked mention is not read as an
+     anchor and the state is reported as free-floating. -->
 
 ### Data
 
