@@ -285,7 +285,7 @@ findings.
 
 The class ids are stable; they are what a reader's own goldens are keyed on.
 
-### Severity — two tiers, and why
+### Severity — two tiers
 
 Review's severity splits the catalogue in two, and the split is a design
 decision rather than a tuning knob.

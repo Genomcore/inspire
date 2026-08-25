@@ -232,7 +232,8 @@ check_entity() {
   if [ "$has_id" = "yes" ]; then
     if ! kh_constraints_of "$copy" "Fields" "id" >/dev/null 2>&1; then
       # OS-E1 is a presence class: flat warning at every lifecycle in 0.8 —
-      # see `_keyed-heads.sh` § "Severity — the 0.8 grace".
+      # see `_keyed-heads.sh` § "Severity — the 0.8 grace on the presence
+      # classes".
       local e1_sev e1_note
       e1_sev="$(kh_class_severity "OS-E1" "$sev")"
       e1_note="$(kh_class_note "OS-E1")"
