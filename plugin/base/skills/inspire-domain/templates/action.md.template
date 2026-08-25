@@ -92,5 +92,9 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
   An error's head names what it reports the violation OF, drawn from V1 ∪ V3 — e.g.
   `unique(email)` for a conflict, `actor(admin)` for a forbidden call. A written field
   carrying `unique` obliges its action to declare a matching `unique(...)` error head.
-  An action with no error cases still says so explicitly, with a single `none` bullet.
+  An action with no error cases still says so explicitly, with a single `none` bullet —
+  and the BACKTICKS ARE PART OF THE SPELLING. Backticked, `none` reads as an error code
+  with no head, which is clean. Unbackticked, `- none` reads as a head attempt and is
+  reported as OS-A8, an unknown head. Every descriptor shipped so far writes it
+  backticked; write it that way.
 -->

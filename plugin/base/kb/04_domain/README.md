@@ -22,7 +22,13 @@ write-once and never renumbered, which is what lets a change to one claim leave
 every other claim untouched. The grammar, the vocabularies and what a strict
 reader refuses are one contract, in
 `.claude/skills/_references/keyed-heads.md`; the validators
-`keys-present`, `constraints-mechanics` and `head-referents` check it.
+`keys-present`, `constraints-mechanics` and `head-referents` check it. What a
+keyed entry *says* blocks from `accepted` onward — a word outside the
+vocabulary, a wrong arity, a duplicate key, an unresolvable referent. Whether
+the keyed shape *is there at all* is a warning in 0.8, at every lifecycle, so a
+vault upgraded to this release is not red on every artifact it already had;
+`derive` refuses an old-shape artifact regardless, and those classes ramp in the
+release after.
 
 - **Skill:** `inspire-domain` (define / show / update / refactor / delete /
   promote / demote / review / source / graph).

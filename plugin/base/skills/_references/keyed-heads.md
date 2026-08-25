@@ -61,12 +61,13 @@ Two shapes, and only two:
 - The **head is bare** (never backticked) and is recognized by shape: a segment
   is a *head attempt* when it is nothing but a lowercase identifier, optionally
   followed by a parenthesized argument list — `unique`, `actor(admin)`,
-  `len(3, 64)`, `pattern(/.+@.+/)`. Prose never has that shape, so the two never
+  `len(3, 64)`, `pattern(/.+@.+/)` — or by an argument list that opens and never
+  closes, `actor(admin`. Prose never has any of those shapes, so the two never
   collide.
-- A head attempt whose identifier is **outside the section's vocabulary**, or
-  whose argument count is wrong for it, is a defect — not prose. This is what
-  keeps a typo (`uniqe`) from silently degrading a store-oracle claim into a
-  prose one.
+- A head attempt whose identifier is **outside the section's vocabulary**, whose
+  argument count is wrong for it, or whose argument list never closes, is a
+  defect — not prose. This is what keeps a typo (`uniqe`) from silently
+  degrading a store-oracle claim into a prose one.
 - An entry with no head is **prose-only** and legal. It derives a test-oracle
   claim rather than a store-oracle one (see [Oracles](#oracles)).
 
@@ -76,6 +77,26 @@ with `None` and ends with a period. The shipped `None beyond Fields
 constraints.` is the entity-invariant spelling; `None.` is the general one. The
 section still has to be present — an absent section and a section that says
 "nothing holds here" are different claims.
+
+### What the grammar does not catch
+
+Recognition by shape has a boundary, and the boundary is stated here rather than
+claimed away. In each case below the entry is still *well-formed* — as a
+**prose-only** entry — so nothing is reported, and the claim the author meant to
+make silently becomes the weaker one:
+
+| written | read as | why |
+|---|---|---|
+| `` - `P1` – actor(admin) – … `` | prose-only | the separator is the em dash `—`; an en dash `–` or a hyphen `-` is not it, and the whole remainder is then one prose segment |
+| `` - `P1` — Actor(admin) — … `` | prose-only | heads are lowercase; `Actor` is not a head attempt, and a capitalised word opening a sentence is ordinary prose |
+| `` - `P1` — actor(admin) `` | prose-only | a head with no prose after it has no second separator, so the head *is* the whole remainder and reads as the prose |
+
+None of the three is a mistake the reader can distinguish from a deliberate
+prose-only entry without guessing, and guessing is what the shape rule exists to
+avoid. The remedy is the same in all three: write the separator, lowercase the
+head, and say in prose what the head means. An **unclosed** argument list is the
+one near-miss that *is* reported (`actor(admin`), because no prose opens a
+parenthesis directly onto a bare lowercase identifier.
 
 ## Keyspaces
 
@@ -132,6 +153,19 @@ Constraints: `nonnull, unique, pattern(/.+@.+/)`
 | `len(n,m)` | 2 | length between `n` and `m` inclusive |
 | `pattern(/…/)` | 1 | the value matches this regular expression |
 | `references({module}.{entity})` | 1 | the value is a key into that entity |
+
+**The regex inside `pattern(/…/)` is unrestricted.** The delimiters are the
+grammar's; everything between them is the regular expression's, commas,
+parentheses and `\/` escapes included — `pattern(/^[a-z]{3,8}@.+$/)` is one
+argument, not two. A reader that split it on the comma would report a correct
+field as wrong-arity, so the `/…/` span is read as one atomic token wherever an
+argument may begin.
+
+**The line's home is the H3's first content line.** A `Constraints:` line
+written after a sentence of prose is still read and still checked — silence
+there is how a typo'd constraint stops being asserted without anyone noticing —
+but the placement itself is reported (`OS-E8`). Constraints first, then the
+prose that explains them.
 
 **Fields are nullable by default.** There is no `nullable` word: absence of
 `nonnull` *is* nullability. This makes the common case the quiet one and the
@@ -247,22 +281,56 @@ when it fails:
 A strict reader (the derived-contract parser) **refuses** an artifact in any of
 the classes below and names the skill to touch it with; it never reads the
 section as silently empty. Authoring-time review reports the same classes as
-findings, ramping with the artifact's own lifecycle where it has one — a draft
-is design space, an `accepted` artifact has been declared emanable.
+findings.
 
 The class ids are stable; they are what a reader's own goldens are keyed on.
+
+### Severity — two tiers, and why
+
+Review's severity splits the catalogue in two, and the split is a design
+decision rather than a tuning knob.
+
+**Content classes ramp with the artifact's own lifecycle** — warning at `draft`,
+error at `accepted` and `stable`, warning again at `superseded`. A draft is
+design space; an `accepted` artifact has been declared emanable, and
+`draft → accepted` is the human pre-flight gate where a keyed entry that is
+*there but wrong* has to block. This covers everything about the content of a
+keyed entry: vocabulary, arity, duplicate keys, referents, the `unique`+`create`
+join, a misplaced `Constraints:` line — `OS-E4`–`OS-E8`, `OS-A2`, `OS-A5`–`OS-A10`,
+`OS-F2`–`OS-F5`, `OS-X1`–`OS-X4`.
+
+**The five presence classes are flat warnings at every lifecycle state in 0.8**
+— `OS-A1`, `OS-A3`, `OS-A4`, `OS-E1`, `OS-E3`, the same posture `W-1` carries.
+Their messages end `— derive refuses old-shape artifacts`, so the operator can
+see what the warning costs.
+
+The reason is that **"new but unkeyed" and "pre-0.8" are the same shape on
+disk.** A presence class fires on exactly the artifacts an upgrade inherits: no
+`B{n}` on the first step, no `## Preconditions`, no `Constraints:` line on `id`,
+prose invariants. Ramping them with the lifecycle would put every `accepted` and
+`stable` artifact of an upgraded vault into error at pre-PR and at `promote` —
+and an upgrade that leaves a vault broken is not an upgrade, whatever the
+version file claims. A grace is the only posture that keeps that promise while
+the format is still arriving.
+
+The strictness has a home regardless: **`derive` refuses an old-shape artifact
+outright** (design D7), so nothing emanates from an unkeyed descriptor no matter
+how quietly review reported it. The five are **scheduled to ramp with the
+lifecycle in the release after 0.8**, by which time a touch pass will have had a
+release to run.
 
 ### Entity document
 
 | id | old shape |
 |---|---|
-| `OS-E1` | the `id` field row carries no per-field H3 whose first line is a `Constraints:` line — the deterministic marker of a pre-keying entity |
+| `OS-E1` | the `id` field row carries no per-field H3 with a `Constraints:` line anywhere in its body — the deterministic marker of a pre-keying entity |
 | `OS-E2` | `## Fields` has no `id` row at all (its own class, so `OS-E1` can never be vacuous) |
 | `OS-E3` | `## Invariants` carries content that is neither a declared-none body nor keyed `I{n}` entries — prose invariants |
 | `OS-E4` | a `Constraints:` line carries a word outside V1, or a V1 word at the wrong arity |
 | `OS-E5` | a keyed invariant's head attempt is outside V2 |
 | `OS-E6` | two entries share one key in one keyspace |
 | `OS-E7` | a `references(...)` argument resolves to no entity document |
+| `OS-E8` | a `Constraints:` line is not its H3's **first content line** — detected by counting the H3's content lines (blank and comment-only lines excluded) and reporting every `Constraints:` line after the first of them; a second `Constraints:` line under one H3 is therefore reported too, since at most one line can be first. The line is still **read and checked** wherever it sits: ignoring it is what let a typo'd constraint silently stop being asserted. Also the class for a misplaced per-input `Constraints:` line in an action descriptor — one shape, one id |
 
 ### Action descriptor
 
@@ -278,6 +346,10 @@ The class ids are stable; they are what a reader's own goldens are keyed on.
 | `OS-A8` | an `## Errors` head attempt is outside V5 |
 | `OS-A9` | two entries share one key in one keyspace |
 | `OS-A10` | `## Preconditions` / `## Postconditions` sit outside the canonical section order |
+
+A misplaced per-input `Constraints:` line is reported under **`OS-E8`**, in the
+entity table above: the shape is identical on a field H3 and on an input H3, one
+reader checks both, and one shape gets one id.
 
 ### Use-case file
 
@@ -295,14 +367,20 @@ The class ids are stable; they are what a reader's own goldens are keyed on.
 |---|---|
 | `OS-X1` | a written `unique` field's action declares no `unique(...)` error head covering it |
 | `OS-X2` | an invariant head names a field absent from `## Fields` |
-| `OS-X3` | a `P` / `Q` head names an entity absent from `## Entities` |
+| `OS-X3` | a `P` / `Q` head names an entity absent from `## Entities`. Two message shapes share this id, because `unchanged(...)` is resolved differently by design: for every other V3/V4 head the finding says the named entity *is not touched by this descriptor*, and for `unchanged(...)` — whose whole point is naming an untouched entity — it says the named entity *resolves to no entity document on disk* |
 | `OS-X4` | `returns({field})` names a field absent from `## Outputs` |
 
 ### The one warning-only class
 
 | id | shape |
 |---|---|
-| `W-1` | constraint words lingering in a `Notes` or `Description` cell, or in per-field prose, after the constraint itself moved to a `Constraints:` line |
+| `W-1` | constraint words lingering in a **table cell** — the entity `## Fields` `Notes`, the descriptor `## Inputs` `Description`, the descriptor `## Entities` field-touch `Notes` — after the constraint itself moved to a `Constraints:` line |
+
+`W-1` scans **those three columns and nothing else**. Per-field and per-input H3
+prose is deliberately out of scope: prose under an H3 is where a constraint's
+*meaning* is supposed to be explained, so scanning it would fire on the writing
+the format asks for. The cells are the narrow case where a constraint word is
+almost always a leftover.
 
 `W-1` is **never** a refusal. Detecting it means scanning prose for words that
 have legitimate prose uses, so it is a heuristic, and a heuristic does not get

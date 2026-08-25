@@ -42,7 +42,7 @@ Public-facing signup. Layers domain allow-list enforcement and audit logging on 
 | Field          | Touch   | Type      | Mapping                  | Notes                                 |
 |----------------|---------|-----------|--------------------------|---------------------------------------|
 | `id`           | written | uuid      | `uuid()`                 | PK.                                   |
-| `email`        | written | email     | `input.email`            | Unique across `auth::user` rows.      |
+| `email`        | written | email     | `input.email`            | The principal's identity handle.      |
 | `password`     | written | password  | `hash(input.password)`   | Never plaintext.                      |
 | `created_at`   | written | timestamp | `now()`                  | Set at insert.                        |
 | `signup_ip`    | written | string    | `current_request.ip`     | Audit trail; not exposed in reads.    |

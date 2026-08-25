@@ -97,7 +97,7 @@ Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariant
 - **`## Rationale`** — operator-authored, feature/ADR-grounded. The **discussion-forcing function**: when an action introduces a new field, the agent surfaces the rationale question and waits for the operator to update this section *before* the new field row lands in `## Fields`. This is what keeps the entity shape an act of design rather than an emergent residue of action authoring.
 - **`## Invariants`** — operator-authored, and **keyed**: each entry is `` - `I{n}` — {head} — {prose} `` (or `` - `I{n}` — {prose} `` when no head fits), per [`keyed-heads.md`](../../_references/keyed-heads.md). Heads come from V2 there — the multi-field and relational predicates a single field's own line cannot express. `None beyond Fields constraints.` remains the valid one-line body; the section must be present, but brevity is welcome when there is genuinely nothing extra to assert.
 - **`## Fields`** — `| Field | Type | Notes |` table with backticked field names, **unchanged**: constraints do not live in the table. The row set is **largely emergent** — populated and reconciled by the agent during consolidation from every action descriptor's `## Entities` declarations — but each row exists because some action touches the field, and adding one forces a `## Rationale` update. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens.
-- **`### {field-name}`** — per-field sub-section, immediately under the Fields table, in field-table order. Its **first line carries the field's constraints** when it has any: `` Constraints: `nonnull, unique, immutable` `` — the closed V1 vocabulary of [`keyed-heads.md`](../../_references/keyed-heads.md). Everything after that line is the per-field rationale prose: what motivates the design, which ADR or feature grounds it, what consumers need to know. A constrained field **must** carry the H3, even when the Constraints line is all it has to say; an unconstrained field needs one only when its design needs narrating.
+- **`### {field-name}`** — per-field sub-section, immediately under the Fields table, in field-table order. Its **first line carries the field's constraints** when it has any: `` Constraints: `nonnull, unique, immutable` `` — the closed V1 vocabulary of [`keyed-heads.md`](../../_references/keyed-heads.md). A `Constraints:` line further down the body is read and checked too, and reported as misplaced (`OS-E8`) rather than ignored. Everything after that line is the per-field rationale prose: what motivates the design, which ADR or feature grounds it, what consumers need to know. A constrained field **must** carry the H3, even when the Constraints line is all it has to say; an unconstrained field needs one only when its design needs narrating.
 - **`## Touched by`** — auto-populated by consolidation: `| Action | Touch | Notes |` table. **Touch values**: `read` · `write` · `list` · `delete`. Action ids use pipe-syntax wikilinks (`[[module.entity.action|module::entity::action]]`). Operators do not hand-edit this section; it is rewritten on every consolidation pass.
 
 **No `## Findings`, no `## Used by`.** Files state present truth only — findings live in `review` output (git history is the audit trail), and the V2 `## Used by` section is now `## Touched by` with explicit touch semantics.
@@ -113,6 +113,20 @@ is specific to entity documents.
 vocabulary V1, comma-separated, inside one backtick span. A word outside V1, or
 a V1 word at the wrong arity, is an error — it is a typo, not prose, and a typo
 in a constraint is a claim that silently stops being asserted.
+
+The reader lives up to that sentence: it takes a `Constraints:` line **wherever
+in the H3 it sits**, not only as the first line, and checks it there. A line
+written after a paragraph of rationale used to be skipped in silence, which made
+the very failure this rule exists to prevent — a claim quietly ceasing to be
+asserted — the thing a misplaced line *caused*. Placement is still the format:
+a line that is not the H3's first content line is reported as `OS-E8`, and a
+second `Constraints:` line under one H3 is reported the same way. Constraints
+first, then the prose that explains them.
+
+The **regex inside `pattern(/…/)` is unrestricted**. Commas, parentheses and
+escaped delimiters inside the `/…/` belong to the regular expression, so
+`` Constraints: `nonnull, pattern(/^[a-z]{3,8}@.+$/)` `` is two constraints, not
+three, and `pattern`'s argument is one, not two.
 
 **Two or more fields, or a relation → a named invariant.** `` - `I3` — unique(org_id, email) — {prose} `` in `## Invariants`. This is why the
 composite case has a home at all: a rule about a tuple has no single field to
@@ -130,13 +144,30 @@ the requirement.
   written in this format from one written before it — which is why a strict
   reader can refuse the old shape per-artifact instead of guessing. An entity
   with no `id` row at all is a separate defect, reported separately, so the
-  marker can never pass vacuously.
+  marker can never pass vacuously. In 0.8 review reports a missing `id`
+  Constraints line as a **warning at every lifecycle**, not an error at
+  `accepted` — see "What review blocks on" below.
 - **A constraint stated twice drifts.** Once a constraint is on the Constraints
   line, the `Notes` cell says what the constraint *means* to a reader, not that
   it exists. "Unique across rows" in Notes next to `unique` on the line is two
   spellings of one fact; `review.sh` reports the leftover as a warning — a
   warning, because recognising a constraint word inside prose is a heuristic and
-  a heuristic does not block anything.
+  a heuristic does not block anything. The heuristic reads the `Notes` **cell**
+  only, never the per-field H3 prose: prose under an H3 is exactly where a
+  constraint's meaning is supposed to be explained.
+
+**What review blocks on.** The catalogue splits in two, and
+[`keyed-heads.md`](../../_references/keyed-heads.md) § "Severity — two tiers"
+states it once for both object kinds. What a *keyed entry says* — an
+out-of-vocabulary word, a wrong arity, a duplicate key, a misplaced
+`Constraints:` line, an unresolvable referent — ramps with the artifact's own
+lifecycle: warning at `draft`, **error at `accepted` and `stable`**, at pre-commit,
+at pre-PR and at `promote` alike. Whether the *keyed shape is there at all* —
+no `Constraints:` line on `id` (`OS-E1`), prose or unkeyed `## Invariants`
+(`OS-E3`) — is a **flat warning at every lifecycle in 0.8**, because those are
+the shapes an upgrade inherits and a vault that upgrades cleanly may not go red
+on every entity it already had. `derive` refuses an old-shape entity regardless,
+and the presence classes ramp in the release after 0.8.
 
 ## Entity lifecycle (symmetric with actions)
 

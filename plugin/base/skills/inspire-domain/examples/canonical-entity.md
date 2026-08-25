@@ -18,26 +18,28 @@ lifecycle: accepted             # ← symmetric with action lifecycle; promotion
 The `auth::user` entity is the platform's single source of truth for a user account — the row that represents an authenticated principal in the [[auth-user-management|user-management subsystem]]. Every authenticated session, every audit-event actor reference, and every permission-set binding ultimately resolves back to a row in this entity.
 
 ## Rationale
-The identity model in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple, so the entity exists as a discrete object. The auth subsystem must not delegate that uniqueness invariant to a downstream consumer.
+The identity model in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple, so the entity exists as a discrete object. The auth subsystem must not delegate that uniqueness invariant to a downstream consumer. One email may hold an account in two scopes and those are two principals, which is why the uniqueness here is a *tuple's* and not a field's.
 
-The field shape carries the minimum the auth-provider integration needs, plus the platform's own metadata. `email` is the canonical identity handle that [[auth-identity-model|the identity-model feature]] describes. `password_hash` carries credential material whose algorithm is a system-wide setting (see the field-level rationale below). `created_at` anchors the row to the platform audit timeline that [[adr-audit-01-centralized-logging]] defines.
+The field shape carries the minimum the auth-provider integration needs, plus the platform's own metadata. `scope` is the tenancy discriminator that identity model calls for, fixed at provisioning because moving an account between scopes is a create plus a retire rather than an edit. `email` is the canonical identity handle that [[auth-identity-model|the identity-model feature]] describes. `password_hash` carries credential material whose algorithm is a system-wide setting (see the field-level rationale below). `created_at` anchors the row to the platform audit timeline that [[adr-audit-01-centralized-logging]] defines.
 
 A new field lands here only after `## Rationale` justifies it. The discussion-forcing discipline keeps the entity shape an act of design rather than a residue of action authoring.
 
 ## Invariants
-- `I1` — immutable(email) — Changing an account's email is a new referent, not an edit: the [[adr-auth-01-identity-model|identity model]] makes the email half of the principal's identity, so a rename is a create plus a retire.
+- `I1` — unique(scope, email) — One account per `{scope, email}` pair: the [[adr-auth-01-identity-model|identity model]] scopes identity to a tenancy, so the same handle in two scopes is two principals and neither shadows the other.
 - `I2` — `password_hash` is write-only — no read action returns it. Reads exist only via `auth::password::verify` (constant-time comparison, never raw exposure).
 
-<!-- ← `I1` carries a head because `immutable(email)` says it exactly; `I2` is prose-only, which is
-     the normal case for the interesting ones, and derives a test-oracle claim rather than a
-     store-oracle one. `email`'s uniqueness is NOT here: it is a single-field rule and lives on the
-     field's own Constraints line, next to the field it constrains. -->
+<!-- ← `I1` carries a head because the tuple has no single field to live under: `unique(scope, email)`
+     is precisely the case `## Invariants` exists for. `I2` is prose-only, which is the normal case
+     for the interesting ones, and derives a test-oracle claim rather than a store-oracle one.
+     Note what is NOT here: `email`'s own `immutable` and `pattern`. Those constrain one field, so
+     they live on that field's Constraints line, next to the field they constrain. -->
 
 ## Fields
 
 | Field           | Type      | Notes                                                          |
 |-----------------|-----------|----------------------------------------------------------------|
 | `id`            | uuid      | Primary key.                                                   |
+| `scope`         | string    | The tenancy the account belongs to.                            |
 | `email`         | email     | The canonical identity handle.                                 |
 | `password_hash` | string    | Opaque credential blob; algorithm is system-wide (see below).  |
 | `created_at`    | timestamp | The platform audit-timeline anchor.                            |
@@ -46,8 +48,13 @@ A new field lands here only after `## Rationale` justifies it. The discussion-fo
 ### id
 Constraints: `nonnull, unique, immutable`
 
+### scope
+Constraints: `nonnull, immutable`
+
 ### email
-Constraints: `nonnull, unique, pattern(/.+@.+/)`
+Constraints: `nonnull, immutable, pattern(/.+@.+/)`
+
+`immutable` is here and not in `## Invariants`: changing an account's email is a new referent rather than an edit — the [[adr-auth-01-identity-model|identity model]] makes the email half of the principal's identity, so a rename is a create plus a retire — but that constrains exactly one field, and a single-field rule lives on the field's own line.
 
 The pattern is deliberately permissive: the real rules are the deliverability and allow-list rules in [[auth-email-validation|the email-validation feature]], which change without the schema changing. What belongs here is the shape nothing downstream may violate.
 
@@ -66,7 +73,7 @@ Nullable until the first successful login, and deliberately carries no `nonnull`
 
 | Action                                                       | Touch  | Notes                                              |
 |--------------------------------------------------------------|--------|----------------------------------------------------|
-| [[auth.user.create|auth::user::create]]                      | write  | Inserts `id`, `email`, `password_hash`, `created_at`. |
+| [[auth.user.create|auth::user::create]]                      | write  | Inserts `id`, `scope`, `email`, `password_hash`, `created_at`. |
 | [[auth.user.find|auth::user::find]]                          | read   | Looks up by `id` or `email`; returns full row.     |
 | [[auth.user.signup|auth::user::signup]]                      | write  | Public-facing wrapper; delegates row insert to `create`. |
 ```
@@ -79,13 +86,13 @@ Nullable until the first successful login, and deliberately carries no `nonnull`
 
 - **Purpose and Rationale are operator-authored prose, feature/ADR-grounded.** Wikilinks weave into the sentences that make the claims (prosaic back-sourcing). No trailing `Back-source:` lines. The Rationale is the **discussion-forcing function** — when an action introduces a new field, the agent surfaces the question and waits for the operator to update Rationale *before* the new row lands in `## Fields`.
 
-- **Invariants are keyed, and a head is optional.** `I1` carries `immutable(email)` because that head says it exactly; `I2` is prose-only, which is the normal case for the interesting invariants and derives a test-oracle claim instead of a store-oracle one. Keys are write-once: `I1` stays `I1`, deleting one leaves a gap, and nothing is renumbered. When there is nothing to assert beyond what the fields already constrain, write `None beyond Fields constraints.` — the section must be present; brevity is acceptable.
+- **Invariants are keyed, and a head is optional.** `I1` carries `unique(scope, email)` because that head says it exactly; `I2` is prose-only, which is the normal case for the interesting invariants and derives a test-oracle claim instead of a store-oracle one. Keys are write-once: `I1` stays `I1`, deleting one leaves a gap, and nothing is renumbered. When there is nothing to assert beyond what the fields already constrain, write `None beyond Fields constraints.` — the section must be present; brevity is acceptable.
 
-- **A single-field rule is not an invariant.** `email`'s uniqueness sits on `### email`'s Constraints line, not in `## Invariants`, because it constrains one field and belongs next to it. `## Invariants` is for the rules a single field cannot express — a tuple's uniqueness, a co-presence rule, referential integrity — and for the ones no head captures at all.
+- **A single-field rule is not an invariant.** `email`'s `immutable` and `pattern` sit on `### email`'s Constraints line, not in `## Invariants`, because each constrains one field and belongs next to it. `## Invariants` is for the rules a single field cannot express — and `I1` is exactly that: `unique(scope, email)` is a claim about a *pair*, so there is no one field's H3 it could live under. A tuple's uniqueness, a co-presence rule, referential integrity, and the rules no head captures at all: that is the section's whole population. Anything narrower written there is a locality error, even though no validator catches it — this example is the guard.
 
 - **Fields is largely emergent, not arbitrary.** The row set comes from joining every action descriptor's `## Entities` declarations during consolidation. But each row exists because a design decision motivated it — adding one requires a Rationale update. The Notes column says what a field *means* to a reader; the constraints say what may not be violated, and the two never restate each other. "Unique across rows" in Notes next to `unique` on the line is two spellings of one fact.
 
-- **Per-field H3 is mandatory for a constrained field, opt-in otherwise.** `id`, `email`, `password_hash` and `created_at` all have constraints, so all four carry an H3 — `id` and `created_at` say nothing beyond their Constraints line, and that is a complete H3. `password_hash` adds rationale because the algorithm-is-system-wide call is worth grounding in an ADR. `last_seen_at` carries no constraints at all and gets an H3 anyway, because *deliberate* nullability is a design statement worth making out loud — fields are nullable by default, so the absence of `nonnull` is quiet, and quiet is exactly what needs a sentence here.
+- **Per-field H3 is mandatory for a constrained field, opt-in otherwise.** `id`, `scope`, `email`, `password_hash` and `created_at` all have constraints, so all five carry an H3 — `id`, `scope` and `created_at` say nothing beyond their Constraints line, and that is a complete H3. `password_hash` adds rationale because the algorithm-is-system-wide call is worth grounding in an ADR. `last_seen_at` carries no constraints at all and gets an H3 anyway, because *deliberate* nullability is a design statement worth making out loud — fields are nullable by default, so the absence of `nonnull` is quiet, and quiet is exactly what needs a sentence here.
 
 - **Touched by uses pipe-syntax wikilinks and explicit touch verbs.** `[[auth.user.create|auth::user::create]]` resolves cleanly on disk (dotted) while displaying the canonical id (colon form). Touch values are `read` · `write` · `list` · `delete`. The section is **auto-populated** by consolidation — operators do not hand-edit it; the table is rewritten on every consolidation pass.
 

@@ -45,6 +45,7 @@ The floor is the platform-wide minimum [[adr-auth-02-password-hashing]] sets; th
 | Field          | Touch   | Type      | Mapping                | Notes                                |
 |----------------|---------|-----------|------------------------|--------------------------------------|
 | `id`           | written | uuid      | `uuid()`               | PK; generated at write.              |
+| `scope`        | written | string    | `current_scope`        | The provisioning tenancy.            |
 | `email`        | written | email     | `input.email`          | The identity handle.                 |
 | `password`     | written | password  | `hash(input.password)` | Never stored plaintext.              |
 | `created_at`   | written | timestamp | `now()`                | The audit-timeline anchor.           |
@@ -56,7 +57,7 @@ The floor is the platform-wide minimum [[adr-auth-02-password-hashing]] sets; th
 ## Behavior
 1. `B1` — Validate `email` against RFC 5321 and the project's allow-list rules described in [[auth-email-validation|the email-validation rules]].
 2. `B2` — Hash `password` via [[auth.password.hash|auth::password::hash]] using bcrypt at the cost defined in [[adr-auth-02-password-hashing]].
-3. `B3` — INSERT INTO `auth_user (id, email, password, created_at)`. The DB unique constraint on `email` is the conflict-detection mechanism — if it fires, fall through to the `email_exists` error.
+3. `B3` — INSERT INTO `auth_user (id, scope, email, password, created_at)`. The DB unique constraint on `(scope, email)` is the conflict-detection mechanism — if it fires, fall through to the `email_exists` error.
 4. `B4` — Audit event emission is out of scope for this action; the public-facing wrapper [[auth.user.signup|auth::user::signup]] layers that side-effect on top.
 
 ## Postconditions
@@ -65,7 +66,7 @@ The floor is the platform-wide minimum [[adr-auth-02-password-hashing]] sets; th
 - `Q3` — unchanged(audit.event) — No audit event is emitted here. The wrapper owns that, and stating it turns "we did not mean to write that" into something the suite asserts.
 
 ## Errors
-- `email_exists` — unique(email) — operator-facing message: "An account already exists with that email."
+- `email_exists` — unique(scope, email) — operator-facing message: "An account already exists with that email."
 - `password_too_weak` — len(password) — operator-facing message: "Password must be at least 12 characters and contain mixed case and digits."
 - `email_invalid` — pattern(email) — operator-facing message: "Email address is not valid."
 - `forbidden` — actor(admin) — operator-facing message: "Only an administrator may create an account."

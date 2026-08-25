@@ -22,7 +22,9 @@ leaves a gap, which is the contract working, and anything citing a step keeps
 citing the same one. Most use-case entries are legitimately prose: a use case
 describes what from the user's perspective, and the optional machine-readable
 heads exist for the few places one fits exactly. The shared grammar lives in
-`.claude/skills/_references/keyed-heads.md`.
+`.claude/skills/_references/keyed-heads.md`. Use-case files carry no
+`lifecycle:`, so every finding in this layer is a **warning** — including the
+one that says a `## Main flow` step predates keyed steps.
 
 Features reference decisions in [`01_adr`](../01_adr), are realised as specs in
 [`04_domain`](../04_domain) and screens in [`05_screens`](../05_screens), and are explored

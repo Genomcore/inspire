@@ -81,7 +81,7 @@ The floor is the platform-wide minimum set by [[adr-auth-02-password-hashing]]; 
 The body has eight sections in fixed order: `## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Preconditions` · `## Behavior` · `## Postconditions` · `## Errors`. The order is the Hoare reading of a contract — what must hold, what happens, what holds afterwards — and each section has a consistent shape across descriptors:
 
 - **`## Purpose`** — operator-readable role of the action in the system. Back-sourcing is **prosaic**: wikilinks weave into the sentence that makes the claim, using pipe-syntax display text where it reads better. No trailing `Back-source: [[x]], [[y]].` lines, no bare `[[link]]` at the end of behavior steps.
-- **`## Inputs`** — 4-column table: `| Parameter | Type | Required | Description |`. When all params share a property (e.g. every parameter is optional, or every parameter is required), state it in a lead-in sentence above the table and you may omit the column. A constrained parameter carries a `### {param}` H3 under the table whose first line is its `Constraints:` line — the same shape and the same closed vocabulary the entity format uses for fields, per [`keyed-heads.md`](../../_references/keyed-heads.md). The `Required` column stays the **only** home for required-ness, so `nonnull` never appears on an input's Constraints line.
+- **`## Inputs`** — 4-column table: `| Parameter | Type | Required | Description |`. When all params share a property (e.g. every parameter is optional, or every parameter is required), state it in a lead-in sentence above the table and you may omit the column. A constrained parameter carries a `### {param}` H3 under the table whose first line is its `Constraints:` line — the same shape and the same closed vocabulary the entity format uses for fields, per [`keyed-heads.md`](../../_references/keyed-heads.md). A `Constraints:` line further down that H3 is read and checked too, and reported as misplaced (`OS-E8`) rather than ignored. The `Required` column stays the **only** home for required-ness, so `nonnull` never appears on an input's Constraints line.
 - **`## Outputs`** — a **logical contract**, not a wire shape. Three sub-patterns by what the action returns:
   - **Whole entity (or array of it)** → 1-line reference to the entity document, no inline table. Form: `An array of [[platform.action|platform::action]] entities.` The entity document's `## Fields` table is the canonical declaration of the field shape; duplicating it here would drift.
   - **Subset of an entity** (e.g. the action returns only `{id, name}` from a 10-field entity) → inline table listing the returned fields, drawn from the entity's canonical types.
@@ -117,6 +117,19 @@ Three coherence checks join across the sections, and each is a real defect when
 it fails: a `P`/`Q` head naming an entity absent from `## Entities`;
 `returns({field})` naming a field absent from `## Outputs`; and a written
 `unique` field whose action declares no `unique(...)` error head covering it.
+
+**What review blocks on.** The split is stated once, for both object kinds, in
+[`keyed-heads.md`](../../_references/keyed-heads.md) § "Severity — two tiers".
+What a keyed entry *says* — a head outside its vocabulary, a wrong arity, a
+duplicate key, an unresolvable referent, a misplaced `Constraints:` line — ramps
+with the descriptor's lifecycle: warning at `draft`, **error at `accepted` and
+`stable`**, at pre-commit, at pre-PR and at `promote` alike. Whether the keyed
+shape *is there at all* — no `B{n}` on the first step (`OS-A1`), no
+`## Preconditions` (`OS-A3`), no `## Postconditions` (`OS-A4`) — is a **flat
+warning at every lifecycle in 0.8**: those are precisely the shapes an upgrade
+inherits, and a vault that upgrades cleanly may not go red on every descriptor
+it already had. `derive` refuses an old-shape descriptor regardless, and the
+presence classes ramp with the lifecycle in the release after 0.8.
 
 ## Pure-contract scope
 
