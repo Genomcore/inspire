@@ -20,6 +20,26 @@ skipped(){ echo "SKIP $2 ($1 assertions)"; skip=$((skip+$1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
+# Scratch trees that spend part of their life read-only — chmod 555 or 500, so that
+# a deletion or a move fails the way it would on a read-only mount. `rm -rf` cannot
+# unlink out of a directory it may not write to, so an abort between the chmod and
+# the inline restore would strand an undeletable tree in $TMPDIR forever (the old
+# fixed /tmp paths at least got a `rm -rf` attempt from the next run; a private
+# mktemp tree gets none). Register them here and the EXIT trap restores the mode
+# before removing. The trap runs no `exit`, so the suite's own status stands, and
+# its `[ -d ]` guard means a tree already cleaned up inline costs nothing.
+HOPOPS_SCRATCH=()
+hopops_scratch(){ HOPOPS_SCRATCH=( ${HOPOPS_SCRATCH+"${HOPOPS_SCRATCH[@]}"} "$1" ); }
+hopops_scratch_cleanup(){
+  local d
+  for d in ${HOPOPS_SCRATCH+"${HOPOPS_SCRATCH[@]}"}; do
+    [ -d "$d" ] || continue
+    chmod -R u+rwX "$d" 2>/dev/null
+    rm -rf "$d"
+  done
+}
+trap hopops_scratch_cleanup EXIT
+
 # ---- detection ----------------------------------------------------------
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
 
@@ -442,10 +462,16 @@ fixture_cleanup "$w"
 # against disk, so a line written BEFORE the mutation is a claim we cannot
 # support. chmod 555 on the parent makes rm/mv fail while the paths survive —
 # the same shape as a read-only mount, an immutable flag, or a full disk.
-# Literal /tmp paths throughout, and the mode is restored before cleanup.
-rm -rf /tmp/inspire-hopops-perm
-mkdir -p /tmp/inspire-hopops-perm/locked
-perm=/tmp/inspire-hopops-perm
+#
+# The scratch tree is `mktemp -d`, not a fixed path: this block and the symlink
+# block below used to name /tmp/inspire-hopops-{perm,link} literally, so two runs
+# of this suite at once — two worktrees of the same repo, say — deleted each
+# other's trees mid-assertion and reported phantom failures. A private tree per
+# run makes the suite safe to run concurrently. It registers with hopops_scratch
+# because part of its life is chmod 555, which `rm -rf` cannot empty; the mode is
+# restored before the inline cleanup either way.
+perm="$(mktemp -d)"; hopops_scratch "$perm"
+mkdir -p "$perm/locked"
 printf 'a\n' > "$perm/locked/a.txt"
 printf 'b\n' > "$perm/locked/b.txt"
 printf 'victim\n' > "$perm/locked/victim.txt"
@@ -520,17 +546,16 @@ else
     "! grep -q \$'^delete\tonly/' '$perm/j-act'"
   chmod 755 "$perm/only"
 fi
-chmod 755 /tmp/inspire-hopops-perm/locked
-rm -rf /tmp/inspire-hopops-perm
+chmod 755 "$perm/locked"
+rm -rf "$perm"
 
 # ---- a symlink is a directory entry, so both modes must see it -------------
 # `find -type f` excluded it, so both modes computed zero survivors; only act
 # mode then discovered via rmdir that the directory was not empty. The two
 # modes returned OPPOSITE verdicts on identical input, and neither mentioned
 # the symlink at all. `! -type d` fixes both halves at once.
-rm -rf /tmp/inspire-hopops-link
-mkdir -p /tmp/inspire-hopops-link/proj/pfx/nested
-sym=/tmp/inspire-hopops-link
+sym="$(mktemp -d)"; hopops_scratch "$sym"
+mkdir -p "$sym/proj/pfx/nested"
 printf 'x\n' > "$sym/proj/pfx/nested/ours.txt"
 jq -n --arg h "$(sha256_of "$sym/proj/pfx/nested/ours.txt")" \
   '{version:"9.9.9",released:"x",commit:"x",layout:"A",
@@ -546,8 +571,8 @@ sym_act="$(awk -F'\t' '$2=="pfx/" {print $1}' "$sym/j-act")"
 sym_act_link="$(grep -c 'operator-symlink' "$sym/j-act")"
 
 # Rebuild an identical starting tree for record mode.
-rm -rf /tmp/inspire-hopops-link/proj
-mkdir -p /tmp/inspire-hopops-link/proj/pfx/nested
+rm -rf "$sym/proj"
+mkdir -p "$sym/proj/pfx/nested"
 printf 'x\n' > "$sym/proj/pfx/nested/ours.txt"
 ln -s /nonexistent-target-xyz "$sym/proj/pfx/operator-symlink"
 HOP_JOURNAL="$sym/j-rec"; hop_ops_init "$sym/proj" "$sym/mf.json" 1
@@ -564,7 +589,7 @@ check "the symlink is labelled the operator's, not ours" \
   "grep -q \$'^keep\tpfx/operator-symlink\tyours' '$sym/j-rec'"
 check "the operator's symlink was not deleted" \
   "[ -L '$sym/proj/pfx/operator-symlink' ]"
-rm -rf /tmp/inspire-hopops-link
+rm -rf "$sym"
 
 # ---- the chain ----------------------------------------------------------
 . "$PLUGIN_ROOT/scripts/lib/chain.sh"
@@ -1142,7 +1167,13 @@ fixture_cleanup "$w"
 # validator moves failed, every failure was honestly journalled, the run exited
 # 0 — and .inspire.lock went 0.2.1 → 0.3.1, claiming a migration that did not
 # happen. HOP_FAILED, compared across each hop, is what makes it observable.
-w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+#
+# chmod 500 again, so the fixture is registered for the same reason the hop-ops
+# scratch trees are: `rm -rf` cannot unlink out of a directory it may not write
+# to, and the restore below is on the happy path only. fixture_cleanup still does
+# the removing when the block completes; the trap only covers an abort inside the
+# window, and its `[ -d ]` guard makes the double-up a no-op.
+w="$(mktemp -d)"; hopops_scratch "$w"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
 chmod 500 "$p/.claude/bin"
 if touch "$p/.claude/bin/probe" 2>/dev/null; then
   rm -f "$p/.claude/bin/probe"; chmod 755 "$p/.claude/bin"
@@ -1164,8 +1195,10 @@ else
   # End to end: exit 2, and the lock still reads the OLD version. A stale lock is
   # recoverable — the next run re-detects 0.2.1 and re-runs the hop; a lock that
   # claims 0.3.1 would make detection score the project as already migrated and
-  # the migration would never be retried.
-  w="$(mktemp -d)"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
+  # the migration would never be retried. Registered for the same reason as the
+  # tree above — this one's restore sits after a materialize.sh call, so the
+  # unwritable window spans a whole subprocess.
+  w="$(mktemp -d)"; hopops_scratch "$w"; p="$(fixture_from_tag v0.2.1 "$w" "$REPO")"
   chmod 500 "$p/.claude/bin"
   hf_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
   hf_rc=$?
