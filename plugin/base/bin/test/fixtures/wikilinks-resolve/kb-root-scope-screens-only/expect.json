@@ -1,0 +1,23 @@
+{
+  "exit": 1,
+  "args": ["spec/kb"],
+  "findings": [
+    {
+      "rule": "wikilinks-resolve",
+      "severity": "warning",
+      "message_substring": "this-wikilink-resolves-nowhere"
+    },
+    {
+      "rule": "wikilinks-resolve",
+      "severity": "error",
+      "message_substring": "user.profile.edit.md"
+    }
+  ],
+  "forbidden": [
+    "03_features",
+    "01_adr",
+    "adr-does-not-exist-anywhere",
+    "adr-also-does-not-exist",
+    "also::missing::here"
+  ]
+}

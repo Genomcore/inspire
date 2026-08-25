@@ -2,5 +2,5 @@
   "exit": 0,
   "args": ["spec/kb"],
   "findings": [],
-  "forbidden": ["severity", "wikilinks-resolve"]
+  "forbidden": ["wikilinks-resolve"]
 }

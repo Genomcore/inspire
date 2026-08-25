@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "pattern entry declares no '## Regions' table"
+    }
+  ],
+  "forbidden": ["pattern join", "\"severity\":\"error\""]
+}

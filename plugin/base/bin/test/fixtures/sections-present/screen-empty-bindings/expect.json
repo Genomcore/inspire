@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "screen file has empty section(s) (header present but no body content): Bindings"
+    }
+  ],
+  "forbidden": ["missing required part", "Notes"]
+}
