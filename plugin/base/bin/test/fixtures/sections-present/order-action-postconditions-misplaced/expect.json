@@ -1,3 +1,3 @@
 { "exit": 1,
-  "findings": [{"rule":"sections-present","severity":"error","message_substring":"action descriptor section order"}],
+  "findings": [{"rule":"sections-present","severity":"error","message_substring":"OS-A10: action descriptor section order"}],
   "forbidden": [] }
