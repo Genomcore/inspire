@@ -225,9 +225,12 @@ anything.
   | `bash plugin/test/test-upgrade.sh` | detection, layout signatures, hops, the merge, end-to-end upgrades |
   | `bash plugin/test/test-materialize.sh` | `init` and `update` against scratch projects |
 
-  The last two take minutes — that is the fixture builds, not a hang. Neither is
-  parallel-safe: `test-upgrade.sh` uses literal `/tmp` paths, so two copies at once
-  produce phantom failures.
+  The last two take minutes — that is the fixture builds, not a hang. All six are
+  **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
+  only ever read, so any number of copies — several worktrees at once, or the same
+  suite twice over — can run concurrently without interfering. Keep it that way:
+  a fixed path under `/tmp` is what made `test-upgrade.sh` produce phantom failures
+  before.
 - Fixtures are free and cost the repo nothing: every tag ships a runnable installer,
   so `git archive <tag>` plus that era's own installer yields a genuine
   period-correct project tree. `plugin/test/lib/fixtures.sh` does this — prefer it
