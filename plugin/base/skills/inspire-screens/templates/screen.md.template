@@ -6,8 +6,9 @@ lifecycle: draft
 ---
 
 <!-- Required: the frontmatter identity block (id · module · screen · lifecycle),
-     the H1 title, the Features line, and ## Bindings with at least one of its
-     four subsections (### Data · ### Dispatches · ### Navigation · ### States).
+     the H1 title, the Features line, a non-empty ## Purpose, and ## Bindings
+     with at least one of its four subsections (### Data · ### Dispatches ·
+     ### Navigation · ### States).
      Optional / presence-free: the Pattern and Components lines,
      ## Module-specific deviations, ## Current prototype, ## Notes.
      This split is the single source of the two lists the validator encodes.
@@ -22,6 +23,16 @@ lifecycle: draft
 **Features:** FEAT-01, FEAT-02
 **Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
 **Components:** [[{rel-to-05_screens}/components/{component-name}]]
+
+<!-- One paragraph of prose — no table, no list: who comes to this screen, for
+     which task, and what they see first. It orients a human reader and gives
+     the emanating agent the screen's intent, which the feature links alone do
+     not carry. It never restates the bindings below (those rows are the
+     contract) and never names a route (routes derive from `module` +
+     `screen`). Present state, the product's own words, kept short. -->
+## Purpose
+
+{who comes here} {for which task}. {what they see first, and what they do from there.}
 
 ## Bindings
 

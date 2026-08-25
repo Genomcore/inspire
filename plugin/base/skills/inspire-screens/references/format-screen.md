@@ -26,6 +26,12 @@ lifecycle: draft         # draft | accepted | stable | superseded
 **Pattern:** [[../patterns/list]]
 **Components:** [[../components/data-table]]
 
+## Purpose
+
+An administrator comes here to find one user among many. The roster leads, so
+the first thing the reader sees is who exists in the workspace at all;
+everything else on the screen serves that search.
+
 ## Bindings
 
 ### Data
@@ -56,8 +62,8 @@ lifecycle: draft         # draft | accepted | stable | superseded
 ```
 
 Required: the frontmatter identity block, the H1 title, the `**Features:**` line,
-and `## Bindings` with at least one of its four subsections. Optional and
-presence-free: `**Pattern:**`, `**Components:**`,
+a non-empty `## Purpose`, and `## Bindings` with at least one of its four
+subsections. Optional and presence-free: `**Pattern:**`, `**Components:**`,
 `## Module-specific deviations`, `## Current prototype`, `## Notes`.
 
 ## Identity — the id is the referent
@@ -121,6 +127,26 @@ constrains presentation and nothing else, and a screen that names none is not a
 special case — it simply inherits no shared layout. Its declarations stand on
 their own either way. Both lines feed the emanation gate: a screen emanates once
 the pattern and components it declares are `stable`.
+
+## `## Purpose` — who comes here, and what for
+
+One paragraph of prose, directly under the header lines: **who** comes to this
+screen, for **which task**, and **what they see first**. Prose only — no table,
+no bullet list — the way an action descriptor opens with its own `## Purpose`.
+
+It is orientation for a human reader and intent for the emanating agent, which
+would otherwise have to reconstruct the screen's job from the feature links.
+Two boundaries keep it from turning into a second contract:
+
+- **It never restates the bindings.** The `## Bindings` rows are the contract,
+  and a paragraph re-listing them is one more place to drift. Say why the screen
+  exists; let the rows say what it declares.
+- **It never names a route.** Routes derive (§ Routes derive — nothing authors
+  one), and a route written into a paragraph is still a route written down.
+
+Say it in the product's own words, in present state, and keep it short: a reader
+who needs three paragraphs to learn what a screen is for is reading a screen
+that does two jobs.
 
 ## `## Bindings` — the screen's own semantics
 
@@ -219,3 +245,13 @@ handed an empty section:
 
 The presence of `id:` in frontmatter is the deterministic marker of the new shape:
 every new-shape screen has one, and no old-shape screen does.
+
+**An absent `## Purpose` gets no row of its own**, and this is the same treatment
+`## Bindings`'s own absence gets. Every row above names something the old file
+**carries** and says what that text becomes — `## Instantiation` earns a row
+because its declarations move into keyed rows, and the identity block earns one
+because the H1 route and the missing frontmatter are text on disk today. A screen
+that never had a purpose paragraph carries nothing to convert: there is no old
+sentence to rewrite, only a section to author. That is exactly what
+`sections-present` reports as a missing required part, and a catalogue row saying
+"nothing → write one" would add a second name for one finding.

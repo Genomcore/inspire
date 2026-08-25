@@ -12,6 +12,11 @@ lifecycle: draft
 
 **Pattern:** [[../patterns/form]]
 
+## Purpose
+
+A returning member arrives here with no session and wants one. The form asks
+for an email and a password, and nothing else competes for attention.
+
 ## Bindings
 
 ### Data

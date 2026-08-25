@@ -9,6 +9,11 @@ lifecycle: draft
 
 **Features:** FEAT-01
 
+## Purpose
+
+A coordinator comes here to find one person in the directory among many. The
+list leads, so the reader sees who exists before choosing anyone to open.
+
 ## Bindings
 
 ### Data

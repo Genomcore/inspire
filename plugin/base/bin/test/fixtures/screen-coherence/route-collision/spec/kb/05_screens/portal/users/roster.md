@@ -9,6 +9,11 @@ lifecycle: draft
 
 **Features:** FEAT-01
 
+## Purpose
+
+A portal visitor comes here to browse the same roster under the portal shell.
+The list leads, and each row opens the record behind it.
+
 ## Bindings
 
 ### Data

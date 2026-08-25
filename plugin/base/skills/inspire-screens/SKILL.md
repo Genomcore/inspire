@@ -61,21 +61,25 @@ layout, or re-describe components.
 
 ## Screen file structure
 
-The on-disk shape — identity, header lines, `## Bindings`, claims, the route
-derivation and the old-shape catalogue — is
+The on-disk shape — identity, header lines, `## Purpose`, `## Bindings`, claims,
+the route derivation and the old-shape catalogue — is
 [`references/format-screen.md`](references/format-screen.md). Read it before
 writing a screen. Template:
 [`templates/screen.md.template`](templates/screen.md.template) — the template is
 the single source of which parts are required (the frontmatter identity block,
-H1, `**Features:**`, `## Bindings`) versus optional/presence-free (`**Pattern:**`,
-`**Components:**`, `## Module-specific deviations`, `## Current prototype`,
-`## Notes`).
+H1, `**Features:**`, `## Purpose`, `## Bindings`) versus optional/presence-free
+(`**Pattern:**`, `**Components:**`, `## Module-specific deviations`,
+`## Current prototype`, `## Notes`).
 
-Three facts about that shape carry the rest of this skill:
+Four facts about that shape carry the rest of this skill:
 
 - **The `id` is the referent, the path is only where the file sits.** Minted once
   as `{module}.{screen}`, never re-derived from location. Same id at a new path is
   a move; a changed id is a new screen.
+- **The screen says what it is for.** `## Purpose` carries one paragraph — who
+  comes here, for which task, what they see first. It is what the emanating agent
+  would otherwise have to guess from the feature links. It restates no binding
+  and names no route.
 - **The screen owns its semantics.** `## Bindings` declares the data sources,
   dispatches, navigation and states, keyed screen-locally, and generates claims
   whether or not a pattern is named. `**Pattern:**` is a peer dependency
