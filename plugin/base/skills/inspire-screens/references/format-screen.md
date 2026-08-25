@@ -192,6 +192,12 @@ against this screen's bindings. Each region declares `Fill` (`required` |
 A **required** region whose `Accepts` names a binding kind demands at least one
 binding of that kind: a `list` layout with no data binding is a finding.
 
+**Both vocabularies are closed**, and a value outside them is a warning on the
+**pattern** file — not on the screens that adopt it, and once however many do.
+The join can only ignore a token it does not recognize, so an out-of-vocabulary
+`Accepts` would otherwise buy the region silence instead of a check: the region
+that most needs a binding would be the one demanding none.
+
 This is a check on the join, never a transfer of ownership. Regions are holes; a
 component's props stay in the component's own catalog entry; the screen is the one
 artifact where props and regions meet.

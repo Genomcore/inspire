@@ -67,11 +67,26 @@ LIFECYCLE_STATES="draft accepted stable superseded"
 # ─────────────────────────────────────────────────────────────────────────────
 
 # fm_scalar <key> — filter: prints the value of a top-level frontmatter key from
-# the YAML on stdin. The keys read here (`id`, `module`, `screen`) are bare
-# identifiers, which yq never quotes, so no unquoting is needed.
+# the YAML on stdin, with one matching pair of surrounding quotes removed.
+#
+# yq writes these keys bare, but YAML lets an operator quote them and nothing
+# forbids it. The quotes have to come off here because `sdd_fm_value` (yq) takes
+# them off everywhere else: leave them on and a legal `id: "users.list"` reads as
+# a different string than the same id written bare — an id-shape error on a valid
+# file, and a `superseded_by` that yq round-tripped into quotes never matching
+# its screen in the index. Two readers of one frontmatter must agree.
 fm_scalar() {
-  awk -v key="$1" '
-    index($0, key ": ") == 1 { print substr($0, length(key) + 3); exit }
+  awk -v key="$1" -v q="'" '
+    index($0, key ": ") == 1 {
+      v = substr($0, length(key) + 3)
+      sub(/[ \t\r]+$/, "", v)
+      first = substr(v, 1, 1)
+      last = substr(v, length(v), 1)
+      if (length(v) >= 2 && first == last && (first == "\"" || first == q))
+        v = substr(v, 2, length(v) - 2)
+      print v
+      exit
+    }
   '
 }
 
@@ -168,6 +183,23 @@ sc_parse_bindings() {
 # sc_bare <text> — a table cell reduced to its key: backticks and spaces gone.
 sc_bare() {
   printf '%s\n' "$1" | tr -d '`' | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }'
+}
+
+# sc_link_target <cell> — the canonical target of the first wikilink in a table
+# cell (pipe-syntax right side, anchor dropped), or nothing when the cell carries
+# none. Existence is `wikilinks-resolve.sh`'s question; this reader exists so the
+# FORM of a transition target can be judged, which is this rule's half.
+sc_link_target() {
+  printf '%s\n' "$1" | awk '
+    match($0, /\[\[[^]]+\]\]/) {
+      t = substr($0, RSTART+2, RLENGTH-4)
+      p = index(t, "|")
+      if (p > 0) t = substr(t, p+1)
+      sub(/#.*$/, "", t)
+      gsub(/^[ \t]+|[ \t]+$/, "", t)
+      print t
+    }
+  '
 }
 
 # sc_resolve_rel <from_dir> <target> — prints the file a path-shaped or bare
@@ -343,7 +375,7 @@ check_bindings() {
   done < <(awk -F'\t' '$1 == "ROW" { print }' "$SC_ROWS")
 
   # Dispatch outcomes: a declared state key, a declared data key, or a screen id.
-  local outcome col
+  local outcome col navtarget
   while IFS= read -r line; do
     for col in 6 7; do
       outcome="$(printf '%s\n' "$line" | cut -f$col)"
@@ -352,7 +384,17 @@ check_bindings() {
         ""|"-"|"—"|"n/a"|"none") continue ;;
       esac
       case "$outcome" in
-        *"[["*"]]"*) continue ;;                       # navigate: a screen id
+        *"[["*"]]"*)                                   # navigate: a screen id
+          # …and a screen id has no slash in it. Wrapping a route in brackets
+          # satisfies the grammar's shape and none of its meaning, so it is
+          # caught here rather than left to `wikilinks-resolve` to report as a
+          # generic dangling target.
+          navtarget="$(sc_link_target "$outcome")"
+          case "$navtarget" in
+            */*) emit "$sev" "$file" \
+                   "navigate outcome is route-shaped: '$navtarget' — an outcome names a screen id, never a route" ;;
+          esac
+          continue ;;
         "state "*|"→ state "*)
           key="$(sc_bare "${outcome##*state }")"
           if ! awk -F'\t' -v k="$key" '$1 == "States" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
@@ -375,11 +417,21 @@ check_bindings() {
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 
-  # Navigation targets are screen ids, written as wikilinks.
+  # Navigation targets are screen ids, written as wikilinks. Brackets alone are
+  # not enough: a screen id is `{module}.{screen}` or `{surface}.{module}.
+  # {screen}` and carries no slash, so a route survives the bracket test and
+  # fails this one — otherwise the check would accept what its own message
+  # forbids.
   while IFS= read -r line; do
     key="$(printf '%s\n' "$line" | cut -f4)"
     case "$key" in
-      *"[["*"]]"*) ;;
+      *"[["*"]]"*)
+        navtarget="$(sc_link_target "$key")"
+        case "$navtarget" in
+          */*) emit "$sev" "$file" \
+                 "navigation target is route-shaped: '$navtarget' — targets are wikilinked screen ids, never routes" ;;
+        esac
+        ;;
       *) emit "$sev" "$file" \
            "navigation target is not a screen id: '$key' — targets are wikilinked ids, never routes" ;;
     esac
@@ -422,6 +474,78 @@ check_bindings() {
 # rather than once per adopting screen.
 SC_PATTERNS_REPORTED=""
 
+# sc_pattern_regions <pattern_file> — the entry's `## Regions` table as TSV,
+# one row per region: region \t fill \t accepts, backticks gone and the two
+# vocabulary columns lowercased. Both readers below share it, so the join and
+# the vocabulary check can never disagree about what a row says.
+sc_pattern_regions() {
+  sdd_body_section "$1" "Regions" | awk '
+      function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+      /<!--/ { incomment = 1 }
+      incomment { if ($0 ~ /-->/) incomment = 0; next }
+      /^[ \t]*\|/ {
+        probe = $0
+        gsub(/[ \t|:-]/, "", probe)
+        if (probe == "") next
+        if (!hdr) { hdr = 1; next }
+        n = split($0, cell, "|")
+        if (n < 4) next
+        r = trim(cell[2]); gsub(/`/, "", r)
+        f = trim(cell[3]); gsub(/`/, "", f)
+        a = trim(cell[4]); gsub(/`/, "", a)
+        printf "%s\t%s\t%s\n", r, tolower(f), tolower(a)
+      }
+    '
+}
+
+# The two region vocabularies are closed — `Fill` is required|optional and
+# `Accepts` is one or more of data|dispatch|nav|static, per format-screen.md and
+# `templates/pattern-entry.md.template`. Closed, and until now enforced nowhere:
+# the join simply dropped a token it did not recognize, so `| body | required |
+# records |` bought the pattern silence instead of a finding, and a region that
+# should have demanded a data binding demanded nothing.
+#
+# Warning, on the PATTERN file, deduped once per pattern — the same three
+# reasons as the no-`## Regions` warning it sits beside: that is the file to
+# change, an adopting screen did nothing wrong, and a shared entry must not be
+# named once per adopter.
+SC_PATTERNS_VOCAB_CHECKED=""
+
+check_pattern_vocab() {
+  local pattern_file="$1"
+  case " $SC_PATTERNS_VOCAB_CHECKED " in
+    *" $pattern_file "*) return 0 ;;
+  esac
+  SC_PATTERNS_VOCAB_CHECKED="$SC_PATTERNS_VOCAB_CHECKED $pattern_file"
+
+  local region fill accepts tok bad="" seen=""
+  while IFS=$'\t' read -r region fill accepts; do
+    [ -z "$region" ] && continue
+    case "$fill" in
+      required|optional|""|"-"|"—") ;;
+      *)
+        case " $seen " in
+          *" fill:$fill "*) ;;
+          *) seen="$seen fill:$fill"; bad="${bad:+$bad, }Fill '$fill'" ;;
+        esac
+        ;;
+    esac
+    for tok in $(printf '%s\n' "$accepts" | tr ',|' '  '); do
+      case "$tok" in
+        data|dispatch|nav|static|"-"|"—") continue ;;
+      esac
+      case " $seen " in
+        *" accepts:$tok "*) ;;
+        *) seen="$seen accepts:$tok"; bad="${bad:+$bad, }Accepts '$tok'" ;;
+      esac
+    done
+  done < <(sc_pattern_regions "$pattern_file")
+
+  [ -n "$bad" ] || return 0
+  emit "warning" "$pattern_file" \
+    "pattern region value outside the closed vocabulary: $bad — 'Fill' is required|optional, 'Accepts' is one or more of data|dispatch|nav|static"
+}
+
 #   Reads $SC_ROWS, which check_bindings wrote for this same file: the join asks
 #   which binding kinds the screen declares, and that is exactly what the
 #   normalized rows already say. The dispatch below keeps the order.
@@ -457,6 +581,7 @@ check_join() {
             ;;
         esac
       else
+        check_pattern_vocab "$pattern_file"
         while IFS=$'\t' read -r region fill accepts; do
           [ -z "$region" ] && continue
           [ "$fill" = "required" ] || continue
@@ -476,23 +601,7 @@ check_join() {
             emit "$sev" "$file" \
               "pattern join: required region '$region' of $(basename "$pattern_file" .md) accepts$(printf '%s' "$kinds") and this screen declares no such binding"
           fi
-        done < <(sdd_body_section "$pattern_file" "Regions" | awk '
-            function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
-            /<!--/ { incomment = 1 }
-            incomment { if ($0 ~ /-->/) incomment = 0; next }
-            /^[ \t]*\|/ {
-              probe = $0
-              gsub(/[ \t|:-]/, "", probe)
-              if (probe == "") next
-              if (!hdr) { hdr = 1; next }
-              n = split($0, cell, "|")
-              if (n < 4) next
-              r = trim(cell[2]); gsub(/`/, "", r)
-              f = trim(cell[3]); gsub(/`/, "", f)
-              a = trim(cell[4]); gsub(/`/, "", a)
-              printf "%s\t%s\t%s\n", r, tolower(f), tolower(a)
-            }
-          ')
+        done < <(sc_pattern_regions "$pattern_file")
       fi
     fi
   fi

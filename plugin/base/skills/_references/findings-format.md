@@ -85,6 +85,12 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
 | `ADR missing required subsection` | sections-present | `### Breaking changes` is nowhere in the ADR. Presence-only: an ADR that breaks nothing still says so. |
 | `ADR subsection … is present but not under …` | sections-present | `### Breaking changes` exists but sits under some other `## Section`, where it answers a different question. Distinct from the type above so the operator is told to move a heading rather than write one. |
+| `pattern entry declares no '## Regions' table` | screen-coherence | A pattern entry some screen names carries no `## Regions`, so the screen-to-layout join cannot be checked at all. |
+| `pattern region value outside the closed vocabulary` | screen-coherence | A `## Regions` row's `Fill` is outside `required` / `optional`, or its `Accepts` names something outside `data` · `dispatch` · `nav` · `static`. The join ignores a token it does not know, so an unrecognized `Accepts` buys the region silence rather than a check. The message names every offending value. |
+
+The last two are reported on the **pattern** file — that is the file to change,
+and an adopting screen did nothing wrong — and once per pattern however many
+screens adopt it. A pattern entry carries no `lifecycle:`, so neither ramps.
 
 ### Screens (draft → warning, accepted / stable → error, superseded → warning)
 
@@ -105,7 +111,8 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 | `binding row has no key` | screen-coherence | A binding table row whose first cell is empty. Every declaration is keyed. |
 | `duplicate binding key` | screen-coherence | One key used twice in the same subsection. Keys are screen-local and unique per subsection; a second dispatch of the same action needs its own key. |
 | `unresolved outcome` | screen-coherence | A dispatch's `On success` / `On error` is not one of `→ [[{screen-id}]]`, `state \`{key}\``, or `refresh \`{key}\`` — or names a state/data key the screen does not declare. |
-| `state not anchored` | screen-coherence | A state's `When` references no declared data key, no dispatch key and no deviation. A free-floating state has nothing to observe. |
+| `navigation target is not a screen id` / `navigation target is route-shaped` / `navigate outcome is route-shaped` | screen-coherence | A `### Navigation` target, or a dispatch outcome that navigates, is not a wikilinked screen id — or is one shaped like a route (`[[/users/:id]]`). A screen id carries no slash, so a route in brackets satisfies the form and none of the meaning. The rule reads the FORM only; whether the id exists is `wikilinks-resolve`'s question. |
+| `state not anchored` | screen-coherence | A state's `When` references no declared data key, no dispatch key and no deviation. A free-floating state has nothing to observe. The reference anchors only through backticks: `` `main` returns zero rows `` anchors, the same words unbackticked do not. |
 | `pattern join` | screen-coherence | The named pattern has a required region accepting `data`, `dispatch` or `nav`, and the screen declares no binding of that kind — a `list` layout with no data binding. |
 | `stable screen declares a to-extract component` | screen-coherence | Error at `stable` only, exempt elsewhere: a component still to extract is a promise, not a dependency. |
 

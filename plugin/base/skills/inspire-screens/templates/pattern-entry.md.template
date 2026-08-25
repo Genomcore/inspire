@@ -28,7 +28,8 @@ Tokens (spacing, type, colors, density) come from the design system
      `Fill`: required | optional. `Accepts`: one or more of `data` · `dispatch` ·
      `nav` · `static` — the first three name the binding kind a screen must declare
      for a required region, and `static` means screen-authored content with no
-     binding behind it. The join-check reads these two columns. -->
+     binding behind it. The join-check reads these two columns, and both
+     vocabularies are closed: a value outside them is a warning on THIS file. -->
 
 | Region | Fill | Accepts | What it holds |
 |---|---|---|---|
