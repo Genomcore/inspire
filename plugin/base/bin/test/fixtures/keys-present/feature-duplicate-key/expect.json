@@ -1,0 +1,3 @@
+{ "exit": 0,
+  "findings": [{"rule":"keys-present","severity":"warning","message_substring":"OS-F4: ## Main flow reuses step key `B2`"}],
+  "forbidden": ["OS-F1", "OS-F2", "\"severity\":\"error\""] }

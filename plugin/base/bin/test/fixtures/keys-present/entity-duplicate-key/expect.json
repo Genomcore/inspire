@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"keys-present","severity":"error","message_substring":"OS-E6: ## Invariants reuses key `I1`"}],
+  "forbidden": [] }

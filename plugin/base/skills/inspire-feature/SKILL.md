@@ -51,6 +51,17 @@ Template: [`templates/use-case.md.template`](templates/use-case.md.template) —
 description, the `**State:**` / `**Priority:**` / `**Depends on:**` lines, and the
 acceptance-criteria id contract are documented there.
 
+Three sections carry **keyed entries**: `## Preconditions` (`P{n}`),
+`## Main flow` (`B{n}`) and `## Postconditions` (`Q{n}`), joining the `AC-{n}`
+contract acceptance criteria already carry. The entry grammar, the optional
+machine-readable heads and their closed vocabularies live in
+[`_references/keyed-heads.md`](../_references/keyed-heads.md) — read them there,
+they are not restated here. What matters at feature altitude: keys are
+write-once and never renumbered (deleting a step leaves a gap, which is the
+contract working), and most use-case entries are legitimately **prose-only** —
+a use case describes what from the user's perspective, and a head that does not
+fit exactly is worse than no head.
+
 ## Rules
 
 > **Output language.** Write every artifact you produce in the project's declared

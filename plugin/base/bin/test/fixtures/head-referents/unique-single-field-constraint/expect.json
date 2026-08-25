@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"head-referents","severity":"error","message_substring":"OS-X1: writes `email` on auth.user, which carries `unique`"}],
+  "forbidden": [] }

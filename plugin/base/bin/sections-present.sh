@@ -8,8 +8,20 @@
 # Every layer below is checked against the format spec that owns it:
 #
 #   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
-#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Behavior · ## Errors
+#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Preconditions ·
+#     ## Behavior · ## Postconditions · ## Errors
 #     in that fixed order (inspire-domain/references/format-action.md).
+#
+#     Six of those eight are checked for PRESENCE here, at flat error severity:
+#     the pre-0.8 core. `## Preconditions` and `## Postconditions` are 0.8
+#     additions, and their presence is checked by `keys-present.sh` instead,
+#     where in 0.8 it is a FLAT WARNING at every lifecycle state (`OS-A3` /
+#     `OS-A4` are two of the five graced presence classes) — a vault upgraded to
+#     0.8 must not go red at pre-PR and at `promote` on every descriptor it
+#     already had. Both names are still in the ORDER list, because an order
+#     check is a subsequence match: a descriptor that has not gained them yet
+#     skips them cleanly, and one that has gained them in the wrong place is
+#     genuinely out of canonical order.
 #
 #   Entity document — `04_domain`, 2-segment leaf filename (severity: error)
 #     ## Purpose · ## Rationale · ## Invariants · ## Fields · ## Touched by
@@ -82,7 +94,12 @@ sdd_init_counters
 
 SCOPE="${1:-}"
 
-ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
+ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Preconditions" \
+                 "Behavior" "Postconditions" "Errors")
+# The subset whose ABSENCE is a flat error at every lifecycle — see the header.
+# Defined as a second array rather than an index range so that reordering the
+# canonical list above cannot silently move which sections are mandatory.
+ACTION_CORE_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
 ENTITY_SECTIONS=("Purpose" "Rationale" "Invariants" "Fields" "Touched by")
 FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
@@ -227,7 +244,7 @@ join_list() {
   printf '%s\n' "$out"
 }
 
-# check_order <file> <kind> <canonical section...>
+# check_order <file> <kind> <class-id|-> <canonical section...>
 #   Subsequence match over the H2 stream: the file's KNOWN sections must appear
 #   in the canonical relative order. Unknown or optional H2s are skipped, so a
 #   file that adds a section is not penalised for it. The comparison is
@@ -237,10 +254,16 @@ join_list() {
 #   the H2 stream genuinely is out of canonical order.
 #   Lifecycle-progressive: what a draft may still be reshaping, an accepted or
 #   stable object has fixed.
+#   <class-id> is the old-shape class the finding is catalogued under in
+#   `_references/keyed-heads.md`, prefixed to the message so a golden fixture,
+#   a finding and the catalogue all name the same thing. `-` for the kinds that
+#   predate that catalogue and are therefore in no class.
 check_order() {
-  local file="$1" kind="$2"
-  shift 2
+  local file="$1" kind="$2" class="$3"
+  shift 3
   local canon=("$@")
+  local prefix=""
+  [ "$class" != "-" ] && prefix="$class: "
   local idx_list="" name_list="" h i idx section
 
   while IFS= read -r h; do
@@ -264,7 +287,7 @@ check_order() {
       local sev
       sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
       sdd_finding "$sev" "sections-present" "$file" \
-        "$kind section order: known sections appear out of canonical order (expected: $(join_list "${canon[@]}"); found: $name_list)"
+        "$prefix$kind section order: known sections appear out of canonical order (expected: $(join_list "${canon[@]}"); found: $name_list)"
       sdd_count_by_severity "$sev"
       return 0
     fi
@@ -275,8 +298,8 @@ check_order() {
 check_action() {
   local file="$1"
   sections_report "$file" "$file" "action descriptor" "error" "" \
-    "${ACTION_SECTIONS[@]}"
-  check_order "$file" "action descriptor" "${ACTION_SECTIONS[@]}"
+    "${ACTION_CORE_SECTIONS[@]}"
+  check_order "$file" "action descriptor" "OS-A10" "${ACTION_SECTIONS[@]}"
 }
 
 check_entity() {
@@ -284,7 +307,7 @@ check_entity() {
   # `## Touched by` is presence-only: see the header comment.
   sections_report "$file" "$file" "entity document" "error" "Touched by" \
     "${ENTITY_SECTIONS[@]}"
-  check_order "$file" "entity document" "${ENTITY_SECTIONS[@]}"
+  check_order "$file" "entity document" "-" "${ENTITY_SECTIONS[@]}"
 }
 
 # check_acceptance_criteria <read_file> <target>
@@ -323,7 +346,7 @@ check_acceptance_criteria() {
       esac
     else
       sdd_finding "warning" "sections-present" "$target" \
-        "AC-id format: acceptance criterion is not of the form '- [ ] AC-N: ...': $line"
+        "OS-F5: AC-id format: acceptance criterion is not of the form '- [ ] AC-N: ...': $line"
       sdd_count_warning
     fi
   done < <(sdd_body_prose "$file" "Acceptance criteria")

@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E8: `email` carries a `Constraints:` line that is not the first content line"}],
+  "forbidden": ["OS-E4", "OS-E1"] }

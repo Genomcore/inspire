@@ -24,7 +24,15 @@ agent:    "OK. So inputs are email + password. The action writes a new
 
 operator: "Right. Signup is a separate orchestrator."
 
-agent:    [proposes a descriptor draft — frontmatter + body — and shows it
+agent:    "Two more, then I'll draft. Who may call this — any authenticated
+           caller, or an administrator? And is there a length range on the
+           password, or is the type all we say?"
+
+operator: "Administrators only. Password 12 to 128."
+
+agent:    [records `P1` — actor(admin) — and the password's Constraints
+           line as `len(12, 128)`]
+          [proposes a descriptor draft — frontmatter + body — and shows it
            to the operator]
           "Draft below. The Entities block has one entity
            (auth::user) with id/email/password/created_at as written fields.
@@ -56,6 +64,7 @@ agent:    [shows the auth.user.md diff, waits for ok, writes]
 - **Show-then-approve, not propose-then-explain.** The descriptor draft was shown directly. Justification only when the operator pushed back.
 - **Iteration is in-line.** "Add a created_by field" was handled as a small edit, not as a "want me to revise?" gate.
 - **Consolidation runs by default after approval**, with a show-then-approve gate on the reconciled `{module}.{entity}.md` entity document (Fields + Touched by tables refreshed; operator-authored sections preserved) before it lands.
+- **The machine-readable parts came out of ordinary dialogue.** The operator said "administrators only" and "12 to 128"; the agent turned those into `P1` — actor(admin) and `Constraints: `len(12, 128)``. Nobody was asked to speak in vocabulary — that translation is the agent's job, and pushing the vocabulary at the operator is its own kind of drift.
 
 ## Cross-document capture in action
 

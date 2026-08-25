@@ -1,0 +1,4 @@
+{ "exit": 0,
+  "findings": [{"rule":"keys-present","severity":"warning","message_substring":"OS-A3: action descriptor is missing ## Preconditions"},
+               {"rule":"keys-present","severity":"warning","message_substring":"derive refuses old-shape artifacts"}],
+  "forbidden": ["OS-A4", "\"severity\":\"error\""] }

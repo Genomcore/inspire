@@ -28,7 +28,7 @@ The gate composes rule families across three severity tiers, plus the style chec
 
 | Rule | What it catches |
 |---|---|
-| `sections-present` | Missing or empty mandatory body sections (actions: 6 sections; entities: 4 sections) |
+| `sections-present` | Missing or empty mandatory body sections. Actions: the pre-0.8 core six (`## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Behavior` · `## Errors`); entities: four. Section ORDER is checked against the full canonical eight, so a misplaced `## Preconditions` or `## Postconditions` is caught here while their *presence* is `keys-present`'s, where in 0.8 it is a warning at every lifecycle rather than an error from `accepted` |
 | `no-todos` | `TODO` / `FIXME` / `XXX` / `HACK` markers in body (D19: files state present truth only) |
 | `action-fields-in-entity` | Action touches a field the entity doc's `## Fields` table does not declare |
 | `entity-coherence` | field-conflict (error), field-unsourced (error), field-orphan-write (warning) across actions sharing an entity |
@@ -39,9 +39,29 @@ The gate composes rule families across three severity tiers, plus the style chec
 
 | Rule | What it catches |
 |---|---|
+| `keys-present` | An entry that cannot be named: prose invariants instead of keyed `I{n}`; an unkeyed `## Behavior` or `## Main flow` step; an absent or empty `## Preconditions` / `## Postconditions`; a head outside its closed vocabulary; a key used twice. Finding messages carry the old-shape class id (`OS-A1`, `OS-E3`, …) from [`keyed-heads.md`](../../../_references/keyed-heads.md) |
+| `constraints-mechanics` | A `Constraints:` line that is malformed, carries a word outside the closed V1 vocabulary, uses one at the wrong arity, or sits somewhere other than its H3's first content line (`OS-E8` — the line is read and checked wherever it sits, so only its placement is the finding); an entity whose `id` carries no Constraints line (the pre-keying marker) or no `id` row at all; `nonnull` on an input line, where the `Required` column already owns required-ness |
+| `head-referents` | A head naming something that is not there: a written `unique` field with no matching `unique(...)` error head; an invariant head naming a field absent from `## Fields`; a `P`/`Q` head naming an untouched entity; `returns(...)` naming a missing output; an unresolvable `references(...)` |
 | `field-coverage` | Entity Fields row declared but no action touches the field |
 | `rationale-wikilink` | Entity `## Rationale` (or action `## Purpose` ∪ `## Behavior`) has no `[[wikilink]]` back-source |
 | `wikilinks-resolve` | A `[[wikilink]]` in body does not resolve to an existing file |
+
+`constraints-mechanics` also emits the one **permanent** flat-warning finding in
+this family, `W-1`: a constraint still narrated in a `Notes` or `Description`
+cell after its machine-readable form moved to a `Constraints:` line. It scans
+those table cells only, never per-field H3 prose. It never ramps and never
+blocks — recognising a constraint word inside prose is a heuristic, and a
+heuristic does not get to fail a gate.
+
+**Five classes in the three keyed-head rules do not ramp in 0.8** and sit
+outside the table above: `OS-A1` (no `B{n}` on the first `## Behavior` step),
+`OS-A3` / `OS-A4` (no `## Preconditions` / `## Postconditions`), `OS-E1` (no
+`Constraints:` line on `id`) and `OS-E3` (prose or unkeyed `## Invariants`).
+These are the *presence* classes — the shape an upgrade inherits, indistinguishable
+from a new artifact someone forgot to key — so they are **warnings at every
+lifecycle state**, at pre-commit, pre-PR and `promote` alike, and their messages
+end `— derive refuses old-shape artifacts`. Everything else these rules report
+ramps exactly as the table says. The five ramp too, in the release after 0.8.
 
 **Style — the mechanical subset of the writing contract:**
 

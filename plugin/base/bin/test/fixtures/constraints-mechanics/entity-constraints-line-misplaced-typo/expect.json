@@ -1,0 +1,5 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E8: `email` carries a `Constraints:` line that is not the first content line"},
+               {"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E4: `email` Constraints — unknown head `uniqe`"},
+               {"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E4: `email` Constraints — unknown head `patern`"}],
+  "forbidden": ["OS-E1"] }

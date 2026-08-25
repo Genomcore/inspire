@@ -18,11 +18,27 @@
 {Primary persona}
 
 ## Preconditions
-{What must be true before this flow starts}
+- `P1` — {what must be true before this flow starts}
+- `P2` — {a second precondition, or delete this line}
+
+<!--
+  Keyed entries, per `.claude/skills/_references/keyed-heads.md`: keys are write-once,
+  never renumbered, never reused, and gaps are legal. A machine-readable head from the V3
+  vocabulary — actor(role) · exists(module.entity) · absent(module.entity) ·
+  state(module.entity, value) — may precede the prose where one fits exactly:
+  `- `P1` — actor(admin) — {prose}`. Most use-case preconditions are prose-only, which is
+  correct: a use case describes WHAT from the user's perspective. Nothing to state at all
+  is written as the single line `None.`
+-->
 
 ## Main flow
-1. {Step 1}
-2. {Step 2}
+1. `B1` — {Step 1}
+2. `B2` — {Step 2}
+
+<!--
+  Every step is keyed. The markdown ordinal is presentation; the `Bn` key is the step's
+  identity, so deleting a step leaves a gap rather than renumbering the survivors.
+-->
 
 ## Alternative flows
 ### AF-1: {Description}
@@ -31,7 +47,13 @@
 ### EF-1: {Description}
 
 ## Postconditions
-{What is true after successful completion}
+- `Q1` — {what is true after successful completion}
+
+<!--
+  Same keyed shape. V4 heads where one fits — created(module.entity) ·
+  updated(module.entity) · deleted(module.entity) · unchanged(module.entity) ·
+  returns(field) — prose-only otherwise.
+-->
 
 ## Acceptance criteria
 <!-- ids are stable: never renumber; a new criterion takes the next free id; never reuse a deleted id; gaps are legal -->

@@ -1,0 +1,4 @@
+{ "exit": 0,
+  "findings": [{"rule":"keys-present","severity":"warning","message_substring":"OS-A1: ## Behavior step 1 carries no"},
+               {"rule":"keys-present","severity":"warning","message_substring":"derive refuses old-shape artifacts"}],
+  "forbidden": ["OS-A2", "\"severity\":\"error\""] }
