@@ -1,3 +1,4 @@
-{ "exit": 1,
-  "findings": [{"rule":"keys-present","severity":"error","message_substring":"OS-E3: ## Invariants entry carries no"}],
-  "forbidden": [] }
+{ "exit": 0,
+  "findings": [{"rule":"keys-present","severity":"warning","message_substring":"OS-E3: ## Invariants entry carries no"},
+               {"rule":"keys-present","severity":"warning","message_substring":"derive refuses old-shape artifacts"}],
+  "forbidden": ["\"severity\":\"error\""] }

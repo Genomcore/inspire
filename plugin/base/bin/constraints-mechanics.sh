@@ -5,7 +5,7 @@
 # grouped into one pass, the way `frontmatter-mechanics.sh` groups its three:
 #
 #   (1) THE `id` MARKER. Every entity document's `## Fields` table has an `id`
-#       row, and that row has a `### id` sub-section whose first line is a
+#       row, and that row has a `### id` sub-section carrying a
 #       `Constraints:` line. Every entity has an `id` and its constraints are
 #       always real (`nonnull, unique, immutable` at minimum), which makes this
 #       the deterministic marker distinguishing an entity written in the current
@@ -21,6 +21,14 @@
 #       INPUT line, because `## Inputs`' `Required` column is the only home for
 #       required-ness and two spellings of one fact drift.
 #
+#       A `Constraints:` line is READ WHEREVER IT SITS in the H3 body, not only
+#       as the first content line. The format still puts it first, and a line
+#       that sits later is reported as `OS-E8` — but it is reported *and*
+#       checked, because the alternative is the failure mode this rule exists
+#       to prevent: a line written after a sentence of prose used to be
+#       ignored in silence, typos and all, so a claim the author believed they
+#       had made simply stopped being asserted.
+#
 #   (3) CONSTRAINT WORDS LEFT IN PROSE (W-1). A `Notes` or `Description` cell
 #       still carrying a constraint after the constraint itself moved to a
 #       `Constraints:` line — the entity's `## Fields` Notes, the descriptor's
@@ -32,9 +40,15 @@
 #       the posture the prose-style heuristics carry. Inline code is exempt: a
 #       token quoted as a token names the constraint rather than restating it.
 #
-# Checks (1) and (2) are lifecycle-progressive (`sdd_progressive_severity`):
-# warning at draft, error at accepted and stable, warning again at superseded.
-# The reasoning is `keys-present.sh`'s and is stated there.
+# Check (2) is lifecycle-progressive (`sdd_progressive_severity`): warning at
+# draft, error at accepted and stable, warning again at superseded — and so is
+# `OS-E8`, since a misplaced line is something the current format's own author
+# got wrong. Check (1)'s `OS-E1` is the exception: it is one of the five
+# OLD-SHAPE PRESENCE classes, which are FLAT WARNINGS at every lifecycle in
+# 0.8 so that a vault upgraded to this release is not red at pre-PR and at
+# `promote` on every entity it already had. The full reasoning, the class list
+# and the ramp schedule live in `_keyed-heads.sh` § "Severity — the 0.8 grace
+# on the presence classes"; `keys-present.sh` carries the same split.
 #
 # This rule resolves nothing on the filesystem: whether a `references(...)`
 # argument names a real entity, and whether a head's arguments name real fields,
@@ -121,14 +135,26 @@ cm_prose_hits() {
 
 # cm_check_line <file> <target> <parent_h2> <name> <severity> <class>
 #               <reject_nonnull>
-#   The vocabulary pass over one `Constraints:` line. Returns 0 when the H3
-#   carries a line at all (well-formed or not), 1 when it carries prose instead —
-#   which the caller needs, because a prose-only H3 is legal for every field
-#   except `id`.
+#   The vocabulary pass over one `Constraints:` line, wherever in the H3 body
+#   it sits. Returns 0 when the H3 carries a line at all (well-formed or not,
+#   first or later), 1 when it carries prose only — which the caller needs,
+#   because a prose-only H3 is legal for every field except `id`.
 cm_check_line() {
   local file="$1" target="$2" parent="$3" name="$4" sev="$5" class="$6"
   local reject_nonnull="$7"
-  local list rc token reason
+  local list rc token reason bad
+
+  # OS-E8 — placement, which is independent of what the line says, so it is
+  # checked before the vocabulary pass and reported even when the line is
+  # malformed. One finding per misplaced line, which reports a SECOND
+  # `Constraints:` line too: at most one line can be the H3's first.
+  while IFS= read -r bad; do
+    [ -z "$bad" ] && continue
+    sdd_finding "$sev" "constraints-mechanics" "$target" \
+      "OS-E8: \`$name\` carries a \`Constraints:\` line that is not the first content line of its \`### $name\` sub-section — the line is read and checked wherever it sits, but the format puts it first"
+    sdd_count_by_severity "$sev"
+  done < <(kh_constraints_misplaced "$file" "$parent" "$name")
+
   list="$(kh_constraints_of "$file" "$parent" "$name")"
   rc=$?
   if [ "$rc" = "1" ]; then return 1; fi
@@ -205,9 +231,14 @@ check_entity() {
 
   if [ "$has_id" = "yes" ]; then
     if ! kh_constraints_of "$copy" "Fields" "id" >/dev/null 2>&1; then
-      sdd_finding "$sev" "constraints-mechanics" "$file" \
-        "OS-E1: entity document's \`id\` field carries no \`Constraints:\` line — the marker of a pre-keying entity; touch it with /inspire_domain update"
-      sdd_count_by_severity "$sev"
+      # OS-E1 is a presence class: flat warning at every lifecycle in 0.8 —
+      # see `_keyed-heads.sh` § "Severity — the 0.8 grace".
+      local e1_sev e1_note
+      e1_sev="$(kh_class_severity "OS-E1" "$sev")"
+      e1_note="$(kh_class_note "OS-E1")"
+      sdd_finding "$e1_sev" "constraints-mechanics" "$file" \
+        "OS-E1: entity document's \`id\` field carries no \`Constraints:\` line — the marker of a pre-keying entity; touch it with /inspire_domain update$e1_note"
+      sdd_count_by_severity "$e1_sev"
     fi
   fi
 
