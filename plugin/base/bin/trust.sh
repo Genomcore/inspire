@@ -199,12 +199,14 @@ skip_artifact() {
   return 1
 }
 
-# Screens `_index.md` files and the pattern/component catalog are rebuilt
-# content: endorsing them is drift by construction. They still carry provenance.
+# Screens `_index.md` files are rebuilt nav content: endorsing them is drift by
+# construction. They still carry provenance. Pattern/component catalog entries
+# are NOT in this exemption: since T2 an entry is an authored layout contract
+# (its regions, what each accepts) rather than rebuilt output, so a human can
+# vouch for it like any other 01_adr–05_screens artifact.
 endorsement_checked() {
   case "$1" in
-    _index.md|*/_index.md)                         return 1 ;;
-    05_screens/patterns/*|05_screens/components/*) return 1 ;;
+    _index.md|*/_index.md) return 1 ;;
   esac
   return 0
 }

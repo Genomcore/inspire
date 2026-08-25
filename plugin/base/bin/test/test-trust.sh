@@ -239,7 +239,8 @@ eq "fixture: all six skill dirs hash distinctly" \
 
 mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_adr" "$R/inspire_kb/02_modules" \
          "$R/inspire_kb/03_features" "$R/inspire_kb/04_domain/auth/user" \
-         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/auth"
+         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/components" \
+         "$R/inspire_kb/05_screens/auth"
 
 art(){ # art <path> <endorsed:yes|no> [skill sha refs]
   local path="$R/inspire_kb/$1" e="$2" skill="${3:-}" sha="${4:-}" refs="${5:-}"
@@ -267,7 +268,8 @@ art 03_features/checkout.md   yes feature 0000000   "$R_REFS"      # OWNER NOT I
 art 04_domain/auth/user/auth.user.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)
 art 05_screens/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — DS is owned by bootstrap
 art 05_screens/login.md       no                                  # UNENDORSED + PRE-PROVENANCE
-art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # produced-checked, never UNENDORSED
+art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # UNENDORSED — patterns/ became endorsable (T12)
+art 05_screens/components/button.md yes screens "$R_SCR" "$R_REFS" # clean — endorsed AND fresh, the inverse positive
 
 # An artifact with NO frontmatter whose BODY contains `endorsed:` and `produced:`
 # at column 0 — a KB artifact documenting the stamp format is the obvious way to
@@ -292,7 +294,7 @@ EOF
 rc=0; FULL="$(cd "$R" && "$TRUST" report)" || rc=$?
 eq "report: exits 0 with findings" "$rc" "0"
 
-eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "3"
+eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "4"
 eq "report: STALE count"             "$(group_count STALE "$FULL")"                 "1"
 eq "report: REFS-CHANGED count"      "$(group_count REFS-CHANGED "$FULL")"          "1"
 eq "report: PRE-PROVENANCE count"    "$(group_count PRE-PROVENANCE "$FULL")"        "3"
