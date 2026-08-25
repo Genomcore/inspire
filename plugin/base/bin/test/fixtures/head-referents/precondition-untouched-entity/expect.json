@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"head-referents","severity":"error","message_substring":"OS-X3: ## Preconditions `P2` head `absent` names entity `auth.session`"}],
+  "forbidden": [] }

@@ -1,6 +1,6 @@
 # Canonical entity document — `auth::user`
 
-A complete, annotated entity document. This is the shape every entity doc should mirror — operator-authored `## Purpose` + `## Rationale` + `## Invariants` carry the design discipline; `## Fields` is the field shape (largely emergent from the actions that touch it, but every row exists because a design decision motivated it); per-field H3s opt in only when a field needs more than the Notes column; `## Touched by` is auto-populated by consolidation.
+A complete, annotated entity document. This is the shape every entity doc should mirror — operator-authored `## Purpose` + `## Rationale` + `## Invariants` carry the design discipline; `## Fields` is the field shape (largely emergent from the actions that touch it, but every row exists because a design decision motivated it); per-field H3s carry each field's constraints and, where it needs one, its rationale; `## Touched by` is auto-populated by consolidation.
 
 This is the entity document the canonical action descriptors (`auth::user::create`, `auth::user::find`, `auth::user::signup`) all touch. Annotations live in HTML comments so they survive a copy-paste into a real `inspire_kb/04_domain/auth/user/auth.user.md`.
 
@@ -25,27 +25,42 @@ The field shape carries the minimum the auth-provider integration needs, plus th
 A new field lands here only after `## Rationale` justifies it. The discussion-forcing discipline keeps the entity shape an act of design rather than a residue of action authoring.
 
 ## Invariants
-- `email` is unique within the entity — no two rows may share the same email value. Enforced at the database level and required by the identity model in [[adr-auth-01-identity-model]].
-- `password_hash` is write-only — no read action returns it. Reads exist only via `auth::password::verify` (constant-time comparison, never raw exposure).
-- `created_at` is immutable after insert — no action updates it.
+- `I1` — immutable(email) — Changing an account's email is a new referent, not an edit: the [[adr-auth-01-identity-model|identity model]] makes the email half of the principal's identity, so a rename is a create plus a retire.
+- `I2` — `password_hash` is write-only — no read action returns it. Reads exist only via `auth::password::verify` (constant-time comparison, never raw exposure).
+
+<!-- ← `I1` carries a head because `immutable(email)` says it exactly; `I2` is prose-only, which is
+     the normal case for the interesting ones, and derives a test-oracle claim rather than a
+     store-oracle one. `email`'s uniqueness is NOT here: it is a single-field rule and lives on the
+     field's own Constraints line, next to the field it constrains. -->
 
 ## Fields
 
 | Field           | Type      | Notes                                                          |
 |-----------------|-----------|----------------------------------------------------------------|
-| `id`            | uuid      | Primary key. Generated at create-time.                         |
-| `email`         | email     | Unique across rows. The canonical identity handle.             |
+| `id`            | uuid      | Primary key.                                                   |
+| `email`         | email     | The canonical identity handle.                                 |
 | `password_hash` | string    | Opaque credential blob; algorithm is system-wide (see below).  |
-| `created_at`    | timestamp | Set at insert; never updated.                                  |
-| `last_seen_at`  | timestamp | Updated by session activity; nullable until the first login.   |
+| `created_at`    | timestamp | The platform audit-timeline anchor.                            |
+| `last_seen_at`  | timestamp | Written by session activity; read by the dormancy reports.     |
 
-### password_hash    <!-- ← per-field H3: motivated by a design call that the Notes column can't carry. -->
+### id
+Constraints: `nonnull, unique, immutable`
+
+### email
+Constraints: `nonnull, unique, pattern(/.+@.+/)`
+
+The pattern is deliberately permissive: the real rules are the deliverability and allow-list rules in [[auth-email-validation|the email-validation feature]], which change without the schema changing. What belongs here is the shape nothing downstream may violate.
+
+### password_hash    <!-- ← the Constraints line, then the rationale the Notes column can't carry. -->
+Constraints: `nonnull`
+
 The column stores an opaque hashed credential, never plaintext. The hashing algorithm and cost parameters are a **system-wide** setting — not a per-row column — because rolling the algorithm is a platform migration, not a per-user choice. The decision and the migration mechanism are described in [[adr-auth-02-password-hashing]]. Verification goes through [[auth.password.verify|auth::password::verify]] (constant-time); the field is never returned by any read action.
 
-### last_seen_at    <!-- ← per-field H3: nullability is non-obvious and worth a sentence. -->
-Nullable until the first successful login. A freshly-created user that has never authenticated has `last_seen_at = null` rather than a synthetic value at the creation timestamp — distinguishing "never logged in" from "logged in once at creation" is load-bearing for the dormant-account reports described in [[auth-account-hygiene|the account-hygiene feature]].
+### created_at
+Constraints: `nonnull, immutable, default(now)`
 
-<!-- ← `id` and `created_at` get no H3: self-evident from Notes column. -->
+### last_seen_at    <!-- ← no constraints at all: nullable by default, and that is the design. -->
+Nullable until the first successful login, and deliberately carries no `nonnull`. A freshly-created user that has never authenticated has `last_seen_at = null` rather than a synthetic value at the creation timestamp — distinguishing "never logged in" from "logged in once at creation" is load-bearing for the dormant-account reports described in [[auth-account-hygiene|the account-hygiene feature]].
 
 ## Touched by
 
@@ -64,11 +79,13 @@ Nullable until the first successful login. A freshly-created user that has never
 
 - **Purpose and Rationale are operator-authored prose, feature/ADR-grounded.** Wikilinks weave into the sentences that make the claims (prosaic back-sourcing). No trailing `Back-source:` lines. The Rationale is the **discussion-forcing function** — when an action introduces a new field, the agent surfaces the question and waits for the operator to update Rationale *before* the new row lands in `## Fields`.
 
-- **Invariants can be short — or even one line.** When there's nothing to assert beyond what the Fields table already constrains, write `None beyond Fields constraints.` The section must be present; brevity is acceptable.
+- **Invariants are keyed, and a head is optional.** `I1` carries `immutable(email)` because that head says it exactly; `I2` is prose-only, which is the normal case for the interesting invariants and derives a test-oracle claim instead of a store-oracle one. Keys are write-once: `I1` stays `I1`, deleting one leaves a gap, and nothing is renumbered. When there is nothing to assert beyond what the fields already constrain, write `None beyond Fields constraints.` — the section must be present; brevity is acceptable.
 
-- **Fields is largely emergent, not arbitrary.** The row set comes from joining every action descriptor's `## Entities` declarations during consolidation. But each row exists because a design decision motivated it — adding one requires a Rationale update. The Notes column is short context; per-field H3 is for fields whose design notes don't fit a cell.
+- **A single-field rule is not an invariant.** `email`'s uniqueness sits on `### email`'s Constraints line, not in `## Invariants`, because it constrains one field and belongs next to it. `## Invariants` is for the rules a single field cannot express — a tuple's uniqueness, a co-presence rule, referential integrity — and for the ones no head captures at all.
 
-- **Per-field H3 is opt-in.** `password_hash` gets one because the algorithm-is-system-wide call is a design decision worth grounding in an ADR. `last_seen_at` gets one because nullability semantics are non-obvious. `id` and `created_at` don't — self-evident from the Notes column. Use H3s sparingly; the absence of one is a signal that the field's behavior is fully described by its Type + Notes.
+- **Fields is largely emergent, not arbitrary.** The row set comes from joining every action descriptor's `## Entities` declarations during consolidation. But each row exists because a design decision motivated it — adding one requires a Rationale update. The Notes column says what a field *means* to a reader; the constraints say what may not be violated, and the two never restate each other. "Unique across rows" in Notes next to `unique` on the line is two spellings of one fact.
+
+- **Per-field H3 is mandatory for a constrained field, opt-in otherwise.** `id`, `email`, `password_hash` and `created_at` all have constraints, so all four carry an H3 — `id` and `created_at` say nothing beyond their Constraints line, and that is a complete H3. `password_hash` adds rationale because the algorithm-is-system-wide call is worth grounding in an ADR. `last_seen_at` carries no constraints at all and gets an H3 anyway, because *deliberate* nullability is a design statement worth making out loud — fields are nullable by default, so the absence of `nonnull` is quiet, and quiet is exactly what needs a sentence here.
 
 - **Touched by uses pipe-syntax wikilinks and explicit touch verbs.** `[[auth.user.create|auth::user::create]]` resolves cleanly on disk (dotted) while displaying the canonical id (colon form). Touch values are `read` · `write` · `list` · `delete`. The section is **auto-populated** by consolidation — operators do not hand-edit it; the table is rewritten on every consolidation pass.
 

@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"keys-present","severity":"error","message_substring":"OS-A1: ## Behavior step 1 carries no"}],
+  "forbidden": ["OS-A2"] }

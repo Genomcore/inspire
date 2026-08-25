@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"is not a constraint expression"}],
+  "forbidden": [] }

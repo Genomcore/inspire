@@ -8,8 +8,19 @@
 # Every layer below is checked against the format spec that owns it:
 #
 #   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
-#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Behavior · ## Errors
+#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Preconditions ·
+#     ## Behavior · ## Postconditions · ## Errors
 #     in that fixed order (inspire-domain/references/format-action.md).
+#
+#     Six of those eight are checked for PRESENCE here, at flat error severity:
+#     the pre-0.8 core. `## Preconditions` and `## Postconditions` are 0.8
+#     additions, and their presence is checked by `keys-present.sh` instead, at
+#     lifecycle-progressive severity — a vault upgraded to 0.8 must not have
+#     every descriptor it already had blocking every commit on the day the
+#     runtime moves. Both names are still in the ORDER list, because an order
+#     check is a subsequence match: a descriptor that has not gained them yet
+#     skips them cleanly, and one that has gained them in the wrong place is
+#     genuinely out of canonical order.
 #
 #   Entity document — `04_domain`, 2-segment leaf filename (severity: error)
 #     ## Purpose · ## Rationale · ## Invariants · ## Fields · ## Touched by
@@ -77,7 +88,12 @@ sdd_init_counters
 
 SCOPE="${1:-}"
 
-ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
+ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Preconditions" \
+                 "Behavior" "Postconditions" "Errors")
+# The subset whose ABSENCE is a flat error at every lifecycle — see the header.
+# Defined as a second array rather than an index range so that reordering the
+# canonical list above cannot silently move which sections are mandatory.
+ACTION_CORE_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
 ENTITY_SECTIONS=("Purpose" "Rationale" "Invariants" "Fields" "Touched by")
 FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
@@ -270,7 +286,7 @@ check_order() {
 check_action() {
   local file="$1"
   sections_report "$file" "$file" "action descriptor" "error" "" \
-    "${ACTION_SECTIONS[@]}"
+    "${ACTION_CORE_SECTIONS[@]}"
   check_order "$file" "action descriptor" "${ACTION_SECTIONS[@]}"
 }
 

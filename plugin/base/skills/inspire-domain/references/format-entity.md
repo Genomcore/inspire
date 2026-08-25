@@ -23,19 +23,37 @@ Operator-facing prose stating what this entity is and why it exists as a discret
 feature/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic wikilinks throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
 
 ## Invariants
-Operator-facing assertions that must hold across the entity — uniqueness, ordering, immutability, referential integrity. May be `None beyond Fields constraints.` when no extra invariants apply; the section must be present but a one-liner is acceptable.
+- `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [[adr-auth-01-identity-model]] scopes principals to an org.
+- `I2` — A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.
 
 ## Fields
 
 | Field          | Type      | Notes                                  |
 |----------------|-----------|----------------------------------------|
 | `id`           | uuid      | Primary key.                           |
-| `email`        | email     | Unique across `auth::user` rows.       |
+| `org_id`       | uuid      | The owning organisation.               |
+| `email`        | email     | The canonical identity handle.         |
 | `password_hash`| string    | Algorithm decided system-wide.         |
-| `created_at`   | timestamp | Set at insert; never updated.          |
+| `created_at`   | timestamp | The audit-timeline anchor.             |
+
+### id
+Constraints: `nonnull, unique, immutable`
+
+### org_id
+Constraints: `nonnull, immutable, references(auth.org)`
+
+### email
+Constraints: `nonnull, pattern(/.+@.+/)`
+
+Per-field rationale follows the Constraints line, in prose, with inline wikilinks where a claim needs sourcing — here, why the pattern is deliberately permissive and defers to [[auth-email-validation|the email-validation rules]].
 
 ### password_hash
-Opt-in per-field H3 sub-section. Use for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline wikilink to [[adr-auth-02-password-hashing]]. Skip for self-evident fields (`id`, `created_at`).
+Constraints: `nonnull`
+
+Use the per-field H3 for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline wikilink to [[adr-auth-02-password-hashing]].
+
+### created_at
+Constraints: `nonnull, immutable, default(now)`
 
 ## Touched by
 
@@ -73,16 +91,52 @@ Three tooling consequences:
 
 ## Section conventions
 
-Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`), 1 opt-in per field (`### {field-name}` H3 sub-sections, placed immediately after the Fields table), 1 auto-populated (`## Touched by`).
+Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`), 1 per-field H3 (`### {field-name}` sub-sections, placed immediately after the Fields table — mandatory for a constrained field, opt-in otherwise), 1 auto-populated (`## Touched by`).
 
 - **`## Purpose`** — non-empty, operator-readable prose stating what the entity is and why it exists as a discrete object. Back-sourcing is **prosaic**: wikilinks weave into the sentence that makes the claim.
 - **`## Rationale`** — operator-authored, feature/ADR-grounded. The **discussion-forcing function**: when an action introduces a new field, the agent surfaces the rationale question and waits for the operator to update this section *before* the new field row lands in `## Fields`. This is what keeps the entity shape an act of design rather than an emergent residue of action authoring.
-- **`## Invariants`** — operator-authored. `None beyond Fields constraints.` is a valid one-line body; the section must be present, but brevity is welcome when there is genuinely nothing extra to assert.
-- **`## Fields`** — `| Field | Type | Notes |` table with backticked field names. The row set is **largely emergent** — populated and reconciled by the agent during consolidation from every action descriptor's `## Entities` declarations — but each row exists because some action touches the field, and adding one forces a `## Rationale` update. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens.
-- **`### {field-name}`** — opt-in per-field rationale, immediately under the Fields table. Use for fields whose behavior or design needs more than the Notes column can carry. Skip for self-evident fields. Inline wikilinks where claims need sourcing.
+- **`## Invariants`** — operator-authored, and **keyed**: each entry is `` - `I{n}` — {head} — {prose} `` (or `` - `I{n}` — {prose} `` when no head fits), per [`keyed-heads.md`](../../_references/keyed-heads.md). Heads come from V2 there — the multi-field and relational predicates a single field's own line cannot express. `None beyond Fields constraints.` remains the valid one-line body; the section must be present, but brevity is welcome when there is genuinely nothing extra to assert.
+- **`## Fields`** — `| Field | Type | Notes |` table with backticked field names, **unchanged**: constraints do not live in the table. The row set is **largely emergent** — populated and reconciled by the agent during consolidation from every action descriptor's `## Entities` declarations — but each row exists because some action touches the field, and adding one forces a `## Rationale` update. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens.
+- **`### {field-name}`** — per-field sub-section, immediately under the Fields table, in field-table order. Its **first line carries the field's constraints** when it has any: `` Constraints: `nonnull, unique, immutable` `` — the closed V1 vocabulary of [`keyed-heads.md`](../../_references/keyed-heads.md). Everything after that line is the per-field rationale prose: what motivates the design, which ADR or feature grounds it, what consumers need to know. A constrained field **must** carry the H3, even when the Constraints line is all it has to say; an unconstrained field needs one only when its design needs narrating.
 - **`## Touched by`** — auto-populated by consolidation: `| Action | Touch | Notes |` table. **Touch values**: `read` · `write` · `list` · `delete`. Action ids use pipe-syntax wikilinks (`[[module.entity.action|module::entity::action]]`). Operators do not hand-edit this section; it is rewritten on every consolidation pass.
 
 **No `## Findings`, no `## Used by`.** Files state present truth only — findings live in `review` output (git history is the audit trail), and the V2 `## Used by` section is now `## Touched by` with explicit touch semantics.
+
+## Constraints and invariants
+
+Two homes, split by how many fields a rule spans. The grammar, the closed
+vocabularies, the derived claim ids and the oracle split all live in
+[`keyed-heads.md`](../../_references/keyed-heads.md); what follows is only what
+is specific to entity documents.
+
+**One field → its own `Constraints:` line.** `` Constraints: `nonnull, unique, immutable` ``, the first line of that field's H3. The list is closed
+vocabulary V1, comma-separated, inside one backtick span. A word outside V1, or
+a V1 word at the wrong arity, is an error — it is a typo, not prose, and a typo
+in a constraint is a claim that silently stops being asserted.
+
+**Two or more fields, or a relation → a named invariant.** `` - `I3` — unique(org_id, email) — {prose} `` in `## Invariants`. This is why the
+composite case has a home at all: a rule about a tuple has no single field to
+live under.
+
+**Fields are nullable by default.** There is no `nullable` word — absence of
+`nonnull` is nullability. The quiet case is the common one; the marked case is
+the requirement.
+
+**Two per-field rules that are not conventions but checks:**
+
+- **`id` always carries a Constraints line.** Every entity has an `id`, and its
+  constraints are always real (`nonnull, unique, immutable` at minimum). That
+  makes the `id` H3 the **deterministic marker** distinguishing an entity
+  written in this format from one written before it — which is why a strict
+  reader can refuse the old shape per-artifact instead of guessing. An entity
+  with no `id` row at all is a separate defect, reported separately, so the
+  marker can never pass vacuously.
+- **A constraint stated twice drifts.** Once a constraint is on the Constraints
+  line, the `Notes` cell says what the constraint *means* to a reader, not that
+  it exists. "Unique across rows" in Notes next to `unique` on the line is two
+  spellings of one fact; `review.sh` reports the leftover as a warning — a
+  warning, because recognising a constraint word inside prose is a heuristic and
+  a heuristic does not block anything.
 
 ## Entity lifecycle (symmetric with actions)
 

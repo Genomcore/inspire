@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E2: entity document declares no `id` row in ## Fields"}],
+  "forbidden": ["OS-E1"] }

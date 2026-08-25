@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"keys-present","severity":"error","message_substring":"OS-E3: ## Invariants entry carries no"}],
+  "forbidden": [] }

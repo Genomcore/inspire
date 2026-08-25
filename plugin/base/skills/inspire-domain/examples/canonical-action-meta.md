@@ -49,13 +49,19 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 | `id`       | read  | string | `matches input.id` |                                        |
 | `manifest` | read  | json   | —                  | The descriptor's resolved contract.    |
 
+## Preconditions
+- `P1` — exists(platform.action) — The id must name a registered action; the catalog in [[adr-plt-06-action-catalog]] is the register.
+
 ## Behavior
-1. Resolve `id` against the action catalog index defined in [[adr-plt-06-action-catalog]].
-2. Return the descriptor's frontmatter and resolved manifest as JSON.
-3. If the id is unknown → `action_not_found`.
+1. `B1` — Resolve `id` against the action catalog index defined in [[adr-plt-06-action-catalog]].
+2. `B2` — Return the descriptor's frontmatter and resolved manifest as JSON.
+3. `B3` — If the id is unknown → `action_not_found`.
+
+## Postconditions
+- `Q1` — The caller receives the whole entity, so its shape is the entity document's and not restated here.
 
 ## Errors
-- `action_not_found` — operator-facing message: "Action {id} not found in the catalog."
+- `action_not_found` — exists(platform.action) — operator-facing message: "Action {id} not found in the catalog."
 ```
 
 ## What's notable
@@ -65,6 +71,10 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 - **The entity `platform::action` is meta**, not a data noun. The fields (`id`, `manifest`) are properties of the action manifest itself, not columns of a `platform_action` table. There's no SQL `CREATE TABLE` for this entity — the source of truth is the filesystem (action descriptors and the catalog index).
 
 - **The Outputs section uses the whole-entity 1-liner.** Since `resolve` returns the entire `platform::action` entity, the contract points at the entity document instead of restating its field shape. The SDD descriptor is a logical contract — wire-shape translations live in surface-binding artifacts downstream.
+
+- **`Q1` is prose-only because `returns(...)` has nothing to name.** With no `## Outputs` table there is no field for the head to point at, so the postcondition says what it can in prose and derives a test-oracle claim. This is the honest case for a prose-only entry: a head would have to invent a referent.
+
+- **`P1` and the error share one head.** `exists(platform.action)` is the precondition, and `action_not_found` is what the caller sees when it fails. Writing the same head on both is what says they are the same fact seen from two sides — and it means a test generated from the precondition and a test generated from the error cover one claim rather than two.
 
 - **`entity-coherence` on meta entities is a known soft spot.** The rule expects every read field to have at least one `Touch=written` declaration somewhere. Here, the writers are *operators authoring descriptors* — not other actions. If `field-unsourced` fires on a meta entity, the fix (not yet implemented) is a `kind: meta` annotation on the `### [[platform.action|platform::action]]` subheader that tells the rule "this entity's fields are authored, not action-written; skip field-unsourced." Until then, the warning is acceptable noise.
 

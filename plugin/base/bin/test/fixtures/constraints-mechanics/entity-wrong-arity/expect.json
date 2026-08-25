@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E4: `email` Constraints — head `len` takes 2 argument"}],
+  "forbidden": [] }
