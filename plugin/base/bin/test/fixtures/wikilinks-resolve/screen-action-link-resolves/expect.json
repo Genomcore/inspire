@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "args": ["spec/kb/05_screens"],
+  "findings": [
+    { "rule": "wikilinks-resolve", "severity": "error", "message_substring": "auth::user::archive" }
+  ],
+  "forbidden": [
+    "wikilink does not resolve: [[auth::user::list]]",
+    "adr-decoy-the-domain-half-must-stay-silent"
+  ]
+}

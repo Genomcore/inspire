@@ -63,7 +63,14 @@ SCOPE="${1:-}"
 # Build SDD id index (covers actions only — sdd_build_id_index iterates
 # sdd_find_actions). For entity documents, we use sdd_resolve_entity_id
 # directly.
-sdd_build_id_index "$SCOPE"
+#
+# The domain root, never $SCOPE: an index is what a link resolves AGAINST, and a
+# scoped run must still resolve a link that points outside its scope. Handing the
+# scope through instead would empty the index on `wikilinks-resolve.sh
+# inspire_kb/05_screens` — 05_screens ∩ 04_domain is nothing — and every action
+# binding on every accepted screen would be reported as dangling. Built the same
+# way as SCREEN_ID_INDEX below, which names its own layer root outright.
+sdd_build_id_index "$SDD_SPEC_ROOT"
 
 # Build a name→path basename index for non-SDD wikilink targets (PDD,
 # ADR, references, etc), and a screen-id→path index for screen links.
