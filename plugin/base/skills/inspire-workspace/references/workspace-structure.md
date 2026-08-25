@@ -17,7 +17,9 @@ Validate the vault structure at the top level (not module-scoped).
 3. **Screens module directories:** every `inspire_kb/05_screens/` module
    directory — flat `{module}/` or surface-first `{surface}/{module}/` (per
    [`_references/surface-scope.md`](../../_references/surface-scope.md)) —
-   carries an `_index.md` with a route-map/coverage table. Existence and
+   carries an `_index.md` listing its screens by **id** and title with their
+   feature coverage — never a route column: routes derive from `module:` +
+   `screen:`, and a hand-copied derived value is a drift source. Existence and
    presence only; table content is a module-level concern
    (`/inspire_module review`), not this top-level check.
 4. **Task tracker:**
