@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "error",
+      "message_substring": "screen file missing required part(s): ## Purpose"
+    }
+  ],
+  "forbidden": ["## Bindings", "empty section(s)", "H1 title", "**Features:** line", "retired section"]
+}

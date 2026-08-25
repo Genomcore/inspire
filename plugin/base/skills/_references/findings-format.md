@@ -104,7 +104,7 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line or `## Bindings`, or has an empty `## Bindings`. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
+| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, `## Purpose` or `## Bindings`, or carries one of those two sections with nothing under it. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
 | `screen file carries a retired section` | sections-present | `## Instantiation` is still there. Its declarations belong in keyed `## Bindings` rows — see `inspire-screens/references/format-screen.md` § Old shape → new shape. |
 | `screen missing frontmatter field` | screen-coherence | One of `id` · `module` · `screen` · `lifecycle` is absent. On a file with no frontmatter at all this is the whole old-shape story, reported once per missing field. |
 | `invalid screen lifecycle value` | screen-coherence | `lifecycle:` is set but is not one of `draft / accepted / stable / superseded`. |

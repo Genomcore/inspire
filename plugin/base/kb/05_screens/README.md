@@ -66,6 +66,10 @@ built — in the prototype ([`/prototype`](../../prototype)) or in production.
   minted once and never re-derived from the file's location: the path says where
   the file sits, the id says what it is. Moving a file is a move; changing an id
   makes a different screen.
+- **A `## Purpose` paragraph** — who comes to this screen, for which task, and
+  what they see first. One paragraph of prose, required: it orients a human
+  reader and gives the emanating agent the screen's intent, which the feature
+  links alone do not carry. It restates no binding and names no route.
 - **Its own `## Bindings`** — the data sources, dispatches, navigation targets and
   states it declares, each keyed screen-locally. These stand whether or not a
   pattern is named, and each row is one claim the emanation loop can cover. A

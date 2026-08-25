@@ -36,10 +36,10 @@ files under `inspire_kb/03_features/{module}/`.
   every listed screen exists on disk, and every screen file is listed. Routes are
   derived, never written into the index.
 - Every screen carries its identity block (`id` · `module` · `screen` ·
-  `lifecycle`), a `**Features:**` line and a non-empty `## Bindings`. A
-  `**Pattern:**` line is optional; where it is there, it resolves to a file in
-  `inspire_kb/05_screens/patterns/` and that layout's required regions find the
-  bindings they need.
+  `lifecycle`), a `**Features:**` line, a non-empty `## Purpose` and a non-empty
+  `## Bindings`. A `**Pattern:**` line is optional; where it is there, it
+  resolves to a file in `inspire_kb/05_screens/patterns/` and that layout's
+  required regions find the bindings they need.
 - No screen redefines design tokens (those live in `design-system.md`); no inline
   mock data (reference the data source); each screen stays focused (~250 lines).
 

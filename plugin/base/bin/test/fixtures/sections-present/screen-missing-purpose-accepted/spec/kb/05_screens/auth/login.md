@@ -2,18 +2,12 @@
 id: auth.login
 module: auth
 screen: login
-lifecycle: draft
+lifecycle: accepted
 ---
 
 # Sign in
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/form]]
-
-## Purpose
-
-A returning member arrives here with no session and wants one. The form asks
-for an email and a password, and nothing else competes for attention.
 
 ## Bindings
 
@@ -27,4 +21,4 @@ for an email and a password, and nothing else competes for attention.
 
 | Key | When | Presentation |
 |---|---|---|
-| `denied` | `sign-in` rejects | the form keeps the email |
+| `denied` | `sign-in` rejects | the form keeps its email and clears the password |

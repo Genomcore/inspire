@@ -10,6 +10,12 @@ superseded_by: "[[users.nowhere]]"
 
 **Features:** FEAT-01
 
+## Purpose
+
+An administrator comes here to scan the roster of workspace members. The screen
+carries a pointer to the list that supersedes it, so a reader lands there
+instead.
+
 ## Bindings
 
 ### Data

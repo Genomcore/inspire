@@ -37,12 +37,12 @@
 #     ## Related ADRs, plus `### Breaking changes` under ## Consequences.
 #
 #   Screen — `05_screens/**` (severity: lifecycle-progressive)
-#     an H1 title, the `**Features:**` header line, and a non-empty
-#     ## Bindings. `**Pattern:**`, `**Components:**`, `## Module-specific
-#     deviations`, `## Current prototype` and `## Notes` are optional and
-#     presence-free: never flagged either way. A lingering `## Instantiation` is
-#     reported as a retired section — its declarations belong in keyed
-#     ## Bindings rows.
+#     an H1 title, the `**Features:**` header line, a non-empty ## Purpose and
+#     a non-empty ## Bindings. `**Pattern:**`, `**Components:**`,
+#     `## Module-specific deviations`, `## Current prototype` and `## Notes` are
+#     optional and presence-free: never flagged either way. A lingering
+#     ## Instantiation is reported as a retired section — its declarations
+#     belong in keyed ## Bindings rows.
 #
 # `03_features` and `01_adr` carry no `lifecycle:` field, so nothing there can
 # ramp: their findings are warnings at every moment of their life. The domain
@@ -105,6 +105,7 @@ FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
 ADR_SECTIONS=("Context" "Decision" "Consequences" "Alternatives considered" \
               "Related ADRs")
+SCREEN_SECTIONS=("Purpose" "Bindings")
 
 # The canonical orders are the section arrays themselves: the format specs
 # state one list, in order, and a second copy here could only drift from it.
@@ -414,31 +415,42 @@ check_adr() {
 }
 
 check_screen() {
-  local file="$1" missing="" sev
+  local file="$1" missing="" empty="" sev section
   sp_strip_to_tmp "$file" || return 0
   local tmp="$SP_TMP"
 
   # Screens carry `lifecycle:`, so their findings ramp with it like a domain
   # object's. A screen with no frontmatter at all — every screen written before
   # the identity block existed — reads as draft and keeps emitting warnings.
+  # `## Purpose` is required from 0.8 on, and it ramps with the same lifecycle:
+  # no file written before it existed starts blocking a commit.
   sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
 
   has_line_prefix "$tmp" "# "            || missing="${missing:+$missing,}H1 title"
   has_line_prefix "$tmp" "**Features:**" || missing="${missing:+$missing,}**Features:** line"
 
-  if sdd_has_section "$tmp" "Bindings"; then
-    if [ "$(section_has_content "$tmp" "Bindings")" != "1" ]; then
-      sdd_finding "$sev" "sections-present" "$file" \
-        "screen file has empty section(s) (header present but no body content): Bindings"
-      sdd_count_by_severity "$sev"
+  # Both required sections in document order, each present AND non-empty. A
+  # header with nothing under it is the empty-section finding rather than the
+  # missing-part one, so the operator is told which of the two to fix.
+  for section in "${SCREEN_SECTIONS[@]}"; do
+    if ! sdd_has_section "$tmp" "$section"; then
+      missing="${missing:+$missing,}## $section"
+      continue
     fi
-  else
-    missing="${missing:+$missing,}## Bindings"
-  fi
+    if [ "$(section_has_content "$tmp" "$section")" != "1" ]; then
+      empty="${empty:+$empty,}$section"
+    fi
+  done
 
   if [ -n "$missing" ]; then
     sdd_finding "$sev" "sections-present" "$file" \
       "screen file missing required part(s): $missing"
+    sdd_count_by_severity "$sev"
+  fi
+
+  if [ -n "$empty" ]; then
+    sdd_finding "$sev" "sections-present" "$file" \
+      "screen file has empty section(s) (header present but no body content): $empty"
     sdd_count_by_severity "$sev"
   fi
 

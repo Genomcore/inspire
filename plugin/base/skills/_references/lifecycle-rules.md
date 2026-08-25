@@ -91,7 +91,7 @@ Screen files carry `lifecycle:`, so the columns above are readable there too:
 
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
-| `sections-present` (screen required parts: H1 · `**Features:**` line · non-empty `## Bindings`; and the retired `## Instantiation`) | warning | error | error | warning |
+| `sections-present` (screen required parts: H1 · `**Features:**` line · non-empty `## Purpose` · non-empty `## Bindings`; and the retired `## Instantiation`) | warning | error | error | warning |
 | `screen-coherence` (identity fields, keyed bindings, internal references, the pattern↔region join) | warning | error | error | warning |
 | `screen-coherence` (duplicate `id`; two screens deriving one route in one shell) | error | error | error | error |
 | `screen-coherence` (a `stable` screen declaring a `**State:** to-extract` component) | exempt | exempt | error | exempt |
