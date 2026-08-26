@@ -260,7 +260,7 @@ anything.
   | `plugin/test/materialize/` | `init` and `update` against scratch projects |
   | `plugin/test/manifest/` | `gen-manifest.sh` + every shipped manifest reproduces |
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
-  | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `arr_to_json`, `version_cmp` |
+  | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
   | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its three hand-wired siblings |
 
@@ -270,12 +270,15 @@ anything.
   shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
   holds no tests and the runner never runs it.
 
-  A run takes minutes, and that is the fixture builds and the per-file hashing,
-  not a hang. Measured solo when the runner landed, against the unbatched
-  runtime: **267 s** for the whole estate at the default `-j`; ~713 s at `-j 1`,
-  summed over per-area invocations that each rebuilt the fixture cache.
-  Two files dominate it — `upgrade/18-e2e-0.1.0.sh` and
-  `upgrade/22-derive-equal-e2e.sh`, ~120 s each on their own. Every job is
+  A run takes about two minutes, and that is fixture builds and process spawns,
+  not a hang. Measured solo on the batched runtime: **106 s** for the whole
+  estate at the default `-j`, from 267 s. It is spawn-bound, not critical-path
+  bound — every job inflates roughly twofold beside eight peers, so cutting a
+  long file shortens that file and leaves the wall where it was. Run on its own,
+  every file is under 20 s but four: `upgrade/18b-e2e-resolution-flags.sh` (27 s,
+  four pre-0.3 fixtures and four updates), `upgrade/23-agents-class.sh` (27 s),
+  `upgrade/22c-derive-equal-resolutions.sh` (20–23 s) and
+  `materialize/01-init-current-tree.sh` (22 s). Every job is
   **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
   only ever read, so any number of copies — several worktrees at once, the same
   file twice over, a single file beside a full run — can run concurrently without
