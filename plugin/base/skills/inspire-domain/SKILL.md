@@ -121,7 +121,8 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - Entity document → [`references/format-entity.md`](references/format-entity.md);
   copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
 - Semantic types → [`references/type-mapping.md`](references/type-mapping.md) — the
-  authority for the `Type` vocabulary and `Mapping` tokens used by both formats.
+  authority for the `Type` vocabulary and `Mapping` tokens used by both formats,
+  and the project's own types in `00_bootstrap/semantic-types.md`.
 - Keyed entries and machine-readable heads →
   [`_references/keyed-heads.md`](../_references/keyed-heads.md) — the authority for
   every keyed section in both formats (entity `## Invariants` and per-field
