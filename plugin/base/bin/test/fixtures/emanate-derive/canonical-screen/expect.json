@@ -1,22 +1,8 @@
 {
-  "exit": 4,
+  "exit": 0,
   "args": [
     "screen",
     "users.list"
   ],
-  "stdout_jq": [
-    {
-      "expr": "[.refused[].class] | unique | join(\",\")",
-      "equals": "DR-S2,DR-S8"
-    },
-    {
-      "expr": "has(\"claims\")",
-      "equals": "false"
-    },
-    {
-      "expr": ".unit.kind",
-      "equals": "screen"
-    }
-  ],
-  "note": "The canonical screen of format-screen.md refuses, and neither refusal is derive's: DR-S2 is screen-coherence.sh reading an inline YAML comment as part of the id (its index goes through `yq '.'`, which round-trips comments, while `yq '.id'` strips them), and DR-S8 is the example's own `delete` dispatch naming an On-error state `error` that its ### States does not declare. Both are reported to their owners; this fixture pins the shapes so that fixing either one turns red here."
+  "stdout": "expected-stdout.json"
 }

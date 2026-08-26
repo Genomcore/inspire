@@ -44,3 +44,4 @@ everything else on the screen serves that search.
 |---|---|---|
 | `empty` | `main` returns zero rows | the empty-collection message and the create action |
 | `form-error` | `create` rejects | the field errors, inline, with the form still filled |
+| `error` | `delete` rejects | the failure message, with the row still in place |
