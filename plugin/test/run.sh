@@ -96,12 +96,17 @@ if [ "$njobs" -eq 0 ]; then
 fi
 
 # One build per tag for the whole estate instead of one per call site. The tags
-# are read off the call sites, so adding one needs no edit here.
+# are read off the call sites, so adding one needs no edit here. Only tags this
+# repo actually has are pre-built: test-run.sh names a synthetic one, and a
+# mistyped tag must fail in the job that names it, not in the cache.
 tags=""
 if [ -s "$TMP/files" ]; then
-  tags="$(tr '\n' '\0' < "$TMP/files" \
-          | xargs -0 grep -hoE "fixture_from_tag[ $TAB]+\"?v[0-9][0-9.]*" 2>/dev/null \
-          | sed -e "s/.*[ $TAB]\"\{0,1\}//" | LC_ALL=C sort -u | tr '\n' ' ')"
+  for tag in $(tr '\n' '\0' < "$TMP/files" \
+               | xargs -0 grep -hoE "fixture_from_tag[ $TAB]+\"?v[0-9][0-9.]*" 2>/dev/null \
+               | sed -e "s/.*[ $TAB]\"\{0,1\}//" | LC_ALL=C sort -u); do
+    git -C "$REPO" rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1 || continue
+    tags="$tags $tag"
+  done
 fi
 fp0=""
 if [ -n "$tags" ]; then
