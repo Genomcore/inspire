@@ -125,7 +125,10 @@ repo is both its source and its own marketplace.
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
-      authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`.
+      authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
+      unchanged and still correct on its own; `plugin/test/run.sh` drives it one
+      rule at a time (`run-tests.sh <rule>`) plus its three hand-wired siblings,
+      which turns the estate's slowest single job into nineteen short ones.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
       (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
@@ -240,24 +243,48 @@ anything.
   `inspire_kb/`, not here.
 - The KB ships as a **skeleton** — each layer has a README (and, where useful,
   starter files); a real project fills the rest in via the skills.
-- **Six test suites, all run by hand — there is no CI.** Run the ones your change
-  touches; run all six before a release:
+- **One command runs the whole estate, by hand — there is no CI:**
+  `bash plugin/test/run.sh`. It discovers every test file, builds each released
+  fixture the estate needs once into a run-scoped cache, and runs the lot
+  concurrently (`-j N`, default `min(ncpu, 8)`; `-j 1` is serial). One line per
+  file as it finishes, a failing file's output dumped under it, and **a file that
+  produced zero assertions fails the run** — a test that silently did nothing is
+  not coverage. `--inventory FILE` writes every `PASS`/`FAIL`/`SKIP` line of the
+  run, sorted; that file is how a refactor of the tests proves it lost no
+  assertion. A bare word narrows the run to the jobs whose name contains it
+  (`run.sh upgrade`, `run.sh 06-hop-ops`, `run.sh golden`).
 
-  | suite | covers |
+  | area | covers |
   |---|---|
-  | `bash plugin/base/bin/test/run-tests.sh` | the validators, via golden fixtures |
-  | `bash plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `arr_to_json`, `version_cmp` |
-  | `bash plugin/test/test-fixtures.sh` | the period-correct fixture builder |
-  | `bash plugin/test/test-manifest.sh` | `gen-manifest.sh` + every shipped manifest reproduces |
-  | `bash plugin/test/test-upgrade.sh` | detection, layout signatures, hops, the merge, end-to-end upgrades |
-  | `bash plugin/test/test-materialize.sh` | `init` and `update` against scratch projects |
+  | `plugin/test/upgrade/` | detection, layout signatures, hop ops, the chain, the merge, end-to-end upgrades — one file per concern |
+  | `plugin/test/materialize/` | `init` and `update` against scratch projects |
+  | `plugin/test/manifest/` | `gen-manifest.sh` + every shipped manifest reproduces |
+  | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
+  | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `arr_to_json`, `version_cmp` |
+  | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
+  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its three hand-wired siblings |
 
-  The last two take minutes — that is the fixture builds, not a hang. All six are
+  **Every file also runs on its own**, from any directory and with no
+  environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
+  prints its own summary; the cache is an accelerator, never a dependency. The
+  shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
+  holds no tests and the runner never runs it.
+
+  A run takes minutes, and that is the fixture builds and the per-file hashing,
+  not a hang. Measured solo when the runner landed, against the unbatched
+  runtime: **267 s** for the whole estate at the default `-j`; ~713 s at `-j 1`,
+  summed over per-area invocations that each rebuilt the fixture cache.
+  Two files dominate it — `upgrade/18-e2e-0.1.0.sh` and
+  `upgrade/22-derive-equal-e2e.sh`, ~120 s each on their own. Every job is
   **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
-  only ever read, so any number of copies — several worktrees at once, or the same
-  suite twice over — can run concurrently without interfering. Keep it that way:
-  a fixed path under `/tmp` is what made `test-upgrade.sh` produce phantom failures
-  before.
+  only ever read, so any number of copies — several worktrees at once, the same
+  file twice over, a single file beside a full run — can run concurrently without
+  interfering. The one shared tree is the fixture cache each `run.sh` builds
+  inside its own `mktemp -d`: read-only to the jobs, fingerprinted after the
+  build and again before exit, so a job that reached into it fails the run —
+  naming the cache, not the job — instead of poisoning its siblings. Keep it that
+  way: a fixed path under `/tmp` is what made the upgrade suite produce phantom
+  failures before.
 - Fixtures are free and cost the repo nothing: every tag ships a runnable installer,
   so `git archive <tag>` plus that era's own installer yields a genuine
   period-correct project tree. `plugin/test/lib/fixtures.sh` does this — prefer it
