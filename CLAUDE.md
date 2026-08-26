@@ -36,7 +36,9 @@ repo is both its source and its own marketplace.
   - `plugin/scripts/hops/` — `layouts.tsv` (each layout's structural markers and
     where it materializes `base/`) plus one executable bash script per version that
     moved something. A version that moved nothing has no file: a hop's **absence**
-    is the no-op.
+    is the no-op. A payload class that is only *added* moves nothing either, so it
+    extends the existing row's `dest_map` instead of opening a new layout — the
+    rule, and why a new layout id would break detection, is in the file's header.
   - `plugin/scripts/materialize.sh` — the mechanics the skills call. Modes:
     `--mode plan` (read-only: detect, verify the layout, enumerate the chain,
     classify content, print the grouped report to stderr and a JSON summary to
@@ -100,6 +102,18 @@ repo is both its source and its own marketplace.
         `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
         `keyed-heads.md`); it is
         **not** matched by an `inspire-*` glob.
+    - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
+      definitions, materialized where Claude Code discovers them and merged with
+      the skills' never-clobber rules (an edited shipped agent is kept or asked
+      about; an operator's own agent file is kept by construction). It is **not**
+      a new layout: `layouts.tsv`'s 0.3 row gained `agents:.claude/agents`,
+      because an additive class moves nothing, and a second layout id could only
+      reuse 0.3's own markers — leaving `verify_layout` unable to tell them apart
+      and `detect_version` refusing any project that ties across them. That file's
+      header carries the full argument, and no `0.8.0` hop exists because nothing
+      moved. Claude Code parses **every** `*.md` under this root as an agent
+      definition, so nothing without valid agent frontmatter may ship here — the
+      class's own README is a `.txt` for exactly that reason.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
@@ -188,8 +202,9 @@ plugin installed:
 /inspire:init
 ```
 
-It materializes `plugin/base/{skills,bin,hooks,kb,templates}` into the project
-(`.claude/skills/`, `.inspire/bin/`, `.claude/inspire/hooks/`, `inspire_kb/`, plus
+It materializes `plugin/base/{skills,agents,bin,hooks,kb,templates}` into the
+project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
+`.claude/inspire/hooks/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
 `05_screens/design-system.md` from `00_bootstrap/theme.md`, and writes
