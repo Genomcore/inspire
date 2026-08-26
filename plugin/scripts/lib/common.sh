@@ -45,9 +45,15 @@ sha256_of() {
 # input count, and on any mismatch the whole batch falls back to per-file hashing,
 # which cannot misalign. Slow, correct, and rare.
 #
-# A path containing a newline is outside this system's representable set already
-# (manifests are TSV, and every consumer reads `find` output line by line), so it
-# is not handled here either — it merely trips that count check.
+# A PATH CONTAINING A NEWLINE IS UNREACHABLE HERE, and the count check is NOT what
+# would save it — say so rather than imply a guard that does not hold. Under
+# `sha256sum` the raw name splits the line in two and the count check does trip;
+# under the `shasum` fallback the escaped `\n` keeps the hash count equal while
+# `names` gains a line, so `paste` would misalign silently. Neither case is
+# reachable: a manifest is TSV and a base path comes from the plugin's own tree,
+# while a project file with a newline is already split into two bogus lines by the
+# `while read` in every consumer before it can reach this function — identically
+# on both sides of this change.
 hash_paths() {
   local root="$1" list="$2" out="$3"
   local args names hashes p n_in n_out
