@@ -10,6 +10,9 @@ pass=0; fail=0
 ok()   { echo "PASS $1"; pass=$((pass+1)); }
 bad()  { echo "FAIL $1"; fail=$((fail+1)); }
 check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+# Same shape as the other two suites': a value comparison that REPORTS both
+# sides, so a failure names what it got instead of leaving a bare `check` false.
+eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 
 # ---------------------------------------------------------------------------
 # The released baseline every DETECTING block runs against.
@@ -69,6 +72,39 @@ check "test/ EXCLUDED"                "[ ! -e '$proj/.inspire/bin/test' ]"
 check "dispatcher materialized"       "[ -x '$proj/.claude/inspire/hooks/dispatch.sh' ]"
 check "skills materialized"           "[ -d '$proj/.claude/skills/inspire-domain' ]"
 check "shared _references present"    "[ -d '$proj/.claude/skills/_references' ]"
+# The agents payload class. Both sides asserted: a destination check alone
+# passes whether or not the copy ran, since an empty .claude/agents/ is a
+# perfectly ordinary thing for a project to have.
+check "premise: the plugin ships base/agents/"  "[ -f '$PLUGIN_ROOT/base/agents/README.txt' ]"
+check "agents materialized"           "[ -f '$proj/.claude/agents/README.txt' ]"
+check "the agent payload is byte-identical to what ships" \
+  "cmp -s '$PLUGIN_ROOT/base/agents/README.txt' '$proj/.claude/agents/README.txt'"
+# Claude Code parses EVERY *.md under .claude/agents/ as an agent definition, so
+# a shipped .md without agent frontmatter is a broken agent in every project we
+# touch. The class's README is a .txt for exactly that reason; this is the guard
+# on everything shipped here later (T9's role shells).
+agent_lint() {
+  local d="$1" f out=""
+  while IFS= read -r f; do
+    head -n1 "$f" | grep -q '^---$' || out="$out $(basename "$f"):frontmatter"
+    grep -q '^name:' "$f"          || out="$out $(basename "$f"):name"
+  done < <(find "$d" -type f -name '*.md')
+  printf '%s' "$out"
+}
+eq "every .md shipped under base/agents carries agent frontmatter" \
+   "$(agent_lint "$PLUGIN_ROOT/base/agents")" ""
+# Until a .md actually ships here the check above passes over an EMPTY SET,
+# which is indistinguishable from coverage. So prove the lint bites: same
+# function, a copy of the same directory, one deliberate offender in it.
+agl="$(mktemp -d)"; cp -R "$PLUGIN_ROOT/base/agents/." "$agl/"
+printf 'no frontmatter here\n' > "$agl/broken.md"
+eq "the frontmatter guard bites on a .md that lacks one" \
+   "$(agent_lint "$agl")" " broken.md:frontmatter broken.md:name"
+rm -rf "$agl"
+check "nothing under base/agents is committed executable" \
+  "[ -z \"\$(find '$PLUGIN_ROOT/base/agents' -type f -perm -u+x)\" ]"
+check "and none of it acquired the executable bit on the way in" \
+  "[ -z \"\$(find '$proj/.claude/agents' -type f -perm -u+x)\" ]"
 check "USER SKILL PRESERVED"          "[ -f '$proj/.claude/skills/my-own-skill/SKILL.md' ]"
 check "FOREIGN SETTINGS PRESERVED"    "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
 check "marker present"                "grep -q INSPIRE-MANAGED '$proj/.claude/settings.json'"
@@ -208,6 +244,9 @@ clean="$(mktemp -d)/p2"; mkdir -p "$clean"; ( cd "$clean" && git init -q )
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$clean" \
   --source-root source --prototype-root prototype --dry-run >/dev/null 2>&1
 check "dry-run writes nothing"        "[ ! -e '$clean/inspire_kb' ] && [ ! -e '$clean/.inspire.lock' ]"
+# Directories included: a payload class whose root the preview created would be
+# a write, however empty the directory looked afterwards.
+check "dry-run creates no .claude/agents either" "[ ! -e '$clean/.claude/agents' ]"
 
 # Brownfield: '.' and 'none' create no folders.
 bf="$(mktemp -d)/p3"; mkdir -p "$bf"; ( cd "$bf" && git init -q )
@@ -699,7 +738,24 @@ nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$ns
 check "gitignore shadow: no false positive on a clean repo" \
   "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
 
-rm -rf "$(dirname "$shp")" "$(dirname "$nsh")"
+# Per payload class, not per .claude/. A rule that excludes ONLY the agents root
+# leaves every other class committed, so the warning must name that root and no
+# other — the blanket '/.claude' case above cannot tell a per-class check from a
+# hardcoded list of the older three.
+agsh="$(mktemp -d)/agshproj"; mkdir -p "$agsh"; ( cd "$agsh" && git init -q )
+printf '.claude/agents/\n' > "$agsh/.gitignore"
+agshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$agsh" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "gitignore shadow: agents really is ignored (premise)" \
+  "git -C '$agsh' check-ignore -q --no-index .claude/agents"
+check "gitignore shadow: skills is NOT ignored (premise)" \
+  "! git -C '$agsh' check-ignore -q --no-index .claude/skills"
+check "gitignore shadow: an agents-only rule is warned about" \
+  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/agents'"
+check "gitignore shadow: and it names only the class that is shadowed" \
+  "! printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/skills'"
+
+rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")"
 
 # ---------------------------------------------------------------------------
 # Input guards. Each of these reports SUCCESS while doing the wrong thing if
@@ -810,6 +866,50 @@ check "guard: real v0.3 lock still updates"      "[ '$rc_okupdate' = 0 ]"
 kb_expect="$(find "$PLUGIN_ROOT/base/kb" -type f | wc -l | tr -d ' ')"
 check "guard: real v0.3 update kept the KB" \
   "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" -ge '$kb_expect' ]"
+
+# ---------------------------------------------------------------------------
+# UPDATE reaches the agents payload class — and touches nothing else in it.
+#
+# The class is new at 0.8, so no shipped manifest lists a path under
+# .claude/agents/. That makes an upgrade the interesting direction: the class
+# arrives through the TARGET map, an operator's own file there must survive by
+# construction, and an edited copy of ours must never be clobbered on a re-run.
+# ---------------------------------------------------------------------------
+agp="$(mktemp -d)/proj"
+fixture_copy "$agp"
+check "premise: the released baseline has no .claude/agents (the class postdates it)" \
+  "[ ! -e '$agp/.claude/agents' ]"
+mkdir -p "$agp/.claude/agents"
+printf 'MY AGENT\n' > "$agp/.claude/agents/mine.md"
+agrep="$(mktemp)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$agp" >/dev/null 2>"$agrep"
+rc_ag=$?
+check "agents: update with an operator's agents dir exits 0" "[ '$rc_ag' = 0 ]"
+check "agents: the class landed"        "[ -f '$agp/.claude/agents/README.txt' ]"
+check "agents: byte-identical to what ships" \
+  "cmp -s '$PLUGIN_ROOT/base/agents/README.txt' '$agp/.claude/agents/README.txt'"
+eq "agents: the operator's own agent file is untouched" \
+   "$(cat "$agp/.claude/agents/mine.md")" "MY AGENT"
+check "agents: the report announces the class as a creation" \
+  "grep -q 'create .*\.claude/agents/README\.txt' '$agrep'"
+check "agents: the report calls the operator's file theirs to keep" \
+  "grep -q 'keep .*\.claude/agents/mine\.md' '$agrep'"
+check "agents: nothing under .claude/agents came out executable" \
+  "[ -z \"\$(find '$agp/.claude/agents' -type f -perm -u+x)\" ]"
+check "agents: the lock is still provenance-only after the class arrived" \
+  "[ \"\$(jq -r 'keys|join(\",\")' '$agp/.inspire.lock')\" = 'inspire_version,installed_at,released,template_sha' ]"
+
+# An edited copy of a file we ship survives the NEXT update, exactly as an
+# edited skill does — nobody has to resolve anything for that to hold.
+printf 'MY EDIT\n' >> "$agp/.claude/agents/README.txt"
+ag_h="$(shasum -a 256 "$agp/.claude/agents/README.txt" | cut -d' ' -f1)"
+"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$agp" >/dev/null 2>&1
+eq "agents: a re-run does not clobber an edited agent file" \
+   "$(shasum -a 256 "$agp/.claude/agents/README.txt" | cut -d' ' -f1)" "$ag_h"
+eq "agents: nor their own file beside it" \
+   "$(cat "$agp/.claude/agents/mine.md")" "MY AGENT"
+rm -f "$agrep"; rm -rf "$(dirname "$agp")"
+
 
 rm -rf "$(dirname "$gp")" "$(dirname "$v2p")" "$(dirname "$okp")" "$notplugin"
 fixture_cleanup "$FIXTURE_WORK"

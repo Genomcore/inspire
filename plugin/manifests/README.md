@@ -12,6 +12,27 @@ Generated, never hand-written:
 them differs from its tag. A manifest that cannot be reproduced means the
 release is broken.
 
+## `layout` names a tree SHAPE, not a payload inventory
+
+The `layout` field points at a row in `plugin/scripts/hops/layouts.tsv`, and that
+row says where each `base/` directory materializes. Only a **move** — a root
+relocating, the way `bin/` went from `.claude/bin` to `.inspire/bin` at 0.3 — is
+a new layout. A payload class that is merely **added** (0.8's `base/agents/` →
+`.claude/agents/`) extends the existing row's `dest_map` and leaves every shipped
+manifest's `layout` value exactly as it was.
+
+That is not a convenience. An additive class changes no shape, so a new layout id
+could only reuse 0.3's own structural markers — two ids `verify_layout` cannot
+tell apart, and any score tie between them becomes the cross-layout tie
+`detect_version` refuses outright instead of resolving to the higher version. The
+full argument is in `layouts.tsv`'s header.
+
+For the files here it means the addition is invisible: `gen-manifest.sh` reads the
+new class per release, finds nothing under `plugin/base/agents/` at any tag up to
+`v0.7.0`, and regenerates all nine manifests byte-identically. **Never edit a
+shipped manifest to keep up with a new class** — if one stops reproducing, the
+generator is wrong, not the manifest.
+
 ## Scope: releases only
 
 Each file describes a *tagged release*, and every release maps to exactly one

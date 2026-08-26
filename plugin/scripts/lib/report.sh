@@ -105,9 +105,10 @@ _emit_group() {
 # verification of a real 0.1→0.4 migration had to ask the operator what they ran).
 #
 # .inspire/ ROOT, deliberately, and never inside a dest_map root
-# (.inspire/bin, .claude/inspire/hooks, .claude/skills): classify's pass 3 walks
-# every dest_map root looking for project-authored files, so a log placed in one
-# would come back on the NEXT run as `keep … yours — INSPIRE never shipped this`.
+# (.inspire/bin, .claude/inspire/hooks, .claude/skills, .claude/agents):
+# classify's pass 3 walks every dest_map root looking for project-authored
+# files, so a log placed in one would come back on the NEXT run as
+# `keep … yours — INSPIRE never shipped this`.
 # That claim would be false, and it would repeat forever.
 REPORT_LOG_REL='.inspire/last-upgrade.log'
 

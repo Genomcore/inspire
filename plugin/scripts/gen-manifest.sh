@@ -7,14 +7,23 @@
 # installed project has on disk — because that is what gets compared to disk.
 # Two layouts exist:
 #   pre-0.3 : install.sh copied .inspire/{skills,bin,hooks} → .claude/{skills,bin,hooks}
-#   0.3     : materialize.sh copies base/{bin,hooks,skills}  → .inspire/bin,
-#             .claude/inspire/hooks, .claude/skills — excluding whatever
-#             lib/merge.sh's _base_excluded rejects (today: the top-level
+#   0.3     : materialize.sh copies base/{bin,hooks,skills,agents} → .inspire/bin,
+#             .claude/inspire/hooks, .claude/skills, .claude/agents — excluding
+#             whatever lib/merge.sh's _base_excluded rejects (today: the top-level
 #             base/bin/test/ entry and any top-level template-*.sh entry).
 #             That function is SOURCED here rather than re-expressed: it is the
 #             single definition of the rule, and a manifest that disagreed with
 #             the applier about what ships would make every such path read as
 #             either a phantom deletion or a phantom creation.
+#
+# A PAYLOAD CLASS ADDED LATER COSTS PAST MANIFESTS NOTHING. The map below is
+# read per class, and a class the release predates simply has no tree entries:
+# `git ls-tree -r <commit> -- plugin/base/agents` is empty at every tag up to
+# v0.7.0, so those manifests regenerate byte-identically with `agents` in the
+# map — which is what test-manifest.sh's nine-manifest sweep asserts, and it is
+# the mechanical half of the argument for extending the 0.3 layout rather than
+# minting a new one (see scripts/hops/layouts.tsv). The layout id is therefore
+# still decided by the release-identity file alone, never by which classes exist.
 #
 # Only read-only git is used. Content hashes come from the blob, which is
 # identical to the installed file: no installer transforms a runtime file
@@ -62,8 +71,8 @@ if git -C "$REPO" cat-file -e "$commit:plugin/.claude-plugin/plugin.json" 2>/dev
   LAYOUT="0.3"
   IDENTITY_PATH="plugin/.claude-plugin/plugin.json"
   SRC_PREFIX="plugin/base"
-  MAP_NAMES="bin hooks skills"
-  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills"
+  MAP_NAMES="bin hooks skills agents"
+  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills .claude/agents"
 else
   LAYOUT="pre-0.3"
   IDENTITY_PATH=".inspire/manifest.json"
