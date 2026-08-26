@@ -17,13 +17,19 @@
 # absence is what the cache assertions in test-fixtures.sh key on — otherwise
 # "the cache was read" and "the tree was rebuilt" are indistinguishable, which is
 # the vacuity class this repo has been bitten by.
+#
+# `cp -Rp`, not `cp -R`: without `-p` the copy's modes go through the umask, so
+# under `umask 077` a hit would hand the caller 600/700 where a fresh 0.3+ build
+# sets 644/755 explicitly through _apply_write — a hit that differs from a build
+# is exactly what this must not be. Under 022 (the suites' umask) the two are
+# already equal, so nothing observable changes here; the flag makes it umask-proof.
 fixture_from_tag() {
   local tag="$1" work="$2" repo="$3"
   local src="$work/src" proj="$work/proj" rc
 
   if [ -n "${INSPIRE_FIXTURE_CACHE:-}" ] && [ -d "$INSPIRE_FIXTURE_CACHE/$tag/proj" ]; then
     rm -rf "$proj"
-    cp -R "$INSPIRE_FIXTURE_CACHE/$tag/proj" "$proj" || return 1
+    cp -Rp "$INSPIRE_FIXTURE_CACHE/$tag/proj" "$proj" || return 1
     printf '%s\n' "$proj"
     return 0
   fi
