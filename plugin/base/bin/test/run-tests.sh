@@ -160,6 +160,23 @@ if [ -z "$filter" ]; then
   rm -f "$trust_out"
 fi
 
+# emanate-harvest.sh is likewise a tool, not a review rule: it emits no
+# findings and there is no inspire_kb/ tree to scan, only git state (refs,
+# reflog, tree contents) that fixtures/{rule}/{scenario}/ has no vocabulary
+# for. Same hand-wiring as trust.sh above.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  harvest_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-harvest.sh" >"$harvest_out" 2>&1; then
+    echo "PASS emanate-harvest.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL emanate-harvest.sh/behaviour" >&2
+    cat "$harvest_out" >&2
+  fi
+  rm -f "$harvest_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]
