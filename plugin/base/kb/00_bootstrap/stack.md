@@ -10,14 +10,14 @@ prototype_root: prototype   # where the horizontal prototype lives (inspire-prot
 
 The application stack the product is built with. This is the single registry of
 the official stack; adding a tool is an edit here, replacing a load-bearing choice
-is an ADR ([`01_adr`](../01_adr)). Configure with `/inspire_bootstrap`.
+is an ADR ([`01_adr`](../01_adr)). Configure with `/inspire-bootstrap`.
 
 > **Default**, seeded from the OpenBIMS reference implementation. Swap any layer
 > for your project's choice — the skills are stack-agnostic and read this file.
 
 ## Shape
 
-How the product is laid out. Established at `/inspire_bootstrap init`; it frames
+How the product is laid out. Established at `/inspire-bootstrap init`; it frames
 which layers below apply. **Load-bearing** — changing it later (adding a backend,
 adding mobile, moving off a deployed database) is an ADR.
 

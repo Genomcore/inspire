@@ -1,4 +1,4 @@
-# /inspire_code tdd — write production code test-first
+# /inspire-code tdd — write production code test-first
 
 **No implementation without tests first.** This reference carries two things: the
 red-green-refactor loop with its test conventions, and the non-negotiable authoring
@@ -7,7 +7,7 @@ rules that hold for *any* code this skill writes (not only under `tdd`).
 The unit of work is a **feature**: `tdd {feature-id}` implements the use case at
 `inspire_kb/03_features/{module}/{feature-id}.md`, and its **acceptance criteria
 are the test list**. One testable criterion → at least one test. A criterion you
-cannot write a test for is a spec problem — hand it back to `/inspire_feature`
+cannot write a test for is a spec problem — hand it back to `/inspire-feature`
 before writing code.
 
 > **Stack profile.** Resolve the active profile(s) first (SKILL.md → Stack
@@ -316,7 +316,7 @@ generic, stack-agnostic core — the toolchain enforces the mechanical rest.
   a short comment explaining *why* something non-obvious was removed.
 - **Never leave anonymous TODOs.** Every deferred item names an owner **and** a
   closing trigger — and in INSPIRE the trigger is a real ticket:
-  `/inspire_task create`. If you can't name an owner or a trigger, it isn't
+  `/inspire-task create`. If you can't name an owner or a trigger, it isn't
   deferred, it's forgotten: do it now, or open the ticket first.
 
 **A flaky test is fixed, never re-run.**
@@ -350,8 +350,8 @@ controlled.
 
 - Each test traces to an **acceptance criterion**; if criteria and tests diverge,
   the feature file wins — update tests, or hand the criterion back to
-  `/inspire_feature` if it's the criterion that's wrong.
+  `/inspire-feature` if it's the criterion that's wrong.
 - The implementation realizes an **action descriptor**; honor its inputs, outputs,
   touched entities, invariants, and declared error set. A behavior the code needs
-  but the descriptor doesn't cover is a `/inspire_domain` hand-back, not an
+  but the descriptor doesn't cover is a `/inspire-domain` hand-back, not an
   ad-lib.

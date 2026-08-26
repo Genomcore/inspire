@@ -343,7 +343,7 @@ seed_design_system() {
 
 # Seed the project's root CLAUDE.md from the stub template, once. Never
 # clobbers an existing CLAUDE.md — a brownfield adopter brings their own, and
-# from here on the file is the project's: `/inspire_bootstrap init` refines
+# from here on the file is the project's: `/inspire-bootstrap init` refines
 # the seeded stub in place, it is not re-seeded on update.
 seed_claude_md() {
   local stub_src="$PLUGIN_ROOT/base/templates/CLAUDE.md"

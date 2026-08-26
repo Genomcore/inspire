@@ -128,7 +128,7 @@ repo is both its source and its own marketplace.
       [docs/adr/adr-suites-and-surfaces.md](docs/adr/adr-suites-and-surfaces.md);
       the runtime rules live in `base/skills/_references/surface-scope.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
-      in afterwards by `/inspire_bootstrap init`, never clobbered if one already
+      in afterwards by `/inspire-bootstrap init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.
 - `.claude-plugin/marketplace.json` — makes this repo its own plugin marketplace,
   so `/plugin marketplace add Genomcore/inspire` resolves.

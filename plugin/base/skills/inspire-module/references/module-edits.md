@@ -20,15 +20,15 @@ prefix (e.g. `MYM`), and a description.
    registration (module hubs are `inspire_kb/02_modules/*.md` excluding `_*.md`
    and `README.md` — the glob is the registry).
 2. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
-   added via `/inspire_feature create`.
+   added via `/inspire-feature create`.
 3. **screen spec:** not created here. `inspire_kb/05_screens/{module}/` (flat or
    surface-first per the roster's UI count — see
    [`_references/surface-scope.md`](../../_references/surface-scope.md)) is created
-   lazily by [`/inspire_screens`](../../inspire-screens/SKILL.md), per surface, on the
+   lazily by [`/inspire-screens`](../../inspire-screens/SKILL.md), per surface, on the
    module's first screen. `create` never pre-guesses which surfaces the module will
    reach.
-4. Point the user to `/inspire_feature create` for the first use cases, and
-   `/inspire_prototype` once screens exist.
+4. Point the user to `/inspire-feature create` for the first use cases, and
+   `/inspire-prototype` once screens exist.
 
 Report what was created and the next steps.
 

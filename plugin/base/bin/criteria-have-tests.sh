@@ -49,7 +49,7 @@
 #
 # Severity by the feature's declared `**State:**`:
 #   🟡 Planned      → warning  (authoring a feature must not require its tests to exist
-#                               yet; blocking here would make `/inspire_feature create`
+#                               yet; blocking here would make `/inspire-feature create`
 #                               impossible, which is not what "tests first" means)
 #   🔵 In progress  → error    (work has started, and the first act of TDD is the test)
 #   🟢 Implemented  → error

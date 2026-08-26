@@ -18,7 +18,7 @@ reads before working — the base context the rest of the KB assumes.
   - [`glossary.md`](glossary.md) — the **term list**: one concept, one word. Each
     row carries the approved term, the synonyms it displaces and a one-line
     definition. The approved term is the operator's own language, written here by
-    `/inspire_bootstrap` when an interview settles a naming question — never the
+    `/inspire-bootstrap` when an interview settles a naming question — never the
     agent's taxonomy. It ships **empty**, meaning header + separator and zero data
     rows; an empty list binds nothing, which is the honest state of a project that
     has settled no naming question yet. R4 of
@@ -27,18 +27,18 @@ reads before working — the base context the rest of the KB assumes.
   - [`theme.md`](theme.md) — the **default design-system template**: fonts, the
     color palette + status map, density and layout tokens. At install it is copied
     to [`05_screens/design-system.md`](../05_screens) (the project's live design
-    system, edited via `/inspire_bootstrap design-system`); `theme.md` stays as the
+    system, edited via `/inspire-bootstrap design-system`); `theme.md` stays as the
     reusable default.
   - [`surfaces.md`](surfaces.md) — the **surface roster**, the one optional file
     here: absent in a suite-of-one (the default a bare template ships with), it is
-    authored — never seeded — by `/inspire_surface add` the moment a second surface
+    authored — never seeded — by `/inspire-surface add` the moment a second surface
     is declared. Owned entirely by `inspire-surface`. See
     [`.claude/skills/_references/surface-scope.md`](../../.claude/skills/_references/surface-scope.md)
     for what a surface is and how scope resolves.
 
 Both `stack.md` and `theme.md` start seeded with a **sensible default** (the stack + theme of the OpenBIMS
 reference implementation). Reconfigure them for your project with
-`/inspire_bootstrap` — every downstream layer (specs, screen specs, the prototype,
+`/inspire-bootstrap` — every downstream layer (specs, screen specs, the prototype,
 production code) builds on what is declared here.
 
 > Changing a load-bearing choice here (a framework, the primary color) is an

@@ -22,7 +22,7 @@ Same mechanism as the stack profiles ([`inspire-code/profiles/README.md`](../../
 resolved from [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares
-   `wire_conventions: [<id>, …]`, use that set. `/inspire_bootstrap stack`
+   `wire_conventions: [<id>, …]`, use that set. `/inspire-bootstrap stack`
    maintains this line.
 2. **Inference fallback** — otherwise infer from the declared transport (a GraphQL ADR
    or a `## API` section naming GraphQL → `graphql`; an HTTP/REST API → `rest`).
@@ -34,7 +34,7 @@ folded into `profiles/`.
 
 **No convention resolved is not a free pass.** It means the wire behavior is
 unspecified, and the honest move is to say so and offer to run
-`/inspire_bootstrap stack` — not to guess a status code and write a test that pins
+`/inspire-bootstrap stack` — not to guess a status code and write a test that pins
 the guess.
 
 ## Two halves, and the line between them
@@ -97,8 +97,8 @@ instead of an interpretation.
 
 | Consumer | Uses it for |
 |---|---|
-| `/inspire_bootstrap stack` | asking the project-policy questions once, recording the answers |
-| `/inspire_code tdd` | deriving the full test list before writing the first failing test |
-| `/inspire_code review` | a case the convention requires and no test covers is a finding |
-| `/inspire_feature` | the acceptance-criteria gate: a declared error with no criterion |
-| `/inspire_domain` | whether a descriptor needs a deviation note at all |
+| `/inspire-bootstrap stack` | asking the project-policy questions once, recording the answers |
+| `/inspire-code tdd` | deriving the full test list before writing the first failing test |
+| `/inspire-code review` | a case the convention requires and no test covers is a finding |
+| `/inspire-feature` | the acceptance-criteria gate: a declared error with no criterion |
+| `/inspire-domain` | whether a descriptor needs a deviation note at all |

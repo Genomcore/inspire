@@ -72,7 +72,7 @@ if [ -n "$INSPIRE_VERSION" ] && [ "$INSPIRE_VERSION" != "null" ]; then
 
 INSPIRE runtime — version \`${INSPIRE_VERSION}\` (see \`.inspire.lock\`). When a \
 session surfaces something worth teaching a skill, record it with \
-\`/inspire_lesson note\`; it is stamped with this runtime version."
+\`/inspire-lesson note\`; it is stamped with this runtime version."
 fi
 
 # Surface roster (best-effort): if the project declares suite surfaces, inject a

@@ -10,8 +10,8 @@ Two consumers wrap this library:
   via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
   `git commit`, `pre-pr.sh` on `gh pr create`.
 - **Skills** invoke them via the `Bash` tool inside conversational
-  sessions. `/inspire_domain review` for read-only checks;
-  `/inspire_domain promote` uses the write-test-revert pattern against
+  sessions. `/inspire-domain review` for read-only checks;
+  `/inspire-domain promote` uses the write-test-revert pattern against
   `review.sh` to validate lifecycle transitions.
 
 ## Prerequisites
@@ -76,7 +76,7 @@ kind.
 
 | Script | Checks | Notes |
 |---|---|---|
-| `escape-hatch-ratchet.sh` | The count of deliberate rule suppressions in the product code may fall, never rise. Per-pattern ceilings from `.escape-hatches.json`; `--update` can only lower them. | Reads `source/`, **not** `inspire_kb/`. Deliberately **absent from `review.sh`'s default rule list** — `/inspire_domain review` is a KB review and must not start judging product code. Invoked directly by `pre-commit.sh`, `pre-pr.sh` and `/inspire_code review`. |
+| `escape-hatch-ratchet.sh` | The count of deliberate rule suppressions in the product code may fall, never rise. Per-pattern ceilings from `.escape-hatches.json`; `--update` can only lower them. | Reads `source/`, **not** `inspire_kb/`. Deliberately **absent from `review.sh`'s default rule list** — `/inspire-domain review` is a KB review and must not start judging product code. Invoked directly by `pre-commit.sh`, `pre-pr.sh` and `/inspire-code review`. |
 | `declared-errors-tested.sh` | Every error an action declares in `## Errors` appears as a literal in a test file. | Reads both the KB and `source/`. Lifecycle-progressive: warning at `draft` (TDD writes the spec first), error at `accepted`+, skipped at `superseded`. Also absent from the default list, for the same reason. Wired into `pre-pr.sh`. |
 | `criteria-have-tests.sh` | Every acceptance criterion carries a **stable id**, claimed by a test through `/** @covers {feature}/AC-{n} */` — qualified by the owning feature's filename stem; a bare `AC-{n}` never matches. | The larger half of "nothing untested" — errors are the small half. The id lives in an annotation, never in the test name, so CI output stays readable. Two findings: `carries no id` (untraceable by construction, so reported even when tests exist) and `is claimed by no test`. Severity from the feature's `**State:**`: warning at 🟡 Planned, error at 🔵 In progress and 🟢 Implemented. Wired into `pre-pr.sh`. |
 
@@ -110,7 +110,7 @@ syntax. Rationale and the ceiling-in-repo exception:
 |---|---|---|
 | `review.sh` | Composite check — orchestrates the rule scripts; aggregates findings. | `pre-commit.sh` hook on `git commit`, `pre-pr.sh` hook on `gh pr create`, the `review` skill subcommands, and the `promote` skill subcommands (write-test-revert). |
 | `_lib.sh` | Shared helpers (frontmatter parsing, body-section parsing, wikilink unwrapping, severity calculation, finding emission). Sourced by other scripts. | (library — not invoked directly) |
-| `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire_workspace review` and the `/inspire:update` tail. |
+| `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire-workspace review` and the `/inspire:update` tail. |
 
 ## Output format
 

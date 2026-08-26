@@ -58,5 +58,5 @@ against the live `05_screens/design-system.md` per `bootstrap-comparison.md`:
 - `consolidations` — ad-hoc-value / near-duplicate / no-system findings.
 - `elaboration` — the signals above as `high`/`medium`/`low` maturity notes.
 
-Do **not** author `theme.md` / `design-system.md`; that is `/inspire_bootstrap` /
-`/inspire_screens`'s job after the operator approves the verdict.
+Do **not** author `theme.md` / `design-system.md`; that is `/inspire-bootstrap` /
+`/inspire-screens`'s job after the operator approves the verdict.

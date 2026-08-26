@@ -55,4 +55,4 @@ view are **not** separate screens (note them as sections of their host screen).
 - `component_candidates` — `{name, adopters[]}` for consolidated components.
 - `navigation` — the view hierarchy, if discernible.
 
-Do **not** author screen files; that is `/inspire_screens`'s job after review.
+Do **not** author screen files; that is `/inspire-screens`'s job after review.

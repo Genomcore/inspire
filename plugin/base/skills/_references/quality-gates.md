@@ -38,7 +38,7 @@ cannot satisfy it today. Choosing between the two is mechanical:
 - **Few existing violations** → fix them, set the rule **absolute**. No state to
   store, nothing to maintain.
 - **Many** → the rule enters **scoped** (changed files only) or **ratcheted**, and
-  the cleanup becomes a ticket (`/inspire_task create`). Recorded, never silent.
+  the cleanup becomes a ticket (`/inspire-task create`). Recorded, never silent.
 - **The rule is wrong here** → drop it and write down why, in the profile.
 
 Never reach for a ratchet where an absolute would hold. An absolute is a line in a
@@ -93,7 +93,7 @@ not of the text), which is why its history has to live outside.
 What the ratchet buys is adoption on contaminated ground: nobody has to clean up today,
 nobody may make it worse tomorrow, and every opportunistic fix is locked in. What it
 does not buy is silence — **exceeding** the ceiling blocks the commit (sitting at it is
-the normal resting state, not a failure), and the cleanup is a `/inspire_task` ticket,
+the normal resting state, not a failure), and the cleanup is a `/inspire-task` ticket,
 never a line in a log someone reads later.
 
 Tooling: `.inspire/bin/escape-hatch-ratchet.sh`, driven by
@@ -115,7 +115,7 @@ three moves, and no more:
    registry already records environment choices the runtime does not provision.
 2. **Install and validate the in-repo bridge** — the CI workflow, the reporter
    config. That part *is* a versioned file and is owned like any other.
-3. **Hand the far side to a human, as a ticket** — `/inspire_task create`, with the
+3. **Hand the far side to a human, as a ticket** — `/inspire-task create`, with the
    human owner and the concrete acts named (protect the branch so a red check blocks
    the merge; make the service's own pass condition strict). Not a validator, not an
    agent's job, and never reported as done.
@@ -154,7 +154,7 @@ step 3: a human act, handed over as a ticket.
 
 | Consumer | Uses it for |
 |---|---|
-| `/inspire_bootstrap stack` | installing a new project's gates from its profiles; declaring the external one |
-| `/inspire_code review` | a missing mechanical check is a finding, with the gate that should own it |
-| `/inspire_code` authoring flows | which violations the toolchain already refuses, so they are never written |
+| `/inspire-bootstrap stack` | installing a new project's gates from its profiles; declaring the external one |
+| `/inspire-code review` | a missing mechanical check is a finding, with the gate that should own it |
+| `/inspire-code` authoring flows | which violations the toolchain already refuses, so they are never written |
 | stack profiles (`## Quality gates`) | the per-framework translation of Rules 1–2 |

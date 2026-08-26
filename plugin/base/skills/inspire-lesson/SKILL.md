@@ -3,7 +3,7 @@ name: inspire-lesson
 description: "Lessons catalog: capture durable, write-once, version-stamped LESSONS that change how an inspire-* skill behaves in this project — each a single one-line instruction (\"do X this way\"), materialized into the skill so the agent internalizes it. One timestamp-named file per lesson (YYYYMMDD_<slug>) in inspire_kb/98_lessons/. A lesson is relevant HERE; whether it generalizes is decided upstream. Use to record a lesson after skill friction or a deliberate skill change, list / show them, or purge the archive. Not for product work — that is the tracker (inspire-task), nor for spike/prototype learnings."
 ---
 
-# /inspire_lesson — Lessons catalog
+# /inspire-lesson — Lessons catalog
 
 ## Scope
 
@@ -78,10 +78,10 @@ how a skill behaves graduates into a lesson (see *Relationship to the tracker*).
 
 ## Invocation
 
-- `/inspire_lesson note {title} [--skill X --category preference --supersedes id]`
-- `/inspire_lesson list [--since YYYYMMDD --until YYYYMMDD --skill X --category Z]` (read-only)
-- `/inspire_lesson show {id}` (read-only)
-- `/inspire_lesson purge [--months N | --before YYYYMMDD] [--confirm]`
+- `/inspire-lesson note {title} [--skill X --category preference --supersedes id]`
+- `/inspire-lesson list [--since YYYYMMDD --until YYYYMMDD --skill X --category Z]` (read-only)
+- `/inspire-lesson show {id}` (read-only)
+- `/inspire-lesson purge [--months N | --before YYYYMMDD] [--confirm]`
 
 ## Subcommand: note {title} [--flags]
 
@@ -175,5 +175,5 @@ what the skill learns from it — and, via the observer, what INSPIRE core may l
 
 - The offer protocol the other skills follow lives in
   [`_references/lesson-capture.md`](../_references/lesson-capture.md) — they offer
-  `/inspire_lesson note`; the operator decides.
-- `/inspire_task` handles the local, closeable side of the same feedback signal.
+  `/inspire-lesson note`; the operator decides.
+- `/inspire-task` handles the local, closeable side of the same feedback signal.

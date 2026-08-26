@@ -16,8 +16,8 @@
 #   superseded       → skipped (no longer authoritative)
 #
 # Like `escape-hatch-ratchet.sh`, this rule reads `source/` as well as the KB, and is
-# deliberately NOT in `review.sh`'s default list: `/inspire_domain review` is a
-# knowledge-base review. Invoked by `pre-pr.sh` and by `/inspire_code review`.
+# deliberately NOT in `review.sh`'s default list: `/inspire-domain review` is a
+# knowledge-base review. Invoked by `pre-pr.sh` and by `/inspire-code review`.
 #
 # Config (env, all optional): SDD_TEST_SCOPE · SDD_TEST_GLOBS, defined in `_lib.sh` and
 # shared with `criteria-have-tests.sh` — the discovery logic lives there precisely so the

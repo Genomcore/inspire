@@ -170,7 +170,7 @@ while IFS= read -r adr; do
       ;;
     design|prototyped)
       sdd_finding "error" "adr-maturity-matches-features" "$adr" \
-        "is at \`$status\` while 🟢 Implemented feature(s) rest on it: $claimants — an ADR the shipped code realizes must say so. Promote it (\`/inspire_adr promote\`) if the code has landed, or demote the feature if it has not; the vault currently answers \"is this built?\" two different ways"
+        "is at \`$status\` while 🟢 Implemented feature(s) rest on it: $claimants — an ADR the shipped code realizes must say so. Promote it (\`/inspire-adr promote\`) if the code has landed, or demote the feature if it has not; the vault currently answers \"is this built?\" two different ways"
       sdd_count_error
       ;;
     superseded|rejected)

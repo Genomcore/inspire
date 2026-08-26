@@ -145,13 +145,13 @@ This rule is the deciding test for any skill added later.
 
 ### D4c — The `init` / `bootstrap init` boundary
 
-`/inspire_bootstrap init` already claims *"first-time setup: establish `project.md`
+`/inspire-bootstrap init` already claims *"first-time setup: establish `project.md`
 (language), `stack.md` + `theme.md`, and create the project's root `README.md`."* That
 overlaps `/inspire:init`. The boundary:
 
 - **`/inspire:init` (plugin)** — mechanical, once-only: materialize the payload, create dirs,
   marker-merge `settings.json`, declare the marketplace, write `.inspire.lock`.
-- **`/inspire_bootstrap init` (project)** — interview-driven, re-runnable: language, stack,
+- **`/inspire-bootstrap init` (project)** — interview-driven, re-runnable: language, stack,
   theme, design system, README.
 
 They stay separate because one is idempotent scaffolding and the other is a lesson-susceptible
@@ -162,7 +162,7 @@ Claude Code watches skill directories for file changes, and creating a top-level
 directory that did not exist when the session started requires restarting Claude Code so the
 new directory can be watched. In a greenfield repo, `/inspire:init` *creates*
 `.claude/skills/`, so it is not watched and the newly materialized skills are unavailable to
-the running session — a direct invocation of `/inspire_bootstrap init` would fail precisely in
+the running session — a direct invocation of `/inspire-bootstrap init` would fail precisely in
 the most common case. So init behaves conditionally: if `.claude/skills/` did not pre-exist, it
 prints the restart instruction plus the next command; if it pre-existed (a re-init, or the
 user's own skills already present), the materialized files load live and it offers the chain.

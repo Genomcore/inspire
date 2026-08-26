@@ -83,7 +83,7 @@ fi
 PROFILES="$(sdd_fm_list "$STACK_FILE" '.profiles')"
 if [ -z "$PROFILES" ]; then
   sdd_finding "warning" "$RULE" "$STACK_FILE" \
-    "declares no \`profiles:\` — /inspire_code falls back to inference, and with no resolved profile there is no gate contract to enforce"
+    "declares no \`profiles:\` — /inspire-code falls back to inference, and with no resolved profile there is no gate contract to enforce"
   sdd_count_warning
   sdd_exit_with_counters
   exit $?

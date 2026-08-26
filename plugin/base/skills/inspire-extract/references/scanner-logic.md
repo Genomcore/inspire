@@ -66,4 +66,4 @@ the synthesis step derives features and wires them.
   confidence}`.
 - `consolidations` — duplicate-CRUD / repeated-logic / entity-aliasing findings.
 
-Do **not** author domain files; that is `/inspire_domain`'s job after review.
+Do **not** author domain files; that is `/inspire-domain`'s job after review.

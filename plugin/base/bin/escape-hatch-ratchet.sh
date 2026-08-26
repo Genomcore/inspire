@@ -14,7 +14,7 @@
 # config, so the runtime never hardcodes one language's suppression syntax.
 #
 # Config: `.escape-hatches.json` at the repo root (override with
-# $ESCAPE_HATCH_CONFIG). Seeded by `/inspire_bootstrap stack` from the resolved
+# $ESCAPE_HATCH_CONFIG). Seeded by `/inspire-bootstrap stack` from the resolved
 # stack profile's `## Quality gates`.
 #
 #   {
@@ -60,7 +60,7 @@ MODE="check"
 
 if [ ! -f "$CONFIG" ]; then
   sdd_finding "warning" "escape-hatch-ratchet" "$CONFIG" \
-    "no escape-hatch config — the ceiling is unenforced (seed it with /inspire_bootstrap stack, per quality-gates.md Rule 4)"
+    "no escape-hatch config — the ceiling is unenforced (seed it with /inspire-bootstrap stack, per quality-gates.md Rule 4)"
   sdd_count_warning
   echo "escape-hatch-ratchet: no config at $CONFIG — nothing enforced."
   exit 0

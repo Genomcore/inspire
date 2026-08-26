@@ -19,7 +19,7 @@ Validate the vault structure at the top level (not module-scoped).
    [`_references/surface-scope.md`](../../_references/surface-scope.md)) —
    carries an `_index.md` with a route-map/coverage table. Existence and
    presence only; table content is a module-level concern
-   (`/inspire_module review`), not this top-level check.
+   (`/inspire-module review`), not this top-level check.
 4. **Task tracker:**
    - `inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
      and under `archive/` (closed). Frontmatter parses, enums match, ID format

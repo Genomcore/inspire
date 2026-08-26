@@ -3,7 +3,7 @@ name: inspire-task
 description: "Task tracker: create / update / close / list / show tickets in inspire_kb/99_tracker/. A plain-file kanban (one Markdown file per ticket, no external tool) for tracking work, drift, and skill-feedback. Use to open, advance, close, or query tickets."
 ---
 
-# /inspire_task — Task tracker
+# /inspire-task — Task tracker
 
 ## Scope
 
@@ -19,11 +19,11 @@ any subcommand that writes** (`create`, `update`, `close`).
 
 ## Invocation
 
-- `/inspire_task create {title} [--epic X --size M --importance Mid --skills a,b]`
-- `/inspire_task update TASK-{id} [--field value ...]`
-- `/inspire_task close TASK-{id} [--cancelled --reason "..."]`
-- `/inspire_task list [--status X --epic Y --skill prototype]` (read-only)
-- `/inspire_task show TASK-{id}` (read-only)
+- `/inspire-task create {title} [--epic X --size M --importance Mid --skills a,b]`
+- `/inspire-task update TASK-{id} [--field value ...]`
+- `/inspire-task close TASK-{id} [--cancelled --reason "..."]`
+- `/inspire-task list [--status X --epic Y --skill prototype]` (read-only)
+- `/inspire-task show TASK-{id}` (read-only)
 
 ## Subcommand: create {title} [--flags]
 
@@ -109,7 +109,7 @@ confirmed ticket **graduating** into a lesson lives in
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -126,5 +126,5 @@ confirmed ticket **graduating** into a lesson lives in
 
 - Every skill consults the tracker (`list`) at the start of multi-step work and
   files a **skill-feedback ticket** when a session surfaces friction.
-- `/inspire_workspace structure` validates the tracker's on-disk invariants
+- `/inspire-workspace structure` validates the tracker's on-disk invariants
   (location ↔ status, ID format, no duplicates).

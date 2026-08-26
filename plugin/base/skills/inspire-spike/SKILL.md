@@ -3,11 +3,11 @@ name: inspire-spike
 description: "Vertical spikes: register and harvest external functional-prototype repos. A spike is a narrow, deep, throwaway build in its OWN repo that answers 'can we build it as we think?'. Use to register such a repo (name/reference it, set up its learnings hygiene) and to capture its learnings into the vault as a gap analysis against the current project."
 ---
 
-# /inspire_spike — Vertical spikes (external functional prototypes)
+# /inspire-spike — Vertical spikes (external functional prototypes)
 
 A **vertical spike** is a narrow, deep, **functional** prototype that lives in its
 **own external repo** and answers *"can we build it as we think?"*. Unlike the
-horizontal prototype ([`/inspire_prototype`](../inspire-prototype/SKILL.md), which is
+horizontal prototype ([`/inspire-prototype`](../inspire-prototype/SKILL.md), which is
 wide, shallow and in *this* repo), a spike is throwaway code somewhere else — so
 this skill never builds it. It **brings the knowledge home** into
 [`inspire_kb/06_spikes/`](../../../inspire_kb/06_spikes), so it survives even after
@@ -19,8 +19,8 @@ asymmetry is central to `capture` below.
 
 ## Invocation
 
-- `/inspire_spike register {name}` — record an external spike repo in the vault
-- `/inspire_spike capture {name}` — harvest its learnings as a gap analysis against this project
+- `/inspire-spike register {name}` — record an external spike repo in the vault
+- `/inspire-spike capture {name}` — harvest its learnings as a gap analysis against this project
 
 ## Subcommand: register {name}
 
@@ -65,8 +65,8 @@ here?
 4. **Write the learnings to stand on their own** in `06_spikes/{name}.md` — useful
    even if the external repo disappears — and route the actionable ones to the vault:
    a validated approach → an ADR can advance to `prototyped`
-   ([`/inspire_adr promote`](../inspire-adr/SKILL.md)); a proven capability → a
-   feature/contract via `/inspire_feature` / `/inspire_domain`.
+   ([`/inspire-adr promote`](../inspire-adr/SKILL.md)); a proven capability → a
+   feature/contract via `/inspire-feature` / `/inspire-domain`.
 5. **Record the outcome:** promote to a spec/ADR, feed the horizontal prototype,
    park it, or mark it archived — keep the learnings either way.
 
@@ -83,12 +83,12 @@ here?
 > hardest here: a learning states what is true, never what the spike tried first.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **Never build the spike here.** The code lives in its external repo; this skill
-   only registers and harvests. Building is the spike author's job (or `/inspire_code`
+   only registers and harvests. Building is the spike author's job (or `/inspire-code`
    for real implementation).
 2. **Writing to the external repo needs explicit permission.** Suggesting a
    `Learnings.md` / `CLAUDE.md` section is fine; adding it requires a clear operator
@@ -98,15 +98,15 @@ here?
 4. **Capture is a gap analysis, not a copy.** Import the *signal* (what the spike
    de-risked); leave the *roughness* (its throwaway shortcuts) behind. Ask when
    unsure whether a piece applies to this project.
-5. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
+5. **Consult the task tracker** ([`/inspire-task list`](../inspire-task/SKILL.md))
    for tracked spikes; don't re-register what's already tracked.
 
 ## Related skills
 
-- `/inspire_prototype` — the horizontal, in-repo visual prototype (discovery); a
+- `/inspire-prototype` — the horizontal, in-repo visual prototype (discovery); a
   spike often starts life as a question the horizontal couldn't resolve.
-- `/inspire_adr` — a spike is the *external functional validation* that lets an ADR
+- `/inspire-adr` — a spike is the *external functional validation* that lets an ADR
   reach `prototyped` maturity (record the `**Prototype:**` pointer there).
-- `/inspire_feature` · `/inspire_domain` — where a captured capability lands as a
+- `/inspire-feature` · `/inspire-domain` — where a captured capability lands as a
   feature or contract.
-- `/inspire_code` — the real, in-repo implementation the spike de-risks.
+- `/inspire-code` — the real, in-repo implementation the spike de-risks.

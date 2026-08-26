@@ -1,4 +1,4 @@
-# /inspire_code debug — root-cause framework
+# /inspire-code debug — root-cause framework
 
 **Never fix without understanding root cause.** A patch that makes the symptom go
 away without an explained cause is drift waiting to recur.
@@ -35,8 +35,8 @@ or *spec*:
 - **Spec cause** — the behavior the code got "wrong" was never actually specified,
   or the acceptance criterion is ambiguous/absent, or an action descriptor's
   contract is silent on this case → **stop and hand back.** Route to
-  `/inspire_feature update {feature-id}` (missing/updated acceptance criterion) or
-  `/inspire_domain define|update {id}` (missing/ambiguous behavioral contract).
+  `/inspire-feature update {feature-id}` (missing/updated acceptance criterion) or
+  `/inspire-domain define|update {id}` (missing/ambiguous behavioral contract).
   Fixing code to paper over an unspecified behavior just moves the drift.
 
 ### 5. Fix
@@ -50,9 +50,9 @@ or *spec*:
 1. Verify the new test passes, the failing scenario is gone, and the full suite is
    free of collateral breakage.
 2. **Search for sibling patterns** — the same bug in adjacent code. Fix them, or
-   file them as a tracker ticket via `/inspire_task`, never as an anonymous TODO.
+   file them as a tracker ticket via `/inspire-task`, never as an anonymous TODO.
 3. If the cause was a non-obvious gotcha, capture *why* — in the test name, a short
-   code comment, or, if it is a design lesson, an ADR (`/inspire_adr`) or the design
+   code comment, or, if it is a design lesson, an ADR (`/inspire-adr`) or the design
    system.
 
 ## Output
@@ -65,7 +65,7 @@ Report the cause, not just the fix:
 **Reproduction.** {exact conditions}
 **Root cause.** {fault class} — {WHY, one or two sentences}
 **Scope.** {this site only | also at <paths>}
-**Classification.** code | spec (→ handed to /inspire_feature|/inspire_domain)
+**Classification.** code | spec (→ handed to /inspire-feature|/inspire-domain)
 **Fix.** {what changed} + regression test at {path}
 **Verification.** failing test now passes; full suite {green | N pre-existing failures}
 ```

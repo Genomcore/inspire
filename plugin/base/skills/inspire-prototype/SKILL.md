@@ -1,9 +1,9 @@
 ---
 name: inspire-prototype
-description: "Build and evolve the horizontal prototype at /prototype — the interactive, mock-data, whole-system visual model — from the specs, so the user can SEE the product and steer functional + UI/UX criteria. Its insights co-evolve the vault live (features, screens, component specs, ADRs). Use to scaffold or iterate the visual prototype. Vertical spikes (external repos) live in /inspire_spike."
+description: "Build and evolve the horizontal prototype at /prototype — the interactive, mock-data, whole-system visual model — from the specs, so the user can SEE the product and steer functional + UI/UX criteria. Its insights co-evolve the vault live (features, screens, component specs, ADRs). Use to scaffold or iterate the visual prototype. Vertical spikes (external repos) live in /inspire-spike."
 ---
 
-# /inspire_prototype — The horizontal prototype (discovery)
+# /inspire-prototype — The horizontal prototype (discovery)
 
 The horizontal prototype is a **wide, shallow, mock-data model of the whole
 product** — "Figma with data", not the production app. Its job is to make the
@@ -19,14 +19,14 @@ clarity lands in the vault.
 
 > **Agile on purpose.** No tests, no auth, no persistence, minimal controls — only
 > what's needed to *learn*. Rigor (tests, error handling, robustness) is reserved
-> for real implementation in [`/inspire_code`](../inspire-code/SKILL.md). Building
+> for real implementation in [`/inspire-code`](../inspire-code/SKILL.md). Building
 > the mock, borrow the UI conventions of the codification stage — the
-> **design system** ([`/inspire_bootstrap design-system`](../inspire-bootstrap/SKILL.md))
-> and the UI **stack profile** (`/inspire_code`'s `react` etc.) — but in sketch mode.
+> **design system** ([`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md))
+> and the UI **stack profile** (`/inspire-code`'s `react` etc.) — but in sketch mode.
 >
 > **Vertical spikes are a different skill.** Deep, functional, throwaway builds in
 > their own external repos answering *"can we build it as we think?"* →
-> [`/inspire_spike`](../inspire-spike/SKILL.md).
+> [`/inspire-spike`](../inspire-spike/SKILL.md).
 
 ## Multi-surface suites
 
@@ -78,19 +78,19 @@ the flow", "this needs a filter", "these two screens should merge"), the insight
 **applied to the vault in the same session**, through the owning skill — the
 prototype is a discovery surface for the spec, not a place learnings pile up:
 
-- New/changed behavior or use case → [`/inspire_feature create|update`](../inspire-feature/SKILL.md).
-- New/changed screen, or a UI block worth sharing → [`/inspire_screens`](../inspire-screens/SKILL.md)
+- New/changed behavior or use case → [`/inspire-feature create|update`](../inspire-feature/SKILL.md).
+- New/changed screen, or a UI block worth sharing → [`/inspire-screens`](../inspire-screens/SKILL.md)
   (screen spec, pattern, or component spec).
-- A behavioral contract the flow implies → [`/inspire_domain define|update`](../inspire-domain/SKILL.md).
-- An architectural decision the exploration forces → [`/inspire_adr create`](../inspire-adr/SKILL.md).
+- A behavioral contract the flow implies → [`/inspire-domain define|update`](../inspire-domain/SKILL.md).
+- An architectural decision the exploration forces → [`/inspire-adr create`](../inspire-adr/SKILL.md).
 
 The horizontal prototype keeps **no learnings file of its own** — everything it
 teaches lands in the vault through the owning skill (above). Insight that is
 cross-cutting rather than one feature/screen has a higher-level home: a **decision**
-→ an ADR (`/inspire_adr`, module-scoped or cross-cutting by slug); a **system-wide
-design pattern** → the design system (`/inspire_bootstrap design-system`); a **stack
-pitfall** → `00_bootstrap`; **future work** → a task (`/inspire_task`); a question the
-horizontal **can't resolve** → a spike (`/inspire_spike`). Nothing accumulates in a
+→ an ADR (`/inspire-adr`, module-scoped or cross-cutting by slug); a **system-wide
+design pattern** → the design system (`/inspire-bootstrap design-system`); a **stack
+pitfall** → `00_bootstrap`; **future work** → a task (`/inspire-task`); a question the
+horizontal **can't resolve** → a spike (`/inspire-spike`). Nothing accumulates in a
 `03_*` file for the horizontal — a running learnings log would fight R6 of the
 [writing contract](../_references/writing-style.md) anyway.
 
@@ -109,7 +109,7 @@ loop stay the user's.
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -119,7 +119,7 @@ loop stay the user's.
 2. **Adopt, don't reinvent.** Before writing new UI, check the component catalog
    (`05_screens/components`) and existing prototype code for something canonical.
 3. **Mocked, not real.** The prototype *visualizes* decisions; it does not implement
-   backends, auth, persistence, or tests. That's `/inspire_code`.
+   backends, auth, persistence, or tests. That's `/inspire-code`.
 4. **Verify by running, not just building.** A green build is not a working screen —
    runtime issues (bad data coercion, render loops, null derefs) often render a
    blank page a build won't catch. Launch the prototype and drive the affected flow
@@ -128,9 +128,9 @@ loop stay the user's.
    co-evolved artifacts (feature/screen/domain/ADR/design-system/task); the
    horizontal prototype keeps no learnings log — see the learnings loop above.
 6. **Propagation is bilateral.** A prototype change that alters behavior/structure
-   the screen spec describes must reach the spec (`/inspire_screens`), and vice
+   the screen spec describes must reach the spec (`/inspire-screens`), and vice
    versa. Ask before ending the turn.
-7. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
+7. **Consult the task tracker** ([`/inspire-task list`](../inspire-task/SKILL.md))
    for tracked prototype drift; don't re-surface it as new.
 
 ## Verify checklist
@@ -145,8 +145,8 @@ loop stay the user's.
 
 ## Related skills
 
-- `/inspire_screens` · `/inspire_domain` · `/inspire_feature` · `/inspire_adr` — the
+- `/inspire-screens` · `/inspire-domain` · `/inspire-feature` · `/inspire-adr` — the
   spec skills the learnings loop co-evolves.
-- `/inspire_spike` — vertical spikes (external functional prototypes).
-- `/inspire_code` — the real implementation, once the prototype has clarified the thing.
+- `/inspire-spike` — vertical spikes (external functional prototypes).
+- `/inspire-code` — the real implementation, once the prototype has clarified the thing.
 - `run` / `verify` — launch and exercise the prototype end to end.

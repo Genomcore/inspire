@@ -1,4 +1,4 @@
-# /inspire_code review — judgment review of a diff
+# /inspire-code review — judgment review of a diff
 
 Review a working diff (or a scoped target) for the things a linter **cannot** catch.
 Mechanical checks belong to the toolchain. When one slips through, the finding is the
@@ -39,7 +39,7 @@ terms, judge it against what the KB says it must be:
 
 A disagreement here is not automatically a code bug — it may be a spec gap. Classify
 it: **code wrong → fix in the diff; spec wrong/missing → hand back** to
-`/inspire_feature` / `/inspire_domain`. Render SDD-layer findings with the shared
+`/inspire-feature` / `/inspire-domain`. Render SDD-layer findings with the shared
 format in [`../../_references/findings-format.md`](../../_references/findings-format.md).
 
 ## Phases 1–4 — universal quality (judgment only)
@@ -92,7 +92,7 @@ pass/fail per step; don't inline the raw output.
 ## Fan-out (thorough mode)
 
 For a large or critical diff, run phases 1–4 as **parallel dimension agents**, one
-per dimension, then synthesize — the same batch pattern `/inspire_module review`
+per dimension, then synthesize — the same batch pattern `/inspire-module review`
 uses. Each agent gets the diff + the loaded anchors and reports findings in the
 row format below. The dimensions:
 
@@ -120,7 +120,7 @@ runs the full fan-out. Keep dimensions read-only.
 
 ### KB alignment (Phase 0)
 - ADRs: {ok | contradicts adr-xxx} · Descriptor: {satisfied | gap} · Acceptance criteria: {N/N covered}
-- Hand-backs: {none | /inspire_domain <id>: <why>; /inspire_feature <id>: <why>}
+- Hand-backs: {none | /inspire-domain <id>: <why>; /inspire-feature <id>: <why>}
 
 ### Tooling: lint {PASS/FAIL} · types {PASS/FAIL} · build {PASS/FAIL} · tests {PASS/FAIL}
 Escape hatches: {n} (ceiling {m}) — {new ones in this diff, file:line, with their reason}
@@ -131,7 +131,7 @@ Mutation drill: {not run | k mutations, n survived} — {file:line — mutation 
 |---|---|---|---|---|
 | BLOCKING | Security | src/foo:42 | Hardcoded API key | Move to env var |
 | BLOCKING | Correctness | src/bar:15 | Race on concurrent update | Optimistic lock |
-| WARNING | Architecture | src/baz:8 | Business logic in controller | Move to service — `/inspire_code tdd` |
+| WARNING | Architecture | src/baz:8 | Business logic in controller | Move to service — `/inspire-code tdd` |
 | WARNING | Tooling gap | eslint.config | Layer boundary reviewed by hand | `import-x/no-restricted-paths` |
 
 ### Verdict: READY | NEEDS FIXES ({n} blocking, {m} warnings)

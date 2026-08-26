@@ -23,10 +23,10 @@ survives after the spike repo goes stale or is archived.
 
 ## Adding a spike
 
-1. `/inspire_spike register {name}` copies
+1. `/inspire-spike register {name}` copies
    `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md` and
    fills the repo link, the question, scope, and covered features.
-2. `/inspire_spike capture {name}` harvests its learnings as a **gap analysis**
+2. `/inspire-spike capture {name}` harvests its learnings as a **gap analysis**
    against the vault — importing the signal it de-risked, leaving its rough shortcuts
    behind.
 

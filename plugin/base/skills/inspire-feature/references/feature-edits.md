@@ -19,10 +19,10 @@ Create a new feature/use-case file in a module. **Required arg:**
    use-case file** `inspire_kb/03_features/{module}/{feature-id}.md` from the use
    case template ([`../SKILL.md`](../SKILL.md) § Use case template).
 4. **Report next steps:**
-   - If UI-facing → `/inspire_screens` to add a screen spec.
-   - If it describes a behavior/endpoint → `/inspire_domain define
+   - If UI-facing → `/inspire-screens` to add a screen spec.
+   - If it describes a behavior/endpoint → `/inspire-domain define
      {module}::{entity}::{verb}` to author the action descriptor.
-   - Prototype → `/inspire_prototype` when ready.
+   - Prototype → `/inspire-prototype` when ready.
 
 **Feature ID convention:** the module's prefix + the next available number (scan
 existing IDs), per the convention recorded in the module hub /
@@ -82,7 +82,7 @@ Remove a feature and clean up all references.
 2. Delete the use-case file
    (`inspire_kb/03_features/{module}/{feature-id}.md`).
 3. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
-   screen's only feature was this one, flag it for removal (that's `/inspire_screens`'s
+   screen's only feature was this one, flag it for removal (that's `/inspire-screens`'s
    job) and update the screen spec `_index.md` coverage table.
 4. **Prototype:** remove references in the prototype root (`/prototype` by default —
    resolve `prototype_root` per

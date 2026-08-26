@@ -6,7 +6,7 @@ protocol, defined once here rather than thirteen times.
 ## The offer
 
 At a natural pause, when the operator's feedback should durably change how
-this skill behaves, offer `/inspire_lesson note`. **Never auto-write a
+this skill behaves, offer `/inspire-lesson note`. **Never auto-write a
 lesson** — the skill only ever proposes; the operator decides what is worth
 keeping.
 

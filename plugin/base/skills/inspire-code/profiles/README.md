@@ -12,13 +12,13 @@ At the start of any subcommand, `inspire-code` resolves the active profile set f
 [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
-   use that set. `/inspire_bootstrap stack` maintains this line.
+   use that set. `/inspire-bootstrap stack` maintains this line.
 2. **Inference fallback** — otherwise infer from the stack sections
    (`## Frontend: React` → `react`; `## Backend: NestJS` → `nestjs`; …).
 
 Then read **only** `profiles/{id}.md` for each resolved id. A framework the project
 does not use never loads. If a declared framework has no profile file, the
-subcommand runs **purely generic** and says so — offering `/inspire_bootstrap` to
+subcommand runs **purely generic** and says so — offering `/inspire-bootstrap` to
 scaffold one. Missing profiles never block.
 
 Profiles are **composable**: a React + NestJS monorepo loads both, and each
@@ -78,7 +78,7 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
 | `## Test conventions` | `tdd` · `review` Phase 4 |
 | `## Forbidden patterns` | `review` · `tdd` authoring rules |
 | `## Review focus` | `review` fan-out (extra dimensions) |
-| `## Quality gates` | `/inspire_bootstrap stack` (installs them) · `review` (missing-gate findings) |
+| `## Quality gates` | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |
 | `## Build & verify` | `fix-build` · `review` build step · `debug` |
 
 ## Authoring rules for profiles

@@ -3,7 +3,7 @@
 Every INSPIRE skill authors the artifacts it produces in the project's **declared
 output language**, read from `output_language` in
 [`00_bootstrap/project.md`](../../../inspire_kb/00_bootstrap/project.md). Default:
-`en` (English). Set it with `/inspire_bootstrap language`.
+`en` (English). Set it with `/inspire-bootstrap language`.
 
 ## The rule
 
