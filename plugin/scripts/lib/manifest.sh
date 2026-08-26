@@ -26,16 +26,24 @@ manifest_versions() {
 manifest_paths()  { jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' "$1"; }
 manifest_layout() { jq -r '.layout // "unknown"' "$1"; }
 
-# _score <manifest> <project_root> → integer percent of manifest paths whose
+# _score <manifest_tsv> <hash_table> → integer percent of manifest paths whose
 # on-disk content matches what we shipped.
+#
+# Both arguments are files because detect_version hashes the union of every
+# candidate's paths once and scores each candidate against that one table.
+# awk only counts and bash still divides, so the integer is what it always was,
+# truncation included; a path absent from the table is one the old `[ -f ]` guard
+# skipped.
 _score() {
-  local mf="$1" root="$2" total=0 hit=0 path hash
-  while IFS=$'\t' read -r path hash; do
-    [ -n "$path" ] || continue
-    total=$((total+1))
-    [ -f "$root/$path" ] || continue
-    [ "$(sha256_of "$root/$path")" = "$hash" ] && hit=$((hit+1))
-  done < <(manifest_paths "$mf")
+  local tsv="$1" table="$2" th total hit
+  th="$(tf="$table" LC_ALL=C awk -F'\t' '
+    BEGIN { tf = ENVIRON["tf"] }
+    FILENAME == tf { if (NF >= 2) h[$2] = $1; next }
+    $1 != "" { total++; if (($1 in h) && h[$1] == $2) hit++ }
+    END { printf "%d\t%d\n", total + 0, hit + 0 }
+  ' "$table" "$tsv")"
+  total="${th%%$'\t'*}"
+  hit="${th##*$'\t'}"
   [ "$total" -gt 0 ] || { printf '0\n'; return 0; }
   printf '%s\n' $(( hit * 100 / total ))
 }
@@ -73,20 +81,43 @@ detect_version() {
     return 1
   fi
 
-  # Pass 1: score every candidate exactly once.
+  # One hashing pass for the whole detection, dying inside this function: the
+  # hops run much later, so nothing mutates the project between hash and score.
+  local work
+  work="$(mktemp -d)" || {
+    log "INSPIRE: could not create a temporary directory to detect the version."
+    log "  Refusing to guess — an upgrade from the wrong baseline can lose work."
+    return 1
+  }
+
+  # m<n>.tsv is filled in step with versions[] and read back that way below.
+  local n=0
   for v in "${order[@]}"; do
     mf="$(manifest_path "$plugin_root" "$v")" || continue
     [ -n "$mf" ] || continue
-    s="$(_score "$mf" "$root")"
+    n=$((n+1))
+    manifest_paths "$mf" > "$work/m$n.tsv"
     versions+=("$v")
-    scores+=("$s")
   done
 
   if [ "${#versions[@]}" -eq 0 ]; then
     log "INSPIRE: no readable manifests under '$plugin_root/manifests'."
     log "  Refusing to guess — an upgrade from the wrong baseline can lose work."
+    rm -rf "$work"
     return 1
   fi
+
+  LC_ALL=C awk -F'\t' '$1 != "" { print $1 }' "$work"/m*.tsv \
+    | LC_ALL=C sort -u | tr '\n' '\0' > "$work/list"
+  hash_paths "$root" "$work/list" "$work/table"
+
+  i=0
+  while [ "$i" -lt "${#versions[@]}" ]; do
+    s="$(_score "$work/m$((i+1)).tsv" "$work/table")"
+    scores+=("$s")
+    i=$((i+1))
+  done
+  rm -rf "$work"
 
   # Pass 2a: find the maximum score.
   best_s=-1

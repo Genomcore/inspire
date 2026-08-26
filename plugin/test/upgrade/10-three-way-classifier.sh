@@ -28,6 +28,15 @@ printf '\nMY EDIT\n' >> "$p/.inspire/bin/no-todos.sh"
 rm -f "$p/.inspire/bin/acyclic-deps.sh"
 # Row: project-authored file inside an owned dir → keep. THE rm -rf REGRESSION.
 printf 'go rules\n' > "$p/.claude/skills/inspire-code/references/go-best-practices.md"
+# Row: project-authored files whose NAMES CONTAIN A TAB — the classifier's row
+# files are tab-separated and pass 3 is the one pass that walks the operator's own
+# names. Two of them: a tail of exactly `1` reads as the exclusion flag and drops
+# the row, a tail that is not `1` does not, so both halves of that failure are
+# covered.
+tab_a=".claude/skills/$(printf 'tab\t1')"
+tab_b=".claude/skills/$(printf 'tab\t1.md')"
+printf 'operator, tab-named\n' > "$p/$tab_a"
+printf 'operator, tab-named\n' > "$p/$tab_b"
 
 # ---- pass 2 collision: base ships a target the SOURCE manifest never listed
 # (merge.sh:161-184). Eligibility mirrors the no-op-row selection below, but
@@ -96,6 +105,14 @@ eq "operator deletion is restored" \
    "$(verdict_for "$out" .inspire/bin/acyclic-deps.sh)" "restore"
 eq "project-authored file is kept" \
    "$(verdict_for "$out" .claude/skills/inspire-code/references/go-best-practices.md)" "keep"
+# Full-line match, not verdict_for: that helper compares $2, which is itself only
+# the first tab-separated segment of a tab-named path. The whole row must be
+# present, once per file, carrying the complete name.
+tab_row_a="$(printf 'keep\t%s\tyours — INSPIRE never shipped this' "$tab_a")"
+tab_row_b="$(printf 'keep\t%s\tyours — INSPIRE never shipped this' "$tab_b")"
+check "a TAB in an operator file's name survives pass 3 whole, one row each" \
+   "[ \"\$(printf '%s\n' \"\$out\" | grep -Fxc \"\$tab_row_a\")\" = 1 ] \
+    && [ \"\$(printf '%s\n' \"\$out\" | grep -Fxc \"\$tab_row_b\")\" = 1 ]"
 eq "pass-2 collision: a different operator file at an unshipped-in-source target asks" \
    "$(verdict_for "$out" "$ask_path")" "ask"
 eq "pass-2 collision: ask detail matches merge.sh's exact wording" \

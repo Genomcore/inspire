@@ -319,17 +319,27 @@ seed_kb() {
 # here — the find below names its two roots explicitly rather than sweeping
 # base/, which is what keeps a new payload class from silently acquiring the
 # executable bit.
+#
+# A chmod failure is ignored, as it always was: a bit that will not set is no
+# reason to abort an upgrade that has already written the file. STDERR STAYS OPEN
+# for the same reason it did per file — `chmod: Unable to change file mode on
+# <path>` is the only signal an operator gets that a registered hook or a
+# validator was left non-executable, and the exit status is never checked.
 chmod_executables() {
   [ "$DRY_RUN" = 1 ] && return 0
-  local src_sh rel
+  local src_sh rel list
+  list="$(mktemp)"
   while IFS= read -r src_sh; do
     rel="${src_sh#"$PLUGIN_ROOT"/base/}"
     case "$rel" in
       bin/*) rel=".inspire/${rel}" ;;
       hooks/*) rel=".claude/inspire/${rel}" ;;
     esac
-    [ -f "$PROJECT_ROOT/$rel" ] && chmod +x "$PROJECT_ROOT/$rel"
+    [ -f "$PROJECT_ROOT/$rel" ] && printf '%s\0' "$PROJECT_ROOT/$rel" >> "$list"
   done < <(find "$PLUGIN_ROOT/base/bin" "$PLUGIN_ROOT/base/hooks" -type f -name '*.sh' ! -path '*/test/*' 2>/dev/null)
+  [ -s "$list" ] && xargs -0 chmod +x < "$list"
+  rm -f "$list"
+  return 0
 }
 
 # Seed the live design system from the bootstrap theme, once. Never clobbers an
