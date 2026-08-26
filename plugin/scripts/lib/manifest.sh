@@ -44,7 +44,8 @@ manifest_layout() { jq -r '.layout // "unknown"' "$1"; }
 # guard meant.
 _score() {
   local tsv="$1" table="$2" th total hit
-  th="$(LC_ALL=C awk -F'\t' -v tf="$table" '
+  th="$(tf="$table" LC_ALL=C awk -F'\t' '
+    BEGIN { tf = ENVIRON["tf"] }
     FILENAME == tf { if (NF >= 2) h[$2] = $1; next }
     $1 != "" { total++; if (($1 in h) && h[$1] == $2) hit++ }
     END { printf "%d\t%d\n", total + 0, hit + 0 }
