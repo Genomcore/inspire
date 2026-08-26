@@ -172,14 +172,18 @@ domain_scan() {
 # — or a pattern entry passed as `action --file` — from rendering an empty
 # contract with a clean exit.
 kind_holds() {
-  local path="$1" want="$2"
+  local path="$1" want="$2" dir
+  case "$path" in */*) dir="${path%/*}" ;; *) dir="." ;; esac
   case "$want" in
     screen)
       derive_screen_index
       awk -F'\t' -v p="$path" '$1 == p { f = 1; exit } END { exit !f }' \
         "$DERIVE_TMP/screens.tsv" ;;
-    entity) sdd_find_entities "$SDD_SPEC_ROOT" | grep -qxF "$path" ;;
-    action) sdd_find_actions "$SDD_SPEC_ROOT" | grep -qxF "$path" ;;
+    # Scoped to the file's own directory: the finder intersects that with
+    # $SDD_SPEC_ROOT first, so a path outside the domain tree yields nothing and
+    # the walk stays one directory wide instead of one vault wide.
+    entity) sdd_find_entities "$dir" | grep -qxF "$path" ;;
+    action) sdd_find_actions "$dir" | grep -qxF "$path" ;;
   esac
 }
 
