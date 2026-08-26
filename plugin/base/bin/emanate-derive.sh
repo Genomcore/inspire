@@ -2,43 +2,20 @@
 # .inspire/bin/emanate-derive.sh
 #
 # derive — a unit's KB artifacts -> the DERIVED CONTRACT, on stdout, as JSON
-# (D5/D7/D8). One of the emanation loop's four independent bin scripts
-# (derive, plan, gate, harvest); the shared bulk lives in `lib/` and is
-# sourceable on its own, which is the reuse surface `plan` and `gate` compose
-# on:
+# (D5/D7/D8). One of the emanation loop's four independent bin scripts (derive,
+# plan, gate, harvest); the shared bulk lives in `lib/derive-{json,types,
+# refusals,domain,screen}.sh`, sourceable on its own — the reuse surface `plan`
+# and `gate` compose on.
 #
-#   lib/derive-json.sh       spools, table and entry readers, fingerprints,
-#                            the jq prelude every contract program opens with
-#   lib/derive-types.sh      the universal semantic vocabulary as data, and
-#                            resolution against the project's own types
-#   lib/derive-refusals.sh   the strict parser's refusal half — the rule sweep,
-#                            the class map, the `DR-*` ids
-#   lib/derive-domain.sh     entity and action derivation
-#   lib/derive-screen.sh     screen derivation
+# STRICT, AND THAT IS THE ONE NEW BEHAVIOUR IN THE LOOP (D7): an old shape is a
+# DERIVATION ERROR naming the skill to touch the artifact with, never a
+# silently-empty section, and never softened by the 0.8 lifecycle grace review
+# gives the five presence classes. Each `OS-*` class is checked by RUNNING the
+# rule that owns it, so no class has a second implementation here to drift from
+# the one review uses.
 #
-# THE DERIVED CONTRACT IS THE DERIVER'S OUTPUT, with two consumers: the
-# readiness gate (`plan`) and the contracter agent. It is the language-neutral
-# projection of one unit — inputs with resolved semantic types, outputs, errors,
-# `requires:` dependencies, invariants, and every claim the unit makes as a
-# keyed id plus a content fingerprint. The JSON shape, field by field, is
-# `.claude/skills/_references/derived-contract.md`.
-#
-# STRICT, AND THAT IS THE ONE NEW BEHAVIOUR IN THE LOOP (D7). An old shape —
-# prose invariants, unkeyed steps, constraints left in a Description, a screen
-# with no identity block — is a DERIVATION ERROR that names the skill to touch
-# the artifact with. It is never read as a silently-empty section, and never
-# softened by the 0.8 lifecycle grace the review rules give the five presence
-# classes: review warns so an upgraded vault is not red everywhere, and derive
-# refuses so nothing emanates from an unkeyed descriptor anyway.
-#
-# Every `OS-*` class is checked by RUNNING the rule that owns it and reading its
-# findings back, so no class has a second implementation here to drift from the
-# one review uses. `lib/derive-refusals.sh` § "ONE DEFINITION PER REFUSAL CLASS"
-# carries the argument and names the rules consulted.
-#
-# PATTERNS AND COMPONENTS ARE NOT DERIVE KINDS. A screen's contract lists them
-# as declared dependencies — id, resolved path, and a component's `**State:**`
-# line — and reading readiness off those states is the `plan` script's job.
+# The JSON shape field by field, the claim ids, the fingerprint rule and the
+# `DR-*` classes: `.claude/skills/_references/derived-contract.md`.
 #
 # Usage:
 #   emanate-derive.sh <kind> <id>
@@ -158,13 +135,8 @@ trap 'rm -rf "$DERIVE_TMP"' EXIT
 derive_init_spools requires claims refused
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Locating the unit
-#
-# A domain id maps to its path by the format spec's own filename convention, so
-# the common case is one stat rather than a frontmatter scan. A screen does not:
-# its id is minted write-once and never re-derived from location (A12), so the
-# only correct lookup is the id index — which is also why a screen the finders
-# cannot reach is unfindable rather than merely misplaced.
+# Locating the unit — by path convention for a domain id, by the id index for a
+# screen, whose id is minted write-once and never re-derived from location (A12).
 # ─────────────────────────────────────────────────────────────────────────────
 
 not_found() {
@@ -275,12 +247,8 @@ U_ROUTE="/$U_MODULE/$U_SCREEN"
 derive_target "$U_PATH" "$U_ID" "$KIND"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Derivation and the rule sweep run TOGETHER. The sweep starts on the unit's own
-# directory, which is known before anything is parsed; derivation then discovers
-# the other documents this unit must read — an action's touched entities — and
-# `derive_sweep_collect` covers any directory the first launch did not reach
-# before filtering. Every class found either way lands in one list, so the
-# operator gets the whole picture in one run rather than one class per attempt.
+# Derivation and the sweep run TOGETHER; collect covers whatever directory the
+# derivation reached that the first launch did not, then files every class found.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Declared before the branch below because `set -u` makes an unset variable

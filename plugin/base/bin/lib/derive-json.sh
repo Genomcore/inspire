@@ -1,37 +1,30 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/derive-json.sh
 #
-# Library — spools, fingerprints and the JSON assembly `emanate-derive.sh` and
-# its sibling units share. Sourced after `_lib.sh` and `_keyed-heads.sh`; safe
-# to source on its own from any other bin script that wants the same readers
-# (the reuse surface the `plan` and `gate` scripts compose on).
+# Library — the readers, spools and JSON assembly the derive units share.
+# Sourced after `_lib.sh` and `_keyed-heads.sh`; safe to source on its own.
+# It carries: the scratch directory and the spool writers, `derive_norm` and the
+# table / frontmatter / keyed-entry readers, the claim spool and its batched
+# fingerprints, and the jq prelude every contract program opens with.
 #
-# THE SPOOL DISCIPLINE. A derived collection is accumulated as one
-# separator-delimited record per line in a scratch file, and the whole contract
-# is then rendered by a SINGLE `jq -n --rawfile` program per kind. Two reasons,
-# both measured: one `jq` per derived object costs about 8 ms and a unit has
-# dozens of them; and a record written through `derive_row` cannot be
-# mis-escaped the way hand-built JSON can. Separators, outermost first:
+# A derived collection is accumulated as one separator-delimited record per line
+# and rendered by a SINGLE `jq -n --rawfile` program per kind: one `jq` per
+# object costs ~8 ms and a unit has dozens, and a record written through
+# `derive_row` cannot be mis-escaped the way hand-built JSON can. Separators,
+# outermost first — neither can occur in a markdown cell, which is what makes
+# the encoding lossless without an escape rule:
 #
 #   DERIVE_FS  U+001F  between the fields of one record
-#   DERIVE_LS  U+001E  between the items of a list INSIDE one field
-#                      (a head's arguments; a fingerprint payload's parts)
+#   DERIVE_LS  U+001E  between the items of a list inside one field
 #
-# Neither character can occur in a markdown table cell or a keyed entry, which
-# is what makes the encoding lossless without an escape rule.
+# THE FINGERPRINT is `sha256:<hex>` over the claim's payload bytes — its derived
+# content, DERIVE_LS-joined, no trailing newline. Never the raw line and never
+# the position: ordinals are not read and whitespace is collapsed, so two files
+# differing only in spacing or numbering fingerprint identically. The payload
+# per claim family is tabled in `_references/derived-contract.md`.
 #
-# THE FINGERPRINT. `sha256:<hex>` over the claim's PAYLOAD BYTES — the derived
-# content of the claim, DERIVE_LS-joined, with no trailing newline. Never the
-# raw line and never the position: the markdown ordinal is not read, whitespace
-# inside every part is collapsed, and a head is rendered canonically, so two
-# files differing only in spacing or numbering fingerprint identically. The
-# payload shape per claim family is catalogued in
-# `.claude/skills/_references/derived-contract.md`.
-#
-# Hashing is BATCHED: every payload is spooled, written out as one small file
-# each, and digested by a single `shasum`/`sha256sum` invocation. Per-claim
-# invocations cost 13 ms each — 0.4 s on a unit with thirty claims, which would
-# be most of a derivation.
+# Hashing is BATCHED — one digest process per unit rather than per claim, which
+# is 0.4 s on a unit with thirty of them.
 
 DERIVE_FS=$'\037'
 DERIVE_LS=$'\036'
@@ -85,14 +78,11 @@ derive_norm() {
   printf '%s' "$DERIVE_NORM"
 }
 
-# derive_fm_scalar <file> <key> — one top-level frontmatter scalar, read from
-# the file's own block rather than through `yq`. The screen index reads one key
-# from every screen in the vault, and a yq process per file is the largest
-# avoidable cost in a derivation. Two YAML facts have to be honoured or the
-# reader answers differently from `sdd_fm_value`, and two readers of one
-# frontmatter that disagree about an `id:` disagree about identity itself: a
-# quoted scalar is its quoted span, and an unquoted ` #` opens a comment — the
-# shipped templates put the enum of a field in exactly such a comment.
+# derive_fm_scalar <file> <key> — one frontmatter scalar, read from the file's
+# own block: a yq process per screen is a derivation's largest avoidable cost.
+# A quoted scalar is its quoted span and an unquoted ` #` opens a comment, or
+# this reader and `sdd_fm_value` would disagree about an `id:` — and two readers
+# that disagree about an id disagree about identity.
 derive_fm_scalar() {
   awk -v key="$2" '
     NR == 1 { if ($0 != "---") exit; next }
@@ -126,16 +116,10 @@ derive_link_target() {
   derive_norm "$t"
 }
 
-# derive_head_split <head>
-#   Splits a head once into three globals: $DERIVE_HWORD (the identifier),
-#   $DERIVE_HARGS (its arguments, trimmed and DERIVE_LS-joined, for the record
-#   field the JSON program turns back into an array) and $DERIVE_HCANON (the
-#   canonical rendering `word` or `word(a1,a2)`).
-#
-#   One split, three answers: `kh_split_args` is an awk plus a sed, and a head
-#   would otherwise be split once for its arguments and again for its canonical
-#   form, on every constraint token in the file. Canonical rendering is what
-#   makes `len(3, 64)` and `len(3,64)` one claim rather than two.
+# derive_head_split <head> — $DERIVE_HWORD, $DERIVE_HARGS (DERIVE_LS-joined) and
+# $DERIVE_HCANON, from one pass. `kh_split_args` is an awk plus a sed and a head
+# is otherwise split twice on every constraint token in the file. The canonical
+# rendering is what makes `len(3, 64)` and `len(3,64)` one claim, not two.
 derive_head_split() {
   local head="$1" args a
   DERIVE_HWORD=""; DERIVE_HARGS=""; DERIVE_HCANON=""
@@ -153,14 +137,10 @@ derive_head_split() {
   DERIVE_HCANON="$DERIVE_HWORD(${DERIVE_HARGS//$DERIVE_LS/,})"
 }
 
-# derive_table <file> <section>
-#   Every markdown table in that body section, as DERIVE_FS-joined records: one
-#   `H` record per table carrying its header cells, then one `R` record per data
-#   row. Header-keyed columns are what let a reader survive the optional
-#   `Required` column `## Inputs` may drop.
-#   The separator row is the discriminator (a header is the row before it), so a
-#   pipe line that is not part of a table yields nothing; a `\|` escaped for a
-#   wikilink is protected before the split and restored after.
+# derive_table <file> <section> — every table in that section as records: one `H`
+# per table, then one `R` per data row. The separator row is the discriminator,
+# so a pipe line outside a table yields nothing; header cells are emitted because
+# `## Inputs` may drop its `Required` column.
 derive_table() {
   sdd_body_section "$1" "$2" | awk -v fs="$DERIVE_FS" '
     function emit(kind, line,   n, i, c, out) {

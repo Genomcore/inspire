@@ -110,13 +110,8 @@ w1="$( cd "$FX/w1-never-refuses" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
 ne "the W-1 fixture really does provoke a W-1 finding" "$w1" "0"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Derive is stricter than review, by construction
-#
-# The five presence classes are a flat warning at every lifecycle in 0.8 so that
-# an upgraded vault is not red everywhere, and derive refuses on them anyway
-# (D7). The `*-draft` fixtures pin derive's half; this pins review's, on the very
-# same tree — otherwise "regardless of the grace" is a claim about two runs
-# nobody compared.
+# Derive is stricter than review, by construction. The `*-draft` fixtures pin
+# derive's half of D7; this pins review's, on the very same tree.
 # ─────────────────────────────────────────────────────────────────────────────
 
 while IFS=' ' read -r fx rule class; do

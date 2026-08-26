@@ -66,13 +66,10 @@ derive_project_types() {
   printf '%s\n' "$DERIVE_PROJECT_TYPES"
 }
 
-# derive_type_base <type>
-#   Prints the universal base type of a `Type` cell. Exit codes, because the
-#   three failures are three different refusal classes:
-#     0  resolved (base printed)
-#     1  no type declared at all — an empty cell or the `—` / `-` none-spelling
-#     2  the type is in neither home
-#     3  a project type whose declared base type is missing or not universal
+# derive_type_base <type> — prints the base type. The three failures are three
+# refusal classes, so they are three exit codes: 1 no type declared (an empty
+# cell or the `—` none-spelling), 2 the type is in neither home, 3 a project
+# type whose declared base type is missing or not universal.
 derive_type_base() {
   local name base
   name="$(derive_norm "$1")"

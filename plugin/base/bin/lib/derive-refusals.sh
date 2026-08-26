@@ -2,34 +2,17 @@
 # .inspire/bin/lib/derive-refusals.sh
 #
 # Library — the strict parser's refusal half (design D7). Sourced after
-# `_lib.sh`, `_keyed-heads.sh` and `derive-json.sh`.
+# `_lib.sh`, `_keyed-heads.sh` and `derive-json.sh`. It carries: the refusal
+# spool and its remedies, the target registry a finding is filtered against,
+# `derive_class_of` (the message-to-class map), and the rule sweep.
 #
-# ONE DEFINITION PER REFUSAL CLASS, and the mechanism is the point. Every
-# `OS-*` class already has exactly one implementation — the review rule that
-# owns it — so derive does not re-implement one. It RUNS those rules over the
-# unit's own directory and reads their JSON findings back off stderr, filtered
-# to the artifacts this derivation must read. A class therefore cannot drift
-# between the gate and the review: there is one check, and both callers see the
-# same finding. What derive adds is only the POSTURE: it refuses on the class
-# whatever severity the rule reported it at, so the 0.8 grace on the five
-# presence classes (`_keyed-heads.sh` § Severity) never softens the gate, and
-# `W-1` — a prose heuristic — is never a refusal.
-#
-# The rules consulted, by unit kind, and nothing else:
-#   entity, action  keys-present · constraints-mechanics · head-referents ·
-#                   sections-present
-#   screen          screen-coherence · sections-present
-# Everything else `review.sh` runs is readiness, which the `plan` script owns.
-#
-# NOTHING A CONSULTED RULE REPORTS AGAINST THIS UNIT IS EVER IGNORED. A message
-# carrying an `OS-*` prefix is filed under that class; the rest are mapped by
-# `derive_class_of` to a `DR-*` id this package owns; anything neither is filed
-# under `DR-U1` rather than dropped. A silent pass is the one outcome a strict
-# parser may not produce, so an unrecognised finding refuses too.
-#
-# The `DR-*` catalogue — ids, meanings and remedies — is in
-# `.claude/skills/_references/derived-contract.md`. The `OS-*` catalogue is
-# `_references/keyed-heads.md`'s and is never copied.
+# Derive re-implements no check. It RUNS the rule that owns each `OS-*` class
+# and reads its findings back, so a class cannot drift between the gate and the
+# review; what derive adds is the posture — it refuses whatever severity the
+# rule reported, and `W-1` alone is never a refusal. The argument, the rules
+# consulted per kind, and the `DR-*` catalogue are in
+# `.claude/skills/_references/derived-contract.md` § "How the classes are
+# checked". The `OS-*` catalogue is `_references/keyed-heads.md`'s, never copied.
 
 # Consumers that source these units instead of running the entry get the same
 # default the entry sets: the directory holding the rules is the one above lib/.
@@ -56,12 +39,9 @@ derive_remedy() {
 }
 
 # derive_target <path> <id> <kind> — register an artifact this derivation reads.
-# A finding against anything else is another unit's business.
-#
-# The path is normalised through `sdd_scope_norm`, and so is a finding's own
-# `target` before the two are compared: a rule normalises the scope it is given
-# and reports `spec/sdd/…` however it was spelled, so `./spec/sdd/…` on derive's
-# side would match nothing and every refusal would read as acceptance.
+# Normalised, as a finding's own `target` is before the two are compared: a rule
+# reports `spec/sdd/…` however its scope was spelled, so `./spec/sdd/…` here
+# would match nothing and every refusal would read as acceptance.
 derive_target() {
   printf '%s\t%s\t%s\n' "$(sdd_scope_norm "$1")" "$2" "$3" >> "$DERIVE_TMP/targets.tsv"
 }
@@ -106,16 +86,10 @@ derive_class_of() {
   esac
 }
 
-# The sweep is SPLIT so that it overlaps the derivation instead of following it:
-# both halves cost roughly the same and need nothing from each other until the
-# filtering step — 0.65 s overlapped against 1.06 s in sequence, per unit.
-#
-# THE SWEEP IS ALSO THE STRICTNESS. A consulted rule that is missing, that dies,
-# or that prints one line of anything but a finding used to disable every class
-# silently, so all three are integrity failures here: the rules are required
-# tools (127), a job's exit status is read, and stderr is parsed line by line so
-# an unparseable line becomes a `DR-U1` refusal instead of aborting the reader
-# and taking every later finding with it.
+# The sweep is SPLIT to overlap the derivation: 0.65 s against 1.06 s in
+# sequence, per unit. It is also the strictness, so a rule that is missing, that
+# dies, or that prints anything but a finding is an integrity failure here —
+# each of the three used to disable every class in silence.
 DERIVE_SWEEP_JOBS=0
 DERIVE_SWEEP_DIRS=""
 

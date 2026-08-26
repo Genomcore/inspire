@@ -45,12 +45,9 @@ derive_constraints() {
   done < <(kh_split_constraints "$list")
 }
 
-# derive_type_cell <cell> <where> <target>
-#   Resolves a `Type` cell into $DERIVE_TNAME / $DERIVE_TBASE, or refuses.
-#   Sets globals rather than printing: a refusal recorded inside `$( … )` would
-#   lose nothing on disk but everything in the caller's state, and refusing is
-#   the whole point of this call. Never emits a generic type (D5) — a type
-#   nothing recognizes is a rendering the contracter would have to guess at.
+# derive_type_cell <cell> <where> <target> — resolves into $DERIVE_TNAME /
+# $DERIVE_TBASE, or refuses. Globals rather than stdout: a refusal recorded
+# inside `$( … )` would lose the caller's state, and refusing is the point.
 derive_type_cell() {
   local cell="$1" where="$2" target="$3" name rc
   derive_norm_g "$cell"
@@ -146,15 +143,11 @@ derive_entity_json() {
 # Action
 # ─────────────────────────────────────────────────────────────────────────────
 
-# derive_touched <action-copy> <action-file>
-#   The `## Entities` declarations, each carrying the touched entity's own
-#   constraints for the fields this action touches — what a contracter needs to
-#   render persistence and validation without opening a second document.
-#
-#   `sdd_entities_touched` speaks TSV and this reader does not: a tab is an IFS
-#   *whitespace* character, so `IFS=$'\t' read` collapses runs of them, and a
-#   row with an empty `Mapping` cell would shift every later cell one place
-#   left. The rows are re-separated on DERIVE_FS, which read preserves.
+# derive_touched <action-copy> <action-file> — the `## Entities` declarations,
+# each carrying the touched entity's own constraints for the fields it touches.
+# Re-separated on DERIVE_FS because a tab is an IFS *whitespace* character:
+# `IFS=$'\t' read` collapses runs, and an empty `Mapping` cell would shift every
+# later cell one place left.
 derive_touched() {
   local copy="$1" file="$2" n=0 rows="$DERIVE_TMP/touched.rows"
   local rid ain effect field touch type mapping notes entfile entcopy
