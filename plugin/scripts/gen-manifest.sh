@@ -91,22 +91,13 @@ identity="$(git -C "$REPO" show "$commit:$IDENTITY_PATH" 2>/dev/null)" \
 version="$(printf '%s' "$identity"  | jq -r '.version  // "unknown"')"
 released="$(printf '%s' "$identity" | jq -r '.released // "unknown"')"
 
-tmp="$(mktemp)"; work="$(mktemp -d)"; arc="$(mktemp -d)"
-trap 'rm -f "$tmp"; rm -rf "$work" "$arc"' EXIT
-
-# ONE `git archive` instead of a `git show` per blob, and one hash batch instead of
-# two spawns per blob — 79–192 paths per manifest, nine manifests per sweep. The
-# bytes are the same bytes: this repo has no .gitattributes, so archive is a plain
-# blob extraction, and the proof is that all nine shipped manifests still
-# regenerate byte-for-byte (test-manifest.sh's sweep, plus an explicit full diff).
-git -C "$REPO" archive "$commit" -- "$SRC_PREFIX" | tar -x -C "$arc" \
-  || { log "gen-manifest.sh: cannot read $SRC_PREFIX at $TAG"; exit 1; }
+tmp="$(mktemp)"; blobtmp="$(mktemp)"
+trap 'rm -f "$tmp" "$blobtmp"' EXIT
 
 i=0
 for name in $MAP_NAMES; do
   i=$((i+1))
   dest="$(printf '%s' "$MAP_DESTS" | cut -d' ' -f"$i")"
-  : > "$work/list"; : > "$work/map"
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     rel="${path#"$SRC_PREFIX/$name/"}"
@@ -120,22 +111,11 @@ for name in $MAP_NAMES; do
     if [ "$LAYOUT" = "0.3" ]; then
       _base_excluded "$name" "$rel" && continue
     fi
-    printf '%s\0' "$path" >> "$work/list"
-    printf '%s\t%s\n' "$path" "$dest/$rel" >> "$work/map"
+    git -C "$REPO" show "$commit:$path" > "$blobtmp" \
+      || { log "gen-manifest.sh: cannot read $path at $TAG"; exit 1; }
+    h="$(sha256_of "$blobtmp")"
+    printf '%s\t%s\n' "$dest/$rel" "$h" >> "$tmp"
   done < <(git -C "$REPO" ls-tree -r --name-only "$commit" -- "$SRC_PREFIX/$name")
-
-  hash_paths "$arc" "$work/list" "$work/table"
-  # Joined BY PATH, never by position: a tree entry the extraction cannot produce
-  # as a regular file has no hash, and must fail as loudly as the old `git show`
-  # did rather than shift every later row onto the wrong path.
-  tf="$work/table" LC_ALL=C awk -F'\t' '
-    BEGIN { tf = ENVIRON["tf"] }
-    FILENAME == tf { h[$2] = $1; next }
-    { if ($1 in h) printf "%s\t%s\n", $2, h[$1]
-      else { print "gen-manifest.sh: cannot read " $1 > "/dev/stderr"; miss = 1 } }
-    END { if (miss) exit 1 }
-  ' "$work/table" "$work/map" >> "$tmp" \
-    || { log "gen-manifest.sh: the path(s) above are missing at $TAG"; exit 1; }
 done
 
 files_json="$(LC_ALL=C sort "$tmp" | jq -R -s '
