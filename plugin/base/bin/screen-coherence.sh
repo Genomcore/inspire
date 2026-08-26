@@ -66,30 +66,6 @@ LIFECYCLE_STATES="draft accepted stable superseded"
 # Readers
 # ─────────────────────────────────────────────────────────────────────────────
 
-# fm_scalar <key> — filter: prints the value of a top-level frontmatter key from
-# the YAML on stdin, with one matching pair of surrounding quotes removed.
-#
-# yq writes these keys bare, but YAML lets an operator quote them and nothing
-# forbids it. The quotes have to come off here because `sdd_fm_value` (yq) takes
-# them off everywhere else: leave them on and a legal `id: "users.list"` reads as
-# a different string than the same id written bare — an id-shape error on a valid
-# file, and a `superseded_by` that yq round-tripped into quotes never matching
-# its screen in the index. Two readers of one frontmatter must agree.
-fm_scalar() {
-  awk -v key="$1" -v q="'" '
-    index($0, key ": ") == 1 {
-      v = substr($0, length(key) + 3)
-      sub(/[ \t\r]+$/, "", v)
-      first = substr(v, 1, 1)
-      last = substr(v, length(v), 1)
-      if (length(v) >= 2 && first == last && (first == "\"" || first == q))
-        v = substr(v, 2, length(v) - 2)
-      print v
-      exit
-    }
-  '
-}
-
 # sc_surface_of <path> — the surface segment a screen sits in, or the empty
 # string in the flat (suite-of-one) shape. `shared` is returned as itself: it is
 # a pseudo-surface serving every shell, which is exactly why it collides with
@@ -224,14 +200,19 @@ sc_resolve_rel() {
 # The vault-wide identity index: path \t id \t module \t screen \t surface
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Read FIELD BY FIELD through `sdd_fm_value`, never off the extracted block:
+# `yq '.'` round-trips an inline `# comment` into the value it prints, while
+# `yq '.id'` gives the scalar YAML actually means. The shipped canonical screen
+# carries such a comment, so the block reader failed its own format's example —
+# and it fed `id`, `module` and `screen`, hence the duplicate-id and
+# route-collision indexes too.
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  fm="$(sdd_frontmatter "$f")"
   printf '%s\t%s\t%s\t%s\t%s\n' \
     "$f" \
-    "$(printf '%s\n' "$fm" | fm_scalar id)" \
-    "$(printf '%s\n' "$fm" | fm_scalar module)" \
-    "$(printf '%s\n' "$fm" | fm_scalar screen)" \
+    "$(sdd_fm_value "$f" '.id')" \
+    "$(sdd_fm_value "$f" '.module')" \
+    "$(sdd_fm_value "$f" '.screen')" \
     "$(sc_surface_of "$f")" >> "$SC_INDEX"
 done < <(sdd_find_screens "$SDD_KB_ROOT")
 
