@@ -325,6 +325,12 @@ seed_kb() {
 # itself. The same paths are chmodded, and a failure is still ignored — the old
 # loop never checked chmod's status either, and a bit that will not set is no
 # reason to abort an upgrade that has already written the file.
+#
+# STDERR STAYS OPEN, deliberately, and this is not an oversight: the per-file loop
+# ran with it open, and `chmod: Unable to change file mode on <path>` is the ONLY
+# signal an operator gets that a registered hook or a validator has been left
+# non-executable — the exit status was never checked, so silencing the message
+# silences the whole diagnostic. `xargs chmod` prints the identical per-file text.
 chmod_executables() {
   [ "$DRY_RUN" = 1 ] && return 0
   local src_sh rel list
@@ -337,7 +343,7 @@ chmod_executables() {
     esac
     [ -f "$PROJECT_ROOT/$rel" ] && printf '%s\0' "$PROJECT_ROOT/$rel" >> "$list"
   done < <(find "$PLUGIN_ROOT/base/bin" "$PLUGIN_ROOT/base/hooks" -type f -name '*.sh' ! -path '*/test/*' 2>/dev/null)
-  [ -s "$list" ] && xargs -0 chmod +x < "$list" 2>/dev/null
+  [ -s "$list" ] && xargs -0 chmod +x < "$list"
   rm -f "$list"
   return 0
 }
