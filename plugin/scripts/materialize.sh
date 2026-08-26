@@ -319,17 +319,33 @@ seed_kb() {
 # here — the find below names its two roots explicitly rather than sweeping
 # base/, which is what keeps a new payload class from silently acquiring the
 # executable bit.
+#
+# ONE `chmod` for the whole set instead of one per file: the paths go into a NUL
+# list handed to a single xargs, which splits over the argument-length limit by
+# itself. The same paths are chmodded, and a failure is still ignored — the old
+# loop never checked chmod's status either, and a bit that will not set is no
+# reason to abort an upgrade that has already written the file.
+#
+# STDERR STAYS OPEN, deliberately, and this is not an oversight: the per-file loop
+# ran with it open, and `chmod: Unable to change file mode on <path>` is the ONLY
+# signal an operator gets that a registered hook or a validator has been left
+# non-executable — the exit status was never checked, so silencing the message
+# silences the whole diagnostic. `xargs chmod` prints the identical per-file text.
 chmod_executables() {
   [ "$DRY_RUN" = 1 ] && return 0
-  local src_sh rel
+  local src_sh rel list
+  list="$(mktemp)"
   while IFS= read -r src_sh; do
     rel="${src_sh#"$PLUGIN_ROOT"/base/}"
     case "$rel" in
       bin/*) rel=".inspire/${rel}" ;;
       hooks/*) rel=".claude/inspire/${rel}" ;;
     esac
-    [ -f "$PROJECT_ROOT/$rel" ] && chmod +x "$PROJECT_ROOT/$rel"
+    [ -f "$PROJECT_ROOT/$rel" ] && printf '%s\0' "$PROJECT_ROOT/$rel" >> "$list"
   done < <(find "$PLUGIN_ROOT/base/bin" "$PLUGIN_ROOT/base/hooks" -type f -name '*.sh' ! -path '*/test/*' 2>/dev/null)
+  [ -s "$list" ] && xargs -0 chmod +x < "$list"
+  rm -f "$list"
+  return 0
 }
 
 # Seed the live design system from the bootstrap theme, once. Never clobbers an

@@ -57,24 +57,55 @@ _base_excluded() {
 
 # _middle <dest_map> <path> → the base-relative middle (e.g. bin/review.sh),
 # or empty when the path is not under any of the map's destinations.
-_middle() {
+# THE `_var` VARIANTS ARE THE SAME FUNCTIONS WITHOUT THE COMMAND SUBSTITUTION:
+# they assign a global instead of printing, because the batched walkers below
+# call them once per file and a `$(...)` there is a fork per file — the same
+# per-file tax the hashing had, in cheaper clothes. The printing form is that
+# variant plus a printf, so the path arithmetic exists in exactly one place.
+_middle_var() {
   local map="$1" path="$2" pair name dest
+  _MIDDLE=""
   for pair in $map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     case "$path" in
-      "$dest"/*) printf '%s\n' "$name/${path#"$dest"/}"; return 0 ;;
+      "$dest"/*) _MIDDLE="$name/${path#"$dest"/}"; return 0 ;;
     esac
   done
   return 1
 }
+_middle() {
+  _middle_var "$1" "$2" || return 1
+  printf '%s\n' "$_MIDDLE"
+}
 
 # _from_middle <dest_map> <middle> → the path that map materializes it at
-_from_middle() {
+_from_middle_var() {
   local map="$1" mid="$2" pair name dest
+  _FROM_MIDDLE=""
   for pair in $map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     case "$mid" in
-      "$name"/*) printf '%s\n' "$dest/${mid#"$name"/}"; return 0 ;;
+      "$name"/*) _FROM_MIDDLE="$dest/${mid#"$name"/}"; return 0 ;;
+    esac
+  done
+  return 1
+}
+_from_middle() {
+  _from_middle_var "$1" "$2" || return 1
+  printf '%s\n' "$_FROM_MIDDLE"
+}
+
+# _map_dest_var <dest_map> <name> → _MAP_DEST, that class's destination in the
+# map, or empty (rc 1) when the map has no such class. It is _from_middle_var's
+# answer with the per-file half removed: `_from_middle "$map" "$name/$rel"` is
+# always `<that dest>/$rel`, so the lookup is loop-invariant and belongs outside
+# the per-file walk.
+_map_dest_var() {
+  local map="$1" want="$2" pair
+  _MAP_DEST=""
+  for pair in $map; do
+    case "$pair" in
+      "$want":*) _MAP_DEST="${pair#*:}"; return 0 ;;
     esac
   done
   return 1
@@ -90,111 +121,192 @@ _from_middle() {
 # `bin:.claude/bin`. Handing it the target map instead resolves nothing, every
 # pre-0.3 file reads as dropped upstream, and the whole validator set is marked
 # for deletion.
-_base_src() {
-  local base="$1" map="$2" path="$3" mid name rel
-  mid="$(_middle "$map" "$path")" || return 1
-  [ -n "$mid" ] || return 1
-  name="${mid%%/*}"; rel="${mid#*/}"
+# _base_mid_var is the same question answered as a MIDDLE rather than a path,
+# assigned to _BASE_MID (empty when the target ships nothing there). The batched
+# classifier needs the middle: it is the key of the base-side hash table, and the
+# absolute path would have to be turned back into one. _base_src is that plus the
+# base/ prefix.
+_base_mid_var() {
+  local base="$1" map="$2" path="$3" name rel
+  _BASE_MID=""
+  _middle_var "$map" "$path" || return 1
+  [ -n "$_MIDDLE" ] || return 1
+  name="${_MIDDLE%%/*}"; rel="${_MIDDLE#*/}"
   _base_excluded "$name" "$rel" && return 1
-  [ -f "$base/$mid" ] || return 1
-  printf '%s\n' "$base/$mid"
+  [ -f "$base/$_MIDDLE" ] || return 1
+  _BASE_MID="$_MIDDLE"
+}
+_base_src() {
+  _base_mid_var "$1" "$2" "$3" || return 1
+  printf '%s\n' "$1/$_BASE_MID"
 }
 
 # classify <source_manifest> <project_root> <base_dir> <src_map> <tgt_map>
 #   → lines `<verdict>\t<path>\t<detail>` on stdout.
+#
+# EVERY PASS IS NOW TWO HALVES. A bash walk decides everything a file test can
+# answer — does the path exist, is it a regular file, does the target ship it, is
+# it excluded — and writes one row per candidate; then exactly the files that pass
+# needed to hash are hashed in ONE process each side; then one awk turns the rows
+# and the tables into the verdict lines. The branch tree in that awk is this
+# function's old branch tree, in the same order, so the verdict stream is
+# byte-identical. Safe by construction: classify writes nothing to the project, so
+# no hash it takes can be stale by the time it is used.
+#
+# `seen` was a file consulted with one `grep -Fxq` PER CANDIDATE — over 900 spawns
+# on a pre-0.3 project, where pass 3 walks every file under every INSPIRE-owned
+# root. It is an awk set now, filled in the same order and consulted at the same
+# points, including the additions each pass makes AS IT EMITS: a pass adds a path
+# only when it emitted a verdict for it, and the awk does the same, so a duplicate
+# path within one pass behaves exactly as it did.
+#
+# THE ROW-FILE INVARIANT, and it is load-bearing: A PATH IS NEVER `$1` OF A
+# MULTI-FIELD ROW. Rows are tab-separated, and an operator's file inside an owned
+# root may legitimately have a TAB in its name — pass 3 walks exactly those files.
+# The first shape of this code wrote `<rel>\t<flag>` and read `$1`, which cut such
+# a name at its tab, read the remainder as the flag (a remainder of `1` DROPPED
+# the keep row) and collapsed the truncated duplicates through the seen set. So:
+# every unbounded path is either a whole line or the LAST field, taken with
+# `substr` rather than `$n`, and the fields before it are bounded and tab-free by
+# construction (a one-character state, and map tokens — a tab inside one would
+# already have split `for pair in $map`). A path that is manifest-derived is
+# tab-free anyway: `IFS=$'\t' read -r target hash_a` truncates it here exactly as
+# it did at 394eaa9, so those rows carry a path that cannot contain a tab.
+# awk's `-v` is not used for paths either: it expands escape sequences in the
+# value, so a `\` in a temp-file path would corrupt the FILENAME comparison. Paths
+# reach awk through the environment.
 classify() {
   local mf="$1" root="$2" base="$3" src_map="$4" tgt_map="$5"
-  local target hash_a hash_b hash_c src pair name dest abs rel moved
-  local seen; seen="$(mktemp)"; : > "$seen"
+  local target hash_a pair name dest abs rel state ex mvp
+  local w; w="$(mktemp -d)"
+  local seen1="$w/seen1" seen2="$w/seen2"
+  : > "$seen1"; : > "$seen2"
 
   # Pass 1 — everything the source version shipped. Paths are in SOURCE space,
   # so the source map is what locates their base/ counterpart.
+  : > "$w/p1"; : > "$w/p1lb"; : > "$w/p1lc"
   while IFS=$'\t' read -r target hash_a; do
     [ -n "$target" ] || continue
-    printf '%s\n' "$target" >> "$seen"
-    src="$(_base_src "$base" "$src_map" "$target")" || src=""
+    printf '%s\n' "$target" >> "$seen1"
+    _base_mid_var "$base" "$src_map" "$target"
 
-    if [ ! -f "$root/$target" ]; then
-      if [ -e "$root/$target" ]; then
-        # A directory (or other non-regular entry) where we shipped a file.
-        printf 'keep\t%s\t%s\n' "$target" "not a regular file here; left untouched"
-      elif [ -n "$src" ]; then
-        printf 'restore\t%s\t%s\n' "$target" "you deleted this; restoring at the new version"
-      fi
-      continue
-    fi
-    hash_b="$(sha256_of "$root/$target")"
-
-    if [ -z "$src" ]; then
-      # Dropped upstream.
-      if [ "$hash_b" = "$hash_a" ]; then
-        printf 'delete\t%s\t%s\n' "$target" "no longer part of INSPIRE"
-      else
-        printf 'keep\t%s\t%s\n' "$target" "no longer part of INSPIRE, but you edited it"
-      fi
-      continue
-    fi
-    hash_c="$(sha256_of "$src")"
-
-    if [ "$hash_b" = "$hash_a" ]; then
-      if [ "$hash_c" = "$hash_a" ]; then
-        printf 'noop\t%s\t\n' "$target"
-      else
-        printf 'replace\t%s\t%s\n' "$target" "untouched, takes the new version"
-      fi
+    if [ -f "$root/$target" ]; then
+      state=f
+      printf '%s\0' "$target" >> "$w/p1lb"
+      [ -n "$_BASE_MID" ] && printf '%s\0' "$_BASE_MID" >> "$w/p1lc"
+    elif [ -e "$root/$target" ]; then
+      state=e            # a directory (or other non-regular entry)
     else
-      if [ "$hash_c" = "$hash_a" ]; then
-        printf 'keep\t%s\t%s\n' "$target" "you changed it, we did not"
-      elif [ "$hash_c" = "$hash_b" ]; then
-        printf 'noop\t%s\t%s\n' "$target" "your edit already matches the new version"
-      else
-        printf 'ask\t%s\t%s\n' "$target" "you and we both changed it"
-      fi
+      state=x
     fi
+    printf '%s\t%s\t%s\t%s\n' "$target" "$hash_a" "$state" "$_BASE_MID" >> "$w/p1"
   done < <(manifest_paths "$mf")
+
+  hash_paths "$root" "$w/p1lb" "$w/p1tb"
+  hash_paths "$base" "$w/p1lc" "$w/p1tc"
+  # `target` is manifest-derived, so it is `$1` safely: the TSV read above already
+  # truncated any tab in it, exactly as 394eaa9 did.
+  tb="$w/p1tb" tc="$w/p1tc" LC_ALL=C awk -F'\t' '
+    BEGIN { tb = ENVIRON["tb"]; tc = ENVIRON["tc"] }
+    FILENAME == tb { hb[$2] = $1; next }
+    FILENAME == tc { hc[$2] = $1; next }
+    {
+      target = $1; ha = $2; st = $3; mid = $4
+      if (st != "f") {
+        if (st == "e")
+          printf "keep\t%s\t%s\n", target, "not a regular file here; left untouched"
+        else if (mid != "")
+          printf "restore\t%s\t%s\n", target, "you deleted this; restoring at the new version"
+        next
+      }
+      hbv = (target in hb) ? hb[target] : ""
+      if (mid == "") {
+        # Dropped upstream.
+        if (hbv == ha) printf "delete\t%s\t%s\n", target, "no longer part of INSPIRE"
+        else printf "keep\t%s\t%s\n", target, "no longer part of INSPIRE, but you edited it"
+        next
+      }
+      hcv = (mid in hc) ? hc[mid] : ""
+      if (hbv == ha) {
+        if (hcv == ha) printf "noop\t%s\t\n", target
+        else printf "replace\t%s\t%s\n", target, "untouched, takes the new version"
+      } else {
+        if (hcv == ha) printf "keep\t%s\t%s\n", target, "you changed it, we did not"
+        else if (hcv == hbv) printf "noop\t%s\t%s\n", target, "your edit already matches the new version"
+        else printf "ask\t%s\t%s\n", target, "you and we both changed it"
+      }
+    }
+  ' "$w/p1tb" "$w/p1tc" "$w/p1"
 
   # Pass 2 — what the target version ships that the source did not. Paths are
   # in TARGET space. A file that merely MOVED is not new: it was already seen in
   # pass 1 under its SOURCE path, so that path is checked too before calling it
   # a creation. Without it every validator on a pre-0.3 project would be
   # announced as new at .inspire/bin/ while also being deleted from .claude/bin/.
+  : > "$w/p2"; : > "$w/p2lb"; : > "$w/p2lc"
   for pair in $tgt_map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     [ -d "$base/$name" ] || continue
+    # Loop-invariant: `_from_middle "$src_map" "$name/$rel"` is always this
+    # class's source-map destination plus the same `$rel`.
+    _map_dest_var "$src_map" "$name"; mvp="$_MAP_DEST"
     while IFS= read -r abs; do
       rel="${abs#"$base/$name"/}"
       _base_excluded "$name" "$rel" && continue
       target="$dest/$rel"
-      grep -Fxq "$target" "$seen" && continue
-      moved="$(_from_middle "$src_map" "$name/$rel")" || moved=""
-      if [ -n "$moved" ]; then
-        grep -Fxq "$moved" "$seen" && continue
-      fi
-      if [ -e "$root/$target" ]; then
-        if [ -f "$root/$target" ] \
-           && [ "$(sha256_of "$root/$target")" = "$(sha256_of "$abs")" ]; then
-          printf 'noop\t%s\t\n' "$target"
-        else
-          printf 'ask\t%s\t%s\n' "$target" "new in this release, and you already have a different file here"
-        fi
+      if [ -f "$root/$target" ]; then
+        state=f
+        printf '%s\0' "$target"      >> "$w/p2lb"
+        printf '%s\0' "$name/$rel"   >> "$w/p2lc"
+      elif [ -e "$root/$target" ]; then
+        state=e
       else
-        printf 'create\t%s\t%s\n' "$target" "new in this release"
+        state=x
       fi
-      printf '%s\n' "$target" >> "$seen"
+      # `rel` LAST — see the row-file invariant above. The three paths this pass
+      # needs (target, middle, moved-from) are all a bounded prefix plus this same
+      # `rel`, so awk rebuilds them instead of carrying three unbounded fields.
+      printf '%s\t%s\t%s\t%s\t%s\n' "$state" "$dest" "$name" "$mvp" "$rel" >> "$w/p2"
     done < <(find "$base/$name" -type f)
   done
+
+  hash_paths "$root" "$w/p2lb" "$w/p2tb"
+  hash_paths "$base" "$w/p2lc" "$w/p2tc"
+  sf="$seen1" tb="$w/p2tb" tc="$w/p2tc" sf2="$seen2" LC_ALL=C awk -F'\t' '
+    BEGIN { sf = ENVIRON["sf"]; tb = ENVIRON["tb"]; tc = ENVIRON["tc"]; sf2 = ENVIRON["sf2"] }
+    FILENAME == sf { seen[$0] = 1; next }
+    FILENAME == tb { hb[$2] = $1; next }
+    FILENAME == tc { hc[$2] = $1; next }
+    {
+      st = $1; dest = $2; name = $3; mvp = $4
+      rel = substr($0, length($1) + length($2) + length($3) + length($4) + 5)
+      target = dest "/" rel
+      mid = name "/" rel
+      moved = (mvp == "" ? "" : mvp "/" rel)
+      if (target in seen) next
+      if (moved != "" && (moved in seen)) next
+      if (st == "f" && (target in hb) && (mid in hc) && hb[target] == hc[mid])
+        printf "noop\t%s\t\n", target
+      else if (st == "x")
+        printf "create\t%s\t%s\n", target, "new in this release"
+      else
+        printf "ask\t%s\t%s\n", target, "new in this release, and you already have a different file here"
+      seen[target] = 1
+      print target > sf2
+    }
+  ' "$seen1" "$w/p2tb" "$w/p2tc" "$w/p2"
 
   # Pass 3 — project-authored files inside directories INSPIRE owns. These are
   # never ours and must survive; this is the row that replaces materialize_entry's
   # `rm -rf` of a whole owned entry. Disk is still in SOURCE space at this point,
   # so walk the source map.
-  local mid ex_name ex_rel
+  local ex_name ex_rel
+  : > "$w/p3"
   for pair in $src_map; do
     dest="${pair#*:}"
     [ -d "$root/$dest" ] || continue
     while IFS= read -r abs; do
       rel="${abs#"$root"/}"
-      grep -Fxq "$rel" "$seen" && continue
       # NOT THEIRS IF WE SHIP IT BUT NEVER MATERIALIZE IT. `_base_excluded` is
       # exactly that question, and a path it rejects is INSPIRE's own staged
       # source, not project-authored work.
@@ -220,17 +332,36 @@ classify() {
       # exact prefix per file and labels the survivors "yours — not shipped by
       # INSPIRE". Staying silent where a truthful line is available elsewhere
       # beats asserting ownership of 114 files that are ours.
-      mid="$(_middle "$src_map" "$rel")" || mid=""
-      if [ -n "$mid" ]; then
-        ex_name="${mid%%/*}"; ex_rel="${mid#*/}"
-        _base_excluded "$ex_name" "$ex_rel" && continue
+      ex=0
+      _middle_var "$src_map" "$rel"
+      if [ -n "$_MIDDLE" ]; then
+        ex_name="${_MIDDLE%%/*}"; ex_rel="${_MIDDLE#*/}"
+        _base_excluded "$ex_name" "$ex_rel" && ex=1
       fi
-      printf 'keep\t%s\t%s\n' "$rel" "yours — INSPIRE never shipped this"
-      printf '%s\n' "$rel" >> "$seen"
+      # THE FLAG FIRST, THE PATH LAST. These are the operator's own file names —
+      # the one place a TAB in a name is reachable — so the path is the rest of
+      # the line, never a field. See the row-file invariant above.
+      printf '%s\t%s\n' "$ex" "$rel" >> "$w/p3"
     done < <(find "$root/$dest" -type f)
   done
 
-  rm -f "$seen"
+  # No hashing at all in pass 3 — it only ever asks whether a path was already
+  # accounted for, so the whole pass is the membership test that used to cost a
+  # grep per file.
+  sf="$seen1" sf2="$seen2" LC_ALL=C awk -F'\t' '
+    BEGIN { sf = ENVIRON["sf"]; sf2 = ENVIRON["sf2"] }
+    FILENAME == sf  { seen[$0] = 1; next }
+    FILENAME == sf2 { seen[$0] = 1; next }
+    {
+      ex = $1; rel = substr($0, length($1) + 2)
+      if (rel in seen) next
+      if (ex == "1") next
+      printf "keep\t%s\t%s\n", rel, "yours — INSPIRE never shipped this"
+      seen[rel] = 1
+    }
+  ' "$seen1" "$seen2" "$w/p3"
+
+  rm -rf "$w"
 }
 
 # keepset_of <verdicts_file> <project_root> → one sha256 per line
@@ -243,14 +374,21 @@ classify() {
 # bytes survive a `mv` unchanged while paths do not.
 keepset_of() {
   local vf="$1" root="$2" verdict target detail
+  local w; w="$(mktemp -d)"
+  : > "$w/list"
   while IFS=$'\t' read -r verdict target detail; do
     case "$verdict" in
       keep|ask) ;;
       *) continue ;;
     esac
     [ -f "$root/$target" ] || continue
-    sha256_of "$root/$target"
-  done < "$vf" | LC_ALL=C sort -u
+    printf '%s\0' "$target" >> "$w/list"
+  done < "$vf"
+  hash_paths "$root" "$w/list" "$w/table"
+  # awk, not `cut -f1`: a file that could not be read has no hash, and the old
+  # loop emitted no line for it rather than an empty one.
+  LC_ALL=C awk -F'\t' '$1 != "" { print $1 }' "$w/table" | LC_ALL=C sort -u
+  rm -rf "$w"
 }
 
 # _apply_write <src_abs> <dst_abs> <middle> → install one file, atomically.
@@ -342,11 +480,28 @@ _prune_up() {
 #     directory it did not empty — an operator's empty directory elsewhere under
 #     an INSPIRE-owned root is not ours to remove, and a directory sitting where
 #     we ship a FILE is reported `keep` by classify and must survive.
+# Batched exactly like classify: a bash walk that decides everything a file test
+# answers, one hash per side, one awk that reduces the rows to the list of files
+# to actually install — and only then the writes. The hashes are taken before the
+# first _apply_write, which is safe because a write to one target cannot change
+# another target's bytes and never touches base/. The keep-set membership test,
+# a `grep -Fxq` per file, is a set in the same awk.
+#
+# Same row-file invariant as classify: the unbounded path is the LAST field, the
+# three paths this pass needs are one bounded prefix plus a shared `rel`, and paths
+# reach awk through the environment rather than `-v`. The act list is read back
+# with parameter expansion, not `IFS=$'\t' read`: tab is IFS whitespace, so `read`
+# would collapse a repeated tab and strip a trailing one out of a file name.
 apply_base() {
   local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
-  local pair name dest abs rel target h rc=0
+  local pair name dest abs rel target state mid rc=0
+  local w; w="$(mktemp -d)"
+  local kf="$keep"
+  # The old grep tolerated a missing keep-set file (2>/dev/null); awk would not.
+  [ -f "$kf" ] || kf=/dev/null
 
   # Pass 1 — every file the target version ships.
+  : > "$w/p1"; : > "$w/p1lb"; : > "$w/p1lc"
   for pair in $tgt_map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     [ -d "$base/$name" ] || continue
@@ -358,26 +513,56 @@ apply_base() {
       _base_excluded "$name" "$rel" && continue
       target="$dest/$rel"
 
+      if [ -f "$root/$target" ]; then
+        state=f
+        printf '%s\0' "$target"    >> "$w/p1lb"
+        printf '%s\0' "$name/$rel" >> "$w/p1lc"
+      elif [ -e "$root/$target" ]; then
+        state=e
+      else
+        state=x
+      fi
+      printf '%s\t%s\t%s\t%s\n' "$state" "$dest" "$name" "$rel" >> "$w/p1"
+    done < <(find "$base/$name" -type f)
+  done
+
+  hash_paths "$root" "$w/p1lb" "$w/p1tb"
+  hash_paths "$base" "$w/p1lc" "$w/p1tc"
+  kf="$kf" tb="$w/p1tb" tc="$w/p1tc" LC_ALL=C awk -F'\t' '
+    BEGIN { kf = ENVIRON["kf"]; tb = ENVIRON["tb"]; tc = ENVIRON["tc"] }
+    FILENAME == kf { ks[$0] = 1; next }
+    FILENAME == tb { hb[$2] = $1; next }
+    FILENAME == tc { hc[$2] = $1; next }
+    {
+      st = $1; dest = $2; name = $3
+      rel = substr($0, length($1) + length($2) + length($3) + 4)
+      target = dest "/" rel
+      mid = name "/" rel
       # A directory (or fifo, socket, device node) where we ship a file. `mv a b`
       # with b a directory puts a INSIDE it and reports success — silent tree
       # corruption. classify already reports this path as `keep`; do nothing.
-      if [ -e "$root/$target" ] && [ ! -f "$root/$target" ]; then
-        continue
-      fi
-
-      if [ -f "$root/$target" ]; then
-        h="$(sha256_of "$root/$target")"
+      if (st == "e") next
+      if (st == "f") {
+        h = (target in hb) ? hb[target] : ""
         # Theirs to keep, or already identical to ours: leave it.
-        grep -Fxq "$h" "$keep" 2>/dev/null && continue
-        [ "$h" = "$(sha256_of "$abs")" ] && continue
-      fi
+        if (h in ks) next
+        if ((mid in hc) && h == hc[mid]) next
+      }
+      # `rel` last again: the act list is a row file too.
+      printf "%s\t%s\t%s\n", dest, name, rel
+    }
+  ' "$kf" "$w/p1tb" "$w/p1tc" "$w/p1" > "$w/p1act"
 
-      # The decision above is made in both modes; only the act is switched, so a
-      # preview can never diverge from what the real run decides.
-      [ "$record" = 1 ] && continue
-      _apply_write "$abs" "$root/$target" "$name/$rel" || rc=2
-    done < <(find "$base/$name" -type f)
-  done
+  local line rest
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    dest="${line%%$'\t'*}"; rest="${line#*$'\t'}"
+    name="${rest%%$'\t'*}"; rel="${rest#*$'\t'}"
+    # The decision above is made in both modes; only the act is switched, so a
+    # preview can never diverge from what the real run decides.
+    [ "$record" = 1 ] && continue
+    _apply_write "$base/$name/$rel" "$root/$dest/$rel" "$name/$rel" || rc=2
+  done < "$w/p1act"
 
   # Pass 2 — files we shipped at the SOURCE version that the target no longer
   # ships. Removed only when still byte-identical to what we shipped: an edited
@@ -386,13 +571,16 @@ apply_base() {
   # That hash test is strictly stronger than consulting the keep-set here, which
   # is why it does not: every keep/ask verdict at a manifest path implies a hash
   # that differs from the manifest's, so an operator's file can never satisfy it.
-  local path hash mid found tgt_root
+  local path hash found tgt_root
+  : > "$w/p2"; : > "$w/p2l"
   while IFS=$'\t' read -r path hash; do
     [ -n "$path" ] || continue
     # Source path → base-relative middle → where the target layout puts it.
-    mid="$(_middle "$src_map" "$path")" || continue
-    [ -n "$mid" ] || continue
-    found="$(_from_middle "$tgt_map" "$mid")" || continue
+    _middle_var "$src_map" "$path" || continue
+    [ -n "$_MIDDLE" ] || continue
+    mid="$_MIDDLE"
+    _from_middle_var "$tgt_map" "$mid" || continue
+    found="$_FROM_MIDDLE"
     [ -n "$found" ] || continue
     # DELIBERATELY `[ -f "$base/$mid" ]` and not _base_src: the only paths where
     # the two disagree are bin/test/**, whose target-space home (.inspire/bin/
@@ -403,7 +591,26 @@ apply_base() {
     # contradict a report the operator has already read.
     [ -f "$base/$mid" ] && continue                          # still shipped
     [ -f "$root/$found" ] || continue
-    [ "$(sha256_of "$root/$found")" = "$hash" ] || continue   # not ours to delete
+    printf '%s\0' "$found" >> "$w/p2l"
+    printf '%s\t%s\t%s\n' "$found" "$hash" "$mid" >> "$w/p2"
+  done < <(manifest_paths "$mf")
+
+  # The batch is taken before the first rm, and nothing in the loop below can
+  # invalidate it: unlinking one file does not change another's bytes, and the
+  # prune only ever removes directories it just emptied.
+  hash_paths "$root" "$w/p2l" "$w/p2t"
+  # `found` is `$1` safely here, and so is the act list's: both it and `mid` come
+  # from a manifest path, which the `IFS=$'\t' read` above has already truncated at
+  # any tab — exactly as 394eaa9 did. Neither can contain one.
+  tb="$w/p2t" LC_ALL=C awk -F'\t' '
+    BEGIN { tb = ENVIRON["tb"] }
+    FILENAME == tb { hb[$2] = $1; next }
+    # not ours to delete unless it is still byte-identical to what we shipped
+    ($1 in hb) && hb[$1] == $2 { print $0 }
+  ' "$w/p2t" "$w/p2" > "$w/p2act"
+
+  while IFS=$'\t' read -r found hash mid; do
+    [ -n "$found" ] || continue
     [ "$record" = 1 ] && continue
     rm -f "$root/$found" 2>/dev/null
     if [ -e "$root/$found" ]; then
@@ -421,7 +628,8 @@ apply_base() {
     # leaves <dest> with no second lookup to keep in step.
     tgt_root="${found%"/${mid#*/}"}"
     _prune_up "$(dirname "$root/$found")" "$root/$tgt_root"
-  done < <(manifest_paths "$mf")
+  done < "$w/p2act"
 
+  rm -rf "$w"
   return "$rc"
 }
