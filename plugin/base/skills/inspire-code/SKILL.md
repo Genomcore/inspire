@@ -168,8 +168,10 @@ surface's `Profiles` field is the selector instead; see *Surfaces and the monore
 above.
 
 What this skill adds is where a profile's sections land in its own flow:
-`## Layering` → review Phase 1 / implementation shape; `## Test conventions` → `tdd`
-+ review Phase 4; `## Forbidden patterns` → review + authoring rules;
+`## Layering` → the quality overseer's architecture lens and the implementation shape;
+`## Test conventions` → [`roles/tester.md`](references/roles/tester.md), which also
+reads it for **the test paths harvest accepts**; `## Forbidden patterns` →
+[`roles/implementer.md`](references/roles/implementer.md)'s authoring rules;
 `## Review focus` → extra review dimensions; `## Build & verify` → the real
 build/test commands. When a framework the project declared has no profile, say so in
 the run's opening statement and offer `/inspire_bootstrap` to scaffold one.

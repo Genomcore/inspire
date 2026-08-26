@@ -85,8 +85,9 @@ npm view <parent>@<installed-version> dependencies.<pkg>   # "4.1.1" (exact, won
    dependency does NOT replace the nested copy — npm keeps the parent's exact copy.
    Only an override works then.
 
-### Step 4 — Override only as last resort (HIGH/CRITICAL with no other path)
-- Use the narrowest range that satisfies the advisory's "patched in" version.
+### Step 4 — Add an override
+Reached only once Steps 2–3 have shown there is no other path, and bound by the
+standing rules above.
 - A global override is fine when multiple nested copies need the same bump and all
   consumers are API-compatible. **Verify API compatibility** before forcing a major
   across the tree (a removed/renamed method in the new major breaks any consumer
@@ -125,7 +126,7 @@ Use the smallest number of overrides that satisfies the severity bar.
 
 ### Overrides
 - Removed (now obsolete): ...
-- Added (last resort, HIGH/CRITICAL only): `<pkg>: <range>` — why no other path
+- Added: `<pkg>: <range>` — why no other path existed
 - Kept: ...
 
 ### Dependency bumps

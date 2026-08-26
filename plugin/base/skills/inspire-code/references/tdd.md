@@ -13,8 +13,9 @@ before writing code.
 
 > **Stack profile.** Resolve the active profile(s) first (SKILL.md → Stack
 > profiles). When one is present, its `## Test conventions`, `## Layering`, and
-> `## Forbidden patterns` refine the generic rules below, and its `## Build &
-> verify` gives the exact commands to run. No profile → the generic rules stand.
+> `## Forbidden patterns` refine the generic rules in [`roles/`](roles/README.md),
+> and its `## Build & verify` gives the exact commands to run. No profile → those
+> generic rules stand alone.
 
 ## Two roles, in sequence
 
