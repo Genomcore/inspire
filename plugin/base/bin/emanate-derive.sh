@@ -55,13 +55,18 @@
 #
 # Roots, as everywhere in base/bin/: the current working directory is the repo
 # root; $SDD_SPEC_ROOT (default inspire_kb/04_domain) is the domain tree and
-# $SDD_KB_ROOT (default inspire_kb) is the KB as a whole.
+# $SDD_KB_ROOT (default inspire_kb) is the KB as a whole. BOTH are required even
+# for a domain kind: the project's own semantic types live under $SDD_KB_ROOT,
+# and a type that cannot be resolved is a refusal rather than a guess.
 #
 # Exit codes — distinct and documented, never a generic catch-all:
 #   0    derived. The contract is on stdout.
 #   2    usage — bad kind, missing id, unknown flag, both an id and --file.
-#   3    unit not found: no artifact of that kind carries that id (or the
-#        --file path does not exist). A screen sitting deeper than
+#   3    unit not found: no artifact of THAT KIND carries that id, or the
+#        --file path does not exist or is not an artifact of that kind. The
+#        kind is asserted from the artifact itself (the `_lib.sh` finders), so
+#        `action auth.user` and a pattern entry passed as `action --file` are
+#        both 3 rather than an empty contract. A screen sitting deeper than
 #        05_screens/{surface}/{module}/{screen}.md lands here too — the screen
 #        finders do not reach past that depth, so nothing in the vault can see
 #        it.
@@ -188,6 +193,23 @@ domain_scan() {
   return 1
 }
 
+# kind_holds <path> <kind> — exit 0 when the finder for that kind reaches that
+# path. The finders in `_lib.sh` are the one definition of what an entity, an
+# action and a screen file are, so asking them is what stops `action auth.user`
+# — or a pattern entry passed as `action --file` — from rendering an empty
+# contract with a clean exit.
+kind_holds() {
+  local path="$1" want="$2"
+  case "$want" in
+    screen)
+      derive_screen_index
+      awk -F'\t' -v p="$path" '$1 == p { f = 1; exit } END { exit !f }' \
+        "$DERIVE_TMP/screens.tsv" ;;
+    entity) sdd_find_entities "$SDD_SPEC_ROOT" | grep -qxF "$path" ;;
+    action) sdd_find_actions "$SDD_SPEC_ROOT" | grep -qxF "$path" ;;
+  esac
+}
+
 U_PATH=""
 if [ -n "$UNIT_FILE" ]; then
   [ -f "$UNIT_FILE" ] || { echo "emanate-derive.sh: no such file: $UNIT_FILE" >&2; exit "$EXIT_NOT_FOUND"; }
@@ -206,6 +228,21 @@ else
       fi ;;
   esac
 fi
+
+if ! kind_holds "$(sdd_scope_norm "$U_PATH")" "$KIND"; then
+  if [ -n "$UNIT_FILE" ]; then
+    echo "emanate-derive.sh: $U_PATH is not a $KIND artifact" >&2
+  else
+    echo "emanate-derive.sh: no $KIND carries id '$UNIT_ARG'" >&2
+  fi
+  [ "$KIND" = "screen" ] && echo "  (a screen deeper than 05_screens/{surface}/{module}/{screen}.md is not reachable by the screen finders)" >&2
+  exit "$EXIT_NOT_FOUND"
+fi
+
+# One spelling from here on. `sdd_scope_norm` is the same normalizer the rules
+# put their scope through, so derive's path and a finding's `target` are
+# comparable however the operator spelled either.
+U_PATH="$(sdd_scope_norm "$U_PATH")"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Identity

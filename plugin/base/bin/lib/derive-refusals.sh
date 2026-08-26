@@ -53,8 +53,13 @@ derive_remedy() {
 
 # derive_target <path> <id> <kind> — register an artifact this derivation reads.
 # A finding against anything else is another unit's business.
+#
+# The path is normalised through `sdd_scope_norm`, and so is a finding's own
+# `target` before the two are compared: a rule normalises the scope it is given
+# and reports `spec/sdd/…` however it was spelled, so `./spec/sdd/…` on derive's
+# side would match nothing and every refusal would read as acceptance.
 derive_target() {
-  printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$DERIVE_TMP/targets.tsv"
+  printf '%s\t%s\t%s\n' "$(sdd_scope_norm "$1")" "$2" "$3" >> "$DERIVE_TMP/targets.tsv"
 }
 
 # derive_class_of <rule> <message> — the class id a finding belongs to. The
@@ -146,6 +151,7 @@ derive_sweep_collect() {
 
   while IFS="$DERIVE_FS" read -r f_rule f_sev f_target f_msg; do
     [ -n "$f_target" ] || continue
+    f_target="$(sdd_scope_norm "$f_target")"
     awk -F'\t' -v p="$f_target" '$1 == p { f = 1; exit } END { exit !f }' \
       "$DERIVE_TMP/targets.tsv" || continue
     class="$(derive_class_of "$f_rule" "$f_msg")" || continue

@@ -103,15 +103,17 @@ derive_catalog_file() {
 }
 
 # derive_screen_index — path<TAB>id for every screen the finder reaches, built
-# once. A navigation target names a screen by ID, so nothing positional could
-# answer "does this target exist".
+# once, paths normalised the way every other path in a derivation is. A
+# navigation target names a screen by ID, so nothing positional could answer
+# "does this target exist".
 derive_screen_index() {
   local f
   [ -f "$DERIVE_TMP/screens.tsv" ] && return 0
   : > "$DERIVE_TMP/screens.tsv"
   while IFS= read -r f; do
     [ -n "$f" ] || continue
-    printf '%s\t%s\n' "$f" "$(derive_fm_scalar "$f" id)" >> "$DERIVE_TMP/screens.tsv"
+    printf '%s\t%s\n' "$(sdd_scope_norm "$f")" "$(derive_fm_scalar "$f" id)" \
+      >> "$DERIVE_TMP/screens.tsv"
   done < <(sdd_find_screens "$SDD_KB_ROOT")
 }
 
