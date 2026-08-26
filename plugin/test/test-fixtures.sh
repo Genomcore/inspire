@@ -13,10 +13,7 @@ REPO="$(cd -P "$HERE/../.." && pwd -P)"
 # set the variable per call instead, on a cache they build themselves.
 unset INSPIRE_FIXTURE_CACHE
 
-pass=0; fail=0
-ok()   { echo "PASS $1"; pass=$((pass+1)); }
-bad()  { echo "FAIL $1"; fail=$((fail+1)); }
-check(){ if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+. "$HERE/lib/assert.sh"
 
 w2="$(mktemp -d)"
 p2="$(fixture_from_tag v0.2.1 "$w2" "$REPO")"
@@ -51,8 +48,6 @@ fixture_cleanup "$w3"
 # takes the old path, and that the integrity fingerprint the runner will compare
 # actually notices a mutation.
 # ---------------------------------------------------------------------------
-eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
-
 cache="$(mktemp -d)"
 fixture_cache_build "$cache" "$REPO" v0.2.1 v0.6.0; cb_rc=$?
 eq "fixture_cache_build returns 0" "$cb_rc" "0"
@@ -114,5 +109,4 @@ fixture_cleanup "$hw6"; fixture_cleanup "$fw6"
 fixture_cleanup "$hw2"; fixture_cleanup "$fw2"
 rm -rf "$cache"
 
-echo ""; echo "Passed: $pass · Failed: $fail"
-[ "$fail" -eq 0 ]
+summary
