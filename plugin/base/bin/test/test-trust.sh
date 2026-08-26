@@ -305,7 +305,8 @@ has "report: UNENDORSED lists project.md"  'inspire_kb/00_bootstrap/project.md' 
 has "report: UNENDORSED lists login.md"    'inspire_kb/05_screens/login.md'     "$(group_block UNENDORSED "$FULL")"
 hasnt "report: endorsed stack.md is not UNENDORSED" 'stack.md' "$(group_block UNENDORSED "$FULL")"
 hasnt "report: _index.md is never UNENDORSED" '_index.md'   "$(group_block UNENDORSED "$FULL")"
-hasnt "report: catalog entries are never UNENDORSED" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
+has "report: patterns/list.md is UNENDORSED (T12: catalog entries became endorsable)" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
+hasnt "report: an endorsed AND fresh catalog entry is not UNENDORSED" 'components/button.md' "$(group_block UNENDORSED "$FULL")"
 
 # A body is not frontmatter: an `endorsed:` line in prose must never be mistaken
 # for a human vouch, nor a `produced:` line for a stamp.
@@ -350,7 +351,7 @@ rc=0; SUM="$(cd "$R" && "$TRUST" report --summary)" || rc=$?
 eq "report --summary: exits 0" "$rc" "0"
 eq "report --summary: exactly one line" "$(printf '%s\n' "$SUM" | grep -c .)" "1"
 eq "report --summary: counts match the full report" "$SUM" \
-  "trust: 3 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
+  "trust: 4 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
 
 # ── stamping the stale artifact clears it ─────────────────────────────────
 ( cd "$R" && "$TRUST" stamp inspire_kb/01_adr/adr-stale.md --skill adr ) >/dev/null
