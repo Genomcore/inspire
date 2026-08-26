@@ -28,7 +28,7 @@ fm() {
 #
 # The envelope's tool half lives in this frontmatter and nowhere else: there is
 # no path-level write restriction in an agent definition, so an overseer is made
-# read-only by what its allowlist omits. Bash is on that list because a shell can
+# read-only by what its allowlist omits. Bash is on that list because Bash can
 # write, which is the whole reason D3's "writes nothing" needs an allowlist.
 # ---------------------------------------------------------------------------
 premise "the plugin ships an agents payload class" "[ -d '$AGENTS' ]"
@@ -47,13 +47,19 @@ for r in $PERSONAS $OVERSEERS; do
 done
 
 for r in $PERSONAS; do
-  has "persona: inspire-$r keeps the Agent tool (D1 self-spawn)" \
-      "$(fm "$AGENTS/inspire-$r.md" tools)" "Agent"
+  tl="$(fm "$AGENTS/inspire-$r.md" tools)"
+  has "persona: inspire-$r keeps the Agent tool (D1 self-spawn)" "$tl" "Agent"
+  # Plain `Agent`, never `Agent(name)`: the docs restrict that allowlist form to a
+  # main-thread agent and ignore the names inside a subagent definition, so writing
+  # one here would claim an enforcement the substrate does not perform.
+  hasnt "persona: inspire-$r spells Agent without a type list" "$tl" "Agent("
 done
 
+# The tool names below ARE the operational half of the overseer shape stated in
+# roles/README.md; the two must agree or the rule means one thing per reader.
 for r in $OVERSEERS; do
   tl="$(fm "$AGENTS/inspire-$r.md" tools)"
-  for t in Bash Write Edit Agent; do
+  for t in Bash Write Edit NotebookEdit Agent; do
     hasnt "overseer: inspire-$r cannot $t" "$tl" "$t"
   done
 done
@@ -77,21 +83,42 @@ eq "no .md under base/agents is anything but a shipped shell" "$strays" ""
 eq "roster: the -overseer.md convention matches exactly the two shipped overseers" \
    "$(cd "$AGENTS" && ls -- *-overseer.md 2>/dev/null | tr '\n' ' ')" \
    "inspire-quality-overseer.md inspire-security-overseer.md "
-check "roster: roles/README.md states the convention T10 enforces" \
-  "grep -qF -- '-overseer.md' '$ROLES/README.md'"
+# Grep the RULE, not the filename pattern: the table of shells above already prints
+# `-overseer.md`, so a pattern match survives deleting the whole rule section.
+for phrase in "additive-only" "non-removable" "NotebookEdit"; do
+  check "roster: roles/README.md states the rule ('$phrase')" \
+    "grep -qF -- '$phrase' '$ROLES/README.md'"
+done
+check "roster: README.txt defers to that one definition instead of restating it" \
+  "grep -qF 'roles/README.md' '$AGENTS/README.txt'"
 
 for r in README $PERSONAS $OVERSEERS; do
   check "doctrine: roles/$r.md ships" "[ -f '$ROLES/$r.md' ]"
 done
-# T6's gate greps test sources for this token; it is fixed here, once.
+# T6's gate greps test sources for this token, so the doc must publish the exact
+# expression T6 implements — a token and a regex that disagree cover nothing.
 check "doctrine: tester.md fixes the @claim citation token" \
   "grep -qF '@claim <claim-id>' '$ROLES/tester.md'"
+check "doctrine: tester.md publishes the gate's grep expression" \
+  "grep -qF '@claim[[:space:]]+[^[:space:]]+' '$ROLES/tester.md'"
+
+# one_home <phrase> — files whose text contains it, whitespace collapsed. grep -F is
+# line-bound, so a phrase wrapped across two lines escapes a plain -r sweep, which is
+# exactly how a second home for the append-shaped rule survived the first pass.
+one_home() {
+  local n=0 f
+  while IFS= read -r f; do
+    tr -s '[:space:]' ' ' < "$f" | grep -qF "$1" && n=$((n+1))
+  done < <(find "$PLUGIN_ROOT/base/skills" -type f -name '*.md')
+  printf '%s' "$n"
+}
 
 # The refactor is a move: each relocated paragraph has exactly one home left.
 for p in "Never silence the toolchain" "One test = one scenario" \
-         "Semantic duplication no linter sees" "Hardcoded secrets"; do
-  eq "one home: '$p' is claimed by exactly one file" \
-     "$(grep -rlF "$p" "$PLUGIN_ROOT/base/skills" | wc -l | tr -d ' ')" "1"
+         "Semantic duplication no linter sees" "Hardcoded secrets" \
+         "never edited, reordered or deleted" \
+         "Generated once is generated forever"; do
+  eq "one home: '$p' is claimed by exactly one file" "$(one_home "$p")" "1"
 done
 
 # ---------------------------------------------------------------------------
