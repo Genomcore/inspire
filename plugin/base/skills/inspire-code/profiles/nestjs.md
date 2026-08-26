@@ -132,5 +132,9 @@ actor constraint.
 The recipe is the language profile's ([`typescript.md`](typescript.md) § Declaration-only
 tree). One framework addendum: **decorators do not survive declaration emission**, so
 routes, guards, DI tokens and `@ApiProperty` shapes are invisible in a packed tree.
-Nothing is lost — every one of them is derived from `## Bindings` above, which the
-test phase reads directly.
+Nothing is lost, but it is not all recovered from the same place: routes and guards
+are derived from `## Bindings` above, which the test phase reads directly; the DI
+shape (concrete class vs. abstract-class contract) follows from the domain/
+infrastructure split in `## Layering` above, stated as a rule under
+`## Forbidden patterns`; and `@ApiProperty` shapes are derived from the descriptor
+plus the language profile's § Rendering.

@@ -63,8 +63,15 @@ routes to `/users/list`, with no doubled surface segment.
 - **Route** = `/{module}/{screen}`, both kebab-cased (`user_profile` →
   `user-profile`).
 - A screen named `index` renders the module's landing route, `/{module}`.
-- **The surface contributes only its shell prefix** — `{shell}/{route}`, taken from
-  the surface roster (`00_bootstrap/surfaces.md`). A suite-of-one has no prefix.
+- **The surface contributes only its shell prefix.** The roster's `**Shell:**`
+  value already carries its own leading slash
+  (`inspire-surface/references/roster-format.md:76`), so the rendering is a plain
+  concatenation, `{shell}{route}`, with no separator in between — a suite-of-one
+  renders `{route}` alone, with no prefix. Example: shell `/admin` + route
+  `/users/list` → `/admin/users/list`. (A12 states the shape as
+  `{shell}/{route}`; that notation reads a slash between the two parts, which is
+  already inside `{shell}` — quote A12 verbatim only when citing it, and use the
+  concatenation above to render an actual route.)
 - A screen whose data binding identifies a single entity appends `/:{param}`, named
   after the identifying input (`/users/detail/:userId`).
 - **One route table per surface**, generated from the screen set (`src/routes.tsx`).
@@ -92,9 +99,13 @@ of one wire.
   with cache key `['{screen-id}', '{key}']` so a screen binding the same action twice
   stays two independent reads.
 - **Dispatch keys** → one mutation hook per key, named the same way. The row's
-  **On success** / **On error** attributes become its `onSuccess` / `onError`: a
-  navigation outcome resolves through `## Routes` by screen id, a state outcome
-  writes the named state key.
+  **On success** / **On error** attributes become its `onSuccess` / `onError`,
+  rendering whichever of the three declared forms is present: a navigation
+  outcome (`→ [[{screen-id}]]`) resolves through `## Routes` by screen id; a
+  state outcome (`` state `{key}` ``) writes the named state key; a refresh
+  outcome (`` refresh `{key}` ``) invalidates that data key's cache entry,
+  `['{screen-id}', '{key}']` (the same key `## Bindings` mints above), so the
+  next read re-fetches.
 - **State keys** → a slice of the screen's own store, keyed by the declared key.
   Nothing is lifted to global state unless another screen's bindings name it.
 - **Nav keys** → `navigate(routeOf('{target screen id}'))`, never a literal path.

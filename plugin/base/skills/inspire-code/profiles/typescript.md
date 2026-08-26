@@ -64,8 +64,9 @@ and every one of them carries a **universal base type**.
   always has one.
 - **A row here wins.** To give a project type its own rendering, add a row to
   *Rendering* above (and to *Mapping tokens* if it introduces one), and point at
-  this profile from that type's `Rendering override` column. Adding project rows
-  is the expected way to edit this file.
+  this profile from that type's `Rendering` column in
+  `00_bootstrap/semantic-types.md`. Adding project rows is the expected way to
+  edit this file.
 - A project type declaring **no** base type and having **no** row here has no
   rendering at all — an emanation-readiness refusal, not a silent `unknown`.
 

@@ -51,8 +51,12 @@ Guard: `actor({role})` → <guard>; no actor precondition → <public>.
 
 ## Routes
 <!-- SEED — UI profiles only; delete otherwise. Screen `module:` + `screen:` → route.
-     Never the file path, never the id string. Say what the surface shell contributes. -->
-`{module}` + `{screen}` → `<route>`; surface shell prefix → `{shell}/<route>`.
+     Never the file path, never the id string. Say what the surface shell contributes.
+     The roster's `**Shell:**` value already carries its own leading slash, so the
+     shell and route concatenate with no separator: `{shell}{route}`, e.g. `/admin` +
+     `/users/list` → `/admin/users/list`; a suite-of-one renders `<route>` alone. -->
+`{module}` + `{screen}` → `<route>`; surface shell prefix → `{shell}<route>` (no
+separator — the shell's leading slash is already there).
 
 ## Persistence
 <!-- SEED — the ORM, entity→table and field→column naming, keys, and the migration
