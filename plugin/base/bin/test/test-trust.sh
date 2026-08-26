@@ -307,6 +307,10 @@ hasnt "report: endorsed stack.md is not UNENDORSED" 'stack.md' "$(group_block UN
 hasnt "report: _index.md is never UNENDORSED" '_index.md'   "$(group_block UNENDORSED "$FULL")"
 has "report: patterns/list.md is UNENDORSED (T12: catalog entries became endorsable)" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
 hasnt "report: an endorsed AND fresh catalog entry is not UNENDORSED" 'components/button.md' "$(group_block UNENDORSED "$FULL")"
+# Presence guard: the inverse positive lands in no group, so without this line the
+# fixture row could be deleted and every assertion above would still pass.
+eq "fixture: the inverse-positive artifact exists" \
+  "$([ -f "$R/inspire_kb/05_screens/components/button.md" ] && echo yes || echo no)" "yes"
 
 # A body is not frontmatter: an `endorsed:` line in prose must never be mistaken
 # for a human vouch, nor a `produced:` line for a stamp.

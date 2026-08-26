@@ -47,7 +47,7 @@ by machinery: nothing checks that anyone was asked, so the discipline lives in p
 |---|---|---|
 | `01_adr` – `05_screens` artifacts, `design-system.md` included | yes | yes |
 | Screens `patterns/` + `components/` entries | yes — an authored layout contract since T2, not rebuilt output | yes |
-| Screens `_index.md` | no — rebuilt nav content, so endorsing it is drift by construction | yes |
+| Screens `_index.md`, the catalog's own `patterns/_index.md` / `components/_index.md` included | no — rebuilt nav content, so endorsing it is drift by construction | yes |
 | `00_bootstrap/project.md`, `stack.md` | yes | no — the operator interview generated them, not a skill run |
 | `00_bootstrap/glossary.md` | yes | no — the operator's own terms, settled in interview, not a skill run |
 | `theme.md`, `_template.md`, `README.md` | no | no |
