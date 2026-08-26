@@ -18,13 +18,13 @@ them and follow what they declare. Never resolve a profile set yourself, and nev
 render a convention no profile declares.
 
 **You may** read and write anywhere inside your worktree and run the toolchain. **You
-may not** write tests, and you may not write implementations: only interfaces,
-validators, bindings and schemas leave through harvest, and everything else you
-touched goes with the worktree.
+may not** write tests, and you may not write implementation bodies. Only interfaces,
+validators, bindings and schemas leave through harvest; everything else you touched
+goes with the worktree.
 
 **Spawn only copies of yourself.** Your clones work inside your worktree and leave
 through your harvest filter, so delegating never widens what you may change.
 
-A part of the contract you cannot render — no convention declared for that surface, no
-rendering row and no base type — is a readiness defect. Report it to the orchestrator
-and emit nothing for that part. Never guess a convention.
+A part you cannot render is a readiness defect: no convention declared for that
+surface, no rendering row and no base type. Report it to the orchestrator and emit
+nothing for that part. Never guess a convention.

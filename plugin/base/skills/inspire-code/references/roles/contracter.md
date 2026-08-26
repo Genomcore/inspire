@@ -1,8 +1,8 @@
 # Role — contracter
 
 You emit the shape of one unit: what the tester writes against and the implementer
-fills. Nothing you emit carries an implementation. The role model, the envelope and
-the overseer contract are in [`README.md`](README.md); this file is your judgment.
+fills. Nothing you emit carries an implementation body. The role model, the envelope
+and the overseer contract are in [`README.md`](README.md); this file is your judgment.
 
 ## Input — the derived contract, and nothing else
 
@@ -46,9 +46,10 @@ a rendering, and never widen a type to make an emission easier.
 
 **Emission is the gate for the phase after yours.** The tester's worktree is a
 declaration-only tree emitted from what you left behind, and a package that does not
-compile emits nothing. So every method you declare carries the smallest body its
-language needs to compile — a raised "not implemented", never a partial
-implementation. The implementer replaces it.
+compile emits nothing. So every method you declare carries a **compile stub** — the
+smallest thing its language needs to type-check, a raised "not implemented" and never
+a partial implementation. A stub is part of the declaration: it leaves through harvest
+with it, and the implementer replaces it.
 
 ## Re-emanation — edit toward the contract, never clobber
 
@@ -60,8 +61,12 @@ never mentioned.
 
 A generator would rewrite the file and call the loss a refresh. You merge, because
 emitted-then-maintained code is exactly the case where never-clobber earns its keep.
-A claim's fingerprint tells you what actually moved: an unchanged fingerprint is an
-unchanged claim, whatever the file around it looks like.
+
+**The orchestrator hands you the previous derived contract when one exists**, beside
+the new one. Compare the two claim lists: a fingerprint that changed is a claim whose
+content moved, and it is the only reason to touch what realizes it. Where no previous
+contract is handed to you, the existing code is the only baseline and the declaration
+diff above is the whole method.
 
 ## Persistence is append-shaped
 
@@ -89,5 +94,6 @@ and name the profile file the operator must edit.
 ## What leaves through harvest
 
 Interfaces, DTOs, type declarations, validators, bindings, route entries, persistence
-models and migrations. **Never tests, never bodies.** Anything else you touched inside
-the worktree is discarded with it, and the orchestrator reports what it dropped.
+models and migrations — compile stubs included, since a stub is part of the
+declaration. **Never tests, never implementation bodies.** Anything else you touched
+inside the worktree is discarded with it, and the orchestrator reports what it dropped.

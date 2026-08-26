@@ -32,7 +32,7 @@ page that explains the whole model.
 
 The three personas carry a full working set including Bash and Agent. The two
 overseers carry Read, Grep and Glob and nothing else: an overseer writes nothing,
-and a shell can write.
+and Bash can write.
 
 The overseer roster is additive-only
 ------------------------------------
@@ -43,9 +43,10 @@ An overseer is any agent file in this directory whose name ends in
 *-overseer.md here and a doctrine doc beside the shipped ones; the loop picks it
 up at every handoff.
 
-The two shipped overseers are NOT removable: emanation refuses to run when either
-is missing, or when either has been edited into something that is no longer an
-overseer — a tools: list that can write, most of all. The ceiling only rises.
+What makes such a file a valid overseer, and why the two shipped ones cannot be
+removed, is defined once — in roles/README.md, section "The roster is
+additive-only". Read the rule there rather than from here; emanation enforces
+that definition, and a second wording of it in this file could only drift.
 
 Your own agents are welcome here. INSPIRE only ever writes the files it ships
 (this README and its agent shells); nothing else in this directory is ever

@@ -28,12 +28,12 @@ spawn time, and the combinations multiply without the artifacts multiplying.
 | quality overseer | `inspire-quality-overseer.md` | [`quality-overseer.md`](quality-overseer.md) | nothing |
 
 Every shell sits at `.claude/agents/{file}`, where Claude Code discovers it. Per unit
-the three personas run in that order, and both overseers read at each handoff between
-them.
+the three personas run in that order, and both overseers read at every handoff, the
+implementer's exit included.
 
 **The attended subcommands play the same roles in sequence.** Under `tdd` one session
-contracts, tests and implements; under `review` it holds both overseer lenses and
-reports to the operator rather than to an orchestrator. One doctrine, two dispatch
+contracts, tests and implements. Under `review` it holds both overseer lenses,
+reporting to the operator rather than to an orchestrator. One doctrine, two dispatch
 shapes — which is why these docs never say "the agent" where they can say the role.
 
 ## The envelope has two halves
@@ -45,9 +45,16 @@ shapes — which is why these docs never say "the agent" where they can say the 
   permissive: the whole worktree is writable, and only the phase's own paths leave.
 
 Neither half lives in a hook, and an agent cannot widen either from the inside. A
-persona that writes outside its owned paths loses that work at harvest and is told so
-afterwards; nothing warns it earlier, which is why each persona doc states what it
-owns.
+persona that writes outside its owned paths loses that work at harvest. It is told so
+afterwards, and nothing warns it earlier — which is why each persona doc states what
+it owns.
+
+**What the tool half cannot express.** There is no path-level write restriction in an
+agent definition, so a persona's owned paths are the other half's job. Nor can a
+persona's shell restrict *which* agents it spawns. The `Agent(name)` allowlist form
+binds a main-thread agent only; inside a subagent definition the names in parentheses
+are ignored. "Spawn only copies of yourself" is therefore doctrine, and the harvest
+filter is what makes it harmless either way.
 
 **A persona's tool list is a working set, and it is yours to extend.** A project whose
 stack needs another tool adds it to that shell's list; the edit survives
@@ -80,9 +87,9 @@ project adds:
   deterministic gate. A judgment oracle may only make the loop more conservative,
   which is what keeps it safe to add one.
 
-**What an overseer receives:** the boundary it is judging, the diff, the worktree path
-to read it in, the unit's derived contract, the suite result, and the unit's resolved
-profile set. **What it returns:**
+**What an overseer receives:** the boundary, its diff, the worktree path, the unit's
+derived contract, the suite result, and the resolved profile set. **What it
+returns:**
 
 ```markdown
 ## {role} — {unit id} @ {boundary}
@@ -103,12 +110,18 @@ non-blocking finding is recorded and never rejects on its own.
 `-overseer.md`.** That is the whole mechanism — no frontmatter key, no roster file, no
 knowledge-base artifact.
 
+**The overseer shape, operationally.** A file that matches the name carries a `tools:`
+line that is **present** and names **none** of `Bash`, `Write`, `Edit`, `NotebookEdit`
+or `Agent`. A shell with no `tools:` line inherits every tool and is therefore not an
+overseer, however it is named. The rule binds **every** `*-overseer.md`: the two
+INSPIRE ships, and every one a project adds. A lens that can write is a participant,
+and D3 gives an oracle no way to act on what it sees.
+
 - A project **adds** an overseer — compliance, accessibility, a domain lens — by
   dropping one more `*-overseer.md` shell there and a doctrine doc beside these.
 - The two INSPIRE ships are **non-removable**. `emanate` refuses to run when either is
-  missing, or when either carries a shape that is no longer an overseer: a `tools:`
-  list that can write is the case to watch.
+  missing, and when any `*-overseer.md` fails the shape above.
 
-The ceiling only rises. A gate its author can lower is not a gate, while an extension
-point that only adds keeps each overseer a position the people who own that concern
-can refine.
+The ceiling only rises. A gate its author can lower is not a gate. An
+**additive-only** extension point keeps each overseer a position the people who own
+that concern can refine.

@@ -11,8 +11,9 @@ Your worktree holds the contracter's declarations and the tester's suite in **so
 form** — the failing assertion is there to be read, because an implementer who cannot
 read it burns its budget guessing. Reading is the whole permission.
 
-- **`tests/**` is frozen.** Run the tests, read them, reason from them. An edit there
-  dies at harvest and is reported as an attempted test change.
+- **The tests are frozen.** Run them, read them, reason from them. Which paths those
+  are is the framework profile's `## Test conventions` — an edit to any of them dies
+  at harvest and is reported as an attempted test change.
 - **The declared surface is frozen too.** A signature, a DTO field or an error type
   that does not fit the body you want is a finding against the contract phase, not a
   thing to widen on your way past.
@@ -28,9 +29,9 @@ case the specification did not name.
 
 A green reached by weakening a test, an assertion or an interface is the quality
 overseer's first catalogue entry. It is also what stalls the unit: the overseer
-rejects, the orchestrator hands the findings back, and a budget spent on the same
-shortcut twice ends the unit with the findings recorded. Reaching a real green slowly
-costs less than reaching a false one fast.
+rejects, the orchestrator hands the findings back, and the budget spent on the same
+shortcut ends the unit with the findings recorded. Reaching a real green slowly costs
+less than reaching a false one fast.
 
 ## Non-negotiable authoring rules
 
@@ -59,7 +60,10 @@ enforces the mechanical rest, and the resolved framework profile's
 - **Never leave anonymous TODOs.** Every deferred item names an owner **and** a
   closing trigger — and in INSPIRE the trigger is a real ticket:
   `/inspire_task create`. If you can't name an owner or a trigger, it isn't
-  deferred, it's forgotten: do it now, or open the ticket first.
+  deferred, it's forgotten: do it now, or open the ticket first. **Unattended,
+  opening one is not available to you** — the tracker is a knowledge-base write and
+  it dies at harvest. Do it now, or report the deferral to the orchestrator as a
+  finding. A TODO is never the answer.
 
 ## What leaves through harvest
 

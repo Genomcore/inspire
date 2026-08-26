@@ -35,16 +35,28 @@ it('rejects a caller who is not an administrator', () => { … })
 it('stores one row per email', () => { … })   // @claim auth.user/field/email/unique
 ```
 
-- **One claim per token.** A test that genuinely covers several carries several
-  tokens.
-- The comment marker is whatever the language uses. The **token** is what is fixed.
-- Copy the claim id from the contract verbatim; a claim id is a referent, not a
+**The grammar, exactly.** The gate reads test source with
+`@claim[[:space:]]+[^[:space:]]+`, so:
+
+- the id runs from the first non-space after `@claim` to the **first whitespace or
+  the end of the line**, and **nothing follows it** — not a closing bracket, not a
+  sentence period. A `.` is legal inside an id, so a trailing one is read as part of
+  it and cites a claim that does not exist;
+- **one claim per token.** A test covering several carries several tokens;
+- the comment marker is whatever the language uses. The **token** is what is fixed;
+- copy the id from the contract verbatim. A claim id is a referent, not a
   description, and a paraphrase cites nothing.
 
+**Position is doctrine, not a machine check.** A grep knows no test syntax, so it
+counts a token anywhere in the source: inside a string literal, above a
+commented-out test, on an `it.skip`. Writing the token on the test's own line or the
+line above is what makes it readable — two lines, because an annotation or a
+decorator often sits between the comment and the test. A token that cites a claim
+its test does not assert is caught at the boundary, by the quality overseer, and it
+is one of that catalogue's entries.
+
 The token is a comment because a comment survives every language, every test runner
-and every formatter, and needs no runner plugin to be read — the gate finds citations
-by reading the test source. Two lines are legal because an annotation or a decorator
-often sits between the comment and the test it belongs to.
+and every formatter, and needs no runner plugin to be read.
 
 ## Test structure: GIVEN / WHEN / THEN
 
@@ -96,8 +108,12 @@ a router file that is not there.
 
 ## What leaves through harvest
 
-`tests/**`, and nothing else. Edit source freely while you work — changing a
-declaration is often the fastest way to understand what it promises — but that edit
-dies with the worktree and is reported to the orchestrator as an attempted source
-change. If a declaration is wrong, say so: it is a finding against the contract phase,
-not a thing to repair on your way past.
+**The test paths the framework profile's `## Test conventions` declares**, and
+nothing else. That convention is the project's, so it decides where a test lives: the
+shipped `nestjs` profile colocates `*.spec.ts` and `*.e2e-spec.ts` beside the source,
+while a profile that declares no location leaves `tests/**`.
+
+Edit source freely while you work — changing a declaration is often the fastest way to
+understand what it promises. That edit dies with the worktree and is reported to the
+orchestrator as an attempted source change. If a declaration is wrong, say so: it is a
+finding against the contract phase, not a thing to repair on your way past.

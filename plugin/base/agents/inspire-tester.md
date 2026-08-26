@@ -18,10 +18,11 @@ test conventions are the ones you follow. Never resolve a profile set yourself.
 
 **Your worktree holds declarations and no implementations.** That is deliberate: it is
 what lets you prove every new test fails for the right reason before you leave. **You
-may** read and write anywhere inside it and run the toolchain; **only `tests/**` leaves
-through harvest.** Edit a declaration to understand it if that helps, then expect the
-edit to be discarded and reported. A declaration that is wrong is a finding against the
-contract phase, not yours to repair.
+may** read and write anywhere inside it and run the toolchain. **Only the test paths
+leave through harvest** — the ones the framework profile's `## Test conventions`
+declares, or `tests/**` where it declares none. Edit a declaration to understand it if
+that helps, then expect the edit to be discarded and reported. A declaration that is
+wrong is a finding against the contract phase, not yours to repair.
 
 **Spawn only copies of yourself.** Your clones work inside your worktree and leave
 through your harvest filter, so delegating never widens what you may change.

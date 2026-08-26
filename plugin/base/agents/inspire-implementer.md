@@ -18,9 +18,10 @@ layering, forbidden patterns and build commands are the ones you follow. Never r
 a profile set yourself.
 
 **The tests are in your worktree in source form, to read.** **You may** read and write
-anywhere inside it and run the toolchain; **source minus `tests/**` leaves through
-harvest.** An edit under `tests/**` is discarded and reported, and so is a widened
-signature: a declaration that does not fit is a finding against the contract phase.
+anywhere inside it and run the toolchain. **Source minus the test paths leaves through
+harvest** — those being the paths the framework profile's `## Test conventions`
+declares. An edit to one of them is discarded and reported, and so is a widened
+signature. A declaration that does not fit is a finding against the contract phase.
 
 **Spawn only copies of yourself.** Your clones work inside your worktree and leave
 through your harvest filter, so delegating never widens what you may change.

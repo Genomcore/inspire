@@ -41,7 +41,13 @@ cheaper way, and each is blocking:
 - **an interface widened to admit the test** — an optional field, a broadened return
   type or a new overload that the derived contract never declared;
 - **an `any`-shaped escape** — a cast, a suppression or a widened type that makes a
-  real type error compile.
+  real type error compile;
+- **a loosened test command or runner config** — `"test": "jest || true"`, an added
+  `--passWithNoTests`, a widened `testPathIgnorePatterns`, a lowered coverage
+  threshold. These sit in source rather than in the suite, so the freeze never
+  touches them and they leave through harvest like any other body. They also fool the
+  orchestrator's own re-run, which invokes the profile's `## Build & verify` command.
+  Read the diff for them by name.
 
 A green that arrives with one of these is the reason this overseer exists. Reject, name
 the file and line, and name the honest fix.
