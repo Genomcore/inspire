@@ -3,5 +3,11 @@
   "args": [
     "screen",
     "users.list"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
   ]
 }

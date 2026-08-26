@@ -3,5 +3,11 @@
   "args": [
     "entity",
     "auth.user"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
   ]
 }

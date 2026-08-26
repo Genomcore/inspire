@@ -99,6 +99,7 @@ derive_class_of() {
         "screen file missing required part(s)"*|"screen file has empty section(s)"*) printf 'DR-S4' ;;
         "screen file carries a retired section"*)    printf 'DR-S5' ;;
         *" missing required section"*|*" has empty section"*) printf 'DR-D1' ;;
+        *" section order:"*)                         printf 'DR-D2' ;;
         *)                                           printf 'DR-U1' ;;
       esac ;;
     *) printf 'DR-U1' ;;

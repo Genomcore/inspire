@@ -110,6 +110,31 @@ w1="$( cd "$FX/w1-never-refuses" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
 ne "the W-1 fixture really does provoke a W-1 finding" "$w1" "0"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Derive is stricter than review, by construction
+#
+# The five presence classes are a flat warning at every lifecycle in 0.8 so that
+# an upgraded vault is not red everywhere, and derive refuses on them anyway
+# (D7). The `*-draft` fixtures pin derive's half; this pins review's, on the very
+# same tree — otherwise "regardless of the grace" is a claim about two runs
+# nobody compared.
+# ─────────────────────────────────────────────────────────────────────────────
+
+while IFS=' ' read -r fx rule class; do
+  [ -n "$fx" ] || continue
+  sev="$( cd "$FX/$fx" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
+          bash "$BIN/$rule.sh" 2>&1 >/dev/null \
+          | jq -r --arg c "$class" 'select(.message | startswith($c + ":")) | .severity' \
+          | LC_ALL=C sort -u | head -1 )"
+  eq "$class at draft: $rule reports it as a warning, derive refuses it" "$sev" "warning"
+done <<'GRACE'
+os-a1-draft keys-present OS-A1
+os-a3-draft keys-present OS-A3
+os-a4-draft keys-present OS-A4
+os-e1-draft constraints-mechanics OS-E1
+os-e3-draft keys-present OS-E3
+GRACE
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Sweep integrity. A fixture cannot express these: they need a BROKEN copy of
 # the bin tree and the harness runs the real one. The strictness is only as
 # reliable as the sweep, so each way a consulted rule can fail gets one.

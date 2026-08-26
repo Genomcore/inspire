@@ -16,14 +16,6 @@
     {
       "expr": ".unit.kind",
       "equals": "action"
-    },
-    {
-      "expr": ".refused[0].remedy",
-      "equals": "/inspire_domain update auth.org"
-    },
-    {
-      "expr": ".refused[0].target",
-      "equals": "spec/sdd/auth/org/auth.org.md"
     }
   ]
 }

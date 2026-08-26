@@ -1,0 +1,14 @@
+{
+  "exit": 3,
+  "args": [
+    "action",
+    "--file",
+    "spec/kb/05_screens/users/list.md"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
+  ]
+}

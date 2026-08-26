@@ -3,5 +3,11 @@
   "args": [
     "pattern",
     "list"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
   ]
 }

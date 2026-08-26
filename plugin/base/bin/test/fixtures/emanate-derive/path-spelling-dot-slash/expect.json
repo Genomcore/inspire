@@ -1,0 +1,22 @@
+{
+  "exit": 4,
+  "args": [
+    "action",
+    "--file",
+    "./spec/sdd/auth/user/auth.user.create.md"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "OS-A1"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    },
+    {
+      "expr": ".unit.kind",
+      "equals": "action"
+    }
+  ]
+}

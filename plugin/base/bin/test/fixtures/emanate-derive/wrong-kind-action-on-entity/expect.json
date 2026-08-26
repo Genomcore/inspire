@@ -1,0 +1,13 @@
+{
+  "exit": 3,
+  "args": [
+    "action",
+    "auth.user"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
+  ]
+}

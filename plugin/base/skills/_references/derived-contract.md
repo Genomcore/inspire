@@ -249,6 +249,7 @@ this table name the same thing.
 | `DR-S11` | the pattern join: a required region finds no binding of a kind it accepts | touch the screen |
 | `DR-S12` | a `stable` screen declaring a `to-extract` component | touch the screen |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
+| `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
 
 `DR-U1` is the catch-all, and it refuses like every other class. A finding derive
