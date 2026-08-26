@@ -95,6 +95,22 @@ _from_middle() {
   printf '%s\n' "$_FROM_MIDDLE"
 }
 
+# _map_dest_var <dest_map> <name> → _MAP_DEST, that class's destination in the
+# map, or empty (rc 1) when the map has no such class. It is _from_middle_var's
+# answer with the per-file half removed: `_from_middle "$map" "$name/$rel"` is
+# always `<that dest>/$rel`, so the lookup is loop-invariant and belongs outside
+# the per-file walk.
+_map_dest_var() {
+  local map="$1" want="$2" pair
+  _MAP_DEST=""
+  for pair in $map; do
+    case "$pair" in
+      "$want":*) _MAP_DEST="${pair#*:}"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
 # _base_src <base_dir> <dest_map> <path> → absolute path in base/ of the file
 # the target version would materialize at <path>, or empty (rc 1) when the
 # target ships nothing there.
@@ -143,9 +159,25 @@ _base_src() {
 # points, including the additions each pass makes AS IT EMITS: a pass adds a path
 # only when it emitted a verdict for it, and the awk does the same, so a duplicate
 # path within one pass behaves exactly as it did.
+#
+# THE ROW-FILE INVARIANT, and it is load-bearing: A PATH IS NEVER `$1` OF A
+# MULTI-FIELD ROW. Rows are tab-separated, and an operator's file inside an owned
+# root may legitimately have a TAB in its name — pass 3 walks exactly those files.
+# The first shape of this code wrote `<rel>\t<flag>` and read `$1`, which cut such
+# a name at its tab, read the remainder as the flag (a remainder of `1` DROPPED
+# the keep row) and collapsed the truncated duplicates through the seen set. So:
+# every unbounded path is either a whole line or the LAST field, taken with
+# `substr` rather than `$n`, and the fields before it are bounded and tab-free by
+# construction (a one-character state, and map tokens — a tab inside one would
+# already have split `for pair in $map`). A path that is manifest-derived is
+# tab-free anyway: `IFS=$'\t' read -r target hash_a` truncates it here exactly as
+# it did at 394eaa9, so those rows carry a path that cannot contain a tab.
+# awk's `-v` is not used for paths either: it expands escape sequences in the
+# value, so a `\` in a temp-file path would corrupt the FILENAME comparison. Paths
+# reach awk through the environment.
 classify() {
   local mf="$1" root="$2" base="$3" src_map="$4" tgt_map="$5"
-  local target hash_a pair name dest abs rel state ex
+  local target hash_a pair name dest abs rel state ex mvp
   local w; w="$(mktemp -d)"
   local seen1="$w/seen1" seen2="$w/seen2"
   : > "$seen1"; : > "$seen2"
@@ -172,7 +204,10 @@ classify() {
 
   hash_paths "$root" "$w/p1lb" "$w/p1tb"
   hash_paths "$base" "$w/p1lc" "$w/p1tc"
-  LC_ALL=C awk -F'\t' -v tb="$w/p1tb" -v tc="$w/p1tc" '
+  # `target` is manifest-derived, so it is `$1` safely: the TSV read above already
+  # truncated any tab in it, exactly as 394eaa9 did.
+  tb="$w/p1tb" tc="$w/p1tc" LC_ALL=C awk -F'\t' '
+    BEGIN { tb = ENVIRON["tb"]; tc = ENVIRON["tc"] }
     FILENAME == tb { hb[$2] = $1; next }
     FILENAME == tc { hc[$2] = $1; next }
     {
@@ -212,11 +247,13 @@ classify() {
   for pair in $tgt_map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     [ -d "$base/$name" ] || continue
+    # Loop-invariant: `_from_middle "$src_map" "$name/$rel"` is always this
+    # class's source-map destination plus the same `$rel`.
+    _map_dest_var "$src_map" "$name"; mvp="$_MAP_DEST"
     while IFS= read -r abs; do
       rel="${abs#"$base/$name"/}"
       _base_excluded "$name" "$rel" && continue
       target="$dest/$rel"
-      _from_middle_var "$src_map" "$name/$rel"
       if [ -f "$root/$target" ]; then
         state=f
         printf '%s\0' "$target"      >> "$w/p2lb"
@@ -226,18 +263,26 @@ classify() {
       else
         state=x
       fi
-      printf '%s\t%s\t%s\t%s\n' "$target" "$name/$rel" "$_FROM_MIDDLE" "$state" >> "$w/p2"
+      # `rel` LAST — see the row-file invariant above. The three paths this pass
+      # needs (target, middle, moved-from) are all a bounded prefix plus this same
+      # `rel`, so awk rebuilds them instead of carrying three unbounded fields.
+      printf '%s\t%s\t%s\t%s\t%s\n' "$state" "$dest" "$name" "$mvp" "$rel" >> "$w/p2"
     done < <(find "$base/$name" -type f)
   done
 
   hash_paths "$root" "$w/p2lb" "$w/p2tb"
   hash_paths "$base" "$w/p2lc" "$w/p2tc"
-  LC_ALL=C awk -F'\t' -v sf="$seen1" -v tb="$w/p2tb" -v tc="$w/p2tc" -v sf2="$seen2" '
+  sf="$seen1" tb="$w/p2tb" tc="$w/p2tc" sf2="$seen2" LC_ALL=C awk -F'\t' '
+    BEGIN { sf = ENVIRON["sf"]; tb = ENVIRON["tb"]; tc = ENVIRON["tc"]; sf2 = ENVIRON["sf2"] }
     FILENAME == sf { seen[$0] = 1; next }
     FILENAME == tb { hb[$2] = $1; next }
     FILENAME == tc { hc[$2] = $1; next }
     {
-      target = $1; mid = $2; moved = $3; st = $4
+      st = $1; dest = $2; name = $3; mvp = $4
+      rel = substr($0, length($1) + length($2) + length($3) + length($4) + 5)
+      target = dest "/" rel
+      mid = name "/" rel
+      moved = (mvp == "" ? "" : mvp "/" rel)
       if (target in seen) next
       if (moved != "" && (moved in seen)) next
       if (st == "f" && (target in hb) && (mid in hc) && hb[target] == hc[mid])
@@ -293,18 +338,22 @@ classify() {
         ex_name="${_MIDDLE%%/*}"; ex_rel="${_MIDDLE#*/}"
         _base_excluded "$ex_name" "$ex_rel" && ex=1
       fi
-      printf '%s\t%s\n' "$rel" "$ex" >> "$w/p3"
+      # THE FLAG FIRST, THE PATH LAST. These are the operator's own file names —
+      # the one place a TAB in a name is reachable — so the path is the rest of
+      # the line, never a field. See the row-file invariant above.
+      printf '%s\t%s\n' "$ex" "$rel" >> "$w/p3"
     done < <(find "$root/$dest" -type f)
   done
 
   # No hashing at all in pass 3 — it only ever asks whether a path was already
   # accounted for, so the whole pass is the membership test that used to cost a
   # grep per file.
-  LC_ALL=C awk -F'\t' -v sf="$seen1" -v sf2="$seen2" '
+  sf="$seen1" sf2="$seen2" LC_ALL=C awk -F'\t' '
+    BEGIN { sf = ENVIRON["sf"]; sf2 = ENVIRON["sf2"] }
     FILENAME == sf  { seen[$0] = 1; next }
     FILENAME == sf2 { seen[$0] = 1; next }
     {
-      rel = $1; ex = $2
+      ex = $1; rel = substr($0, length($1) + 2)
       if (rel in seen) next
       if (ex == "1") next
       printf "keep\t%s\t%s\n", rel, "yours — INSPIRE never shipped this"
@@ -437,6 +486,12 @@ _prune_up() {
 # first _apply_write, which is safe because a write to one target cannot change
 # another target's bytes and never touches base/. The keep-set membership test,
 # a `grep -Fxq` per file, is a set in the same awk.
+#
+# Same row-file invariant as classify: the unbounded path is the LAST field, the
+# three paths this pass needs are one bounded prefix plus a shared `rel`, and paths
+# reach awk through the environment rather than `-v`. The act list is read back
+# with parameter expansion, not `IFS=$'\t' read`: tab is IFS whitespace, so `read`
+# would collapse a repeated tab and strip a trailing one out of a file name.
 apply_base() {
   local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
   local pair name dest abs rel target state mid rc=0
@@ -467,18 +522,22 @@ apply_base() {
       else
         state=x
       fi
-      printf '%s\t%s\t%s\t%s\n' "$abs" "$target" "$name/$rel" "$state" >> "$w/p1"
+      printf '%s\t%s\t%s\t%s\n' "$state" "$dest" "$name" "$rel" >> "$w/p1"
     done < <(find "$base/$name" -type f)
   done
 
   hash_paths "$root" "$w/p1lb" "$w/p1tb"
   hash_paths "$base" "$w/p1lc" "$w/p1tc"
-  LC_ALL=C awk -F'\t' -v kf="$kf" -v tb="$w/p1tb" -v tc="$w/p1tc" '
+  kf="$kf" tb="$w/p1tb" tc="$w/p1tc" LC_ALL=C awk -F'\t' '
+    BEGIN { kf = ENVIRON["kf"]; tb = ENVIRON["tb"]; tc = ENVIRON["tc"] }
     FILENAME == kf { ks[$0] = 1; next }
     FILENAME == tb { hb[$2] = $1; next }
     FILENAME == tc { hc[$2] = $1; next }
     {
-      abs = $1; target = $2; mid = $3; st = $4
+      st = $1; dest = $2; name = $3
+      rel = substr($0, length($1) + length($2) + length($3) + 4)
+      target = dest "/" rel
+      mid = name "/" rel
       # A directory (or fifo, socket, device node) where we ship a file. `mv a b`
       # with b a directory puts a INSIDE it and reports success — silent tree
       # corruption. classify already reports this path as `keep`; do nothing.
@@ -489,16 +548,20 @@ apply_base() {
         if (h in ks) next
         if ((mid in hc) && h == hc[mid]) next
       }
-      printf "%s\t%s\t%s\n", abs, target, mid
+      # `rel` last again: the act list is a row file too.
+      printf "%s\t%s\t%s\n", dest, name, rel
     }
   ' "$kf" "$w/p1tb" "$w/p1tc" "$w/p1" > "$w/p1act"
 
-  while IFS=$'\t' read -r abs target mid; do
-    [ -n "$abs" ] || continue
+  local line rest
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    dest="${line%%$'\t'*}"; rest="${line#*$'\t'}"
+    name="${rest%%$'\t'*}"; rel="${rest#*$'\t'}"
     # The decision above is made in both modes; only the act is switched, so a
     # preview can never diverge from what the real run decides.
     [ "$record" = 1 ] && continue
-    _apply_write "$abs" "$root/$target" "$mid" || rc=2
+    _apply_write "$base/$name/$rel" "$root/$dest/$rel" "$name/$rel" || rc=2
   done < "$w/p1act"
 
   # Pass 2 — files we shipped at the SOURCE version that the target no longer
@@ -536,7 +599,11 @@ apply_base() {
   # invalidate it: unlinking one file does not change another's bytes, and the
   # prune only ever removes directories it just emptied.
   hash_paths "$root" "$w/p2l" "$w/p2t"
-  LC_ALL=C awk -F'\t' -v tb="$w/p2t" '
+  # `found` is `$1` safely here, and so is the act list's: both it and `mid` come
+  # from a manifest path, which the `IFS=$'\t' read` above has already truncated at
+  # any tab — exactly as 394eaa9 did. Neither can contain one.
+  tb="$w/p2t" LC_ALL=C awk -F'\t' '
+    BEGIN { tb = ENVIRON["tb"] }
     FILENAME == tb { hb[$2] = $1; next }
     # not ours to delete unless it is still byte-identical to what we shipped
     ($1 in hb) && hb[$1] == $2 { print $0 }

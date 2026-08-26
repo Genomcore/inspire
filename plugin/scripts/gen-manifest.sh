@@ -128,7 +128,8 @@ for name in $MAP_NAMES; do
   # Joined BY PATH, never by position: a tree entry the extraction cannot produce
   # as a regular file has no hash, and must fail as loudly as the old `git show`
   # did rather than shift every later row onto the wrong path.
-  LC_ALL=C awk -F'\t' -v tf="$work/table" '
+  tf="$work/table" LC_ALL=C awk -F'\t' '
+    BEGIN { tf = ENVIRON["tf"] }
     FILENAME == tf { h[$2] = $1; next }
     { if ($1 in h) printf "%s\t%s\n", $2, h[$1]
       else { print "gen-manifest.sh: cannot read " $1 > "/dev/stderr"; miss = 1 } }
