@@ -107,11 +107,28 @@ subcommand, read its reference file** — the table below is an index, not the f
 
 | Subcommand | What it does |
 |---|---|
-| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor, GIVEN/WHEN/THEN, and the non-negotiable authoring rules. Anchored to the feature's acceptance criteria. |
+| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor, anchored to the feature's acceptance criteria. The test-authoring and code-authoring doctrine it applies lives per role in [`references/roles/`](references/roles/README.md). |
 | [`review`](references/review-dimensions.md) | Judgment review of a diff. Phase 0 checks KB alignment (ADRs, action descriptors, acceptance criteria); phases 1–4 cover architecture, correctness, security, tests. Fans out to dimension agents in thorough mode. |
 | [`debug`](references/debug.md) | Reproduce → hypothesize → eliminate → root cause → fix → prevent regression. A root cause that is a spec gap routes back to `/inspire_feature` or `/inspire_domain`. |
 | [`fix-build`](references/fix-build.md) | Parse build/compile errors, diagnose root cause, apply the minimal fix, rebuild to verify. |
 | [`fix-vulns`](references/fix-vulns.md) | Reach the agreed severity bar with the fewest `overrides` possible, without breaking build or tests. **npm only.** |
+
+## Roles
+
+A **role** is where the judgment lives, and the subcommands above play the roles in
+sequence. `tdd` is the tester and then the implementer; `review` holds both overseer
+lenses at once, addressing the operator instead of an orchestrator; `debug` and
+`fix-build` write code, so the implementer's authoring rules bind them too. The five
+roles — contracter · tester · implementer · security overseer · quality overseer —
+carry one doctrine document each, in
+[`references/roles/`](references/roles/README.md).
+
+The same docs are read by the **agent shells** INSPIRE ships to `.claude/agents/`, one
+per role: `emanate` (the unattended loop) dispatches them with a permission envelope
+and the unit's resolved profile set, where an attended subcommand simply reads the
+doctrine and applies it. One doctrine, two dispatch shapes —
+[`references/roles/README.md`](references/roles/README.md) is the one page for the
+whole model, the envelope and the overseer roster included.
 
 ## SDD anchoring — the thing that makes this different from a generic linter
 
@@ -196,9 +213,10 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
    don't, that is a tooling gap to fix, not a thing to review by hand every time.
 4. **Root cause before fix.** `debug` and `fix-build` never patch a symptom. Fix
    the cause, then check whether the same pattern exists elsewhere.
-5. **Never silence the toolchain and never swallow errors.** See
-   [`references/tdd.md`](references/tdd.md) — these authoring rules hold across
-   every subcommand that writes code, not just `tdd`.
+5. **The authoring rules bind every subcommand that writes code**, not just `tdd`.
+   They live in
+   [`references/roles/implementer.md`](references/roles/implementer.md) § Non-negotiable
+   authoring rules.
 6. **No production code without its test.** `tdd` writes the failing test first;
    `review` flags new logic that arrived without one.
 7. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
@@ -214,10 +232,16 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
 
 ## References
 
-- [`references/tdd.md`](references/tdd.md) — test-first loop, GIVEN/WHEN/THEN, and
-  non-negotiable authoring rules (toolchain, error handling, dead code, TODOs).
+- [`references/roles/README.md`](references/roles/README.md) — the role model: the
+  three personas, the two overseers, the permission envelope's two halves, and the
+  additive-only overseer roster. The five role docs sit beside it — `contracter.md`
+  (emission over the derived contract), `tester.md` (test structure and claim
+  citation), `implementer.md` (the non-negotiable authoring rules),
+  `security-overseer.md`, `quality-overseer.md`.
+- [`references/tdd.md`](references/tdd.md) — the attended test-first loop and its KB
+  anchoring.
 - [`references/review-dimensions.md`](references/review-dimensions.md) — the review
-  phases + the fan-out dimensions and what each one checks.
+  phases, the fan-out, and the report format.
 - [`references/fix-build.md`](references/fix-build.md) — build-error taxonomy + process.
 - [`references/fix-vulns.md`](references/fix-vulns.md) — npm vulnerability workflow.
 - [`references/debug.md`](references/debug.md) — the 6-step root-cause framework.

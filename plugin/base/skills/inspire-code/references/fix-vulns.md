@@ -16,25 +16,24 @@ operator's conversation, so you **can and should ask** when a decision is needed
 
 ## Hard rules (non-negotiable)
 
+The severity bar, what an override means, and never silencing an audit belong to
+[`roles/security-overseer.md`](roles/security-overseer.md) § Dependencies — read them
+first. Below is the npm procedure that honours them.
+
 1. **NEVER run `npm audit fix --force`.** It downgrades parents, breaks
    peerDependencies, and is the opposite of fixing. Plain `npm audit fix` (no
    `--force`) is allowed but rarely helps.
-2. **Severity bar: 0 high / 0 critical is mandatory.** moderate / low are tolerated
-   if the only fix would require an override (rule 3). Confirm a different bar only
-   if the operator signalled one.
-3. **Avoid `overrides`. Last resort, ONLY when a HIGH/CRITICAL has no other fix
-   path** (no published parent release — stable, rc, or next — uses a patched
-   version). A moderate/low that would need an override → leave it.
-4. **You MAY bump majors** of direct dependencies and **change the affected source
+2. **A moderate or low whose only fix would be an override → leave it.** The bar
+   tolerates it, and an override buys nothing there.
+3. **You MAY bump majors** of direct dependencies and **change the affected source
    code and tests** to make the bump work. That is preferred over an override.
-5. **Do not touch files in an unresolved-merge state.** If `git status` shows
+4. **Do not touch files in an unresolved-merge state.** If `git status` shows
    `UU`/`AA`, or unrelated in-progress work, and a test fails because of it,
    **report it and ask** — never silently edit that file.
-6. **ALWAYS test-remove every existing override (Step 1) first, and remove the
-   obsolete ones.** Mandatory. For each `overrides.<name>`: delete it,
-   `npm install`, re-audit; if the bar still holds it stays removed, otherwise
-   restore it. Never finish with an override the audit proves unnecessary. If the
-   removal check errors, fix the check and re-run — don't skip and leave it in.
+5. **ALWAYS test-remove every existing override (Step 1) first, and remove the
+   obsolete ones.** For each `overrides.<name>`: delete it, `npm install`, re-audit;
+   if the bar still holds it stays removed, otherwise restore it. If the removal
+   check errors, fix the check and re-run — don't skip and leave it in.
 
 ## Workflow
 
@@ -46,7 +45,7 @@ npm audit --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c
 git status --short   # note any UU / unrelated changes BEFORE you start
 ```
 
-### Step 1 — Can any EXISTING override be removed? (MANDATORY — see hard rule 6)
+### Step 1 — Can any EXISTING override be removed? (MANDATORY — see hard rule 5)
 Upstream may have caught up. Test removal **one at a time, for every override**:
 ```bash
 npm pkg delete overrides.<name>
@@ -104,9 +103,9 @@ npm test 2>&1 | grep -E "Tests:|Test Suites:"
   **pre-existing** (unrelated in-progress work / a `UU` file). Report pre-existing
   failures as such; never silently "fix" unrelated files.
 
-### Step 6 — When the two rules collide, ASK the operator
+### Step 6 — When the two standing rules collide, ASK the operator
 If a HIGH/CRITICAL can ONLY be killed by an override (no parent release fixes it),
-the "avoid overrides" preference and the "never high" bar conflict. Ask:
+the last-resort rule and the severity bar conflict. Ask:
 - **A:** keep the single override → 0 high, some moderate. (recommended — honours the bar)
 - **B:** no overrides → leaves the high. (violates the bar)
 
