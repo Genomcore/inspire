@@ -1,0 +1,2 @@
+{ "exit": 1, "finding_count": 2,
+  "findings": [ { "rule": "profile-gates-installed", "message_substring": "which does not exist" } ] }

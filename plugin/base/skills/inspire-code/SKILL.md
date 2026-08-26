@@ -107,7 +107,7 @@ subcommand, read its reference file** — the table below is an index, not the f
 
 | Subcommand | What it does |
 |---|---|
-| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor, GIVEN/WHEN/THEN, and the non-negotiable authoring rules. Anchored to the feature's acceptance criteria. |
+| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor → mutation drill, GIVEN/WHEN/THEN, and the non-negotiable authoring rules. Anchored to the feature's acceptance criteria. |
 | [`review`](references/review-dimensions.md) | Judgment review of a diff. Phase 0 checks KB alignment (ADRs, action descriptors, acceptance criteria); phases 1–4 cover architecture, correctness, security, tests. Fans out to dimension agents in thorough mode. |
 | [`debug`](references/debug.md) | Reproduce → hypothesize → eliminate → root cause → fix → prevent regression. A root cause that is a spec gap routes back to `/inspire_feature` or `/inspire_domain`. |
 | [`fix-build`](references/fix-build.md) | Parse build/compile errors, diagnose root cause, apply the minimal fix, rebuild to verify. |
@@ -174,28 +174,45 @@ the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review`, `debug` (analysis phase) are read-only until a fix is agreed.**
-   `review` never edits code — it reports, ranks, and names the fix. `fix-build`,
-   `fix-vulns`, and `tdd` do edit, but only source/test files, never the KB.
+   `review` never edits code — it reports, ranks, and names the fix. Its one bounded
+   exception is the mutation drill (review Phase 4), which applies and immediately
+   reverts one mutation at a time and must leave the tree exactly as it found it.
+   `fix-build`, `fix-vulns`, and `tdd` do edit, but only source/test files, never
+   the KB.
 2. **The KB is the source of truth, not the code.** Every disagreement between the
    two is surfaced, not silently reconciled. KB edits are routed to the owning
    skill (see SDD anchoring).
-3. **Mechanical checks are not this skill's job.** Formatting, unused imports,
-   `any`/return-type rules, line length, naming, import order, floating promises —
-   the project's linter/formatter/type-checker and hooks enforce these. If they
-   don't, that is a tooling gap to fix, not a thing to review by hand every time.
+3. **Mechanical checks are not this skill's job — closing the gap is.** Formatting,
+   unused imports, `any`/return-type rules, line length, naming, import order,
+   floating promises, cyclomatic complexity, module size, import cycles, tests that
+   assert nothing — the project's linter/formatter/type-checker and hooks enforce
+   these. A check the toolchain *could* run but doesn't is a **finding**, not an
+   observation: report it naming the gate that should own it, per
+   [`_references/quality-gates.md`](../_references/quality-gates.md) and the active
+   profile's `## Quality gates`. Reviewing by hand every time what a machine could
+   check once is itself the defect.
 4. **Root cause before fix.** `debug` and `fix-build` never patch a symptom. Fix
    the cause, then check whether the same pattern exists elsewhere.
 5. **Never silence the toolchain and never swallow errors.** See
    [`references/tdd.md`](references/tdd.md) — these authoring rules hold across
    every subcommand that writes code, not just `tdd`.
-6. **No production code without its test.** `tdd` writes the failing test first;
-   `review` flags new logic that arrived without one.
-7. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
+6. **Infrastructure before the first test.** E2E comes first, so the database / broker /
+   cache it runs against has to exist before the cycle starts. A component the tests need
+   is declared in `stack.md`'s `## Test infrastructure` (an ADR when load-bearing), then
+   added to the compose file, then brought up **by the operator** — never started
+   silently, never assumed. A connection error is not a red test; it is a test that never
+   ran. See [`references/tdd.md`](references/tdd.md).
+7. **No production code without its test, and no test trusted until it has failed.**
+   `tdd` writes the failing test first; `review` flags new logic that arrived without
+   one. Green is not the end of the cycle — the **mutation drill** closes it
+   ([`references/tdd.md`](references/tdd.md), step 6): break the settled code on
+   purpose and confirm the tests notice. A survivor is a test gap, not a code bug.
+8. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
    `git push` as a side effect. When the operator does ask, follow the shared git
    discipline in
    [`_references/git-conventions.md`](../_references/git-conventions.md) (the
    project's `CLAUDE.md` overrides it).
-8. **Consult the task tracker** at the start of multi-step subcommands
+9. **Consult the task tracker** at the start of multi-step subcommands
    (`/inspire_task list`). Surface known items as `(tracked: TASK-{id})`
    rather than re-reporting them as new. If a session surfaces friction worth
    capturing, offer a skill-feedback ticket (`epic: skill-feedback`,
@@ -214,6 +231,13 @@ the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
   lean default profiles (`react`, `nestjs`) live beside it.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
+- [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer
+  owns a rule (lint vs metric gate vs human), absolutes vs ratchets, and why a
+  threshold must live outside the author's write reach.
+- [`_references/conventions/README.md`](../_references/conventions/README.md) — the
+  wire conventions resolved from `00_bootstrap/stack.md`: what a caller observes for
+  each logical error, so `tdd` can derive its test list instead of inventing the half
+  the descriptor deliberately leaves out.
 
 ## Related skills
 

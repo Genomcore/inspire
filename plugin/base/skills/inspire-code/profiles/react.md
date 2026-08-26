@@ -13,6 +13,11 @@ infrastructure** — all data access behind an interface, with a mock/real switc
 the UI is testable without a backend. Global state in a dedicated store, not in
 prop-drilled component state.
 
+Module boundaries: not yet formulated for this stack — deliberately deferred to a
+frontend iteration that exercises them, rather than transcribed untested from the
+backend rules. The contract in README.md still applies; this line is the deferral,
+not the answer.
+
 ## Test conventions
 - **Unit / component** — the component test runner + Testing Library; query by role
   first (`getByRole` > `getByText` > `getByTestId`), assert what the user sees, not
@@ -38,6 +43,18 @@ prop-drilled component state.
   labels, and focus management; forms announce errors.
 - **security**: forms, auth, and navigation validate input and guard against
   XSS/open-redirect.
+
+## Quality gates
+Not yet formulated for this stack — the backend profile's gates were measured on a
+real NestJS codebase, and this stack has had no equivalent iteration; transcribing
+them here untested is exactly what [`quality-gates.md`](../../_references/quality-gates.md)
+Rule 2 forbids dressing up as adoption. The rules themselves still bind: a project on
+this stack derives its own `## Quality gates` (and the `gates:` frontmatter that lets
+`.inspire/bin/profile-gates-installed.sh` verify them) from a frontend iteration that
+exercises each rule before writing it down. The shared-toolchain candidates are
+obvious — `strictTypeChecked`, `ban-ts-comment`, the escape-hatch ratchet — and the
+React-only ground (`eslint-plugin-react-hooks`, `jsx-a11y`, a bundle-size budget) is
+where the measuring has to happen. This section is the deferral, not the answer.
 
 ## Build & verify
 build: `npm run build` · lint: `npm run lint` · types: `npx tsc --noEmit` ·

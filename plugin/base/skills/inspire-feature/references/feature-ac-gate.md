@@ -24,6 +24,28 @@ Check each criterion on three dimensions:
   [`../SKILL.md`](../SKILL.md) § Rules); no contradictions between criteria; happy
   path **and** error/edge paths covered.
 
+Then check what the criteria **must not restate**, and what they **must** cover. The
+line between the two is the project's resolved wire convention
+([`_references/conventions/README.md`](../../_references/conventions/README.md)):
+
+- **Do not write criteria for the convention's always-present cases.** "Returns 404 for
+  an unknown id", "returns 401 without a token" — these hold for every action of the
+  transport, `/inspire_code tdd` derives them, and restating them per feature is the
+  duplication that drifts the day the convention changes.
+- **Do write a criterion for every error the feature's actions declare** in their
+  `## Errors`. That is the half a convention cannot derive, because the error is
+  domain-specific. A declared error with no criterion is the gap this gate exists to
+  catch.
+- **Do write a criterion for anything that deviates** from the convention — a deviation
+  is by definition not derivable.
+- **Never work backwards from the test suite.** A test with no criterion is normal: it may
+  come from the convention, from an ADR invariant, or from ordinary engineering (a unit
+  test, a regression test, a security probe). Inventing a criterion to give such a test a
+  home inflates the contract with programming conventions and is the failure mode this
+  section guards against. The one honest reason to add a criterion from a test is that the
+  test proves **user-observable behavior the feature genuinely forgot to state** — and
+  then it is the feature that was incomplete, not the test that was orphaned.
+
 Then a short **devil's advocate** pass — name at least a couple of ways the feature
 could break that the criteria don't yet cover (malformed/missing data, an external
 dependency down, two actors acting at once, boundary inputs) and turn each into a

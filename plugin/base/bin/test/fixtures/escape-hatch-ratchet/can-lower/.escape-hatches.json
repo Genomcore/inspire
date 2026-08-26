@@ -1,0 +1,7 @@
+{
+  "scope": ["src"],
+  "extensions": ["ts"],
+  "patterns": [
+    { "id": "as-any", "regex": "as any", "ceiling": 5 }
+  ]
+}

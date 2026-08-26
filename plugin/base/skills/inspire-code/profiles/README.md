@@ -36,7 +36,10 @@ layer: frontend | backend | data | tooling
 ---
 
 ## Layering
-Where each kind of code lives; the architectural shape. Feeds review Phase 1
+Where each kind of code lives; the architectural shape. Must also answer the
+module-boundary questions: what a module exposes to its siblings, and where code
+shared across modules (an external system's client and its generic helpers) lives —
+decided at first use, never deferred to the second consumer. Feeds review Phase 1
 (architecture) and the implementation shape in `tdd`.
 
 ## Test conventions
@@ -50,6 +53,14 @@ and the authoring rules in `tdd`.
 ## Review focus
 Extra dimensions `review` adds to its fan-out for this stack (e.g. api-contract,
 styling, a11y, security). Each is a lens name + one line of what it hunts for.
+
+## Quality gates
+The concrete tools and rules that mechanically enforce this stack's share of
+[`_references/quality-gates.md`](../../_references/quality-gates.md): which lint
+rules, which coverage tooling, which of them are absolute vs ratcheted, and which
+suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+this stack is listed as **dropped with its reason**, never left out silently. Names
+tools and rules only — never an org's server or pipeline.
 
 ## Build & verify
 The concrete lint / type-check / build / test commands. `fix-build`, `review`, and
@@ -67,6 +78,7 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
 | `## Test conventions` | `tdd` · `review` Phase 4 |
 | `## Forbidden patterns` | `review` · `tdd` authoring rules |
 | `## Review focus` | `review` fan-out (extra dimensions) |
+| `## Quality gates` | `/inspire_bootstrap stack` (installs them) · `review` (missing-gate findings) |
 | `## Build & verify` | `fix-build` · `review` build step · `debug` |
 
 ## Authoring rules for profiles

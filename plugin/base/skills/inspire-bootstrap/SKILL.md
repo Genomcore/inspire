@@ -204,6 +204,12 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
+7. **Gates ship with the stack.** `stack` installs the in-repo quality gates from the
+   resolved profiles and records the project's answers under `stack.md`'s
+   `## Quality gates`; the server-side half becomes a tracker ticket with a human
+   owner, never reported as done. See
+   [`_references/quality-gates.md`](../_references/quality-gates.md).
+
 ## Related skills
 
 - `/inspire_screens` — instantiates the theme's tokens into patterns/components.

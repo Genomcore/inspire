@@ -29,6 +29,17 @@ Score the source and the KB current on the same axes, then compare.
 | Production infra (Dockerfile, CI, migrations, env config) | none, or `create-*-app` defaults untouched |
 | Load-bearing choices made deliberately (DB, framework, runtime) | placeholder/in-memory store, "TODO pick a DB" |
 | Consistent across the repo | mixed experiments, dead alternatives side by side |
+| Real quality gates wired (strict lint set, coverage threshold, CI running them) | defaults untouched, or a config nothing enforces |
+
+**Quality gates are the one part of `stack.md` that migrates upward by default.** A
+source's installed gates are evidence, not opinion — they are in its `eslint.config` /
+CI and the code already satisfies them. So when the source enforces something the KB's
+`## Quality gates` does not, **recommend migrating the gate** even where the overall
+verdict for `stack.md` is *keep local*, and record what the existing code already
+passes: that number is the ratchet's starting baseline, and it is only measurable
+before the migration touches anything. Gates the source is **missing** are not a
+finding against it — they enter as the target with a cleanup ticket, per
+[`_references/quality-gates.md`](../../_references/quality-gates.md) Rule 2.
 
 **Theme (`theme.md` / live `design-system.md`):**
 

@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "declared-errors-tested", "message_substring": "appears in no test" }
+  ]
+}

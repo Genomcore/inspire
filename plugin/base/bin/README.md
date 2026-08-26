@@ -72,6 +72,38 @@ not: table cells are never read, prose above the first H2 is never read, and the
 per-field `### {field}` prose inside `## Fields` inherits its parent's tabular
 kind.
 
+### Source-code gates — the rules that do not read the KB alone
+
+| Script | Checks | Notes |
+|---|---|---|
+| `escape-hatch-ratchet.sh` | The count of deliberate rule suppressions in the product code may fall, never rise. Per-pattern ceilings from `.escape-hatches.json`; `--update` can only lower them. | Reads `source/`, **not** `inspire_kb/`. Deliberately **absent from `review.sh`'s default rule list** — `/inspire_domain review` is a KB review and must not start judging product code. Invoked directly by `pre-commit.sh`, `pre-pr.sh` and `/inspire_code review`. |
+| `declared-errors-tested.sh` | Every error an action declares in `## Errors` appears as a literal in a test file. | Reads both the KB and `source/`. Lifecycle-progressive: warning at `draft` (TDD writes the spec first), error at `accepted`+, skipped at `superseded`. Also absent from the default list, for the same reason. Wired into `pre-pr.sh`. |
+| `criteria-have-tests.sh` | Every acceptance criterion carries a **stable id**, claimed by a test through `/** @covers {feature}/AC-{n} */` — qualified by the owning feature's filename stem; a bare `AC-{n}` never matches. | The larger half of "nothing untested" — errors are the small half. The id lives in an annotation, never in the test name, so CI output stays readable. Two findings: `carries no id` (untraceable by construction, so reported even when tests exist) and `is claimed by no test`. Severity from the feature's `**State:**`: warning at 🟡 Planned, error at 🔵 In progress and 🟢 Implemented. Wired into `pre-pr.sh`. |
+
+Test-file discovery for both is in `_lib.sh` (`sdd_find_test_files`, `sdd_literal_in_tests`,
+`sdd_covers_in_tests`, `SDD_TEST_SCOPE`, `SDD_TEST_GLOBS`) rather than duplicated per rule —
+the two gates must agree on what a test file *is*, and the glob set already had one
+silent-miss bug in it. Where the product code lives resolves in `_lib.sh` too:
+`$SDD_SOURCE_ROOT` if set, else the `source_root:` frontmatter of
+`00_bootstrap/stack.md` (a brownfield install sets `.` there), else `source/` — so a
+project whose code is not at `source/` gets these gates pointed at the right tree
+without any per-hook plumbing.
+
+These three source-code gates are **tools with a verdict**, in the sense `trust.sh` below is a tool without
+one: they emit findings and can block, but they sit outside `review.sh`'s default rules
+because everything else here validates the knowledge base and these validate the code the
+knowledge base produced. They are stack-agnostic — every pattern and every ceiling comes
+from the project's config, so the runtime never hardcodes one language's suppression
+syntax. Rationale and the ceiling-in-repo exception:
+`.claude/skills/_references/quality-gates.md` Rule 4.
+
+### Gates over the KB's own claims
+
+| Script | Checks | Notes |
+|---|---|---|
+| `adr-maturity-matches-features.sh` | Every ADR a 🟢 Implemented feature links to is itself at `implemented`. | The decision layer was the only KB layer no rule read. One-directional, like `touched-entity-lifecycle.sh`: it walks features and never walks ADRs demanding features. Only 🟢 features are checked — at 🟡/🔵 a `design`-stage ADR is the ladder working. Findings are grouped per ADR, since the fix is a single `promote` however many features cite it. Takes the **features** root, so it is absent from `review.sh`'s default list, which passes the spec root. |
+| `profile-gates-installed.sh` | Every quality gate a resolved stack profile **declares** in its `gates:` frontmatter is present in the project's config (or absent, where the profile rejects it). | The gate that guards the gates. Reads the frontmatter, never the `## Quality gates` prose: that prose deliberately names rules the stack **rejects**, so scraping it would demand what the reasoning refuses. Cannot see a rule that is present but switched `off` — stated in its header rather than implied. Wired into `pre-pr.sh`. |
+
 ### Library
 
 | Script | Purpose | When it runs |
