@@ -94,8 +94,10 @@ carries no head by design). `oracle` is `keyed-heads.md`'s split: `store` for
 `unique` · `nonnull` · `default` · `references`, `test` for everything else and
 for every prose-only entry.
 
-A **type** is `{ "name", "base" }`, or `null` where a cell legitimately declares
-none. `base` is the universal semantic type from
+A **type** is `{ "name", "base" }`, always. Every `Type` cell must resolve —
+`## Entities` field-touch rows included — and an empty one is `DR-T2` rather than
+a `null`: a field whose type nothing states is a rendering the contracter would
+have to guess at. `base` is the universal semantic type from
 [`type-mapping.md`](../inspire-domain/references/type-mapping.md); a project's
 own type from `00_bootstrap/semantic-types.md` resolves to its declared base
 type. The parametric universal row `enum<A,B,C>` has base name `enum`, so a
@@ -262,3 +264,16 @@ recognise would be exactly the silent-green trap the strictness exists to close.
 turns refusals into readiness findings grouped by owning skill. `emanate gate`
 reads `claims` and matches them against citing tests. The contracter agent reads
 everything else. All three read this file for what a field means.
+
+**Sourcing the units instead of running the entry** is the other way in, and the
+line between the two is worth stating. The reuse surface is
+`.inspire/bin/lib/derive-*.sh` after `_lib.sh` and `_keyed-heads.sh`:
+`derive_scratch` (which must run first — every other unit reads `$DERIVE_TMP`,
+and the caller owns the EXIT trap that removes it), the readers, the fingerprint
+helpers, and the sweep (`derive_sweep_require` · `derive_sweep_start` ·
+`derive_sweep_collect`, which need `$DERIVE_BIN` — it defaults to the directory
+holding the rules, so only a caller relocating them has to set it). What belongs
+to the entry and not to the surface: the `U_*` globals it fills from the
+artifact's identity, and the `derive_*_json` renderers that read them. A
+consumer that wants a contract runs `emanate-derive.sh`; a consumer that wants a
+reader sources the unit.
