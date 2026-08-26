@@ -2,6 +2,7 @@
 kind: inspire-code-profile
 id: nestjs
 layer: backend
+language: typescript
 ---
 
 ## Layering
@@ -56,3 +57,80 @@ equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx 
 {package}`). Never run a workspace-wide install or build from a subcommand when a
 filtered form exists. E2E still runs against a real database — filter which package's
 suite runs, never what it runs against.
+
+## Bindings
+
+> **Seed.** Everything below is a default this template ships, not a rule INSPIRE
+> enforces. Edit it to match the project's real API shape; the machinery reads
+> whatever this section declares. See [`README.md`](README.md) § Seeds.
+
+An action's binding is **derived from its id**, never authored per action. An id is
+`{module}::{entity}::{verb}`; the path is `/{module}/{entities}`, where `{entities}`
+is the entity name pluralized (default `+s`, kebab-cased when multi-word) and
+`{id}` is the entity's identifying input.
+
+| verb | method + path |
+|---|---|
+| `create` | `POST /{module}/{entities}` |
+| `list` | `GET /{module}/{entities}` |
+| `get` | `GET /{module}/{entities}/{id}` |
+| `update` | `PATCH /{module}/{entities}/{id}` |
+| `delete` | `DELETE /{module}/{entities}/{id}` |
+
+**Any other verb is a named operation**, never bent into one of the five. It takes
+the entity's identifier as an input → `POST /{module}/{entities}/{id}/{verb}`; it
+does not → `POST /{module}/{entities}/{verb}`. Always `POST` — a named operation
+carries no idempotency promise, and a verb that genuinely has one is one of the five.
+Multi-word verbs kebab-case (`reset_password` → `reset-password`). Irregular plurals
+are declared as override rows in this section; the seed has none.
+
+**Controller placement.** One controller per entity, `{module}/{entity}.controller.ts`,
+carrying every route of that entity. The controller method calls the application
+service method of the same name as the verb.
+
+**The guard comes from the actor constraint.** A `P{n} — actor({role})` precondition
+(vocabulary V3 of
+[`keyed-heads.md`](../../_references/keyed-heads.md)) renders as that route's role
+guard — `@UseGuards(AuthGuard, RolesGuard)` + `@Roles('{role}')`. No `actor(…)`
+precondition → no guard and a public route. The guard is derived, so changing the
+precondition changes the guard, and the two can never disagree.
+
+Three claims derive from this section per action, with no authoring: the route
+exists · it dispatches to that action's service method · its guard matches the
+actor constraint.
+
+## Persistence
+
+> **Seed**, as above — an ORM choice most of all. A project on another ORM replaces
+> this section wholesale.
+
+- **ORM:** TypeORM against the seeded Postgres stack.
+- **Entity → table.** One table per domain entity, named with the same plural the
+  binding path uses (`auth::user` → `users`), snake_case. The module is not part of
+  the table name — it is the schema where the project uses schemas, and nothing
+  otherwise.
+- **Field → column.** snake_case; the column type comes from the language profile's
+  *Rendering* table ([`typescript.md`](typescript.md)), never from a guess here.
+  The field's `Constraints:` line renders as column constraints — `unique` → a unique
+  index, `nonnull` → `NOT NULL`, `default(v)` → the expansion in that profile's
+  *Mapping tokens*. `immutable` has no column form: it is enforced in the repository
+  and asserted by a test.
+- **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` primary key;
+  `created_at` / `updated_at` as `TIMESTAMPTZ`.
+- **The persistence entity is not the domain entity.** It lives in `infrastructure/`
+  beside its repository and `toDomain()` mapper; the domain interface never imports
+  the ORM (see `## Layering`).
+- **Migrations are append-shaped.** `src/migrations/`, one timestamp-named file per
+  change. Re-emanating a changed entity **appends** a migration; an existing one is
+  never edited, reordered or deleted — not even one that has only ever run locally.
+  Generated once is generated forever; a mistake is corrected by the next migration.
+- Never `synchronize: true` outside a throwaway local run — migrations are the only
+  schema authority.
+
+## Declaration-only tree
+
+The recipe is the language profile's ([`typescript.md`](typescript.md) § Declaration-only
+tree). One framework addendum: **decorators do not survive declaration emission**, so
+routes, guards, DI tokens and `@ApiProperty` shapes are invisible in a packed tree.
+Nothing is lost — every one of them is derived from `## Bindings` above, which the
+test phase reads directly.
