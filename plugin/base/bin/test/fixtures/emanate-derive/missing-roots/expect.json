@@ -1,0 +1,7 @@
+{
+  "exit": 5,
+  "args": [
+    "entity",
+    "auth.user"
+  ]
+}

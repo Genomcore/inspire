@@ -1,0 +1,240 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "entity",
+    "id": "auth.user",
+    "path": "spec/sdd/auth/user/auth.user.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user"
+  },
+  "purpose": "The account record a principal signs in with, described in auth-user-management.",
+  "requires": [
+    {
+      "kind": "entity",
+      "id": "auth.org"
+    }
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "name": "uuid",
+        "base": "uuid"
+      },
+      "notes": "Primary key.",
+      "constraints": [
+        {
+          "word": "nonnull",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "unique",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "immutable",
+          "args": [],
+          "oracle": "test"
+        }
+      ]
+    },
+    {
+      "name": "org_id",
+      "type": {
+        "name": "uuid",
+        "base": "uuid"
+      },
+      "notes": "The owning organisation.",
+      "constraints": [
+        {
+          "word": "nonnull",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "immutable",
+          "args": [],
+          "oracle": "test"
+        },
+        {
+          "word": "references",
+          "args": [
+            "auth.org"
+          ],
+          "oracle": "store"
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "type": {
+        "name": "email",
+        "base": "email"
+      },
+      "notes": "Unique across rows.",
+      "constraints": [
+        {
+          "word": "nonnull",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "pattern",
+          "args": [
+            "/^[a-z]{3,8}@.+$/"
+          ],
+          "oracle": "test"
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "type": {
+        "name": "status",
+        "base": "string"
+      },
+      "notes": "Where the account sits.",
+      "constraints": [
+        {
+          "word": "nonnull",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "default",
+          "args": [
+            "active"
+          ],
+          "oracle": "store"
+        }
+      ]
+    },
+    {
+      "name": "created_at",
+      "type": {
+        "name": "timestamp",
+        "base": "timestamp"
+      },
+      "notes": "The audit-timeline anchor.",
+      "constraints": [
+        {
+          "word": "nonnull",
+          "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "immutable",
+          "args": [],
+          "oracle": "test"
+        },
+        {
+          "word": "default",
+          "args": [
+            "now"
+          ],
+          "oracle": "store"
+        }
+      ]
+    }
+  ],
+  "invariants": [
+    {
+      "key": "I1",
+      "head": {
+        "word": "unique",
+        "args": [
+          "org_id",
+          "email"
+        ]
+      },
+      "prose": "Email is unique per organisation, never globally.",
+      "oracle": "store"
+    },
+    {
+      "key": "I2",
+      "head": null,
+      "prose": "A suspended account keeps every row it wrote; suspension changes what may be read.",
+      "oracle": "test"
+    }
+  ],
+  "claims": [
+    {
+      "id": "auth.user/field/id/nonnull",
+      "oracle": "store",
+      "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/id/unique",
+      "oracle": "store",
+      "fingerprint": "sha256:c2720445a45267813688ff73fa188aa060c1b661aefaf1650d42f690697b5ab3"
+    },
+    {
+      "id": "auth.user/field/id/immutable",
+      "oracle": "test",
+      "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
+    },
+    {
+      "id": "auth.user/field/org_id/nonnull",
+      "oracle": "store",
+      "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/org_id/immutable",
+      "oracle": "test",
+      "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
+    },
+    {
+      "id": "auth.user/field/org_id/references",
+      "oracle": "store",
+      "fingerprint": "sha256:6ddcb66483f838cd11a6aa4a3e5b7cd475b48474a43102664bc08a5d8ecbe299"
+    },
+    {
+      "id": "auth.user/field/email/nonnull",
+      "oracle": "store",
+      "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/email/pattern",
+      "oracle": "test",
+      "fingerprint": "sha256:a5c79eafb8e59c8c78c5bece27fad8f93ec352bf86762c0da908f1ea8be71d44"
+    },
+    {
+      "id": "auth.user/field/status/nonnull",
+      "oracle": "store",
+      "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/status/default",
+      "oracle": "store",
+      "fingerprint": "sha256:cf096fb38557a71ec5ef1a920acaacf0e7599e37aec1d43923798900582d5a54"
+    },
+    {
+      "id": "auth.user/field/created_at/nonnull",
+      "oracle": "store",
+      "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/created_at/immutable",
+      "oracle": "test",
+      "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
+    },
+    {
+      "id": "auth.user/field/created_at/default",
+      "oracle": "store",
+      "fingerprint": "sha256:ed6baa0c5da273d87f29c5f46135fa2c98f6032e24294da3dd866067b8b9abb2"
+    },
+    {
+      "id": "auth.user/inv/I1",
+      "oracle": "store",
+      "fingerprint": "sha256:96f54602f847be60f03bc88b8d508870dee0a9330ce603076a4f0b396ceee434"
+    },
+    {
+      "id": "auth.user/inv/I2",
+      "oracle": "test",
+      "fingerprint": "sha256:90a04df857aee90e445894fc621c24fb67852d1a0a08019346de966205b7e838"
+    }
+  ]
+}

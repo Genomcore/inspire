@@ -1,0 +1,21 @@
+{
+  "exit": 4,
+  "args": [
+    "entity",
+    "auth.user"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "DR-T1"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    },
+    {
+      "expr": ".unit.kind",
+      "equals": "entity"
+    }
+  ]
+}

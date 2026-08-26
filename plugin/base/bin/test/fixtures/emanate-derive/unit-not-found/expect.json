@@ -1,0 +1,7 @@
+{
+  "exit": 3,
+  "args": [
+    "entity",
+    "auth.ghost"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "exit": 4,
+  "args": [
+    "action",
+    "auth.user.create"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "OS-E1"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    },
+    {
+      "expr": ".unit.kind",
+      "equals": "action"
+    },
+    {
+      "expr": ".refused[0].remedy",
+      "equals": "/inspire_domain update auth.org"
+    },
+    {
+      "expr": ".refused[0].target",
+      "equals": "spec/sdd/auth/org/auth.org.md"
+    }
+  ]
+}
