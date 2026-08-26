@@ -22,23 +22,42 @@
 #      is what keeps the filter correct after the tip has moved.
 #   2. A private temporary index (GIT_INDEX_FILE) is seeded from the cut and
 #      then `add -A`'d inside the phase worktree, snapshotting its CURRENT
-#      full state — staged, unstaged and untracked alike, honouring
-#      .gitignore — as one tree object. This never touches the worktree's own
-#      .git/index.
+#      ON-DISK state as one tree object, honouring .gitignore. `add -A`
+#      reads the FILESYSTEM, not the worktree's own index — that index is
+#      never consulted and never touched. A file staged then deleted from
+#      disk is NOT harvested; a staged deletion left on disk (`git rm
+#      --cached`) IS harvested with its on-disk content, exactly like an
+#      ordinary unstaged edit. Working-tree state is authoritative, full
+#      stop.
 #   3. git diff --no-renames --name-only, restricted to the owned pathspec vs.
 #      unrestricted, gives the harvested and dropped path sets (a rename
 #      decomposes into a delete + an add with renames off, which the
 #      path-by-path overlay in step 5 handles correctly with no special
-#      case).
+#      case). Every path list in this script is produced with `-c
+#      core.quotePath=false … -z` and consumed NUL-terminated: a non-ASCII
+#      byte, or a literal '"' or '\' in a filename, is never trusted to
+#      git's human-readable (and lossy, C-quoted) rendering of it — that
+#      rendering is not a valid pathname on its own, and treating it as one
+#      silently drops the real file (it matches nothing on a later lookup).
 #   4. The same diff between the cut and the integration branch's CURRENT tip
 #      gives the set of paths the branch changed independently since the cut
-#      (other harvests, other commits). If that set intersects the owned set,
-#      this is a conflict: refuse, touch nothing. Disjoint means the harvest
-#      applies cleanly on top of whatever the tip is now.
+#      (other harvests, other commits). If that set intersects the owned
+#      set AND the intersecting path's content actually differs between the
+#      worktree snapshot and the tip, this is a conflict: refuse, touch
+#      nothing. An intersecting path whose content is byte-identical on both
+#      sides is NOT a conflict — it means this exact change already landed
+#      (a repeat harvest, or the same content arrived some other way) — see
+#      exit 6. Otherwise disjoint means the harvest applies cleanly on top
+#      of whatever the tip is now.
 #   5. A second temporary index, seeded from the tip, is overlaid path by
-#      path with the worktree snapshot's content for every owned changed path
-#      (present => `update-index --cacheinfo`; absent => `--force-remove`),
-#      written to a new tree, and committed with the tip as its one parent.
+#      path with the worktree snapshot's content for every owned changed
+#      path: present => `update-index --cacheinfo`, but ONLY once the tree
+#      entry's mode is confirmed to be an actual blob/symlink/gitlink
+#      (100644/100755/120000/160000) — anything else means the path became a
+#      tree (a file replaced by a same-named directory, or vice versa), and
+#      the harvest refuses rather than fabricate a corrupt entry (exit 8);
+#      absent => `--force-remove`. The result is written to a new tree and
+#      committed with the tip as its one parent.
 #   6. `git update-ref refs/heads/<branch> <new> <old-tip>` — itself a
 #      compare-and-swap — lands the commit. A concurrent mover of the branch
 #      (a real race, not just a stale read) fails this exactly like the
@@ -65,7 +84,11 @@
 #                trail (D4).
 #   --discard    after a successful commit, `git worktree remove --force`
 #                the phase worktree and delete the branch that was checked
-#                out in it. Default: keep both. Inert under --mode plan /
+#                out in it. Refused — commit kept, worktree and branch left
+#                exactly in place, a warning printed, discarded:false — if
+#                that branch IS <branch> itself: removing it would delete
+#                the integration branch this run just committed to. Default
+#                (no --discard): keep both. Inert under --mode plan /
 #                --dry-run (nothing was committed, so there is nothing whose
 #                success gates a removal).
 #   --mode plan  read-only preview: performs every check and reports the same
@@ -85,25 +108,40 @@
 #   0   success — a commit was made (or, under --mode plan, would have been).
 #   1   an unexpected git failure at a step earlier validation should have
 #       ruled out (defensive; not expected to fire in practice).
-#   2   usage error — bad flags, missing --label, or (rare) the worktree's
-#       branch shares no history with the integration branch at all.
-#   3   the worktree path does not exist, or is not a git worktree of THIS
-#       repository.
+#   2   usage error — bad flags, missing --label, a malformed owned pathspec
+#       (bad ':()' magic — the one input entirely in the caller's hands, so
+#       a typo here is USAGE, not an internal failure), or (rare) the
+#       worktree's branch shares no history with the integration branch at
+#       all.
+#   3   the worktree path does not exist, is not a git worktree of THIS
+#       repository, or this script's own CWD is not inside any git
+#       repository at all.
 #   4   the integration branch does not exist as a local ref.
 #   5   no owned pathspec was given after --.
-#   6   nothing to harvest — the owned diff is empty. A NORMAL outcome, not a
-#       failure: the orchestrator branches on it (e.g. a tester phase that
-#       touched no tests). No commit is made, no ref is touched.
+#   6   nothing to harvest — either the owned diff is empty, or every owned
+#       change is already present on the integration branch byte-for-byte
+#       (re-running an already-landed harvest is idempotent, not a
+#       conflict). A NORMAL outcome, not a failure: the orchestrator
+#       branches on it. No commit is made, no ref is touched.
 #   7   conflict — the owned diff does not apply cleanly onto the
 #       integration branch's CURRENT tip: it moved since the cut and touched
-#       a path this harvest also owns, or the final update-ref
-#       compare-and-swap lost a race. Every ref is left exactly as found.
+#       a path this harvest also owns with DIFFERENT content, or the final
+#       update-ref compare-and-swap lost a race. Every ref is left exactly
+#       as found.
+#   8   an owned path is a blob/symlink/gitlink on one side and a tree
+#       (directory) on the other, between the cut/tip and the current
+#       worktree snapshot — e.g. `foo.txt` replaced by a `foo.txt/`
+#       directory, or vice versa. Refused before writing anything rather
+#       than fabricate a corrupt tree entry; every ref is left exactly as
+#       found.
 #   127 a required tool (jq) is missing.
 #
-# Report: a grouped human report to stderr (harvested paths, dropped paths,
-# the commit sha) and a one-line JSON summary to stdout:
+# Report: a grouped human report to stderr (harvested paths — each with its
+# A/M/D... status — dropped paths, the commit sha) and a one-line JSON
+# summary to stdout:
 #   {"commit": <sha-or-null>, "branch": <name>, "harvested": [...],
-#    "dropped": [...], "discarded": <bool>}
+#    "harvested_status": {<path>: "A"|"M"|"D"|...}, "dropped": [...],
+#    "discarded": <bool>}
 #
 # In-package decision: lib/. D8 and the Defaults call for shared bin logic to
 # live in plugin/base/bin/lib/ (materializing to .inspire/bin/lib/, deployed
@@ -130,12 +168,15 @@ EXIT_NO_REF=4
 EXIT_NO_PATHSPEC=5
 EXIT_EMPTY=6
 EXIT_CONFLICT=7
+EXIT_TYPE_CONFLICT=8
 EXIT_MISSING_TOOL=127
 
-# The header block's own Usage section, through to the first line of code —
-# same extraction trust.sh uses.
+# The header block's own Usage/Exit-codes/Report sections, through to (but
+# not including) "In-package decision" — the internal design rationale is
+# not operator-facing help.
 usage() {
-  sed -n '/^# Usage:/,/^[^#]/p' "$0" | sed -e '/^[^#]/d' -e 's/^# \{0,1\}//'
+  sed -n '/^# Usage:/,/^# In-package decision/p' "$0" \
+    | sed -e '/^# In-package decision/d' -e '/^[^#]/d' -e 's/^# \{0,1\}//'
 }
 
 die_code() {
@@ -265,9 +306,9 @@ WORK="$(mktemp -d -t emanate-harvest.XXXXXX)" || die_code "$EXIT_INTERNAL" "cann
 trap 'rm -rf "${WORK:-}"' EXIT
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Snapshot the phase worktree's CURRENT full state (staged + unstaged +
-# untracked, honouring .gitignore) as one tree object, via a private index
-# that never touches the worktree's own .git/index.
+# Snapshot the phase worktree's CURRENT on-disk state (never its own index —
+# see step 2 above) as one tree object, via a private index that never
+# touches the worktree's own .git/index.
 # ─────────────────────────────────────────────────────────────────────────────
 
 wt_idx="$WORK/wt.index"
@@ -279,28 +320,72 @@ worktree_tree="$(GIT_INDEX_FILE="$wt_idx" git -C "$WORKTREE" write-tree)" \
   || die_code "$EXIT_INTERNAL" "cannot write the worktree snapshot tree"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# tree_entry <tree> <path> — prints "<mode>\t<type>\t<sha>" for the tree
+# entry at EXACTLY <path> in <tree> (`:(literal)` pathspec magic: a filename
+# that happens to contain '*'/'?'/'[' is never treated as a glob), or
+# nothing at all (and fails) if no such entry exists. NUL-terminated read of
+# `ls-tree -z`, never trusting a quoted/munged rendering of the path (B1);
+# the caller decides whether the mode is one it is willing to write (B2) —
+# this helper only reports what is actually there.
+#
+# status_for <path> — the A/M/D... status `--name-status` recorded for an
+# owned changed path (empty if, for some reason, absent).
+# ─────────────────────────────────────────────────────────────────────────────
+
+tree_entry() {
+  local raw
+  raw="$(git ls-tree -z "$1" -- ":(literal)$2" 2>/dev/null | tr '\0' '\n' | head -n 1)"
+  [ -n "$raw" ] || return 1
+  printf '%s\n' "$raw" | awk '{print $1"\t"$2"\t"$3}'
+}
+
+status_for() {
+  awk -F '\t' -v p="$1" '$2 == p { print $1; exit }' "$owned_status_raw"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Path sets. --no-renames throughout: this tool's behaviour must not depend
 # on the caller's diff.renames config, and a rename decomposing into a
 # delete + an add is exactly what the path-by-path overlay below wants — no
-# separate rename handling needed.
+# separate rename handling needed. Every list here is produced with `-c
+# core.quotePath=false … -z` and immediately normalised to one real,
+# unmunged path per line (B1) — filenames cannot contain NUL, so this is
+# lossless for every path this tool is asked to support (a literal newline
+# INSIDE a filename is the one byte this representation cannot carry; it is
+# out of scope, exactly as for the rest of base/bin/'s line-oriented tools).
 # ─────────────────────────────────────────────────────────────────────────────
 
 all_changed="$WORK/all_changed"
+owned_status_raw="$WORK/owned_status.raw"
 owned_changed="$WORK/owned_changed"
 dropped_changed="$WORK/dropped_changed"
 tip_changed="$WORK/tip_changed"
 overlap="$WORK/overlap"
+overlap_conflict="$WORK/overlap_conflict"
 
-git diff --no-renames --name-only "$cut_sha" "$worktree_tree" \
-  > "$all_changed" \
+git -c core.quotePath=false diff --no-renames --name-only -z "$cut_sha" "$worktree_tree" \
+  | tr '\0' '\n' > "$all_changed" \
   || die_code "$EXIT_INTERNAL" "cannot diff the worktree snapshot against the cut point"
 
-git diff --no-renames --name-only "$cut_sha" "$worktree_tree" -- "${PATHSPECS[@]}" \
-  > "$owned_changed.raw" \
-  || die_code "$EXIT_INTERNAL" "cannot diff the worktree snapshot against the cut point (owned pathspec)"
+# The owned diff carries an A/M/D... status per path (N4: a destructive
+# harvest — e.g. a rename whose destination fell outside the owned pathspec —
+# must read as one, not as an ordinary modify). A pathspec syntax error (a
+# bad ':()' magic token) is the one failure shape here that is entirely the
+# caller's doing, so it maps to USAGE (2), not an internal failure.
+owned_err="$WORK/owned.err"
+if ! git -c core.quotePath=false diff --no-renames --name-status -z "$cut_sha" "$worktree_tree" \
+       -- "${PATHSPECS[@]}" 2>"$owned_err" \
+     | tr '\0' '\n' | paste -d '\t' - - > "$owned_status_raw"; then
+  cat "$owned_err" >&2
+  if grep -qi pathspec "$owned_err" 2>/dev/null; then
+    die_code "$EXIT_USAGE" "malformed owned pathspec"
+  else
+    die_code "$EXIT_INTERNAL" "cannot diff the worktree snapshot against the cut point (owned pathspec)"
+  fi
+fi
 
+awk -F '\t' 'NF >= 2 { print $2 }' "$owned_status_raw" | LC_ALL=C sort -u > "$owned_changed"
 LC_ALL=C sort -u "$all_changed" -o "$all_changed"
-LC_ALL=C sort -u "$owned_changed.raw" -o "$owned_changed"
 comm -23 "$all_changed" "$owned_changed" > "$dropped_changed"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -310,6 +395,7 @@ comm -23 "$all_changed" "$owned_changed" > "$dropped_changed"
 print_report() {
   local commit_sha="$1" discarded_flag="$2" verdict="$3"
   local n_harvested n_dropped
+
   n_harvested="$(nlines "$owned_changed")"
   n_dropped="$(nlines "$dropped_changed")"
 
@@ -317,7 +403,14 @@ print_report() {
     printf 'INSPIRE harvest — %s -> %s (%s)\n' "$WORKTREE" "$BRANCH" "$verdict"
 
     printf '\nHARVESTED (%s)\n' "$n_harvested"
-    if [ "$n_harvested" -gt 0 ]; then sed 's/^/  /' "$owned_changed"; else printf '  (none)\n'; fi
+    if [ "$n_harvested" -gt 0 ]; then
+      while IFS= read -r p; do
+        [ -n "$p" ] || continue
+        printf '  %s %s\n' "$(status_for "$p")" "$p"
+      done < "$owned_changed"
+    else
+      printf '  (none)\n'
+    fi
 
     printf '\nDROPPED (%s)\n' "$n_dropped"
     if [ "$n_dropped" -gt 0 ]; then
@@ -333,30 +426,39 @@ print_report() {
       printf '\nCOMMIT  none\n'
     fi
     if [ "$discarded_flag" = true ]; then
-      printf 'DISCARD worktree + branch removed\n'
+      if [ -n "$wt_branch" ]; then
+        printf 'DISCARD worktree + branch removed\n'
+      else
+        printf 'DISCARD worktree removed (detached HEAD — no branch to remove)\n'
+      fi
     fi
   } >&2
 }
 
 emit_json() {
   local commit_sha="$1" discarded_flag="$2"
-  local commit_json harvested_json dropped_json
+  local commit_json harvested_json dropped_json harvested_status_json
   if [ -n "$commit_sha" ]; then commit_json="\"$commit_sha\""; else commit_json="null"; fi
   harvested_json="$(jq -R -s 'split("\n") | map(select(length > 0))' "$owned_changed")"
   dropped_json="$(jq -R -s 'split("\n") | map(select(length > 0))' "$dropped_changed")"
+  harvested_status_json="$(jq -R -s '
+      split("\n") | map(select(length > 0)) | map(split("\t"))
+      | map({(.[1]): .[0]}) | add // {}
+    ' "$owned_status_raw")"
   jq -n \
     --argjson commit "$commit_json" \
     --arg branch "$BRANCH" \
     --argjson harvested "$harvested_json" \
+    --argjson harvested_status "$harvested_status_json" \
     --argjson dropped "$dropped_json" \
     --argjson discarded "$discarded_flag" \
-    '{commit: $commit, branch: $branch, harvested: $harvested, dropped: $dropped, discarded: $discarded}'
+    '{commit: $commit, branch: $branch, harvested: $harvested, harvested_status: $harvested_status, dropped: $dropped, discarded: $discarded}'
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Nothing to harvest — a normal outcome, not a failure. Reported regardless:
-# the dropped list on an empty owned diff is itself the signal (a tester
-# phase that touched zero tests but touched source, say).
+# Nothing to harvest (empty diff) — a normal outcome, not a failure.
+# Reported regardless: the dropped list on an empty owned diff is itself the
+# signal (a tester phase that touched zero tests but touched source, say).
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [ ! -s "$owned_changed" ]; then
@@ -367,24 +469,49 @@ fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Atomicity: has the integration branch itself touched any owned path since
-# the cut? Disjoint applies; overlapping refuses. Refs are untouched either
-# way up to this point.
+# the cut? An intersecting path is only a REAL conflict if its content
+# actually differs between the worktree snapshot and the tip — if the exact
+# same content is already on the tip (a previous harvest of this same
+# change, or the same content landing some other way), re-harvesting it is
+# idempotent, not a conflict (N3). Refs are untouched up to this point
+# either way.
 # ─────────────────────────────────────────────────────────────────────────────
 
-git diff --no-renames --name-only "$cut_sha" "$old_tip" > "$tip_changed" \
+git -c core.quotePath=false diff --no-renames --name-only -z "$cut_sha" "$old_tip" \
+  | tr '\0' '\n' > "$tip_changed" \
   || die_code "$EXIT_INTERNAL" "cannot diff the integration branch against the cut point"
 LC_ALL=C sort -u "$tip_changed" -o "$tip_changed"
 
 comm -12 "$owned_changed" "$tip_changed" > "$overlap"
 
+: > "$overlap_conflict"
 if [ -s "$overlap" ]; then
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    wt_entry="$(tree_entry "$worktree_tree" "$path")" || wt_entry=""
+    tip_entry="$(tree_entry "$old_tip" "$path")" || tip_entry=""
+    [ "$wt_entry" = "$tip_entry" ] || printf '%s\n' "$path" >> "$overlap_conflict"
+  done < "$overlap"
+fi
+
+if [ -s "$overlap_conflict" ]; then
   {
     printf 'INSPIRE harvest — %s -> %s (conflict)\n' "$WORKTREE" "$BRANCH"
     printf '\n%s has moved since the cut and independently touched:\n' "$BRANCH"
-    sed 's/^/  /' "$overlap"
+    sed 's/^/  /' "$overlap_conflict"
     printf '  refusing — every ref is left exactly as found.\n'
   } >&2
   exit "$EXIT_CONFLICT"
+fi
+
+# Every owned change already present on the tip, byte for byte: nothing to
+# do, and NOT an error — same exit code as the plain empty-diff case (N3).
+n_owned="$(nlines "$owned_changed")"
+n_overlap="$(nlines "$overlap")"
+if [ "$n_overlap" -gt 0 ] && [ "$n_overlap" -eq "$n_owned" ]; then
+  print_report "" false "nothing to harvest — already on $BRANCH"
+  emit_json "" false
+  exit "$EXIT_EMPTY"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -409,10 +536,15 @@ GIT_INDEX_FILE="$tip_idx" git read-tree "$old_tip" \
 
 while IFS= read -r path; do
   [ -n "$path" ] || continue
-  entry="$(git ls-tree "$worktree_tree" -- "$path")"
-  if [ -n "$entry" ]; then
-    mode_bits="$(printf '%s\n' "$entry" | awk '{print $1}')"
-    blob_sha="$(printf '%s\n' "$entry" | awk '{print $3}')"
+  if entry="$(tree_entry "$worktree_tree" "$path")"; then
+    mode_bits="${entry%%$'\t'*}"
+    rest="${entry#*$'\t'}"
+    blob_sha="${rest#*$'\t'}"
+    case "$mode_bits" in
+      100644|100755|120000|160000) ;;
+      *)
+        die_code "$EXIT_TYPE_CONFLICT" "owned path changed kind in the worktree snapshot: $path is now tree-mode $mode_bits, not a blob/symlink/gitlink (a file replaced by a same-named directory, or vice versa) — refusing to fabricate a tree entry; every ref is left exactly as found" ;;
+    esac
     GIT_INDEX_FILE="$tip_idx" git update-index --add --cacheinfo "$mode_bits,$blob_sha,$path" \
       || die_code "$EXIT_INTERNAL" "cannot stage $path"
   else
@@ -442,7 +574,9 @@ git update-ref "refs/heads/$BRANCH" "$new_commit" "$old_tip" \
 
 discarded=false
 if [ "$DISCARD" = 1 ]; then
-  if git worktree remove --force "$WORKTREE" 2>/dev/null; then
+  if [ -n "$wt_branch" ] && [ "$wt_branch" = "$BRANCH" ]; then
+    echo "emanate-harvest.sh: warning: commit $new_commit landed, but --discard was refused — $WORKTREE holds $BRANCH itself (the integration branch just committed to); removing it would delete that branch. Worktree and branch left in place." >&2
+  elif git worktree remove --force "$WORKTREE" 2>/dev/null; then
     [ -z "$wt_branch" ] || git branch -D "$wt_branch" >/dev/null 2>&1
     discarded=true
   else

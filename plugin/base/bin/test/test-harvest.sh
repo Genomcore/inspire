@@ -293,6 +293,156 @@ if [ -d "$WT" ]; then ok "discard/on-failure: worktree NOT removed on a failed (
 if git -C "$R" show-ref --verify --quiet refs/heads/phase11c; then ok "discard/on-failure: branch NOT removed on a failed (empty-diff) harvest"; else bad "discard/on-failure: branch was removed despite failure"; fi
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 12 — non-ASCII path: harvested, present on the tip under its REAL name
+#      (B1). Regression fixture for the C-quoted-literal bug: a pre-existing
+#      non-ASCII path that git would otherwise render as
+#      "source/caf\303\251.txt" must land as source/café.txt.
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r12"; WT="$ROOT/wt12"
+git init -q "$R"
+git -C "$R" config user.email tester@example.com
+git -C "$R" config user.name tester
+mkdir -p "$R/source"
+printf 'orig\n' > "$R/source/café.txt"
+git -C "$R" add -A
+git -C "$R" commit -q -m init >/dev/null
+git -C "$R" checkout -q -b integration
+new_phase "$R" "$WT" phase12
+printf 'IMPLEMENTED\n' > "$WT/source/café.txt"
+
+OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label nonascii -- 'source/**')"
+eq "non-ascii: exit 0" "$?" "0"
+eq "non-ascii: café.txt landed on integration with the real content" \
+  "$(git -C "$R" show 'integration:source/café.txt')" "IMPLEMENTED"
+has "non-ascii: harvested JSON names the real (unquoted) filename" "source/café.txt" \
+  "$(json_field "$OUT" '.harvested | join(",")')"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 13 — a literal '"' in a filename: same story (B1).
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r13"; WT="$ROOT/wt13"
+git init -q "$R"
+git -C "$R" config user.email tester@example.com
+git -C "$R" config user.name tester
+mkdir -p "$R/source"
+printf 'orig\n' > "$R/source/normal.txt"
+git -C "$R" add -A
+git -C "$R" commit -q -m init >/dev/null
+git -C "$R" checkout -q -b integration
+new_phase "$R" "$WT" phase13
+printf 'quoted\n' > "$WT/source/we\"ird.txt"
+
+OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label quotename -- 'source/**')"
+eq "quote-in-name: exit 0" "$?" "0"
+eq "quote-in-name: file landed on integration with the real content" \
+  "$(git -C "$R" show 'integration:source/we"ird.txt')" "quoted"
+has "quote-in-name: harvested JSON names the real filename" 'source/we"ird.txt' \
+  "$(json_field "$OUT" '.harvested | join(",")')"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 14 — file replaced by a same-named directory: refused with its documented
+#      exit code, every ref left untouched (B2). No fabricated path may ever
+#      reach the tip.
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r14"; WT="$ROOT/wt14"
+fresh_repo "$R"
+new_phase "$R" "$WT" phase14
+before="$(tip_sha "$R")"
+before_reflog="$(reflog_n "$R")"
+rm "$WT/source/a.txt"
+mkdir "$WT/source/a.txt"
+printf 'inner\n' > "$WT/source/a.txt/inner.txt"
+
+rc=0; ( cd "$R" && "$HARVEST" "$WT" integration --label f2d -- 'source/**' >/dev/null 2>&1 ) || rc=$?
+eq "file-to-dir: refused with exit 8" "$rc" "8"
+eq "file-to-dir: integration ref unchanged" "$(tip_sha "$R")" "$before"
+eq "file-to-dir: reflog did not grow" "$(reflog_n "$R")" "$before_reflog"
+if path_exists_at "$R" integration:source/a.txt/inner.txt; then
+  bad "file-to-dir: fabricated nested path leaked onto integration"
+else
+  ok "file-to-dir: no fabricated path landed on integration"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 15 — --discard when the phase worktree holds the integration branch
+#      itself: the commit still lands, but the branch (and its worktree)
+#      MUST survive — deleting it would destroy the very branch just
+#      committed to (B3).
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r15"; W="$ROOT/w15"
+fresh_repo "$R"
+git -C "$R" checkout -q -b main-side
+git -C "$R" worktree add -q "$W" integration
+printf 'impl\n' > "$W/source/a.txt"
+
+OUT="$(cd "$R" && "$HARVEST" "$W" integration --label selfbranch --discard -- 'source/**')"
+eq "discard/self-branch: exit 0 (the commit still lands)" "$?" "0"
+eq "discard/self-branch: harvested content landed" "$(git -C "$R" show integration:source/a.txt)" "impl"
+if git -C "$R" show-ref --verify --quiet refs/heads/integration; then
+  ok "discard/self-branch: integration branch survives"
+else
+  bad "discard/self-branch: integration branch was deleted"
+fi
+eq "discard/self-branch: commit is reachable from integration" \
+  "$(git -C "$R" rev-parse --verify -q refs/heads/integration)" "$(json_field "$OUT" '.commit')"
+eq "discard/self-branch: JSON discarded is false" "$(json_field "$OUT" '.discarded')" "false"
+if [ -d "$W" ]; then
+  ok "discard/self-branch: worktree left in place (refused, never removed)"
+else
+  bad "discard/self-branch: worktree was removed despite holding the integration branch"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 16 — idempotency: re-running an already-landed harvest is "nothing to
+#      harvest" (exit 6), not a conflict — and the ref does not move (N3).
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r16"; WT="$ROOT/wt16"
+fresh_repo "$R"
+new_phase "$R" "$WT" phase16
+printf 'impl\n' > "$WT/source/a.txt"
+( cd "$R" && "$HARVEST" "$WT" integration --label first -- 'source/**' >/dev/null )
+after_first="$(tip_sha "$R")"
+after_first_reflog="$(reflog_n "$R")"
+
+OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label second -- 'source/**')"
+rc=$?
+eq "idempotent: re-run exits 6 (nothing to harvest)" "$rc" "6"
+eq "idempotent: integration ref unmoved by the re-run" "$(tip_sha "$R")" "$after_first"
+eq "idempotent: reflog did not grow on the re-run" "$(reflog_n "$R")" "$after_first_reflog"
+eq "idempotent: JSON commit is null on the re-run" "$(json_field "$OUT" '.commit')" "null"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 17 — a rename whose destination falls OUTSIDE the owned pathspec: the
+#      owned source path is a deletion, not an ordinary modify, and the
+#      harvested_status must say so (N4) — a destructive harvest reads as
+#      one instead of looking like every other harvest.
+# ═══════════════════════════════════════════════════════════════════════════
+
+R="$ROOT/r17"; WT="$ROOT/wt17"
+fresh_repo "$R"
+new_phase "$R" "$WT" phase17
+mv "$WT/source/a.txt" "$WT/moved-out.txt"
+
+OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label renameout -- 'source/**')"
+eq "rename-out-of-scope: exit 0" "$?" "0"
+eq "rename-out-of-scope: harvested is exactly source/a.txt" \
+  "$(json_field "$OUT" '.harvested | join(",")')" "source/a.txt"
+eq "rename-out-of-scope: status recorded for source/a.txt is D" \
+  "$(json_field "$OUT" '.harvested_status["source/a.txt"]')" "D"
+if path_exists_at "$R" integration:source/a.txt; then
+  bad "rename-out-of-scope: source/a.txt still present on integration"
+else
+  ok "rename-out-of-scope: source/a.txt removed from integration (destructive harvest, correctly signalled)"
+fi
+has "rename-out-of-scope: moved-out.txt is in the dropped list" "moved-out.txt" \
+  "$(json_field "$OUT" '.dropped | join(",")')"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Stub-guard — the assertions above must be sensitive to real filtering and
 # real ref-writing, or they were never testing anything (this repo's
 # documented vacuous-assertion trap). Each stub is a copy of the real script
@@ -305,7 +455,7 @@ ne "stub-guard: sanity — the harvest script is non-empty" "$(wc -l < "$HARVEST
 # --- stub 1: the owned-path filter accepts everything (drops the pathspec
 #     restriction from the owned-diff computation) ---------------------------
 STUB_ACCEPT_ALL="$ROOT/harvest-stub-accept-all.sh"
-sed 's#^git diff --no-renames --name-only "\$cut_sha" "\$worktree_tree" -- "\${PATHSPECS\[@\]}" \\$#git diff --no-renames --name-only "$cut_sha" "$worktree_tree" \\#' \
+sed 's#^       -- "\${PATHSPECS\[@\]}" 2>"\$owned_err" \\$#       2>"$owned_err" \\#' \
   "$HARVEST" > "$STUB_ACCEPT_ALL"
 chmod +x "$STUB_ACCEPT_ALL"
 ne "stub-guard: accept-all stub actually differs from the real script" \
