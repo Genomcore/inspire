@@ -130,24 +130,43 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     fi
   done < <(jq -r '.forbidden[]?' "$expect_file")
 
-  # A tool's product is its stdout, so a fixture may pin it whole …
+  # A tool's product is its stdout, so a fixture may pin it whole … Each side is
+  # normalized separately and the normalization's own exit status is checked: a
+  # comparison of two things `jq` could not read passes trivially, which is how a
+  # golden regenerated from a broken run would freeze the breakage. An EMPTY file
+  # is the sharp case: `jq -S .` reads one happily and prints nothing, so two
+  # empty sides compare equal — a fixture that pins stdout needs stdout.
   expected_stdout="$(jq -r '.stdout // ""' "$expect_file")"
   if [ -n "$expected_stdout" ]; then
+    want_norm="$(mktemp)"; got_norm="$(mktemp)"
     if [ ! -f "$fixture/$expected_stdout" ]; then
       pass=false
       echo "FAIL $rule/$scenario (missing golden stdout: $expected_stdout)" >&2
-    elif ! diff -u <(jq -S . "$fixture/$expected_stdout" 2>/dev/null) \
-                   <(jq -S . "$actual_stdout" 2>/dev/null) >/dev/null; then
+    elif ! jq -S . "$fixture/$expected_stdout" > "$want_norm" 2>/dev/null \
+         || [ ! -s "$want_norm" ]; then
+      pass=false
+      echo "FAIL $rule/$scenario (golden $expected_stdout is not readable JSON)" >&2
+    elif ! jq -S . "$actual_stdout" > "$got_norm" 2>/dev/null || [ ! -s "$got_norm" ]; then
+      pass=false
+      echo "FAIL $rule/$scenario (stdout is not readable JSON)" >&2
+    elif ! diff -u "$want_norm" "$got_norm" >/dev/null; then
       pass=false
       echo "FAIL $rule/$scenario (stdout differs from $expected_stdout)" >&2
-      diff -u <(jq -S . "$fixture/$expected_stdout" 2>/dev/null) \
-              <(jq -S . "$actual_stdout" 2>/dev/null) | head -40 >&2
+      diff -u "$want_norm" "$got_norm" | head -40 >&2
     fi
+    rm -f "$want_norm" "$got_norm"
   fi
 
-  # … or state one thing about it at a time.
+  # … or state one thing about it at a time. An entry missing either key is a
+  # defect in the fixture, not a pass: `jq -r '.equals'` on an entry without one
+  # yields "null", and "null" is what an unreadable stdout yields too.
   while IFS= read -r probe; do
     [ -n "$probe" ] || continue
+    if ! echo "$probe" | jq -e 'has("expr") and has("equals")' >/dev/null 2>&1; then
+      pass=false
+      echo "FAIL $rule/$scenario (stdout_jq entry needs both 'expr' and 'equals': $probe)" >&2
+      continue
+    fi
     probe_expr="$(echo "$probe" | jq -r '.expr')"
     probe_want="$(echo "$probe" | jq -r '.equals')"
     probe_got="$(jq -r "$probe_expr" "$actual_stdout" 2>/dev/null)"
