@@ -222,6 +222,15 @@ surface scoping is untouched, a frontmatter block being nothing like a `surfaces
 `materialize.sh`'s own writes during init and update are **not provenance events**: the
 upgrade never stamps.
 
+**Amended 2026-08-25 (0.8.0):** the "catalog entries take `produced` only" sentence
+above no longer covers pattern/component entries. Since T2 an entry under
+`05_screens/patterns/` or `05_screens/components/` is an authored layout contract —
+its regions, what each accepts — not rebuilt catalog output, so a human can vouch for
+it; it now takes `endorsed` and `produced` like any other `01_adr`–`05_screens`
+artifact. Screens' `_index.md` hubs are unaffected: still rebuilt nav content, still
+`produced`-only, until the F10-flows residue retires the file. The original sentence
+is left above as history rather than rewritten.
+
 ### D9 — The tier walk, recorded so it is not re-derived
 
 | Decision | Resolution |

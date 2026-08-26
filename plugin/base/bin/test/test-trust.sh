@@ -239,7 +239,8 @@ eq "fixture: all six skill dirs hash distinctly" \
 
 mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_adr" "$R/inspire_kb/02_modules" \
          "$R/inspire_kb/03_features" "$R/inspire_kb/04_domain/auth/user" \
-         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/auth"
+         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/components" \
+         "$R/inspire_kb/05_screens/auth"
 
 art(){ # art <path> <endorsed:yes|no> [skill sha refs]
   local path="$R/inspire_kb/$1" e="$2" skill="${3:-}" sha="${4:-}" refs="${5:-}"
@@ -267,7 +268,8 @@ art 03_features/checkout.md   yes feature 0000000   "$R_REFS"      # OWNER NOT I
 art 04_domain/auth/user/auth.user.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)
 art 05_screens/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — DS is owned by bootstrap
 art 05_screens/login.md       no                                  # UNENDORSED + PRE-PROVENANCE
-art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # produced-checked, never UNENDORSED
+art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # UNENDORSED — patterns/ became endorsable (T12)
+art 05_screens/components/button.md yes screens "$R_SCR" "$R_REFS" # clean — endorsed AND fresh, the inverse positive
 
 # An artifact with NO frontmatter whose BODY contains `endorsed:` and `produced:`
 # at column 0 — a KB artifact documenting the stamp format is the obvious way to
@@ -292,7 +294,7 @@ EOF
 rc=0; FULL="$(cd "$R" && "$TRUST" report)" || rc=$?
 eq "report: exits 0 with findings" "$rc" "0"
 
-eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "3"
+eq "report: UNENDORSED count"        "$(group_count UNENDORSED "$FULL")"            "4"
 eq "report: STALE count"             "$(group_count STALE "$FULL")"                 "1"
 eq "report: REFS-CHANGED count"      "$(group_count REFS-CHANGED "$FULL")"          "1"
 eq "report: PRE-PROVENANCE count"    "$(group_count PRE-PROVENANCE "$FULL")"        "3"
@@ -303,7 +305,12 @@ has "report: UNENDORSED lists project.md"  'inspire_kb/00_bootstrap/project.md' 
 has "report: UNENDORSED lists login.md"    'inspire_kb/05_screens/login.md'     "$(group_block UNENDORSED "$FULL")"
 hasnt "report: endorsed stack.md is not UNENDORSED" 'stack.md' "$(group_block UNENDORSED "$FULL")"
 hasnt "report: _index.md is never UNENDORSED" '_index.md'   "$(group_block UNENDORSED "$FULL")"
-hasnt "report: catalog entries are never UNENDORSED" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
+has "report: patterns/list.md is UNENDORSED (T12: catalog entries became endorsable)" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
+hasnt "report: an endorsed AND fresh catalog entry is not UNENDORSED" 'components/button.md' "$(group_block UNENDORSED "$FULL")"
+# Presence guard: the inverse positive lands in no group, so without this line the
+# fixture row could be deleted and every assertion above would still pass.
+eq "fixture: the inverse-positive artifact exists" \
+  "$([ -f "$R/inspire_kb/05_screens/components/button.md" ] && echo yes || echo no)" "yes"
 
 # A body is not frontmatter: an `endorsed:` line in prose must never be mistaken
 # for a human vouch, nor a `produced:` line for a stamp.
@@ -348,7 +355,7 @@ rc=0; SUM="$(cd "$R" && "$TRUST" report --summary)" || rc=$?
 eq "report --summary: exits 0" "$rc" "0"
 eq "report --summary: exactly one line" "$(printf '%s\n' "$SUM" | grep -c .)" "1"
 eq "report --summary: counts match the full report" "$SUM" \
-  "trust: 3 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
+  "trust: 4 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
 
 # ── stamping the stale artifact clears it ─────────────────────────────────
 ( cd "$R" && "$TRUST" stamp inspire_kb/01_adr/adr-stale.md --skill adr ) >/dev/null
