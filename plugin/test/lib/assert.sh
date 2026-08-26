@@ -24,10 +24,12 @@ hasnt(){ case "$2" in *"$3"*) bad "$1 (got '$2', want NOT to contain '$3')";; *)
 # the prefix is what makes them countable across a whole run.
 premise(){ check "premise: $1" "$2"; }
 
-# Zero assertions is a failure: a file that made none did not run.
+# Zero assertions is a failure: a file that made none did not run. A skip is the
+# record of an assertion NOT made, so it does not count — which is also how
+# run.sh reads the same file, and standalone must not disagree with the runner.
 summary(){
   echo ""; echo "Passed: $pass · Failed: $fail · Skipped: $skip"
   [ "$fail" -eq 0 ] || exit 1
-  [ $((pass + fail + skip)) -gt 0 ] || exit 1
+  [ $((pass + fail)) -gt 0 ] || exit 1
   exit 0
 }
