@@ -139,20 +139,20 @@ STUBS="$(mktemp -d -t inspire-derive-stub.XXXXXX)" || exit 1
 trap 'rm -rf "$STUBS"' EXIT
 
 # stub_run <label> <sed-program|REMOVE|UNEXEC> <file> <fixture> <arg>… — derive
-# on a copy of plugin/base whose bin/<file> was patched; prints
-# `exit<TAB>classes`.
+# from a copy of the scripts whose <file> was patched, over the REAL fixture
+# tree: derive writes nothing, so only the bin needs copying.
 stub_run() {
   local label="$1" prog="$2" file="$3" fx="$4"; shift 4
   local w="$STUBS/$label" out code
-  mkdir -p "$w"
-  cp -R "$BIN/../." "$w/"
+  mkdir -p "$w/lib"
+  cp "$BIN"/*.sh "$w/" && cp "$BIN"/lib/*.sh "$w/lib/"
   case "$prog" in
-    REMOVE) rm -f "$w/bin/$file" ;;
-    UNEXEC) chmod -x "$w/bin/$file" ;;
-    *)      sed -i.bak "$prog" "$w/bin/$file" ;;
+    REMOVE) rm -f "$w/$file" ;;
+    UNEXEC) chmod -x "$w/$file" ;;
+    *)      sed -i.bak "$prog" "$w/$file" ;;
   esac
-  out="$( cd "$w/bin/test/fixtures/emanate-derive/$fx" && SDD_SPEC_ROOT=spec/sdd \
-          SDD_KB_ROOT=spec/kb bash "$w/bin/emanate-derive.sh" "$@" 2>/dev/null )"
+  out="$( cd "$FX/$fx" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
+          bash "$w/emanate-derive.sh" "$@" 2>/dev/null )"
   code=$?
   printf '%s\t%s' "$code" \
     "$(printf '%s' "$out" | jq -r '[.refused[]?.class] | unique | join(",")' 2>/dev/null)"
