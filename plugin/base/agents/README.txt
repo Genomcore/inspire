@@ -15,6 +15,38 @@ frontmatter would be parsed as a broken agent. The same rule applies to anything
 you add here — a note, a draft, a snippet: give it a non-.md extension, or give
 it valid agent frontmatter.
 
+What INSPIRE ships here
+-----------------------
+
+Five shells, one per role of the code-emanation loop. A shell is an identity, a
+permission envelope (its tools: list) and a pointer at its doctrine; the doctrine
+itself lives once, in
+.claude/skills/inspire-code/references/roles/, and roles/README.md is the one
+page that explains the whole model.
+
+  inspire-contracter.md        emits interfaces, validators, bindings, schemas
+  inspire-tester.md            writes the frozen suite from the unit's claims
+  inspire-implementer.md       writes the bodies that turn that suite green
+  inspire-security-overseer.md read-only security oracle at each handoff
+  inspire-quality-overseer.md  read-only quality oracle at each handoff
+
+The three personas carry a full working set including Bash and Agent. The two
+overseers carry Read, Grep and Glob and nothing else: an overseer writes nothing,
+and a shell can write.
+
+The overseer roster is additive-only
+------------------------------------
+
+An overseer is any agent file in this directory whose name ends in
+-overseer.md. There is no roster file and no extra frontmatter key. Add your own
+— compliance, accessibility, a lens your domain needs — by dropping one more
+*-overseer.md here and a doctrine doc beside the shipped ones; the loop picks it
+up at every handoff.
+
+The two shipped overseers are NOT removable: emanation refuses to run when either
+is missing, or when either has been edited into something that is no longer an
+overseer — a tools: list that can write, most of all. The ceiling only rises.
+
 Your own agents are welcome here. INSPIRE only ever writes the files it ships
 (this README and its agent shells); nothing else in this directory is ever
 written, moved or deleted by an upgrade.
