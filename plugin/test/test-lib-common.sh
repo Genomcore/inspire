@@ -2,11 +2,7 @@
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 . "$HERE/../scripts/lib/common.sh"
-
-pass=0; fail=0
-ok(){ echo "PASS $1"; pass=$((pass+1)); }
-bad(){ echo "FAIL $1"; fail=$((fail+1)); }
-eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
+. "$HERE/lib/assert.sh"
 
 eq "equal"            "$(version_cmp 0.3.1 0.3.1)"   "0"
 eq "patch older"      "$(version_cmp 0.3.0 0.3.1)"   "-1"
@@ -33,5 +29,4 @@ rm -f "$tmp"
 eq "arr_to_json empty" "$(arr_to_json)" "[]"
 eq "arr_to_json two"   "$(arr_to_json a b | jq -c .)" '["a","b"]'
 
-echo ""; echo "Passed: $pass · Failed: $fail"
-[ "$fail" -eq 0 ]
+summary
