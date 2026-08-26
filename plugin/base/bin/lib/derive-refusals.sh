@@ -31,6 +31,10 @@
 # `.claude/skills/_references/derived-contract.md`. The `OS-*` catalogue is
 # `_references/keyed-heads.md`'s and is never copied.
 
+# Consumers that source these units instead of running the entry get the same
+# default the entry sets: the directory holding the rules is the one above lib/.
+: "${DERIVE_BIN:=$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
+
 DERIVE_RULES_DOMAIN="keys-present constraints-mechanics head-referents sections-present"
 DERIVE_RULES_SCREEN="screen-coherence sections-present"
 
@@ -101,12 +105,42 @@ derive_class_of() {
   esac
 }
 
-# The sweep is SPLIT so that it overlaps the derivation instead of following it.
-# Both halves cost roughly the same, they need nothing from each other until the
-# filtering step, and a derivation that ran them in sequence would pay for both
-# — measured at 1.06 s against 0.65 s overlapped, per unit, every time.
+# The sweep is SPLIT so that it overlaps the derivation instead of following it:
+# both halves cost roughly the same and need nothing from each other until the
+# filtering step — 0.65 s overlapped against 1.06 s in sequence, per unit.
+#
+# THE SWEEP IS ALSO THE STRICTNESS. A consulted rule that is missing, that dies,
+# or that prints one line of anything but a finding used to disable every class
+# silently, so all three are integrity failures here: the rules are required
+# tools (127), a job's exit status is read, and stderr is parsed line by line so
+# an unparseable line becomes a `DR-U1` refusal instead of aborting the reader
+# and taking every later finding with it.
 DERIVE_SWEEP_JOBS=0
 DERIVE_SWEEP_DIRS=""
+
+derive_sweep_rules() {
+  case "$1" in
+    screen) printf '%s' "$DERIVE_RULES_SCREEN" ;;
+    *)      printf '%s' "$DERIVE_RULES_DOMAIN" ;;
+  esac
+}
+
+# derive_sweep_require <kind>
+#   Every rule this kind consults is present and executable. They are required
+#   tools for derive exactly as `jq` is — an operator may legitimately delete a
+#   validator, and derive may not answer "clean" when it did.
+derive_sweep_require() {
+  local rule missing=""
+  for rule in $(derive_sweep_rules "$1"); do
+    if [ ! -f "$DERIVE_BIN/$rule.sh" ] || [ ! -x "$DERIVE_BIN/$rule.sh" ]; then
+      missing="${missing:+$missing }$rule.sh"
+    fi
+  done
+  [ -z "$missing" ] && return 0
+  echo "error: missing or non-executable rule script(s): $missing" >&2
+  echo "       derive checks each OS-* class by running the rule that owns it" >&2
+  return 1
+}
 
 # derive_sweep_start <kind> <dir>...
 #   Launches the consulted rules over each directory, once per directory it has
@@ -114,42 +148,89 @@ DERIVE_SWEEP_DIRS=""
 #   directory the first call did not reach — an action's touched entity in
 #   another module.
 derive_sweep_start() {
-  local kind="$1" rules rule dir
+  local kind="$1" rule dir
   shift
-  case "$kind" in
-    screen) rules="$DERIVE_RULES_SCREEN" ;;
-    *)      rules="$DERIVE_RULES_DOMAIN" ;;
-  esac
   for dir in "$@"; do
     [ -n "$dir" ] || continue
     case "$DERIVE_SWEEP_DIRS" in *"|$dir|"*) continue ;; esac
     DERIVE_SWEEP_DIRS="$DERIVE_SWEEP_DIRS|$dir|"
-    for rule in $rules; do
+    for rule in $(derive_sweep_rules "$kind"); do
       DERIVE_SWEEP_JOBS=$((DERIVE_SWEEP_JOBS + 1))
       bash "$DERIVE_BIN/$rule.sh" "$dir" >/dev/null 2>"$DERIVE_TMP/sweep.$DERIVE_SWEEP_JOBS" &
+      printf '%s%s%s%s%s\n' "$DERIVE_SWEEP_JOBS" "$DERIVE_FS" "$rule" "$DERIVE_FS" "$!" \
+        >> "$DERIVE_TMP/jobs"
     done
   done
 }
 
+# derive_sweep_broke <rule> <message>
+derive_sweep_broke() {
+  derive_refuse "DR-U1" "$U_PATH" \
+    "DR-U1: the sweep could not trust \`$1.sh\`: $2" \
+    "check .inspire/bin/$1.sh — derive refuses rather than report a class it did not check"
+}
+
 # derive_sweep_collect <kind>
-#   Waits for the launched rules, covers any directory a target reached that the
-#   first launch did not, and refuses on every finding aimed at a registered
-#   target. Filtering happens here, with the target list complete.
+#   Waits for every launched rule, covers any directory a target reached that the
+#   first launch did not, checks each job's integrity, and refuses on every
+#   finding aimed at a registered target. Filtering happens here, with the target
+#   list complete.
 derive_sweep_collect() {
-  local kind="$1" path dir f_rule f_sev f_target f_msg class
+  local kind="$1" path dir idx rule pid status
+  local rectype tag f_sev f_target f_msg f_rule class
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     case "$path" in */*) dir="${path%/*}" ;; *) dir="." ;; esac
     case "$DERIVE_SWEEP_DIRS" in *"|$dir|"*) ;; *) derive_sweep_start "$kind" "$dir" ;; esac
   done < <(cut -f1 "$DERIVE_TMP/targets.tsv")
-  wait
 
-  cat "$DERIVE_TMP"/sweep.* 2>/dev/null \
-    | jq -r --arg fs "$DERIVE_FS" 'select(type == "object")
-        | [.rule, .severity, .target, .message] | join($fs)' 2>/dev/null \
-    | LC_ALL=C sort -u > "$DERIVE_TMP/findings"
+  # Each line is tagged with the rule and the job that produced it, so an
+  # unparseable one can name its author. A whitespace-only line is dropped
+  # rather than refused: no rule emits one, and a stray newline is not a defect.
+  : > "$DERIVE_TMP/sweeplines"
+  : > "$DERIVE_TMP/status"
+  while IFS="$DERIVE_FS" read -r idx rule pid; do
+    [ -n "$idx" ] || continue
+    wait "$pid"
+    status=$?
+    printf '%s%s%s%s%s\n' "$idx" "$DERIVE_FS" "$rule" "$DERIVE_FS" "$status" \
+      >> "$DERIVE_TMP/status"
+    awk -v tag="$rule:$idx" -v fs="$DERIVE_FS" \
+      '{ line = $0; gsub(/[ \t\r]/, "", line); if (line != "") print tag fs $0 }' \
+      "$DERIVE_TMP/sweep.$idx" >> "$DERIVE_TMP/sweeplines"
+  done < "$DERIVE_TMP/jobs"
 
-  while IFS="$DERIVE_FS" read -r f_rule f_sev f_target f_msg; do
+  jq -rR --arg fs "$DERIVE_FS" '
+      (index($fs)) as $i
+      | .[0:$i] as $tag
+      | .[$i+1:] as $body
+      | ($body | fromjson? // null) as $o
+      | if ($o | type) == "object" and ($o.target? != null) and ($o.message? != null)
+        then ["F", $tag, ($o.severity // ""), $o.target, $o.message]
+        else ["X", $tag, "", "", $body] end
+      | join($fs)
+    ' "$DERIVE_TMP/sweeplines" | LC_ALL=C sort -u > "$DERIVE_TMP/findings"
+
+  # A rule that exited anything but 0 (clean) or 1 (errors found) died; a rule
+  # that claims errors and produced no finding is telling us two different
+  # things. Either way derive did not check that rule's classes.
+  while IFS="$DERIVE_FS" read -r idx rule status; do
+    [ -n "$idx" ] || continue
+    case "$status" in
+      0) ;;
+      1) awk -F"$DERIVE_FS" -v t="$rule:$idx" '$1 == "F" && $2 == t { f = 1; exit } END { exit !f }' \
+           "$DERIVE_TMP/findings" \
+           || derive_sweep_broke "$rule" "it reported errors and printed no finding" ;;
+      *) derive_sweep_broke "$rule" "it exited $status" ;;
+    esac
+  done < "$DERIVE_TMP/status"
+
+  while IFS="$DERIVE_FS" read -r rectype tag f_sev f_target f_msg; do
+    f_rule="${tag%%:*}"
+    if [ "$rectype" = "X" ]; then
+      derive_sweep_broke "$f_rule" "it printed a line that is not a finding: $f_msg"
+      continue
+    fi
     [ -n "$f_target" ] || continue
     f_target="$(sdd_scope_norm "$f_target")"
     awk -F'\t' -v p="$f_target" '$1 == p { f = 1; exit } END { exit !f }' \

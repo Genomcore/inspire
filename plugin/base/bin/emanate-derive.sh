@@ -136,6 +136,7 @@ case "$KIND" in entity|action|screen) ;; *) usage ;; esac
 [ -z "$UNIT_ARG" ] && [ -z "$UNIT_FILE" ] && usage
 
 sdd_require_tools || exit "$EXIT_MISSING_TOOL"
+derive_sweep_require "$KIND" || exit "$EXIT_MISSING_TOOL"
 if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
   echo "error: missing required tool: sha256sum or shasum" >&2
   exit "$EXIT_MISSING_TOOL"

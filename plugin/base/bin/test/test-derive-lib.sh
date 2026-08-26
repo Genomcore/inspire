@@ -110,11 +110,55 @@ w1="$( cd "$FX/w1-never-refuses" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
 ne "the W-1 fixture really does provoke a W-1 finding" "$w1" "0"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Sweep integrity. A fixture cannot express these: they need a BROKEN copy of
+# the bin tree and the harness runs the real one. The strictness is only as
+# reliable as the sweep, so each way a consulted rule can fail gets one.
+# ─────────────────────────────────────────────────────────────────────────────
+
+STUBS="$(mktemp -d -t inspire-derive-stub.XXXXXX)" || exit 1
+trap 'rm -rf "$STUBS"' EXIT
+
+# stub_run <label> <sed-program|REMOVE|UNEXEC> <file> <fixture> <arg>… — derive
+# on a copy of plugin/base whose bin/<file> was patched; prints
+# `exit<TAB>classes`.
+stub_run() {
+  local label="$1" prog="$2" file="$3" fx="$4"; shift 4
+  local w="$STUBS/$label" out code
+  mkdir -p "$w"
+  cp -R "$BIN/../." "$w/"
+  case "$prog" in
+    REMOVE) rm -f "$w/bin/$file" ;;
+    UNEXEC) chmod -x "$w/bin/$file" ;;
+    *)      sed -i.bak "$prog" "$w/bin/$file" ;;
+  esac
+  out="$( cd "$w/bin/test/fixtures/emanate-derive/$fx" && SDD_SPEC_ROOT=spec/sdd \
+          SDD_KB_ROOT=spec/kb bash "$w/bin/emanate-derive.sh" "$@" 2>/dev/null )"
+  code=$?
+  printf '%s\t%s' "$code" \
+    "$(printf '%s' "$out" | jq -r '[.refused[]?.class] | unique | join(",")' 2>/dev/null)"
+}
+
+SFX=os-e1-id-no-constraints
+eq "a missing rule script is a missing required tool" \
+  "$(stub_run rule-missing REMOVE constraints-mechanics.sh "$SFX" entity auth.user)" \
+  "$(printf '127\t')"
+eq "a non-executable rule script is the same" \
+  "$(stub_run rule-unexec UNEXEC head-referents.sh "$SFX" entity auth.user)" \
+  "$(printf '127\t')"
+eq "a rule that prints a non-finding line refuses, and the real class survives" \
+  "$(stub_run rule-noise 's|^sdd_require_tools|echo "keys-present: note" >\&2\
+sdd_require_tools|' keys-present.sh "$SFX" entity auth.user)" \
+  "$(printf '4\tDR-U1,OS-E1')"
+eq "a rule that dies refuses, and the real class survives" \
+  "$(stub_run rule-dies 's|^sdd_require_tools.*|exit 3|' head-referents.sh "$SFX" entity auth.user)" \
+  "$(printf '4\tDR-U1,OS-E1')"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # derive_class_of, including the class no rule can produce a message for
 # ─────────────────────────────────────────────────────────────────────────────
 
 DERIVE_TMP="$(mktemp -d -t inspire-derive-lib.XXXXXX)" || exit 1
-trap 'rm -rf "$DERIVE_TMP"' EXIT
+trap 'rm -rf "$DERIVE_TMP" "$STUBS"' EXIT
 source "$BIN/_lib.sh"
 source "$BIN/_keyed-heads.sh"
 source "$BIN/lib/derive-json.sh"
