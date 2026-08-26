@@ -5,6 +5,14 @@ HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 REPO="$(cd -P "$HERE/../.." && pwd -P)"
 . "$HERE/lib/fixtures.sh"
 
+# THIS SUITE'S SUBJECT IS THE BUILDER, so it must never inherit a cache: a runner
+# that exports INSPIRE_FIXTURE_CACHE would otherwise turn every build below into a
+# `cp -R` and the builder's own coverage would quietly vanish. Proved by probe:
+# with the variable pointing at a deliberately corrupted cache, two of the 0.2.1
+# assertions went red before this line existed. The cache assertions at the bottom
+# set the variable per call instead, on a cache they build themselves.
+unset INSPIRE_FIXTURE_CACHE
+
 pass=0; fail=0
 ok()   { echo "PASS $1"; pass=$((pass+1)); }
 bad()  { echo "FAIL $1"; fail=$((fail+1)); }
