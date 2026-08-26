@@ -143,10 +143,12 @@ This skill is stack-agnostic; a **stack profile** layers a framework's concrete
 conventions onto its generic dimensions. At the start of any subcommand, resolve the
 active profile set per [`profiles/README.md`](profiles/README.md) § Resolution. That
 contract is also where the load rules live — which files a resolved set reads from
-[`profiles/`](profiles/), that profiles compose, and that a declared framework with no
-profile file runs purely generic instead of blocking — so read it there rather than
-from here. When the suite has a surface roster, the target surface's `Profiles` field
-is the selector instead; see *Surfaces and the monorepo* above.
+[`profiles/`](profiles/), that profiles compose along two axes (a framework profile
+pulls in the **language profile** its `language:` field names), and that a declared
+framework with no profile file runs purely generic instead of blocking — so read it
+there rather than from here. When the suite has a surface roster, the target
+surface's `Profiles` field is the selector instead; see *Surfaces and the monorepo*
+above.
 
 What this skill adds is where a profile's sections land in its own flow:
 `## Layering` → review Phase 1 / implementation shape; `## Test conventions` → `tdd`
@@ -154,6 +156,15 @@ What this skill adds is where a profile's sections land in its own flow:
 `## Review focus` → extra review dimensions; `## Build & verify` → the real
 build/test commands. When a framework the project declared has no profile, say so in
 the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
+
+The seed sections — `## Bindings`, `## Routes`, `## Persistence` — and the language
+profile's rendering tables are read by the emanation stages rather than by this
+skill's own subcommands. They are project-owned conventions, so treat them as fact
+when you meet emitted code that follows them: an API shape or a table name that
+matches the profile is correct by declaration, not something to flag. **Every
+subcommand here keeps the never-block rule** — a missing profile degrades to generic
+and says so. The single exception is unattended: `emanate plan` refuses a unit whose
+stack declares no language profile, per `profiles/README.md` § The one exception.
 
 ## Rules
 
@@ -210,8 +221,9 @@ the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
 - [`references/fix-build.md`](references/fix-build.md) — build-error taxonomy + process.
 - [`references/fix-vulns.md`](references/fix-vulns.md) — npm vulnerability workflow.
 - [`references/debug.md`](references/debug.md) — the 6-step root-cause framework.
-- [`profiles/README.md`](profiles/README.md) — the stack-profile contract; the
-  lean default profiles (`react`, `nestjs`) live beside it.
+- [`profiles/README.md`](profiles/README.md) — the stack-profile contract, both axes;
+  the lean defaults live beside it — framework profiles `react` + `nestjs`, language
+  profile `typescript`.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
 

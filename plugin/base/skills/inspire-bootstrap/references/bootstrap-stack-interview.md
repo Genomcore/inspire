@@ -73,3 +73,21 @@ generic coding-stage checks. After confirming the layers:
    [`../SKILL.md`](../SKILL.md) § Subcommand: init, whose long form is
    [`bootstrap-identity.md`](bootstrap-identity.md); that step also creates one if
    the project somehow lacks it).
+3. **Check every stack language has a language profile.** Profiles compose along two
+   axes: a framework profile declares `language: <id>` and pulls that language
+   profile in, and the language profile is where a semantic type's rendering lives
+   (`typescript.md` ships). A framework profile without one, or a `language:` naming a
+   file that does not exist, is worth fixing here rather than later: attended
+   `/inspire_code` runs degrade to generic, but `emanate plan` **refuses** a unit whose
+   stack has no language profile — a missing rendering home is a readiness error, not
+   a silent generic emission. A language whose only surface is a plain library needs
+   no framework profile; list its language profile in `profiles:` directly.
+
+### Project semantic types
+
+The empty [`semantic-types.md`](../../../../inspire_kb/00_bootstrap/semantic-types.md)
+is not filled by this interview — a type is declared when domain work meets a field
+the universal vocabulary has no type for. Mention it only if the stack conversation
+surfaces one (a project that must carry exact decimal amounts, say): every project
+type declares a **universal base type**, and it renders as that base type unless the
+language profile carries an explicit row for it.

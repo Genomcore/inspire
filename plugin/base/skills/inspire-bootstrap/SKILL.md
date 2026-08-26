@@ -19,6 +19,12 @@ This skill owns the **bootstrap layer** —
   [`_references/product-roots.md`](../_references/product-roots.md)).
 - `theme.md` — the **design-system default** (fonts, color palette + status map,
   density, layout tokens) — the reusable template.
+- `semantic-types.md` — the project's **own semantic types**, each with a mandatory
+  universal base type. It ships empty and no interview here fills it: a type is
+  declared the moment domain work meets a field the universal vocabulary
+  ([`type-mapping.md`](../inspire-domain/references/type-mapping.md)) has no type for.
+  What this skill owes it is the **language profile** that renders those types — see
+  the `stack` flow.
 - `05_screens/design-system.md` (the one artifact this skill owns **outside**
   `00_bootstrap`) — the project's **live design system**, seeded from `theme.md` at
   install and edited here via the `design-system` subcommand. `theme.md` is the

@@ -24,6 +24,13 @@ reads before working — the base context the rest of the KB assumes.
     has settled no naming question yet. R4 of
     [`.claude/skills/_references/writing-style.md`](../../.claude/skills/_references/writing-style.md)
     binds every layer's prose to it.
+  - [`semantic-types.md`](semantic-types.md) — the **project's own semantic types**:
+    the types this project adds to the universal vocabulary defined in
+    [`.claude/skills/inspire-domain/references/type-mapping.md`](../../.claude/skills/inspire-domain/references/type-mapping.md).
+    Every row carries a mandatory **universal base type**, so a type declared here
+    always renders — a language profile with no explicit row for it falls back to that
+    base type. Like the glossary it ships **empty**: most projects need no type of
+    their own, and an empty table says exactly that.
   - [`theme.md`](theme.md) — the **default design-system template**: fonts, the
     color palette + status map, density and layout tokens. At install it is copied
     to [`05_screens/design-system.md`](../05_screens) (the project's live design
