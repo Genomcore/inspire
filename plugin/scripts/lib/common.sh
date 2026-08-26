@@ -11,49 +11,21 @@ sha256_of() {
   fi
 }
 
-# hash_paths <root> <list-file> <out-file>
+# hash_paths <root> <list-file> <out-file> — the batched form of sha256_of: one
+# hashing process per NUL-separated list, `<hash><TAB><path>` per regular file.
 #
-# The batched form of sha256_of: ONE hashing process for a whole set of files
-# instead of two spawns (sha256sum + awk) per file. <list-file> holds
-# NUL-separated paths relative to <root>; <out-file> receives one
-# `<hash><TAB><path>` line per path that is a regular file, in list order.
-# A path that is not a regular file (a directory, a dangling link, an absent
-# file) is simply ABSENT from the table — the `[ -f ]` guard every caller used to
-# carry, moved here once. An empty list spawns nothing and yields an empty table,
-# rc 0.
-#
-# THE SCOPE RULE THAT KEEPS BEHAVIOUR IDENTICAL BY CONSTRUCTION: a batch is
-# computed at the start of the function that consumes it and never outlives that
-# function. Hops (`mv`) and _apply_write run BETWEEN phases, so no hash ever
-# survives a mutation; the same files are hashed at the same moments as before,
-# in one process instead of two per file.
-#
-# ASSOCIATION IS BY LIST ORDER, NEVER BY THE PRINTED PATH. The tools disagree on
-# how they print a path, and neither form is round-trippable:
-#   · /sbin/sha256sum (Darwin 1.0) prints the path RAW — a backslash or a newline
-#     in it comes out verbatim, so a newline splits the line in two.
-#   · shasum -a 256 (and GNU sha256sum) ESCAPE: the line is prefixed with `\` and
-#     the path's `\` becomes `\\`, its newline `\n`.
-# So only the hash column is parsed — with any leading `\` stripped — and the
-# path comes from our own ordered list. Consumers join the table with awk: bash
-# 3.2 has no associative arrays, so a hash table here is a file.
-#
-# THE ORDER ASSUMPTION IS CHECKED, NOT TRUSTED. A listed file that cannot be READ
-# (permissions, or one that vanished after the `[ -f ]` test) makes the tool print
-# an error and no line, which would shift every later hash onto the wrong path —
-# silent, and catastrophic in a classifier. So the line count is compared with the
-# input count, and on any mismatch the whole batch falls back to per-file hashing,
-# which cannot misalign. Slow, correct, and rare.
-#
-# A PATH CONTAINING A NEWLINE IS UNREACHABLE HERE, and the count check is NOT what
-# would save it — say so rather than imply a guard that does not hold. Under
-# `sha256sum` the raw name splits the line in two and the count check does trip;
-# under the `shasum` fallback the escaped `\n` keeps the hash count equal while
-# `names` gains a line, so `paste` would misalign silently. Neither case is
-# reachable: a manifest is TSV and a base path comes from the plugin's own tree,
-# while a project file with a newline is already split into two bogus lines by the
-# `while read` in every consumer before it can reach this function — identically
-# on both sides of this change.
+# A batch never outlives the function that computed it: hops and _apply_write run
+# between phases, so no hash survives a mutation and the same files are hashed at
+# the same moments as before.
+# Association is by list order, never by the printed path — sha256sum prints paths
+# raw, shasum and GNU escape them, and neither form is round-trippable.
+# The order is checked against the input count, since a file that cannot be read
+# prints no line and would shift every later hash; a mismatch falls back to
+# per-file hashing.
+# That check does not catch a newline in a path (under the shasum fallback the
+# escaped `\n` keeps the counts equal), and nothing else here does: no consumer
+# can reach this function with one, before or after this change, because their
+# own `while read` splits such a path first.
 hash_paths() {
   local root="$1" list="$2" out="$3"
   local args names hashes p n_in n_out
@@ -78,9 +50,8 @@ hash_paths() {
   fi
 
   hashes="$(mktemp)" || { rm -f "$args" "$names"; return 1; }
-  # xargs -0 splits over the argument-length limit by itself and runs the pieces
-  # in order, so list order survives a split batch. `--` because a caller may
-  # pass a relative root, which would leave a leading `-` on the first argument.
+  # xargs -0 runs its pieces in order, so list order survives a split batch; `--`
+  # because a relative root would leave a leading `-` on the first argument.
   if command -v sha256sum >/dev/null 2>&1; then
     xargs -0 sha256sum -- < "$args" 2>/dev/null \
       | awk '{ h=$1; sub(/^\\/, "", h); print h }' > "$hashes"

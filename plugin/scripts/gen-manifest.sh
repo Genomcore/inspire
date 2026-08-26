@@ -94,11 +94,9 @@ released="$(printf '%s' "$identity" | jq -r '.released // "unknown"')"
 tmp="$(mktemp)"; work="$(mktemp -d)"; arc="$(mktemp -d)"
 trap 'rm -f "$tmp"; rm -rf "$work" "$arc"' EXIT
 
-# ONE `git archive` instead of a `git show` per blob, and one hash batch instead of
-# two spawns per blob — 79–192 paths per manifest, nine manifests per sweep. The
-# bytes are the same bytes: this repo has no .gitattributes, so archive is a plain
-# blob extraction, and the proof is that all nine shipped manifests still
-# regenerate byte-for-byte (test-manifest.sh's sweep, plus an explicit full diff).
+# One archive rather than a `git show` per blob. The bytes are the same bytes:
+# this repo has no .gitattributes, so archive is a plain blob extraction, and the
+# nine shipped manifests still regenerate byte-for-byte.
 git -C "$REPO" archive "$commit" -- "$SRC_PREFIX" | tar -x -C "$arc" \
   || { log "gen-manifest.sh: cannot read $SRC_PREFIX at $TAG"; exit 1; }
 
@@ -110,13 +108,10 @@ for name in $MAP_NAMES; do
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     rel="${path#"$SRC_PREFIX/$name/"}"
-    # What 0.3 ships is one rule, defined once, in lib/merge.sh: the applier
-    # (apply_base), the classifier (_base_src) and this generator all ask
-    # _base_excluded. It was duplicated here until the final review; the copy
-    # never diverged, but the only place a rule CAN drift is a second copy of it.
-    # (Pre-0.3 needs no filter: install.sh copied .inspire/{skills,bin,hooks}
-    # wholesale, bin/test/ included — that is precisely why 114 fixture paths sit
-    # in the 0.2.1 manifest.)
+    # What 0.3 ships is one rule with one definition, in lib/merge.sh; a second
+    # copy here is the only place it could drift. Pre-0.3 needs no filter at all:
+    # install.sh copied .inspire/{skills,bin,hooks} wholesale, bin/test/ included,
+    # which is why 114 fixture paths sit in the 0.2.1 manifest.
     if [ "$LAYOUT" = "0.3" ]; then
       _base_excluded "$name" "$rel" && continue
     fi
@@ -126,8 +121,8 @@ for name in $MAP_NAMES; do
 
   hash_paths "$arc" "$work/list" "$work/table"
   # Joined BY PATH, never by position: a tree entry the extraction cannot produce
-  # as a regular file has no hash, and must fail as loudly as the old `git show`
-  # did rather than shift every later row onto the wrong path.
+  # as a regular file has no hash, and must fail as loudly as `git show` did
+  # rather than shift every later row onto the wrong path.
   tf="$work/table" LC_ALL=C awk -F'\t' '
     BEGIN { tf = ENVIRON["tf"] }
     FILENAME == tf { h[$2] = $1; next }

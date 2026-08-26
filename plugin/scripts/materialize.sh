@@ -320,17 +320,11 @@ seed_kb() {
 # base/, which is what keeps a new payload class from silently acquiring the
 # executable bit.
 #
-# ONE `chmod` for the whole set instead of one per file: the paths go into a NUL
-# list handed to a single xargs, which splits over the argument-length limit by
-# itself. The same paths are chmodded, and a failure is still ignored — the old
-# loop never checked chmod's status either, and a bit that will not set is no
-# reason to abort an upgrade that has already written the file.
-#
-# STDERR STAYS OPEN, deliberately, and this is not an oversight: the per-file loop
-# ran with it open, and `chmod: Unable to change file mode on <path>` is the ONLY
-# signal an operator gets that a registered hook or a validator has been left
-# non-executable — the exit status was never checked, so silencing the message
-# silences the whole diagnostic. `xargs chmod` prints the identical per-file text.
+# A chmod failure is ignored, as it always was: a bit that will not set is no
+# reason to abort an upgrade that has already written the file. STDERR STAYS OPEN
+# for the same reason it did per file — `chmod: Unable to change file mode on
+# <path>` is the only signal an operator gets that a registered hook or a
+# validator was left non-executable, and the exit status is never checked.
 chmod_executables() {
   [ "$DRY_RUN" = 1 ] && return 0
   local src_sh rel list

@@ -28,13 +28,11 @@ printf '\nMY EDIT\n' >> "$p/.inspire/bin/no-todos.sh"
 rm -f "$p/.inspire/bin/acyclic-deps.sh"
 # Row: project-authored file inside an owned dir → keep. THE rm -rf REGRESSION.
 printf 'go rules\n' > "$p/.claude/skills/inspire-code/references/go-best-practices.md"
-# Row: project-authored files whose NAMES CONTAIN A TAB. Pass 3 is the one pass
-# that walks the operator's own file names, and the classifier's row files are
-# tab-separated: the first shape of the batched pass 3 wrote `<rel>\t<flag>` and
-# read `$1`, which cut such a name at its tab, read the remainder as the exclusion
-# flag — a remainder of exactly `1` DROPPED the keep row — and collapsed the
-# truncated duplicates through the seen set. Two names, one whose tail is `1` and
-# one whose tail is not, so both halves of that failure are covered.
+# Row: project-authored files whose NAMES CONTAIN A TAB — the classifier's row
+# files are tab-separated and pass 3 is the one pass that walks the operator's own
+# names. Two of them: a tail of exactly `1` reads as the exclusion flag and drops
+# the row, a tail that is not `1` does not, so both halves of that failure are
+# covered.
 tab_a=".claude/skills/$(printf 'tab\t1')"
 tab_b=".claude/skills/$(printf 'tab\t1.md')"
 printf 'operator, tab-named\n' > "$p/$tab_a"

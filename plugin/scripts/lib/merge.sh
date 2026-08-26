@@ -57,11 +57,9 @@ _base_excluded() {
 
 # _middle <dest_map> <path> → the base-relative middle (e.g. bin/review.sh),
 # or empty when the path is not under any of the map's destinations.
-# THE `_var` VARIANTS ARE THE SAME FUNCTIONS WITHOUT THE COMMAND SUBSTITUTION:
-# they assign a global instead of printing, because the batched walkers below
-# call them once per file and a `$(...)` there is a fork per file — the same
-# per-file tax the hashing had, in cheaper clothes. The printing form is that
-# variant plus a printf, so the path arithmetic exists in exactly one place.
+# Each `_var` variant assigns instead of printing, so the per-file walkers below
+# pay no `$(...)` fork; the printing form is that variant plus a printf, which
+# keeps the path arithmetic in one place.
 _middle_var() {
   local map="$1" path="$2" pair name dest
   _MIDDLE=""
@@ -96,10 +94,8 @@ _from_middle() {
 }
 
 # _map_dest_var <dest_map> <name> → _MAP_DEST, that class's destination in the
-# map, or empty (rc 1) when the map has no such class. It is _from_middle_var's
-# answer with the per-file half removed: `_from_middle "$map" "$name/$rel"` is
-# always `<that dest>/$rel`, so the lookup is loop-invariant and belongs outside
-# the per-file walk.
+# map, or empty (rc 1) when the map has no such class. It is _from_middle_var
+# with the per-file half removed, so the lookup can be hoisted out of a walk.
 _map_dest_var() {
   local map="$1" want="$2" pair
   _MAP_DEST=""
@@ -121,11 +117,8 @@ _map_dest_var() {
 # `bin:.claude/bin`. Handing it the target map instead resolves nothing, every
 # pre-0.3 file reads as dropped upstream, and the whole validator set is marked
 # for deletion.
-# _base_mid_var is the same question answered as a MIDDLE rather than a path,
-# assigned to _BASE_MID (empty when the target ships nothing there). The batched
-# classifier needs the middle: it is the key of the base-side hash table, and the
-# absolute path would have to be turned back into one. _base_src is that plus the
-# base/ prefix.
+# _base_mid_var answers the same question as a MIDDLE, which is what the base-side
+# hash tables are keyed by; _base_src is that plus the base/ prefix.
 _base_mid_var() {
   local base="$1" map="$2" path="$3" name rel
   _BASE_MID=""
@@ -144,37 +137,21 @@ _base_src() {
 # classify <source_manifest> <project_root> <base_dir> <src_map> <tgt_map>
 #   → lines `<verdict>\t<path>\t<detail>` on stdout.
 #
-# EVERY PASS IS NOW TWO HALVES. A bash walk decides everything a file test can
-# answer — does the path exist, is it a regular file, does the target ship it, is
-# it excluded — and writes one row per candidate; then exactly the files that pass
-# needed to hash are hashed in ONE process each side; then one awk turns the rows
-# and the tables into the verdict lines. The branch tree in that awk is this
-# function's old branch tree, in the same order, so the verdict stream is
-# byte-identical. Safe by construction: classify writes nothing to the project, so
-# no hash it takes can be stale by the time it is used.
+# Each pass is a bash walk that writes one row per candidate, one hash batch per
+# side, and one awk that reduces rows and tables to verdicts. That awk's branch
+# tree is the old per-file branch tree in the same order, and the seen-set it
+# carries is filled and consulted at the same points the old `grep -Fxq` was, so
+# the verdict stream is unchanged. No hash can go stale: classify writes nothing.
 #
-# `seen` was a file consulted with one `grep -Fxq` PER CANDIDATE — over 900 spawns
-# on a pre-0.3 project, where pass 3 walks every file under every INSPIRE-owned
-# root. It is an awk set now, filled in the same order and consulted at the same
-# points, including the additions each pass makes AS IT EMITS: a pass adds a path
-# only when it emitted a verdict for it, and the awk does the same, so a duplicate
-# path within one pass behaves exactly as it did.
-#
-# THE ROW-FILE INVARIANT, and it is load-bearing: A PATH IS NEVER `$1` OF A
-# MULTI-FIELD ROW. Rows are tab-separated, and an operator's file inside an owned
-# root may legitimately have a TAB in its name — pass 3 walks exactly those files.
-# The first shape of this code wrote `<rel>\t<flag>` and read `$1`, which cut such
-# a name at its tab, read the remainder as the flag (a remainder of `1` DROPPED
-# the keep row) and collapsed the truncated duplicates through the seen set. So:
-# every unbounded path is either a whole line or the LAST field, taken with
-# `substr` rather than `$n`, and the fields before it are bounded and tab-free by
-# construction (a one-character state, and map tokens — a tab inside one would
-# already have split `for pair in $map`). A path that is manifest-derived is
-# tab-free anyway: `IFS=$'\t' read -r target hash_a` truncates it here exactly as
-# it did at 394eaa9, so those rows carry a path that cannot contain a tab.
-# awk's `-v` is not used for paths either: it expands escape sequences in the
-# value, so a `\` in a temp-file path would corrupt the FILENAME comparison. Paths
-# reach awk through the environment.
+# THE ROW-FILE INVARIANT: a path is never `$1` of a multi-field row. Rows are
+# tab-separated and an operator's file inside an owned root may have a TAB in its
+# name — pass 3 walks exactly those. So an unbounded path is the whole line or the
+# LAST field taken with `substr`, and the fields before it are bounded map tokens,
+# tab-free because a tab inside one would already have split `for pair in $map`.
+# A manifest-derived path cannot hold a tab at all: the `IFS=$'\t' read` that
+# produced it truncated one, exactly as 394eaa9 did.
+# Paths reach awk through the environment, never `-v`, which expands escape
+# sequences and would corrupt a FILENAME comparison on a `\`.
 classify() {
   local mf="$1" root="$2" base="$3" src_map="$4" tgt_map="$5"
   local target hash_a pair name dest abs rel state ex mvp
@@ -204,8 +181,7 @@ classify() {
 
   hash_paths "$root" "$w/p1lb" "$w/p1tb"
   hash_paths "$base" "$w/p1lc" "$w/p1tc"
-  # `target` is manifest-derived, so it is `$1` safely: the TSV read above already
-  # truncated any tab in it, exactly as 394eaa9 did.
+  # `target` is manifest-derived, so `$1` is safe here — see the invariant above.
   tb="$w/p1tb" tc="$w/p1tc" LC_ALL=C awk -F'\t' '
     BEGIN { tb = ENVIRON["tb"]; tc = ENVIRON["tc"] }
     FILENAME == tb { hb[$2] = $1; next }
@@ -247,8 +223,7 @@ classify() {
   for pair in $tgt_map; do
     name="${pair%%:*}"; dest="${pair#*:}"
     [ -d "$base/$name" ] || continue
-    # Loop-invariant: `_from_middle "$src_map" "$name/$rel"` is always this
-    # class's source-map destination plus the same `$rel`.
+    # Loop-invariant: the moved-from path is always this plus the same `$rel`.
     _map_dest_var "$src_map" "$name"; mvp="$_MAP_DEST"
     while IFS= read -r abs; do
       rel="${abs#"$base/$name"/}"
@@ -263,9 +238,8 @@ classify() {
       else
         state=x
       fi
-      # `rel` LAST — see the row-file invariant above. The three paths this pass
-      # needs (target, middle, moved-from) are all a bounded prefix plus this same
-      # `rel`, so awk rebuilds them instead of carrying three unbounded fields.
+      # `rel` LAST — see the row-file invariant. The three paths this pass needs
+      # are each a bounded prefix plus this same `rel`, which awk rebuilds.
       printf '%s\t%s\t%s\t%s\t%s\n' "$state" "$dest" "$name" "$mvp" "$rel" >> "$w/p2"
     done < <(find "$base/$name" -type f)
   done
@@ -307,47 +281,27 @@ classify() {
     [ -d "$root/$dest" ] || continue
     while IFS= read -r abs; do
       rel="${abs#"$root"/}"
-      # NOT THEIRS IF WE SHIP IT BUT NEVER MATERIALIZE IT. `_base_excluded` is
-      # exactly that question, and a path it rejects is INSPIRE's own staged
-      # source, not project-authored work.
+      # A path `_base_excluded` rejects is INSPIRE's own staged source, not
+      # project-authored work. Without this, .inspire/bin/test/ — the 114 staged
+      # fixtures a pre-0.3 install.sh copied FROM, sitting under the 0.3 dest_map
+      # root for `bin` — came out as 114 x `keep … "yours"`, contradicting the
+      # 0.3.0 hop's own report, which calls that prefix 0.2 staging residue.
       #
-      # The case that forced this: after a pre-0.3 upgrade, .inspire/bin/test/
-      # still holds the 114 staged fixtures install.sh copied FROM, and
-      # .inspire/bin IS the 0.3 dest_map root for `bin` — so every later run
-      # walked them here, found them absent from `seen` (no manifest lists them
-      # at that path, and pass 2 skips them for this very reason), and emitted
-      # 114 x `keep … "yours — INSPIRE never shipped this"`. We shipped every
-      # byte of it. That is the same false ownership claim the 0.3.0 hop had
-      # removed, arriving from the other side, and it contradicted the hop's own
-      # report, which correctly calls the prefix 0.2 staging residue and tells
-      # the operator to delete it when ready. No new verb: the honest answer is
-      # that this pass has nothing to say about these paths at all.
-      #
-      # DELIBERATE CONSEQUENCE, stated so it is not rediscovered as a bug: a
-      # fixture the OPERATOR wrote under an excluded prefix (say
-      # .claude/bin/test/my-fixture.sh on a pre-0.3 project) is skipped here too,
-      # so it gets no `keep` verdict. It is not at risk — apply_base only ever
-      # writes paths the target ships, and this prefix is by definition not one
-      # of them — and it is still reported, by hop_rm_owned, which walks that
-      # exact prefix per file and labels the survivors "yours — not shipped by
-      # INSPIRE". Staying silent where a truthful line is available elsewhere
-      # beats asserting ownership of 114 files that are ours.
+      # DELIBERATE CONSEQUENCE: a fixture the OPERATOR wrote under an excluded
+      # prefix gets no `keep` verdict either. It is not at risk (apply_base only
+      # writes paths the target ships) and hop_rm_owned still reports it.
       ex=0
       _middle_var "$src_map" "$rel"
       if [ -n "$_MIDDLE" ]; then
         ex_name="${_MIDDLE%%/*}"; ex_rel="${_MIDDLE#*/}"
         _base_excluded "$ex_name" "$ex_rel" && ex=1
       fi
-      # THE FLAG FIRST, THE PATH LAST. These are the operator's own file names —
-      # the one place a TAB in a name is reachable — so the path is the rest of
-      # the line, never a field. See the row-file invariant above.
+      # Flag first, path last: these are the operator's own names, the one place
+      # a TAB is reachable. See the row-file invariant.
       printf '%s\t%s\n' "$ex" "$rel" >> "$w/p3"
     done < <(find "$root/$dest" -type f)
   done
 
-  # No hashing at all in pass 3 — it only ever asks whether a path was already
-  # accounted for, so the whole pass is the membership test that used to cost a
-  # grep per file.
   sf="$seen1" sf2="$seen2" LC_ALL=C awk -F'\t' '
     BEGIN { sf = ENVIRON["sf"]; sf2 = ENVIRON["sf2"] }
     FILENAME == sf  { seen[$0] = 1; next }
@@ -385,8 +339,8 @@ keepset_of() {
     printf '%s\0' "$target" >> "$w/list"
   done < "$vf"
   hash_paths "$root" "$w/list" "$w/table"
-  # awk, not `cut -f1`: a file that could not be read has no hash, and the old
-  # loop emitted no line for it rather than an empty one.
+  # awk, not `cut -f1`: an unreadable file has no hash, and the old loop emitted
+  # no line for it rather than an empty one.
   LC_ALL=C awk -F'\t' '$1 != "" { print $1 }' "$w/table" | LC_ALL=C sort -u
   rm -rf "$w"
 }
@@ -480,18 +434,13 @@ _prune_up() {
 #     directory it did not empty — an operator's empty directory elsewhere under
 #     an INSPIRE-owned root is not ours to remove, and a directory sitting where
 #     we ship a FILE is reported `keep` by classify and must survive.
-# Batched exactly like classify: a bash walk that decides everything a file test
-# answers, one hash per side, one awk that reduces the rows to the list of files
-# to actually install — and only then the writes. The hashes are taken before the
-# first _apply_write, which is safe because a write to one target cannot change
-# another target's bytes and never touches base/. The keep-set membership test,
-# a `grep -Fxq` per file, is a set in the same awk.
+# Batched like classify, and the hashes are taken before the first _apply_write:
+# a write to one target cannot change another target's bytes, and none touches
+# base/.
 #
-# Same row-file invariant as classify: the unbounded path is the LAST field, the
-# three paths this pass needs are one bounded prefix plus a shared `rel`, and paths
-# reach awk through the environment rather than `-v`. The act list is read back
-# with parameter expansion, not `IFS=$'\t' read`: tab is IFS whitespace, so `read`
-# would collapse a repeated tab and strip a trailing one out of a file name.
+# Same row-file invariant as classify. The act list is read back with parameter
+# expansion, not `IFS=$'\t' read`: tab is IFS whitespace, so `read` would collapse
+# a repeated tab and strip a trailing one out of a file name.
 apply_base() {
   local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
   local pair name dest abs rel target state mid rc=0
@@ -582,26 +531,20 @@ apply_base() {
     _from_middle_var "$tgt_map" "$mid" || continue
     found="$_FROM_MIDDLE"
     [ -n "$found" ] || continue
-    # DELIBERATELY `[ -f "$base/$mid" ]` and not _base_src: the only paths where
-    # the two disagree are bin/test/**, whose target-space home (.inspire/bin/
-    # test/) holds nothing but 0.2 STAGING RESIDUE — which hop 0.3.0 explicitly
-    # leaves in place and reports to the operator as theirs to remove. The
-    # materialized copy at .claude/bin/test/ is removed by that hop's
-    # hop_rm_owned, per file, not here. Deleting the residue here would
-    # contradict a report the operator has already read.
+    # DELIBERATELY `[ -f "$base/$mid" ]` and not _base_src: the two disagree only
+    # on bin/test/**, whose target-space home holds 0.2 staging residue that hop
+    # 0.3.0 leaves in place and reports to the operator as theirs to remove.
+    # Deleting it here would contradict a report they have already read.
     [ -f "$base/$mid" ] && continue                          # still shipped
     [ -f "$root/$found" ] || continue
     printf '%s\0' "$found" >> "$w/p2l"
     printf '%s\t%s\t%s\n' "$found" "$hash" "$mid" >> "$w/p2"
   done < <(manifest_paths "$mf")
 
-  # The batch is taken before the first rm, and nothing in the loop below can
-  # invalidate it: unlinking one file does not change another's bytes, and the
-  # prune only ever removes directories it just emptied.
+  # Taken before the first rm, which cannot invalidate it: unlinking one file does
+  # not change another's bytes, and the prune only removes directories it emptied.
   hash_paths "$root" "$w/p2l" "$w/p2t"
-  # `found` is `$1` safely here, and so is the act list's: both it and `mid` come
-  # from a manifest path, which the `IFS=$'\t' read` above has already truncated at
-  # any tab — exactly as 394eaa9 did. Neither can contain one.
+  # `found` and `mid` are manifest-derived, so `$1` is safe — see the invariant.
   tb="$w/p2t" LC_ALL=C awk -F'\t' '
     BEGIN { tb = ENVIRON["tb"] }
     FILENAME == tb { hb[$2] = $1; next }
@@ -622,10 +565,9 @@ apply_base() {
     # directory, so this clears our own emptied scaffolding and stops dead at
     # anything of theirs. Never rm -rf.
     #
-    # The stop is this map entry's own destination root, derived by string math
-    # from the two halves we already hold: `found` is <dest>/<rel> and `rel` is
-    # `mid` minus its base/ directory name, so stripping the one from the other
-    # leaves <dest> with no second lookup to keep in step.
+    # The stop is this map entry's destination root: `found` is <dest>/<rel> and
+    # `rel` is `mid` minus its base/ directory name, so stripping one from the
+    # other leaves <dest> with no second lookup to keep in step.
     tgt_root="${found%"/${mid#*/}"}"
     _prune_up "$(dirname "$root/$found")" "$root/$tgt_root"
   done < "$w/p2act"

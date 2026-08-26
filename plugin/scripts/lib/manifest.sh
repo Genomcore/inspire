@@ -29,19 +29,11 @@ manifest_layout() { jq -r '.layout // "unknown"' "$1"; }
 # _score <manifest_tsv> <hash_table> → integer percent of manifest paths whose
 # on-disk content matches what we shipped.
 #
-# BOTH ARGUMENTS ARE FILES, not a manifest and a root, because the hashing is no
-# longer per-score: detect_version dumps every candidate's `<path>\t<hash>` rows
-# (the same single jq call this function used to make) and hashes the UNION of
-# their paths in one process, then scores each candidate by joining its own rows
-# against that one table. A path listed by three manifests is hashed once instead
-# of three times, and 1 090 files cost one process instead of 2 180.
-#
-# The arithmetic is deliberately unchanged: awk only COUNTS — `total` is every
-# non-empty path the manifest lists, `hit` is those present in the table carrying
-# the hash we shipped — and bash still does the integer division, so this returns
-# the same integer as before, truncation included. A path absent from the table is
-# one that is not a regular file on disk, which is exactly what the old `[ -f ]`
-# guard meant.
+# Both arguments are files because detect_version hashes the union of every
+# candidate's paths once and scores each candidate against that one table.
+# awk only counts and bash still divides, so the integer is what it always was,
+# truncation included; a path absent from the table is one the old `[ -f ]` guard
+# skipped.
 _score() {
   local tsv="$1" table="$2" th total hit
   th="$(tf="$table" LC_ALL=C awk -F'\t' '
@@ -89,10 +81,8 @@ detect_version() {
     return 1
   fi
 
-  # ONE hashing pass for the whole detection, and it dies inside this function:
-  # nothing mutates the project between the hash and the scores (the hops run
-  # much later), so the files hashed here are the files that were hashed here
-  # before — in one process instead of two per path per manifest.
+  # One hashing pass for the whole detection, dying inside this function: the
+  # hops run much later, so nothing mutates the project between hash and score.
   local work
   work="$(mktemp -d)" || {
     log "INSPIRE: could not create a temporary directory to detect the version."
@@ -100,7 +90,7 @@ detect_version() {
     return 1
   }
 
-  # Pass 1a: dump every candidate's rows exactly once, in candidate order.
+  # m<n>.tsv is filled in step with versions[] and read back that way below.
   local n=0
   for v in "${order[@]}"; do
     mf="$(manifest_path "$plugin_root" "$v")" || continue
@@ -117,12 +107,10 @@ detect_version() {
     return 1
   fi
 
-  # Pass 1b: hash the union of every candidate's paths, once.
   LC_ALL=C awk -F'\t' '$1 != "" { print $1 }' "$work"/m*.tsv \
     | LC_ALL=C sort -u | tr '\n' '\0' > "$work/list"
   hash_paths "$root" "$work/list" "$work/table"
 
-  # Pass 1c: score every candidate exactly once, against that one table.
   i=0
   while [ "$i" -lt "${#versions[@]}" ]; do
     s="$(_score "$work/m$((i+1)).tsv" "$work/table")"

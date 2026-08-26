@@ -29,16 +29,9 @@ rm -f "$tmp"
 eq "arr_to_json empty" "$(arr_to_json)" "[]"
 eq "arr_to_json two"   "$(arr_to_json a b | jq -c .)" '["a","b"]'
 
-# ---------------------------------------------------------------------------
-# hash_paths — the batched form of sha256_of.
-#
-# Everything asserted here is a way the batch could silently MISASSOCIATE a hash
-# with a path, which in the classifier reads as "you edited this" about a file
-# nobody touched. The two hashing tools print paths differently (Darwin's
-# sha256sum raw, shasum/GNU backslash-escaped and `\`-prefixed), so the path
-# column is never parsed: association is by list order, and the order is checked
-# against the input count rather than trusted.
-# ---------------------------------------------------------------------------
+# hash_paths. Every case below is a way the batch could silently MISASSOCIATE a
+# hash with a path, which in the classifier reads as "you edited this" about a
+# file nobody touched.
 SHA_ABC="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 SHA_ABCD="88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589"
 hp_get(){ p="$2" awk -F'\t' '$2==ENVIRON["p"] {print $1}' "$1"; }
@@ -65,7 +58,6 @@ eq "hash_paths: a directory is absent from the table" "$(hp_get "$hptab" 'adir')
 eq "hash_paths: an absent path is absent from the table" "$(hp_get "$hptab" 'gone.txt')" ""
 eq "hash_paths: nothing is written to stderr" "$hperr" ""
 
-# Association is by LIST ORDER: reverse the list and every path keeps its hash.
 hprev="$(mktemp)"; hprtab="$(mktemp)"
 printf '%s\0' "back\\slash.txt" "-leading.txt" "quo\"te'and'.txt" "with space.txt" > "$hprev"
 hash_paths "$hpd" "$hprev" "$hprtab"
@@ -76,8 +68,8 @@ eq "hash_paths: reversed list keeps each path's own hash (backslash)" \
 eq "hash_paths: reversed list is in reversed order" \
    "$(head -1 "$hprtab" | cut -f2)" 'back\slash.txt'
 
-# The shasum fallback must produce the SAME table. Forced by a PATH that cannot
-# see sha256sum — /sbin is where this machine keeps it.
+# The fallback is forced by a PATH that cannot see sha256sum: /sbin is where
+# this machine keeps it.
 eq "premise: the fallback run cannot see sha256sum" \
    "$(PATH=/usr/bin:/bin bash -c 'command -v sha256sum >/dev/null 2>&1 && echo yes || echo no')" "no"
 hpfb="$(mktemp)"
