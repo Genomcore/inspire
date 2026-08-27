@@ -61,13 +61,22 @@ The concrete commands and service names belong to the stack profile's
 4. **Verify** — the active profile's `## Build & verify` commands, or the project's
    own when there is no profile (green).
 5. **Refactor** — with the tests as a safety net; re-run.
-6. **Mutation drill** — with code and tests settled, check that the tests were
-   *complete*: break the code on purpose and confirm they notice (see below). A
-   survivor sends you back to step 2, never to step 3.
+6. **Level roll-call** — walk the diff and enumerate every unit it created or touched
+   (services, repositories, entry points, helpers); map each one to the test level the
+   active profile's `## Test conventions` assigns it, and confirm that spec exists and
+   covers the new behavior. **A unit missing its spec is red, not debt** — the cycle
+   does not close while any unit the decomposition created lacks the test its level
+   demands. This step exists because the derived list (step 2) drives the e2e level,
+   while decomposition happens in step 3 and refactoring in step 5: only a roll-call
+   taken *after* both sees the units that actually exist. It is what makes green mean
+   *covered everywhere*, not "the derived e2e list passed".
+7. **Mutation drill** — with code and tests settled and the roll-call clean, check
+   that the tests were *complete*: break the code on purpose and confirm they notice
+   (see below). A survivor sends you back to step 2, never to step 3.
 
-Steps 1–5 prove the code does what the criteria say. Step 6 proves the **tests would
-have caught it if it didn't** — the one thing a green suite cannot tell you about
-itself.
+Steps 1–5 prove the code does what the criteria say. Step 6 proves **no unit shipped
+untested**; step 7 proves the **tests would have caught it if the code were wrong** —
+the one thing a green suite cannot tell you about itself.
 
 ## The test list is derived, not invented
 
@@ -152,7 +161,7 @@ The rule cuts both ways: **stopping short is as wrong as going too far.** An act
 saves a row, calls a payment provider and emits an event has three outputs plus its
 response. A test asserting only the response passes while two of the four are broken.
 
-## The mutation drill (step 6)
+## The mutation drill (step 7)
 
 A green suite proves the tests *ran*. It cannot prove they would have **failed** had
 the code been wrong — and that is the characteristic defect of generated tests: they

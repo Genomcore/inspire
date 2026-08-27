@@ -125,6 +125,18 @@ owns the entity, never to the shared client's config.
 - **Layout:** e2e files in `test/{module}/` mirroring the KB's modules, cross-cutting
   probes (readiness, API-doc contract) in `test/platform/`, shared harness in
   `test/support/`. Unit specs stay colocated with the unit (`src/**/*.spec.ts`).
+- **The level roll-call, concretely** (`tdd.md` → step 6). Before the cycle closes,
+  walk the diff; every row must hold, and a row that does not is **red, not debt**:
+
+  | touched or created | required spec |
+  |---|---|
+  | application service | colocated `*.spec.ts` — every new branch and corner case covered |
+  | controller / endpoint | its derived-list cases in `test/{module}/` |
+  | DB repository | dedicated `test/{module}/{entity}.repository.e2e-spec.ts` |
+  | HTTP repository | colocated unit spec (parsing/mapping) |
+  | helper / pure logic | colocated unit spec, unless an e2e deliberately carries it — name which |
+  | domain rule / invariant | unit spec on the domain unit (property-based where invariants fit) |
+
 - **The two levels together are the change detector.** Held jointly, these conventions
   leave no unowned branch — coverage tends to 100% without anyone chasing the number —
   and, the actual point, a future functional change cannot land silently: a service
@@ -231,7 +243,7 @@ anything reaches the operator):
 is written down, never silently missing):
 - **mutation score as a ratcheted metric.** Coverage proves a line ran, not that a
   test would fail if its behavior changed — so the gap is real. It is closed per-diff
-  by the **mutation drill** ([`../references/tdd.md`](../references/tdd.md), step 6)
+  by the **mutation drill** ([`../references/tdd.md`](../references/tdd.md), step 7)
   with the agent as the mutation engine, not by a repo-wide score. Consequence, stated
   plainly: there is **no aggregate number** for test strength in this stack, and the
   drill is bounded to changed files — code that predates the drill is not covered by

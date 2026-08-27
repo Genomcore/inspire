@@ -205,7 +205,7 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
 7. **No production code without its test, and no test trusted until it has failed.**
    `tdd` writes the failing test first; `review` flags new logic that arrived without
    one. Green is not the end of the cycle — the **mutation drill** closes it
-   ([`references/tdd.md`](references/tdd.md), step 6): break the settled code on
+   ([`references/tdd.md`](references/tdd.md), step 7): break the settled code on
    purpose and confirm the tests notice. A survivor is a test gap, not a code bug.
 8. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
    `git push` as a side effect. When the operator does ask, follow the shared git

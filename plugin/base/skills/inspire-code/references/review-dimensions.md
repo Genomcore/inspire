@@ -76,7 +76,7 @@ concrete claim, not "tests are weak".
 
 **Mutation drill on demand.** When the diff is critical (auth, payments, data
 mutations, an integration) or its tests read as weak, run the drill from
-[`tdd.md`](tdd.md) step 6 against the changed files — *this is the one exception to
+[`tdd.md`](tdd.md) step 7 against the changed files — *this is the one exception to
 `review` being read-only*: it edits, reverts each mutation immediately, and must leave
 `git diff` byte-identical to how it found it. Report survivors; never leave a mutation
 in the tree. Skip it when the suite is red — a survivor is meaningless then.

@@ -63,7 +63,7 @@ Corollary — **scoping a check to the change dissolves the problem**. A check t
 judges the diff has nothing to compare against and therefore no baseline to store,
 trust, or keep honest. That is often the cheaper design, not a weaker one: the
 per-diff mutation drill ([`../inspire-code/references/tdd.md`](../inspire-code/references/tdd.md),
-step 6) replaces a repo-wide mutation score for exactly this reason, and pays for it
+step 7) replaces a repo-wide mutation score for exactly this reason, and pays for it
 in the one currency to be explicit about — it says nothing about code the diff does not
 touch. Name that limit when choosing the design (Rule 2's third branch); a scoped check
 sold as a global one is the failure mode.
