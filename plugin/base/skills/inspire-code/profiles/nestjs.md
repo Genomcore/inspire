@@ -77,26 +77,59 @@ knowledge — a table or collection name belongs to the repository of the module
 owns the entity, never to the shared client's config.
 
 ## Test conventions
-- **Unit** (`*.spec.ts`) — services with their dependencies mocked (a typed
-  auto-mock helper, not hand-rolled objects); assert the returned value **and** each
-  collaborator call.
+- **Unit** (`*.spec.ts`) — **every application service has one, and it is part of the
+  feature's definition of done**: it covers the happy path and *every* business-logic
+  branch and corner case the service owns. Exhaustiveness lives at this level because
+  this level is cheap — dependencies are mocked (a typed auto-mock helper, not
+  hand-rolled objects), so a case costs milliseconds — and each test asserts the
+  returned value **and** each collaborator call. **Private methods are exercised
+  through the public methods that use them**, never tested directly and never widened
+  to `public` for a test: a test pinned to a private breaks on refactor, not on
+  behavior, which is the definition of a fragile test.
 - **E2E** (`*.e2e-spec.ts`) — **written first**, from the acceptance criteria: they
   describe what a caller observes, which is this level. Controllers and DB repositories
   against a **real database**; mock only what sits outside the boundary and assert what
   crossed it — the outbound HTTP request that was made (intercept and assert URL, method
   and body), and the full payload plus topic/key of every event published. E2E never
   overrides providers.
+- **What a controller's e2e suite covers — and what it deliberately does not.** The
+  derived contract list (criteria ∪ declared errors ∪ wire-convention cases ∪ ADR
+  invariants), the happy path, and the corner cases that **change the caller-observable
+  response**. Never every branch: each e2e case pays a real-database round trip and
+  re-asserts every side effect (what persisted, the mocked third-party call, the mocked
+  publish), so enumerating business-logic corner cases here inverts the test pyramid
+  and buys a slow, expensive suite for coverage the service's unit spec already proved.
+  A corner case that alters neither the response nor a boundary side effect belongs to
+  the unit level — see `tdd.md` → Choosing the test level. Every unit is born red→green.
+- **Every DB repository has its own dedicated e2e suite** —
+  `test/{module}/{entity}.repository.e2e-spec.ts`, exercising the repository class
+  **directly** against the real store, never a mocked one: a mocked store tests the
+  mock. Exhaustive by design: all its casuistics through its public methods —
+  found/not-found, empty result, filters and pagination, the `toDomain()` mapping,
+  constraint violations — asserting the full persisted document/row (built from the
+  domain entity) as well as what a read returns. **The controller suite passing
+  through the repository does not count as this coverage**: it proves the wiring, not
+  the repository's contract. Nor does the pyramid economy above thin this suite out —
+  that rule bounds the *controller* suite, where a branch has a cheaper home; a
+  repository's casuistics have no cheaper home, because the store's real behavior *is*
+  the contract. A repository without its own e2e spec is a missing test, same as a
+  service without its unit spec.
 - HTTP repositories (call an API, not a DB) are unit-tested — the contract is the
   parsing/mapping, not the transport.
+- **Helpers and standalone logic** whose branches the e2e suite does not deliberately
+  carry get their own colocated unit spec — nothing ships with untested branches merely
+  because it is small.
 - GIVEN/WHEN/THEN; use test-data builders so each test sets only the significant
   fields. Assert full response bodies and full persisted documents, built from the
   domain entity — never compared against the value under test.
 - **Layout:** e2e files in `test/{module}/` mirroring the KB's modules, cross-cutting
   probes (readiness, API-doc contract) in `test/platform/`, shared harness in
   `test/support/`. Unit specs stay colocated with the unit (`src/**/*.spec.ts`).
-- **Level economy:** the e2e suite carries the derived contract list, the happy path and
-  caller-observable boundaries; business-logic branches are unit-tested on the service or
-  domain unit — see `tdd.md` → Choosing the test level. Every unit is born red→green.
+- **The two levels together are the change detector.** Held jointly, these conventions
+  leave no unowned branch — coverage tends to 100% without anyone chasing the number —
+  and, the actual point, a future functional change cannot land silently: a service
+  behavior change surfaces in its unit spec, a contract change in the e2e suite, and
+  both are re-entered through the same red→green TDD cycle as new code.
 - Run: `npm run test` (unit) · `npm run test:e2e` (e2e).
 - **E2E run serially, and that is a correctness requirement, not a performance choice.**
   `maxWorkers: 1` in the e2e jest config is load-bearing: the files share one real
@@ -190,6 +223,9 @@ anything reaches the operator):
   under its own jest config, so it contributes nothing to this number** — which is where
   most acceptance criteria are actually covered. A low statements floor beside a high
   branch floor is the expected shape, not a defect to explain away.
+  With `## Test conventions` above in force, `application/` and `domain/` should measure
+  at or near 100% on their own — a gap there is a missing unit spec, not noise; the drag
+  on the aggregate comes from declaration-heavy files, never from untested logic.
 
 **Dropped, with the reason** (Rule 2's third branch — a rule that does not hold here
 is written down, never silently missing):
