@@ -85,7 +85,15 @@ repo is both its source and its own marketplace.
         declaration-only-tree recipe. The template ships those three lean
         defaults; a project adds its own. Attended subcommands never block on a
         missing profile; `emanate plan` refuses a unit whose stack declares no
-        language profile.
+        language profile. Its **judgment is filed by role**, not by subcommand:
+        `references/roles/` holds one doc per position of the loop — contracter ·
+        tester · implementer · security overseer · quality overseer — beside a
+        README carrying the role model, the envelope's two halves and the
+        additive-only roster rule. `tdd` (attended) and `emanate` (unattended)
+        read the same docs; `review` holds the two overseer lenses; `fix-vulns`
+        shares the security overseer's standing rules. The subcommand references
+        keep their own flow and point there for the doctrine, so a rule has one
+        home.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
@@ -113,7 +121,18 @@ repo is both its source and its own marketplace.
       header carries the full argument, and no `0.8.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
-      class's own README is a `.txt` for exactly that reason.
+      class's own README is a `.txt` for exactly that reason. It ships the **five
+      role shells** of the emanation loop — `inspire-contracter` ·
+      `inspire-tester` · `inspire-implementer` · `inspire-security-overseer` ·
+      `inspire-quality-overseer`. A shell is an identity, a permission envelope
+      (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
+      only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
+      Bash can write) and a pointer at its doctrine in
+      `inspire-code/references/roles/`. The **overseer roster is additive-only
+      and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
+      whose `tools:` line is present and names no writing tool; a project adds
+      its own, and the two shipped ones are non-removable — `emanate` refuses to
+      run when either is missing or fails that shape.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via

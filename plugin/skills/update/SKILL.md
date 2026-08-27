@@ -201,9 +201,12 @@ There is nothing to hand-patch and no different flags to pass. Re-running
 Relay the final report and every entry in the JSON's `warnings` array verbatim — these
 are conditions the run could not fix on the operator's behalf (a `.gitignore` excluding
 the runtime is the common one, which silently keeps the update out of the commit
-entirely). Note that no session restart is needed: `.claude/skills/` already existed at
-session start, so edits to files inside it load live. Remind the operator to review the
-git diff and commit.
+entirely). Skill edits need no session restart: `.claude/skills/` already existed at
+session start, so edits to files inside it load live. **The agents class is the
+caveat.** When this run created `.claude/agents/` for the first time — every project
+coming from 0.7 or earlier — say plainly that a directory which appears mid-session may
+not be discovered until the next one, so the role shells can need a fresh session before
+`/agents` lists them. Then remind the operator to review the git diff and commit.
 
 ## Step 5 — Nudge
 
