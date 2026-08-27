@@ -1,0 +1,21 @@
+{
+  "exit": 4,
+  "args": [
+    "action",
+    "auth.user.create"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "OS-A2"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    },
+    {
+      "expr": ".unit.kind",
+      "equals": "action"
+    }
+  ]
+}

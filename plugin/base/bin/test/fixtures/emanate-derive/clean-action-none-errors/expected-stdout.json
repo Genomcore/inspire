@@ -1,0 +1,135 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "action",
+    "id": "auth.user.get",
+    "path": "spec/sdd/auth/user/auth.user.get.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user",
+    "action": "get"
+  },
+  "purpose": "Read one account by its identifier, for the roster described in auth-user-management.",
+  "requires": [
+    {
+      "kind": "entity",
+      "id": "auth.user"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "id",
+      "type": {
+        "name": "uuid",
+        "base": "uuid"
+      },
+      "required": "yes",
+      "description": "The account to read.",
+      "constraints": []
+    }
+  ],
+  "outputs": {
+    "entity": "auth.user",
+    "fields": []
+  },
+  "entities": [
+    {
+      "id": "auth.user",
+      "as_input": "key",
+      "effect": "read",
+      "fields": [
+        {
+          "field": "id",
+          "touch": "read",
+          "type": {
+            "name": "uuid",
+            "base": "uuid"
+          },
+          "mapping": "—",
+          "notes": "",
+          "constraints": [
+            {
+              "word": "nonnull",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "unique",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "immutable",
+              "args": [],
+              "oracle": "test"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "preconditions": [
+    {
+      "key": "P1",
+      "head": {
+        "word": "exists",
+        "args": [
+          "auth.user"
+        ]
+      },
+      "prose": "The row the identifier names must already exist.",
+      "oracle": "test"
+    }
+  ],
+  "behavior": [
+    {
+      "key": "B1",
+      "head": null,
+      "prose": "Look the row up by its identifier, per [[auth-user-management]].",
+      "oracle": "test"
+    }
+  ],
+  "postconditions": [
+    {
+      "key": "Q1",
+      "head": {
+        "word": "unchanged",
+        "args": [
+          "auth.org"
+        ]
+      },
+      "prose": "No organisation row is touched by a read.",
+      "oracle": "test"
+    }
+  ],
+  "errors": [
+    {
+      "key": "none",
+      "head": null,
+      "prose": "",
+      "oracle": "test"
+    }
+  ],
+  "claims": [
+    {
+      "id": "auth.user.get/pre/P1",
+      "oracle": "test",
+      "fingerprint": "sha256:428bed1550d19c4758494d7138ba2b4c0065ffcae11e969162b353306a24c0a3"
+    },
+    {
+      "id": "auth.user.get/step/B1",
+      "oracle": "test",
+      "fingerprint": "sha256:95926dc6aa5552ab569c2d0decd3a343739aeabe4d0733a79484b013344bd5cd"
+    },
+    {
+      "id": "auth.user.get/post/Q1",
+      "oracle": "test",
+      "fingerprint": "sha256:dcad66f172f791afd2c02ab820dc1bd45c15371620e8f37c1b912fa3e30bad68"
+    },
+    {
+      "id": "auth.user.get/error/none",
+      "oracle": "test",
+      "fingerprint": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

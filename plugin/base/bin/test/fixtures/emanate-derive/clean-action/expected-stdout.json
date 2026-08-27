@@ -1,0 +1,396 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "action",
+    "id": "auth.user.create",
+    "path": "spec/sdd/auth/user/auth.user.create.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user",
+    "action": "create"
+  },
+  "purpose": "Provision an account from an email and an organisation, per adr-auth-01-identity-model.",
+  "requires": [
+    {
+      "kind": "action",
+      "id": "auth.password.hash"
+    },
+    {
+      "kind": "entity",
+      "id": "auth.org"
+    },
+    {
+      "kind": "entity",
+      "id": "auth.user"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "email",
+      "type": {
+        "name": "email",
+        "base": "email"
+      },
+      "required": "yes",
+      "description": "The login handle.",
+      "constraints": [
+        {
+          "word": "pattern",
+          "args": [
+            "/^[a-z]{3,8}@.+$/"
+          ],
+          "oracle": "test"
+        }
+      ]
+    },
+    {
+      "name": "org_id",
+      "type": {
+        "name": "uuid",
+        "base": "uuid"
+      },
+      "required": "yes",
+      "description": "The owning organisation.",
+      "constraints": [
+        {
+          "word": "references",
+          "args": [
+            "auth.org"
+          ],
+          "oracle": "store"
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "type": {
+        "name": "status",
+        "base": "string"
+      },
+      "required": "no",
+      "description": "Where the account starts.",
+      "constraints": [
+        {
+          "word": "enum",
+          "args": [
+            "active|suspended"
+          ],
+          "oracle": "test"
+        },
+        {
+          "word": "default",
+          "args": [
+            "active"
+          ],
+          "oracle": "store"
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "entity": null,
+    "fields": [
+      {
+        "name": "id",
+        "type": {
+          "name": "uuid",
+          "base": "uuid"
+        },
+        "description": "The newly created user id."
+      }
+    ]
+  },
+  "entities": [
+    {
+      "id": "auth.user",
+      "as_input": "shape",
+      "effect": "create",
+      "fields": [
+        {
+          "field": "id",
+          "touch": "written",
+          "type": {
+            "name": "uuid",
+            "base": "uuid"
+          },
+          "mapping": "uuid()",
+          "notes": "",
+          "constraints": [
+            {
+              "word": "nonnull",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "unique",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "immutable",
+              "args": [],
+              "oracle": "test"
+            }
+          ]
+        },
+        {
+          "field": "org_id",
+          "touch": "written",
+          "type": {
+            "name": "uuid",
+            "base": "uuid"
+          },
+          "mapping": "input.org_id",
+          "notes": "",
+          "constraints": [
+            {
+              "word": "nonnull",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "immutable",
+              "args": [],
+              "oracle": "test"
+            },
+            {
+              "word": "references",
+              "args": [
+                "auth.org"
+              ],
+              "oracle": "store"
+            }
+          ]
+        },
+        {
+          "field": "email",
+          "touch": "written",
+          "type": {
+            "name": "email",
+            "base": "email"
+          },
+          "mapping": "input.email",
+          "notes": "",
+          "constraints": [
+            {
+              "word": "nonnull",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "pattern",
+              "args": [
+                "/^[a-z]{3,8}@.+$/"
+              ],
+              "oracle": "test"
+            }
+          ]
+        },
+        {
+          "field": "created_at",
+          "touch": "written",
+          "type": {
+            "name": "timestamp",
+            "base": "timestamp"
+          },
+          "mapping": "now()",
+          "notes": "",
+          "constraints": [
+            {
+              "word": "nonnull",
+              "args": [],
+              "oracle": "store"
+            },
+            {
+              "word": "immutable",
+              "args": [],
+              "oracle": "test"
+            },
+            {
+              "word": "default",
+              "args": [
+                "now"
+              ],
+              "oracle": "store"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "preconditions": [
+    {
+      "key": "P1",
+      "head": {
+        "word": "actor",
+        "args": [
+          "admin"
+        ]
+      },
+      "prose": "Only an administrator provisions accounts directly.",
+      "oracle": "test"
+    },
+    {
+      "key": "P2",
+      "head": {
+        "word": "absent",
+        "args": [
+          "auth.user"
+        ]
+      },
+      "prose": "No account may already hold the submitted email.",
+      "oracle": "test"
+    }
+  ],
+  "behavior": [
+    {
+      "key": "B1",
+      "head": null,
+      "prose": "Validate the email against the rules in [[auth-user-management]].",
+      "oracle": "test"
+    },
+    {
+      "key": "B2",
+      "head": null,
+      "prose": "Resolve the organisation named by the input.",
+      "oracle": "test"
+    },
+    {
+      "key": "B3",
+      "head": null,
+      "prose": "Persist a new account row.",
+      "oracle": "test"
+    }
+  ],
+  "postconditions": [
+    {
+      "key": "Q1",
+      "head": {
+        "word": "created",
+        "args": [
+          "auth.user"
+        ]
+      },
+      "prose": "Exactly one row exists for the submitted email.",
+      "oracle": "test"
+    },
+    {
+      "key": "Q2",
+      "head": {
+        "word": "unchanged",
+        "args": [
+          "auth.org"
+        ]
+      },
+      "prose": "The organisation row is read and never written.",
+      "oracle": "test"
+    },
+    {
+      "key": "Q3",
+      "head": {
+        "word": "returns",
+        "args": [
+          "id"
+        ]
+      },
+      "prose": "The caller receives the new row's identifier.",
+      "oracle": "test"
+    }
+  ],
+  "errors": [
+    {
+      "key": "email_exists",
+      "head": {
+        "word": "unique",
+        "args": [
+          "email"
+        ]
+      },
+      "prose": "operator-facing message: \"An account already exists with that email.\"",
+      "oracle": "store"
+    },
+    {
+      "key": "org_conflict",
+      "head": {
+        "word": "unique",
+        "args": [
+          "org_id"
+        ]
+      },
+      "prose": "operator-facing message: \"That organisation slot is taken.\"",
+      "oracle": "store"
+    }
+  ],
+  "claims": [
+    {
+      "id": "auth.user.create/input/email/pattern",
+      "oracle": "test",
+      "fingerprint": "sha256:a5c79eafb8e59c8c78c5bece27fad8f93ec352bf86762c0da908f1ea8be71d44"
+    },
+    {
+      "id": "auth.user.create/input/org_id/references",
+      "oracle": "store",
+      "fingerprint": "sha256:6ddcb66483f838cd11a6aa4a3e5b7cd475b48474a43102664bc08a5d8ecbe299"
+    },
+    {
+      "id": "auth.user.create/input/status/enum",
+      "oracle": "test",
+      "fingerprint": "sha256:3f0a2c91d73ca450a50f829a43f6adc4b4a9468adf688f154f6797b248d5fbb8"
+    },
+    {
+      "id": "auth.user.create/input/status/default",
+      "oracle": "store",
+      "fingerprint": "sha256:cf096fb38557a71ec5ef1a920acaacf0e7599e37aec1d43923798900582d5a54"
+    },
+    {
+      "id": "auth.user.create/pre/P1",
+      "oracle": "test",
+      "fingerprint": "sha256:8e746ffcf64b9207c235eec51c1166d77b6a1bb590f1e013663b7d30ef4e9963"
+    },
+    {
+      "id": "auth.user.create/pre/P2",
+      "oracle": "test",
+      "fingerprint": "sha256:d3ab97e9157a1253002cdf7d5aea88fe5e1add13b9a5ed78a99c15018f76e690"
+    },
+    {
+      "id": "auth.user.create/step/B1",
+      "oracle": "test",
+      "fingerprint": "sha256:2893b84386088f905c2700fa037dc34cd5e1d40d004e48611370b910b2432130"
+    },
+    {
+      "id": "auth.user.create/step/B2",
+      "oracle": "test",
+      "fingerprint": "sha256:687e897afd3f6056aa98dfd6e04e41668c54b61d75bbe685dad1b4e228946351"
+    },
+    {
+      "id": "auth.user.create/step/B3",
+      "oracle": "test",
+      "fingerprint": "sha256:c06adb061923702da207acca4e302e174c3f4adfb4a8e271f4f81e540fe7e022"
+    },
+    {
+      "id": "auth.user.create/post/Q1",
+      "oracle": "test",
+      "fingerprint": "sha256:f4684bc8abb6962282f78217fe05f3be8637b10b0ac07918ee882970a71374b0"
+    },
+    {
+      "id": "auth.user.create/post/Q2",
+      "oracle": "test",
+      "fingerprint": "sha256:f3bb55eb1bd3c0138a7992a4da6ea4d32d6dc4247ea9a542cfb2292af0c357a8"
+    },
+    {
+      "id": "auth.user.create/post/Q3",
+      "oracle": "test",
+      "fingerprint": "sha256:e93e0ed78d8d1e7d484997fdc8701791b4ede358d064220454ac5451c1839a27"
+    },
+    {
+      "id": "auth.user.create/error/email_exists",
+      "oracle": "store",
+      "fingerprint": "sha256:435e76d08014c8484fba245dad5ef483f303b983be25a3dc338f534dc9512482"
+    },
+    {
+      "id": "auth.user.create/error/org_conflict",
+      "oracle": "store",
+      "fingerprint": "sha256:e4c5985c6d21fd29f1e94b6fceaab90ebe10234b6d4a9715eab8cbd2fa89c390"
+    }
+  ]
+}

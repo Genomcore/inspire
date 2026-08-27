@@ -75,6 +75,7 @@ lifecycle: draft
 | Key | When | Presentation |
 |---|---|---|
 | `empty` | `main` returns zero rows | {what the user sees} |
+| `{state-key}` | `create` rejects | {what the user sees} |
 
 <!-- Optional — only when the screen deviates from the pattern's defaults, or
      when which component fills which region needs saying. -->

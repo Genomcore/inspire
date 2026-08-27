@@ -72,8 +72,8 @@ $(printf '%s' "$sizes" | LC_ALL=C sort -rn)
 EOF
 
 # The golden estate joins as jobs, not as a rewrite: run-tests.sh already
-# narrows to one rule, and the three siblings it hand-wires keep the labels it
-# prints for them — those labels are part of the estate's inventory.
+# narrows to one rule, and the siblings it hand-wires keep the labels it prints
+# for them — those labels are part of the estate's inventory.
 if [ -d "$GOLDEN/fixtures" ]; then
   for d in "$GOLDEN/fixtures"/*/; do
     [ -d "$d" ] || continue
@@ -83,7 +83,8 @@ if [ -d "$GOLDEN/fixtures" ]; then
 fi
 for s in "lib-tests.sh${TAB}_lib.sh/readers" \
          "test-trust.sh${TAB}trust.sh/behaviour" \
-         "test-harvest.sh${TAB}emanate-harvest.sh/behaviour"; do
+         "test-harvest.sh${TAB}emanate-harvest.sh/behaviour" \
+         "test-derive-lib.sh${TAB}emanate-derive.sh/library"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
   keep "golden/$script" && add sibling "$script" "$label" "golden/$script"

@@ -1,0 +1,13 @@
+{
+  "exit": 3,
+  "args": [
+    "entity",
+    "auth.ghost"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
+  ]
+}
