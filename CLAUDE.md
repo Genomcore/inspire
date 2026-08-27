@@ -123,12 +123,22 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
+      The **`emanate-*` scripts are the same class of thing** — the emanation
+      loop's mechanics (D8), tools outside `review.sh`'s rule list, sharing
+      sourced units in `base/bin/lib/` → `.inspire/bin/lib/`: `emanate-harvest.sh`
+      (a phase worktree's owned diff → one integration commit) and
+      `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
+      the **strict** parser that refuses an old shape rather than read it as an
+      empty section, and the one place the 0.8 grace on the presence classes is
+      paid for — see
+      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)).
+      `emanate-plan` and `emanate-gate` join them and compose on derive.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
       unchanged and still correct on its own; `plugin/test/run.sh` drives it one
-      rule at a time (`run-tests.sh <rule>`) plus its three hand-wired siblings,
-      which turns the estate's slowest single job into nineteen short ones.
+      rule at a time (`run-tests.sh <rule>`) plus its four hand-wired siblings,
+      which turns the estate's slowest single job into twenty-one short ones.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
       (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
@@ -262,7 +272,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its three hand-wired siblings |
+  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its four hand-wired siblings. `golden/emanate-derive` is the estate's longest job (56 s solo, 73 fixtures): derive runs the rules that own the `OS-*` classes rather than re-implementing them, so each fixture spawns four validators |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -271,14 +281,17 @@ anything.
   holds no tests and the runner never runs it.
 
   A run takes about two minutes, and that is fixture builds and process spawns,
-  not a hang. Measured solo on the batched runtime: **106 s** for the whole
-  estate at the default `-j`, from 267 s. It is spawn-bound, not critical-path
-  bound — every job inflates roughly twofold beside eight peers, so cutting a
-  long file shortens that file and leaves the wall where it was. Run on its own,
-  every file is under 20 s but four: `upgrade/18b-e2e-resolution-flags.sh` (27 s,
-  four pre-0.3 fixtures and four updates), `upgrade/23-agents-class.sh` (27 s),
+  not a hang. Measured solo: **160–169 s** for the whole estate at the default
+  `-j`, from 267 s before the batched runtime and 106 s before
+  `emanate-derive`'s goldens joined it. It is spawn-bound, not critical-path bound — every job
+  inflates roughly twofold beside eight peers, so cutting a long file shortens
+  that file and leaves the wall where it was. Run on its own, every file is under
+  20 s but four: `upgrade/18b-e2e-resolution-flags.sh` (27 s, four pre-0.3
+  fixtures and four updates), `upgrade/23-agents-class.sh` (27 s),
   `upgrade/22c-derive-equal-resolutions.sh` (20–23 s) and
-  `materialize/01-init-current-tree.sh` (22 s). Every job is
+  `materialize/01-init-current-tree.sh` (22 s); the longest job of any kind is
+  `golden/emanate-derive` at 56 s, which is 73 fixtures each spawning the
+  validators that own the refusal classes. Every job is
   **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
   only ever read, so any number of copies — several worktrees at once, the same
   file twice over, a single file beside a full run — can run concurrently without

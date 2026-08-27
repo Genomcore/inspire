@@ -285,6 +285,15 @@ findings.
 
 The class ids are stable; they are what a reader's own goldens are keyed on.
 
+The strict reader is `.inspire/bin/emanate-derive.sh`, and it refuses on every
+entity, action and cross-artifact class below **whatever severity review
+reported it at** — the grace in the next section is review's alone. Use-case
+files are not one of its kinds, so `OS-F*` stays review's entirely.
+[`derived-contract.md`](derived-contract.md) is its own half of the catalogue:
+the shapes that no rule here numbers (an unresolvable reference, a semantic type
+nothing recognizes, a screen's own old shapes) carry `DR-*` ids there, alongside
+the contract's JSON shape and the fingerprint rule.
+
 ### Severity — two tiers
 
 Review's severity splits the catalogue in two, and the split is a design
