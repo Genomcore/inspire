@@ -36,8 +36,8 @@ Fix build errors directly — not just analyze. Reach a clean build with the
 
 4. **Fix** — implement the minimal fix in source files. No side effects on
    unrelated code. Prefer proper types over `any` or assertions — an assertion that
-   silences a real type error is the forbidden escape hatch (see
-   [`tdd.md`](tdd.md), "Never silence the toolchain").
+   silences a real type error is the forbidden escape hatch (the authoring rules in
+   [`roles/implementer.md`](roles/implementer.md) bind here too).
 
 5. **Verify** — rebuild (and lint) to confirm the fix is real and introduced
    nothing new:

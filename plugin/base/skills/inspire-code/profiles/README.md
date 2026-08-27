@@ -165,9 +165,9 @@ architecture, and architecture is the framework profile's.
 
 | Profile section | Kind | Consumed by |
 |---|---|---|
-| `## Layering` | framework | `review` Phase 1 · `tdd` implementation shape |
-| `## Test conventions` | framework | `tdd` · `review` Phase 4 |
-| `## Forbidden patterns` | framework | `review` · `tdd` authoring rules |
+| `## Layering` | framework | the quality overseer (architecture) · `tdd` implementation shape |
+| `## Test conventions` | framework | the tester — **including the test paths harvest accepts** · the quality overseer |
+| `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
 | `## Build & verify` | framework | `fix-build` · `review` build step · `debug` |
 | `## Bindings` | framework | the contracter (emitted surface) · derived binding claims · `emanate gate` |

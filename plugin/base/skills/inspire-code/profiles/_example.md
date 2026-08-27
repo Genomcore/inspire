@@ -30,7 +30,7 @@ Unit tests <tool> mock <boundary>; integration/e2e <tool> use the real <thing>.
 GIVEN/WHEN/THEN. Run: `<test cmd>` · `<e2e cmd>`.
 
 ## Forbidden patterns
-<!-- Stack-specific anti-patterns beyond the universal authoring rules in tdd.md. -->
+<!-- Stack-specific anti-patterns beyond the universal authoring rules in references/roles/implementer.md. -->
 - <anti-pattern> — <do this instead>.
 
 ## Review focus

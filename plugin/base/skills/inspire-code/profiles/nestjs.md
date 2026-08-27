@@ -120,10 +120,11 @@ actor constraint.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`
   beside its repository and `toDomain()` mapper; the domain interface never imports
   the ORM (see `## Layering`).
-- **Migrations are append-shaped.** `src/migrations/`, one timestamp-named file per
-  change. Re-emanating a changed entity **appends** a migration; an existing one is
-  never edited, reordered or deleted — not even one that has only ever run locally.
-  Generated once is generated forever; a mistake is corrected by the next migration.
+- **Migrations live in `src/migrations/`,** one timestamp-named file per change. That
+  they are **append-shaped** is an INSPIRE rule rather than this profile's, so it is
+  stated once, in
+  [`../references/roles/contracter.md`](../references/roles/contracter.md)
+  § Persistence is append-shaped.
 - Never `synchronize: true` outside a throwaway local run — migrations are the only
   schema authority.
 

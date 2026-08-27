@@ -41,31 +41,21 @@ format in [`../../_references/findings-format.md`](../../_references/findings-fo
 
 ## Phases 1–4 — universal quality (judgment only)
 
-One phase, one lens. The active stack profile sharpens them where its sections say
-it does — the section → generic-dimension mapping in
-[`profiles/README.md`](../profiles/README.md).
+One phase, one lens — and the lenses are the two overseers'. `review` holds both at
+once, addressing the operator instead of an orchestrator:
 
-### Phase 1 · Architecture & design
-Layering (business logic out of controllers/components), shared logic living in a
-shared place, abstractions justified rather than premature, single-responsibility
-units whose boundaries validate their input.
+| Phase | Lens | Doctrine |
+|---|---|---|
+| 1 | architecture and design | [`roles/quality-overseer.md`](roles/quality-overseer.md) § The dimensions |
+| 2 | logic and correctness | the same |
+| 3 | security | [`roles/security-overseer.md`](roles/security-overseer.md) § The security lens |
+| 4 | testing strategy | [`roles/quality-overseer.md`](roles/quality-overseer.md) § The dimensions |
 
-### Phase 2 · Logic & correctness
-Semantic duplication no linter sees (>~70% overlap across files); an algorithm
-correct for *this* use case, not merely compiling; edge cases (null, empty, boundary,
-concurrent access); error handling specific and at the right level, async paths
-handling both failure and timeout.
-
-### Phase 3 · Security
-Hardcoded secrets; injection / XSS vectors (unsanitized input into the DOM, `eval`,
-dynamic queries, external URLs used unsanitized); input validated at the boundary
-with the *correct* constraints, not merely "a validator exists"; sensitive data in
-logs or error responses; **authorization** checked, not only authentication.
-
-### Phase 4 · Testing strategy
-Tests of the right type for the layer, covering meaningful edge cases and not just
-the happy path, following the conventions in [`tdd.md`](tdd.md) — GIVEN/WHEN/THEN,
-behavior over implementation, one test = one scenario, mocks at the right boundary.
+The active stack profile sharpens them where its sections say it does — the
+section → generic-dimension mapping in
+[`profiles/README.md`](../profiles/README.md). The two catalogues those docs carry for
+an unattended run read just as well against a working diff: they are the shortcuts a
+change takes to look finished.
 
 ## Build verification
 
@@ -80,21 +70,9 @@ pass/fail per step; don't inline the raw output.
 For a large or critical diff, run phases 1–4 as **parallel dimension agents**, one
 per dimension, then synthesize — the same batch pattern `/inspire_module review`
 uses. Each agent gets the diff + the loaded anchors and reports findings in the
-row format below. The dimensions:
-
-| Dimension | Focus (what the agent hunts for) |
-|---|---|
-| architecture | Clean-code / SOLID / DRY / KISS, layering, cyclomatic complexity, unjustified abstraction |
-| correctness-chaos | Every way it breaks: edge cases, race conditions, partial failures, timeouts, corrupt state — run especially on critical flows (auth, payments, data mutations, integrations) |
-| tests | Coverage of new logic, edge cases, mocking correctness, a regression test for each fix |
-| duplication | Copy-pasted / >70%-similar logic across files; propose unification |
-| dead-code | Unused exports/vars/types, orphaned files, commented-out blocks left behind by the change |
-| surface-boundaries | Only when a surface roster exists (`00_bootstrap/surfaces.md`): an import reaching from one surface's `Package` path into another's — cross-surface sharing belongs in a `lib` package |
-
-**Add one agent per active stack profile's `## Review focus` entry** (e.g.
-api-contract, styling, a11y, security) — the stack-concrete lenses layered on top of
-the universal dimensions above. A profile with no `## Review focus`, or no profile
-at all, just means the universal set.
+row format below. The roster of dimensions, and the rule that adds one per the
+profile's `## Review focus`, are in
+[`roles/quality-overseer.md`](roles/quality-overseer.md) § The fan-out roster.
 
 Scale to the change: a small diff runs inline; "review thoroughly" / a critical flow
 runs the full fan-out. Keep dimensions read-only.
