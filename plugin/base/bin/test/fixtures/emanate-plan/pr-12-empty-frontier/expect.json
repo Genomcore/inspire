@@ -8,7 +8,7 @@
   ],
   "stdout_jq": [
     { "expr": "[.refused[].code] | unique | join(\",\")", "equals": "PR-12" },
-    { "expr": ".refused[0].target", "equals": "spec/kb" },
+    { "expr": ".refused[0].target", "equals": "spec/kb spec/sdd" },
     { "expr": "has(\"waves\")", "equals": "false" },
     { "expr": "has(\"units\")", "equals": "false" }
   ]

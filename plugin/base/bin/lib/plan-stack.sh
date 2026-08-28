@@ -63,15 +63,17 @@ plan_surface_profiles() {
 
 # plan_resolve_profiles <key> <declared-file> — resolve one declared set once.
 # Writes `prof/<key>` (the ids that exist on disk, the named languages folded
-# in) and `prof/<key>.gap` (the `PR-06` target, written only when nothing in the
-# set yields a language profile).
+# in) and `prof/<key>.gap` (`reason<TAB>path`, the `PR-06` target, written only
+# when nothing in the set yields a language profile). The reason is `absent`
+# when the named file is not there and `not-language` when it is there but is
+# not one, because those send an operator to two different repairs.
 #
 # A declared id with no file stays OUT of the resolved set: "resolved" means a
 # file was read. What was missing is what the gap names.
 plan_resolve_profiles() {
   local key="$1" src="$2" out="$PLAN_TMP/prof/$key"
   [ -f "$out" ] && return 0
-  local id file layer language have=0 gap="" absent=""
+  local id file lfile language have=0 gap="" why="" absent=""
   : > "$out.raw"
   while IFS= read -r id; do
     [ -n "$id" ] || continue
@@ -81,21 +83,28 @@ plan_resolve_profiles() {
       continue
     fi
     printf '%s\n' "$id" >> "$out.raw"
-    layer="$(sdd_fm_value "$file" '.layer')"
+    [ "$(sdd_fm_value "$file" '.layer')" = "language" ] && have=1
     language="$(sdd_fm_value "$file" '.language')"
-    [ "$layer" = "language" ] && have=1
     [ -n "$language" ] || continue
-    if [ -f "$PLAN_PROFILES_ROOT/$language.md" ]; then
-      printf '%s\n' "$language" >> "$out.raw"
+    lfile="$PLAN_PROFILES_ROOT/$language.md"
+    if [ ! -f "$lfile" ]; then
+      [ -n "$gap" ] || { gap="$lfile"; why="absent"; }
+      continue
+    fi
+    printf '%s\n' "$language" >> "$out.raw"
+    # A framework naming another framework — or itself — resolves to a file and
+    # still states no rendering, which is exactly the guess D5 forbids.
+    if [ "$(sdd_fm_value "$lfile" '.layer')" = "language" ]; then
       have=1
     else
-      [ -n "$gap" ] || gap="$PLAN_PROFILES_ROOT/$language.md"
+      [ -n "$gap" ] || { gap="$lfile"; why="not-language"; }
     fi
   done < "$src"
   LC_ALL=C sort -u "$out.raw" -o "$out.raw"
   mv "$out.raw" "$out"
   : > "$out.gap"
-  [ "$have" = 1 ] || printf '%s' "${gap:-${absent:-$PLAN_PROFILES_ROOT}}" > "$out.gap"
+  [ "$have" = 1 ] \
+    || printf '%s\t%s' "${why:-absent}" "${gap:-${absent:-$PLAN_PROFILES_ROOT}}" > "$out.gap"
 }
 
 # plan_unit_profile_key <kind> <surface> — the declared set a unit resolves

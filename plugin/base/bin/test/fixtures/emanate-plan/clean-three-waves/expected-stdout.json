@@ -1,7 +1,8 @@
 {
   "schema": "inspire.emanation-plan/1",
   "scope": [
-    "spec/kb"
+    "spec/kb",
+    "spec/sdd"
   ],
   "ready": true,
   "floor": 3,

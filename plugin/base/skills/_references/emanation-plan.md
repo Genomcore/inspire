@@ -73,6 +73,10 @@ generic catch-all would collapse two different answers into one.
       "derive_class": null } ] }
 ```
 
+- **`scope`** is the `--scope` paths, `LC_ALL=C` sorted and deduplicated — the
+  order they were typed in never reaches stdout. With none given it names the
+  roots the default sweep walks: `$SDD_KB_ROOT`, and `$SDD_SPEC_ROOT` as well
+  when that is not inside it.
 - **`waves`** is an array of arrays of unit ids, each inner array `LC_ALL=C`
   sorted, and `floor == (waves | length)`.
 - **`deliverable_waves`** is `min(floor, ceiling)`, or `floor` when `ceiling` is
@@ -116,14 +120,20 @@ zero-wave plan, so a run cannot build worktrees for nothing.
 
 ## The ordering edge set
 
-The edge set is derive's `requires[]`, minus two kinds of edge that are not
-build-time dependencies:
+**Every `requires[]` edge is checked the same way, whatever its kind: it must
+resolve (`PR-02`), and its target must be `stable` or in the frontier (`PR-03`).**
+What the edge set below narrows is the ORDERING, and only the ordering.
+
+The ordering edge set is derive's `requires[]`, minus two kinds of edge that are
+not build-time dependencies:
 
 - **Navigation never orders a wave.** A `screen`-kinded edge out of a screen unit
   is a route reference — a route derives from `module` + `screen` without the
   target existing as code — and list and detail screens navigate to each other in
   every real vault, so ordering on navigation would make the common case a cycle.
-  The edge still has to resolve (`PR-02`); it just never layers.
+  The **only** thing navigation skips is the wave ordering: a navigation target
+  that resolves to nothing is still `PR-02`, and one at `draft` or `superseded`
+  is still `PR-03`. A screen that navigates somewhere unfinished is not ready.
 - **Pattern and component edges are readiness checks, never constraints.** They
   are answered by `PR-04` and `PR-05`.
 
@@ -156,7 +166,10 @@ Resolution order, per unit:
    `00_bootstrap/surfaces.md`, falling back to the suite-wide set when it
    declares none. Entities and actions always take the suite-wide set: the
    domain-versus-service partition is an ADR decision and is not machine-readable;
-3. each resolved framework profile pulls in the profile its `language:` names.
+3. each resolved framework profile pulls in the profile its `language:` names —
+   which counts as a rendering home only when that file's own `layer:` is
+   `language`. A framework naming another framework, or naming itself, resolves
+   to a file and still states nothing about how a semantic type renders.
 
 The resolved set must contain at least one language profile that exists on disk,
 or the unit is `PR-06`. This is where D5's amendment lands: "missing profiles
@@ -172,10 +185,10 @@ that compiles.
 |---|---|---|---|
 | `PR-01` | derive refused this unit — one finding per class in its `refused[]`, carrying derive's `class` (as `derive_class`), `target`, `message` and `remedy` verbatim, never re-worded | error | the target's layer |
 | `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it | error | the depending unit's layer |
-| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier | error | the target's layer |
+| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from | error | the target's layer |
 | `PR-04` | a screen declares a component whose `**State:**` is not `implemented`: a screen cannot emanate until the components it declares are stable | error | `inspire-screens` |
 | `PR-05` | a screen names a pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. `screen-coherence` reports the same shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
-| `PR-06` | the unit's resolved profile set yields no language profile — none declared, a framework profile's `language:` naming a file that is absent, or the framework profile itself absent so nothing can name a language | error | `inspire-code` |
+| `PR-06` | the unit's resolved profile set yields no language profile — none declared, a framework profile's `language:` naming a file that is absent or that is not itself `layer: language`, or the framework profile itself absent so nothing can name a language | error | `inspire-code` |
 | `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 
 ### Refusals — nothing is planned, the run exits 4
@@ -183,7 +196,7 @@ that compiles.
 | id | shape | remedy |
 |---|---|---|
 | `PR-10` | the overseer roster fails: either shipped overseer absent, or any `*-overseer.md` under the agents root failing the shape (a `tools:` line present, naming none of `Bash`, `Write`, `Edit`, `NotebookEdit`, `Agent`) | restore the shell, or fix its `tools:` line |
-| `PR-11` | a cycle in the ordering edge set. `acyclic-deps.sh` owns the action-to-action case and is run rather than re-implemented; a cycle the wider edge set forms is reported off the layering, which already knows which nodes it could not consume | fix the `requires:` chain |
+| `PR-11` | a cycle in the ordering edge set. `acyclic-deps.sh` owns the action-to-action case and is run rather than re-implemented; a cycle the wider edge set forms is reported off the layering, which already knows which nodes it could not consume. A unit `derive` refused contributes no edges at all, so a cycle running through one surfaces only once its `PR-01` is remedied — nothing proceeds meanwhile, because `PR-01` is an error and already forces `ready: false` | fix the `requires:` chain |
 | `PR-12` | empty frontier: no unit in scope is at `lifecycle: accepted` | promote something, or widen `--scope` |
 | `PR-13` | no stack: `00_bootstrap/stack.md` is absent, or declares no `profiles:` and no inferable stack section | `/inspire_bootstrap stack` |
 

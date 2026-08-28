@@ -13,8 +13,9 @@
 #   NAVIGATION NEVER ORDERS A WAVE. A `screen`-kinded edge out of a screen unit
 #   is a route reference — a route derives from `module` + `screen` without the
 #   target existing as code — and list/detail screens navigate to each other in
-#   every real vault. Ordering on it would make the common case a cycle. The
-#   edge still has to RESOLVE (`PR-02`); it just never layers.
+#   every real vault. Ordering on it would make the common case a cycle. It is
+#   checked like every other edge: it has to RESOLVE (`PR-02`) and its target
+#   has to be stable or in the frontier (`PR-03`). Only the layering is skipped.
 #
 #   AN EDGE ORDERS A WAVE ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
 #   `stable` artifact is satisfied out of band, an edge to an `accepted` unit
@@ -65,12 +66,24 @@ plan_check_stack() {
   return 1
 }
 
+# plan_fm_has_key <file> <key> — is the key WRITTEN in the frontmatter block?
+# `sdd_fm_value` cannot answer it: a key with no value and an absent key both
+# read back empty, and telling an operator a line is missing when it is there
+# sends them to repair the wrong thing.
+plan_fm_has_key() {
+  awk -v k="^$2:" '
+    /^---[ \t]*$/ { if (++n == 2) exit; next }
+    n == 1 && $0 ~ k { found = 1; exit }
+    END { exit !found }
+  ' "$1"
+}
+
 # plan_check_overseers — PR-10. The shape is `roles/README.md` § The roster is
 # additive-only, implemented exactly and no further: name ends in
 # `-overseer.md`, a `tools:` line is present, and it names none of the five
 # tools that can act.
 plan_check_overseers() {
-  local root="$PLAN_AGENTS_ROOT" base f tools tok bad ok=0
+  local root="$PLAN_AGENTS_ROOT" base f tools tok bad why ok=0
   for base in inspire-security-overseer inspire-quality-overseer; do
     [ -f "$root/$base.md" ] && continue
     ok=1
@@ -83,8 +96,13 @@ plan_check_overseers() {
     tools="$(sdd_fm_value "$f" '.tools')"
     if [ -z "$tools" ] || [ "$tools" = "null" ]; then
       ok=1
+      if plan_fm_has_key "$f" tools; then
+        why="its \`tools:\` line names no tool"
+      else
+        why="it carries no \`tools:\` line"
+      fi
       plan_refuse "PR-10" "$(plan_path_norm "$f")" \
-        "carries no \`tools:\` line, so it inherits every tool and is not an overseer however it is named" \
+        "$why, so it inherits every tool and is not an overseer however it is named" \
         "give it a \`tools:\` line naming only read-only tools"
       continue
     fi
@@ -225,8 +243,11 @@ plan_check_component() {
 }
 
 # plan_resolve_edges — the second pass: PR-02, PR-03 and the ordering edge set.
+# One rule for every edge — it must resolve, and its target must be stable or in
+# the frontier. Navigation is dropped from the ORDERING alone, after both checks
+# have run, which is why the `continue` for it sits inside the in-frontier arm.
 plan_resolve_edges() {
-  local uid upath ukind dkind did dpath lc
+  local uid upath ukind dkind did dpath lc state
   : > "$PLAN_TMP/edges.tsv"
   while IFS=$'\t' read -r uid upath ukind dkind did; do
     [ -n "$uid" ] || continue
@@ -238,15 +259,17 @@ plan_resolve_edges() {
         "$(plan_define_remedy "$dkind" "$did")"
       continue
     fi
-    [ "$ukind" = "screen" ] && [ "$dkind" = "screen" ] && continue
     if LC_ALL=C grep -qxF "$did" "$PLAN_TMP/nodes"; then
+      [ "$ukind" = "screen" ] && [ "$dkind" = "screen" ] && continue
       printf '%s\t%s\n' "$uid" "$did" >> "$PLAN_TMP/edges.tsv"
       continue
     fi
     lc="$(sdd_fm_value "$dpath" '.lifecycle')"
     case "$lc" in stable|accepted) continue ;; esac
+    state="is at lifecycle \`$lc\`"
+    [ -n "$lc" ] || state="declares no lifecycle"
     plan_find "PR-03" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
-      "dependency \`$did\` is at lifecycle \`${lc:-—}\` — neither stable nor in the frontier" \
+      "dependency \`$did\` $state — neither stable nor in the frontier" \
       "$(plan_promote_remedy "$dkind" "$did" "$lc")"
   done < "$PLAN_TMP/deps.tsv"
   LC_ALL=C sort -u "$PLAN_TMP/edges.tsv" -o "$PLAN_TMP/edges.tsv"
@@ -287,7 +310,7 @@ plan_declared_for() {
 
 # plan_check_profiles — PR-06, and the `profiles` spool `units[]` renders from.
 plan_check_profiles() {
-  local uid kind path lifecycle module surface claims key gap pid
+  local uid kind path lifecycle module surface claims key why gap miss fix pid
   while IFS="$PLAN_FS" read -r uid kind path lifecycle module surface claims; do
     [ -n "$uid" ] || continue
     key="$(plan_unit_profile_key "$kind" "$surface")"
@@ -296,11 +319,18 @@ plan_check_profiles() {
       [ -n "$pid" ] || continue
       plan_row profiles "$uid" "$pid"
     done < "$PLAN_TMP/prof/$key"
-    gap="$(cat "$PLAN_TMP/prof/$key.gap")"
+    why=""; gap=""
+    IFS=$'\t' read -r why gap < "$PLAN_TMP/prof/$key.gap"
     [ -n "$gap" ] || continue
+    miss="\`$gap\` is not there"
+    fix="add $gap"
+    if [ "$why" = "not-language" ]; then
+      miss="\`$gap\` is not one — its \`layer:\` is not \`language\`"
+      fix="point that \`language:\` at a \`layer: language\` profile"
+    fi
     plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
-      "the resolved profile set yields no language profile — \`$gap\` is not there, so nothing states how a semantic type renders" \
-      "declare a language profile in \`00_bootstrap/stack.md\`, or add $gap"
+      "the resolved profile set yields no language profile — $miss, so nothing states how a semantic type renders" \
+      "declare a language profile in \`00_bootstrap/stack.md\`, or $fix"
   done < "$PLAN_TMP/units.spool"
 }
 

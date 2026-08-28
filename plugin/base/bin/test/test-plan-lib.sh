@@ -94,7 +94,8 @@ eq "and touches no mtime on that path either" \
 if [ ! -f "$DOC" ]; then
   bad "emanation-plan.md is where the scripts say it is"
 else
-  code_ids="$(LC_ALL=C grep -hoE 'plan_(find|refuse) "PR-[0-9]+"' "$BIN"/lib/plan-*.sh \
+  code_ids="$(LC_ALL=C grep -hoE 'plan_(find|refuse) "PR-[0-9]+"' \
+                "$BIN"/lib/plan-*.sh "$BIN"/emanate-plan.sh \
               | LC_ALL=C grep -oE 'PR-[0-9]+' | LC_ALL=C sort -u | tr '\n' ' ')"
   doc_ids="$(awk '/^\| `PR-[0-9]+`/ { print }' "$DOC" \
              | LC_ALL=C grep -oE 'PR-[0-9]+' | LC_ALL=C sort -u | tr '\n' ' ')"

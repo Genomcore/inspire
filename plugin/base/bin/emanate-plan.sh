@@ -179,11 +179,18 @@ export SDD_KB_ROOT SDD_SPEC_ROOT
 plan_scratch >/dev/null || exit "$EXIT_MISSING_TOOL"
 trap 'rm -rf "$PLAN_TMP"' EXIT
 plan_init_spools units requires profiles waves findings refused
-printf '%s' "$PLAN_SCOPE_ARGS" > "$PLAN_TMP/scopes"
+# Sorted and deduplicated before anything reads it: two --scope flags name one
+# vault, so neither the order they were typed in nor a repeat may reach stdout.
+printf '%s' "$PLAN_SCOPE_ARGS" | LC_ALL=C sort -u > "$PLAN_TMP/scopes"
 if [ -s "$PLAN_TMP/scopes" ]; then
   cp "$PLAN_TMP/scopes" "$PLAN_TMP/scopes.out"
 else
-  sdd_scope_norm "$SDD_KB_ROOT" > "$PLAN_TMP/scopes.out"
+  # The default sweep walks both roots, so the label names both — unless the
+  # spec root sits inside the KB root, as it does in a deployed vault.
+  { sdd_scope_norm "$SDD_KB_ROOT"
+    plan_under "$(sdd_scope_norm "$SDD_SPEC_ROOT")" "$(sdd_scope_norm "$SDD_KB_ROOT")" \
+      || sdd_scope_norm "$SDD_SPEC_ROOT"
+  } | LC_ALL=C sort -u > "$PLAN_TMP/scopes.out"
 fi
 PLAN_SCOPE_LABEL="$(plan_norm "$(tr '\n' ' ' < "$PLAN_TMP/scopes.out")")"
 
