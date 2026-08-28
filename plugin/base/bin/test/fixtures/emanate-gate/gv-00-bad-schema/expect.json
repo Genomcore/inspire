@@ -1,0 +1,16 @@
+{
+  "exit": 4,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json",
+           "--previous", "previous.json"],
+  "stdout_jq": [
+    { "expr": ".schema", "equals": "inspire.gate-verdict/1" },
+    { "expr": ".verdict", "equals": "fail" },
+    { "expr": ".claims", "equals": "[]" },
+    { "expr": "[.findings[].class] | unique | join(\",\")", "equals": "GV-00" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].target", "equals": "auth.user.create" },
+    { "expr": ".findings[0].message", "equals": "contract schema is 'inspire.derived-contract/2', expected 'inspire.derived-contract/1'" },
+    { "expr": ".findings[0].remedy", "equals": "re-run emanate-derive.sh for this unit and pass its stdout to --contract" },
+    { "expr": "has(\"delta\")", "equals": "false" }
+  ]
+}

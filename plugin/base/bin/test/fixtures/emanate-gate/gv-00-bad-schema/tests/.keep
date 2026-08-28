@@ -1,0 +1,2 @@
+a future contract schema is unusable, not unreadable: the claims[] is right
+there, and gate still refuses rather than guess what version 2 renamed

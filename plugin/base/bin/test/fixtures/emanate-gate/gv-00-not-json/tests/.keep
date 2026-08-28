@@ -1,0 +1,2 @@
+the unit is unknown on this path — there is no `unit` object to copy — so the
+GV-00 target falls back to "unknown" rather than to a guess

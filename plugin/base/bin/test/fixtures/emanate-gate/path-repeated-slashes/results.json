@@ -1,0 +1,4 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests//create.spec.ts",
+               "name": "the orchestrator spelled the path with a doubled separator",
+               "status": "passed" } ] }
