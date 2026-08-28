@@ -85,7 +85,8 @@ for s in "lib-tests.sh${TAB}_lib.sh/readers" \
          "test-trust.sh${TAB}trust.sh/behaviour" \
          "test-harvest.sh${TAB}emanate-harvest.sh/behaviour" \
          "test-derive-lib.sh${TAB}emanate-derive.sh/library" \
-         "test-plan-lib.sh${TAB}emanate-plan.sh/library"; do
+         "test-plan-lib.sh${TAB}emanate-plan.sh/library" \
+         "test-gate-lib.sh${TAB}emanate-gate.sh/library"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
   keep "golden/$script" && add sibling "$script" "$label" "golden/$script"

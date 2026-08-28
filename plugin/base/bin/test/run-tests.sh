@@ -271,6 +271,24 @@ if [ -z "$filter" ]; then
   rm -f "$plan_out"
 fi
 
+# emanate-gate.sh has fixtures too; four of its claims fit none of them: a run
+# leaves the fixture tree byte- and mtime-identical, `--contract -` and a doubled
+# `--tests-root` read the verdict a plain file does, the GV-* ids the code names
+# still equal the catalogue documenting them, and stdout is EMPTY on every exit
+# that carries no verdict. Same hand-wiring as the five above.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  gate_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-gate-lib.sh" >"$gate_out" 2>&1; then
+    echo "PASS emanate-gate.sh/library"
+  else
+    failed=$((failed + 1))
+    echo "FAIL emanate-gate.sh/library" >&2
+    cat "$gate_out" >&2
+  fi
+  rm -f "$gate_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]
