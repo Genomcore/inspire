@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": "has(\"delta\")", "equals": "false" }
+  ]
+}

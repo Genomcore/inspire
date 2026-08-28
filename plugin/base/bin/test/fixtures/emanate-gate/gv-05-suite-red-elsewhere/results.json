@@ -1,0 +1,4 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts", "name": "cites this unit and passes", "status": "passed" },
+             { "file": "tests/unrelated.spec.ts", "name": "some other units test", "status": "failed",
+               "message": "unrelated breakage" } ] }

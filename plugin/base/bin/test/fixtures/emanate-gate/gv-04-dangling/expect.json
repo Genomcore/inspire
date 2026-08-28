@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".claims[0].status", "equals": "covered" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].class", "equals": "GV-04" },
+    { "expr": ".findings[0].target", "equals": "tests/create.spec.ts:3" },
+    { "expr": ".summary.findings_by_class | keys | join(\",\")", "equals": "GV-04" }
+  ]
+}

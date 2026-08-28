@@ -1,0 +1,2 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts", "name": "the default tests root resolves with no --tests-root flag", "status": "passed" } ] }

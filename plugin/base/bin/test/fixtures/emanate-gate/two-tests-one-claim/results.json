@@ -1,0 +1,3 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/a.spec.ts", "name": "covers the claim from the first file", "status": "passed" },
+             { "file": "tests/b.spec.ts", "name": "covers the same claim again from the second file", "status": "passed" } ] }

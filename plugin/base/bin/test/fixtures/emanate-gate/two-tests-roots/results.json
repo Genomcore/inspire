@@ -1,0 +1,2 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests2/create.spec.ts", "name": "a file under the second root, citing the claim", "status": "passed" } ] }

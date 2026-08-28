@@ -1,0 +1,15 @@
+{
+  "exit": 4,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".schema", "equals": "inspire.gate-verdict/1" },
+    { "expr": ".verdict", "equals": "fail" },
+    { "expr": ".claims", "equals": "[]" },
+    { "expr": ".unit", "equals": "{}" },
+    { "expr": "[.findings[].class] | unique | join(\",\")", "equals": "GV-00" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].target", "equals": "unknown" },
+    { "expr": ".findings[0].message", "equals": "the --contract file is not valid JSON" },
+    { "expr": ".findings[0].remedy", "equals": "re-run emanate-derive.sh for this unit and pass its stdout to --contract" }
+  ]
+}
