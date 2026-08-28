@@ -260,10 +260,11 @@ recognise would be exactly the silent-green trap the strictness exists to close.
 
 ## Consumers
 
-`emanate plan` aggregates the stdout objects — it must never parse stderr — and
-turns refusals into readiness findings grouped by owning skill. `emanate gate`
-reads `claims` and matches them against citing tests. The contracter agent reads
-everything else. All three read this file for what a field means.
+[`emanate plan`](emanation-plan.md) aggregates the stdout objects — it must never
+parse stderr — and turns refusals into readiness findings grouped by owning
+skill. `emanate gate` reads `claims` and matches them against citing tests. The
+contracter agent reads everything else. All three read this file for what a field
+means.
 
 **Sourcing the units instead of running the entry** is the other way in, and the
 line between the two is worth stating. The reuse surface is

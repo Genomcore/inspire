@@ -253,6 +253,24 @@ if [ -z "$filter" ]; then
   rm -f "$derive_out"
 fi
 
+# emanate-plan.sh has fixtures too, and four of its claims sit outside any one of
+# them: that two runs over one tree are byte-identical, that a run leaves every
+# byte and every mtime of that tree alone, that the PR-* ids the code emits are
+# exactly the ids emanation-plan.md catalogues, and the shapes only a broken bin
+# tree can reach. Same hand-wiring as the four above.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  plan_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-plan-lib.sh" >"$plan_out" 2>&1; then
+    echo "PASS emanate-plan.sh/library"
+  else
+    failed=$((failed + 1))
+    echo "FAIL emanate-plan.sh/library" >&2
+    cat "$plan_out" >&2
+  fi
+  rm -f "$plan_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]

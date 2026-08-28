@@ -151,13 +151,17 @@ repo is both its source and its own marketplace.
       empty section, and the one place the 0.8 grace on the presence classes is
       paid for — see
       [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)).
-      `emanate-plan` and `emanate-gate` join them and compose on derive.
+      `emanate-plan` (a scope's frontier snapshot → dependency waves → the floor
+      versus the declared ceiling → every readiness check, JSON on stdout and
+      nothing written anywhere — see
+      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
+      and `emanate-gate` join them and compose on derive.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
       unchanged and still correct on its own; `plugin/test/run.sh` drives it one
-      rule at a time (`run-tests.sh <rule>`) plus its four hand-wired siblings,
-      which turns the estate's slowest single job into twenty-one short ones.
+      rule at a time (`run-tests.sh <rule>`) plus its five hand-wired siblings,
+      which turns the estate's slowest single job into twenty-three short ones.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
       (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
