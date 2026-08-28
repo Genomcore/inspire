@@ -1,0 +1,17 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-03" },
+    { "expr": ".findings[0].target", "equals": "spec/sdd/auth/org/auth.org.md" },
+    { "expr": ".findings[0].unit", "equals": "auth.user" },
+    { "expr": ".findings[0].remedy", "equals": "/inspire_domain promote auth.org accepted" },
+    { "expr": ".floor", "equals": "1" },
+    { "expr": ".ready", "equals": "false" }
+  ]
+}
