@@ -69,7 +69,7 @@ plan_surface_profiles() {
 # A declared id with no file stays OUT of the resolved set: "resolved" means a
 # file was read. What was missing is what the gap names.
 plan_resolve_profiles() {
-  local key="$1" src="$2" out="$PLAN_TMP/prof/$1"
+  local key="$1" src="$2" out="$PLAN_TMP/prof/$key"
   [ -f "$out" ] && return 0
   local id file layer language have=0 gap="" absent=""
   : > "$out.raw"

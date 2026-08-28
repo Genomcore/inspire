@@ -172,7 +172,7 @@ plan_ingest() {
 }
 
 plan_ingest_one() {
-  local n="$1" kind="$2" path="$3" recf="$PLAN_TMP/c/$1.rec"
+  local n="$1" kind="$2" path="$3" recf="$PLAN_TMP/c/$n.rec"
   local t id lifecycle module claims surface f1 f2 f3 f4
   plan_contract_records "$PLAN_TMP/c/$n.json" > "$recf"
   IFS="$PLAN_FS" read -r t id lifecycle module claims < <(head -1 "$recf")
@@ -201,7 +201,8 @@ plan_ingest_one() {
 
 # plan_check_pattern — PR-05. `screen-coherence` reports the same shape as a
 # warning on the pattern file; at emanation an unverifiable layout join is a
-# rendering the contracter would guess at, so plan reports it as an error.
+# rendering the contracter would guess at, so plan reports it as an error. A
+# pattern link that resolves to nothing is derive's `DR-R4`, already a `PR-01`.
 plan_check_pattern() {
   local uid="$1" pid="$2" p
   p="$(plan_path_norm "$3")"
@@ -272,7 +273,7 @@ plan_promote_remedy() {
 # materialized once per key. A surface that declares none inherits the
 # suite-wide set; it does not extend it.
 plan_declared_for() {
-  local key="$1" surface="$2" f="$PLAN_TMP/prof/$1.declared"
+  local key="$1" surface="$2" f="$PLAN_TMP/prof/$key.declared"
   if [ ! -f "$f" ]; then
     if [ "$key" = "suite" ]; then
       cp "$PLAN_TMP/stack-profiles" "$f"
