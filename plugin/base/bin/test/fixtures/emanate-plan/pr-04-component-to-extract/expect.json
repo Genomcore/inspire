@@ -1,0 +1,16 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-04" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/components/data-table.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-screens" },
+    { "expr": ".findings[0].unit", "equals": "users.list" },
+    { "expr": ".ready", "equals": "false" }
+  ]
+}

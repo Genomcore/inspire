@@ -1,0 +1,7 @@
+{
+  "exit": 5,
+  "args": [],
+  "stdout_jq": [
+    { "expr": ".", "equals": "" }
+  ]
+}
