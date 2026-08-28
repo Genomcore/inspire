@@ -30,7 +30,7 @@ gate_contract_load() {
 
   if ! jq -e . "$file" >/dev/null 2>&1; then
     GATE_CONTRACT_STATUS="unusable"
-    printf '(not JSON)%s%s%s%s\n' "$GATE_FS" \
+    printf '%s%s%s\n' \
       "the --contract file is not valid JSON" "$GATE_FS" \
       "re-run emanate-derive.sh for this unit and pass its stdout to --contract" \
       > "$GATE_TMP/refused.spool"
@@ -56,31 +56,40 @@ gate_contract_load() {
   jq -r '.claims[].id' "$file" > "$GATE_TMP/claim-ids.txt"
 }
 
-# gate_contract_refusal_rows <file> <schema> <has_claims> — one row per reason
-# the contract is unusable. A genuine derive refusal object carries its own
-# `refused[]`, copied through verbatim (class/target become the message
-# prefix — see the render side in gate-verdict.sh, which is what decides GV-00
-# reuses "the unit" as every row's target); anything else gets one synthetic
-# row naming the schema mismatch.
+# gate_contract_refusal_rows <file> <schema> <has_claims> — one MESSAGE/REMEDY
+# row per reason the contract is unusable; the row shape gate_render_refused
+# reads, which is why neither branch below emits a third field. A genuine
+# derive refusal object carries its own `refused[]`: GV-00 forces every target
+# to the unit id, so derive's finer-grained target (the artifact path) is
+# folded into the message here or it is lost. The class is folded in too,
+# unless derive's own message already opens with it.
 gate_contract_refusal_rows() {
   local file="$1" schema="$2" has_claims="$3"
   if [ "$has_claims" != "true" ] && jq -e 'has("refused")' "$file" >/dev/null 2>&1; then
     jq -r --arg fs "$GATE_FS" '
-      .refused[] | [(.class + ": " + .message), (.remedy // "")] | join($fs)
+      .refused[]
+      | {c: (.class // "?"), t: (.target // "unknown"),
+         m: (.message // ""), r: (.remedy // "")} as $row
+      | (if ($row.m | startswith($row.c + ":")) then $row.m
+         else $row.c + ": " + $row.m end) as $msg
+      | [($row.t + ": " + $msg), $row.r] | join($fs)
     ' "$file"
     return 0
   fi
-  printf 'bad-schema%s%s%s%s\n' "$GATE_FS" \
+  printf '%s%s%s\n' \
     "contract schema is '${schema:-<absent>}', expected 'inspire.derived-contract/1'" \
     "$GATE_FS" "re-run emanate-derive.sh for this unit and pass its stdout to --contract"
 }
 
 # gate_contract_load_previous <file> — the delta join only needs id +
 # fingerprint, never oracle: a claim's oracle can't change without its id
-# changing too (the id embeds the constraint word).
+# changing too (the id embeds the constraint word). An unusable --previous is
+# not an error (the current contract still gates), but read as silence it
+# would report every claim as `new`, so it says so on stderr.
 gate_contract_load_previous() {
   local file="$1"
   if ! jq -e 'has("claims")' "$file" >/dev/null 2>&1; then
+    echo "emanate-gate.sh: warning: --previous carries no claims[] (a derive refusal object, or a foreign shape) — every claim will report as new: $file" >&2
     : > "$GATE_TMP/previous.spool"
     return 0
   fi

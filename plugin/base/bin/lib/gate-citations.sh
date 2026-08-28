@@ -19,12 +19,16 @@
 # gate_norm_path <path> — leading `./` stripped, repeated `/` collapsed,
 # trailing `/` dropped (§5.3's join contract). Not sourced from `_lib.sh`'s
 # `sdd_scope_norm`, which does the same thing: gate stays off that file on
-# purpose (see emanate-gate.sh's header), so the three lines are copied
-# instead of shared.
+# purpose (see emanate-gate.sh's header), so the lines are copied instead of
+# shared — gate-results.sh carries the identical copy.
+#
+# The pattern and the replacement are VARIABLES: spelled inline, the `/` that
+# opens the replacement half has to be escaped, and the backslash then lands
+# in the result. One pass also leaves `///` as `//`, hence the loop.
 gate_norm_path() {
-  local p="$1"
+  local p="$1" dbl='//' one='/'
   p="${p#./}"
-  while [ "$p" != "${p//\/\//\/}" ]; do p="${p//\/\//\/}"; done
+  while [ "$p" != "${p//$dbl/$one}" ]; do p="${p//$dbl/$one}"; done
   p="${p%/}"
   printf '%s' "$p"
 }
@@ -59,12 +63,12 @@ gate_collect_citations() {
       [ -n "$match" ] || continue
       id="${match#@claim}"
       id="$(printf '%s' "$id" | sed -E 's/^[[:space:]]+//')"
-      if grep -qxF "$id" "$idfile"; then
+      if grep -qxF -- "$id" "$idfile"; then
         printf '%s%s%s%s%s\n' "$id" "$GATE_FS" "$file" "$GATE_FS" "$lineno" >> "$GATE_TMP/citations.spool"
       elif [ -n "$unit_id" ] && [ "${id%%/*}" = "$unit_id" ]; then
         printf '%s%s%s\n' "$file" "$GATE_FS" "$lineno" >> "$GATE_TMP/gv04.spool"
       fi
       # else: another unit's token, in a shared tests tree — ignored (R5).
-    done < <(LC_ALL=C grep -InoE '@claim[[:space:]]+[^[:space:]]+' "$file" 2>/dev/null)
+    done < <(LC_ALL=C grep -InoE '@claim[[:space:]]+[^[:space:]]+' -- "$file" 2>/dev/null)
   done < "$GATE_TMP/files.spool"
 }

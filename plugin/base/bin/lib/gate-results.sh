@@ -12,12 +12,13 @@
 # the XML sniff runs BEFORE any JSON parse attempt: a silent misread would
 # mark every claim not-run, which is the vacuity trap in a new coat.
 
-# gate_norm_path <path> — see gate-citations.sh; duplicated rather than
-# shared so each gate-*.sh stays sourceable on its own.
+# gate_norm_path <path> — see gate-citations.sh for the contract and for why
+# the pattern is a variable; duplicated byte-for-byte rather than shared so
+# each gate-*.sh stays sourceable on its own.
 gate_norm_path() {
-  local p="$1"
+  local p="$1" dbl='//' one='/'
   p="${p#./}"
-  while [ "$p" != "${p//\/\//\/}" ]; do p="${p//\/\//\/}"; done
+  while [ "$p" != "${p//$dbl/$one}" ]; do p="${p//$dbl/$one}"; done
   p="${p%/}"
   printf '%s' "$p"
 }
@@ -35,11 +36,16 @@ gate_load_results() {
   fi
 
   # jq collapses a genuinely duplicated top-level key to its last occurrence,
-  # so a raw grep is what actually catches "declared twice" rather than
-  # silently keeping one of the two.
-  schema_count="$(grep -c '"schema"[[:space:]]*:' "$file" 2>/dev/null || true)"
+  # so the STREAM is what catches "declared twice" rather than silently
+  # keeping one of the two. Counting lines instead would both miss a one-line
+  # duplicate and reject a `schema` key nested inside a test entry, which the
+  # schema tolerates like any other extra key.
+  schema_count="$(jq -n --stream '
+      [ inputs | select(length == 2 and (.[0] | length) == 1 and .[0][0] == "schema") ] | length
+    ' "$file" 2>/dev/null)" \
+    || die_code "$EXIT_RESULTS" "results file is not valid JSON; emanate-gate reads inspire.suite-results/1"
   [ "$schema_count" = "1" ] \
-    || die_code "$EXIT_RESULTS" "results file: schema key missing or duplicated (found $schema_count)"
+    || die_code "$EXIT_RESULTS" "results file: top-level schema key missing or duplicated (found $schema_count)"
 
   jq -e '
     (.schema == "inspire.suite-results/1") and

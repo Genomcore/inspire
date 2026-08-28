@@ -73,7 +73,10 @@ would go.
 **Path matching is exact after normalization**: a leading `./` stripped, `/`
 runs collapsed, a trailing `/` dropped — applied to both a citation's file
 and a results entry's `file` before either is compared, so the orchestrator
-may spell a path either way. Nothing fuzzy, no suffix matching.
+may spell a path either way. Nothing fuzzy, no suffix matching. Paths are
+matched **as spelled, relative to the working directory**: an absolute
+`--tests-root` discovers absolute citation paths, which match no relative
+`file` entry, and the diagnostic below is what says so.
 
 **A diagnostic, never a finding**: if `tests[]` is non-empty and no entry's
 `file` matches any file discovered under the tests roots, one warning line
@@ -123,7 +126,8 @@ Valid JSON on every exit that produces a verdict (0, 1, 4). Empty on 2, 3,
   per-claim classes (`GV-01`/`GV-02`/`GV-03`) are mutually exclusive by
   status.
 - `delta` is **absent** (no key at all) when `--previous` was not given —
-  never `null`, never an empty object.
+  never `null`, never an empty object — and on the `GV-00` path below even
+  when it was.
 - **The one rule**: `verdict = (findings == 0) ? "pass" : "fail"`.
 
 Stderr carries a grouped human report mirroring `emanate-derive.sh`'s
@@ -191,12 +195,18 @@ row of the underlying problem:
 - if the contract is a genuine derive refusal object, one `GV-00` finding
   per entry of its `refused[]`, target forced to the unit id (a unit that
   never derived has no finer-grained thing to point at), message prefixed
-  with the original `DR-*`/`OS-*` class so nothing is lost;
+  with derive's own `target` — the artifact path to go and fix — and with
+  the original `DR-*`/`OS-*` class where derive's message does not already
+  open with it, so nothing is lost;
 - if the contract is not even that — unparseable JSON, or a foreign/missing
   `schema` — one synthetic `GV-00` finding naming the mismatch.
 
 A unit that did not derive cannot be gated, and saying so in the verdict's
 own grammar is better than saying nothing.
+
+**No `delta` on this path, even with `--previous`.** The contract short-
+circuits before the previous one is ever read, and a delta against claims
+that failed to derive would be a comparison with nothing.
 
 ## Exit codes
 
