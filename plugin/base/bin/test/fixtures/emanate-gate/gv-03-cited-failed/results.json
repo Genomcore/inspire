@@ -1,0 +1,3 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts", "name": "cites the claim and the citing file has a failed entry",
+               "status": "failed", "message": "expected true, got false" } ] }

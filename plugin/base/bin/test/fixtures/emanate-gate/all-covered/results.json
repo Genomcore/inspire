@@ -1,0 +1,4 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts",
+               "name": "provisions an account end to end",
+               "status": "passed" } ] }

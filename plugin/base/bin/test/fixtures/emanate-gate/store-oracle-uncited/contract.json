@@ -1,0 +1,19 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "action",
+    "id": "auth.user.create",
+    "path": "spec/sdd/auth/user/auth.user.create.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user",
+    "action": "create"
+  },
+  "claims": [
+    {
+      "id": "auth.user.create/input/org_id/references",
+      "oracle": "store",
+      "fingerprint": "sha256:6ddcb66483f838cd11a6aa4a3e5b7cd475b48474a43102664bc08a5d8ecbe299"
+    }
+  ]
+}

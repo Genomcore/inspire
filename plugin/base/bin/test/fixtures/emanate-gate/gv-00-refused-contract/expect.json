@@ -1,0 +1,13 @@
+{
+  "exit": 4,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".schema", "equals": "inspire.gate-verdict/1" },
+    { "expr": ".verdict", "equals": "fail" },
+    { "expr": ".unit.id", "equals": "auth.user" },
+    { "expr": ".claims", "equals": "[]" },
+    { "expr": "[.findings[].class] | unique | join(\",\")", "equals": "GV-00" },
+    { "expr": ".findings[0].target", "equals": "auth.user" },
+    { "expr": ".findings[0].message | contains(\"DR-T2\")", "equals": "true" }
+  ]
+}

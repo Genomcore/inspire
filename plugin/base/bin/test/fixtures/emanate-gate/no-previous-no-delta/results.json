@@ -1,0 +1,2 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts", "name": "a plain covered claim, no --previous given", "status": "passed" } ] }

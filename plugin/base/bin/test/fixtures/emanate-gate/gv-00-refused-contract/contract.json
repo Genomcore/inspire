@@ -1,0 +1,19 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "entity",
+    "id": "auth.user",
+    "path": "spec/sdd/auth/user/auth.user.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user"
+  },
+  "refused": [
+    {
+      "class": "DR-T2",
+      "target": "spec/sdd/auth/user/auth.user.md",
+      "message": "DR-T2: field `status` declares no semantic type",
+      "remedy": "/inspire_domain update auth.user"
+    }
+  ]
+}

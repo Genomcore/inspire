@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests1", "--tests-root", "tests2", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".claims[0].status", "equals": "covered" },
+    { "expr": ".claims[0].citations[0].file", "equals": "tests2/create.spec.ts" }
+  ]
+}

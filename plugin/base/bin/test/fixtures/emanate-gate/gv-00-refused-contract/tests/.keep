@@ -1,0 +1,2 @@
+a --tests-root must resolve even when the contract itself is unusable, so the
+usage-level checks stay ahead of the content-level ones

@@ -1,0 +1,14 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json", "--previous", "previous.json"],
+  "stdout_jq": [
+    { "expr": "has(\"delta\")", "equals": "true" },
+    { "expr": ".delta.changed | join(\",\")", "equals": "auth.user.create/pre/P1" },
+    { "expr": ".delta.unchanged | join(\",\")", "equals": "auth.user.create/pre/P2" },
+    { "expr": ".delta.new | join(\",\")", "equals": "auth.user.create/step/B1" },
+    { "expr": ".delta.retired | join(\",\")", "equals": "auth.user.create/post/Q1" },
+    { "expr": ".verdict", "equals": "pass" },
+    { "expr": ".claims[] | select(.id == \"auth.user.create/pre/P1\") | .status", "equals": "covered" },
+    { "expr": ".findings | length", "equals": "0" }
+  ]
+}

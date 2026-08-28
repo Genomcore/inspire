@@ -1,0 +1,10 @@
+{
+  "exit": 1,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": "[.claims[].status] | unique | join(\",\")", "equals": "cited-not-run" },
+    { "expr": ".summary.claims", "equals": "2" },
+    { "expr": ".summary.cited_not_run", "equals": "2" },
+    { "expr": ".summary.covered", "equals": "0" }
+  ]
+}
