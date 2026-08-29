@@ -50,8 +50,12 @@ it does — the section → generic-dimension mapping in
 
 ### Phase 1 · Architecture & design
 Layering (business logic out of controllers/components), shared logic living in a
-shared place, abstractions justified rather than premature, single-responsibility
-units whose boundaries validate their input.
+shared place, abstractions justified rather than premature, and **SOLID applied
+language-agnostically** per [`tdd.md`](tdd.md) § Design principles — single-reason
+units whose boundaries validate their input, growth by addition rather than by a
+widening conditional, substitutes that honor their contract, narrow dependencies,
+concretions injected at the edges. A SOLID finding names the force violated and the
+shape of the fix, not just the acronym letter.
 
 ### Phase 2 · Logic & correctness
 Semantic duplication no linter sees (>~70% overlap across files); an algorithm
@@ -98,7 +102,7 @@ row format below. The dimensions:
 
 | Dimension | Focus (what the agent hunts for) |
 |---|---|
-| architecture | Clean-code / SOLID / DRY / KISS, layering, cyclomatic complexity, unjustified abstraction |
+| architecture | Clean-code / SOLID ([`tdd.md`](tdd.md) § Design principles) / DRY / KISS, layering, cyclomatic complexity, unjustified abstraction |
 | correctness-chaos | Every way it breaks: edge cases, race conditions, partial failures, timeouts, corrupt state — run especially on critical flows (auth, payments, data mutations, integrations) |
 | tests | Coverage of new logic, edge cases, mocking correctness, a regression test for each fix |
 | duplication | Copy-pasted / >70%-similar logic across files; propose unification |

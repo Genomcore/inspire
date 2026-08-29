@@ -55,14 +55,16 @@ The concrete commands and service names belong to the stack profile's
    first**: the acceptance criteria describe what a caller observes, so that is the
    level they translate to. Run them; confirm they fail for the right reason (red).
 3. **Implement the minimum** — the simplest code that passes; no speculative
-   generality. Decomposition happens here, and **each unit it creates is born through
+   generality. Decomposition happens here, shaped by the design principles below
+   (*SOLID, whatever the language*), and **each unit it creates is born through
    its own red → green micro-cycle**: the unit's test is written first, against the
    unit's contract, and seen red before the unit's body exists. Units are never
    backfilled after the code works — a test written against working code has proven
    the code runs, not that the test can fail.
 4. **Verify** — the active profile's `## Build & verify` commands, or the project's
    own when there is no profile (green).
-5. **Refactor** — with the tests as a safety net; re-run.
+5. **Refactor** — with the tests as a safety net; re-run. This is where a SOLID
+   violation the minimum implementation introduced gets paid down, not deferred.
 6. **Level roll-call** — walk the diff and enumerate every unit it created or touched
    (services, repositories, entry points, helpers); map each one to the test level the
    active profile's `## Test conventions` assigns it, and confirm that spec exists and
@@ -330,6 +332,38 @@ to no module (the readiness probe, the API-documentation contract) live under
 `test/platform/`, and shared harness code under `test/support/`. The unit tests need no
 such rule: they are colocated with the unit they test, which is what keeps them next to
 the decomposition that created them.
+
+## Design principles — SOLID, whatever the language
+
+SOLID governs every decomposition this skill produces, and it is **language-agnostic
+by restatement, not by exemption**: the principles predate no language and depend on
+none. Where there is no class, the unit is a module, a function, a service, a
+package — the forces are identical. Stated as those forces, so they read the same in
+any stack:
+
+- **Single responsibility** — one reason to change per unit. The test smell is the
+  giveaway: a unit whose spec needs two unrelated GIVENs is two units sharing a name.
+- **Open/closed** — behavior grows by *adding* a unit, not by editing a conditional
+  that grows a branch per case. A `switch` every new variant must revisit is the
+  violation; a registry, a strategy, a handler table is the shape of the fix.
+- **Liskov substitution** — whatever stands in for an abstraction honors its
+  contract: no strengthened preconditions, no weakened postconditions, no surprise
+  errors outside the declared set. This is the descriptor's `## Errors` discipline
+  applied inward — a substitute that throws what the contract never declared fails
+  callers the type system told to trust it.
+- **Interface segregation** — depend on the narrow contract actually used, never on a
+  wide surface for one method's sake. A test forced to stub ten members to exercise
+  one is this violation, measured.
+- **Dependency inversion** — business logic depends on abstractions it owns;
+  concretions (the store, the transport, the framework) are injected at the edges.
+  This is what makes the unit level of the test pyramid *possible*: a domain unit
+  that news up its own repository can only ever be tested through the database.
+
+They are judgment, not lint — which is exactly why they live here and in `review`
+Phase 1 rather than in a toolchain rule (SKILL.md Rule 3 cuts the other way for
+anything a machine *can* check). The active profile's `## Layering` is the
+stack-concrete realization of the same forces; where profile and principle seem to
+disagree, surface it — never quietly pick one.
 
 ## Non-negotiable authoring rules
 

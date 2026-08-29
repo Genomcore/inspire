@@ -227,8 +227,9 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
 
 ## References
 
-- [`references/tdd.md`](references/tdd.md) — test-first loop, GIVEN/WHEN/THEN, and
-  non-negotiable authoring rules (toolchain, error handling, dead code, TODOs).
+- [`references/tdd.md`](references/tdd.md) — test-first loop, GIVEN/WHEN/THEN, the
+  language-agnostic SOLID design principles, and non-negotiable authoring rules
+  (toolchain, error handling, dead code, TODOs).
 - [`references/review-dimensions.md`](references/review-dimensions.md) — the review
   phases + the fan-out dimensions and what each one checks.
 - [`references/fix-build.md`](references/fix-build.md) — build-error taxonomy + process.
