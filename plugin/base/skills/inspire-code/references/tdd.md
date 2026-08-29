@@ -47,7 +47,9 @@ The concrete commands and service names belong to the stack profile's
 1. **Clarify against the KB** — read the feature file and any action descriptor
    (`04_domain/{module}/{entity}/`) that specifies the behavior. Take the inputs,
    outputs and edge cases from the acceptance criteria and the descriptor's
-   contract. Do not invent behavior the KB doesn't state.
+   contract. Do not invent behavior the KB doesn't state. Read the `**State:**`
+   line while here — a feature still 🟡 Planned gets the In-progress offer
+   *before* the first test is written (see *The state ladder advances from here*).
 2. **Derive the test list, then write it as e2e** — the list is not invented, it is
    composed (see *The test list is derived* below). Write it at the **e2e level
    first**: the acceptance criteria describe what a caller observes, so that is the
@@ -76,7 +78,36 @@ The concrete commands and service names belong to the stack profile's
 
 Steps 1–5 prove the code does what the criteria say. Step 6 proves **no unit shipped
 untested**; step 7 proves the **tests would have caught it if the code were wrong** —
-the one thing a green suite cannot tell you about itself.
+the one thing a green suite cannot tell you about itself. With all three proven, the
+feature has earned its state advance — the closing offer below.
+
+## The state ladder advances from here
+
+The `**State:**` ladder (🟡 Planned → 🔵 In progress → 🟢 Implemented) is
+`/inspire-feature update`'s to write — but the moments it turns on are visible only
+from inside this cycle, so this skill **offers** the advance and never auto-writes
+it. Two moments, one offer each:
+
+- **Cycle start → 🔵 In progress.** At step 1, when the feature file still says
+  🟡 Planned, offer the advance before the first test is written. This is not
+  bookkeeping: `criteria-have-tests.sh` warns at 🟡 and blocks from 🔵 on, so a
+  feature implemented while still Planned runs the whole cycle with its gate
+  disarmed — exactly when the gate exists to act.
+- **Cycle close → 🟢 Implemented.** After step 7, when the suite is green, the
+  drill is clean, and `.inspire/bin/criteria-have-tests.sh
+  inspire_kb/03_features/{module}` reports no finding for this feature — every
+  criterion claimed by a `@covers` — offer the promotion. Promoting puts the
+  linked ADRs on the hook too: `adr-maturity-matches-features.sh` holds each ADR
+  a 🟢 feature cites to `implemented`, so the natural next offer is
+  `/inspire-adr` on any that still say `design`.
+
+On acceptance, chain into `/inspire-feature update {feature-id}` — the owning
+skill presents the one-line diff and stamps the write; this skill still never
+edits the KB. Declining is an answer, not an error: note it and move on. The
+offer matters most in bulk flows (a clean-room implementation pass after
+`/inspire-extract`), where no moment ever reads as "I am starting feature X now"
+and an entire implemented module otherwise sits at 🟡 until someone notices by
+hand.
 
 ## The test list is derived, not invented
 

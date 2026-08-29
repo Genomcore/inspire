@@ -212,7 +212,14 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
    discipline in
    [`_references/git-conventions.md`](../_references/git-conventions.md) (the
    project's `CLAUDE.md` overrides it).
-9. **Consult the task tracker** at the start of multi-step subcommands
+9. **The feature's `State:` advance is offered from here, written elsewhere.**
+   `tdd` offers — never auto-writes — the ladder's two moves at its cycle's edges:
+   🟡 → 🔵 when implementation starts, 🔵 → 🟢 when every criterion is claimed and
+   green ([`references/tdd.md`](references/tdd.md) § The state ladder advances from
+   here). On acceptance the write chains into `/inspire-feature update`, so Rule 1's
+   "never the KB" holds. The lifecycle gates key their severity to that line —
+   leaving it at 🟡 while implementing is running with the gates disarmed.
+10. **Consult the task tracker** at the start of multi-step subcommands
    (`/inspire-task list`). Surface known items as `(tracked: TASK-{id})`
    rather than re-reporting them as new. If a session surfaces friction worth
    capturing, offer a skill-feedback ticket (`epic: skill-feedback`,

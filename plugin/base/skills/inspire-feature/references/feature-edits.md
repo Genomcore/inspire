@@ -74,6 +74,18 @@ dependencies, promoting priority, changing state
    old ID and offer fixes.
 5. Run [`review {feature-id}`](feature-review.md) to verify no drift.
 
+**State advances usually arrive from the coding stage.** `/inspire-code tdd` offers
+the ladder's two moves at its cycle's edges — 🟡 → 🔵 when implementation starts,
+🔵 → 🟢 when every criterion is claimed by a green test — and chains here on
+acceptance: the offer is its, the write is this skill's. A state-only update is the
+minimal form of the flow above — read, one-line diff, apply and stamp; the AC gate
+does not run because no criterion changed. Step 5 is worth its cost on the 🔵 → 🟢
+promotion (that is the claim `adr-maturity-matches-features.sh` starts holding the
+feature to) and is noise on 🟡 → 🔵. The ladder moves one rung at a time; a
+demotion (a 🟢 that overclaimed) is a legitimate `update` too —
+`adr-maturity-matches-features.sh` names it as one of its two fixes — but it is
+the operator's to ask for, never an offer the coding stage makes.
+
 ## Subcommand: delete
 
 Remove a feature and clean up all references.
