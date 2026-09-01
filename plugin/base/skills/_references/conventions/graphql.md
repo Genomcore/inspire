@@ -151,9 +151,9 @@ it is a policy row too, not a derivation.
 Declared in the descriptor below `## Errors`, same form as the REST convention:
 
 ```markdown
-**Wire deviation:** `variant_not_found` is returned in `errors` with code
-`NOT_FOUND` rather than as a `null` field — the caller distinguishes "no such variant"
-from "variant with no current version", and a bare `null` collapses the two.
+**Wire deviation:** `document_not_found` is returned in `errors` with code
+`NOT_FOUND` rather than as a `null` field — the caller distinguishes "no such document"
+from "document with no current version", and a bare `null` collapses the two.
 ```
 
 A deviation without a reason is a finding, not a deviation.
