@@ -76,8 +76,10 @@ repo is both its source and its own marketplace.
         descriptors and acceptance criteria that specify it, and handing drift
         back to the specifying skills. Stack-agnostic, layering optional **stack
         profiles** (`inspire-code/profiles/`, resolved on demand from
-        `00_bootstrap/stack.md`) — the template ships lean `react` + `nestjs`
-        defaults; a project adds its own.
+        `00_bootstrap/stack.md`) — the template ships lean defaults (`react`,
+        `nestjs`, `angular`, `ios`, `android`), each keeping its deep material
+        in `profiles/{id}/references/` loaded only on need; a project adds its
+        own.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`

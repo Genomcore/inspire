@@ -121,7 +121,11 @@ owns the entity, never to the shared client's config.
   because it is small.
 - GIVEN/WHEN/THEN; use test-data builders so each test sets only the significant
   fields. Assert full response bodies and full persisted documents, built from the
-  domain entity — never compared against the value under test.
+  domain entity — never compared against the value under test. The fine-grained
+  authoring rules — expect grouping, stub-groups, typed auto-mocks, matcher
+  discipline, per-spec helpers — live in
+  [`nestjs/references/testing.md`](nestjs/references/testing.md) and apply to every
+  spec this profile governs.
 - **Layout:** e2e files in `test/{module}/` mirroring the KB's modules, cross-cutting
   probes (readiness, API-doc contract) in `test/platform/`, shared harness in
   `test/support/`. Unit specs stay colocated with the unit (`src/**/*.spec.ts`).
@@ -160,6 +164,10 @@ owns the entity, never to the shared client's config.
   contract when there are several. Never interface + string token + `@Inject`.
 - No ORM/DB technology in class names (`EmailTemplateRepository`, not
   `…MongooseRepository`).
+- **No silent domain mutations** — every meaningful create/update/delete emits the
+  project's typed audit event from the service layer (never the controller or
+  repository); operational logging is not a substitute. Scope and shape:
+  [`nestjs/references/coding-standards.md`](nestjs/references/coding-standards.md).
 
 ## Review focus
 - **api-contract**: request/response DTOs validate at the boundary
@@ -308,3 +316,24 @@ suite runs, never what it runs against.
   pointed at a shared instance.
 - Then run `npm run test:e2e` once. A connection error is **not** red; it is a suite that
   never ran.
+
+## References
+
+Deep material, read on demand — never load one whose topic the task does not touch:
+
+- [`nestjs/references/testing.md`](nestjs/references/testing.md) — the spec-authoring
+  conventions: GIVEN/WHEN/THEN grouping, stub-groups, typed auto-mocks, assertion
+  discipline, per-spec helpers, the general rules. Read before writing or modifying
+  any spec, mock, or assertion.
+- [`nestjs/references/db-assertions.md`](nestjs/references/db-assertions.md) — worked
+  e2e examples: read fixtures, domain→model/HTTP mappers, matcher helpers,
+  `expectXInDb`, create/unchanged cases. Read when asserting persisted state.
+- [`nestjs/references/error-assertions.md`](nestjs/references/error-assertions.md) —
+  `toStrictEqual` with cause, custom exceptions, nested causes, anti-patterns. Read
+  when asserting a throw or rejection.
+- [`nestjs/references/nock-helpers.md`](nestjs/references/nock-helpers.md) — the
+  static helper-class template for mocking external HTTP in e2e. Read when a test
+  touches an external API.
+- [`nestjs/references/coding-standards.md`](nestjs/references/coding-standards.md) —
+  the audit-event rule in full, and typed invariants (`NonEmptyArray` + assertion
+  functions). Read when writing a service mutation or a validated boundary.

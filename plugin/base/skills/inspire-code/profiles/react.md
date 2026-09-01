@@ -26,6 +26,10 @@ not the answer.
 - GIVEN/WHEN/THEN. **Mocks are centralized** (a `tests/**/mocks/` layer), never
   inline per-test; a test overrides only the fields it cares about.
 - Run: `npm run test` · `npm run test:e2e`.
+- The authoring detail — the GIVEN/WHEN/THEN comment discipline and the centralized
+  mock architecture with its extension steps — lives in
+  [`react/references/testing.md`](react/references/testing.md); read it before
+  writing or modifying any spec or mock.
 
 ## Forbidden patterns
 - **No business logic or data fetching in components** — push it to a hook /
@@ -65,3 +69,9 @@ package: `pnpm --filter {package} build|lint|test` (or the workspace tool's
 equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx test
 {package}`). Never run a workspace-wide install or build from a subcommand when a
 filtered form exists; a UI surface is verified by its own package going green.
+
+## References
+
+- [`react/references/testing.md`](react/references/testing.md) — the spec-authoring
+  detail: GIVEN/WHEN/THEN comment discipline, the centralized mock architecture and
+  how to extend it. Read before writing or modifying any spec or mock.

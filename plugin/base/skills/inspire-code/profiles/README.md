@@ -90,10 +90,14 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
   login" is org policy and belongs in the project's `CLAUDE.md`, not here.
 - **No product vocabulary.** A profile that a different React project could not
   reuse verbatim has leaked something that isn't a framework convention.
-- **The template ships lean defaults** (`react`, `nestjs`) matching the seeded
-  reference stack; a project adds or replaces profiles for its own frameworks by
-  dropping `profiles/{id}.md` here — inside the runtime, at
-  `.claude/skills/inspire-code/profiles/`.
+- **The template ships lean defaults** — `react` and `nestjs`, matching the seeded
+  reference stack, plus `angular`, `ios` and `android` (the last two mostly
+  deferrals with real test conventions); a project adds or replaces profiles for
+  its own frameworks by dropping `profiles/{id}.md` here — inside the runtime, at
+  `.claude/skills/inspire-code/profiles/`. A profile keeps its deep material in
+  `profiles/{id}/references/`, linked from its `## References` section — the
+  profile file itself stays lean and loads whenever its stack is active; a
+  reference loads only when the task touches its topic.
 
 > **A profile you author here survives `/inspire:update`.** This directory sits
 > inside a skill directory INSPIRE owns, but an update classifies content against

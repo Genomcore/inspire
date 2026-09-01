@@ -236,7 +236,8 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
 - [`references/fix-vulns.md`](references/fix-vulns.md) — npm vulnerability workflow.
 - [`references/debug.md`](references/debug.md) — the 6-step root-cause framework.
 - [`profiles/README.md`](profiles/README.md) — the stack-profile contract; the
-  lean default profiles (`react`, `nestjs`) live beside it.
+  lean default profiles (`react`, `nestjs`, `angular`, `ios`, `android`) live
+  beside it, each with its deep material under `profiles/{id}/references/`.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
 - [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer
