@@ -29,6 +29,17 @@ Score the source and the KB current on the same axes, then compare.
 | Production infra (Dockerfile, CI, migrations, env config) | none, or `create-*-app` defaults untouched |
 | Load-bearing choices made deliberately (DB, framework, runtime) | placeholder/in-memory store, "TODO pick a DB" |
 | Consistent across the repo | mixed experiments, dead alternatives side by side |
+| Real quality gates wired (strict lint set, coverage threshold, CI running them) | defaults untouched, or a config nothing enforces |
+
+**Quality gates are the one part of `stack.md` that migrates upward by default.** A
+source's installed gates are evidence, not opinion — they are in its `eslint.config` /
+CI and the code already satisfies them. So when the source enforces something the KB's
+`## Quality gates` does not, **recommend migrating the gate** even where the overall
+verdict for `stack.md` is *keep local*, and record what the existing code already
+passes: that number is the ratchet's starting baseline, and it is only measurable
+before the migration touches anything. Gates the source is **missing** are not a
+finding against it — they enter as the target with a cleanup ticket, per
+[`_references/quality-gates.md`](../../_references/quality-gates.md) Rule 2.
 
 **Theme (`theme.md` / live `design-system.md`):**
 
@@ -46,17 +57,17 @@ Remember: the **live** design system is `05_screens/design-system.md` (seeded fr
 
 | Source vs KB | Recommendation |
 |--------------|----------------|
-| Source clearly more elaborated **and** production-real | **Recommend migrate.** Present the diff; on approval, route through `/inspire_bootstrap stack` / `theme` (or `/inspire_screens design-system` for the live one). |
+| Source clearly more elaborated **and** production-real | **Recommend migrate.** Present the diff; on approval, route through `/inspire-bootstrap stack` / `theme` (or `/inspire-screens design-system` for the live one). |
 | Comparable | **Keep local.** Note any *specific* concrete detail worth lifting (a pinned version, one status color) as an à-la-carte suggestion — not a wholesale swap. |
 | Source less elaborated (prototype/spike) | **Keep local, don't migrate.** Say so plainly: the source is a scaffold, not a decision. |
 | KB is still the seeded default, source is real | **Recommend migrate** — the default was a placeholder; the source reflects an actual product. |
 
 ## Load-bearing changes are ADRs
 
-Per `/inspire_bootstrap`'s rules, **replacing a load-bearing choice** — a framework,
+Per `/inspire-bootstrap`'s rules, **replacing a load-bearing choice** — a framework,
 the runtime, the primary database, or the primary color — is an architectural
 decision. If a recommended migration touches one, surface it and offer to chain
-`/inspire_workspace adr create` to record the decision, rather than editing
+`/inspire-workspace adr create` to record the decision, rather than editing
 `stack.md` / `theme.md` silently. Adding an incidental tool is a plain edit.
 
 ## Output
@@ -75,6 +86,6 @@ elaborated — no migration.
 ### design-system.md — recommend: migrate (needs ADR)
 Source carries a full token system (primary/accent/status roles, type scale,
 density) vs the KB's seeded default. More elaborated and production-real. The
-primary color change is load-bearing → chain `/inspire_workspace adr create`
-before applying via `/inspire_screens design-system`.
+primary color change is load-bearing → chain `/inspire-workspace adr create`
+before applying via `/inspire-screens design-system`.
 ```

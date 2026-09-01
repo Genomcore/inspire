@@ -32,7 +32,7 @@
   into the one file as a named variant section (see the `design-system` flow in
   [`../SKILL.md`](../SKILL.md) § Subcommand: design-system).
 - If `inspire_kb/00_bootstrap/surfaces.md` exists, the roster's own coherence is
-  `/inspire_surface review`'s check, not this one — point there rather than
+  `/inspire-surface review`'s check, not this one — point there rather than
   duplicating it.
 - Flag any stack layer still on the seeded default when the project has clearly
   moved past it.

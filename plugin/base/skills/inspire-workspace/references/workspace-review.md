@@ -18,7 +18,7 @@
   the roster, or to `all`. An unknown id is critical — it scopes the artifact to
   nothing. An **absent** field is never a finding: it means suite-wide. With no roster
   the check is vacuous, since a suite of one has no ids to resolve against.
-  (`/inspire_surface review` runs the same check roster-side; here it is part of the
+  (`/inspire-surface review` runs the same check roster-side; here it is part of the
   pre-merge gate, over every artifact in scope.)
 - **No undocumented circular dependencies.**
 
@@ -48,7 +48,7 @@
   directory is a **pre-split leftover** in either of its instances: the whole tree
   still flat, or one flat directory sitting beside surface trees. Name the instance
   and hand the roster-side diagnosis and the corrective sweep to
-  [`/inspire_surface review`](../../inspire-surface/SKILL.md) (its
+  [`/inspire-surface review`](../../inspire-surface/SKILL.md) (its
   pre-split-leftover check); this phase reports, it does not re-derive the fix.
   The check lives here because this is the only pass that walks the whole screens
   tree — a module review sees one module's directory.
@@ -87,7 +87,7 @@
 - **Design-system variance signal.** Report how many per-surface variant sections
   `05_screens/design-system.md` carries and how much of the file they occupy. Those
   sections are defined by
-  [`/inspire_bootstrap design-system`](../../inspire-bootstrap/SKILL.md), which allows
+  [`/inspire-bootstrap design-system`](../../inspire-bootstrap/SKILL.md), which allows
   them deliberately and expects them to stay rare; a count that keeps climbing is the
   early shape of a design system splitting in place, which is why it is worth
   counting. It is a **signal, not a finding**, and is treated as every signal is —

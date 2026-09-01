@@ -107,6 +107,6 @@ Reviews ALL features of a module in parallel.
 ### Critical / Important / Minor
 
 ## Correction Plan
-1. `/inspire_screens` — Add screens for: {list}
-2. `/inspire_prototype` — Adopt components for: {list}
+1. `/inspire-screens` — Add screens for: {list}
+2. `/inspire-prototype` — Adopt components for: {list}
 ```

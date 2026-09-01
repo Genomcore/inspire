@@ -14,7 +14,7 @@ the project wins.
 - Name by kind + short hyphenated summary: `feature/…`, `bugfix/…`, `hotfix/…`.
   Where the project tracks work in tickets, include the id
   (`feature/{ticket}_{summary}`) — in INSPIRE that is a `TASK-{id}`
-  ([`/inspire_task`](../inspire-task/SKILL.md)) or the project's
+  ([`/inspire-task`](../inspire-task/SKILL.md)) or the project's
   external tracker id. Never invent a ticket id.
 - A branch's upstream should be its **own** remote counterpart
   (`origin/<branch>`), not the base it was cut from — otherwise status counters

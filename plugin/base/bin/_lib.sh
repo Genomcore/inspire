@@ -14,6 +14,59 @@ set -uo pipefail
 # exactly what it has always been: the root of the `04_domain` tree.
 SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-inspire_kb/04_domain}"
 
+# The features layer sits beside the spec layer in the same knowledge base, so it is
+# derived rather than configured twice — a fixture that redirects SDD_SPEC_ROOT gets
+# the matching features root for free. Override explicitly when they are not siblings.
+SDD_FEATURES_ROOT="${SDD_FEATURES_ROOT:-$(dirname "$SDD_SPEC_ROOT")/03_features}"
+
+# Same derivation, same reason: the decision layer is a sibling of the spec layer.
+SDD_ADR_ROOT="${SDD_ADR_ROOT:-$(dirname "$SDD_SPEC_ROOT")/01_adr}"
+
+# ...and the foundation layer, where the stack declares which profiles are resolved.
+SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$(dirname "$SDD_SPEC_ROOT")/00_bootstrap}"
+
+# Where the product's code lives. Resolution order: the env var, then the project's own
+# declaration (`source_root:` in stack.md's frontmatter — a brownfield install sets it
+# to "." there, and nothing else would ever tell these rules about it), then the
+# greenfield default. Without the stack.md step, every source-reading gate on a
+# brownfield project would look for a `source/` that does not exist, see zero test
+# files, and quietly pass — enforced-looking and inert.
+_sdd_stack_source_root() {
+  local stack="$(dirname "$SDD_SPEC_ROOT")/00_bootstrap/stack.md"
+  [ -f "$stack" ] || return 0
+  awk '
+    NR == 1 && $0 != "---" { exit }
+    NR > 1 && $0 == "---" { exit }
+    /^source_root:/ {
+      sub(/^source_root:[[:space:]]*/, "")
+      sub(/[[:space:]]*#.*$/, "")
+      gsub(/^[[:space:]"]+|[[:space:]"]+$/, "")
+      print
+      exit
+    }
+  ' "$stack"
+}
+if [ -z "${SDD_SOURCE_ROOT:-}" ]; then
+  SDD_SOURCE_ROOT="$(_sdd_stack_source_root)"
+fi
+SDD_SOURCE_ROOT="${SDD_SOURCE_ROOT:-source}"
+
+# Where the stack profiles live. Part of the runtime rather than the KB, so NOT derived
+# from the spec root — a fixture redirecting SDD_SPEC_ROOT must still be able to point
+# at its own profile tree.
+SDD_PROFILES_ROOT="${SDD_PROFILES_ROOT:-.claude/skills/inspire-code/profiles}"
+
+# Where the product's tests live, and what a test file is called. Shared by every rule
+# that checks a KB claim against the tests, so the two cannot drift apart. The scope is
+# derived from the source root — tests live in the product code — so a project that moves
+# its source root moves this with it; override explicitly when the tests live elsewhere.
+#
+# The hyphen forms are NOT redundant: `*.spec.*` does not match `create.e2e-spec.ts`,
+# the NestJS e2e convention. Omitting them makes a rule silently see zero test files and
+# report everything as untested.
+SDD_TEST_SCOPE="${SDD_TEST_SCOPE:-$SDD_SOURCE_ROOT}"
+SDD_TEST_GLOBS="${SDD_TEST_GLOBS:-*.spec.* *-spec.* *.test.* *-test.* *_test.* test_*.*}"
+
 # The KB root — the scope of the KB-wide rules (the ones that check features,
 # ADRs and screens as well as domain files). Kept separate from
 # SDD_SPEC_ROOT so that a domain-scoped run stays domain-scoped.
@@ -32,6 +85,64 @@ sdd_require_tools() {
     echo "       install via: brew install ${missing[*]}" >&2
     return 127
   fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Test-file discovery
+#
+# Prints one test file path per line, or nothing when the scope does not exist.
+# node_modules / dist are excluded — a vendored fixture must never satisfy a gate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+sdd_find_test_files() {
+  local scope="${1:-$SDD_TEST_SCOPE}"
+  [ -d "$scope" ] || return 0
+  local globs=() g
+  read -r -a globs <<< "$SDD_TEST_GLOBS"
+  local args=()
+  for g in "${globs[@]}"; do
+    [ -z "$g" ] && continue
+    [ ${#args[@]} -gt 0 ] && args+=(-o)
+    args+=(-name "$g")
+  done
+  [ ${#args[@]} -eq 0 ] && return 0
+  find "$scope" -type f \( "${args[@]}" \) 2>/dev/null \
+    | grep -v '/node_modules/' | grep -v '/dist/' | sort
+}
+
+# sdd_literal_in_tests <needle> <test-file-list-path>
+#   True when the needle appears verbatim in any listed test file. Deliberately a
+#   literal match: the conventions require a test to assert the exact code / id, so
+#   the only way to satisfy this is to put it there.
+sdd_literal_in_tests() {
+  local needle="$1" list="$2"
+  [ -s "$list" ] || return 1
+  tr '\n' '\0' < "$list" | xargs -0 grep -qlF -- "$needle" 2>/dev/null
+}
+
+# sdd_covers_in_tests <id> <test-file-list-path>
+#   True when a test file carries an `@covers` annotation naming this id.
+#
+#   Two things a plain substring search gets wrong, both of which matter:
+#   - **Boundary, on BOTH sides.** `ANL-02/AC-1` is a substring of `ANL-02/AC-10`, so a
+#     feature with ten criteria would report criterion 1 as covered by criterion 10's
+#     test; and `user/AC-1` is a suffix of `admin-user/AC-1`, so a feature whose stem is
+#     a suffix of another's would be covered by the other's test. The id must be
+#     preceded AND followed by a non-id character (or end of line) — a space always
+#     follows `@covers`, so the left boundary always has a character to match.
+#   - **Intent.** A bare id loose in a comment, or copied in a fixture, would satisfy a
+#     substring match. Requiring `@covers` makes the annotation deliberate and
+#     self-describing — the reason it can live in a comment instead of the test name.
+sdd_covers_in_tests() {
+  local id="$1" list="$2"
+  [ -s "$list" ] || return 1
+  # `.` is the only regex metacharacter an id may contain — an id is a feature-file
+  # stem plus `/AC-n`, and stems stay within `[A-Za-z0-9._-]`; escape it. A stem
+  # outside that set would corrupt this ERE, which is a stated assumption, not
+  # handled input.
+  local pattern="${id//./\\.}"
+  tr '\n' '\0' < "$list" \
+    | xargs -0 grep -qlE -- "@covers.*[^A-Za-z0-9._-]${pattern}([^A-Za-z0-9._-]|$)" 2>/dev/null
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ name: inspire-surface
 description: "Manage the suite's surface roster and its lifecycle: add a surface (greenfield / split out of an existing one / adopt a joining codebase), retire one, or review the roster for coherence. Owns inspire_kb/00_bootstrap/surfaces.md. Use when the product grows a second app, an admin console, a service or a shared package; when a surface is being wound down; or when checking that surface ids, packages, shells and the screens tree still agree."
 ---
 
-# /inspire_surface — Surface roster and lifecycle
+# /inspire-surface — Surface roster and lifecycle
 
 ## Scope
 
@@ -45,9 +45,9 @@ What this skill does **not** own:
 
 ## Invocation
 
-- `/inspire_surface add` — declare a new surface (greenfield · split · adopt)
-- `/inspire_surface retire {surface}` — wind a surface down and unpick its scope
-- `/inspire_surface review` — roster coherence (read-only)
+- `/inspire-surface add` — declare a new surface (greenfield · split · adopt)
+- `/inspire-surface retire {surface}` — wind a surface down and unpick its scope
+- `/inspire-surface review` — roster coherence (read-only)
 
 ## Subcommand: add
 
@@ -77,11 +77,11 @@ screens split** (below). Which `add` came first has no bearing on it.
 3. **Record it** — append the body section and add the id to the frontmatter
    `surfaces:` list in the same write. The two must never disagree, not even
    between two edits.
-4. **UI surfaces get a shell** — hand off to `/inspire_prototype` to scaffold a
+4. **UI surfaces get a shell** — hand off to `/inspire-prototype` to scaffold a
    shell at the recorded prefix, behind the suite landing. Screens accrue normally
-   afterwards through `/inspire_screens`; `add` creates no screen files.
+   afterwards through `/inspire-screens`; `add` creates no screen files.
 5. **Propose an ADR** carrying `surfaces: all` — a suite-shape change is
-   system-wide by construction. Offer `/inspire_adr`; the operator may decline, and
+   system-wide by construction. Offer `/inspire-adr`; the operator may decline, and
    the roster entry stands either way.
 
 `add` only **records** the `Package` path. It does not create the directory,
@@ -97,7 +97,7 @@ growing out of the main UI. The roster entry is cheap; the sweep is the work.
    artifacts *against* an id, so the id must exist.
 2. **Sweep** every screen spec, feature and ADR whose content or blast radius
    touches the moving concern, and present the whole set as **one batch** — the
-   same pattern as `/inspire_module scan`, not a prompt per artifact.
+   same pattern as `/inspire-module scan`, not a prompt per artifact.
 3. **The operator classifies each entry**: *stays* · *moves* · *both*.
 4. **Only then, perform** the classified result:
    - screens marked *moves* go to `05_screens/{surface}/{module}/`; *both* goes to
@@ -107,7 +107,7 @@ growing out of the main UI. The roster entry is cheap; the sweep is the work.
      incumbent's tree rather than staying flat. Otherwise they are untouched.
    - re-prefix the `**Target:**` routes in every moved screen spec, and the
      corresponding routes in the prototype shells, to the new shell prefix.
-   - hand `/inspire_feature` the list of features that now need per-surface
+   - hand `/inspire-feature` the list of features that now need per-surface
      coverage rows.
    - ADRs take their classification as their `surfaces:` value.
 5. **Propose the ADR** (`surfaces: all`), as in greenfield.
@@ -120,7 +120,7 @@ growing out of the main UI. The roster entry is cheap; the sweep is the work.
 
 An existing codebase joins the suite as a surface.
 
-1. **Delegate the reading to `/inspire_extract`**, scoped to that codebase's path.
+1. **Delegate the reading to `/inspire-extract`**, scoped to that codebase's path.
    Extract owns brownfield analysis; this skill does not re-implement scanners.
 2. **Consume its surface candidates back into `add`** — each candidate is a
    proposal, not a fact. It becomes a greenfield interview (steps 1–3) with the
@@ -182,7 +182,7 @@ thing. It may never delete an artifact on the operator's behalf.
    resolve while the sweep runs.
 5. **Surface the consequences.** If the retire drops the suite to a single UI
    surface, the screens tree shape the roster now implies has changed — say so and
-   hand the reshaping to `/inspire_screens`. Never collapse the tree as a side
+   hand the reshaping to `/inspire-screens`. Never collapse the tree as a side
    effect. Retiring back to one surface does not delete the roster.
 6. **Propose an ADR** carrying `surfaces: all`.
 
@@ -231,7 +231,7 @@ Render findings in the shared operator-facing format from
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -263,14 +263,14 @@ Render findings in the shared operator-facing format from
 
 ## Related skills
 
-- `/inspire_screens` — owns the screens tree day to day; receives the reshaping
+- `/inspire-screens` — owns the screens tree day to day; receives the reshaping
   work this skill's sweeps surface.
-- `/inspire_prototype` — one shell per UI surface, behind the suite landing.
-- `/inspire_extract` — reads a joining codebase and emits the surface candidates
+- `/inspire-prototype` — one shell per UI surface, behind the suite landing.
+- `/inspire-extract` — reads a joining codebase and emits the surface candidates
   the *adopt* arrival consumes.
-- `/inspire_code` — resolves a surface's package and profiles from the roster and
+- `/inspire-code` — resolves a surface's package and profiles from the roster and
   scaffolds the package on first emanation.
-- `/inspire_bootstrap` — the shape interview ("one surface or several?") delegates
+- `/inspire-bootstrap` — the shape interview ("one surface or several?") delegates
   each declaration here.
-- `/inspire_workspace` — the global pre-PR review; checks that every `surfaces:`
+- `/inspire-workspace` — the global pre-PR review; checks that every `surfaces:`
   value resolves and reports per-surface health.

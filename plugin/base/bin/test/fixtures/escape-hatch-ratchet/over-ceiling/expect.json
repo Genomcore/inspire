@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "escape-hatch-ratchet", "message_substring": "exceed the ceiling of 1" }
+  ]
+}

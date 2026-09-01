@@ -43,7 +43,7 @@ At the start of any subcommand, `inspire-code` resolves the active profile set f
 [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
-   use that set. `/inspire_bootstrap stack` maintains this line.
+   use that set. `/inspire-bootstrap stack` maintains this line.
 2. **Inference fallback** — otherwise infer from the stack sections
    (`## Frontend: React` → `react`; `## Backend: NestJS` → `nestjs`; …).
 
@@ -51,7 +51,7 @@ Then read **only** `profiles/{id}.md` for each resolved id, **plus the language
 profile each resolved framework profile names** in its `language:` field. A
 framework the project does not use never loads. If a declared framework has no
 profile file, the subcommand runs **purely generic** and says so — offering
-`/inspire_bootstrap` to scaffold one. Missing profiles never block.
+`/inspire-bootstrap` to scaffold one. Missing profiles never block.
 
 Profiles are **composable**: a React + NestJS monorepo loads both, and each
 subcommand applies whichever profile owns the layer it is working in — or, when a
@@ -89,7 +89,10 @@ language: <language id>    # the language profile this one composes with
 ---
 
 ## Layering
-Where each kind of code lives; the architectural shape. Feeds review Phase 1
+Where each kind of code lives; the architectural shape. Must also answer the
+module-boundary questions: what a module exposes to its siblings, and where code
+shared across modules (an external system's client and its generic helpers) lives —
+decided at first use, never deferred to the second consumer. Feeds review Phase 1
 (architecture) and the implementation shape in `tdd`.
 
 ## Test conventions
@@ -103,6 +106,14 @@ and the authoring rules in `tdd`.
 ## Review focus
 Extra dimensions `review` adds to its fan-out for this stack (e.g. api-contract,
 styling, a11y, security). Each is a lens name + one line of what it hunts for.
+
+## Quality gates
+The concrete tools and rules that mechanically enforce this stack's share of
+[`_references/quality-gates.md`](../../_references/quality-gates.md): which lint
+rules, which coverage tooling, which of them are absolute vs ratcheted, and which
+suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+this stack is listed as **dropped with its reason**, never left out silently. Names
+tools and rules only — never an org's server or pipeline.
 
 ## Build & verify
 The concrete lint / type-check / build / test commands. `fix-build`, `review`, and
@@ -169,6 +180,7 @@ architecture, and architecture is the framework profile's.
 | `## Test conventions` | framework | the tester — **including the test paths harvest accepts** · the quality overseer |
 | `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
+| `## Quality gates` | framework | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |
 | `## Build & verify` | framework | `fix-build` · `review` build step · `debug` |
 | `## Bindings` | framework | the contracter (emitted surface) · derived binding claims · `emanate gate` |
 | `## Routes` | framework (UI) | the contracter (route table) · screen nav claims |
@@ -202,11 +214,15 @@ update **asks**. It never silently replaces an edited profile.
   login" is org policy and belongs in the project's `CLAUDE.md`, not here.
 - **No product vocabulary.** A profile that a different React project could not
   reuse verbatim has leaked something that isn't a framework convention.
-- **The template ships lean defaults** — the framework profiles `react` and `nestjs`
-  plus the language profile `typescript` — matching the seeded reference stack; a
-  project adds or replaces profiles for its own frameworks and languages by dropping
-  `profiles/{id}.md` here — inside the runtime, at
-  `.claude/skills/inspire-code/profiles/`.
+- **The template ships lean defaults** — the framework profiles `react` and `nestjs`,
+  matching the seeded reference stack, plus `angular`, `ios` and `android` (the last
+  two mostly deferrals with real test conventions), and the language profile
+  `typescript`; a project adds or replaces profiles for its own frameworks and
+  languages by dropping `profiles/{id}.md` here — inside the runtime, at
+  `.claude/skills/inspire-code/profiles/`. A profile keeps its deep material in
+  `profiles/{id}/references/`, linked from its `## References` section — the profile
+  file itself stays lean and loads whenever its stack is active; a reference loads
+  only when the task touches its topic.
 - **A language profile stays language-wide.** If a rule only holds for one framework
   on that language, it belongs in the framework profile: two frameworks sharing a
   language must both be able to read every line of it.

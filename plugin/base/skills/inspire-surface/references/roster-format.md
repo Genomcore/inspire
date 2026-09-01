@@ -1,7 +1,7 @@
 # Surface roster — on-disk format
 
 The roster is a single file, `inspire_kb/00_bootstrap/surfaces.md`, authored by
-`/inspire_surface` and by nothing else. When it comes into existence, and what its
+`/inspire-surface` and by nothing else. When it comes into existence, and what its
 absence declares, are in
 [`surface-scope.md`](../../_references/surface-scope.md).
 
@@ -59,7 +59,7 @@ surfaces: [portal, admin, api, ui-kit]
 **`surfaces:` MUST mirror the `##` headings** — same ids, nothing extra, nothing
 missing. The session-start hook and any other machine reader take the frontmatter
 list and never parse the body, so a drifted list is wrong in a way nothing else
-notices. `/inspire_surface review` checks this first.
+notices. `/inspire-surface review` checks this first.
 
 ## Body — one `##` section per surface
 

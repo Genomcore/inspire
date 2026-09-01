@@ -10,8 +10,8 @@ Two consumers wrap this library:
   via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
   `git commit`, `pre-pr.sh` on `gh pr create`.
 - **Skills** invoke them via the `Bash` tool inside conversational
-  sessions. `/inspire_domain review` for read-only checks;
-  `/inspire_domain promote` uses the write-test-revert pattern against
+  sessions. `/inspire-domain review` for read-only checks;
+  `/inspire-domain promote` uses the write-test-revert pattern against
   `review.sh` to validate lifecycle transitions.
 
 ## Prerequisites
@@ -76,6 +76,38 @@ not: table cells are never read, prose above the first H2 is never read, and the
 per-field `### {field}` prose inside `## Fields` inherits its parent's tabular
 kind.
 
+### Source-code gates — the rules that do not read the KB alone
+
+| Script | Checks | Notes |
+|---|---|---|
+| `escape-hatch-ratchet.sh` | The count of deliberate rule suppressions in the product code may fall, never rise. Per-pattern ceilings from `.escape-hatches.json`; `--update` can only lower them. | Reads `source/`, **not** `inspire_kb/`. Deliberately **absent from `review.sh`'s default rule list** — `/inspire-domain review` is a KB review and must not start judging product code. Invoked directly by `pre-commit.sh`, `pre-pr.sh` and `/inspire-code review`. |
+| `declared-errors-tested.sh` | Every error an action declares in `## Errors` appears as a literal in a test file. | Reads both the KB and `source/`. Lifecycle-progressive: warning at `draft` (TDD writes the spec first), error at `accepted`+, skipped at `superseded`. Also absent from the default list, for the same reason. Wired into `pre-pr.sh`. |
+| `criteria-have-tests.sh` | Every acceptance criterion carries a **stable id**, claimed by a test through `/** @covers {feature}/AC-{n} */` — qualified by the owning feature's filename stem; a bare `AC-{n}` never matches. | The larger half of "nothing untested" — errors are the small half. The id lives in an annotation, never in the test name, so CI output stays readable. Two findings: `carries no id` (untraceable by construction, so reported even when tests exist) and `is claimed by no test`. Severity from the feature's `**State:**`: warning at 🟡 Planned, error at 🔵 In progress and 🟢 Implemented. Wired into `pre-pr.sh`. |
+
+Test-file discovery for both is in `_lib.sh` (`sdd_find_test_files`, `sdd_literal_in_tests`,
+`sdd_covers_in_tests`, `SDD_TEST_SCOPE`, `SDD_TEST_GLOBS`) rather than duplicated per rule —
+the two gates must agree on what a test file *is*, and the glob set already had one
+silent-miss bug in it. Where the product code lives resolves in `_lib.sh` too:
+`$SDD_SOURCE_ROOT` if set, else the `source_root:` frontmatter of
+`00_bootstrap/stack.md` (a brownfield install sets `.` there), else `source/` — so a
+project whose code is not at `source/` gets these gates pointed at the right tree
+without any per-hook plumbing.
+
+These three source-code gates are **tools with a verdict**, in the sense `trust.sh` below is a tool without
+one: they emit findings and can block, but they sit outside `review.sh`'s default rules
+because everything else here validates the knowledge base and these validate the code the
+knowledge base produced. They are stack-agnostic — every pattern and every ceiling comes
+from the project's config, so the runtime never hardcodes one language's suppression
+syntax. Rationale and the ceiling-in-repo exception:
+`.claude/skills/_references/quality-gates.md` Rule 4.
+
+### Gates over the KB's own claims
+
+| Script | Checks | Notes |
+|---|---|---|
+| `adr-maturity-matches-features.sh` | Every ADR a 🟢 Implemented feature links to is itself at `implemented`. | The decision layer was the only KB layer no rule read. One-directional, like `touched-entity-lifecycle.sh`: it walks features and never walks ADRs demanding features. Only 🟢 features are checked — at 🟡/🔵 a `design`-stage ADR is the ladder working. Findings are grouped per ADR, since the fix is a single `promote` however many features cite it. Takes the **features** root, so it is absent from `review.sh`'s default list, which passes the spec root. |
+| `profile-gates-installed.sh` | Every quality gate a resolved stack profile **declares** in its `gates:` frontmatter is present in the project's config (or absent, where the profile rejects it). | The gate that guards the gates. Reads the frontmatter, never the `## Quality gates` prose: that prose deliberately names rules the stack **rejects**, so scraping it would demand what the reasoning refuses. Cannot see a rule that is present but switched `off` — stated in its header rather than implied. Wired into `pre-pr.sh`. |
+
 ### Library
 
 | Script | Purpose | When it runs |
@@ -83,7 +115,7 @@ kind.
 | `review.sh` | Composite check — orchestrates the rule scripts; aggregates findings. | `pre-commit.sh` hook on `git commit`, `pre-pr.sh` hook on `gh pr create`, the `review` skill subcommands, and the `promote` skill subcommands (write-test-revert). |
 | `_lib.sh` | Shared helpers (frontmatter parsing, body-section parsing, wikilink unwrapping, severity calculation, finding emission). Sourced by other scripts. | (library — not invoked directly) |
 | `_keyed-heads.sh` | Shared readers for the keyed-entry grammar the domain and feature formats use — entry parsing, the five closed vocabularies, head validation, `Constraints:` lines, comment stripping. Sourced by `keys-present.sh`, `constraints-mechanics.sh` and `head-referents.sh` so the three cannot drift on what a key or a head is. Deliberately absent from `DEFAULT_RULES`. | (library — not invoked directly) |
-| `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire_workspace review` and the `/inspire:update` tail. |
+| `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire-workspace review` and the `/inspire:update` tail. |
 | `emanate-harvest.sh` | **A tool, not a review rule.** Worktree diff → integration-branch commit (the emanation loop's harvest step, D4/D8): diffs a phase worktree against an integration branch since their common cut point, accepts only the phase's owned git pathspecs into one commit, refuses on conflict or an empty owned diff, and discards the worktree on request. Pure git plumbing — the integration branch is never checked out, and `--mode plan`/`--dry-run` writes no ref, reflog entry or index. It emits no findings and is deliberately absent from `review.sh`'s `DEFAULT_RULES`. Needs `jq` (for its JSON summary) and does not source `_lib.sh`. | The `emanate run` orchestrator's harvest step, once per phase per unit. |
 | `emanate-derive.sh` | **A tool, not a review rule.** One unit's KB artifacts → the **derived contract** on stdout as JSON (D5/D7/D8): `emanate-derive.sh <entity\|action\|screen> <id>` (or `--file <path>`) emits inputs with resolved semantic types, outputs, errors, `requires:` edges, invariants, bindings and every claim the unit makes as a keyed id plus a content fingerprint. **Strict**: an old shape is a derivation *error* naming the skill to touch the artifact with (exit 4, every class found, never the first) rather than a silently-empty section — and it refuses on a class whatever severity review reported it at, which is where the 0.8 grace on the presence classes is paid for. It re-implements no check: each `OS-*` class is verified by running the rule that owns it and reading its findings back. Writes nothing at all. Absent from `DEFAULT_RULES`. Shape, claim ids, fingerprint rule and the `DR-*` classes: [`derived-contract.md`](../skills/_references/derived-contract.md). | `emanate plan`'s readiness pass, `emanate gate`'s coverage pass, and the contracter agent, once per unit. |
 | `emanate-plan.sh` | **A tool, not a review rule.** One scope's **emanation plan** on stdout as JSON (D5/D8/D10/D11): the frontier snapshot (every unit at `lifecycle: accepted`), its dependency waves, the floor those waves imply, and every readiness answer the orchestrator needs before the first worktree exists. It **composes on derive** — one `emanate-derive.sh` run per frontier unit, read from stdout and never from stderr — so an old shape arrives as a `PR-01` finding rather than being re-detected. Ordering edges are `requires[]` minus navigation (a route reference, not a build-time dependency) and minus patterns and components (readiness checks, never constraints); Kahn over the rest gives the waves. Refuses in two tiers (`PR-10` · `PR-12` · `PR-13`, then `PR-11`) rather than plan a vault it cannot plan. **Writes nothing at all** — not `.inspire/last-emanation.log` either. Absent from `DEFAULT_RULES`. Shape, exit codes, the `PR-*` catalogue and the wave algorithm: [`emanation-plan.md`](../skills/_references/emanation-plan.md). | `emanate run`'s readiness pass at t=0, and an operator asking what a scope would deliver. |

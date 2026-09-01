@@ -3,7 +3,7 @@ name: inspire-bootstrap
 description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md template in inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
 ---
 
-# /inspire_bootstrap — Foundation (language + stack + theme)
+# /inspire-bootstrap — Foundation (language + stack + theme)
 
 ## Scope
 
@@ -48,14 +48,14 @@ stub with the project name, purpose and stack marked as placeholders; this skill
 
 ## Invocation
 
-- `/inspire_bootstrap init` — first-time setup: establish `project.md` (language),
+- `/inspire-bootstrap init` — first-time setup: establish `project.md` (language),
   `stack.md` + `theme.md`, and create the project's root `README.md`
-- `/inspire_bootstrap language` — set the output language artifacts are written in
-- `/inspire_bootstrap stack` — define / update the tech stack
-- `/inspire_bootstrap theme` — define / update the design-system default (`theme.md`)
-- `/inspire_bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md`)
-- `/inspire_bootstrap readme` — create / update the project's root `README.md`
-- `/inspire_bootstrap review` — check the artifacts exist and stay coherent
+- `/inspire-bootstrap language` — set the output language artifacts are written in
+- `/inspire-bootstrap stack` — define / update the tech stack
+- `/inspire-bootstrap theme` — define / update the design-system default (`theme.md`)
+- `/inspire-bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md`)
+- `/inspire-bootstrap readme` — create / update the project's root `README.md`
+- `/inspire-bootstrap review` — check the artifacts exist and stay coherent
 
 ## Subcommand: init
 
@@ -90,7 +90,7 @@ at least the stack.
    the README or any artifact.
 
 Confirm the outcome and point the operator at the next layer (usually
-`/inspire_module create` for the first module).
+`/inspire-module create` for the first module).
 
 ## Flows in `references/`
 
@@ -120,7 +120,7 @@ copy — they may diverge.
 2. Establish/confirm the change (a token value, the type scale, density, a new
    status key, a layout rule). Present a diff; apply on approval.
 3. **Propagate.** A token change ripples to every screen and to the prototype —
-   surface it (offer `/inspire_prototype`); screens must not hard-code values that
+   surface it (offer `/inspire-prototype`); screens must not hard-code values that
    belong here.
 4. **One design system for the whole suite.** There is exactly one
    `design-system.md`, sitting above the surface trees, whatever the roster says.
@@ -133,7 +133,7 @@ copy — they may diverge.
      **named variant axes this file defines and a surface selects**, written as
      clearly-marked per-surface sections *inside* it (e.g. `## Density — mobile`),
      the way mature systems handle density and dark mode. Rare, visible and
-     countable — `/inspire_workspace` reports how many there are as a drift signal.
+     countable — `/inspire-workspace` reports how many there are as a drift signal.
    - **Override** — a surface redefining, from its own side, what a shared token or
      component means: **no channel exists, deliberately.** Never create a
      per-surface design-system file under any name. Per-consumer overrides invert
@@ -185,7 +185,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > question, carrying the operator's own word. Every other skill reads it.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -197,7 +197,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 3. **Load-bearing choices are ADRs.** Replacing a framework or the primary color is
    an architectural decision recorded in `01_adr` (update to add, supersede to
    replace), kept in sync with `stack.md` / `theme.md`.
-4. **Consult the task tracker** (`/inspire_task list`) for tracked
+4. **Consult the task tracker** (`/inspire-task list`) for tracked
    bootstrap work.
 5. **`project.md`/`stack.md` are endorsed-only.** They are interview-generated,
    not skill-produced, so writes to them carry no `produced` stamp; on an
@@ -210,8 +210,14 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
+7. **Gates ship with the stack.** `stack` installs the in-repo quality gates from the
+   resolved profiles and records the project's answers under `stack.md`'s
+   `## Quality gates`; the server-side half becomes a tracker ticket with a human
+   owner, never reported as done. See
+   [`_references/quality-gates.md`](../_references/quality-gates.md).
+
 ## Related skills
 
-- `/inspire_screens` — instantiates the theme's tokens into patterns/components.
-- `/inspire_prototype` — builds the horizontal prototype on this stack + theme.
-- `/inspire_adr create` — record load-bearing stack/theme decisions.
+- `/inspire-screens` — instantiates the theme's tokens into patterns/components.
+- `/inspire-prototype` — builds the horizontal prototype on this stack + theme.
+- `/inspire-adr create` — record load-bearing stack/theme decisions.

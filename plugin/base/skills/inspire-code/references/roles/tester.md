@@ -75,6 +75,18 @@ it('describes one behavior', () => {
 - **Test behavior, not implementation.** Assert the observable outcome and the
   contract, not private internals — and build the expected value from the domain
   entity, never from the value under test.
+- **For a collection or paginated response, "the whole object" is the envelope plus the
+  identity and order of the members** — not every field of every member. Asserting 200
+  records × 40 fields is unmaintainable and breaks on every unrelated field addition, so
+  it degrades into `toHaveLength`, which is the real failure. Assert instead: the
+  envelope's **exact key set** (no extra, no missing), the members' **natural keys in
+  order**, and the paging fields. A count alone cannot tell a correct page from an
+  off-by-one that returned the same number of wrong rows — and that mutation is the one
+  a paging bug actually is. Each member's field shape is the subject of the
+  single-record tests; re-asserting it per member buys nothing.
+- **Prefer exact values over weak matchers.** Reach for "any"/"contains"/regex
+  matchers only for values that are genuinely non-deterministic (generated ids,
+  timestamps) — each weakening hides drift.
 - **Mock at the boundary, not the internals.** Replace external systems, never the
   collaborators whose interaction is the thing being verified. Integration/e2e tests
   use the real thing and mock only the outermost external HTTP.
@@ -93,6 +105,38 @@ The invariant is cheap here and impossible later. Your worktree holds declaratio
 no bodies, so a test that passes in it is asserting nothing about the behaviour it
 names — it is the vacuity the quality overseer looks for at this boundary, caught by
 you first.
+
+## A flaky test is fixed, never re-run
+
+**A test that fails and passes on the next run is a defect, and the flakiness is the
+defect — not the run that caught it.** Fix it before continuing with anything else.
+Re-running to get green is forbidden, and so is recording the failure as unexplained
+and moving on.
+
+The reason is not tidiness. Every mechanical gate in a project is worth exactly what a
+red result is worth. One test that fails at random teaches everybody — operator and
+agent alike — that red might mean nothing, and from then on the honest failures get
+re-run too. A suite that is 99% reliable is not 99% as useful as a reliable one; it is
+a suite nobody reads.
+
+So, in order:
+
+1. **Capture the failure first.** Root cause before fix has no exception here, and an
+   intermittent bug is exactly where a plausible guess is most expensive: it "works"
+   afterwards whether or not it was the cause, and the next occurrence is weeks away.
+   Loop the suite retaining each run's output until one goes red, and read *that*
+   output.
+2. **Rule causes out with evidence, and say which you ruled out.** "The suites run in
+   parallel" is checkable in one line; asserting it without checking sends the fix in
+   the wrong direction and leaves the reader unable to re-derive the reasoning.
+3. **Only then fix**, and prove it by looping the suite again — a fix for an
+   intermittent failure is not verified by one green run, which is the state the bug
+   already produced.
+
+The usual causes, in the order they are worth suspecting for an e2e suite against a
+real store: shared mutable state between test files, DDL or setup racing itself, a
+read issued before the write it depends on is visible, and time or ordering assumed
+rather than controlled.
 
 ## Your worktree is declaration-only
 

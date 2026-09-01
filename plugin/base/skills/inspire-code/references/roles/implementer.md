@@ -59,7 +59,7 @@ enforces the mechanical rest, and the resolved framework profile's
   a short comment explaining *why* something non-obvious was removed.
 - **Never leave anonymous TODOs.** Every deferred item names an owner **and** a
   closing trigger — and in INSPIRE the trigger is a real ticket:
-  `/inspire_task create`. If you can't name an owner or a trigger, it isn't
+  `/inspire-task create`. If you can't name an owner or a trigger, it isn't
   deferred, it's forgotten: do it now, or open the ticket first. **Unattended,
   opening one is not available to you** — the tracker is a knowledge-base write and
   it dies at harvest. Do it now, or report the deferral to the orchestrator as a

@@ -5,7 +5,7 @@ argument-hint: "<subcommand> [<id>|<scope>] [args]"
 user-invocable: true
 ---
 
-# /inspire_domain — Domain (SDD object lifecycle)
+# /inspire-domain — Domain (SDD object lifecycle)
 
 Every file in the SDD layer is an **object**: either an **action descriptor** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
 
@@ -13,7 +13,7 @@ This skill owns the full lifecycle of both kinds — from first interview throug
 
 ## Conversational ownership
 
-This skill **owns its conversational frame**. While inside any `/inspire_domain` subcommand:
+This skill **owns its conversational frame**. While inside any `/inspire-domain` subcommand:
 
 - **Do NOT invoke `superpowers:brainstorming`** or any meta-skill that imposes its own dialogue shape. Authoring an SDD object is creative work, but it is **this skill's** creative work, and its protocol is the interview cadence below.
 - **Do NOT present numbered decision trees or "must resolve before X" walls.** When you hit ambiguity (naming, type, effect), surface it as one focused question and let the operator drive.
@@ -51,7 +51,7 @@ The full annotated example is in [`examples/define-interview.md`](examples/defin
 - ❌ **Proposing a draft field-list / structure before walking the sections.** This is *the* drift. Walk Purpose → … one question at a time; do not emit a populated descriptor after a single probing question.
 - ❌ **Discussing storage, runtime, boot mechanics, or surface bindings** (HTTP route, CLI command, MCP tool, workflow node, agent tool). These are not SDD-layer concerns — the descriptor is a pure contract; exposure and implementation live in other modules' artifacts.
 
-  A surface name pushing into a domain file — "admin-console only", "this one is portal-side" — is almost always something missing elsewhere, and naming it in the descriptor buries it. Either an **actor or trust-boundary invariant** is missing: "only an administrator may suspend a tenant" is a claim about who may act, true wherever the action runs, so it belongs in Behavior/invariants — surfaces bind to actors downstream, not the reverse. Or a **module boundary** is missing: when half a module's actions want one surface and half another, the module wants splitting (`/inspire_module`), not tagging. For service exposure — which service serves which modules — the home is the API-partition ADR pattern in [`/inspire_adr`](../inspire-adr/SKILL.md#the-api-partition-adr); no domain file records it.
+  A surface name pushing into a domain file — "admin-console only", "this one is portal-side" — is almost always something missing elsewhere, and naming it in the descriptor buries it. Either an **actor or trust-boundary invariant** is missing: "only an administrator may suspend a tenant" is a claim about who may act, true wherever the action runs, so it belongs in Behavior/invariants — surfaces bind to actors downstream, not the reverse. Or a **module boundary** is missing: when half a module's actions want one surface and half another, the module wants splitting (`/inspire-module`), not tagging. For service exposure — which service serves which modules — the home is the API-partition ADR pattern in [`/inspire-adr`](../inspire-adr/SKILL.md#the-api-partition-adr); no domain file records it.
 - ❌ **Skipping the Authoring-contexts gate** (Step 0). Establish fresh / field-addition / targeted-revision before any design question.
 - ❌ "Before drafting, we need to resolve X, Y, Z." Operators experience this as a wall. Pick the one that blocks progress, ask about it, defer the others.
 - ❌ "I see three options: (1) …, (2) …, (3) …". The brainstorming reflex. Unless the operator asked for options, don't enumerate.
@@ -72,26 +72,26 @@ The interview produces files **incrementally as the dialogue unfolds**, not in a
 
 This skill owns: **action descriptors**, **entity documents**, **consolidation** (rebuilding the entity doc's derived `## Fields` + `## Touched by` tables after a descriptor change), and the **subcommands** below.
 
-This skill does NOT own: **feature authoring** (`/inspire_module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire_feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
+This skill does NOT own: **feature authoring** (`/inspire-module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire-feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
 
 ## Invocation
 
 ```
-/inspire_domain define   <id>              # author a new object (interview-driven)
-/inspire_domain show     <id>              # render an existing descriptor with resolved cross-refs
-/inspire_domain update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
-/inspire_domain refactor <id> [args]       # rename / split / merge actions
-/inspire_domain delete   <id>              # remove an action (refuses if any other action requires it)
-/inspire_domain promote  <id> {accepted|stable|superseded}
-/inspire_domain demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
-/inspire_domain review   [<scope>]         # run quality_lib checks; show findings
-/inspire_domain source   <id>              # show the back-source trail for every claim
-/inspire_domain graph    [<scope>]         # print the action→action requires graph + supersession edges
+/inspire-domain define   <id>              # author a new object (interview-driven)
+/inspire-domain show     <id>              # render an existing descriptor with resolved cross-refs
+/inspire-domain update   <id> [args]       # iterate on an existing descriptor (blocks on stable — demote first)
+/inspire-domain refactor <id> [args]       # rename / split / merge actions
+/inspire-domain delete   <id>              # remove an action (refuses if any other action requires it)
+/inspire-domain promote  <id> {accepted|stable|superseded}
+/inspire-domain demote   <id>              # lifecycle backwards (stable→accepted, accepted→draft)
+/inspire-domain review   [<scope>]         # run quality_lib checks; show findings
+/inspire-domain source   <id>              # show the back-source trail for every claim
+/inspire-domain graph    [<scope>]         # print the action→action requires graph + supersession edges
 ```
 
 `<id>` is `module::entity::action` (e.g. `auth::user::create`) for actions, or `module::entity` (e.g. `auth::user`) for entities. `<scope>` is `module` or `module::entity`.
 
-Subcommands accept **natural-language continuations** — e.g. `/inspire_domain update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
+Subcommands accept **natural-language continuations** — e.g. `/inspire-domain update auth::user::create add ERROR_QUOTA_EXCEEDED to errors` is parsed as "update `auth::user::create`, change: add `ERROR_QUOTA_EXCEEDED` to errors" and applied as a patch without re-asking for the id.
 
 ## Subcommands
 
@@ -150,7 +150,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > mechanics stay in [`references/format-action.md`](references/format-action.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -164,9 +164,9 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 5. **`update` refuses stable.** Modifying a stable object requires `demote` → `update` → `promote`. The regression is an explicit, traceable act.
 6. **`demote` refuses with cascade preview.** Walking lifecycle backwards refuses if downstream consumers depend on the current state. No `--cascade` flag.
 7. **Consolidation follows approval** and goes through show-then-approve. Operator-authored sections (Purpose / Rationale / Invariants / per-field H3) are preserved untouched.
-8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire_task` (`epic: skill-feedback`, `skills: [domain]`).
+8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire-task` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
-10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire_feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
+10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire-feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
 11. **Stamp every write.** After a descriptor or entity document is written,
     run `.inspire/bin/trust.sh stamp <file> --skill domain`
     ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
@@ -187,5 +187,5 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 
 ## Related skills
 
-- `/inspire_module` — module-level review and scaffolding. Its `scan` subcommand surfaces features↔specs candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
-- `/inspire_feature` — feature-level grouping. Its `scan` subcommand surfaces feature↔action linkback gaps.
+- `/inspire-module` — module-level review and scaffolding. Its `scan` subcommand surfaces features↔specs candidate-action gaps and hosts candidate-narrowing dialogue before chaining to `define`.
+- `/inspire-feature` — feature-level grouping. Its `scan` subcommand surfaces feature↔action linkback gaps.

@@ -27,9 +27,9 @@ Every SDD object — **action descriptor** (`inspire_kb/04_domain/{module}/{enti
                   regression permitted
 ```
 
-Forward progression: `draft → accepted → stable`. Regression (`stable → accepted`, `accepted → draft`) is permitted when a downstream constraint forces it — `/inspire_domain promote` walks both directions, just confirms more carefully on regressions.
+Forward progression: `draft → accepted → stable`. Regression (`stable → accepted`, `accepted → draft`) is permitted when a downstream constraint forces it — `/inspire-domain promote` walks both directions, just confirms more carefully on regressions.
 
-`superseded` is the escape hatch. An action in any state can be marked superseded; the descriptor stays in the tree, carries `superseded_by: "[[module::entity::new-action]]"`, and is dropped from the in-scope `requires` graph (other actions that listed it must be updated separately — `/inspire_domain graph` flags affected callers).
+`superseded` is the escape hatch. An action in any state can be marked superseded; the descriptor stays in the tree, carries `superseded_by: "[[module::entity::new-action]]"`, and is dropped from the in-scope `requires` graph (other actions that listed it must be updated separately — `/inspire-domain graph` flags affected callers).
 
 ## Per-state rule gates
 
@@ -132,9 +132,9 @@ Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`
 
 ## How `promote` walks
 
-Each object kind is promoted by the skill that owns it — `/inspire_domain promote` for actions and entities, `/inspire_screens promote` for screens — and both walk the state machine above. The walk below is the domain one; the screen gates are [`screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) § How `promote` walks.
+Each object kind is promoted by the skill that owns it — `/inspire-domain promote` for actions and entities, `/inspire-screens promote` for screens — and both walk the state machine above. The walk below is the domain one; the screen gates are [`screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) § How `promote` walks.
 
-`/inspire_domain promote {id}` confirms the target state, then re-runs the gates that would apply at that state. If any error finding is emitted, the promotion is refused — operator fixes, then retries.
+`/inspire-domain promote {id}` confirms the target state, then re-runs the gates that would apply at that state. If any error finding is emitted, the promotion is refused — operator fixes, then retries.
 
 - `draft → accepted` — confirm explicitly; the mechanical and coherence tiers already applied at draft, so promotion is a contract-locking act.
 - `accepted → stable` — run stable-blockers + touched-entity-lifecycle; refuse if any `requires` target is not yet stable, or any touched entity is below `accepted`. The two gates are **one-directional**: stable actions need their `requires:` deps at `stable` and their touched entities at ≥ `accepted`. Entities promote independently; the bipartite touch graph means stabilising an entity never has consumer-side preconditions. The unattended `emanate run` orchestrator walks this same transition but also weighs `emanate gate`'s verdict as one more piece of evidence before promoting — see `.claude/skills/_references/gate-verdict.md`.

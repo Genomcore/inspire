@@ -59,7 +59,7 @@ A lesson is an **immutable record**. Once written:
 - To **revise or replace** one, write a *new* lesson that sets `supersedes` to the old
   one's `id`. The old file stays exactly as it was (an update may move it to `archive/`,
   but never edits it).
-- To **remove** old, archived lessons in bulk, use `/inspire_lesson purge` (age-based;
+- To **remove** old, archived lessons in bulk, use `/inspire-lesson purge` (age-based;
   removes whole files, never in-place edits).
 
 This is what lets the observer trust that a lesson it processed once will not silently
@@ -131,7 +131,7 @@ or re-processes old lessons.
 
 ## Purging (fork level)
 
-`/inspire_lesson purge` is local housekeeping — it deletes **archived** lessons older
+`/inspire-lesson purge` is local housekeeping — it deletes **archived** lessons older
 than a threshold (default 6 months), matched on the date prefix. It is **dry-run by
 default** and requires explicit confirmation to delete. It is fully optional: archived
 lessons have already been read by the observer, and deleted files remain recoverable

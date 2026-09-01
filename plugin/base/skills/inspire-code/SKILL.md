@@ -5,7 +5,7 @@ argument-hint: "<subcommand> [<target>] [args]"
 user-invocable: true
 ---
 
-# /inspire_code — Coding-stage Operations
+# /inspire-code — Coding-stage Operations
 
 Every other `inspire-*` skill **specifies**; this one **realizes**. The KB
 (`00_bootstrap` → `04_domain`) describes *what* the product does and *why*;
@@ -50,7 +50,7 @@ the layer — selects the profile: the surface's `Profiles` field is the selecto
 the by-layer rule applies only when no roster exists. Every subcommand states the
 surface and the profile set it resolved.
 
-**Scaffolding is lazy.** `/inspire_surface add` records a `Package` path; it does not
+**Scaffolding is lazy.** `/inspire-surface add` records a `Package` path; it does not
 create the directory. The first emanation into a surface whose package is not on disk
 scaffolds it — the package, per its profiles' conventions, and the workspace manifest
 itself (`pnpm-workspace.yaml`, `turbo.json`, `nx.json` — whichever the stack profile
@@ -78,8 +78,8 @@ root-cause debugging loop; build-error remediation; dependency-vulnerability
 remediation; and — the INSPIRE-specific part — detecting when code and KB have
 drifted apart and routing the fix back to the right specifying skill.
 
-**Does NOT own:** authoring specs (`/inspire_domain`), features (`/inspire_feature`,
-`/inspire_module`), screens (`/inspire_screens`), or ADRs (`/inspire_adr`).
+**Does NOT own:** authoring specs (`/inspire-domain`), features (`/inspire-feature`,
+`/inspire-module`), screens (`/inspire-screens`), or ADRs (`/inspire-adr`).
 When code work reveals that the *spec* is wrong or missing, this skill **stops and
 hands back** to the owning skill — it never edits the KB itself. It also does NOT
 own mechanical enforcement (lint / format / type-only rules) — that is the
@@ -88,11 +88,11 @@ toolchain's job; see each subcommand's note.
 ## Invocation
 
 ```
-/inspire_code tdd       <feature-id>        # implement a feature test-first, anchored to its acceptance criteria
-/inspire_code review    [<target>]          # judgment review of a diff against the KB + universal quality
-/inspire_code debug     <symptom>           # 6-step root-cause framework; loops spec gaps back to the KB
-/inspire_code fix-build                      # diagnose + fix compile/build errors, verify
-/inspire_code fix-vulns                      # npm vulnerability remediation (fewest overrides, keep build+tests green)
+/inspire-code tdd       <feature-id>        # implement a feature test-first, anchored to its acceptance criteria
+/inspire-code review    [<target>]          # judgment review of a diff against the KB + universal quality
+/inspire-code debug     <symptom>           # 6-step root-cause framework; loops spec gaps back to the KB
+/inspire-code fix-build                      # diagnose + fix compile/build errors, verify
+/inspire-code fix-vulns                      # npm vulnerability remediation (fewest overrides, keep build+tests green)
 ```
 
 `<feature-id>` is a use-case id (e.g. `ai-agents/AIA-08`). `<target>` for `review`
@@ -107,9 +107,9 @@ subcommand, read its reference file** — the table below is an index, not the f
 
 | Subcommand | What it does |
 |---|---|
-| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor, anchored to the feature's acceptance criteria. The test-authoring and code-authoring doctrine it applies lives per role in [`references/roles/`](references/roles/README.md). |
+| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor → mutation drill, anchored to the feature's acceptance criteria. The test-authoring and code-authoring doctrine it applies lives per role in [`references/roles/`](references/roles/README.md). |
 | [`review`](references/review-dimensions.md) | Judgment review of a diff. Phase 0 checks KB alignment (ADRs, action descriptors, acceptance criteria); phases 1–4 cover architecture, correctness, security, tests. Fans out to dimension agents in thorough mode. |
-| [`debug`](references/debug.md) | Reproduce → hypothesize → eliminate → root cause → fix → prevent regression. A root cause that is a spec gap routes back to `/inspire_feature` or `/inspire_domain`. |
+| [`debug`](references/debug.md) | Reproduce → hypothesize → eliminate → root cause → fix → prevent regression. A root cause that is a spec gap routes back to `/inspire-feature` or `/inspire-domain`. |
 | [`fix-build`](references/fix-build.md) | Parse build/compile errors, diagnose root cause, apply the minimal fix, rebuild to verify. |
 | [`fix-vulns`](references/fix-vulns.md) | Reach the agreed severity bar with the fewest `overrides` possible, without breaking build or tests. **npm only.** |
 
@@ -150,7 +150,7 @@ continue ([trust-stamps](../_references/trust-stamps.md#endorsement)). Warn,
 never refuse.
 
 When code and KB disagree, the fix has a home: **code wrong → fix here; spec wrong
-or missing → hand back** to `/inspire_domain` / `/inspire_feature`. Never
+or missing → hand back** to `/inspire-domain` / `/inspire-feature`. Never
 silently "correct" the KB to match the code, and never bend the code around a spec
 you believe is wrong — surface the disagreement.
 
@@ -174,7 +174,7 @@ reads it for **the test paths harvest accepts**; `## Forbidden patterns` →
 [`roles/implementer.md`](references/roles/implementer.md)'s authoring rules;
 `## Review focus` → extra review dimensions; `## Build & verify` → the real
 build/test commands. When a framework the project declared has no profile, say so in
-the run's opening statement and offer `/inspire_bootstrap` to scaffold one.
+the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
 
 The seed sections — `## Bindings`, `## Routes`, `## Persistence` — and the language
 profile's rendering tables are read by the emanation stages rather than by this
@@ -199,35 +199,59 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
 > follow [`_references/writing-style.md`](../_references/writing-style.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review`, `debug` (analysis phase) are read-only until a fix is agreed.**
-   `review` never edits code — it reports, ranks, and names the fix. `fix-build`,
-   `fix-vulns`, and `tdd` do edit, but only source/test files, never the KB.
+   `review` never edits code — it reports, ranks, and names the fix. Its one bounded
+   exception is the mutation drill (review Phase 4), which applies and immediately
+   reverts one mutation at a time and must leave the tree exactly as it found it.
+   `fix-build`, `fix-vulns`, and `tdd` do edit, but only source/test files, never
+   the KB.
 2. **The KB is the source of truth, not the code.** Every disagreement between the
    two is surfaced, not silently reconciled. KB edits are routed to the owning
    skill (see SDD anchoring).
-3. **Mechanical checks are not this skill's job.** Formatting, unused imports,
-   `any`/return-type rules, line length, naming, import order, floating promises —
-   the project's linter/formatter/type-checker and hooks enforce these. If they
-   don't, that is a tooling gap to fix, not a thing to review by hand every time.
+3. **Mechanical checks are not this skill's job — closing the gap is.** Formatting,
+   unused imports, `any`/return-type rules, line length, naming, import order,
+   floating promises, cyclomatic complexity, module size, import cycles, tests that
+   assert nothing — the project's linter/formatter/type-checker and hooks enforce
+   these. A check the toolchain *could* run but doesn't is a **finding**, not an
+   observation: report it naming the gate that should own it, per
+   [`_references/quality-gates.md`](../_references/quality-gates.md) and the active
+   profile's `## Quality gates`. Reviewing by hand every time what a machine could
+   check once is itself the defect.
 4. **Root cause before fix.** `debug` and `fix-build` never patch a symptom. Fix
    the cause, then check whether the same pattern exists elsewhere.
 5. **The authoring rules bind every subcommand that writes code**, not just `tdd`.
    They live in
    [`references/roles/implementer.md`](references/roles/implementer.md) § Non-negotiable
    authoring rules.
-6. **No production code without its test.** `tdd` writes the failing test first;
-   `review` flags new logic that arrived without one.
-7. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
+6. **Infrastructure before the first test.** E2E comes first, so the database / broker /
+   cache it runs against has to exist before the cycle starts. A component the tests need
+   is declared in `stack.md`'s `## Test infrastructure` (an ADR when load-bearing), then
+   added to the compose file, then brought up **by the operator** — never started
+   silently, never assumed. A connection error is not a red test; it is a test that never
+   ran. See [`references/tdd.md`](references/tdd.md).
+7. **No production code without its test, and no test trusted until it has failed.**
+   `tdd` writes the failing test first; `review` flags new logic that arrived without
+   one. Green is not the end of the cycle — the **mutation drill** closes it
+   ([`references/tdd.md`](references/tdd.md), step 7): break the settled code on
+   purpose and confirm the tests notice. A survivor is a test gap, not a code bug.
+8. **Commits and pushes stay operator-only.** No subcommand runs `git commit` /
    `git push` as a side effect. When the operator does ask, follow the shared git
    discipline in
    [`_references/git-conventions.md`](../_references/git-conventions.md) (the
    project's `CLAUDE.md` overrides it).
-8. **Consult the task tracker** at the start of multi-step subcommands
-   (`/inspire_task list`). Surface known items as `(tracked: TASK-{id})`
+9. **The feature's `State:` advance is offered from here, written elsewhere.**
+   `tdd` offers — never auto-writes — the ladder's two moves at its cycle's edges:
+   🟡 → 🔵 when implementation starts, 🔵 → 🟢 when every criterion is claimed and
+   green ([`references/tdd.md`](references/tdd.md) § The state ladder advances from
+   here). On acceptance the write chains into `/inspire-feature update`, so Rule 1's
+   "never the KB" holds. The lifecycle gates key their severity to that line —
+   leaving it at 🟡 while implementing is running with the gates disarmed.
+10. **Consult the task tracker** at the start of multi-step subcommands
+   (`/inspire-task list`). Surface known items as `(tracked: TASK-{id})`
    rather than re-reporting them as new. If a session surfaces friction worth
    capturing, offer a skill-feedback ticket (`epic: skill-feedback`,
    `skills: [code]`).
@@ -240,27 +264,35 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
   (emission over the derived contract), `tester.md` (test structure and claim
   citation), `implementer.md` (the non-negotiable authoring rules),
   `security-overseer.md`, `quality-overseer.md`.
-- [`references/tdd.md`](references/tdd.md) — the attended test-first loop and its KB
-  anchoring.
+- [`references/tdd.md`](references/tdd.md) — the attended test-first loop, its KB
+  anchoring, the language-agnostic SOLID design principles and the mutation drill.
 - [`references/review-dimensions.md`](references/review-dimensions.md) — the review
   phases, the fan-out, and the report format.
 - [`references/fix-build.md`](references/fix-build.md) — build-error taxonomy + process.
 - [`references/fix-vulns.md`](references/fix-vulns.md) — npm vulnerability workflow.
 - [`references/debug.md`](references/debug.md) — the 6-step root-cause framework.
 - [`profiles/README.md`](profiles/README.md) — the stack-profile contract, both axes;
-  the lean defaults live beside it — framework profiles `react` + `nestjs`, language
-  profile `typescript`.
+  the lean defaults live beside it — framework profiles `react`, `nestjs`, `angular`,
+  `ios` and `android`, each keeping its deep material under `profiles/{id}/references/`,
+  and language profile `typescript`.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
+- [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer
+  owns a rule (lint vs metric gate vs human), absolutes vs ratchets, and why a
+  threshold must live outside the author's write reach.
+- [`_references/conventions/README.md`](../_references/conventions/README.md) — the
+  wire conventions resolved from `00_bootstrap/stack.md`: what a caller observes for
+  each logical error, so `tdd` can derive its test list instead of inventing the half
+  the descriptor deliberately leaves out.
 
 ## Related skills
 
-- `/inspire_feature`, `/inspire_domain` — the specifying skills this one hands back
+- `/inspire-feature`, `/inspire-domain` — the specifying skills this one hands back
   to when a code problem turns out to be a spec problem.
-- `/inspire_module` — its `review` audits the KB before a PR; `inspire-code review`
+- `/inspire-module` — its `review` audits the KB before a PR; `inspire-code review`
   audits the *code* that realizes it. Run both before landing a change.
-- `/inspire_surface` — owns the roster this skill resolves packages and profiles
+- `/inspire-surface` — owns the roster this skill resolves packages and profiles
   from; the only skill that adds or retires a surface.
-- `/inspire_adr` — ADR lifecycle; an ADR reaches `implemented` maturity via this
-  skill's work. `/inspire_task` — the tracker; consult it and file skill-feedback.
-- `/inspire_workspace` — the pre-PR global review and vault structure.
+- `/inspire-adr` — ADR lifecycle; an ADR reaches `implemented` maturity via this
+  skill's work. `/inspire-task` — the tracker; consult it and file skill-feedback.
+- `/inspire-workspace` — the pre-PR global review and vault structure.

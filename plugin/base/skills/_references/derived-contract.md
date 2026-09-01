@@ -193,8 +193,8 @@ D7). On exit `4` stdout carries every class found, not the first, and no
   "refused": [ { "class", "target", "message", "remedy" } … ] }
 ```
 
-`remedy` names the owning skill's touch command — `/inspire_domain update {id}`
-or `/inspire_screens update {id}`. Nothing machine-edits the knowledge base:
+`remedy` names the owning skill's touch command — `/inspire-domain update {id}`
+or `/inspire-screens update {id}`. Nothing machine-edits the knowledge base:
 naming an invariant is judgment, and judgment happens inside the touch
 interview.
 

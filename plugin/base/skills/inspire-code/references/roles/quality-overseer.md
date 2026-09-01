@@ -61,8 +61,12 @@ and 4.
 
 ### Architecture and design
 Layering (business logic out of controllers/components), shared logic living in a
-shared place, abstractions justified rather than premature, single-responsibility
-units whose boundaries validate their input.
+shared place, abstractions justified rather than premature, and **SOLID applied
+language-agnostically** per [`../tdd.md`](../tdd.md) § Design principles — single-reason
+units whose boundaries validate their input, growth by addition rather than by a
+widening conditional, substitutes that honor their contract, narrow dependencies,
+concretions injected at the edges. A SOLID finding names the force violated and the
+shape of the fix, not just the acronym letter.
 
 ### Logic and correctness
 Semantic duplication no linter sees (>~70% overlap across files); an algorithm
@@ -73,6 +77,10 @@ handling both failure and timeout.
 ### Testing strategy
 Tests of the right type for the layer, covering meaningful edge cases and not just the
 happy path, following the conventions in [`tester.md`](tester.md).
+**Weak assertions are the finding**: a test that runs the new logic and asserts
+`toBeDefined`, a bare truthiness, or a matcher loose enough to accept a wrong value
+passes CI while proving nothing — say which mutation would survive it, which is the
+concrete claim, not "tests are weak".
 
 ### The fan-out roster
 
@@ -80,7 +88,7 @@ A large diff runs the dimensions as parallel read-only lenses rather than one pa
 
 | Dimension | Focus (what the lens hunts for) |
 |---|---|
-| architecture | Clean-code / SOLID / DRY / KISS, layering, cyclomatic complexity, unjustified abstraction |
+| architecture | Clean-code / SOLID ([`../tdd.md`](../tdd.md) § Design principles) / DRY / KISS, layering, cyclomatic complexity, unjustified abstraction |
 | correctness-chaos | Every way it breaks: edge cases, race conditions, partial failures, timeouts, corrupt state — run especially on critical flows (auth, payments, data mutations, integrations) |
 | tests | Coverage of new logic, edge cases, mocking correctness, a regression test for each fix |
 | duplication | Copy-pasted / >70%-similar logic across files; propose unification |

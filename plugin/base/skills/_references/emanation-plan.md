@@ -198,7 +198,7 @@ that compiles.
 | `PR-10` | the overseer roster fails: either shipped overseer absent, or any `*-overseer.md` under the agents root failing the shape (a `tools:` line present, naming none of `Bash`, `Write`, `Edit`, `NotebookEdit`, `Agent`) | restore the shell, or fix its `tools:` line |
 | `PR-11` | a cycle in the ordering edge set. `acyclic-deps.sh` owns the action-to-action case and is run rather than re-implemented; a cycle the wider edge set forms is reported off the layering, which already knows which nodes it could not consume. A unit `derive` refused contributes no edges at all, so a cycle running through one surfaces only once its `PR-01` is remedied — nothing proceeds meanwhile, because `PR-01` is an error and already forces `ready: false` | fix the `requires:` chain |
 | `PR-12` | empty frontier: no unit in scope is at `lifecycle: accepted` | promote something, or widen `--scope` |
-| `PR-13` | no stack: `00_bootstrap/stack.md` is absent, or declares no `profiles:` and no inferable stack section | `/inspire_bootstrap stack` |
+| `PR-13` | no stack: `00_bootstrap/stack.md` is absent, or declares no `profiles:` and no inferable stack section | `/inspire-bootstrap stack` |
 
 **Refusals are evaluated in two tiers, and each tier reports every class it
 finds.** Tier 1 — `PR-10`, `PR-12`, `PR-13` — needs no derivation. Tier 2 —

@@ -1,0 +1,2 @@
+{ "exit": 1, "finding_count": 1,
+  "findings": [ { "rule": "profile-gates-installed", "message_substring": "missing .literal. or .config." } ] }

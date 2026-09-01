@@ -5,7 +5,7 @@ argument-hint: "<subcommand> [<path>] [--only stack,screens,logic,styles]"
 user-invocable: true
 ---
 
-# /inspire_extract — Onboard an existing codebase (brownfield)
+# /inspire-extract — Onboard an existing codebase (brownfield)
 
 INSPIRE is **intent-first**: the knowledge base is the source of truth and code is
 generated from it. This skill runs that flow **in reverse** — from code back to
@@ -52,8 +52,8 @@ Owns: the **four-scanner fan-out**, the **consolidation / cross-linking**, **fea
 derivation**, **module inference**, the **stack/theme elaboration comparison**, and
 the **handoff** into the authoring skills.
 
-Does NOT own: writing final KB artifacts (it delegates to `/inspire_module`,
-`/inspire_feature`, `/inspire_screens`, `/inspire_domain`, `/inspire_bootstrap`); the
+Does NOT own: writing final KB artifacts (it delegates to `/inspire-module`,
+`/inspire-feature`, `/inspire-screens`, `/inspire-domain`, `/inspire-bootstrap`); the
 interview *content* (the authoring skills own that); or **building / running /
 installing** the source (extract never executes the code it reads).
 
@@ -81,13 +81,13 @@ narrowed a choice to 2–4 options. The consolidated manifest is a large surface
 
 ## Invocation
 
-- `/inspire_extract scan {path} [--only stack,screens,logic,styles]` — the flagship:
+- `/inspire-extract scan {path} [--only stack,screens,logic,styles]` — the flagship:
   fan out the four scanners → consolidate → derive features + infer modules → review
   → (on "start") chained authoring. `--only` restricts the fan-out to a subset.
-- `/inspire_extract fingerprint {path}` — run only the **stack** and **styles**
+- `/inspire-extract fingerprint {path}` — run only the **stack** and **styles**
   scanners + the elaboration comparison; recommend migrate-or-keep for
   `00_bootstrap`. Authors nothing.
-- `/inspire_extract review` — re-open the current consolidated manifest for another
+- `/inspire-extract review` — re-open the current consolidated manifest for another
   narrowing pass (read-only re-render).
 
 `{path}` is a local directory (preferred) or a git URL (clone-on-confirm, safety 4).
@@ -155,7 +155,7 @@ Merge the four slices into one manifest and do the work no single scanner can:
    orthogonal to modules, not a second decomposition of them: one package is usually
    both a surface and the home of several modules, and those modules stay in the one
    registry. A candidate is a proposal — nothing here becomes a surface id; the
-   *adopt* arrival of `/inspire_surface add` records one, outside the Phase 4 chain.
+   *adopt* arrival of `/inspire-surface add` records one, outside the Phase 4 chain.
 4. **Bootstrap verdicts.** Fold the **A** and **D** elaboration signals into
    migrate-or-keep recommendations via
    [`references/bootstrap-comparison.md`](references/bootstrap-comparison.md) — never
@@ -188,8 +188,8 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
 
 1. **Bootstrap** (only if the comparison recommends it, on approval) — stack/theme
    is upstream of everything; a load-bearing change is an ADR
-   (`/inspire_workspace adr create`).
-2. **Modules** — scaffold inferred modules via `/inspire_module create`.
+   (`/inspire-workspace adr create`).
+2. **Modules** — scaffold inferred modules via `/inspire-module create`.
 3. **Features** (`03_features`) — the derived use cases; before domain, because
    **features are upstream of specs**.
 4. **Screens** (`05_screens`) — reference the derived features; adopt the
@@ -202,7 +202,7 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
 - **The manifest is transient working state**, staged in the session scratchpad (or
   an operator-named path). It is **never** committed into `inspire_kb/`.
 - **Confirmed candidates leave a durable record via the tracker**: one ticket per
-  authored artifact (`/inspire_workspace task create --epic extract`) — no new KB
+  authored artifact (`/inspire-workspace task create --epic extract`) — no new KB
   structure.
 - **Authored artifacts carry a lightweight, non-authoritative provenance marker** —
   a `> Extracted from: {source-path}` note + `file:line` evidence in `## Notes`, a
@@ -213,11 +213,11 @@ Scanning is parallel; **authoring is ordered** so upstream invariants hold:
 Extract produces **drafts, never blessings**:
 
 - **Features** enter at `🟡 Planned`; the derived flow seeds the
-  `/inspire_feature create` interview as a *proposal* — the operator confirms or
+  `/inspire-feature create` interview as a *proposal* — the operator confirms or
   rewrites the intent.
 - **Domain objects** enter at `lifecycle: draft`. The code is ground truth for the
   *shape*, so extract supplies scanner C's field/touch table as a **grounding
-  digest** the `/inspire_domain define` flow already reads ("Ground, don't draft");
+  digest** the `/inspire-domain define` flow already reads ("Ground, don't draft");
   the interview then settles the WHY.
 - **Promotion is owed.** `draft → accepted → stable` and `🟡 → 🔵 → 🟢` happen only
   through the normal skills, once a human has vouched for the intent.
@@ -228,12 +228,12 @@ Extract never writes these files — it feeds each authoring skill:
 
 | Layer | Skill | Extract supplies |
 |-------|-------|------------------|
-| Bootstrap | `/inspire_bootstrap stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
-| Surface | `/inspire_surface add` (*adopt* arrival) | the `surfaces_inferred` candidates: proposed id, kind, evidence — one interview each, confirmed field by field |
-| Module | `/inspire_module create {module}` | inferred slug, id prefix, one-line description, members |
-| Feature | `/inspire_feature create {module}/{id}` | derived flow (screen ↔ action ↔ entity), candidate actor, `file:line` evidence |
-| Screen | `/inspire_screens create {module}/{screen}` | route, covered feature ids, consolidated pattern, data source; evidence |
-| Domain | `/inspire_domain define {module::entity[::action]}` | reconciled fields + invariants (entity) or verb + touches + `requires` (action), canonicalized ids, the upstream feature |
+| Bootstrap | `/inspire-bootstrap stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
+| Surface | `/inspire-surface add` (*adopt* arrival) | the `surfaces_inferred` candidates: proposed id, kind, evidence — one interview each, confirmed field by field |
+| Module | `/inspire-module create {module}` | inferred slug, id prefix, one-line description, members |
+| Feature | `/inspire-feature create {module}/{id}` | derived flow (screen ↔ action ↔ entity), candidate actor, `file:line` evidence |
+| Screen | `/inspire-screens create {module}/{screen}` | route, covered feature ids, consolidated pattern, data source; evidence |
+| Domain | `/inspire-domain define {module::entity[::action]}` | reconciled fields + invariants (entity) or verb + touches + `requires` (action), canonicalized ids, the upstream feature |
 
 ## Rules
 
@@ -249,7 +249,7 @@ Extract never writes these files — it feeds each authoring skill:
 > owning skill had authored it.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -271,7 +271,7 @@ Extract never writes these files — it feeds each authoring skill:
 8. **Compare before migrating bootstrap.** Never seed stack/theme downward from a
    throwaway source; recommend, ask, route load-bearing changes through an ADR.
 9. **Merge, don't clobber.** Reconcile with existing KB; scaffold new modules via
-   `/inspire_module create`.
+   `/inspire-module create`.
 10. **Consult the task tracker** at the start of `scan`; surface known items as
     `(tracked: TASK-{id})`; offer a **skill-feedback ticket** (`epic: skill-feedback`,
     `skills: [extract]`) when a session surfaces friction.
@@ -287,12 +287,12 @@ Extract never writes these files — it feeds each authoring skill:
 
 ## Related skills
 
-- `/inspire_module` — scaffolds inferred modules and reviews them.
-- `/inspire_feature` · `/inspire_screens` · `/inspire_domain` — the authoring skills
+- `/inspire-module` — scaffolds inferred modules and reviews them.
+- `/inspire-feature` · `/inspire-screens` · `/inspire-domain` — the authoring skills
   extract delegates to; they own the interview and the KB writes.
-- `/inspire_bootstrap` — owns `stack.md` / `theme.md`; the stack + styles scanners
+- `/inspire-bootstrap` — owns `stack.md` / `theme.md`; the stack + styles scanners
   feed its `stack` / `theme` flows when a migration is recommended.
-- `/inspire_surface` — owns the roster; its *adopt* arrival delegates the reading of a
+- `/inspire-surface` — owns the roster; its *adopt* arrival delegates the reading of a
   joining codebase here and consumes the `surfaces_inferred` candidates back.
-- `/inspire_workspace` — the tracker (durable record of extraction) and the ADR
+- `/inspire-workspace` — the tracker (durable record of extraction) and the ADR
   ladder (for load-bearing stack/theme migrations).

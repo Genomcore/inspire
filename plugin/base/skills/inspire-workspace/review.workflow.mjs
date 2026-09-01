@@ -2,7 +2,7 @@ export const meta = {
   name: 'inspire-workspace-review',
   description: 'Pre-PR Global Review (v1, Phase A): parallel module fan-out + completeness gate + sequential cross-cutting synthesis. READ-ONLY — flags issues, never edits.',
   phases: [
-    { title: 'Module reviews', detail: 'one /inspire_module review per in-scope module, in parallel' },
+    { title: 'Module reviews', detail: 'one /inspire-module review per in-scope module, in parallel' },
     { title: 'Completeness', detail: 'no-silent-caps — every module must return a non-degenerate result' },
     { title: 'Synthesize', detail: 'cross-cutting phases 3–6 over the full repo + consolidated report' },
   ],
@@ -27,7 +27,7 @@ const FINDING = {
     description: { type: 'string' },
     file: { type: 'string' },
     line: { type: 'number' },
-    fix_skill: { type: 'string', description: 'the /inspire_* skill that fixes it' },
+    fix_skill: { type: 'string', description: 'the /inspire-* skill that fixes it' },
   },
   required: ['severity', 'description', 'fix_skill'],
 }
@@ -46,7 +46,7 @@ const MODULE_RESULT = {
   required: ['module', 'reviewed', 'files_read', 'findings'],
 }
 
-const READ_ONLY = 'STRICTLY READ-ONLY: flag issues only. NEVER edit a file, NEVER run a fix-skill (/inspire_* create/update/delete), NEVER use Edit/Write. Every finding names the fix-skill to invoke later, but you do not invoke it.'
+const READ_ONLY = 'STRICTLY READ-ONLY: flag issues only. NEVER edit a file, NEVER run a fix-skill (/inspire-* create/update/delete), NEVER use Edit/Write. Every finding names the fix-skill to invoke later, but you do not invoke it.'
 
 // --- Phase A: module fan-out (parallel + barrier) ---------------------------
 phase('Module reviews')

@@ -90,7 +90,7 @@ The body has eight sections in fixed order: `## Purpose` · `## Inputs` · `## O
 - **`## Preconditions`** — what must hold before the action may run, as keyed entries: `` - `P{n}` — {head} — {prose} ``. Heads come from vocabulary V3 of [`keyed-heads.md`](../../_references/keyed-heads.md) — `actor` · `exists` · `absent` · `state` — and are optional; a precondition no head captures is written prose-only. An action with genuinely no precondition says so: `None.` A precondition is a claim about the world, never about a caller's transport — an actor constraint belongs here precisely because it is true wherever the action runs.
 - **`## Behavior`** — numbered steps, each **keyed**: `` 1. `B{n}` — {step prose} ``. The key is the step's identity and the markdown ordinal is presentation, so a deleted step leaves a gap rather than renumbering the survivors. Each step that makes a sourceable claim weaves its wikilinks into the sentence (prosaic back-sourcing), not as trailing references.
 - **`## Postconditions`** — what holds once the action has succeeded, as keyed entries: `` - `Q{n}` — {head} — {prose} ``. Heads come from vocabulary V4 — `created` · `updated` · `deleted` · `unchanged` · `returns`. `unchanged({module}.{entity})` is worth stating deliberately: it is the regression guard that says an entity the action *could* have touched is left alone, and it is the one head that names an entity `## Entities` does not list. `None.` is the valid body for an action with no observable effect, which is rare enough to be worth a second look.
-- **`## Errors`** — bullet list of error codes with operator-facing messages. An error may carry a head naming **what it reports the violation of** — `` - `email_exists` — unique(email) — operator-facing message: "…" `` — drawn from vocabulary V5. The head is what lets a uniqueness constraint on an entity field and the error an action raises for it be checked against each other rather than merely hoped to correspond.
+- **`## Errors`** — bullet list of error codes with operator-facing messages. An error may carry a head naming **what it reports the violation of** — `` - `email_exists` — unique(email) — operator-facing message: "…" `` — drawn from vocabulary V5. The head is what lets a uniqueness constraint on an entity field and the error an action raises for it be checked against each other rather than merely hoped to correspond. Each bullet becomes a test (`/inspire-code tdd` derives its list from the criteria ∪ this section ∪ the convention's always-present cases), so an error declared here and nowhere tested is a contract nobody checks. The observable response is **not** written here — see `## Pure-contract scope`; only a `**Wire deviation:**` note is.
 
 ## Keyed entries
 
@@ -134,6 +134,18 @@ presence classes ramp with the lifecycle in the release after 0.8.
 ## Pure-contract scope
 
 The descriptor specifies what the action does, what it consumes, what it returns, which entities it touches. **How the action is exposed to callers** (HTTP route, CLI command, MCP tool, workflow node, agent tool) lives in surface-binding artifacts owned by their respective modules (e.g. URE Functions, AI Agents Tools, Devices Edge) and is out of scope for this descriptor.
+
+**What a caller observes when a declared error fires is not out of scope, and it is not the descriptor's job either.** It comes from the project's resolved wire convention ([`_references/conventions/README.md`](../../_references/conventions/README.md), selected in `00_bootstrap/stack.md`): the descriptor names the logical error, the convention maps it to an observable response, once, for every action in the project. Restating a status code per descriptor would be the same duplication `## Outputs` already refuses for field shapes — and drift the same way.
+
+The exception is a **deviation**, which belongs here because only this action knows about it. Declare it directly below `## Errors`:
+
+```markdown
+**Wire deviation:** `not_found` returns `403` instead of `404` — this endpoint is
+reachable pre-authorization, and a `404` would let an unauthenticated caller enumerate
+valid ids.
+```
+
+Silence means the convention holds. A deviation without a written reason is a finding, not a deviation.
 
 Storage details, runtime engine, boot mechanics, persistence layer — also out of scope. The descriptor models the contract; how the contract is realized is somebody else's artifact.
 

@@ -121,6 +121,29 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     fi
   done < <(jq -c '.findings[]?' "$expect_file")
 
+  # Optional `finding_count`: assert HOW MANY findings the rule emitted, not just that
+  # the expected ones are among them.
+  #
+  # Added because a substring assertion cannot catch a rule that reports the same defect
+  # twice — found by a mutation drill, where breaking a de-duplication survived every
+  # fixture. Deduplication, "report once per file", and "suppress the per-item findings"
+  # are all behaviours whose only observable difference is a count, so a suite that cannot
+  # express one cannot defend them. Absent from expect.json = not checked, so every
+  # existing fixture is unaffected.
+  expected_count="$(jq -r '.finding_count // empty' "$expect_file")"
+  if [ -n "$expected_count" ]; then
+    # `grep -c` exits 1 when the count is zero, so `|| echo 0` appended a SECOND zero and
+    # produced "0\n0" — which never equals "0", so `finding_count: 0` could not pass. Count
+    # with a filter that always succeeds instead. Found by the first fixture that asserted
+    # zero findings, which is the case the original form could not express.
+    actual_count="$(grep -c '"rule":' "$actual_stderr" 2>/dev/null | head -1)"
+    [ -n "$actual_count" ] || actual_count=0
+    if [ "$actual_count" != "$expected_count" ]; then
+      pass=false
+      echo "FAIL $rule/$scenario (finding count: expected $expected_count, got $actual_count)" >&2
+    fi
+  fi
+
   # Absence assertions: each entry is a literal substring that must not appear.
   while IFS= read -r forbidden; do
     [ -z "$forbidden" ] && continue
@@ -199,6 +222,23 @@ if [ -z "$filter" ]; then
     cat "$lib_out" >&2
   fi
   rm -f "$lib_out"
+fi
+
+# escape-hatch-ratchet's --update mode rewrites its own config, and the fixture
+# loop above is read-only by design — a fixture is a tree a rule scans, never
+# one it rewrites. Its defining guarantee (a ceiling only ever moves DOWN) is
+# asserted by a behavioural script instead, wired in by hand like the others.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  ratchet_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-ratchet-update.sh" >"$ratchet_out" 2>&1; then
+    echo "PASS escape-hatch-ratchet/--update"
+  else
+    failed=$((failed + 1))
+    echo "FAIL escape-hatch-ratchet/--update" >&2
+    cat "$ratchet_out" >&2
+  fi
+  rm -f "$ratchet_out"
 fi
 
 # trust.sh is a tool, not a review rule: it emits no findings, so it has no

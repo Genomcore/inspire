@@ -3,7 +3,7 @@ name: inspire-feature
 description: "Lifecycle of a feature / use case: create / review / update / scan / delete a use-case file in a module and propagate across the KB layers. Use when adding, auditing, or removing features."
 ---
 
-# /inspire_feature — Feature-level Operations
+# /inspire-feature — Feature-level Operations
 
 ## Scope
 
@@ -17,13 +17,13 @@ resolve `prototype_root` per
 
 ## Invocation
 
-- `/inspire_feature review {feature-id}` — single feature, all layers
-- `/inspire_feature review {module}` — batch mode, all features of a module (parallel agents)
-- `/inspire_feature create {module}/{feature-id}` — new use-case file
-- `/inspire_feature update {feature-id}` — modify description, dependencies, priority
-- `/inspire_feature delete {feature-id}` — remove + orphan checks across layers
-- `/inspire_feature scan {feature-id}` — SDD layer alignment for one feature (fast)
-- `/inspire_feature scan {module}` — batch SDD layer alignment for all features of a module
+- `/inspire-feature review {feature-id}` — single feature, all layers
+- `/inspire-feature review {module}` — batch mode, all features of a module (parallel agents)
+- `/inspire-feature create {module}/{feature-id}` — new use-case file
+- `/inspire-feature update {feature-id}` — modify description, dependencies, priority
+- `/inspire-feature delete {feature-id}` — remove + orphan checks across layers
+- `/inspire-feature scan {feature-id}` — SDD layer alignment for one feature (fast)
+- `/inspire-feature scan {module}` — batch SDD layer alignment for all features of a module
 
 ## Subcommands in `references/`
 
@@ -34,7 +34,7 @@ below is an index, not the flow.
 | Subcommand | What it does |
 |---|---|
 | [`review`](references/feature-review.md) | Review one feature across all KB layers, or batch-review every feature of a module in parallel |
-| [`scan`](references/feature-scan.md) | SDD-layer entry point — surface candidate actions and chain into `/inspire_domain` |
+| [`scan`](references/feature-scan.md) | SDD-layer entry point — surface candidate actions and chain into `/inspire-domain` |
 | [`create`](references/feature-edits.md) / [`update`](references/feature-edits.md) / [`delete`](references/feature-edits.md) | New use-case file / modify description, dependencies, priority / remove + orphan checks across layers |
 | [acceptance-criteria gate](references/feature-ac-gate.md) | Judgment gate for `## Acceptance criteria` — run inline by `create` and `update`, not a subcommand of its own |
 
@@ -79,7 +79,7 @@ fit exactly is worse than no head.
 > Referenced, never restated — read the rules there.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -97,7 +97,7 @@ fit exactly is worse than no head.
    may have no UI.
 7. **Drift is informational.** `## Current prototype` drift items don't block
    reviews unless they contradict a current ADR (one not superseded or rejected).
-8. **Consult the task tracker** (`/inspire_task list`) for tracked drift; don't
+8. **Consult the task tracker** (`/inspire-task list`) for tracked drift; don't
    re-surface it as new.
 9. **Acceptance criteria pass the quality gate before they land.** `create` and
    `update` run it inline — what the gate checks, and what a criterion that cannot

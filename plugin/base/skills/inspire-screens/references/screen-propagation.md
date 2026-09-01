@@ -16,10 +16,10 @@ one too.
 3. **Ask, don't assume.** Close the turn with a clear question, e.g.:
 
    > The screen spec for `{module}/{screen}` has changed: {summary}. The prototype is
-   > now misaligned on: {drift}. Shall I propagate now with `/inspire_prototype`, or
+   > now misaligned on: {drift}. Shall I propagate now with `/inspire-prototype`, or
    > in another turn?
 
-4. **If confirmed:** invoke `/inspire_prototype` with a concrete prompt (the
+4. **If confirmed:** invoke `/inspire-prototype` with a concrete prompt (the
    updated screen + the drift items to resolve).
-5. **If declined:** create a tracker ticket via `/inspire_task create` so
+5. **If declined:** create a tracker ticket via `/inspire-task create` so
    it isn't lost.

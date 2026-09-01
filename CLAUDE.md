@@ -79,11 +79,14 @@ repo is both its source and its own marketplace.
         back to the specifying skills. Stack-agnostic, layering optional **stack
         profiles** (`inspire-code/profiles/`, resolved on demand from
         `00_bootstrap/stack.md`), composed along **two axes**: a **framework**
-        profile (`react`, `nestjs`) carries architecture plus the project-owned
-        binding / route / persistence **seeds**, and names the **language**
-        profile (`typescript`) that carries semantic-type rendering and the
-        declaration-only-tree recipe. The template ships those three lean
-        defaults; a project adds its own. Attended subcommands never block on a
+        profile (`react`, `nestjs`, `angular`, `ios`, `android`) carries
+        architecture plus the project-owned binding / route / persistence
+        **seeds**, keeps its deep material in `profiles/{id}/references/` loaded
+        only on need, and names the **language** profile (`typescript`) that
+        carries semantic-type rendering and the declaration-only-tree recipe.
+        The template ships those lean defaults; a project adds its own — note
+        that only `react` and `nestjs` currently declare a `language:`.
+        Attended subcommands never block on a
         missing profile; `emanate plan` refuses a unit whose stack declares no
         language profile. Its **judgment is filed by role**, not by subcommand:
         `references/roles/` holds one doc per position of the loop — contracter ·
@@ -194,7 +197,7 @@ repo is both its source and its own marketplace.
       [docs/adr/adr-suites-and-surfaces.md](docs/adr/adr-suites-and-surfaces.md);
       the runtime rules live in `base/skills/_references/surface-scope.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
-      in afterwards by `/inspire_bootstrap init`, never clobbered if one already
+      in afterwards by `/inspire-bootstrap init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.
 - `.claude-plugin/marketplace.json` — makes this repo its own plugin marketplace,
   so `/plugin marketplace add Genomcore/inspire` resolves.

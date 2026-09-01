@@ -79,7 +79,11 @@ eq "only the three predicted files disappeared" "$h7_lost" \
 ./inspire_kb/05_screens/patterns/_index.md"
 eq "update leaves no question open" \
    "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
-eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+# Derived, not literal: this file runs against the REAL plugin root, a moving
+# target, and a pinned version asserts nothing the root's own does not.
+eq "the lock stamps the current release" \
+   "$(jq -r .inspire_version "$p/.inspire.lock")" \
+   "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
 check "the lock's template_sha is real (the shipped manifest names the release commit)" \
   "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
 # The release does not only RETIRE KB files, it adds two: 00_bootstrap/glossary.md

@@ -1,0 +1,8 @@
+{
+  "scope": ["src"],
+  "extensions": ["ts"],
+  "patterns": [
+    { "id": "ts-expect-error", "regex": "@ts-expect-error", "ceiling": 1 },
+    { "id": "as-any", "regex": "as any", "ceiling": 1 }
+  ]
+}

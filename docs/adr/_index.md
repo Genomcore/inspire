@@ -1,7 +1,7 @@
 # ADR catalog — INSPIRE core
 
 Core-level decisions about INSPIRE itself. Project-level ADRs live in a fork's
-`inspire_kb/01_adr/` and are authored with `/inspire_adr`.
+`inspire_kb/01_adr/` and are authored with `/inspire-adr`.
 
 Ids are slug-only (`adr-{slug}.md`) — see
 [adr-decision-record-ids](adr-decision-record-ids.md) for why. This index carries the

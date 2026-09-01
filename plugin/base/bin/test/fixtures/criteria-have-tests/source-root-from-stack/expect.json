@@ -1,0 +1,2 @@
+{ "exit": 0, "finding_count": 0, "findings": [],
+  "forbidden": ["no test files found", "is claimed by no test"] }

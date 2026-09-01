@@ -48,11 +48,11 @@ drift** (prototype ahead of spec).
    - Spec describes UI not rendered → prototype regression, or spec ahead of code.
    - A prototype feature not traceable to any feature file → **WARN**, ask the user.
    - A prototype violating a canonical pattern/component/UX ADR → code regression;
-     suggest `/inspire_prototype`.
+     suggest `/inspire-prototype`.
 5. **Report reverse drift separately** from forward drift, with severity
    (Important = a whole feature/tab missing from the spec; Minor = a column, label,
    or control).
-6. **Resolution:** reverse-drift findings suggest `/inspire_screens validate`
+6. **Resolution:** reverse-drift findings suggest `/inspire-screens validate`
    to update the spec (the prototype is already correct) — the spec catches up to
    the code, not the other way around.
 
