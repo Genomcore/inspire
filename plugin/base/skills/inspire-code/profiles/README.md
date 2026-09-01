@@ -12,13 +12,13 @@ At the start of any subcommand, `inspire-code` resolves the active profile set f
 [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares `profiles: [<id>, …]`,
-   use that set. `/inspire_bootstrap stack` maintains this line.
+   use that set. `/inspire-bootstrap stack` maintains this line.
 2. **Inference fallback** — otherwise infer from the stack sections
    (`## Frontend: React` → `react`; `## Backend: NestJS` → `nestjs`; …).
 
 Then read **only** `profiles/{id}.md` for each resolved id. A framework the project
 does not use never loads. If a declared framework has no profile file, the
-subcommand runs **purely generic** and says so — offering `/inspire_bootstrap` to
+subcommand runs **purely generic** and says so — offering `/inspire-bootstrap` to
 scaffold one. Missing profiles never block.
 
 Profiles are **composable**: a React + NestJS monorepo loads both, and each
@@ -36,7 +36,10 @@ layer: frontend | backend | data | tooling
 ---
 
 ## Layering
-Where each kind of code lives; the architectural shape. Feeds review Phase 1
+Where each kind of code lives; the architectural shape. Must also answer the
+module-boundary questions: what a module exposes to its siblings, and where code
+shared across modules (an external system's client and its generic helpers) lives —
+decided at first use, never deferred to the second consumer. Feeds review Phase 1
 (architecture) and the implementation shape in `tdd`.
 
 ## Test conventions
@@ -50,6 +53,14 @@ and the authoring rules in `tdd`.
 ## Review focus
 Extra dimensions `review` adds to its fan-out for this stack (e.g. api-contract,
 styling, a11y, security). Each is a lens name + one line of what it hunts for.
+
+## Quality gates
+The concrete tools and rules that mechanically enforce this stack's share of
+[`_references/quality-gates.md`](../../_references/quality-gates.md): which lint
+rules, which coverage tooling, which of them are absolute vs ratcheted, and which
+suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+this stack is listed as **dropped with its reason**, never left out silently. Names
+tools and rules only — never an org's server or pipeline.
 
 ## Build & verify
 The concrete lint / type-check / build / test commands. `fix-build`, `review`, and
@@ -67,6 +78,7 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
 | `## Test conventions` | `tdd` · `review` Phase 4 |
 | `## Forbidden patterns` | `review` · `tdd` authoring rules |
 | `## Review focus` | `review` fan-out (extra dimensions) |
+| `## Quality gates` | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |
 | `## Build & verify` | `fix-build` · `review` build step · `debug` |
 
 ## Authoring rules for profiles
@@ -78,10 +90,14 @@ Pointers to deeper files under `profiles/{id}/references/`, read only when neede
   login" is org policy and belongs in the project's `CLAUDE.md`, not here.
 - **No product vocabulary.** A profile that a different React project could not
   reuse verbatim has leaked something that isn't a framework convention.
-- **The template ships lean defaults** (`react`, `nestjs`) matching the seeded
-  reference stack; a project adds or replaces profiles for its own frameworks by
-  dropping `profiles/{id}.md` here — inside the runtime, at
-  `.claude/skills/inspire-code/profiles/`.
+- **The template ships lean defaults** — `react` and `nestjs`, matching the seeded
+  reference stack, plus `angular`, `ios` and `android` (the last two mostly
+  deferrals with real test conventions); a project adds or replaces profiles for
+  its own frameworks by dropping `profiles/{id}.md` here — inside the runtime, at
+  `.claude/skills/inspire-code/profiles/`. A profile keeps its deep material in
+  `profiles/{id}/references/`, linked from its `## References` section — the
+  profile file itself stays lean and loads whenever its stack is active; a
+  reference loads only when the task touches its topic.
 
 > **A profile you author here survives `/inspire:update`.** This directory sits
 > inside a skill directory INSPIRE owns, but an update classifies content against

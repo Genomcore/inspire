@@ -3,7 +3,7 @@ name: inspire-adr
 description: "ADR lifecycle for architectural decisions that span two or more modules or surfaces, or are system-wide: create / update / promote / supersede along a maturity ladder (design → prototyped → implemented). Use when proposing, recording, advancing, or retiring an architectural decision."
 ---
 
-# /inspire_adr — Architecture Decision Records
+# /inspire-adr — Architecture Decision Records
 
 ## Scope
 
@@ -11,7 +11,7 @@ An **ADR** records a decision that spans **≥2 modules or ≥2 surfaces**, or i
 system-wide — a per-surface ADR spanning two modules within that surface is legal.
 ADRs are stored in
 [`inspire_kb/01_adr/`](../../../inspire_kb/01_adr). This skill owns their full
-lifecycle. It does **not** run the global review — [`/inspire_workspace review`](../inspire-workspace/SKILL.md)
+lifecycle. It does **not** run the global review — [`/inspire-workspace review`](../inspire-workspace/SKILL.md)
 checks that an ADR's consequences have actually propagated; this skill authors and
 advances the decisions themselves.
 
@@ -42,10 +42,10 @@ happens in chat before authoring.
 
 ## Invocation
 
-- `/inspire_adr create {prefix-slug}` — new ADR (defaults to `Status: design`)
-- `/inspire_adr update {id}` — modify an ADR (supersede required only at `implemented`)
-- `/inspire_adr promote {id} {maturity}` — advance maturity and propagate consequences
-- `/inspire_adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
+- `/inspire-adr create {prefix-slug}` — new ADR (defaults to `Status: design`)
+- `/inspire-adr update {id}` — modify an ADR (supersede required only at `implemented`)
+- `/inspire-adr promote {id} {maturity}` — advance maturity and propagate consequences
+- `/inspire-adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
 
 ## Subcommand: create {prefix-slug}
 
@@ -125,7 +125,7 @@ consequences to the layers the new maturity reaches.
    pointer (which external repo validated it, and the evidence); for `implemented`,
    note where in the codebase it lives.
 3. **Propagate / record evidence:** confirm the design workspace reflects the
-   decision, then for each affected module invoke `/inspire_module review {module}`
+   decision, then for each affected module invoke `/inspire-module review {module}`
    to detect where the ADR's consequences are not yet reflected. Surface the gaps
    as follow-up actions.
 4. **Propose endorsement.** Ask the operator whether to endorse the promoted
@@ -158,7 +158,7 @@ via `create`).
 > *no historical language* rule below.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -179,7 +179,7 @@ via `create`).
    content, `## Related ADRs`, the `**Status:**` line and a `Supersedes:` header,
    because this skill mandates those sections and a ban on their content would ban a
    required section.
-5. **Consult the task tracker** ([`/inspire_task list`](../inspire-task/SKILL.md))
+5. **Consult the task tracker** ([`/inspire-task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
 6. **Stamp every write.** After an ADR is written, run
    `.inspire/bin/trust.sh stamp <file> --skill adr`
@@ -189,7 +189,7 @@ via `create`).
 
 ## Related skills
 
-- `/inspire_workspace` — the global review checks ADR-propagation alignment (that
+- `/inspire-workspace` — the global review checks ADR-propagation alignment (that
   consequences cohere across the design workspace within each ADR's maturity reach).
-- `/inspire_module` — `promote` propagates by invoking module review to surface
+- `/inspire-module` — `promote` propagates by invoking module review to surface
   where an ADR's consequences aren't yet reflected.

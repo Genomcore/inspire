@@ -1348,8 +1348,14 @@ check "A3: no empty .claude/hooks survives" "[ ! -e '$p/.claude/hooks' ]"
 check "A4: no empty inspire-learn survives" "[ ! -e '$p/.claude/skills/inspire-learn' ]"
 
 # The pruning must not have cost anything the migration exists to deliver.
-eq "all 15 validators + the trust tool landed at .inspire/bin" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
+# The expected count is DERIVED from the shipped base/bin (test/ never ships and
+# sits one level down, so -maxdepth 1 already excludes it): this block upgrades
+# to the CURRENT root, a moving target, and a literal count here broke on the
+# first release that added a validator while asserting nothing a source-side
+# count does not.
+shipped_bin="$(find "$PLUGIN_ROOT/base/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')"
+eq "every shipped validator + the trust tool landed at .inspire/bin" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "$shipped_bin"
 check "the relocated hooks are all three there" \
    "[ -f '$p/.claude/inspire/hooks/session-start.sh' ] && \
     [ -f '$p/.claude/inspire/hooks/pre-commit.sh' ] && \
@@ -1435,8 +1441,11 @@ eq "the blocked .claude/bin holds nothing but their file" \
    "$(ls -A "$p/.claude/bin" | tr '\n' ' ')" "my-check.sh "
 eq "the blocked .claude/hooks holds nothing but their file" \
    "$(ls -A "$p/.claude/hooks" | tr '\n' ' ')" "my-hook.sh "
-eq "all 15 validators + the trust tool still landed" \
-   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" "16"
+# Derived for the same reason as the landing count above: current root, moving
+# target.
+eq "every shipped validator + the trust tool still landed" \
+   "$(find "$p/.inspire/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')" \
+   "$(find "$PLUGIN_ROOT/base/bin" -maxdepth 1 -type f | wc -l | tr -d ' ')"
 fixture_cleanup "$w"
 
 # --mode plan on the longest chain must still write NOTHING — directories
@@ -1747,7 +1756,11 @@ eq "only the three predicted files disappeared" "$h7_lost" \
 ./inspire_kb/05_screens/patterns/_index.md"
 eq "update leaves no question open" \
    "$(printf '%s' "$h7_up" | jq -r '.ask|length')" "0"
-eq "the lock stamps 0.7.0" "$(jq -r .inspire_version "$p/.inspire.lock")" "0.7.0"
+# This block runs against the REAL plugin root (unlike the pinned-copy blocks
+# below), so the expected version is the root's own, not a literal.
+eq "the lock stamps the current release" \
+   "$(jq -r .inspire_version "$p/.inspire.lock")" \
+   "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
 check "the lock's template_sha is real (the shipped manifest names the release commit)" \
   "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
 # The release does not only RETIRE KB files, it adds two: 00_bootstrap/glossary.md

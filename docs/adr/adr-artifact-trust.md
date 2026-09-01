@@ -172,7 +172,7 @@ one. And disclose before rewriting the body of a file carrying `endorsed:`, pres
 the whole test, so no hash is needed for it.
 
 Endorsement lives with the owning skills' ceremonies and **never** in
-`/inspire_workspace`, whose read-only charter forbids writes.
+`/inspire-workspace`, whose read-only charter forbids writes.
 
 ### D7 — The report is stateless, grouped, and surfaced unconditionally once
 
@@ -193,7 +193,7 @@ never lists: a full report at every PR would be the same wall of true-but-unchan
 lines each run, the exact noise failure the reviews
 flagged, whereas a count that jumped since the last PR is precisely the signal worth an
 unconditional line. The full grouped report stays operator-invoked — the `## Signals`
-section of `/inspire_workspace review`, which is the methodology's actual pre-PR ritual,
+section of `/inspire-workspace review`, which is the methodology's actual pre-PR ritual,
 plus one offer line at the `/inspire:update` tail, where mass divergence actually happens.
 Pre-commit is untouched: per-commit would be noise, the PR is the review moment.
 
@@ -341,7 +341,7 @@ gates. `trust.sh` is a tool beside them, with its own wired test script.
 Built here: `trust.sh` and its tests; the `_references/trust-stamps.md` shared reference
 that is the one home for the model; stamp-on-write and propose-at-promote pointer lines in
 the writing skills; `inspire-code`'s unendorsed-anchor warning; the `## Signals` section in
-`/inspire_workspace review` (with the design-system variance line moved under it, and the
+`/inspire-workspace review` (with the design-system variance line moved under it, and the
 hardcoded report skeleton in `review.workflow.mjs` updated in the same commit); the pre-PR
 counts line; the `/inspire:update` tail offer; and D10's sweep.
 

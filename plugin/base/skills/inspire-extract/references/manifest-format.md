@@ -142,7 +142,7 @@ surfaces_inferred:
 - **`surfaces_inferred`** — surface candidates read off `apps/*` and package
   boundaries, `kind` being one of the three in
   [`_references/surface-scope.md`](../../_references/surface-scope.md) (`ui` ·
-  `headless` · `lib`). They hand off to `/inspire_surface add` in its *adopt* arrival,
+  `headless` · `lib`). They hand off to `/inspire-surface add` in its *adopt* arrival,
   which interviews each candidate into the roster; until that add records one, no
   surface id exists and nothing in the KB may be scoped to it.
 
@@ -166,5 +166,5 @@ as the artifact is promoted.
 
 The manifest is transient. The durable record of *what was extracted* is the **task
 tracker**: one ticket per authored artifact via
-`/inspire_workspace task create --epic extract`. No new KB structure — extract reuses
+`/inspire-workspace task create --epic extract`. No new KB structure — extract reuses
 the tracker like the other skills.

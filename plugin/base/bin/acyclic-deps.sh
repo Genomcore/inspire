@@ -69,16 +69,21 @@ if [ ! -s "$EDGES_FILE" ]; then
   sdd_exit_with_counters
 fi
 
-# Cycle detection via tsort. BSD tsort reports cycles to stderr as:
-#   tsort: cycle in data
-#   tsort: <member1>
-#   tsort: <member2>
+# Cycle detection via tsort. The two tsort implementations report a cycle with
+# DIFFERENT stderr text, and matching only one makes the gate pass silently on the
+# other — found when the fixture suite first ran on Linux (74/74 on macOS, the
+# `cycle` fixture failing on Ubuntu):
+#   BSD (macOS):      tsort: cycle in data
+#   GNU (coreutils):  tsort: -: input contains a loop:
+# Both then list the members one per `tsort: ` line, so member extraction is shared;
+# each header variant has to be excluded from it or GNU's header line (which also
+# starts with `tsort: `) would be reported as a cycle member.
 tsort "$EDGES_FILE" >/dev/null 2>"$STDERR_FILE" || true
 
-if grep -q "cycle in data" "$STDERR_FILE"; then
+if grep -qE "cycle in data|input contains a loop" "$STDERR_FILE"; then
   cycle_members=$(
     grep -E "^tsort: " "$STDERR_FILE" \
-      | grep -v "cycle in data" \
+      | grep -vE "cycle in data|input contains a loop" \
       | sed 's/^tsort:[[:space:]]*//' \
       | paste -sd, -
   )

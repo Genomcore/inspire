@@ -174,7 +174,7 @@ same fallthrough for a retirement one — doing nothing is always the safe choic
 
 Read `source_root` and `prototype_root` from `inspire_kb/00_bootstrap/stack.md` — update
 never re-asks; those were settled at init and changing them is a Shape change owned by
-`/inspire_bootstrap stack`.
+`/inspire-bootstrap stack`.
 
 Run with `--dry-run` first if the operator wants to see the exact file list before
 writing — the decision logic is identical in both, only the write is skipped, so the
@@ -210,7 +210,7 @@ git diff and commit.
 For each kept **skill** edit (an `ask` resolved to `mine`, or a plain `keep` verdict —
 never a kept `inspire_kb/` retirement ask: that is the operator declining to retire a seed
 file, not a skill edit, and it earns no lesson-capture suggestion): tell the operator the
-customization belongs in `/inspire_lesson note`. Say plainly that
+customization belongs in `/inspire-lesson note`. Say plainly that
 nothing is remembered by this flow — the same file will be classified as `ask` (or
 `keep`) again on the next upgrade, and that recurrence is deliberate: it is what stands in
 for the lesson-reconciliation half (D6) that does not exist yet.
@@ -304,4 +304,4 @@ skill waits on it: everything above is what the current release actually does.
    D6, and unbuilt. This skill does not read `98_lessons/`. Do not approximate it — telling
    the operator an edit was kept is truthful; silently merging it is not.
 6. **Do not re-ask the product roots.** Read them from `stack.md`; changing them is a Shape
-   change owned by `/inspire_bootstrap stack`.
+   change owned by `/inspire-bootstrap stack`.

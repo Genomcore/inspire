@@ -1,9 +1,9 @@
 ---
 name: inspire-workspace
-description: "Workspace-level validation: the global pre-PR review (orchestrating module + cross-module checks) and vault-structure validation. Use for the required pre-merge gate and top-level structure checks. ADR lifecycle lives in /inspire_adr; the task tracker in /inspire_task."
+description: "Workspace-level validation: the global pre-PR review (orchestrating module + cross-module checks) and vault-structure validation. Use for the required pre-merge gate and top-level structure checks. ADR lifecycle lives in /inspire-adr; the task tracker in /inspire-task."
 ---
 
-# /inspire_workspace — Workspace-level Operations
+# /inspire-workspace — Workspace-level Operations
 
 ## Scope
 
@@ -16,8 +16,8 @@ don't belong to a single module or feature:
   tracker's on-disk invariants.
 
 It does **not** own the artifacts it validates the coherence of: **ADR lifecycle**
-is [`/inspire_adr`](../inspire-adr/SKILL.md) and the **task tracker** is
-[`/inspire_task`](../inspire-task/SKILL.md). This skill reads ADRs and tickets to
+is [`/inspire-adr`](../inspire-adr/SKILL.md) and the **task tracker** is
+[`/inspire-task`](../inspire-task/SKILL.md). This skill reads ADRs and tickets to
 judge coherence; it never authors them.
 
 When the project declares a **surface roster** (`inspire_kb/00_bootstrap/surfaces.md`),
@@ -29,9 +29,9 @@ one**, and every check reads exactly as it did before surfaces existed.
 
 ## Invocation
 
-- `/inspire_workspace review` — full vault review
-- `/inspire_workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
-- `/inspire_workspace structure` — validate module hubs, ADR files, task tracker, vault conventions
+- `/inspire-workspace review` — full vault review
+- `/inspire-workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
+- `/inspire-workspace structure` — validate module hubs, ADR files, task tracker, vault conventions
 
 ## Subcommands in `references/`
 
@@ -80,7 +80,7 @@ and the output uses the exact skeleton in **Output format** below.
 - If modules are specified, use those. Otherwise, enumerate module hubs:
   `inspire_kb/02_modules/*.md` excluding `_*.md` and `README.md` — the glob is
   the index.
-- For each module in scope, delegate to `/inspire_module review {module}`.
+- For each module in scope, delegate to `/inspire-module review {module}`.
 
 ### Phase 2 — Module reviews
 
@@ -134,7 +134,7 @@ Drift items pending: {N}
 4. **No false positives.** If unsure, note as "verify".
 5. **Actionable.** Every finding suggests the skill to invoke.
 6. **Delegate deep dives.** For complex feature-level issues, suggest
-   `/inspire_feature review {id}`.
+   `/inspire-feature review {id}`.
 7. **Pending drift is not failure.** Prototype drift and pending component adoption
    are `important`, not `critical`, unless they contradict an ADR within its
    maturity's reach.
@@ -146,13 +146,13 @@ Drift items pending: {N}
    never block the pre-PR gate on one. They re-appear for as long as they stay true
    ([trust-stamps](../_references/trust-stamps.md#report)).
 9. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
-   are flagged `(tracked: TASK-{id})`. Use `/inspire_task list`.
+   are flagged `(tracked: TASK-{id})`. Use `/inspire-task list`.
 10. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
-   - Prototype drift → `/inspire_prototype`
-   - screen spec drift → `/inspire_screens`
-   - Feature drift → `/inspire_module update` or `/inspire_feature update`
-   - ADR misalignment → `/inspire_adr update`
-   - Screens tree out of shape, or an unresolved `surfaces:` id → `/inspire_surface review`
+   - Prototype drift → `/inspire-prototype`
+   - screen spec drift → `/inspire-screens`
+   - Feature drift → `/inspire-module update` or `/inspire-feature update`
+   - ADR misalignment → `/inspire-adr update`
+   - Screens tree out of shape, or an unresolved `surfaces:` id → `/inspire-surface review`
 
 ## Subcommand: structure
 
@@ -171,14 +171,14 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **`review` and `structure` are read-only.** They suggest and flag; they never
    edit files or invoke a fix-skill.
 2. **Consult the task tracker.** Known items live in
-   `inspire_kb/99_tracker/tickets/` (`/inspire_task list`); don't re-report them as
+   `inspire_kb/99_tracker/tickets/` (`/inspire-task list`); don't re-report them as
    new findings.
 3. **Git discipline is shared.** Branch/commit/PR conventions, merge-conflict
    auditing, and the git safety protocol live in
@@ -188,12 +188,12 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
 
 ## Related skills
 
-- `/inspire_adr` — ADR lifecycle (create / update / promote / supersede). Review
-  judges whether ADR consequences propagated; `/inspire_adr` authors them.
-- `/inspire_task` — the task tracker. `structure` validates its on-disk invariants;
-  `/inspire_task` operates the tickets.
-- `/inspire_module`, `/inspire_feature` — the module/feature reviews this
+- `/inspire-adr` — ADR lifecycle (create / update / promote / supersede). Review
+  judges whether ADR consequences propagated; `/inspire-adr` authors them.
+- `/inspire-task` — the task tracker. `structure` validates its on-disk invariants;
+  `/inspire-task` operates the tickets.
+- `/inspire-module`, `/inspire-feature` — the module/feature reviews this
   orchestrates and delegates deep dives to.
-- `/inspire_surface` — owns the roster and is the diagnostic for its coherence.
+- `/inspire-surface` — owns the roster and is the diagnostic for its coherence.
   Review flags a screens tree out of shape and `surfaces:` values that don't resolve;
   diagnosing the roster and running the corrective sweep are that skill's.

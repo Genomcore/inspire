@@ -107,14 +107,14 @@ happen. Then:
 INSPIRE <version> installed.
 
   Run:  /reload-skills
-  Then: /inspire_bootstrap init
+  Then: /inspire-bootstrap init
 
-  (/reload-skills picks up the newly materialized skills; /inspire_bootstrap init
+  (/reload-skills picks up the newly materialized skills; /inspire-bootstrap init
   fills in CLAUDE.md's placeholders and starts the KB.)
 ```
 
-Do not invoke `/reload-skills` or `/inspire_bootstrap init` on the operator's behalf —
-`/reload-skills` is the operator's action, and chaining `/inspire_bootstrap init` across it
+Do not invoke `/reload-skills` or `/inspire-bootstrap init` on the operator's behalf —
+`/reload-skills` is the operator's action, and chaining `/inspire-bootstrap init` across it
 would run against whatever skill state existed before the reload. Instruct, don't chain.
 
 Remind the operator to **commit** the result — that is what makes the runtime available to
@@ -132,6 +132,6 @@ teammates and CI.
    message, never a thing to work around — and a non-zero exit from the script is a stop
    too, not something to patch up by hand.
 4. **This skill does not author content.** Language, stack, theme and the project README
-   belong to `/inspire_bootstrap init`.
+   belong to `/inspire-bootstrap init`.
 5. **Instruct, don't chain.** Report the handoff and stop; `/reload-skills` and
-   `/inspire_bootstrap init` are the operator's next actions, not this skill's.
+   `/inspire-bootstrap init` are the operator's next actions, not this skill's.

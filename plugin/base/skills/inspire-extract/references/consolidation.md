@@ -52,7 +52,7 @@ layer. Signals, in rough priority:
   each other belong together.
 
 Propose each module: `{slug, prefix, members[]}`. Modules are scaffolded via
-`/inspire_module create` at authoring time, not here.
+`/inspire-module create` at authoring time, not here.
 
 ## 4. Bootstrap verdicts (fold in A & D)
 

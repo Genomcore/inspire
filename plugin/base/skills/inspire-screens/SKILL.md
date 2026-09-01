@@ -3,7 +3,7 @@ name: inspire-screens
 description: "Create and validate screens (a screen is the UI spec for one view) using a pattern-driven approach. Screens instantiate shared patterns and use shared components. Use when designing or reviewing an application's screens."
 ---
 
-# /inspire_screens — Screen Specifications (Pattern-Driven)
+# /inspire-screens — Screen Specifications (Pattern-Driven)
 
 ## When to use
 
@@ -27,7 +27,7 @@ Four levels under `inspire_kb/05_screens/`:
 
 `design-system.md` is **seeded at install** from the default template
 `00_bootstrap/theme.md`, and owned by
-[`/inspire_bootstrap design-system`](../inspire-bootstrap/SKILL.md) — screens
+[`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md) — screens
 **read** its tokens (they are the source of truth for colors, typography, layout)
 but never edit them.
 
@@ -41,7 +41,7 @@ surface id resolves are defined in
 [`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md);
 read it before writing anywhere under `05_screens/`. This skill works with the
 shape the roster implies — the one-time reshaping from flat to split is
-[`/inspire_surface`](../inspire-surface/SKILL.md)'s sweep, not this skill's.
+[`/inspire-surface`](../inspire-surface/SKILL.md)'s sweep, not this skill's.
 
 **Screens are lightweight** — they instantiate a pattern and describe only
 deviations. They do NOT redefine colors, typography, layout, or re-describe
@@ -107,10 +107,10 @@ being invented.
 - **Directories are created lazily.** A surface or module directory comes into
   existence when the first screen lands in it, never ahead of one.
 - **Reshaping the tree is not this skill's work.** The flat→split move belongs to
-  [`/inspire_surface add`](../inspire-surface/SKILL.md), which performs it as a
+  [`/inspire-surface add`](../inspire-surface/SKILL.md), which performs it as a
   sweep the operator classifies entry by entry. The one reshaping this skill
   performs is consolidating back to the flat shape after a `retire` — and only when
-  `/inspire_surface` hands it over.
+  `/inspire-surface` hands it over.
 
 ## Flows in `references/`
 
@@ -138,9 +138,9 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 
 | Pair | Mismatch direction | Authority | Action |
 |------|--------------------|-----------|--------|
-| **Features ↔ Prototype** | Feature described, not in the prototype | Features | "Code behind spec". Suggest `/inspire_prototype`. |
-| **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire_feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
-| **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire_screens validate`. Do NOT change the prototype — risks losing iterations. |
+| **Features ↔ Prototype** | Feature described, not in the prototype | Features | "Code behind spec". Suggest `/inspire-prototype`. |
+| **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire-feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
+| **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire-screens validate`. Do NOT change the prototype — risks losing iterations. |
 | **screen spec ↔ Prototype** | Prototype renders UI not in the screen spec | Prototype | Spec stale (reverse drift). Update the spec. |
 | **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + current UX ADRs are authoritative for visual/structural conventions. |
 
@@ -172,7 +172,7 @@ When uncertain which layer a finding belongs to, ask the user.
 > points at it rather than restating it.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
-> change how this skill behaves, offer `/inspire_lesson note` — never auto-write
+> change how this skill behaves, offer `/inspire-lesson note` — never auto-write
 > a lesson. Protocol and ticket-vs-lesson routing:
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
@@ -198,7 +198,7 @@ When uncertain which layer a finding belongs to, ask the user.
    routes for detail/edit/new either way. The route mirrors the file's path:
    `{surface}/{module}/{screen}.md` ↔ `{shell}/{module}/{screen}`, so a route and a
    location can never disagree.
-6. **Validate before merge** — run `/inspire_module review` before any PR that
+6. **Validate before merge** — run `/inspire-module review` before any PR that
    modifies screen spec files.
 7. **Respect current UX ADRs.** Screens must not contradict a UX decision in
    `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
@@ -215,7 +215,7 @@ When uncertain which layer a finding belongs to, ask the user.
 
 ## Skill invocations
 
-- `/inspire_screens create {module}/{screen}` — scaffold a new screen with pattern selection
-- `/inspire_screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
-- `/inspire_screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
-- `/inspire_screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities
+- `/inspire-screens create {module}/{screen}` — scaffold a new screen with pattern selection
+- `/inspire-screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
+- `/inspire-screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
+- `/inspire-screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities

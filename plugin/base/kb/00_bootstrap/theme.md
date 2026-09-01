@@ -9,8 +9,8 @@ The **default design-system template**: theme, typography, color, density and
 layout. This is a *seed*, not the live source of truth — `materialize.sh` copies
 it to [`05_screens/design-system.md`](../05_screens) during `/inspire:init`,
 which becomes the project's working design system. From then on edit the live one with
-`/inspire_bootstrap design-system`; re-seed this default with
-`/inspire_bootstrap theme`.
+`/inspire-bootstrap design-system`; re-seed this default with
+`/inspire-bootstrap theme`.
 
 > **Default**, abstracted from the OpenBIMS mockup's CSS (`@theme` tokens +
 > design-system spec). Swap the values for your brand — the token *roles* below are

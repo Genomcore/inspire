@@ -75,11 +75,23 @@ The body has six sections in fixed order: `## Purpose` · `## Inputs` · `## Out
   - **Derived / synthesized / multi-entity** (e.g. the action reads A, joins B and C, returns a derived shape) → inline table declaring the actual returned shape.
 - **`## Entities`** — one sub-section per entity the action touches, headed `### [[module.entity|module::entity]]`, then a metadata line — an optional leading `**As input:** X · ` (how the entity is identified for this action) followed by `**Effect:** Y` (`create` · `read` · `read-whole` · `update` · `delete` · `append` · `replace`) — then a field-touch table. Field names in tables are wrapped in backticks (`` `field_name` ``) to neutralize intraword underscore italics in CommonMark renderers. These sub-sections drive `entity-coherence` and feed the entity document's `## Fields` + `## Touched by` tables during consolidation. The field-touch rows are the authoritative declarations of which fields this action reads or writes. Use `read-whole` when the action returns the entire entity (or an array of entities); the field-touch table then enumerates only filters and keys, not the full returned shape. Plain `read` is reserved for partial projections that genuinely surface only a subset of fields. [`effect-touch-matrix.md`](effect-touch-matrix.md) is the authority for valid As-input × Effect combinations. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens.
 - **`## Behavior`** — numbered steps. Each step that makes a sourceable claim weaves its wikilinks into the sentence (prosaic back-sourcing), not as trailing references.
-- **`## Errors`** — bullet list of error codes with operator-facing messages.
+- **`## Errors`** — bullet list of error codes with operator-facing messages. Each bullet becomes a test (`/inspire-code tdd` derives its list from the criteria ∪ this section ∪ the convention's always-present cases), so an error declared here and nowhere tested is a contract nobody checks. The observable response is **not** written here — see `## Pure-contract scope`; only a `**Wire deviation:**` note is.
 
 ## Pure-contract scope
 
 The descriptor specifies what the action does, what it consumes, what it returns, which entities it touches. **How the action is exposed to callers** (HTTP route, CLI command, MCP tool, workflow node, agent tool) lives in surface-binding artifacts owned by their respective modules (e.g. URE Functions, AI Agents Tools, Devices Edge) and is out of scope for this descriptor.
+
+**What a caller observes when a declared error fires is not out of scope, and it is not the descriptor's job either.** It comes from the project's resolved wire convention ([`_references/conventions/README.md`](../../_references/conventions/README.md), selected in `00_bootstrap/stack.md`): the descriptor names the logical error, the convention maps it to an observable response, once, for every action in the project. Restating a status code per descriptor would be the same duplication `## Outputs` already refuses for field shapes — and drift the same way.
+
+The exception is a **deviation**, which belongs here because only this action knows about it. Declare it directly below `## Errors`:
+
+```markdown
+**Wire deviation:** `not_found` returns `403` instead of `404` — this endpoint is
+reachable pre-authorization, and a `404` would let an unauthenticated caller enumerate
+valid ids.
+```
+
+Silence means the convention holds. A deviation without a written reason is a finding, not a deviation.
 
 Storage details, runtime engine, boot mechanics, persistence layer — also out of scope. The descriptor models the contract; how the contract is realized is somebody else's artifact.
 

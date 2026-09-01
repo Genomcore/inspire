@@ -92,7 +92,7 @@
         <div class="vs-col reveal d2">
           <p class="k">With an agent</p>
           <h3>Drive it with a skill</h3>
-          <p>Invoke an <code>/inspire_*</code> skill and it interviews you, generates the artifact in the correct location, and propagates the change across every dependent layer — features, screens, specs, prototype and ADRs.</p>
+          <p>Invoke an <code>/inspire-*</code> skill and it interviews you, generates the artifact in the correct location, and propagates the change across every dependent layer — features, screens, specs, prototype and ADRs.</p>
         </div>
       </div>
       <p class="note reveal d2"><b>Reviews are read-only.</b> A skill's <code>review</code> surfaces findings and recommends the next command — it never applies changes. Landing the fix is always the author's call.</p>
@@ -114,15 +114,15 @@
         </div>
         <div class="step reveal d2">
           <h4>Invoke a skill</h4>
-          <p>In a Claude Code session, type <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code> — for example <code>/inspire_feature create billing/INV-01</code>. The skill does the rest, interviewing you wherever judgment is needed.</p>
+          <p>In a Claude Code session, type <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code> — for example <code>/inspire-feature create billing/INV-01</code>. The skill does the rest, interviewing you wherever judgment is needed.</p>
         </div>
         <div class="step reveal d3">
           <h4>Codify it</h4>
-          <p>When the spec is ready, <code>/inspire_code tdd {feature-id}</code> implements it test-first against its acceptance criteria — re-anchoring to the ADRs and descriptors that specify it.</p>
+          <p>When the spec is ready, <code>/inspire-code tdd {feature-id}</code> implements it test-first against its acceptance criteria — re-anchoring to the ADRs and descriptors that specify it.</p>
         </div>
         <div class="step reveal d3">
           <h4>Review before the PR</h4>
-          <p>Run <code>/inspire_module review {module}</code> for single-module changes, or <code>/inspire_workspace review</code> for cross-cutting ones. This is the required gate before any PR that touches <code>inspire_kb/</code>.</p>
+          <p>Run <code>/inspire-module review {module}</code> for single-module changes, or <code>/inspire-workspace review</code> for cross-cutting ones. This is the required gate before any PR that touches <code>inspire_kb/</code>.</p>
         </div>
       </div>
     </div>
@@ -168,40 +168,40 @@
       <div class="sec-head reveal">
         <p class="eyebrow">Common scenarios</p>
         <h2>Where do I start?</h2>
-        <p>The usual path: edit directly for small changes, reach for a skill for new artifacts or cross-cutting work, codify with <code>/inspire_code</code> — and always review before merge.</p>
+        <p>The usual path: edit directly for small changes, reach for a skill for new artifacts or cross-cutting work, codify with <code>/inspire-code</code> — and always review before merge.</p>
       </div>
       <div class="scenarios reveal d1">
         <div class="scenario">
           <p class="q">I have an existing codebase to bring in</p>
-          <p class="a"><code>/inspire_extract scan {path}</code> — four parallel scanners (stack, screens, logic·API·DB, styles) inventory your code, then consolidate into cross-linked candidate features, screens and domain objects. Read-only; nothing enters the KB without your review.</p>
+          <p class="a"><code>/inspire-extract scan {path}</code> — four parallel scanners (stack, screens, logic·API·DB, styles) inventory your code, then consolidate into cross-linked candidate features, screens and domain objects. Read-only; nothing enters the KB without your review.</p>
         </div>
         <div class="scenario">
           <p class="q">I want to add a feature to a module</p>
-          <p class="a"><code>/inspire_feature create {module}/{id}</code> — interviews you for the use case, gates the acceptance criteria before writing it, then points you to screens, the domain descriptor, or the prototype next.</p>
+          <p class="a"><code>/inspire-feature create {module}/{id}</code> — interviews you for the use case, gates the acceptance criteria before writing it, then points you to screens, the domain descriptor, or the prototype next.</p>
         </div>
         <div class="scenario">
           <p class="q">I want to propose an architectural change</p>
-          <p class="a"><code>/inspire_adr create {slug}</code>, then <code>promote {id} {maturity}</code> as the decision moves design → prototyped → implemented.</p>
+          <p class="a"><code>/inspire-adr create {slug}</code>, then <code>promote {id} {maturity}</code> as the decision moves design → prototyped → implemented.</p>
         </div>
         <div class="scenario">
           <p class="q">I need to design or review a screen</p>
-          <p class="a"><code>/inspire_screens create {module}/{screen}</code> to author one from a pattern, or <code>validate</code> to check an existing screen for drift.</p>
+          <p class="a"><code>/inspire-screens create {module}/{screen}</code> to author one from a pattern, or <code>validate</code> to check an existing screen for drift.</p>
         </div>
         <div class="scenario">
           <p class="q">I need to specify a behavior contract</p>
-          <p class="a"><code>/inspire_domain define {id}</code> — a socratic interview, not a fill-in-the-blanks form; nothing is written until you approve the shape.</p>
+          <p class="a"><code>/inspire-domain define {id}</code> — a socratic interview, not a fill-in-the-blanks form; nothing is written until you approve the shape.</p>
         </div>
         <div class="scenario">
           <p class="q">I'm ready to write the code</p>
-          <p class="a"><code>/inspire_code tdd {feature-id}</code> implements it test-first; <code>/inspire_code review</code> checks a diff against the KB before you merge.</p>
+          <p class="a"><code>/inspire-code tdd {feature-id}</code> implements it test-first; <code>/inspire-code review</code> checks a diff against the KB before you merge.</p>
         </div>
         <div class="scenario">
           <p class="q">I want a working model of the whole product</p>
-          <p class="a"><code>/inspire_prototype</code> — scaffold the horizontal mockup from the specs; its insights co-evolve the vault live (features, screens, ADRs).</p>
+          <p class="a"><code>/inspire-prototype</code> — scaffold the horizontal mockup from the specs; its insights co-evolve the vault live (features, screens, ADRs).</p>
         </div>
         <div class="scenario">
           <p class="q">I'm working without an agent</p>
-          <p class="a">Edit the Markdown directly following each folder's conventions; run <code>/inspire_workspace review</code> when Claude is back to catch anything the templates don't enforce.</p>
+          <p class="a">Edit the Markdown directly following each folder's conventions; run <code>/inspire-workspace review</code> when Claude is back to catch anything the templates don't enforce.</p>
         </div>
       </div>
     </div>

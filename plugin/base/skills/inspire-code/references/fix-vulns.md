@@ -1,4 +1,4 @@
-# /inspire_code fix-vulns — npm vulnerability remediation
+# /inspire-code fix-vulns — npm vulnerability remediation
 
 **Scope: npm only** (any project with `package.json` / `package-lock.json`). For
 other ecosystems (pip, Maven, Gradle, SPM, cargo) this subcommand does not apply —

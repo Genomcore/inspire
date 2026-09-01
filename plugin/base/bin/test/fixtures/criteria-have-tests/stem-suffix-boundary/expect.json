@@ -1,0 +1,5 @@
+{ "exit": 1, "finding_count": 1,
+  "findings": [
+    { "rule": "criteria-have-tests", "severity": "error", "message_substring": "`user/AC-1` is claimed by no test" }
+  ],
+  "forbidden": ["`admin-user/AC-1` is claimed by no test"] }

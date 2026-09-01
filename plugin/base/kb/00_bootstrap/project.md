@@ -1,20 +1,20 @@
 ---
 kind: bootstrap-project
-status: default          # default (seeded) → set per project via /inspire_bootstrap
+status: default          # default (seeded) → set per project via /inspire-bootstrap
 output_language: en      # ISO 639-1 code (or plain name) — the language ALL KB artifacts are written in
 ---
 
 # Project conventions
 
 Project-wide conventions the whole knowledge base inherits. The foundation layer
-every skill reads before authoring. Configure with `/inspire_bootstrap`.
+every skill reads before authoring. Configure with `/inspire-bootstrap`.
 
 ## Output language
 
 `output_language` (frontmatter above) is the **single language every INSPIRE skill
 writes its artifacts in** — specs, features, ADRs, screen specs, prototype
 learnings, the tracker, bootstrap docs and the project `README.md`. Default: `en`
-(English). Change it with `/inspire_bootstrap language`.
+(English). Change it with `/inspire-bootstrap language`.
 
 It is **deliberately independent** of two other things:
 

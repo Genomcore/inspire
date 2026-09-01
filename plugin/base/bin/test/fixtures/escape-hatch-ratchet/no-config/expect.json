@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "escape-hatch-ratchet", "message_substring": "no escape-hatch config" }
+  ]
+}

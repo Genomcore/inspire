@@ -1,4 +1,4 @@
-# /inspire_code fix-build — build-error remediation
+# /inspire-code fix-build — build-error remediation
 
 Fix build errors directly — not just analyze. Reach a clean build with the
 **minimal** set of changes, understanding the code before touching it.
@@ -54,5 +54,5 @@ Fix build errors directly — not just analyze. Reach a clean build with the
 - **Batch fixes aggressively** — don't rebuild after every single edit.
 - **A build error that is really a spec problem** (the code can't compile because
   the contract it was written against doesn't match the action descriptor) is a
-  hand-back, not a cast — route it to `/inspire_domain` rather than forcing the
+  hand-back, not a cast — route it to `/inspire-domain` rather than forcing the
   types.
