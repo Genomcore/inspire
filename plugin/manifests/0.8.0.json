@@ -1,5 +1,5 @@
 {
-  "commit": "da62ea770446a2744bc672da40f26f4ea3411b50",
+  "commit": "6fe796d6604755886c41445cae75af6e08b08c14",
   "files": {
     ".claude/inspire/hooks/dispatch.sh": "6d0b6425d3213813024f89aaa5d3d623a969921b7df99ac9b4c1c9278e2b3172",
     ".claude/inspire/hooks/pre-commit.sh": "9b5ddbe04ce4aca7df15ac8a2e92a6475c3fcc6f2e28ad91d540b8bf0c82a96b",
@@ -7,7 +7,7 @@
     ".claude/inspire/hooks/session-start.sh": "daf9edeb4cbd92a86c3952c09e8b09352674c6c9fd72e4ed686843e256cb22ba",
     ".claude/skills/_references/conventions/README.md": "f12c324b03a8fb23308087bcb2d8c54e3fe9be08f1ac40afc699176cd28147b4",
     ".claude/skills/_references/conventions/_example.md": "ad2c3ceef85ceb8c991e1715a16b8b784e55ae60a4b8cec85a4dca3f1ab92809",
-    ".claude/skills/_references/conventions/graphql.md": "280d287dcf45129886432c8226697e7b91df6166728e8de7fdd7f6b6e0c203e3",
+    ".claude/skills/_references/conventions/graphql.md": "758f11355e1b3b36a9c7f516bcb72b2cfb16dcb937eda8f4098e0f61247b58c3",
     ".claude/skills/_references/conventions/rest.md": "d71e82bbe776572088548dbdb4e2eeeb66cd4f1e21beb591eba213ed1f813572",
     ".claude/skills/_references/findings-format.md": "386711aea6e00e527bad306335e94bb76569b18a74f9d1d5066023ad6b0a197e",
     ".claude/skills/_references/git-conventions.md": "599060adf93d572372c388d9405c5d2083e9fcc85f4106afcdaf5c280ddbc6d4",
