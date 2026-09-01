@@ -57,10 +57,10 @@ const mapMessageDomainToModel = (message: Message): MessageModel => ({
 
 ## 3. Domain → HTTP-response mapper
 
-Delegate to the project's `convertToHttpResponse` helper (serializes `Date` → ISO
-string, recurses into nested objects/arrays, turns an `anyDate()` matcher into
-`anyString()`, and preserves other matchers). Keep a named wrapper that takes the
-domain interface:
+Delegate to `convertToHttpResponse` — written once into the shared test support the
+first time a spec needs it: it serializes `Date` → ISO string, recurses into nested
+objects/arrays, turns an `anyDate()` matcher into `anyString()`, and preserves other
+matchers. Keep a named wrapper that takes the domain interface:
 
 ```typescript
 const mapConversationDomainToHttpResponse = (conversation: Conversation): HttpResponse<Conversation> =>
@@ -95,9 +95,11 @@ const expectConversationsInDb = async (expected: ConversationModel[]): Promise<v
 };
 ```
 
-`arrayIsEqualIndistinctOrder(expected, actual)` runs
+`arrayIsEqualIndistinctOrder(expected, actual)` is the written-once helper for
+comparing two arrays when order is irrelevant: it runs
 `expect(actual).toEqual(expect.arrayContaining(expected))` + a length check — so the
-**expected** (with matchers) must be the **first** argument.
+**expected** (with matchers) must be the **first** argument. Two lines, authored into
+the shared test support at first need.
 
 ## 6. Putting it together
 

@@ -3,10 +3,14 @@
 The fine-grained authoring rules behind `## Test conventions` in
 [`../../nestjs.md`](../../nestjs.md): how a spec is *written* once the level is chosen.
 The level choice itself (unit vs e2e, what each suite covers) lives in the profile;
-this file is the style the chosen spec follows. Helper *semantics* named here
-(`Mother`, `convertToHttpResponse`, `Expect.throwStrictEqualError`) are conventions a
-project realizes in its own shared test-util library — the names are the contract,
-the implementation is the project's.
+this file is the style the chosen spec follows.
+
+The helpers named here (`Mother`, `convertToHttpResponse`,
+`Expect.throwStrictEqualError`, `Expect.arrayIsEqualIndistinctOrder`) come from no
+package: **the first spec that needs one writes it** — a few lines each, semantics
+specified below — into the project's shared test support (`test/support/`), and every
+later spec reuses it instead of repeating the pattern inline. The names and semantics
+are the contract; the implementation is authored once, in the project.
 
 ## GIVEN / WHEN / THEN
 
@@ -70,8 +74,19 @@ it("should find record by id when record exists", async () => {
 
 ## Mothers (test-data builders)
 
-An Object-Mother builder per entity (`Mother<T>` style, backed by faker). Only specify
-the fields significant to the test; the mother randomizes the rest.
+One Object-Mother per entity, all extending a single abstract `Mother<T>` base class
+the project writes once — the abstraction exists so invocation is identical for every
+entity. A mother generates **every field randomly** (faker) and `make(overrides)`
+merges the fields the test needs fixed:
+
+```typescript
+const record = new RecordMother().make({ projectId }); // projectId pinned, rest random
+```
+
+Only specify the fields significant to the test; the randomness of the rest is the
+point — each run exercises the code with different data, so an accidental dependency
+on an unspecified field surfaces as a flaky red instead of hiding behind a constant.
+`makeByList(overrides[])` builds collections the same way.
 
 ## Fixtures (database setup)
 
@@ -172,9 +187,10 @@ After a mutation, re-read the affected collection(s) via the read fixture and as
 the **whole document**, never isolated fields. Re-read **every** collection the
 request could touch, including the ones that must stay **unchanged** (assert they are
 intact); an empty collection is asserted too (`[]`). Order-sensitive:
-`toEqual([...])`; order-indifferent: the project's
-`Expect.arrayIsEqualIndistinctOrder(expected, actual)` (matchers go in the **first**
-argument, where it applies them). Worked examples: [`db-assertions.md`](db-assertions.md).
+`toEqual([...])`. Order-indifferent: `Expect.arrayIsEqualIndistinctOrder(expected,
+actual)` — the written-once helper for comparing two arrays when order does not
+matter (`arrayContaining` + a length check; matchers go in the **first** argument,
+where it applies them). Worked examples: [`db-assertions.md`](db-assertions.md).
 
 ### Build the expected from the domain entity, never from the value under test
 

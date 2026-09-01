@@ -20,7 +20,8 @@ constructor (and constructor args) the production code uses.
 
 ## Sync — a throw-capture helper
 
-For synchronous code, the project's shared test-util library provides the capture:
+For synchronous code, a throw-capture helper written once into the shared test
+support:
 
 ```typescript
 const callback = (): void => field.validateOrThrow(args);

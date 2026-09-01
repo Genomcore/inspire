@@ -8,6 +8,12 @@ TODOs, no commented-out code) live in the generic
 
 ## Audit every meaningful domain mutation
 
+The requirement is not optional and does not depend on the mechanism: **a backend
+must be observable — every meaningful action a caller can trigger leaves a trace in
+the logs.** An action that happened and shows up nowhere is undebuggable and
+unauditable. Which emitter realizes this is the project's choice; the shape below is
+this profile's.
+
 Operational logging (`this.logger.error/warn/log`) and **audit logging are a
 different concern**: the audit emitter writes a *typed* event to the project's audit
 sink for traceability.
