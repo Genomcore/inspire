@@ -329,6 +329,25 @@ if [ -z "$filter" ]; then
   rm -f "$gate_out"
 fi
 
+# emanate-results.sh has fixtures too, and its central claim fits none of them:
+# that the manifest it emits is the one `lib/gate-results.sh` actually reads. A
+# fixture pins its stdout against a golden written by the same hand, which two
+# tools that had drifted apart would pass just as happily. The cross-tool run,
+# the absolute-path stripping no portable golden can carry, and the byte-level
+# emptiness of a refusal's stdout live there. Same hand-wiring as the six above.
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  results_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-results.sh" >"$results_out" 2>&1; then
+    echo "PASS emanate-results.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL emanate-results.sh/behaviour" >&2
+    cat "$results_out" >&2
+  fi
+  rm -f "$results_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]
