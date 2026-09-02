@@ -1,0 +1,25 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--goal",
+    "users.detail"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".goal.units | join(\",\")", "equals": "users.detail,users.list" },
+    { "expr": ".goal.floor", "equals": "1" },
+    { "expr": ".floor", "equals": "1" },
+    { "expr": ".waves | length", "equals": "1" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "PR-23" },
+    { "expr": "[.findings[].severity] | join(\",\")", "equals": "warning" },
+    { "expr": ".findings[0].owner", "equals": "inspire-screens" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/users/detail.md" },
+    { "expr": ".findings[0].message | test(\"users.detail\")", "equals": "true" },
+    { "expr": ".findings[0].message | test(\"no navigable entry\")", "equals": "true" }
+  ],
+  "forbidden": ["PR-11", "NOT READY"]
+}

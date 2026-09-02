@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the nine
+# Library — the readiness catalogue. Every `PR-*` class lives here: the ten
 # findings that leave a plan standing (seven of which flip it to not-ready; the
-# ceiling and preflight classes are warnings), and the four refusals that mean
-# nothing is planned at all. The catalogue itself — what each
+# ceiling, preflight and reachability classes are warnings), and the four
+# refusals that mean nothing is planned at all. The catalogue itself — what each
 # id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
 # duplicated into a second table.
@@ -486,4 +486,64 @@ plan_check_ceiling() {
   plan_find "PR-20" "warning" "" "" "" \
     "the declared ceiling of $PLAN_CEILING wave(s) is below the floor of $PLAN_EFFECTIVE_FLOOR — delivery will be partial, in graph order" \
     "raise --ceiling to $PLAN_EFFECTIVE_FLOOR, or accept partial-but-reported delivery"
+}
+
+# plan_closure_screens — the goal closure's screen ids, sorted. The kind comes
+# from the join of `idpath.tsv` with `scanned.tsv`, never from the path: a
+# pattern and a component live under `05_screens/` too.
+plan_closure_screens() {
+  awk -F'\t' -v scanf="$PLAN_TMP/scanned.tsv" -v idpathf="$PLAN_TMP/idpath.tsv" '
+    FILENAME == scanf   { if ($2 == "screen") screen[$1] = 1; next }
+    FILENAME == idpathf { if ($2 in screen) sid[$1] = 1; next }
+    $1 in sid
+  ' "$PLAN_TMP/scanned.tsv" "$PLAN_TMP/idpath.tsv" "$PLAN_TMP/goal.closure"
+}
+
+# plan_stable_screen — whether the vault holds a screen at `lifecycle: stable`.
+# Vault-wide and not scope-wide, because navigation resolves vault-wide too, and
+# early on the first hit: this only runs on the path that would otherwise warn.
+plan_stable_screen() {
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ "$(sdd_fm_value "$f" '.lifecycle')" = "stable" ] && return 0
+  done < <(sdd_find_screens "$SDD_KB_ROOT")
+  return 1
+}
+
+# plan_check_reachable — PR-23. A goal's closure walks inbound navigation, so it
+# already pulls every screen that links into the slice: a slice with no way in
+# is a gap in the vault, never an artifact of too narrow a goal. Both kinds of
+# live entry — a nav root, a delivered screen — have to be ruled out before it
+# fires, or it would cry wolf on a healthy vault.
+plan_check_reachable() {
+  local screens first
+  [ -n "$PLAN_GOAL" ] || return 0
+  plan_closure_screens > "$PLAN_TMP/goal.screens"
+  [ -s "$PLAN_TMP/goal.screens" ] || return 0
+  # A nav root is a slice screen nothing in the slice navigates to — and since
+  # the closure is inbound-closed, nothing in the frontier navigates to it.
+  awk -F'\t' -v screensf="$PLAN_TMP/goal.screens" '
+    FILENAME == screensf { s[$1] = 1; next }
+    $2 in s { print $2 }
+  ' "$PLAN_TMP/goal.screens" "$PLAN_TMP/nav.all" | LC_ALL=C sort -u > "$PLAN_TMP/goal.reached"
+  LC_ALL=C comm -23 "$PLAN_TMP/goal.screens" "$PLAN_TMP/goal.reached" \
+    | LC_ALL=C grep -q . && return 0
+  # A realized screen in the slice is a live entry: it exists, which is exactly
+  # why it is out of `goal.units` while still in the closure.
+  LC_ALL=C comm -12 "$PLAN_TMP/goal.screens" "$PLAN_TMP/realized" \
+    | LC_ALL=C grep -q . && return 0
+  # A `stable` screen is delivered and never derived, so its navigation is
+  # unknown here. An entry plan cannot see has to be assumed to exist: silence
+  # under-reports one modelling gap, a false alarm discredits every finding.
+  plan_stable_screen && return 0
+  screens="$(awk '{ printf "%s`%s`", sep, $0; sep = ", " }' "$PLAN_TMP/goal.screens")"
+  # No single screen is at fault — what is missing is a link from outside — so
+  # the target is the slice's first by path, and the owner falls out of the root
+  # it sits under rather than being named here.
+  first="$(plan_path_norm \
+    "$(plan_index_lookup "$PLAN_TMP/idpath.tsv" "$(head -1 "$PLAN_TMP/goal.screens")")")"
+  plan_find "PR-23" "warning" "" "$first" "$(plan_owner "$first")" \
+    "the goal \`$PLAN_GOAL\` resolves a slice whose screens ($screens) have no navigable entry — each is reached only from inside the slice and none of them is already delivered, so the run would build pages with no way in" \
+    "author a navigation binding into one of those screens from a screen outside the slice; widening the goal cannot fix it, since a goal already pulls in every screen that navigates to it"
 }

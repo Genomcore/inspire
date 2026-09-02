@@ -21,10 +21,18 @@
 #   THE GOAL (`--goal`). Its remaining dependency closure is what the run has to
 #   execute, and the deepest wave in that closure is the floor to the goal.
 #
-# CLOSURES WALK ORDERING EDGES ONLY — a navigation edge never extends one, the
-# same exemption the waves have and for the same reason: list and detail screens
-# navigate to each other in every real vault, so a nav-walking closure would
-# pull a whole screen cluster into every selection.
+# A CLOSURE WALKS ORDERING EDGES — a navigation edge never extends one, the same
+# exemption the waves have and for the same reason: list and detail screens
+# navigate to each other in every real vault, so a nav-walking ordering closure
+# would pull a whole screen cluster into every selection.
+#
+# THE GOAL'S CLOSURE ADDS ONE MORE WALK, BACKWARDS ALONG NAVIGATION (0.9): the
+# screens that navigate TO something in it, transitively. A page nothing can
+# reach is not delivered, so a goal owes its nav predecessors. The walk is
+# INBOUND ONLY — a nav successor is a dead affordance, not an unreachable page,
+# and pulling successors would drag in the whole app. `--reemanate` gets no such
+# walk: re-emanating a screen does not change its reachability, since whatever
+# navigates to it already exists.
 #
 # Sourced after `_lib.sh`, `plan-lib.sh` and `gate-citations.sh` (the `@claim`
 # scanner is shared with `emanate-gate.sh` — one grammar, two readers).
@@ -85,6 +93,19 @@ plan_ordering_edges() {
     !($1 in node) || !($5 in node) { next }
     $3 == "screen" && $4 == "screen" { next }
     { print $1 "\t" $5 }
+  ' "$nodes" "$PLAN_TMP/deps.tsv" | LC_ALL=C sort -u
+}
+
+# plan_nav_edges <nodes-file> — the navigation edge set over those nodes, as
+# `from<TAB>to`: exactly the screen->screen edges `plan_ordering_edges` drops,
+# under the same out-of-band exemption, since a screen outside the node set is
+# not this run's to reach.
+plan_nav_edges() {
+  local nodes="$1"
+  awk -F'\t' -v nodesf="$nodes" '
+    FILENAME == nodesf { node[$1] = 1; next }
+    !($1 in node) || !($5 in node) { next }
+    $3 == "screen" && $4 == "screen" { print $1 "\t" $5 }
   ' "$nodes" "$PLAN_TMP/deps.tsv" | LC_ALL=C sort -u
 }
 
@@ -175,6 +196,20 @@ plan_edges_all() {
   plan_ordering_edges "$PLAN_TMP/nodes.all" > "$PLAN_TMP/edges.all"
 }
 
+# plan_goal_edges — the graph the GOAL's closure walks, memoized: every ordering
+# edge, plus every navigation edge REVERSED. The reversal is what lets one `down`
+# walk collect a screen's dependencies and its nav predecessors together — and
+# each predecessor's own dependencies, which the run has to build for that page
+# to exist at all.
+plan_goal_edges() {
+  [ -f "$PLAN_TMP/edges.goal" ] && return 0
+  plan_edges_all
+  plan_nav_edges "$PLAN_TMP/nodes.all" > "$PLAN_TMP/nav.all"
+  { cat "$PLAN_TMP/edges.all"
+    awk -F'\t' '{ print $2 "\t" $1 }' "$PLAN_TMP/nav.all"
+  } | LC_ALL=C sort -u > "$PLAN_TMP/edges.goal"
+}
+
 # plan_apply_reemanate — every `--reemanate` selector's set, unioned, out of the
 # realized set. Sets $PLAN_BAD_SELECTOR (and $PLAN_SEL_REASON) and returns 1 on
 # one that names nothing.
@@ -226,17 +261,20 @@ plan_narrow() {
 # into $PLAN_GOAL_FLOOR. The closure is matched over every frontier-ELIGIBLE
 # node and then intersected with what this run still has to build, so naming an
 # already-realized goal answers "nothing left" rather than "no such unit".
+#
+# The SELECTOR resolves over the ordering edges — its `..` forms are ordering
+# statements — and only the closure around what it named walks navigation too.
 plan_goal() {
   local sel="$1"
   : > "$PLAN_TMP/goal.units"
   PLAN_GOAL_FLOOR=0
-  plan_edges_all
+  plan_goal_edges
   if ! plan_selector_set "$sel" "$PLAN_TMP/nodes.all" "$PLAN_TMP/edges.all" \
          "$PLAN_TMP/goal.match"; then
     PLAN_BAD_SELECTOR="--goal $sel"
     return 1
   fi
-  plan_reach "$PLAN_TMP/edges.all" "$PLAN_TMP/goal.match" down > "$PLAN_TMP/goal.closure"
+  plan_reach "$PLAN_TMP/edges.goal" "$PLAN_TMP/goal.match" down > "$PLAN_TMP/goal.closure"
   LC_ALL=C comm -12 "$PLAN_TMP/goal.closure" "$PLAN_TMP/nodes" > "$PLAN_TMP/goal.units"
   PLAN_GOAL_FLOOR="$(awk -F'\t' -v goalf="$PLAN_TMP/goal.units" '
     FILENAME == goalf { want[$1] = 1; next }

@@ -30,7 +30,7 @@ emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
 | `--ceiling N` | the maximum number of waves this run may execute. Unset by default; budgets are invocation arguments, never a KB artifact. A ceiling below the floor is a warning, never a blocker |
 | `--tests-root DIR` | repeatable. The tree(s) walked for `@claim` tokens, to work out which units are already **realized**. **No default**: given none, no tests tree is read and no unit is realized. See § Realization |
 | `--reemanate SEL` | repeatable. Treat the units `SEL` names as unrealized for this run. See § Selectors |
-| `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure and the floor to it, and the ceiling is then measured against **that** floor. May be given once |
+| `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure — its dependencies, plus the screens that navigate to it — and the floor to it, and the ceiling is then measured against **that** floor. May be given once |
 | `--profiles-root DIR` | where the stack profiles live. Default `.claude/skills/inspire-code/profiles`, env override `INSPIRE_PROFILES_ROOT` |
 | `--agents-root DIR` | where the agent shells live. Default `.claude/agents`, env override `INSPIRE_AGENTS_ROOT` |
 
@@ -114,9 +114,9 @@ generic catch-all would collapse two different answers into one.
   computed no realization, and an operator asking "what would this rebuild?"
   deserves the answer before the run rather than after it.
 - **`goal`** is `null` unless `--goal` was given. `units` is the goal's remaining
-  dependency closure — what this run has to execute — and `floor` is the deepest
-  wave in it, which is the minimum number of orchestrator iterations to reach the
-  goal. Note the two are not `waves`-shaped: `waves` still layers the **whole**
+  closure — its dependencies plus the screens that navigate to it, which is what
+  this run has to execute; see § Selectors — and `floor` is the deepest wave in
+  it, which is the minimum number of orchestrator iterations to reach the goal. Note the two are not `waves`-shaped: `waves` still layers the **whole**
   scope, and `goal.units` names the subset a goal-directed run executes.
 - **`preflight`** is what `00_bootstrap/stack.md`'s `## Test infrastructure`
   declares plus which resolved framework profiles can probe it; see § Preflight.
@@ -275,10 +275,31 @@ frontier-eligible node set:
 | `auth.user.list..` | the node and its transitive **dependents** — "from the list action onwards" |
 | `auth.user..users.list` | the **segment**: every node on an ordering path from the first up to the second, inclusive. On a DAG that is the dependents of the left intersected with the dependencies of the right |
 
-**Closures walk ordering edges only — a navigation edge never extends one.** It
-is the same exemption the waves have and it is there for the same reason: list
-and detail screens navigate to each other in every real vault, so a nav-walking
-closure would pull a whole screen cluster into every selection.
+**A selector's own closures walk ordering edges only — a navigation edge never
+extends one.** It is the same exemption the waves have and it is there for the
+same reason: list and detail screens navigate to each other in every real vault,
+so a nav-walking `..` would pull a whole screen cluster into every selection.
+
+**A `--goal`'s closure then walks navigation backwards as well** (0.9): it pulls
+the screens that navigate *to* something in the closure, transitively, and each
+of those screens' own dependencies with them. A page nothing can navigate to
+delivers nothing, so a goal owes its nav predecessors. Three properties of that
+walk are deliberate:
+
+- **Inbound only.** A nav *successor* is never pulled. A link to something
+  unbuilt is a dead affordance rather than an unreachable page, and pulling
+  successors transitively would drag in the whole app.
+- **A nav cycle is harmless**, because the walk terminates on a visited set.
+  This is reachability, not ordering: navigation still never orders a wave, so
+  `users.list` and `users.detail` still co-emanate in one wave.
+- **`--goal` only — `--reemanate` stays ordering-only**, its segment and
+  dependents closures unchanged. Re-emanating a screen does not change its
+  reachability, since whatever navigates to it already exists. A goal says
+  "deliver this, usefully"; a re-emanation says "rebuild this".
+
+`goal.floor` is the deepest wave over that **enlarged** closure, so a goal whose
+nav predecessor sits deeper than the goal itself deepens with it. And a slice
+with no navigable entry at all is `PR-23`, a warning.
 
 **A selector that selects nothing is a usage error (exit 2), not a reported
 no-match.** A selector is something the operator typed, like `--scope` and
@@ -410,6 +431,7 @@ languages, and any declared `layer: language` profile.
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
+| `PR-23` | the `--goal`'s closure holds screens and **none of them has a navigable entry**: every one is reached only from inside the slice, and none is already delivered. Since a goal's closure pulls in every screen that navigates to it, this can never be an artifact of too narrow a goal — it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by path, since no single screen is at fault — what is missing is a link from outside. Two things terminate the walk legitimately and neither may warn — a **nav root** (a screen nothing navigates to, the app's own entry) and an **already-delivered** screen, whether `stable` or realized. Plan never derives a `stable` screen, so its navigation is invisible here and a vault holding one is never called unreachable: silence under-reports one gap, while a false alarm discredits every finding | warning | `inspire-screens` |
 
 ### Refusals — nothing is planned, the run exits 4
 

@@ -4,7 +4,7 @@
 #
 # `run-tests.sh` runs one fixture at a time and compares one run's stdout with
 # one golden file or one `jq` probe, which covers every per-scope claim the
-# goldens state. Six kinds of assertion do not fit that shape and live here
+# goldens state. Seven kinds of assertion do not fit that shape and live here
 # instead, wired in by hand exactly as `test-derive-lib.sh` is:
 #
 #   ACROSS TWO RUNS — that two plans over one tree are byte-identical. A golden
@@ -33,6 +33,11 @@
 #   fixture's `forbidden` can only say a substring is absent, and "the operator
 #   can tell a typo from a wrong-way segment" is a claim about what the message
 #   does say.
+#
+#   ACROSS SEVERAL ARGV OVER ONE TREE — the usage refusals, and the goal's
+#   navigation walk. A fixture directory gets exactly one argv, so "these eight
+#   flags refuse" and "these three goals over one graph answer differently" are
+#   both claims about a set of invocations rather than about one.
 #
 # Usage: bash plugin/base/bin/test/test-plan-lib.sh
 
@@ -288,6 +293,23 @@ sel_diag() {
 eq "a reversed segment is diagnosed as a direction, not as a missing unit" \
   "$(sel_diag clean-three-waves --reemanate 'auth.user.list..auth.org')" \
   "$(printf '2\tempty\twrong-way')"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# The goal's navigation walk is ASYMMETRIC, and the claim is about three goals
+# over ONE graph — a shape no fixture holds, since each gets a single argv. The
+# graph is `home -> list -> detail -> audit`: a goal owes the screens that reach
+# it, owes nothing to the ones it reaches, and a root owes nothing at all.
+# ─────────────────────────────────────────────────────────────────────────────
+
+goal_units() {
+  plan_in goal-nav-inbound-only --goal "$1" | jq -r '.goal.units | join(",")'
+}
+eq "a goal pulls the screens that navigate to it, transitively" \
+  "$(goal_units users.detail)" "users.detail,users.home,users.list"
+eq "a goal that is a nav root pulls no screen at all" \
+  "$(goal_units users.home)" "users.home"
+eq "and a nav sink pulls every screen on the way in, a successor never" \
+  "$(goal_units users.audit)" "users.audit,users.detail,users.home,users.list"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # One grammar, two readings — the claim that no single fixture can hold, since a

@@ -331,6 +331,7 @@ fi
 
 plan_check_profiles
 plan_check_preflight
+plan_check_reachable
 awk -F'\t' -v fs="$PLAN_FS" '{ print $1 fs $2 }' "$PLAN_TMP/waves.tsv" > "$PLAN_TMP/waves.spool"
 
 # The frontier is empty because everything in it is already realized: the
