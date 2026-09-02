@@ -53,15 +53,18 @@
 #   npm run test:e2e -- --json --outputFile="$T/e2e.json"   || true
 #   emanate-results.sh --from "$T/unit.json" --from "$T/e2e.json" > results.json
 #
-# Status mapping — jest's six assertion statuses onto the schema's three.
-# `pending`/`todo`/`disabled` are all "declared and not executed", which is
-# what `skipped` means to gate (GV-02: a claim whose only citing test was
-# skipped is NOT covered):
-#   passed                        -> passed
-#   failed                        -> failed
-#   pending | todo | disabled     -> skipped
-#   focused                       -> passed   (it ran; `.only` is a local
-#                                              habit, not a result)
+# Status mapping — jest's seven assertion statuses onto the schema's three.
+# `pending`/`todo`/`disabled`/`skipped` are all "declared and not executed",
+# which is what `skipped` means to gate (GV-02: a claim whose only citing test
+# was skipped is NOT covered). Jest spells the last one the same way the schema
+# does; it is listed rather than left implicit, because this table is the only
+# statement of what the refusal arm below accepts — a status the code takes but
+# the table omits reads as one that refuses:
+#   passed                              -> passed
+#   failed                              -> failed
+#   pending | todo | disabled | skipped -> skipped
+#   focused                             -> passed   (it ran; `.only` is a local
+#                                                    habit, not a result)
 # Anything else refuses (exit 5) rather than be folded into a bucket: an
 # unrecognised status quietly read as `skipped` is the vacuity trap in a new
 # coat, the same one gate-results.sh's XML sniff exists to close.
