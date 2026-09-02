@@ -2,8 +2,9 @@
 # .inspire/bin/lib/plan-checks.sh
 #
 # Library — the readiness catalogue. Every `PR-*` class lives here: the ten
-# findings that leave a plan standing (seven of which flip it to not-ready; the
-# ceiling, preflight and reachability classes are warnings), and the four
+# findings that leave a plan standing (the ceiling, preflight and reachability
+# classes are warnings, `PR-02` and `PR-03` are a warning on a navigation edge
+# and an error on an ordering one, and the rest are errors), and the four
 # refusals that mean nothing is planned at all. The catalogue itself — what each
 # id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
@@ -11,12 +12,13 @@
 #
 # Two rules of shape are load-bearing and stated once, here:
 #
-#   NAVIGATION NEVER ORDERS A WAVE. A `screen`-kinded edge out of a screen unit
-#   is a route reference — a route derives from `module` + `screen` without the
-#   target existing as code — and list/detail screens navigate to each other in
-#   every real vault. Ordering on it would make the common case a cycle. It is
-#   checked like every other edge: it has to RESOLVE (`PR-02`) and its target
-#   has to be stable or in the frontier (`PR-03`). Only the layering is skipped.
+#   NAVIGATION NEVER ORDERS A WAVE, AND NEVER REFUSES. A `screen`-kinded edge
+#   out of a screen unit is a route reference — a route derives from `module` +
+#   `screen` without the target existing as code — and list/detail screens
+#   navigate to each other in every real vault. Ordering on it would make the
+#   common case a cycle. Its target is still checked, at both `PR-02` and
+#   `PR-03`, but as a WARNING: an unfinished link out is a broken affordance on
+#   a page that is otherwise buildable, not a page nothing can build.
 #
 #   AN EDGE ORDERS A WAVE ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
 #   `stable` artifact is satisfied out of band and an edge to an `accepted` unit
@@ -222,8 +224,9 @@ plan_ingest_one() {
 }
 
 # plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge
-# set. One rule for every edge, whatever its kind — it must resolve, and its
-# target must be stable or in the frontier. Navigation is dropped from the
+# set. One question for every edge, whatever its kind — it must resolve, and its
+# target must be stable or in the frontier — asked at two severities: an
+# ordering edge refuses, a navigation edge warns. Navigation is dropped from the
 # ORDERING alone, after both checks have run, which is why the in-frontier arm
 # leaves the layering to `plan_ordering_edges`.
 #
@@ -237,17 +240,26 @@ plan_ingest_one() {
 # The edge set itself is `plan_ordering_edges`', over the post-realization node
 # set: which edges ORDER is one question, and the selector closures ask it too.
 plan_resolve_edges() {
-  local uid upath ukind dkind did dpath lc state
+  local uid upath ukind dkind did dpath lc state sev nav
   plan_ordering_edges "$PLAN_TMP/nodes" > "$PLAN_TMP/edges.tsv"
   while IFS=$'\t' read -r uid upath ukind dkind did; do
     [ -n "$uid" ] || continue
     # A realized unit is out of the frontier, so its edges are nobody's
     # readiness question this run — exactly as an out-of-scope unit's are.
     LC_ALL=C grep -qxF "$uid" "$PLAN_TMP/nodes" || continue
+    # An unfinished NAVIGATION target leaves a broken affordance on a page that
+    # is otherwise buildable, so it is reported and the run proceeds. Only the
+    # ordering arm refuses: there the unit cannot be built at all.
+    sev="error"
+    nav=""
+    if [ "$ukind" = screen ] && [ "$dkind" = screen ]; then
+      sev="warning"
+      nav=" (a navigation edge: the page it sits on is buildable, and the link lands nowhere until this is answered)"
+    fi
     dpath="$(plan_dep_path "$dkind" "$did")"
     if [ -z "$dpath" ]; then
-      plan_find "PR-02" "error" "$uid" "$did" "$(plan_owner "$upath")" \
-        "requires \`$did\` ($dkind), which resolves to no artifact in the vault" \
+      plan_find "PR-02" "$sev" "$uid" "$did" "$(plan_owner "$upath")" \
+        "requires \`$did\` ($dkind), which resolves to no artifact in the vault$nav" \
         "$(plan_define_remedy "$dkind" "$did")"
       continue
     fi
@@ -265,8 +277,8 @@ plan_resolve_edges() {
     esac
     state="is at lifecycle \`$lc\`"
     [ -n "$lc" ] || state="declares no lifecycle"
-    plan_find "PR-03" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
-      "dependency \`$did\` $state — neither stable nor in the frontier" \
+    plan_find "PR-03" "$sev" "$uid" "$dpath" "$(plan_owner "$dpath")" \
+      "dependency \`$did\` $state — neither stable nor in the frontier$nav" \
       "$(plan_promote_remedy "$dkind" "$did" "$lc")"
   done < "$PLAN_TMP/deps.tsv"
 }
@@ -512,7 +524,8 @@ plan_check_reachable() {
   # On disk, not run-scoped: a `--reemanate` rebuild does not un-deliver a page.
   LC_ALL=C comm -12 "$PLAN_TMP/goal.screens" "$PLAN_TMP/realized.delivered" \
     | LC_ALL=C grep -q . && return 0
-  # A nav root — nothing in the frontier navigates to it — is the app's entry.
+  # A nav root — nothing frontier-ELIGIBLE navigates to it, which is the set
+  # `nav.all` is built over, realized units included — is the app's entry.
   awk -F'\t' -v screensf="$PLAN_TMP/goal.screens" '
     FILENAME == screensf { s[$1] = 1; next }
     $2 in s { print $2 }

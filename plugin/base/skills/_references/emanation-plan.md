@@ -189,10 +189,12 @@ instantiates it.
 
 ## The ordering edge set
 
-**Every `requires[]` edge is checked the same way, whatever its kind: it must
+**Every `requires[]` edge is asked the same question, whatever its kind: it must
 resolve (`PR-02`), and its target must be delivered or in the frontier —
-otherwise `PR-03`, or `PR-04` / `PR-05` when the target is a catalog entry.**
-What the edge set below narrows is the ORDERING, and only the ordering.
+otherwise `PR-03`, or `PR-04` / `PR-05` when the target is a catalog entry. What
+differs is the SEVERITY of the answer: an ordering edge refuses, a navigation
+edge warns.** What the edge set below narrows is the ORDERING, and only the
+ordering.
 
 The ordering edge set is derive's `requires[]`, minus one kind of edge that is
 not a build-time dependency:
@@ -201,9 +203,13 @@ not a build-time dependency:
   is a route reference — a route derives from `module` + `screen` without the
   target existing as code — and list and detail screens navigate to each other in
   every real vault, so ordering on navigation would make the common case a cycle.
-  The **only** thing navigation skips is the wave ordering: a navigation target
-  that resolves to nothing is still `PR-02`, and one at `draft` or `superseded`
-  is still `PR-03`. A screen that navigates somewhere unfinished is not ready.
+  Navigation skips the wave ordering, and it also **never refuses**: a navigation
+  target that resolves to nothing is `PR-02` and one at `draft` or `superseded`
+  is `PR-03`, both as **warnings**. A screen that navigates somewhere unfinished
+  carries a broken affordance, which is worth saying and worth building anyway;
+  what it is not is a page nothing can build. The operator who knows `home` must
+  link to a roster that is still `draft` emanates `home` today, rather than
+  promoting the roster to `accepted` — which would have got it built too.
 
 **Pattern and component edges order like every other kind** since ED10 made both
 units: a screen waits for its layout's and its components' wave. A17's sibling
@@ -214,11 +220,16 @@ between them (a pattern's own `**Components:**` line), never by an assumed tier.
 to a `stable` artifact — or an `implemented` catalog entry — is satisfied out of
 band; an edge to an `accepted` unit outside the scope is another run's business;
 an edge to anything else — `draft`, `superseded`, or a lifecycle nothing states
-— is `PR-03`, `PR-04` or `PR-05` by the target's kind.
+— is `PR-03`, `PR-04` or `PR-05` by the target's kind, an error unless the edge
+is navigation.
 
-An edge whose target resolves to no artifact at all is `PR-02`. Resolution is
-vault-wide even when ordering is scope-wide, or a narrowed run would report every
-edge leaving its scope as unresolvable.
+An edge whose target resolves to no artifact at all is `PR-02`, again an error
+unless the edge is navigation. Resolution is vault-wide even when ordering is
+scope-wide, or a narrowed run would report every edge leaving its scope as
+unresolvable. **`PR-02`'s navigation arm is unreachable through the shipped
+screen shape**: derive refuses a screen whose transition names no screen id in
+the vault (`DR-R3`), so a dangling link arrives as `PR-01` and the arm stands
+for the day another unit kind records an unresolvable navigation edge.
 
 ## Waves and the floor
 
@@ -448,15 +459,15 @@ languages, and any declared `layer: language` profile.
 | id | shape | severity | owner |
 |---|---|---|---|
 | `PR-01` | derive refused this unit — one finding per class in its `refused[]`, carrying derive's `class` (as `derive_class`), `target`, `message` and `remedy` verbatim, never re-worded | error | the target's layer |
-| `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it | error | the depending unit's layer |
-| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from. A catalog target takes `PR-04` / `PR-05` instead | error | the target's layer |
+| `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it. **A warning on a navigation edge**, an error on an ordering one — the split is the edge's kind, never its target's lifecycle. Derive's `DR-R3` reaches a dangling screen transition first, so the warning arm is currently unreachable | error, or warning on navigation | the depending unit's layer |
+| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier. A catalog target takes `PR-04` / `PR-05` instead. **A warning on a navigation edge**, an error on an ordering one: a link out with nowhere to land is a broken affordance on a page that is otherwise buildable, which is what lets a screen be emanated ahead of the `draft` screen it links to; an ordering edge to the same target leaves nothing to build at all | error, or warning on navigation | the target's layer |
 | `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
-| `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing in the frontier navigates to, which is the app's own entry — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
+| `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing frontier-*eligible* navigates to, which is the app's own entry; eligible rather than in the frontier, because a realized screen has left the frontier and its outbound links are still real — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
 
 ### Refusals — nothing is planned, the run exits 4
 
