@@ -71,13 +71,18 @@ invocation.
 ## Invocation
 
 ```
-/inspire-emanate plan  [until <goal>] [--scope PATH]... [--ceiling N] [--reemanate SEL]...
-/inspire-emanate run    until <goal> [in N steps max] [--scope PATH]... [args]
+/inspire-emanate plan [until <goal>] [--scope PATH]... [--ceiling N] [--reemanate SEL]...
+/inspire-emanate run  [until <goal> [in N steps max]] [--scope PATH]... [args]
 ```
 
 `until <goal>` and `in N steps max` are the operator's phrasing for `--goal SEL`
 and `--ceiling N`; either spelling is accepted and both resolve to the same
 arguments before any tool is called.
+
+**A goal is optional and changes one thing.** Named, it narrows the run to the
+goal's closure and makes an under-budgeted ceiling a **refusal**. Unnamed, the
+run works the whole scope and an under-budgeted ceiling is a warning, delivering
+partially in graph order.
 
 | argument | default | meaning |
 |---|---|---|

@@ -33,7 +33,8 @@ re-emanates the whole vault. Resolve it from the framework profile's
 suite actually lives in. Say in the report which roots were read.
 
 **Forward the operator's arguments; invent none.** Selector prose is resolved to a
-canonical id here (`SKILL.md` § Invocation); everything else is passed through.
+canonical id here ([`SKILL.md`](../SKILL.md) § Invocation); everything else is
+passed through.
 
 ## Acting on the exit code
 
