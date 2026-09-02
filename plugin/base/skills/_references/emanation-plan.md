@@ -301,6 +301,22 @@ walk are deliberate:
 nav predecessor sits deeper than the goal itself deepens with it. And a slice
 with no navigable entry at all is `PR-23`, a warning.
 
+**That reachability question is answered exactly, and asked lazily** (0.9). The
+backward walk sees only the frontier, so a screen that is already delivered
+navigates invisibly: plan derives nothing at `lifecycle: stable`. So unless a
+slice screen is already realized — which settles it for free — the screens the
+frontier does *not* hold are derived too, through `emanate-derive.sh` like every
+other unit and never by a second reading of the bindings table, and asked
+whether any of them links into the slice. That fan-out is the whole added cost,
+and three things bound it: only a `--goal` run asks the question at all, only a
+slice holding screens reaches it, and the derivations are exactly the screens
+outside the frontier — so a vault whose every screen is `accepted` has none to
+run. Answering it exactly is what makes the class worth having: a `stable`
+screen *somewhere* in the vault does not silence it, and nearly every mature
+vault holds one. A screen the strict parser refuses is the one answer plan
+cannot get: it stays silent and says so as `PR-24`, since an unreadable screen
+might be the entry.
+
 **A selector that selects nothing is a usage error (exit 2), not a reported
 no-match.** A selector is something the operator typed, like `--scope` and
 `--ceiling`; a typo that quietly selected nothing would answer "rebuild these"
@@ -418,7 +434,7 @@ languages, and any declared `layer: language` profile.
 
 ## `PR-*` — the readiness catalogue
 
-### Findings — a plan is emitted, `ready` is false, the run exits 1
+### Findings — a plan is emitted; an `error` flips `ready` and exits 1
 
 | id | shape | severity | owner |
 |---|---|---|---|
@@ -431,7 +447,8 @@ languages, and any declared `layer: language` profile.
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
-| `PR-23` | the `--goal`'s closure holds screens and **none of them has a navigable entry**: every one is reached only from inside the slice, and none is already delivered. Since a goal's closure pulls in every screen that navigates to it, this can never be an artifact of too narrow a goal — it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by path, since no single screen is at fault — what is missing is a link from outside. Two things terminate the walk legitimately and neither may warn — a **nav root** (a screen nothing navigates to, the app's own entry) and an **already-delivered** screen, whether `stable` or realized. Plan never derives a `stable` screen, so its navigation is invisible here and a vault holding one is never called unreachable: silence under-reports one gap, while a false alarm discredits every finding | warning | `inspire-screens` |
+| `PR-23` | the `--goal`'s closure holds screens and **none of them has a navigable entry**. Since a goal's closure pulls in every screen that navigates to it, this can never be an artifact of too narrow a goal — it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by path, since no single screen is at fault — what is missing is a link from outside. Three things are a way in and none of them may warn: a **nav root** — a slice screen NOTHING in the vault navigates to, which is the app's own entry; an **already-realized** slice screen, which exists; and an inbound link from a screen that exists or is being delivered (`stable`, `implemented`, `accepted`). An inbound **`draft`** link is none of the three — a draft screen is neither built nor being built — so it un-roots the screen it points at without being a way in, and the slice still warns | warning | `inspire-screens` |
+| `PR-24` | while `PR-23` was being decided, a screen outside the frontier could not be derived, so whether it navigates into the slice is **unknown** and an entry cannot be ruled out. One finding per such screen. **An `info`**, never a warning: what it reports is that the question has no answer, not that the vault has a gap — it cannot flip `ready`, and it exists so an operator can tell "no entry" from "could not tell", which silence alone cannot say | info | the screen's layer |
 
 ### Refusals — nothing is planned, the run exits 4
 

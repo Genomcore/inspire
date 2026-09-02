@@ -9,6 +9,12 @@
 # "`emanate plan` aggregates the stdout objects — it must never parse stderr" —
 # and the entry point is the only surface plan is allowed to depend on.
 #
+# There is a SECOND fan-out here, over the screens the frontier does not hold
+# (`plan_nav_probe`, 0.9). It is the same spawn through the same entry point, and
+# it lives beside the first so one file owns every derivation plan performs — but
+# it runs only where the reachability question is actually asked: a `--goal` run
+# whose slice holds screens and no realized one to answer for them.
+#
 # Sourced after `_lib.sh`, `_keyed-heads.sh` and `plan-lib.sh`.
 
 # Derive fans out to four validators of its own, so the process count is the
@@ -93,6 +99,74 @@ plan_derive_all() {
     if [ "$running" -ge "$PLAN_DERIVE_BATCH" ]; then wait; running=0; fi
   done < "$PLAN_TMP/frontier.tsv"
   wait
+}
+
+# plan_nav_candidates — every screen in the vault that is not a frontier unit,
+# one path per line. They are the only screens whose navigation this run has not
+# already derived: a FRONTIER screen that navigates into a goal's slice is in
+# that slice already, since the goal's walk is inbound-closed over the frontier.
+# Vault-wide and not scope-wide, because navigation resolves vault-wide too.
+plan_nav_candidates() {
+  local f p k
+  : > "$PLAN_TMP/frontier.screens"
+  while IFS=$'\t' read -r p k; do
+    [ "$k" = "screen" ] || continue
+    plan_path_norm "$p" >> "$PLAN_TMP/frontier.screens"
+  done < "$PLAN_TMP/frontier.tsv"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    LC_ALL=C grep -qxF "$(plan_path_norm "$f")" "$PLAN_TMP/frontier.screens" \
+      || printf '%s\n' "$f"
+  done < <(sdd_find_screens "$SDD_KB_ROOT")
+}
+
+# plan_nav_probe_one <n> <path> — one candidate derivation, spooled under its
+# index. Stderr is discarded for the same reason the frontier fan-out discards
+# it: it is the human report, and plan aggregates stdout only.
+plan_nav_probe_one() {
+  "$PLAN_BIN/emanate-derive.sh" screen --file "$2" >"$PLAN_TMP/nav/$1.json" 2>/dev/null
+  printf '%s' "$?" > "$PLAN_TMP/nav/$1.code"
+}
+
+# plan_nav_probe <slice-ids-file> — what navigates into that slice from outside
+# it, one row per answer: `E<TAB>id` from a screen that is delivered or being
+# delivered — a way in; `L<TAB>id` from one that is neither, which is no way in
+# though it does leave its target something the vault navigates to; `?<TAB>path`
+# when derive refused, since an unreadable screen leaves the answer unknown and
+# an absent edge would read as "nothing links in".
+plan_nav_probe() {
+  local slice="$1" n=0 running=0 f code
+  mkdir -p "$PLAN_TMP/nav"
+  plan_nav_candidates > "$PLAN_TMP/nav.candidates"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    n=$((n + 1))
+    plan_nav_probe_one "$n" "$f" &
+    running=$((running + 1))
+    if [ "$running" -ge "$PLAN_DERIVE_BATCH" ]; then wait; running=0; fi
+  done < "$PLAN_TMP/nav.candidates"
+  wait
+  n=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    n=$((n + 1))
+    code="$(cat "$PLAN_TMP/nav/$n.code" 2>/dev/null)"
+    if [ "$code" != 0 ]; then
+      printf '?\t%s\n' "$(plan_path_norm "$f")"
+      continue
+    fi
+    # `implemented` is what the catalog kinds spell delivered; a screen only says
+    # `stable`, and reading both keeps "delivered" defined in one place.
+    jq -r --rawfile slice "$slice" '
+      ($slice | split("\n") | map(select(length > 0))) as $in
+      | ((.unit.lifecycle // "") as $lc
+         | if $lc == "stable" or $lc == "implemented" or $lc == "accepted"
+           then "E" else "L" end) as $cls
+      | (.requires // [])[]
+      | select(.kind == "screen") | select(.id as $t | $in | index($t))
+      | [$cls, .id] | @tsv
+    ' "$PLAN_TMP/nav/$n.json" 2>/dev/null
+  done < "$PLAN_TMP/nav.candidates"
 }
 
 # plan_contract_records <file> — one contract as the record stream the reader
