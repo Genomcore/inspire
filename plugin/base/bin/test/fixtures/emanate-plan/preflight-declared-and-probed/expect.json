@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": "[.preflight.components[].name] | join(\",\")", "equals": "postgres,redis" },
+    { "expr": ".preflight.components[0].purpose", "equals": "the e2e database" },
+    { "expr": ".preflight.probe_profiles | join(\",\")", "equals": "nestjs" },
+    { "expr": ".wire_conventions.ids | join(\",\")", "equals": "rest" },
+    { "expr": "[.wire_conventions.decisions[].decision] | join(\",\")", "equals": "Existence leak,Validation failure status" },
+    { "expr": "[.wire_conventions.decisions[].answer] | join(\",\")", "equals": "404,not decided yet" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-22", "PR-", "NOT READY"]
+}

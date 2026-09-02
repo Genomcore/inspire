@@ -69,6 +69,7 @@ generic catch-all would collapse two different answers into one.
   "deliverable_waves": 3,
   "realized": ["users.list"],
   "realized_all": false,
+  "reemanate": null,
   "goal": { "selector": "users.detail", "units": ["auth.user", "auth.user.get",
                                                   "users.detail"], "floor": 3 },
   "preflight": { "components": [ { "name": "postgres", "purpose": "the e2e database" } ],
@@ -107,6 +108,11 @@ generic catch-all would collapse two different answers into one.
   reason a `stable` artifact is: they are not in the frontier. Empty whenever no
   `--tests-root` was given. **`realized_all`** is true when every
   frontier-eligible unit is realized; see § Realization.
+- **`reemanate`** is `null` unless `--reemanate` was given: `selectors` as typed,
+  `units` the resolved union. It is reported rather than left implicit because a
+  selector's *effect* — units treated as unrealized — is invisible in a run that
+  computed no realization, and an operator asking "what would this rebuild?"
+  deserves the answer before the run rather than after it.
 - **`goal`** is `null` unless `--goal` was given. `units` is the goal's remaining
   dependency closure — what this run has to execute — and `floor` is the deepest
   wave in it, which is the minimum number of orchestrator iterations to reach the

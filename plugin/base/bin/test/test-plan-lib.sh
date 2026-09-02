@@ -65,6 +65,16 @@ second="$(plan_in clean-three-waves)"
 eq "two plans over one tree are byte-identical" "$first" "$second"
 ne "and the plan is not empty" "$first" ""
 
+# Realization, the selectors and the goal each add a list to stdout, so each is a
+# new way for a plan to reorder itself between runs.
+first="$(plan_in realized-shrinks-waves --tests-root tests)"
+second="$(plan_in realized-shrinks-waves --tests-root tests)"
+eq "two plans that computed realization are byte-identical too" "$first" "$second"
+first="$(plan_in canonical-example --reemanate 'auth.user..' --goal users.detail)"
+second="$(plan_in canonical-example --reemanate 'auth.user..' --goal users.detail)"
+eq "and so are two plans carrying a selection and a goal" "$first" "$second"
+ne "and that plan is not empty either" "$first" ""
+
 # ─────────────────────────────────────────────────────────────────────────────
 # The run wrote nothing. Content AND mtime: a rewrite with identical bytes is
 # still a write, and the whole `--mode plan` ethos is that there is not one.
@@ -91,6 +101,16 @@ plan_in pr-11-cycle >/dev/null
 eq "a refused run leaves the tree alone too" "$before" "$(tree_state "$FX/pr-11-cycle")"
 eq "and touches no mtime on that path either" \
   "$(find "$FX/pr-11-cycle" -type f -newer "$marker" | LC_ALL=C grep -c .)" "0"
+
+# The tests roots are a new tree a run reads, and reading is all it may do: a
+# `--tests-root` is somebody's source directory, not a scratch space.
+before="$(tree_state "$FX/realized-shrinks-waves")"
+: > "$marker"
+plan_in realized-shrinks-waves --tests-root tests >/dev/null
+eq "a run that walked a --tests-root leaves that tree alone" \
+  "$before" "$(tree_state "$FX/realized-shrinks-waves")"
+eq "and touches no mtime under it either" \
+  "$(find "$FX/realized-shrinks-waves" -type f -newer "$marker" | LC_ALL=C grep -c .)" "0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # The catalogue in the code equals the catalogue in the document
@@ -196,6 +216,67 @@ stub_out="$( cd "$FX/clean-single-unit" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=sp
                --agents-root spec/agents 2>/dev/null )"
 eq "a derive exiting outside {0,4} is exit 6" "$?" "6"
 eq "and exit 6 prints nothing on stdout" "$stub_out" ""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Exit 2 — the usage answers a fixture cannot state, because `run-tests.sh`
+# gives every fixture one argv and these are eight different ones. Each has to
+# print NOTHING on stdout as well: exit 2 carries no verdict, and a consumer
+# reading a half-plan off a rejected invocation is the failure mode.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# usage_run <fixture> <arg>… — the exit code and whether stdout was empty.
+usage_run() {
+  local fx="$1" out code; shift
+  out="$(plan_in "$fx" "$@")"
+  code=$?
+  printf '%s\t%s' "$code" "$([ -z "$out" ] && echo empty || echo "SOMETHING")"
+}
+
+eq "an empty --reemanate selector is a usage error" \
+  "$(usage_run clean-three-waves --reemanate '')" "$(printf '2\tempty')"
+eq "a selector with no left-hand node is a usage error" \
+  "$(usage_run clean-three-waves --reemanate '..auth.org')" "$(printf '2\tempty')"
+eq "a selector naming two segments is a usage error" \
+  "$(usage_run clean-three-waves --reemanate 'a..b..c')" "$(printf '2\tempty')"
+eq "a --goal selector that names no frontier unit is a usage error" \
+  "$(usage_run clean-three-waves --goal 'billing.*')" "$(printf '2\tempty')"
+eq "a --reemanate selector that names no frontier unit is a usage error" \
+  "$(usage_run clean-three-waves --reemanate 'billing.invoice')" "$(printf '2\tempty')"
+eq "a segment whose endpoints share no ordering path is a usage error" \
+  "$(usage_run clean-three-waves --reemanate 'auth.user.list..auth.org')" "$(printf '2\tempty')"
+eq "a second --goal is a usage error" \
+  "$(usage_run clean-three-waves --goal auth.org --goal auth.user)" "$(printf '2\tempty')"
+eq "a --tests-root that is not there is a usage error" \
+  "$(usage_run clean-three-waves --tests-root no/such/tree)" "$(printf '2\tempty')"
+# The counterpart, or every row above would pass on a tool that refused
+# everything: the same flags with real arguments plan normally.
+eq "and the same flags with arguments that resolve exit 0" \
+  "$(usage_run canonical-example --reemanate 'users.*' --goal users.detail)" \
+  "$(printf '0\tSOMETHING')"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# One grammar, two readings — the claim that no single fixture can hold, since a
+# fixture directory belongs to exactly one tool. Gate covers a claim off the id
+# half of the token; plan realizes a unit only when the fingerprint half matches.
+# ─────────────────────────────────────────────────────────────────────────────
+
+realized_ids() {
+  plan_in "$1" --tests-root tests | jq -r '[.realized[]] | join(",")' 2>/dev/null
+}
+eq "a fingerprinted citation of every claim realizes the unit" \
+  "$(realized_ids realized-all)" "auth.org"
+eq "an id-only citation of every claim realizes nothing" \
+  "$(realized_ids realized-id-only-citation)" ""
+eq "and one stale fingerprint is enough to un-realize it" \
+  "$(realized_ids realized-fingerprint-mismatch)" ""
+gate_covered() {
+  ( cd "$FX/../emanate-gate/$1" \
+    && bash "$BIN/emanate-gate.sh" --contract contract.json --tests-root tests \
+         --results results.json 2>/dev/null \
+       | jq -r '[.claims[].status] | unique | join(",")' )
+}
+eq "while gate covers the claim off the id half, stale fingerprint and all" \
+  "$(gate_covered token-with-fingerprint)" "covered"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Two --scope flags union rather than intersect

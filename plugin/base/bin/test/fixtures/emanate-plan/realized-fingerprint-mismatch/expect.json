@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".realized | length", "equals": "0" },
+    { "expr": ".realized_all", "equals": "false" },
+    { "expr": ".floor", "equals": "1" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "auth.org" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "auth.org" }
+  ],
+  "forbidden": ["REALIZED", "PR-"]
+}

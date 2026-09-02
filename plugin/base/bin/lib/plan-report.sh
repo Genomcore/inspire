@@ -24,6 +24,8 @@ plan_json_plan() {
     --rawfile waves "$PLAN_TMP/waves.spool" \
     --rawfile findings "$PLAN_TMP/findings.spool" \
     --rawfile realized "$PLAN_TMP/realized" \
+    --rawfile reemsel "$PLAN_TMP/reemanate-args" \
+    --rawfile reemunits "$PLAN_TMP/reemanate" \
     --rawfile goalunits "$PLAN_TMP/goal.units" \
     --rawfile components "$PLAN_TMP/components.spool" \
     --rawfile probes "$PLAN_TMP/probes.spool" \
@@ -51,6 +53,9 @@ plan_json_plan() {
        deliverable_waves: $deliverable,
        realized: (ids($realized) | sort),
        realized_all: $realizedall,
+       reemanate: (if (ids($reemsel) | length) == 0 then null
+                   else {selectors: ids($reemsel),
+                         units: (ids($reemunits) | sort)} end),
        goal: (if $goalsel == "" then null
               else {selector: $goalsel, units: (ids($goalunits) | sort),
                     floor: $goalfloor} end),
@@ -149,6 +154,11 @@ plan_report_plan() {
     if [ "$realized" -gt 0 ]; then
       printf '\nREALIZED (%s, out of the frontier)\n  ' "$realized"
       awk '{ printf "%s%s", sep, $0; sep = " · " } END { printf "\n" }' "$PLAN_TMP/realized"
+    fi
+    if [ -s "$PLAN_TMP/reemanate" ]; then
+      printf '\nRE-EMANATED (%s, treated as unrealized)\n  ' \
+        "$(LC_ALL=C grep -c . "$PLAN_TMP/reemanate")"
+      awk '{ printf "%s%s", sep, $0; sep = " · " } END { printf "\n" }' "$PLAN_TMP/reemanate"
     fi
     [ -n "$PLAN_GOAL" ] && printf '\nGOAL %s · %s piece(s) · FLOOR TO GOAL %s\n' \
       "$PLAN_GOAL" "$(LC_ALL=C grep -c . "$PLAN_TMP/goal.units")" "$PLAN_GOAL_FLOOR"

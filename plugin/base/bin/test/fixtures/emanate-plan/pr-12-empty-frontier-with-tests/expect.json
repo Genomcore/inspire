@@ -1,0 +1,20 @@
+{
+  "exit": 4,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].code] | unique | join(\",\")", "equals": "PR-12" },
+    { "expr": ".refused[0].target", "equals": "spec/kb spec/sdd" },
+    { "expr": "has(\"waves\")", "equals": "false" },
+    { "expr": "has(\"units\")", "equals": "false" },
+    { "expr": "has(\"realized_all\")", "equals": "false" },
+    { "expr": "has(\"preflight\")", "equals": "false" }
+  ],
+  "forbidden": ["realized_all", "READY"]
+}

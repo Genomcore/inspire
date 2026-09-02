@@ -202,6 +202,10 @@ plan_declared_for() {
 # in that section, as `cell<TAB>cell…`. The header is the row immediately above
 # the `|---|` separator, so a table is read by its shape rather than by a pinned
 # column count, and a section whose table has no rows yet reads as none.
+#
+# A cell's VALUE, not its markdown: backticks are stripped the way `derive`
+# strips them, so a component declared as `` `postgres` `` is the compose
+# service `postgres` and not a string with punctuation in it.
 plan_table_rows() {
   sdd_body_section "$1" "$2" | awk '
     function issep(l) { gsub(/[ \t|:-]/, "", l); return l == "" }
@@ -209,6 +213,7 @@ plan_table_rows() {
       sub(/^[ \t]*\|/, "", l); sub(/\|[ \t]*$/, "", l)
       n = split(l, a, "|")
       for (i = 1; i <= n; i++) {
+        gsub(/`/, "", a[i])
         gsub(/^[ \t]+|[ \t]+$/, "", a[i])
         out = out (i > 1 ? "\t" : "") a[i]
       }

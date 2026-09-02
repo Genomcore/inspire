@@ -83,7 +83,8 @@
 # Stdout is JSON on exactly the exits that produce a verdict, and EMPTY on every
 # other one:
 #   exit 0 / 1   {schema, scope, ready, floor, ceiling, deliverable_waves,
-#                 realized, realized_all, goal, preflight, wire_conventions,
+#                 realized, realized_all, reemanate, goal, preflight,
+#                 wire_conventions,
 #                 units, waves, findings}
 #   exit 4       {schema, scope, ready: false, refused: [...]} — and no `waves`,
 #                `floor` or `units` key at all, because nothing was planned and

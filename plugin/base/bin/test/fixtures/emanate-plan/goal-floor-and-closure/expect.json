@@ -1,0 +1,25 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--goal",
+    "users.detail",
+    "--ceiling",
+    "3"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".goal.selector", "equals": "users.detail" },
+    { "expr": ".goal.units | join(\",\")", "equals": "auth.user,auth.user.get,users.detail" },
+    { "expr": ".goal.floor", "equals": "3" },
+    { "expr": ".floor", "equals": "3" },
+    { "expr": ".ceiling", "equals": "3" },
+    { "expr": ".deliverable_waves", "equals": "3" },
+    { "expr": ".goal.units | index(\"users.list\")", "equals": "null" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-20", "PR-", "NOT READY"]
+}

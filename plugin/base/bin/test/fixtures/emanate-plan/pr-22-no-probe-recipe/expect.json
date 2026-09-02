@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-22" },
+    { "expr": ".findings[0].severity", "equals": "warning" },
+    { "expr": ".findings[0].owner", "equals": "inspire-bootstrap" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/00_bootstrap/stack.md" },
+    { "expr": ".findings[0].unit", "equals": "null" },
+    { "expr": ".ready", "equals": "true" },
+    { "expr": "[.preflight.components[].name] | join(\",\")", "equals": "postgres,redis" },
+    { "expr": ".preflight.probe_profiles | length", "equals": "0" }
+  ],
+  "forbidden": ["NOT READY"]
+}
