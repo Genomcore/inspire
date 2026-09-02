@@ -228,8 +228,11 @@ unless the edge is navigation. Resolution is vault-wide even when ordering is
 scope-wide, or a narrowed run would report every edge leaving its scope as
 unresolvable. **`PR-02`'s navigation arm is unreachable through the shipped
 screen shape**: derive refuses a screen whose transition names no screen id in
-the vault (`DR-R3`), so a dangling link arrives as `PR-01` and the arm stands
-for the day another unit kind records an unresolvable navigation edge.
+the vault (`DR-R3`), so a dangling link arrives as `PR-01`. The arm is gated on
+a screen depending on a screen, so no other unit kind can reach it — an edge
+any other kind records takes the error arm by construction. It stands for the
+day a screen records an unresolvable screen-kinded edge that derive does not
+refuse first.
 
 ## Waves and the floor
 
