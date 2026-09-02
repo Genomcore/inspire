@@ -11,6 +11,7 @@
     { "expr": ".findings[0].target", "equals": "spec/profiles/react.md" },
     { "expr": ".findings[0].owner", "equals": "inspire-code" },
     { "expr": ".findings[0].message | test(\"is not one\")", "equals": "true" },
+    { "expr": ".findings[0].remedy", "equals": "point `nestjs`'s `language:` at a `layer: language` profile" },
     { "expr": ".units[0].profiles | join(\",\")", "equals": "nestjs,react" },
     { "expr": ".ready", "equals": "false" }
   ]

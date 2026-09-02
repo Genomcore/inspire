@@ -1,0 +1,21 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-07" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/00_bootstrap/stack.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-bootstrap" },
+    { "expr": ".findings[0].unit", "equals": "auth.org" },
+    { "expr": ".findings[0].message | test(\"names no framework profile, so nothing states how this entity is built\")", "equals": "true" },
+    { "expr": ".findings[0].remedy", "equals": "declare a framework profile in `spec/kb/00_bootstrap/stack.md`" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "typescript" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["PR-06", "PR-13"]
+}

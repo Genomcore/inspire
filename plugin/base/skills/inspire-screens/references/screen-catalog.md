@@ -28,10 +28,34 @@ pattern over creating a new one.
 **What each entry declares is not the same thing.** A pattern declares
 `## Regions`: named holes, each with a `Fill` (`required` | `optional`) and an
 `Accepts` (`data` · `dispatch` · `nav` · `static`) — geometry and nothing more. A
-component declares `## API / Slots`: its own props. The two never mirror each
-other. A region called `columns`, or any region naming the fields its content
-shows, is a component prop that leaked into a layout: put it back in the
-component's entry, where the screen's wiring can reach it.
+component declares `## API / Slots`: its own props, and optionally a `## States`
+table keyed the way a screen's `### States` is, for the renderings every screen
+instantiating it inherits. The two never mirror each other. A region called
+`columns`, or any region naming the fields its content shows, is a component
+prop that leaked into a layout: put it back in the component's entry, where the
+screen's wiring can reach it.
+
+## `**State:**` is the entry's lifecycle
+
+Both kinds of entry carry one, and the vocabulary is closed:
+
+| `**State:**` | means | the `lifecycle:` it stands in for |
+|---|---|---|
+| `to-extract` | the entry is authored; no code stands behind it yet | `accepted` |
+| `implemented` | the shared layout or component exists in the code | `stable` |
+
+A catalog entry carries no `lifecycle:` field and needs the same answers one
+gives, so this line is where they live. The vocabulary is closed: anything else
+— a third word, or no line at all — states neither, so nothing can place the
+entry. Both shipped starters (`list`, `detail`) ship at `to-extract`, which is
+what they are in a project that has not built them.
+
+**An entry at `to-extract` is a unit the emanation loop emanates**, never a
+blocker on the screens that name it. What the loop does with each word, and what
+it reports when the line states neither, is
+[`_references/emanation-plan.md`](../../_references/emanation-plan.md) —
+including why both shapes are read strictly there: an entry with no props table,
+or a layout with no regions, is a rendering the contracter would have to invent.
 
 Extracting a pattern out of screens that already declare bindings changes nothing
 about those bindings — they are screen-owned, and the promoted layout only gains

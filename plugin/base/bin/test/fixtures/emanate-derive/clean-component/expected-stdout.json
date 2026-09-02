@@ -1,0 +1,74 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "component",
+    "id": "data-table",
+    "path": "spec/kb/05_screens/components/data-table.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "a sortable table of records.",
+  "requires": [],
+  "structure": [
+    "A header row, one cell per column.",
+    "The record rows.",
+    "A footer carrying the count."
+  ],
+  "variants": [
+    "**Compact** — when the roster is dense.",
+    "**Selectable** — when the caller needs a selection column."
+  ],
+  "props": [
+    {
+      "name": "rows",
+      "carries": "the records to render"
+    },
+    {
+      "name": "columns",
+      "carries": "which fields become columns, in order"
+    },
+    {
+      "name": "on-row-click",
+      "carries": "the handler a row activation calls"
+    }
+  ],
+  "states": [
+    {
+      "key": "empty",
+      "when": "`rows` is empty",
+      "presentation": "the empty-collection message, no header"
+    },
+    {
+      "key": "loading",
+      "when": "`rows` has not resolved yet",
+      "presentation": "skeleton rows at the last known count"
+    }
+  ],
+  "claims": [
+    {
+      "id": "data-table/prop/rows",
+      "oracle": "test",
+      "fingerprint": "sha256:61081edb9b2db24e336739c7ebde630044debd52eeb25cc9ec3724fb27211110"
+    },
+    {
+      "id": "data-table/prop/columns",
+      "oracle": "test",
+      "fingerprint": "sha256:9e3ed87acfb925e439f284fec62db369c492d2c2fd7ddbe03d6a1fd09dc51400"
+    },
+    {
+      "id": "data-table/prop/on-row-click",
+      "oracle": "test",
+      "fingerprint": "sha256:525582102728907efaf5e251a8fbb96cc06a3ba199af2c8a9ab803db4f4136bd"
+    },
+    {
+      "id": "data-table/state/empty",
+      "oracle": "test",
+      "fingerprint": "sha256:3e2803356e5c823d46c41ed524e5ee9d7bdfca8dbd7c3fe50bfb94ed6d8c9271"
+    },
+    {
+      "id": "data-table/state/loading",
+      "oracle": "test",
+      "fingerprint": "sha256:5b5d914451b16ed76aab23a84811cf74917ca8f9bc721f8e60c50ccb2d6d815b"
+    }
+  ]
+}

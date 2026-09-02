@@ -4,8 +4,8 @@
 # derive — a unit's KB artifacts -> the DERIVED CONTRACT, on stdout, as JSON
 # (D5/D7/D8). One of the emanation loop's four independent bin scripts (derive,
 # plan, gate, harvest); the shared bulk lives in `lib/derive-{json,types,
-# refusals,domain,screen}.sh`, sourceable on its own — the reuse surface `plan`
-# and `gate` compose on.
+# refusals,domain,screen,catalog}.sh`, sourceable on its own — the reuse surface
+# `plan` and `gate` compose on.
 #
 # STRICT, AND THAT IS THE ONE NEW BEHAVIOUR IN THE LOOP (D7): an old shape is a
 # DERIVATION ERROR naming the skill to touch the artifact with, never a
@@ -21,11 +21,14 @@
 #   emanate-derive.sh <kind> <id>
 #   emanate-derive.sh <kind> --file <path>
 #
-#   <kind>    entity | action | screen. The positional kind is not redundant
-#             with the id: a 2-segment id is an entity OR a screen, and a
-#             3-segment id an action OR a collision-minted screen.
+#   <kind>    entity | action | screen | component | pattern. The positional
+#             kind is not redundant with the id: a 2-segment id is an entity OR
+#             a screen, a 3-segment id an action OR a collision-minted screen,
+#             and a bare word a component OR a pattern.
 #   <id>      the artifact's own id — `auth.user`, `auth.user.create`,
-#             `users.list`, `admin.users.list`. The colon display form is
+#             `users.list`, `admin.users.list`, or a catalog entry's filename
+#             stem (`data-table`, `filtered-list`), which is the only name a
+#             pattern or component file carries. The colon display form is
 #             accepted and read as the dotted one.
 #   --file    the artifact's path, in place of <id>; the kind is still given.
 #             The plan tool usually holds the path already.
@@ -42,8 +45,9 @@
 #   3    unit not found: no artifact of THAT KIND carries that id, or the
 #        --file path does not exist or is not an artifact of that kind. The
 #        kind is asserted from the artifact itself (the `_lib.sh` finders), so
-#        `action auth.user` and a pattern entry passed as `action --file` are
-#        both 3 rather than an empty contract. A screen sitting deeper than
+#        `action auth.user`, a pattern entry passed as `action --file` and a
+#        component entry passed as `pattern --file` are all 3 rather than an
+#        empty contract. A screen sitting deeper than
 #        05_screens/{surface}/{module}/{screen}.md lands here too — the screen
 #        finders do not reach past that depth, so nothing in the vault can see
 #        it.
@@ -85,10 +89,13 @@ source "$SCRIPT_DIR/lib/derive-types.sh"
 source "$SCRIPT_DIR/lib/derive-refusals.sh"
 source "$SCRIPT_DIR/lib/derive-domain.sh"
 source "$SCRIPT_DIR/lib/derive-screen.sh"
+source "$SCRIPT_DIR/lib/derive-catalog.sh"
+
+DERIVE_KINDS="entity|action|screen|component|pattern"
 
 usage() {
-  echo "usage: emanate-derive.sh <entity|action|screen> <id>" >&2
-  echo "       emanate-derive.sh <entity|action|screen> --file <path>" >&2
+  echo "usage: emanate-derive.sh <$DERIVE_KINDS> <id>" >&2
+  echo "       emanate-derive.sh <$DERIVE_KINDS> --file <path>" >&2
   exit "$EXIT_USAGE"
 }
 
@@ -108,7 +115,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-case "$KIND" in entity|action|screen) ;; *) usage ;; esac
+# Spelled out rather than `$DERIVE_KINDS`: a `case` pattern is expanded after
+# the `|` separators are parsed, so the variable would match one literal string.
+case "$KIND" in entity|action|screen|component|pattern) ;; *) usage ;; esac
 [ -n "$UNIT_ARG" ] && [ -n "$UNIT_FILE" ] && usage
 [ -z "$UNIT_ARG" ] && [ -z "$UNIT_FILE" ] && usage
 
@@ -135,8 +144,10 @@ trap 'rm -rf "$DERIVE_TMP"' EXIT
 derive_init_spools requires claims refused
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Locating the unit — by path convention for a domain id, by the id index for a
-# screen, whose id is minted write-once and never re-derived from location (A12).
+# Locating the unit — by path convention for a domain id or a catalog entry, by
+# the id index for a screen, whose id is minted write-once and never re-derived
+# from location (A12). A catalog entry is the opposite case: its filename stem
+# IS its name, since the entry carries no identity block at all.
 # ─────────────────────────────────────────────────────────────────────────────
 
 not_found() {
@@ -166,11 +177,21 @@ domain_scan() {
   return 1
 }
 
+# catalog_path_for <kind> <id> — 05_screens/{patterns,components}/{id}.md, the
+# one layout a catalog entry has: both catalogs are suite-wide and never move
+# into a surface tree, so there is no second place to look and no index to
+# build.
+catalog_path_for() {
+  local dir
+  [ "$1" = "pattern" ] && dir=patterns || dir=components
+  printf '%s/05_screens/%s/%s.md' "$SDD_KB_ROOT" "$dir" "$2"
+}
+
 # kind_holds <path> <kind> — exit 0 when the finder for that kind reaches that
-# path. The finders in `_lib.sh` are the one definition of what an entity, an
-# action and a screen file are, so asking them is what stops `action auth.user`
-# — or a pattern entry passed as `action --file` — from rendering an empty
-# contract with a clean exit.
+# path. The finders in `_lib.sh` are the one definition of what each unit kind's
+# file is, so asking them is what stops `action auth.user` — or a pattern entry
+# passed as `action --file`, or a component entry passed as `pattern --file` —
+# from rendering an empty contract with a clean exit.
 kind_holds() {
   local path="$1" want="$2" dir
   case "$path" in */*) dir="${path%/*}" ;; *) dir="." ;; esac
@@ -182,8 +203,10 @@ kind_holds() {
     # Scoped to the file's own directory: the finder intersects that with
     # $SDD_SPEC_ROOT first, so a path outside the domain tree yields nothing and
     # the walk stays one directory wide instead of one vault wide.
-    entity) sdd_find_entities "$dir" | grep -qxF "$path" ;;
-    action) sdd_find_actions "$dir" | grep -qxF "$path" ;;
+    entity)    sdd_find_entities "$dir"   | grep -qxF "$path" ;;
+    action)    sdd_find_actions "$dir"    | grep -qxF "$path" ;;
+    pattern)   sdd_find_patterns "$dir"   | grep -qxF "$path" ;;
+    component) sdd_find_components "$dir" | grep -qxF "$path" ;;
   esac
 }
 
@@ -198,6 +221,9 @@ else
       derive_screen_index
       U_PATH="$(derive_screen_by_id "$U_ARG_DOTTED")"
       [ -n "$U_PATH" ] || not_found "$U_ARG_DOTTED" ;;
+    component|pattern)
+      U_PATH="$(catalog_path_for "$KIND" "$UNIT_ARG")"
+      [ -f "$U_PATH" ] || not_found "$UNIT_ARG" ;;
     *)
       U_PATH="$(domain_path_for "$U_ARG_DOTTED")"
       if [ ! -f "$U_PATH" ]; then
@@ -240,12 +266,18 @@ if [ -z "$U_ID" ]; then
   U_ID="$(basename "$U_PATH" .md)"
   [ "$KIND" = "screen" ] && U_ID="$(basename "$(dirname "$U_PATH")").$U_ID"
 fi
-[ -n "$U_MODULE" ] || U_MODULE="${U_ID%%.*}"
-[ "$KIND" = "screen" ] && [ -z "$U_SCREEN" ] && U_SCREEN="${U_ID##*.}"
-[ "$KIND" = "action" ] && [ -z "$U_ACTION" ] && U_ACTION="${U_ID##*.}"
-if [ -z "$U_ENTITY" ] && [ "$KIND" != "screen" ]; then
-  U_ENTITY="${U_ID#*.}"; U_ENTITY="${U_ENTITY%%.*}"
-fi
+# A catalog entry has no module and never will: both catalogs are suite-wide,
+# and a shared layout or component belongs to every module that instantiates it.
+case "$KIND" in
+  component|pattern) U_LIFECYCLE="$(sdd_catalog_lifecycle "$U_PATH")" ;;
+  *)
+    [ -n "$U_MODULE" ] || U_MODULE="${U_ID%%.*}"
+    [ "$KIND" = "screen" ] && [ -z "$U_SCREEN" ] && U_SCREEN="${U_ID##*.}"
+    [ "$KIND" = "action" ] && [ -z "$U_ACTION" ] && U_ACTION="${U_ID##*.}"
+    if [ -z "$U_ENTITY" ] && [ "$KIND" != "screen" ]; then
+      U_ENTITY="${U_ID#*.}"; U_ENTITY="${U_ENTITY%%.*}"
+    fi ;;
+esac
 U_ROUTE="/$U_MODULE/$U_SCREEN"
 
 derive_target "$U_PATH" "$U_ID" "$KIND"
@@ -257,17 +289,26 @@ derive_target "$U_PATH" "$U_ID" "$KIND"
 
 # Declared before the branch below because `set -u` makes an unset variable
 # fatal and each of these is assigned by one kind's deriver only.
-U_PATTERN_ID=""; U_PATTERN_PATH=""; U_OUTPUT_ENTITY=""
+U_PATTERN_ID=""; U_PATTERN_PATH=""; U_OUTPUT_ENTITY=""; U_STATE=""
 
 derive_sweep_start "$KIND" "$(dirname "$U_PATH")"
 case "$KIND" in
-  entity) derive_entity "$U_PATH" "$U_ID" ;;
-  action) derive_action "$U_PATH" "$U_ID" ;;
-  screen) derive_screen "$U_PATH" "$U_ID" ;;
+  entity)    derive_entity "$U_PATH" "$U_ID" ;;
+  action)    derive_action "$U_PATH" "$U_ID" ;;
+  screen)    derive_screen "$U_PATH" "$U_ID" ;;
+  component) derive_component "$U_PATH" "$U_ID" ;;
+  pattern)   derive_pattern "$U_PATH" "$U_ID" ;;
 esac
 derive_sweep_collect "$KIND"
 
-U_PURPOSE="$(derive_norm "$(sdd_body_prose "$DERIVE_TMP/unit.md" "Purpose")")"
+# A catalog entry states its purpose on a header LINE, the way it states its
+# state — there is no `## Purpose` section to read.
+case "$KIND" in
+  component|pattern)
+    U_PURPOSE="$(derive_norm "$(derive_header_line "$DERIVE_TMP/unit.md" '**Purpose:**')")" ;;
+  *)
+    U_PURPOSE="$(derive_norm "$(sdd_body_prose "$DERIVE_TMP/unit.md" "Purpose")")" ;;
+esac
 
 LC_ALL=C sort -u "$DERIVE_TMP/requires.spool" -o "$DERIVE_TMP/requires.spool"
 derive_hash_claims
@@ -315,13 +356,15 @@ if [ -s "$DERIVE_TMP/refused.spool" ]; then
     --arg schema "$DERIVE_SCHEMA" --arg kind "$KIND" --arg id "$U_ID" \
     --arg path "$U_PATH" --arg lifecycle "$U_LIFECYCLE" --arg module "$U_MODULE" \
     --arg entity "$U_ENTITY" --arg action "$U_ACTION" --arg screen "$U_SCREEN" \
+    --arg state "$U_STATE" \
     "$DERIVE_JQ_PRELUDE"'
       {schema: $schema,
-       unit: ({kind: $kind, id: $id, path: $path, lifecycle: $lifecycle,
-               module: $module}
+       unit: ({kind: $kind, id: $id, path: $path, lifecycle: $lifecycle}
+              + (if $module == "" then {} else {module: $module} end)
               + (if $kind == "entity" then {entity: $entity}
                  elif $kind == "action" then {entity: $entity, action: $action}
-                 else {screen: $screen} end)),
+                 elif $kind == "screen" then {screen: $screen}
+                 else {state: $state} end)),
        refused: (recs($refused)
                  | map({class: .[0], target: cel(.;1), message: cel(.;2),
                         remedy: cel(.;3)}))}
@@ -331,9 +374,11 @@ if [ -s "$DERIVE_TMP/refused.spool" ]; then
 fi
 
 case "$KIND" in
-  entity) derive_entity_json ;;
-  action) derive_action_json ;;
-  screen) derive_screen_json ;;
+  entity)    derive_entity_json ;;
+  action)    derive_action_json ;;
+  screen)    derive_screen_json ;;
+  component) derive_component_json ;;
+  pattern)   derive_pattern_json ;;
 esac
 report_derived
 exit "$EXIT_OK"

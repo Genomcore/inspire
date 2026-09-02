@@ -1,0 +1,15 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "angular,typescript" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-06", "PR-07", "NOT READY"]
+}

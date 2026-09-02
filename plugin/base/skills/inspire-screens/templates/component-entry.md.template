@@ -23,6 +23,18 @@ Tokens (spacing, type, colors, density) come from the design system
 |------|--------------------------|
 | `{prop}` | {what it carries} |
 
+## States
+
+<!-- Optional, and keyed the way a screen's `### States` is (Key · When ·
+     Presentation). These are the component's OWN renderings — empty, loading,
+     error — the ones every screen instantiating it inherits. A state a single
+     screen enters belongs to that screen's `### States` instead. Each row is
+     one claim the emanation loop covers with a render test. -->
+
+| Key | When | Presentation |
+|---|---|---|
+| `{key}` | {the condition} | {what the component shows} |
+
 ## Variants
 
 - **{Variant name}** — {when to use it}.

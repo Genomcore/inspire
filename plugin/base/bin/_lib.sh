@@ -459,6 +459,62 @@ sdd_find_screens() {
     | sort
 }
 
+# Design-system CATALOG entries: one file per shared layout or shared component,
+# at 05_screens/{patterns,components}/{name}.md and nowhere deeper. Both
+# catalogs are suite-wide and never move into a surface tree, so there is no
+# second shape to accept. `_`-prefixed names are navigation or templates rather
+# than entries (`inspire-screens` spells this `patterns/[!_]*.md`), and
+# `README.md` is excluded as it is everywhere else.
+sdd_find_catalog() {
+  local scope="$1" dir="$2"
+  [ -d "$scope" ] || return 0
+  find "$scope" -type f -name "*.md" 2>/dev/null \
+    | awk -F'(^|/)05_screens/' -v d="$dir" '
+        NF > 1 {
+          n = split($NF, seg, "/")
+          if (n != 2 || seg[1] != d) next
+          if (seg[2] ~ /^_/ || seg[2] == "README.md") next
+          print
+        }
+      ' \
+    | sort
+}
+
+sdd_find_patterns()   { sdd_find_catalog "${1:-$SDD_KB_ROOT}" patterns; }
+sdd_find_components() { sdd_find_catalog "${1:-$SDD_KB_ROOT}" components; }
+
+# sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
+# or empty when it declares none.
+sdd_catalog_state() {
+  awk '
+    index($0, "**State:**") == 1 {
+      s = $0
+      sub(/^\*\*State:\*\*[ \t]*/, "", s)
+      gsub(/^[ \t]+|[ \t]+$/, "", s)
+      print s
+      exit
+    }
+  ' "$1"
+}
+
+# sdd_catalog_lifecycle <file> — the lifecycle a catalog entry's `**State:**`
+# stands for, and the ONE definition of it: derive reads it to fill a contract's
+# `unit.lifecycle`, plan reads it to build the frontier, and two answers to
+# "is this delivered?" would be one too many.
+#
+# A catalog entry carries no `lifecycle:` and needs the same three answers a
+# domain artifact's gives. `implemented` is delivered, so it satisfies an edge
+# out of band and never emanates — `stable`. `to-extract` is authored with no
+# code behind it, which is exactly what emanates — `accepted`. Anything else,
+# an absent line included, states neither, and the empty answer is what the
+# readiness checks report on.
+sdd_catalog_lifecycle() {
+  case "$(sdd_catalog_state "$1")" in
+    implemented) printf 'stable' ;;
+    to-extract)  printf 'accepted' ;;
+  esac
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Finding emission
 #

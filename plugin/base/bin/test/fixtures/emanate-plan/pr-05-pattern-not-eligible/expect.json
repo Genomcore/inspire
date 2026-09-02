@@ -1,0 +1,19 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-05" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/patterns/list.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-screens" },
+    { "expr": ".findings[0].unit", "equals": "users.list" },
+    { "expr": ".findings[0].message | test(\"neither .implemented. nor .to-extract.\")", "equals": "true" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "users.list" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["/../", "## Regions"]
+}

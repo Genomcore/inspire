@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the seven
+# Library — the readiness catalogue. Every `PR-*` class lives here: the eight
 # findings that leave a plan standing and flip it to not-ready, and the four
 # refusals that mean nothing is planned at all. The catalogue itself — what each
 # id means, its severity and its owner — is
@@ -18,9 +18,10 @@
 #   has to be stable or in the frontier (`PR-03`). Only the layering is skipped.
 #
 #   AN EDGE ORDERS A WAVE ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
-#   `stable` artifact is satisfied out of band, an edge to an `accepted` unit
-#   outside the scope is someone else's run, and an edge to a pattern or a
-#   component is a readiness check rather than a constraint.
+#   `stable` artifact is satisfied out of band and an edge to an `accepted` unit
+#   outside the scope is someone else's run. A pattern and a component are units
+#   like the rest since ED10, so their edges order like the rest: a screen waits
+#   for its layout's and its components' wave rather than refusing over them.
 #
 # Sourced after `_lib.sh`, `plan-lib.sh`, `plan-scan.sh` and `plan-stack.sh`.
 
@@ -208,8 +209,6 @@ plan_ingest_one() {
     case "$t" in
       R) plan_row requires "$id" "$f1" "$f2"
          printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$path" "$kind" "$f1" "$f2" >> "$PLAN_TMP/deps.tsv" ;;
-      P) plan_check_pattern "$id" "$f1" "$f2" ;;
-      C) plan_check_component "$id" "$f1" "$f2" "$f3" ;;
       X) plan_find "PR-01" "error" "$id" "$(plan_path_norm "$f2")" \
            "$(plan_owner "$f2")" "$f3" "$f4" "$f1" ;;
       *) ;;
@@ -217,41 +216,23 @@ plan_ingest_one() {
   done < "$recf"
 }
 
-# plan_check_pattern — PR-05. `screen-coherence` reports the same shape as a
-# warning on the pattern file; at emanation an unverifiable layout join is a
-# rendering the contracter would guess at, so plan reports it as an error. A
-# pattern link that resolves to nothing is derive's `DR-R4`, already a `PR-01`.
-plan_check_pattern() {
-  local uid="$1" pid="$2" p
-  p="$(plan_path_norm "$3")"
-  [ -f "$p" ] || return 0
-  sdd_has_section "$p" "Regions" && return 0
-  plan_find "PR-05" "error" "$uid" "$p" "$(plan_owner "$p")" \
-    "pattern \`$pid\` declares no \`## Regions\` table, so the screen-to-layout join cannot be checked" \
-    "add a \`## Regions\` table to $p"
-}
-
-# plan_check_component — PR-04 (D10/A10: a screen cannot emanate until the
-# components it declares are stable).
-plan_check_component() {
-  local uid="$1" cid="$2" state="$4" p
-  p="$(plan_path_norm "$3")"
-  [ "$state" = "implemented" ] && return 0
-  plan_find "PR-04" "error" "$uid" "$p" "$(plan_owner "$p")" \
-    "declared component \`$cid\` is at \`**State:** ${state:-—}\`, not \`implemented\`" \
-    "implement \`$cid\`, then set its \`**State:**\` to \`implemented\`"
-}
-
-# plan_resolve_edges — the second pass: PR-02, PR-03 and the ordering edge set.
-# One rule for every edge — it must resolve, and its target must be stable or in
-# the frontier. Navigation is dropped from the ORDERING alone, after both checks
-# have run, which is why the `continue` for it sits inside the in-frontier arm.
+# plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge
+# set. One rule for every edge, whatever its kind — it must resolve, and its
+# target must be stable or in the frontier. Navigation is dropped from the
+# ORDERING alone, after both checks have run, which is why the `continue` for it
+# sits inside the in-frontier arm.
+#
+# ED10 is what makes that one rule reach the catalog kinds. They used to be
+# skipped here and answered by two bespoke readiness errors, which meant a
+# screen could not emanate until its UI kit had been hand-built first. Now a
+# to-extract component is a unit like any other and the screen simply WAITS for
+# its wave; the error form survives only where it always belonged — a target
+# that is neither delivered nor emanatable.
 plan_resolve_edges() {
   local uid upath ukind dkind did dpath lc state
   : > "$PLAN_TMP/edges.tsv"
   while IFS=$'\t' read -r uid upath ukind dkind did; do
     [ -n "$uid" ] || continue
-    case "$dkind" in pattern|component) continue ;; esac
     dpath="$(plan_dep_path "$dkind" "$did")"
     if [ -z "$dpath" ]; then
       plan_find "PR-02" "error" "$uid" "$did" "$(plan_owner "$upath")" \
@@ -264,8 +245,15 @@ plan_resolve_edges() {
       printf '%s\t%s\n' "$uid" "$did" >> "$PLAN_TMP/edges.tsv"
       continue
     fi
-    lc="$(sdd_fm_value "$dpath" '.lifecycle')"
+    lc="$(plan_lifecycle_of "$dpath" "$dkind")"
+    if [ "$lc" = "stable" ] && [ "$dkind" = "pattern" ]; then
+      plan_check_regions "$uid" "$did" "$dpath"
+      continue
+    fi
     case "$lc" in stable|accepted) continue ;; esac
+    case "$dkind" in
+      pattern|component) plan_find_catalog "$uid" "$dkind" "$did" "$dpath"; continue ;;
+    esac
     state="is at lifecycle \`$lc\`"
     [ -n "$lc" ] || state="declares no lifecycle"
     plan_find "PR-03" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
@@ -275,10 +263,44 @@ plan_resolve_edges() {
   LC_ALL=C sort -u "$PLAN_TMP/edges.tsv" -o "$PLAN_TMP/edges.tsv"
 }
 
+# plan_find_catalog — PR-04 (component) and PR-05 (pattern): the entry's
+# `**State:**` is neither `implemented` nor `to-extract`, so it is neither
+# delivered nor a unit anything can emanate, and the screen naming it has
+# nothing to wait for. A `to-extract` entry outside the scope is treated the way
+# an out-of-scope `accepted` unit is — someone else's run.
+plan_find_catalog() {
+  local uid="$1" dkind="$2" did="$3" dpath="$4" owner state msg fix
+  owner="$(plan_owner "$dpath")"
+  state="$(sdd_catalog_state "$dpath")"
+  msg="declared $dkind \`$did\` is at \`**State:** ${state:-—}\` — neither \`implemented\` nor \`to-extract\`, so it is neither delivered nor emanatable"
+  fix="set its \`**State:**\` to \`to-extract\` so it enters the frontier, or to \`implemented\` once its code exists"
+  # Both ids spelled out rather than picked into a variable: `test-plan-lib.sh`
+  # holds the catalogue and the code to the same set of literals, and an id the
+  # grep cannot see is an id the document is free to drift from.
+  case "$dkind" in
+    component) plan_find "PR-04" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
+    *)         plan_find "PR-05" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
+  esac
+}
+
+# plan_check_regions — PR-05's other half, and the only one an `implemented`
+# pattern can reach: a delivered layout is never derived, so nothing else would
+# ever notice that it declares no holes. `screen-coherence` reports the same
+# shape as a warning on the pattern file; at emanation an unverifiable join is a
+# rendering the contracter would guess at.
+plan_check_regions() {
+  local uid="$1" pid="$2" dpath="$3"
+  sdd_has_section "$dpath" "Regions" && return 0
+  plan_find "PR-05" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
+    "pattern \`$pid\` declares no \`## Regions\` table, so the screen-to-layout join cannot be checked" \
+    "add a \`## Regions\` table to $dpath"
+}
+
 plan_define_remedy() {
   case "$1" in
-    screen) printf '/inspire_screens create %s' "$2" ;;
-    *)      printf '/inspire_domain define %s' "$2" ;;
+    screen)            printf '/inspire_screens create %s' "$2" ;;
+    pattern|component) printf '/inspire_screens extract %s %s' "$1" "$2" ;;
+    *)                 printf '/inspire_domain define %s' "$2" ;;
   esac
 }
 
@@ -294,44 +316,135 @@ plan_promote_remedy() {
 
 # plan_declared_for <key> <surface> — the declared id list a unit resolves from,
 # materialized once per key. A surface that declares none inherits the
-# suite-wide set; it does not extend it.
+# suite-wide set; it does not extend it. The file the list came FROM is recorded
+# beside it, because that is the file `PR-07`'s remedy has to name.
 plan_declared_for() {
   local key="$1" surface="$2" f="$PLAN_TMP/prof/$key.declared"
   if [ ! -f "$f" ]; then
+    printf '%s' "$SDD_KB_ROOT/00_bootstrap/stack.md" > "$f.source"
     if [ "$key" = "suite" ]; then
       cp "$PLAN_TMP/stack-profiles" "$f"
     else
       plan_surface_profiles "$surface" > "$f"
-      [ -s "$f" ] || cp "$PLAN_TMP/stack-profiles" "$f"
+      if [ -s "$f" ]; then
+        printf '%s' "$SDD_KB_ROOT/00_bootstrap/surfaces.md" > "$f.source"
+      else
+        cp "$PLAN_TMP/stack-profiles" "$f"
+      fi
     fi
   fi
   printf '%s' "$f"
 }
 
-# plan_check_profiles — PR-06, and the `profiles` spool `units[]` renders from.
+# plan_check_profiles — PR-06 and PR-07, plus the `profiles` spool `units[]`
+# renders from. The two are reported independently: a suite naming two framework
+# profiles of which one has no rendering table has two defects, and suppressing
+# either would hide half the repair.
 plan_check_profiles() {
-  local uid kind path lifecycle module surface claims key why gap miss fix pid
+  local uid kind path lifecycle module surface claims key sel pid
   while IFS="$PLAN_FS" read -r uid kind path lifecycle module surface claims; do
     [ -n "$uid" ] || continue
     key="$(plan_unit_profile_key "$kind" "$surface")"
     plan_resolve_profiles "$key" "$(plan_declared_for "$key" "$surface")"
+    sel="$(plan_unit_profiles "$key" "$kind")"
     while IFS= read -r pid; do
       [ -n "$pid" ] || continue
       plan_row profiles "$uid" "$pid"
-    done < "$PLAN_TMP/prof/$key"
-    why=""; gap=""
-    IFS=$'\t' read -r why gap < "$PLAN_TMP/prof/$key.gap"
-    [ -n "$gap" ] || continue
-    miss="\`$gap\` is not there"
-    fix="add $gap"
-    if [ "$why" = "not-language" ]; then
-      miss="\`$gap\` is not one — its \`layer:\` is not \`language\`"
-      fix="point that \`language:\` at a \`layer: language\` profile"
-    fi
-    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
-      "the resolved profile set yields no language profile — $miss, so nothing states how a semantic type renders" \
-      "declare a language profile in \`00_bootstrap/stack.md\`, or $fix"
+    done < "$sel.set"
+    plan_check_language "$uid" "$sel"
+    plan_check_framework "$uid" "$kind" "$key" "$sel"
   done < "$PLAN_TMP/units.spool"
+}
+
+# plan_check_language — PR-06, one finding per resolved framework profile with
+# no rendering home. Set-level was the older shape and it let a mixed suite
+# resolve one framework's language and emanate every OTHER framework's units
+# under it, which is the guess D5 forbids wearing a clean exit code.
+plan_check_language() {
+  local uid="$1" sel="$2" why fw gap miss fix
+  while IFS=$'\t' read -r why fw gap; do
+    [ -n "$why" ] || continue
+    case "$why" in
+      not-language)
+        miss="names \`$gap\` as its language profile and it is not one — its \`layer:\` is not \`language\`"
+        fix="point \`$fw\`'s \`language:\` at a \`layer: language\` profile" ;;
+      no-language-declared)
+        miss="declares no \`language:\` at all"
+        fix="add a \`language:\` line to $gap naming a \`layer: language\` profile, and author that profile" ;;
+      *)
+        miss="names a language profile that is not there — \`$gap\`"
+        fix="add $gap, or point \`$fw\`'s \`language:\` at a \`layer: language\` profile that exists" ;;
+    esac
+    # Only per-framework repairs are offered: the check is per framework, so a
+    # language profile declared in `stack.md` satisfies no branch of it and an
+    # operator who does that first sees nothing change.
+    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
+      "framework profile \`$fw\` $miss, so nothing states how a semantic type renders" \
+      "$fix"
+  done < "$sel.gap"
+}
+
+# plan_check_framework — PR-07, in two arms. A spawn is briefed with the whole
+# matching SET and applies the union of its members' rules, so a suite spanning
+# several layers is the ordinary case and no longer a finding (R8'). Two ties are
+# left: 2+ frameworks sharing ONE `layer:`, where nothing says which of the two
+# builds the unit, and an empty set, which states no architecture at all.
+plan_check_framework() {
+  local uid="$1" kind="$2" key="$3" sel="$4" src layer n
+  src="$(plan_path_norm "$(cat "$PLAN_TMP/prof/$key.declared.source")")"
+  LC_ALL=C cut -f2 "$sel.fw" | LC_ALL=C sort | LC_ALL=C uniq -d > "$sel.tied-layers"
+  if [ -s "$sel.tied-layers" ]; then
+    while IFS= read -r layer; do
+      [ -n "$layer" ] || continue
+      awk -F'\t' -v l="$layer" '$2 == l { print $1 }' "$sel.fw" > "$sel.tied"
+      n="$(LC_ALL=C grep -c . "$sel.tied")"
+      plan_find "PR-07" "error" "$uid" "$src" "$(plan_owner "$src")" \
+        "the resolved profile set names $n \`layer: $layer\` framework profiles ($(plan_id_list "$sel.tied")) and nothing states which one this $kind is built under" \
+        "declare exactly one \`layer: $layer\` framework profile in \`$src\`"
+    done < "$sel.tied-layers"
+    return 0
+  fi
+  [ -s "$sel.fw" ] && return 0
+  plan_check_framework_none "$uid" "$kind" "$key" "$sel" "$src"
+}
+
+# plan_check_framework_none <uid> <kind> <key> <sel> <src> — PR-07's empty-set
+# arm. An absence is not a count ambiguity: nothing was resolved to brief a spawn
+# with, so the three sub-cases each name a different repair — a declared id whose
+# file is missing, a declared profile on neither axis (read and discarded, which
+# would otherwise read as "you declared nothing"), and a genuinely empty set.
+plan_check_framework_none() {
+  local uid="$1" kind="$2" key="$3" sel="$4" src="$5" want named miss fix target
+  want="$(plan_unit_layer "$kind")"
+  named="${want:+\`layer: $want\` }framework"
+  target="$src"
+  if [ -s "$PLAN_TMP/prof/$key.missing" ]; then
+    target="$(plan_path_norm "$PLAN_PROFILES_ROOT")"
+    miss="names no $named profile: $(plan_id_list "$PLAN_TMP/prof/$key.missing") is declared and no profile file of that name is on disk"
+    fix="add the missing profile under \`$target\`, or declare a $named profile that is there in \`$src\`"
+  elif [ -s "$sel.odd" ]; then
+    miss="names no $named profile: $(plan_odd_list "$sel.odd") was read and discarded, naming neither a framework layer nor \`language\`"
+    fix="correct that profile's \`layer:\`, or declare a $named profile in \`$src\`"
+  else
+    miss="names no $named profile, so nothing states how this $kind is built"
+    fix="declare a $named profile in \`$src\`"
+  fi
+  plan_find "PR-07" "error" "$uid" "$target" "$(plan_owner "$target")" \
+    "the resolved profile set $miss" "$fix"
+}
+
+# plan_id_list <file> — the ids in the FIRST tab-separated column as a
+# backticked, comma-separated phrase, sorted so a message is stable across runs.
+plan_id_list() {
+  LC_ALL=C sort "$1" | awk -F'\t' '{ printf "%s`%s`", sep, $1; sep = ", " }'
+}
+
+# plan_odd_list <file> — the same for `id<TAB>layer` records, each carrying the
+# layer that got it discarded, since that is what the operator has to correct.
+plan_odd_list() {
+  LC_ALL=C sort "$1" | awk -F'\t' '
+    { printf "%s`%s` (%s)", sep, $1, ($2 == "" ? "no `layer:`" : "`layer: " $2 "`")
+      sep = ", " }'
 }
 
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low

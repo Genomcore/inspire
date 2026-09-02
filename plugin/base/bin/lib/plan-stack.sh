@@ -12,6 +12,12 @@
 # README.md` § Resolution and `inspire-surface/references/roster-format.md`
 # § Body; this file implements it and owns no rule of its own.
 #
+# There are TWO axes and each has its own refusal. The framework axis picks the
+# SET a persona spawn is briefed with — the applied rules are its members' union,
+# so a suite spanning several layers is ordinary and only a tie WITHIN one layer
+# or an empty set is `PR-07`; the language axis asks whether each framework
+# states how a semantic type renders (`PR-06`), per framework rather than per set.
+#
 # Sourced after `_lib.sh` and `plan-lib.sh`.
 
 # plan_stack_declared — the suite-wide profile ids, one per line. Exit 1 when
@@ -61,56 +67,108 @@ plan_surface_profiles() {
   ' "$f"
 }
 
-# plan_resolve_profiles <key> <declared-file> — resolve one declared set once.
-# Writes `prof/<key>` (the ids that exist on disk, the named languages folded
-# in) and `prof/<key>.gap` (`reason<TAB>path`, the `PR-06` target, written only
-# when nothing in the set yields a language profile). The reason is `absent`
-# when the named file is not there and `not-language` when it is there but is
-# not one, because those send an operator to two different repairs.
-#
-# A declared id with no file stays OUT of the resolved set: "resolved" means a
-# file was read. What was missing is what the gap names.
+# The layers a FRAMEWORK profile declares. `language` is the other axis of the
+# two-profile model — a rendering table rather than a build target — so it is
+# deliberately absent from this list.
+PLAN_FRAMEWORK_LAYERS=" frontend backend data tooling "
+
+# plan_resolve_profiles <key> <declared-file> — read one declared set once.
+# Writes `prof/<key>.resolved` (`id<TAB>layer<TAB>language` per declared id
+# whose file is on disk) and `prof/<key>.missing` (the declared ids with no
+# file). A declared id with no file stays OUT of the resolved set: "resolved"
+# means a file was read, and what was missing is what `PR-07` names.
 plan_resolve_profiles() {
   local key="$1" src="$2" out="$PLAN_TMP/prof/$key"
-  [ -f "$out" ] && return 0
-  local id file lfile language have=0 gap="" why="" absent=""
-  : > "$out.raw"
+  [ -f "$out.resolved" ] && return 0
+  local id file
+  : > "$out.resolved.raw"; : > "$out.missing"
   while IFS= read -r id; do
     [ -n "$id" ] || continue
     file="$PLAN_PROFILES_ROOT/$id.md"
     if [ ! -f "$file" ]; then
-      [ -n "$absent" ] || absent="$file"
+      printf '%s\n' "$id" >> "$out.missing"
       continue
     fi
-    printf '%s\n' "$id" >> "$out.raw"
-    [ "$(sdd_fm_value "$file" '.layer')" = "language" ] && have=1
-    language="$(sdd_fm_value "$file" '.language')"
-    [ -n "$language" ] || continue
+    printf '%s\t%s\t%s\n' "$id" \
+      "$(sdd_fm_value "$file" '.layer')" "$(sdd_fm_value "$file" '.language')" \
+      >> "$out.resolved.raw"
+  done < "$src"
+  LC_ALL=C sort -u "$out.resolved.raw" -o "$out.resolved.raw"
+  mv "$out.resolved.raw" "$out.resolved"
+  LC_ALL=C sort -u "$out.missing" -o "$out.missing"
+}
+
+# plan_unit_layer <kind> — the profile `layer:` a unit of that kind is built by,
+# empty for the kinds no layer answers for (R8). A screen, a component and a
+# pattern are frontend by construction. An entity and an action take the whole
+# framework set instead: the domain-versus-service partition is an ADR decision
+# nothing on disk states, and a multi-layer set is a legal briefing (R8').
+plan_unit_layer() {
+  case "$1" in screen|component|pattern) printf 'frontend' ;; esac
+}
+
+# plan_unit_profiles <key> <kind> — the profile selection this unit emanates
+# under, memoized per (key, matching layer) and printed as its file prefix:
+#   `<sel>.fw`   `id<TAB>layer` per framework that matches — `PR-07`'s subject,
+#                carrying the layer because a tie within ONE layer is the only
+#                ambiguity a set still leaves (R8')
+#   `<sel>.odd`  `id<TAB>layer` per declared profile on neither axis, so an
+#                empty `.fw` can say something was read and discarded rather
+#                than nothing declared
+#   `<sel>.set`  every profile id the unit is emanated under, `units[].profiles`
+#   `<sel>.gap`  `why<TAB>framework-id<TAB>target` per framework with no
+#                rendering home — `PR-06`'s subject, one record per FRAMEWORK
+#                rather than one per set, because each framework a spawn could
+#                pick needs a rendering table of its own.
+#
+# The three `why` values send an operator to three different repairs: `absent`
+# (the named language file is not there), `not-language` (it is there and its
+# `layer:` is not `language` — a framework naming another framework, or itself,
+# resolves to a file and still states no rendering) and `no-language-declared`
+# (no `language:` line at all, which is the shipped `ios` / `android` case).
+plan_unit_profiles() {
+  local key="$1" kind="$2" want sel
+  want="$(plan_unit_layer "$kind")"
+  sel="$PLAN_TMP/prof/$key.${want:-any}"
+  [ -f "$sel.set" ] && { printf '%s' "$sel"; return 0; }
+  local id layer language lfile
+  : > "$sel.fw"; : > "$sel.odd"; : > "$sel.set.raw"; : > "$sel.gap"
+  while IFS=$'\t' read -r id layer language; do
+    [ -n "$id" ] || continue
+    if [ "$layer" = "language" ]; then
+      printf '%s\n' "$id" >> "$sel.set.raw"
+      continue
+    fi
+    case "$PLAN_FRAMEWORK_LAYERS" in
+      *" $layer "*) ;;
+      *) printf '%s\t%s\n' "$id" "$layer" >> "$sel.odd"; continue ;;
+    esac
+    [ -z "$want" ] || [ "$layer" = "$want" ] || continue
+    printf '%s\t%s\n' "$id" "$layer" >> "$sel.fw"
+    printf '%s\n' "$id" >> "$sel.set.raw"
+    if [ -z "$language" ]; then
+      printf 'no-language-declared\t%s\t%s\n' "$id" "$PLAN_PROFILES_ROOT/$id.md" >> "$sel.gap"
+      continue
+    fi
     lfile="$PLAN_PROFILES_ROOT/$language.md"
     if [ ! -f "$lfile" ]; then
-      [ -n "$gap" ] || { gap="$lfile"; why="absent"; }
+      printf 'absent\t%s\t%s\n' "$id" "$lfile" >> "$sel.gap"
       continue
     fi
-    printf '%s\n' "$language" >> "$out.raw"
-    # A framework naming another framework — or itself — resolves to a file and
-    # still states no rendering, which is exactly the guess D5 forbids.
-    if [ "$(sdd_fm_value "$lfile" '.layer')" = "language" ]; then
-      have=1
-    else
-      [ -n "$gap" ] || { gap="$lfile"; why="not-language"; }
-    fi
-  done < "$src"
-  LC_ALL=C sort -u "$out.raw" -o "$out.raw"
-  mv "$out.raw" "$out"
-  : > "$out.gap"
-  [ "$have" = 1 ] \
-    || printf '%s\t%s' "${why:-absent}" "${gap:-${absent:-$PLAN_PROFILES_ROOT}}" > "$out.gap"
+    printf '%s\n' "$language" >> "$sel.set.raw"
+    [ "$(sdd_fm_value "$lfile" '.layer')" = "language" ] \
+      || printf 'not-language\t%s\t%s\n' "$id" "$lfile" >> "$sel.gap"
+  done < "$PLAN_TMP/prof/$key.resolved"
+  LC_ALL=C sort -u "$sel.set.raw" -o "$sel.set.raw"
+  mv "$sel.set.raw" "$sel.set"
+  printf '%s' "$sel"
 }
 
 # plan_unit_profile_key <kind> <surface> — the declared set a unit resolves
-# under. Only a UI surface partitions the set; the domain-versus-service
-# partition is an ADR decision and is not machine-readable in 0.8, so entities
-# and actions always take the suite-wide one.
+# under. Only a UI surface partitions the set: which surface a screen sits in is
+# positional and readable, while the domain-versus-service partition an entity
+# or an action would need is not. A catalog entry is suite-wide by construction
+# — `patterns/` and `components/` never move into a surface tree.
 plan_unit_profile_key() {
   local kind="$1" surface="$2"
   if [ "$kind" = "screen" ] && [ -n "$surface" ] \

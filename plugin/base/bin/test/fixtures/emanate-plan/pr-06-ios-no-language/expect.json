@@ -1,0 +1,20 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-06" },
+    { "expr": ".findings[0].target", "equals": "spec/profiles/ios.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-code" },
+    { "expr": ".findings[0].unit", "equals": "users.list" },
+    { "expr": ".findings[0].message | test(\"declares no .language:. at all\")", "equals": "true" },
+    { "expr": ".findings[0].remedy", "equals": "add a `language:` line to spec/profiles/ios.md naming a `layer: language` profile, and author that profile" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "ios" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["PR-07", "is not there"]
+}

@@ -48,7 +48,7 @@ both:
 
 | Owner | Owns | Never owns |
 |---|---|---|
-| a **component** entry | its props | where it is placed |
+| a **component** entry | its props, and the states it renders | where it is placed |
 | a **pattern** entry | its regions (named holes) and geometry | the fields its content shows |
 | a **screen** | the wiring: data → components, components → regions | tokens, layouts, props |
 
@@ -56,6 +56,12 @@ A region is a hole, never a mirror of some component's props. That is why a
 pattern's `## Regions` table says only how a hole is filled (`required` /
 `optional`) and what kind of content it accepts (`data` · `dispatch` · `nav` ·
 `static`).
+
+Both catalog entries carry a `**State:**` line — `to-extract` (authored, no code
+yet) or `implemented` (built). That line is the entry's lifecycle: the emanation
+loop reads it exactly as it reads a domain artifact's `lifecycle:`, so a
+`to-extract` entry is a unit it emanates and the screens naming it wait for its
+wave rather than refusing over it.
 
 The entries in [`components/`](components) are also the reference when the UI is
 built — in the prototype ([`/prototype`](../../prototype)) or in production.

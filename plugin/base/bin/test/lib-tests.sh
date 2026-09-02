@@ -184,6 +184,8 @@ mkdir -p "$KB/03_features/auth" "$KB/03_features/auth/nested" \
 : > "$KB/05_screens/auth/login.md"
 : > "$KB/05_screens/console/billing/invoices.md"
 : > "$KB/05_screens/patterns/form.md"
+: > "$KB/05_screens/patterns/_index.md"
+: > "$KB/05_screens/patterns/README.md"
 : > "$KB/05_screens/components/table.md"
 : > "$KB/05_screens/auth/_index.md"
 : > "$KB/05_screens/auth/README.md"
@@ -217,6 +219,34 @@ eq "find_screens is empty on a domain scope"  "$(sdd_find_screens  "$KB/04_domai
 eq "find_features is empty on the ADR layer"  "$(sdd_find_features "$KB/01_adr")"    ""
 has "find_features narrows to a module scope" "FEAT-01-login.md" \
     "$(sdd_find_features "$KB/03_features/auth")"
+
+# The catalog finders — the two kinds ED10 made units. Each catalog is one
+# directory deep and suite-wide, so the finders accept exactly that shape.
+pats="$(sdd_find_patterns "$KB")"
+comps="$(sdd_find_components "$KB")"
+has   "find_patterns finds a pattern entry"        "patterns/form.md"  "$pats"
+hasnt "find_patterns excludes _-prefixed names"    "_index.md"         "$pats"
+hasnt "find_patterns excludes README.md"           "README.md"         "$pats"
+hasnt "find_patterns excludes the component catalog" "components/"     "$pats"
+hasnt "find_patterns excludes screens"             "auth/login.md"     "$pats"
+has   "find_components finds a component entry"    "components/table.md" "$comps"
+hasnt "find_components excludes the pattern catalog" "patterns/"       "$comps"
+eq "find_patterns is empty on a domain scope"   "$(sdd_find_patterns   "$KB/04_domain")" ""
+eq "find_components is empty on a domain scope" "$(sdd_find_components "$KB/04_domain")" ""
+
+# `**State:**` is a catalog entry's lifecycle, and one function maps it — derive
+# fills a contract from it and plan builds the frontier from it.
+CAT="$KB/05_screens/components"
+printf '# Component: a\n\n**State:** to-extract\n' > "$CAT/a.md"
+printf '# Component: b\n\n**State:** implemented\n' > "$CAT/b.md"
+printf '# Component: c\n\n**State:** planned\n'     > "$CAT/c.md"
+printf '# Component: d\n\nno state line at all\n'   > "$CAT/d.md"
+eq "catalog_state reads the line"            "$(sdd_catalog_state "$CAT/a.md")" "to-extract"
+eq "catalog_state is empty when absent"      "$(sdd_catalog_state "$CAT/d.md")" ""
+eq "to-extract is the analogue of accepted"  "$(sdd_catalog_lifecycle "$CAT/a.md")" "accepted"
+eq "implemented is the analogue of stable"   "$(sdd_catalog_lifecycle "$CAT/b.md")" "stable"
+eq "a word outside the pair maps to nothing" "$(sdd_catalog_lifecycle "$CAT/c.md")" ""
+eq "and so does an absent line"              "$(sdd_catalog_lifecycle "$CAT/d.md")" ""
 
 # ─────────────────────────────────────────────────────────────────────────────
 # sdd_scope_intersect — the shared scope contract

@@ -86,9 +86,11 @@ generic catch-all would collapse two different answers into one.
 - **`units[].requires`** is derive's edge set verbatim — every declared
   dependency, ordering or not. Which of them ORDER is visible in `waves`.
 - **`units[].surface`** is the surface a split screens tree puts a screen under,
-  `null` for entities, actions and the flat suite-of-one shape.
-- **`units[].profiles`** is the resolved set: the ids that exist on disk, with
-  each framework profile's named language folded in.
+  `null` for every other kind and for the flat suite-of-one shape.
+  **`units[].module`** is `null` for the two catalog kinds, which have none.
+- **`units[].profiles`** is the resolved set the unit is emanated under: its
+  matching framework profile, that framework's language, and any declared
+  `layer: language` profile. See § Profiles.
 - **`findings[].derive_class`** carries derive's own class id on a `PR-01` and is
   `null` on every other code. `unit`, `target` and `owner` are `null` on a
   finding that names none.
@@ -108,9 +110,11 @@ there is no unit for a skill to own. Every class found is reported, not the firs
 
 ## What a unit is, and which are in the frontier
 
-**Unit kinds are exactly derive's three** — `entity`, `action`, `screen`.
-Patterns and components are not units; their readiness is read off a component's
-`**State:**` (`PR-04`) and a pattern's `## Regions` (`PR-05`).
+**Unit kinds are exactly derive's five** — `entity`, `action`, `screen`,
+`component`, `pattern`. A shared layout and a shared component are units the
+loop emanates, not readiness errors on the screens that declare them (ED10):
+refusing there would have made the loop unable to touch any screen whose UI kit
+had not been hand-built first.
 
 **The frontier is every unit at `lifecycle: accepted`, within scope.** `accepted`
 is design closed and the contract being implemented, which is exactly what
@@ -118,14 +122,29 @@ emanates. `draft` is still in design, `stable` is already delivered, `superseded
 is history. An empty frontier refuses (`PR-12`) rather than emitting a green
 zero-wave plan, so a run cannot build worktrees for nothing.
 
+**A catalog entry says the same thing on its `**State:**` line**, since it
+carries no `lifecycle:` field. What that line means is
+[`inspire-screens/references/screen-catalog.md`](../inspire-screens/references/screen-catalog.md)
+§ "`**State:**` is the entry's lifecycle"; what the loop does with it is: the
+`accepted` analogue enters the frontier, the `stable` analogue satisfies an edge
+out of band, and an entry stating neither leaves a screen declaring it unready
+(`PR-04` / `PR-05`). `sdd_catalog_lifecycle` in `_lib.sh` is the one
+implementation of the mapping, which derive reads too: two answers to "is this
+component delivered?" would be one too many.
+
+A catalog entry's `units[].module` is `null` and its `surface` always is: both
+catalogs are suite-wide and a shared entry belongs to every module that
+instantiates it.
+
 ## The ordering edge set
 
 **Every `requires[]` edge is checked the same way, whatever its kind: it must
-resolve (`PR-02`), and its target must be `stable` or in the frontier (`PR-03`).**
+resolve (`PR-02`), and its target must be delivered or in the frontier —
+otherwise `PR-03`, or `PR-04` / `PR-05` when the target is a catalog entry.**
 What the edge set below narrows is the ORDERING, and only the ordering.
 
-The ordering edge set is derive's `requires[]`, minus two kinds of edge that are
-not build-time dependencies:
+The ordering edge set is derive's `requires[]`, minus one kind of edge that is
+not a build-time dependency:
 
 - **Navigation never orders a wave.** A `screen`-kinded edge out of a screen unit
   is a route reference — a route derives from `module` + `screen` without the
@@ -134,13 +153,17 @@ not build-time dependencies:
   The **only** thing navigation skips is the wave ordering: a navigation target
   that resolves to nothing is still `PR-02`, and one at `draft` or `superseded`
   is still `PR-03`. A screen that navigates somewhere unfinished is not ready.
-- **Pattern and component edges are readiness checks, never constraints.** They
-  are answered by `PR-04` and `PR-05`.
+
+**Pattern and component edges order like every other kind** since ED10 made both
+units: a screen waits for its layout's and its components' wave. A17's sibling
+rule survives — a pattern and a component order only by a *declared* edge
+between them (a pattern's own `**Components:**` line), never by an assumed tier.
 
 **An edge orders a wave only when its target is itself in the frontier.** An edge
-to a `stable` artifact is satisfied out of band; an edge to an `accepted` unit
-outside the scope is another run's business; an edge to anything else — `draft`,
-`superseded`, or a lifecycle nothing states — is `PR-03`.
+to a `stable` artifact — or an `implemented` catalog entry — is satisfied out of
+band; an edge to an `accepted` unit outside the scope is another run's business;
+an edge to anything else — `draft`, `superseded`, or a lifecycle nothing states
+— is `PR-03`, `PR-04` or `PR-05` by the target's kind.
 
 An edge whose target resolves to no artifact at all is `PR-02`. Resolution is
 vault-wide even when ordering is scope-wide, or a narrowed run would report every
@@ -158,24 +181,62 @@ cycle (`PR-11`).
 
 ## Profiles
 
-Resolution order, per unit:
+**Which set is declared**, per unit:
 
 1. the suite-wide `profiles:` in `00_bootstrap/stack.md`, or — when it declares
    none — the ids inferable from its `## Layer: Name` sections;
 2. for a screen under a surface, that surface's own `**Profiles:**` line from
    `00_bootstrap/surfaces.md`, falling back to the suite-wide set when it
-   declares none. Entities and actions always take the suite-wide set: the
-   domain-versus-service partition is an ADR decision and is not machine-readable;
-3. each resolved framework profile pulls in the profile its `language:` names —
-   which counts as a rendering home only when that file's own `layer:` is
-   `language`. A framework naming another framework, or naming itself, resolves
-   to a file and still states nothing about how a semantic type renders.
+   declares none. Every other kind takes the suite-wide set: a catalog entry is
+   suite-wide by construction, and for an entity or an action the
+   domain-versus-service partition is an ADR decision nothing on disk states.
 
-The resolved set must contain at least one language profile that exists on disk,
-or the unit is `PR-06`. This is where D5's amendment lands: "missing profiles
-never block" holds for every attended subcommand, and emanation alone draws the
-line differently, because an unattended run with no rendering table emits a guess
-that compiles.
+A declared id whose file is not on disk stays OUT of the resolved set:
+"resolved" means a file was read.
+
+**Which frameworks the unit is built under**, from that resolved set — narrowed
+by the unit's kind through the profile's own `layer:`:
+
+| kind | matching layer |
+|---|---|
+| `screen` · `component` · `pattern` | `frontend` — a UI unit is frontend by construction |
+| `entity` · `action` | every framework layer (`frontend` · `backend` · `data` · `tooling`) |
+
+**A unit resolves a SET of framework profiles, and the applied rules are the
+union of its members'.** A spawn briefed with `nestjs` and `react` follows both,
+which is what the ordinary frontend-plus-backend suite needs — `[react, nestjs]`
+is the template's own default and refuses nothing, for any unit kind.
+
+**Two shapes of that set are still `PR-07`**, and neither is a matter of count:
+
+- **2+ frameworks sharing one `layer:`** — `[react, angular]` for a screen, or
+  for any unit whose matching set contains both. `layer:` is the field that says
+  what a framework builds, so two claiming the same one say nothing about which
+  builds this unit, and nothing else on disk answers.
+- **an empty matching set** — `profiles: [typescript]` alone, a screen in a
+  `[nestjs]`-only suite, a declared id with no file on disk, or a declared
+  profile whose `layer:` names neither axis and was therefore read and
+  discarded. There is no architecture doctrine to emanate under at all, which is
+  an absence rather than an ambiguity. The finding names which case it was,
+  because a missing file, a wrong `layer:` and an undeclared framework are three
+  different repairs.
+
+**Which language profile renders its types.** Each framework profile in the
+matching set pulls in the profile its own `language:` names, and that counts as
+a rendering home only when the named file's `layer:` is `language`. A framework
+naming another framework, or naming itself, resolves to a file and still states
+nothing about how a semantic type renders.
+
+**Every framework in the matching set must reach a language profile, or the unit
+is `PR-06`** — per framework, never per set. Set-level was the older shape and
+it let a mixed suite resolve one framework's language and emanate every *other*
+framework's units under it. This is where D5's amendment lands: "missing
+profiles never block" holds for every attended subcommand, and emanation alone
+draws the line differently, because an unattended run with no rendering table
+emits a guess that compiles.
+
+`units[].profiles` is the result: the matching frameworks, their resolved
+languages, and any declared `layer: language` profile.
 
 ## `PR-*` — the readiness catalogue
 
@@ -185,10 +246,11 @@ that compiles.
 |---|---|---|---|
 | `PR-01` | derive refused this unit — one finding per class in its `refused[]`, carrying derive's `class` (as `derive_class`), `target`, `message` and `remedy` verbatim, never re-worded | error | the target's layer |
 | `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it | error | the depending unit's layer |
-| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from | error | the target's layer |
-| `PR-04` | a screen declares a component whose `**State:**` is not `implemented`: a screen cannot emanate until the components it declares are stable | error | `inspire-screens` |
-| `PR-05` | a screen names a pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. `screen-coherence` reports the same shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
-| `PR-06` | the unit's resolved profile set yields no language profile — none declared, a framework profile's `language:` naming a file that is absent or that is not itself `layer: language`, or the framework profile itself absent so nothing can name a language | error | `inspire-code` |
+| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from. A catalog target takes `PR-04` / `PR-05` instead | error | the target's layer |
+| `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
+| `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
+| `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
+| `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 
 ### Refusals — nothing is planned, the run exits 4

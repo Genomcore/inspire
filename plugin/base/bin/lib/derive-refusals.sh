@@ -20,6 +20,11 @@
 
 DERIVE_RULES_DOMAIN="keys-present constraints-mechanics head-referents sections-present"
 DERIVE_RULES_SCREEN="screen-coherence sections-present"
+# A catalog entry's own shape is owned by NO review rule — `screen-coherence`
+# reaches a pattern only through an adopting screen, and a pattern-scoped run
+# has no screen to reach it from. So the catalog kinds consult none, and their
+# `DR-C*` classes are the whole of the strictness rather than half of it.
+DERIVE_RULES_CATALOG=""
 
 # derive_refuse <class> <target> <message> <remedy>
 derive_refuse() {
@@ -33,8 +38,9 @@ derive_remedy() {
   id="$(awk -F'\t' -v p="$path" '$1 == p { print $2; exit }' "$DERIVE_TMP/targets.tsv")"
   kind="$(awk -F'\t' -v p="$path" '$1 == p { print $3; exit }' "$DERIVE_TMP/targets.tsv")"
   case "$kind" in
-    screen) printf '/inspire_screens update %s' "$id" ;;
-    *)      printf '/inspire_domain update %s' "$id" ;;
+    screen)            printf '/inspire_screens update %s' "$id" ;;
+    component|pattern) printf '/inspire_screens extract %s %s' "$kind" "$id" ;;
+    *)                 printf '/inspire_domain update %s' "$id" ;;
   esac
 }
 
@@ -95,8 +101,9 @@ DERIVE_SWEEP_DIRS=""
 
 derive_sweep_rules() {
   case "$1" in
-    screen) printf '%s' "$DERIVE_RULES_SCREEN" ;;
-    *)      printf '%s' "$DERIVE_RULES_DOMAIN" ;;
+    screen)            printf '%s' "$DERIVE_RULES_SCREEN" ;;
+    component|pattern) printf '%s' "$DERIVE_RULES_CATALOG" ;;
+    *)                 printf '%s' "$DERIVE_RULES_DOMAIN" ;;
   esac
 }
 
@@ -153,6 +160,9 @@ derive_sweep_broke() {
 derive_sweep_collect() {
   local kind="$1" path dir idx rule pid status
   local rectype tag f_sev f_target f_msg f_rule class
+  # A kind that consults no rule has nothing to wait for and no findings to
+  # filter — and `jobs` was never created, which is not a broken run.
+  [ -n "$(derive_sweep_rules "$kind")" ] || return 0
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     case "$path" in */*) dir="${path%/*}" ;; *) dir="." ;; esac
