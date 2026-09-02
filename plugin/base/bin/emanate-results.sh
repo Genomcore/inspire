@@ -217,13 +217,21 @@ done
 # Emit
 # ─────────────────────────────────────────────────────────────────────────────
 
-jq -s '{schema: "inspire.suite-results/1", tests: .}' "$SPOOL" \
+# Assembled whole, then printed — emanate-gate.sh's own order, and what makes
+# "stdout is EMPTY on every non-zero exit" structural rather than argued.
+MANIFEST="$WORK/results.json"
+jq -s '{schema: "inspire.suite-results/1", tests: .}' "$SPOOL" > "$MANIFEST" \
   || die_code "$EXIT_RESULTS" "cannot assemble the manifest"
 
-n_total="$(jq -s 'length' "$SPOOL")"
-n_passed="$(jq -s '[.[] | select(.status == "passed")] | length' "$SPOOL")"
-n_failed="$(jq -s '[.[] | select(.status == "failed")] | length' "$SPOOL")"
-n_skipped="$(jq -s '[.[] | select(.status == "skipped")] | length' "$SPOOL")"
+cat "$MANIFEST"
+
+IFS=$'\t' read -r n_total n_passed n_failed n_skipped < <(jq -r '
+  .tests
+  | [ length,
+      ([.[] | select(.status == "passed")]  | length),
+      ([.[] | select(.status == "failed")]  | length),
+      ([.[] | select(.status == "skipped")] | length) ]
+  | @tsv' "$MANIFEST")
 
 {
   printf 'INSPIRE results — %s test(s) from %s report(s): %s passed, %s failed, %s skipped\n' \
