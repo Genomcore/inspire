@@ -12,8 +12,7 @@ completion and exits — no wrapper needed, because the invocation *is* the
 recipe:
 
 ```
-claude -p "/inspire-emanate run until users.detail in 3 steps max" \
-    --dangerously-skip-permissions
+claude -p "/inspire-emanate run until users.detail in 3 steps max"
 ```
 
 Everything after the slash command is exactly what an attended operator would
@@ -22,48 +21,56 @@ type — [`SKILL.md`](../SKILL.md) § Invocation names every argument, `until` /
 about the arguments; it only changes who presses return. `plan` takes the same
 call shape and is the read-only half — see below.
 
-## Permission posture: nothing may prompt
+## Permission posture: auto mode, and what it does not cover
 
-**Every tool call the run makes — the orchestrator's own `Bash` and `Agent`
-calls, and every persona's and overseer's, down to a spawned implementer's
-`Edit` inside its own worktree — must be pre-approved before t=0.** A single
-unapproved call is a prompt, and a prompt in an unattended run is
-indistinguishable from a hang: nobody is there to answer it, so the run sits
-until something external kills it.
+**The run makes every tool call itself** — the orchestrator's own `Bash` and
+`Agent` calls, and every persona's and overseer's, down to a spawned
+implementer's `Edit` inside its own worktree. The harness's **auto mode** is
+what carries that, and it is the whole of what INSPIRE prescribes: a
+methodology template has no business deciding how permissions are configured in
+an environment it cannot see.
 
-- **Full bypass** — `--dangerously-skip-permissions` (equivalently
-  `--permission-mode bypassPermissions`), passed to the same invocation above.
-  This is the recipe's default, because a narrower allowlist only has to miss
-  one tool a role shell ends up needing and the run stalls anyway — a gap an
-  operator discovers at the worst possible time, overnight, from a report that
-  never arrives.
-- **A subagent inherits the top session's permission mode; it cannot loosen or
-  override it from its own agent definition.** A role shell's `tools:` line
-  (the identity plus the permission **envelope** every persona and overseer
-  shell carries — [`inspire-code/references/roles/README.md`](../../inspire-code/references/roles/README.md))
-  restricts *which* tools a persona or overseer may call at all; whether a call
-  inside that envelope prompts is decided once, by the session that started the
-  run. Bypass the top session and every spawned role inherits it — there is no
-  second setting to find.
-- **The project-level alternative** — `.claude/settings.json`:
-  ```json
-  { "permissions": { "defaultMode": "bypassPermissions" } }
-  ```
-  for an environment where the scheduler's own invocation is fixed (a CI job
-  definition, say) and a CLI flag is not the natural place to carry this. Same
-  effect, same caveat below — it is not a narrower posture, only a different
-  place to declare the same one.
+**Auto mode is not a promise that nothing can prompt, and the recipe will not
+pretend otherwise.** A call that falls outside what it covers still raises one,
+and a prompt in an unattended run is indistinguishable from a hang: nobody is
+there to answer it, so the run sits until something external kills it. That is
+the trade, stated plainly — and it is why the two things that bound a run matter
+**more** under this posture, not less:
 
-**The posture is total, and the harness says so plainly: use it only in an
-isolated environment — a container, a VM, a dev container with no internet
-access — where nothing it does can reach past the run, and run it as a
-non-root user on Linux and macOS.** This is not a scruple specific to
-`/inspire-emanate`; it is the same caveat any bypass invocation carries, stated
-here because an unattended emanation run is exactly the shape that tempts an
-operator to run it on their own machine instead. Don't: a run that can write
-anywhere the operator's own shell can write is not scoped to this repository,
-and the loop's own hard ceiling (never a merge, never a push to production) is
-worth nothing if the environment around it has no ceiling of its own.
+- **the preflight** (§ Preflight) settles at t=0 what would otherwise be
+  discovered mid-wave, when there is nobody to answer it;
+- **the scope filter** keeps the run inside a path whose toolchain the operator
+  already exercises by hand.
+
+Neither is housekeeping. Together they are what keeps a run inside what auto
+mode already covers.
+
+**An operator may judge that their own environment justifies a different
+posture.** That call is theirs, and its mechanics belong to the harness's
+documentation rather than to this one — naming that the choice exists is honest,
+shipping the recipe for it would be prescribing.
+
+Two properties of the shipped roster are why the posture holds for what INSPIRE
+ships, and both are worth stating:
+
+- **No spawned role can stall a run by asking a question.** None of the five
+  shipped role shells lists `AskUserQuestion` in its `tools:`, so no persona and
+  no overseer can put a question in front of nobody mid-wave. Only the session
+  that started the run can — the one place an operator already knows to look.
+  That is the main structural reason an unattended run does not stall inside a
+  wave.
+- **A shell's `tools:` restricts and never escalates; its permission *mode* is a
+  separate question.** The `tools:` line is the permission **envelope** every
+  persona and overseer shell carries
+  ([`inspire-code/references/roles/README.md`](../../inspire-code/references/roles/README.md)),
+  and it can only narrow which tools a role may call. Mode is not covered by
+  that: a subagent may declare its own `permissionMode:` in frontmatter, which
+  the harness honors except under auto mode. **None of the five shipped shells
+  declares one** — so the shipped roster runs under the session's own posture,
+  and the overseers' read-only envelope holds by construction. That is a fact
+  about these five files, not a law about agent definitions: the overseer roster
+  is additive-only, so an operator who adds their own owns its envelope, the
+  frontmatter INSPIRE checks nothing about included.
 
 ## Scheduling starts an invocation; it does not implement the loop
 
@@ -145,10 +152,8 @@ Two invocations off the same base, the same `--reemanate` segment, and
 different arguments — a profile, a model, a doctrine variant:
 
 ```
-claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-A]" \
-    --dangerously-skip-permissions
-claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-B]" \
-    --dangerously-skip-permissions
+claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-A]"
+claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-B]"
 ```
 
 The run-id scheme already isolates the two into two turn branches — nothing
