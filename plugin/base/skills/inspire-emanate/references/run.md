@@ -220,9 +220,18 @@ green is never trusted.** It runs on the integration branch, after the harvest.
 
 **1. The whole suite.** Not the unit's tests — the whole suite. This is what
 defends the kept dependents of a re-emanated piece: the gate stays unit-scoped by
-construction, so breakage elsewhere has nowhere else to surface. Normalize the
-runner's output into the `inspire.suite-results/1` manifest with
-`.inspire/bin/emanate-results.sh`; the manifest's shape is
+construction, so breakage elsewhere has nowhere else to surface. Run it, then
+normalize the runner's own output into the `inspire.suite-results/1` manifest:
+
+```
+.inspire/bin/emanate-results.sh --from FILE [--from FILE]... [--format jest] \
+    [--root DIR]
+```
+
+`--from` repeats once per test command the resolved profile's `## Build &
+verify` runs (the shipped stack runs unit and e2e separately); `--root` strips
+the runner's absolute paths so the manifest's `file` field joins against
+repo-relative `@claim` citations. The manifest's shape is
 [`gate-verdict.md`](../../_references/gate-verdict.md) § Suite results and its
 reader is `lib/gate-results.sh`. Nothing here restates that schema.
 
@@ -248,12 +257,19 @@ wave 2 reports every not-yet-emanated sibling as an error and halts the whole
 wave. The loop would die on its own remaining work list. An unscoped call here is
 a defect, not a stylistic choice.
 
-**3. The escape-hatch ratchet.** Run it per unit, and **once more over the turn
-branch before the halt point**: the ratchet is an aggregate, so per-unit passes do
-not imply a turn-branch pass, and a run that reported success into a PR that is
-already blocked would be lying. On a breach, halt the unit and state the
-operator's remedy verbatim — **raise the ceiling by hand, in review**. The loop
-never raises one; a gate its subject can lower is not a gate.
+**3. The escape-hatch ratchet.**
+
+```
+.inspire/bin/escape-hatch-ratchet.sh
+```
+
+Run it per unit, and **once more over the turn branch before the halt point**:
+the ratchet is an aggregate, so per-unit passes do not imply a turn-branch pass,
+and a run that reported success into a PR that is already blocked would be
+lying. It takes no positional scope — the count is repo-wide by design, the same
+call `pre-pr.sh` makes. On a breach, halt the unit and state the operator's
+remedy verbatim — **raise the ceiling by hand, in review**. The loop never
+raises one; a gate its subject can lower is not a gate.
 
 **4. What verify does not run, said out loud.** `profile-gates-installed.sh` and
 `adr-maturity-matches-features.sh` are **not** run: the first would fire
@@ -304,6 +320,15 @@ homes, no drift.
 Exits `0`, `1` and `4` all produce a verdict on stdout — read it, do not infer it
 from the exit code. `2`, `3`, `5` and `127` produce none and stall the unit,
 naming the tool.
+
+**That second group is a gate defect, not a unit outcome — no `GV-*` verdict
+was reached, so nothing about the unit's own claims or tests was judged.** The
+report's next-act line for a stall of this shape routes to `/inspire-lesson
+note`, alongside the tool name the stall already carries: a bad `--contract`
+path, a manifest the gate could not parse, a missing `jq` — these are facts
+about the substrate an operator fixes once, and a lesson is what keeps the next
+run from tripping the same tool defect rather than a per-unit finding nobody
+outside this run would ever read again.
 
 **A gate pass is what promotes.** An overseer's approval never substitutes for it,
 and the verdict digest rides into the merge trailer.
@@ -457,12 +482,25 @@ the next run would then be building on a tree nobody vouched for.
 
 ## The run report
 
-One report, written at every exit — goal reached, ceiling exhausted, or cascade.
-Never a prompt. Save it to `.inspire/last-emanation.log`, overwritten each run, as
-`/inspire:update` saves `.inspire/last-upgrade.log`; that file and git are the
-only things a run writes outside a worktree, and neither is the knowledge base.
+**One file, one run: truncated at t=0 of an act-mode run, then appended to as
+each wave closes.** `run` never holds the whole report in memory waiting for an
+exit that might be hours away — every iteration's outcome lands in
+`.inspire/last-emanation.log` as its wave finishes, so a run killed from
+outside still leaves a readable partial account rather than nothing. What
+**overwrites** is the next *invocation*: its own t=0 truncates whatever the
+previous run left, the same way `/inspire:update` starts
+`.inspire/last-upgrade.log` fresh on every upgrade. Within one run the file only
+grows; across runs it never survives the next one's t=0. That file and git are
+the only things a run writes outside a worktree, and neither is the knowledge
+base.
 
-It carries:
+**`plan` writes nothing, that file included** — [`plan`](plan.md) already
+says so for the tool, and it holds here without exception: a `plan` invocation,
+standalone or as `run`'s own t=0 step, never touches
+`.inspire/last-emanation.log`. The log is `run`'s alone, and only from the
+moment a turn branch exists.
+
+By the final wave the file carries:
 
 - **the run's identity** — the run id, the turn branch, the base branch, the
   scope, the goal and the selectors as typed;
@@ -470,22 +508,39 @@ It carries:
   waves actually executed;
 - **delivered · stalled · blocked**, each unit named, with its integration branch
   where one was left in place;
-- **per unit** — the gate verdict digest, rework cycles and infrastructural
-  retries as two numbers, the paths a harvest dropped, and the drill's survivors
-  (or *drill incomplete* / *drill skipped*, with the reason);
-- **verify's findings that did not halt** — the reported-not-blocking half,
-  attributed;
+- **per unit, beyond the gate verdict digest** — rework cycles and
+  infrastructural retries as two numbers, the paths a harvest dropped, and
+  three measurements the trust-report posture governs exactly as it governs
+  `inspire-workspace`'s `## Signals`: reported every time, carrying no severity
+  of their own, never a gate and never a reason to hold a piece back —
+  - the drill's **survivors**, `file:line — mutation applied → the test that
+    was missing` (or *no survivors*, the claim worth making, or *drill
+    incomplete* / *drill skipped*, with the reason);
+  - the **verify findings that did not halt** — everything
+    `criteria-have-tests.sh` and `declared-errors-tested.sh` reported in this
+    unit's scope and the unit ran past: its own warnings, *and* the
+    error-severity findings whose subject is a sibling inside the same scoped
+    path (§ verify item 2), which have no other home in this report. Each one
+    attributed to its target the same way an error-severity halt already is, and
+    each carrying the rule's own severity, honored and never rewritten — that a
+    finding is an error is a fact about a path, not a verdict on this piece;
+  - the **promote trailers' digest** — run id, `template_sha`, the resolved
+    profile hashes, the gate-verdict digest — the same provenance the merge
+    commit itself carries (§ promote), read back here so the operator has it
+    without leaving the report;
 - **the pre-PR list** — the rules verify did not run
   (`profile-gates-installed.sh`, `adr-maturity-matches-features.sh`) and
   `criteria-have-tests.sh`'s 🟡 limitation, so nothing about what the hook will
   still check is a surprise;
-- **the operator's next act** — the PR to open or already opened, and the remedies
-  every stall named.
+- **a gate-defect stall's next act is `/inspire-lesson note`** (§ gate),
+  alongside every other stall's remedy;
+- **the operator's next act** — the PR to open or already opened, and the
+  remedies every stall named.
 
 ## The morning after, and A/B
 
-Both are the operator's, and their recipes are `references/unattended.md`. What
-belongs here is why nothing extra is needed to support them:
+Both are the operator's, and their recipes are [`unattended.md`](unattended.md).
+What belongs here is why nothing extra is needed to support them:
 
 - **Reject everything** — delete the turn branch. The tests and the code die with
   it, the knowledge base never knew, and the report plus the log remain for the
