@@ -68,6 +68,11 @@ invocation.
 - **The reach ceiling is hard.** A fully-green run ends at most in a PR — never a
   merge, never production.
 
+**The headless recipe is its own reference.** Invocation, the required
+permission posture, scheduling, the preflight, and the operator-facing morning
+after and A/B — none of it lives here:
+[`references/unattended.md`](references/unattended.md).
+
 ## Invocation
 
 ```
