@@ -539,8 +539,8 @@ By the final wave the file carries:
 
 ## The morning after, and A/B
 
-Both are the operator's, and their recipes are `references/unattended.md`. What
-belongs here is why nothing extra is needed to support them:
+Both are the operator's, and their recipes are [`unattended.md`](unattended.md).
+What belongs here is why nothing extra is needed to support them:
 
 - **Reject everything** — delete the turn branch. The tests and the code die with
   it, the knowledge base never knew, and the report plus the log remain for the
