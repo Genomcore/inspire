@@ -165,8 +165,9 @@ vocabulary.
 - **`regions`** carries the pattern's holes verbatim, `Fill` and `Accepts`
   lowercased by nobody: the two vocabularies are `screen-coherence.sh`'s own
   (`required` | `optional`, and one or more of `data` · `dispatch` · `nav` ·
-  `static`), and a value outside them is `DR-C5`. A region is a hole — it says
-  what kind of content it takes, never which fields that content shows.
+  `static`), and a value outside them is `DR-C5` — an empty cell or a dash
+  excepted, since that rule owns the join and tolerates both. A region is a hole
+  — it says what kind of content it takes, never which fields that content shows.
 
 ## Claim ids
 
@@ -235,8 +236,8 @@ D7). On exit `4` stdout carries every class found, not the first, and no
 ```
 
 `remedy` names the owning skill's touch command — `/inspire-domain update {id}`,
-`/inspire-screens update {id}`, or `/inspire-screens extract {id}` for a catalog
-entry. Nothing machine-edits the knowledge base: naming an invariant is
+`/inspire-screens update {id}`, or `/inspire-screens extract {kind} {id}` for a
+catalog entry. Nothing machine-edits the knowledge base: naming an invariant is
 judgment, and judgment happens inside the touch interview.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the

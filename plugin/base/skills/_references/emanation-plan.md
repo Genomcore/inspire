@@ -123,12 +123,14 @@ is history. An empty frontier refuses (`PR-12`) rather than emitting a green
 zero-wave plan, so a run cannot build worktrees for nothing.
 
 **A catalog entry says the same thing on its `**State:**` line**, since it
-carries no `lifecycle:` field: `to-extract` is the analogue of `accepted` and
-enters the frontier, `implemented` the analogue of `stable` and satisfies an
-edge out of band. Anything else — a third word, or no line — states neither, and
-a screen declaring such an entry is `PR-04` / `PR-05`. `sdd_catalog_lifecycle`
-in `_lib.sh` is the one implementation of that mapping, which derive reads too:
-two answers to "is this component delivered?" would be one too many.
+carries no `lifecycle:` field. What that line means is
+[`inspire-screens/references/screen-catalog.md`](../inspire-screens/references/screen-catalog.md)
+§ "`**State:**` is the entry's lifecycle"; what the loop does with it is: the
+`accepted` analogue enters the frontier, the `stable` analogue satisfies an edge
+out of band, and an entry stating neither leaves a screen declaring it unready
+(`PR-04` / `PR-05`). `sdd_catalog_lifecycle` in `_lib.sh` is the one
+implementation of the mapping, which derive reads too: two answers to "is this
+component delivered?" would be one too many.
 
 A catalog entry's `units[].module` is `null` and its `surface` always is: both
 catalogs are suite-wide and a shared entry belongs to every module that
@@ -192,7 +194,7 @@ cycle (`PR-11`).
 A declared id whose file is not on disk stays OUT of the resolved set:
 "resolved" means a file was read.
 
-**Which framework the unit is built under**, from that resolved set — narrowed
+**Which frameworks the unit is built under**, from that resolved set — narrowed
 by the unit's kind through the profile's own `layer:`:
 
 | kind | matching layer |
@@ -200,12 +202,24 @@ by the unit's kind through the profile's own `layer:`:
 | `screen` · `component` · `pattern` | `frontend` — a UI unit is frontend by construction |
 | `entity` · `action` | every framework layer (`frontend` · `backend` · `data` · `tooling`) |
 
-**That matching set must be a singleton, or the unit is `PR-07`.** A persona
-spawn is briefed with exactly one framework profile, so two say nothing about
-which and none says nothing at all. The `layer:` narrowing is what keeps the
-common `[react, nestjs]` suite out of it — a screen's frontend set is a
-singleton there — and leaves only the domain kinds ambiguous, which is the one
-case no field on disk answers.
+**A unit resolves a SET of framework profiles, and the applied rules are the
+union of its members'.** A spawn briefed with `nestjs` and `react` follows both,
+which is what the ordinary frontend-plus-backend suite needs — `[react, nestjs]`
+is the template's own default and refuses nothing, for any unit kind.
+
+**Two shapes of that set are still `PR-07`**, and neither is a matter of count:
+
+- **2+ frameworks sharing one `layer:`** — `[react, angular]` for a screen, or
+  for any unit whose matching set contains both. `layer:` is the field that says
+  what a framework builds, so two claiming the same one say nothing about which
+  builds this unit, and nothing else on disk answers.
+- **an empty matching set** — `profiles: [typescript]` alone, a screen in a
+  `[nestjs]`-only suite, a declared id with no file on disk, or a declared
+  profile whose `layer:` names neither axis and was therefore read and
+  discarded. There is no architecture doctrine to emanate under at all, which is
+  an absence rather than an ambiguity. The finding names which case it was,
+  because a missing file, a wrong `layer:` and an undeclared framework are three
+  different repairs.
 
 **Which language profile renders its types.** Each framework profile in the
 matching set pulls in the profile its own `language:` names, and that counts as
@@ -236,7 +250,7 @@ languages, and any declared `layer: language` profile.
 | `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
-| `PR-07` | the unit's matching framework set is not a singleton: two or more, and nothing states which one a spawn is briefed with; or none, and nothing states how the unit is built at all. For a domain kind the ambiguity is inherent — the domain-versus-service partition is an ADR decision nothing on disk states — and refusing it is the alternative to guessing | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
+| `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 
 ### Refusals — nothing is planned, the run exits 4

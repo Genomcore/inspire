@@ -18,6 +18,7 @@
       "surface": null,
       "profiles": [
         "nestjs",
+        "react",
         "typescript"
       ],
       "requires": [],
@@ -33,6 +34,7 @@
       "surface": null,
       "profiles": [
         "nestjs",
+        "react",
         "typescript"
       ],
       "requires": [],
@@ -48,6 +50,7 @@
       "surface": null,
       "profiles": [
         "nestjs",
+        "react",
         "typescript"
       ],
       "requires": [
@@ -68,6 +71,7 @@
       "surface": null,
       "profiles": [
         "nestjs",
+        "react",
         "typescript"
       ],
       "requires": [

@@ -13,9 +13,10 @@
 # § Body; this file implements it and owns no rule of its own.
 #
 # There are TWO axes and each has its own refusal. The framework axis picks the
-# one profile a persona spawn is briefed with (`PR-07`), narrowed by the unit's
-# kind through `layer:`; the language axis asks whether that framework states
-# how a semantic type renders (`PR-06`), per framework rather than per set.
+# SET a persona spawn is briefed with — the applied rules are its members' union,
+# so a suite spanning several layers is ordinary and only a tie WITHIN one layer
+# or an empty set is `PR-07`; the language axis asks whether each framework
+# states how a semantic type renders (`PR-06`), per framework rather than per set.
 #
 # Sourced after `_lib.sh` and `plan-lib.sh`.
 
@@ -99,18 +100,21 @@ plan_resolve_profiles() {
 
 # plan_unit_layer <kind> — the profile `layer:` a unit of that kind is built by,
 # empty for the kinds no layer answers for (R8). A screen, a component and a
-# pattern are frontend by construction, and `layer:` is machine-readable, which
-# is what lets the common two-framework suite resolve rather than refuse. An
-# entity and an action take the whole framework set instead: the
-# domain-versus-service partition is an ADR decision nothing on disk states, so
-# the honest answer there is to refuse while the set is ambiguous.
+# pattern are frontend by construction. An entity and an action take the whole
+# framework set instead: the domain-versus-service partition is an ADR decision
+# nothing on disk states, and a multi-layer set is a legal briefing (R8').
 plan_unit_layer() {
   case "$1" in screen|component|pattern) printf 'frontend' ;; esac
 }
 
 # plan_unit_profiles <key> <kind> — the profile selection this unit emanates
 # under, memoized per (key, matching layer) and printed as its file prefix:
-#   `<sel>.fw`   the framework ids that match, one per line — `PR-07`'s subject
+#   `<sel>.fw`   `id<TAB>layer` per framework that matches — `PR-07`'s subject,
+#                carrying the layer because a tie within ONE layer is the only
+#                ambiguity a set still leaves (R8')
+#   `<sel>.odd`  `id<TAB>layer` per declared profile on neither axis, so an
+#                empty `.fw` can say something was read and discarded rather
+#                than nothing declared
 #   `<sel>.set`  every profile id the unit is emanated under, `units[].profiles`
 #   `<sel>.gap`  `why<TAB>framework-id<TAB>target` per framework with no
 #                rendering home — `PR-06`'s subject, one record per FRAMEWORK
@@ -128,16 +132,19 @@ plan_unit_profiles() {
   sel="$PLAN_TMP/prof/$key.${want:-any}"
   [ -f "$sel.set" ] && { printf '%s' "$sel"; return 0; }
   local id layer language lfile
-  : > "$sel.fw"; : > "$sel.set.raw"; : > "$sel.gap"
+  : > "$sel.fw"; : > "$sel.odd"; : > "$sel.set.raw"; : > "$sel.gap"
   while IFS=$'\t' read -r id layer language; do
     [ -n "$id" ] || continue
     if [ "$layer" = "language" ]; then
       printf '%s\n' "$id" >> "$sel.set.raw"
       continue
     fi
-    case "$PLAN_FRAMEWORK_LAYERS" in *" $layer "*) ;; *) continue ;; esac
+    case "$PLAN_FRAMEWORK_LAYERS" in
+      *" $layer "*) ;;
+      *) printf '%s\t%s\n' "$id" "$layer" >> "$sel.odd"; continue ;;
+    esac
     [ -z "$want" ] || [ "$layer" = "$want" ] || continue
-    printf '%s\n' "$id" >> "$sel.fw"
+    printf '%s\t%s\n' "$id" "$layer" >> "$sel.fw"
     printf '%s\n' "$id" >> "$sel.set.raw"
     if [ -z "$language" ]; then
       printf 'no-language-declared\t%s\t%s\n' "$id" "$PLAN_PROFILES_ROOT/$id.md" >> "$sel.gap"

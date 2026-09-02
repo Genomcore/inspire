@@ -11,9 +11,10 @@
     { "expr": ".findings[0].target", "equals": "spec/kb/00_bootstrap/stack.md" },
     { "expr": ".findings[0].owner", "equals": "inspire-bootstrap" },
     { "expr": ".findings[0].unit", "equals": "auth.org" },
-    { "expr": ".findings[0].message | test(\"2 framework profiles\")", "equals": "true" },
-    { "expr": ".findings[0].message | test(\"domain-versus-service\")", "equals": "true" },
-    { "expr": ".units[0].profiles | join(\",\")", "equals": "nestjs,react,typescript" },
+    { "expr": ".findings[0].message | test(\"2 `layer: frontend` framework profiles \\\\(`angular`, `react`\\\\)\")", "equals": "true" },
+    { "expr": ".findings[0].message | test(\"which one this entity is built under\")", "equals": "true" },
+    { "expr": ".findings[0].remedy", "equals": "declare exactly one `layer: frontend` framework profile in `spec/kb/00_bootstrap/stack.md`" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "angular,react,typescript" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-06"]

@@ -299,7 +299,7 @@ plan_check_regions() {
 plan_define_remedy() {
   case "$1" in
     screen)            printf '/inspire_screens create %s' "$2" ;;
-    pattern|component) printf '/inspire_screens extract %s' "$2" ;;
+    pattern|component) printf '/inspire_screens extract %s %s' "$1" "$2" ;;
     *)                 printf '/inspire_domain define %s' "$2" ;;
   esac
 }
@@ -375,37 +375,56 @@ plan_check_language() {
         miss="names a language profile that is not there — \`$gap\`"
         fix="add $gap, or point \`$fw\`'s \`language:\` at a \`layer: language\` profile that exists" ;;
     esac
+    # Only per-framework repairs are offered: the check is per framework, so a
+    # language profile declared in `stack.md` satisfies no branch of it and an
+    # operator who does that first sees nothing change.
     plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
       "framework profile \`$fw\` $miss, so nothing states how a semantic type renders" \
-      "declare a language profile in \`00_bootstrap/stack.md\`, or $fix"
+      "$fix"
   done < "$sel.gap"
 }
 
-# plan_check_framework — PR-07. A persona spawn is briefed with exactly ONE
-# framework profile, so two say nothing about which and none says nothing at
-# all. The `layer:` narrowing is what keeps the common `[react, nestjs]` suite
-# out of this: a screen's frontend set is a singleton there, and only a domain
-# unit — whose owning layer nothing on disk states — is left ambiguous.
+# plan_check_framework — PR-07, in two arms. A spawn is briefed with the whole
+# matching SET and applies the union of its members' rules, so a suite spanning
+# several layers is the ordinary case and no longer a finding (R8'). Two ties are
+# left: 2+ frameworks sharing ONE `layer:`, where nothing says which of the two
+# builds the unit, and an empty set, which states no architecture at all.
 plan_check_framework() {
-  local uid="$1" kind="$2" key="$3" sel="$4" n want src named why miss fix target
-  n="$(LC_ALL=C grep -c . "$sel.fw")"
-  [ "$n" = 1 ] && return 0
+  local uid="$1" kind="$2" key="$3" sel="$4" src layer n
+  src="$(plan_path_norm "$(cat "$PLAN_TMP/prof/$key.declared.source")")"
+  LC_ALL=C cut -f2 "$sel.fw" | LC_ALL=C sort | LC_ALL=C uniq -d > "$sel.tied-layers"
+  if [ -s "$sel.tied-layers" ]; then
+    while IFS= read -r layer; do
+      [ -n "$layer" ] || continue
+      awk -F'\t' -v l="$layer" '$2 == l { print $1 }' "$sel.fw" > "$sel.tied"
+      n="$(LC_ALL=C grep -c . "$sel.tied")"
+      plan_find "PR-07" "error" "$uid" "$src" "$(plan_owner "$src")" \
+        "the resolved profile set names $n \`layer: $layer\` framework profiles ($(plan_id_list "$sel.tied")) and nothing states which one this $kind is built under" \
+        "declare exactly one \`layer: $layer\` framework profile in \`$src\`"
+    done < "$sel.tied-layers"
+    return 0
+  fi
+  [ -s "$sel.fw" ] && return 0
+  plan_check_framework_none "$uid" "$kind" "$key" "$sel" "$src"
+}
+
+# plan_check_framework_none <uid> <kind> <key> <sel> <src> — PR-07's empty-set
+# arm. An absence is not a count ambiguity: nothing was resolved to brief a spawn
+# with, so the three sub-cases each name a different repair — a declared id whose
+# file is missing, a declared profile on neither axis (read and discarded, which
+# would otherwise read as "you declared nothing"), and a genuinely empty set.
+plan_check_framework_none() {
+  local uid="$1" kind="$2" key="$3" sel="$4" src="$5" want named miss fix target
   want="$(plan_unit_layer "$kind")"
   named="${want:+\`layer: $want\` }framework"
-  # A screen's owning layer is readable, so its ambiguity is the operator's to
-  # narrow; a domain unit's is not, and saying so is what keeps the refusal from
-  # reading as a tool defect.
-  why=" and nothing states which one this $kind is built under"
-  [ -n "$want" ] || why="$why — the domain-versus-service partition is an ADR decision nothing on disk states"
-  src="$(plan_path_norm "$(cat "$PLAN_TMP/prof/$key.declared.source")")"
   target="$src"
-  if [ "$n" -gt 1 ]; then
-    miss="names $n $named profiles ($(plan_id_list "$sel.fw"))$why"
-    fix="declare exactly one $named profile in \`$src\`"
-  elif [ -s "$PLAN_TMP/prof/$key.missing" ]; then
+  if [ -s "$PLAN_TMP/prof/$key.missing" ]; then
     target="$(plan_path_norm "$PLAN_PROFILES_ROOT")"
     miss="names no $named profile: $(plan_id_list "$PLAN_TMP/prof/$key.missing") is declared and no profile file of that name is on disk"
     fix="add the missing profile under \`$target\`, or declare a $named profile that is there in \`$src\`"
+  elif [ -s "$sel.odd" ]; then
+    miss="names no $named profile: $(plan_odd_list "$sel.odd") was read and discarded, naming neither a framework layer nor \`language\`"
+    fix="correct that profile's \`layer:\`, or declare a $named profile in \`$src\`"
   else
     miss="names no $named profile, so nothing states how this $kind is built"
     fix="declare a $named profile in \`$src\`"
@@ -414,10 +433,18 @@ plan_check_framework() {
     "the resolved profile set $miss" "$fix"
 }
 
-# plan_id_list <file> — the ids in a one-per-line file as a backticked,
-# comma-separated phrase, sorted so a message is stable across runs.
+# plan_id_list <file> — the ids in the FIRST tab-separated column as a
+# backticked, comma-separated phrase, sorted so a message is stable across runs.
 plan_id_list() {
-  LC_ALL=C sort "$1" | awk '{ printf "%s`%s`", sep, $0; sep = ", " }'
+  LC_ALL=C sort "$1" | awk -F'\t' '{ printf "%s`%s`", sep, $1; sep = ", " }'
+}
+
+# plan_odd_list <file> — the same for `id<TAB>layer` records, each carrying the
+# layer that got it discarded, since that is what the operator has to correct.
+plan_odd_list() {
+  LC_ALL=C sort "$1" | awk -F'\t' '
+    { printf "%s`%s` (%s)", sep, $1, ($2 == "" ? "no `layer:`" : "`layer: " $2 "`")
+      sep = ", " }'
 }
 
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low

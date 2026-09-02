@@ -39,24 +39,23 @@ screen's wiring can reach it.
 
 Both kinds of entry carry one, and the vocabulary is closed:
 
-| `**State:**` | means | to the emanation loop |
+| `**State:**` | means | the `lifecycle:` it stands in for |
 |---|---|---|
-| `to-extract` | the entry is authored; no code stands behind it yet | frontier-eligible — the analogue of a domain artifact's `accepted` |
-| `implemented` | the shared layout or component exists in the code | delivered — the analogue of `stable`, satisfying a screen's edge out of band |
+| `to-extract` | the entry is authored; no code stands behind it yet | `accepted` |
+| `implemented` | the shared layout or component exists in the code | `stable` |
 
 A catalog entry carries no `lifecycle:` field and needs the same answers one
-gives, so this line is where they live. Anything else — a third word, or no line
-at all — states neither, and a screen declaring such an entry is not ready
-(`PR-04` for a component, `PR-05` for a pattern): there is nothing to wait for
-and no delivery to lean on. Both shipped starters (`list`, `detail`) ship at
-`to-extract`, which is what they are in a project that has not built them.
+gives, so this line is where they live. The vocabulary is closed: anything else
+— a third word, or no line at all — states neither, so nothing can place the
+entry. Both shipped starters (`list`, `detail`) ship at `to-extract`, which is
+what they are in a project that has not built them.
 
-**An entry at `to-extract` is a unit the loop emanates**, never a blocker on the
-screens that name it — those wait for its wave
-([`_references/emanation-plan.md`](../../_references/emanation-plan.md)). Which
-is also why both shapes are read strictly at emanation: an entry with no props
-table, or a layout with no regions, is a rendering the contracter would have to
-invent.
+**An entry at `to-extract` is a unit the emanation loop emanates**, never a
+blocker on the screens that name it. What the loop does with each word, and what
+it reports when the line states neither, is
+[`_references/emanation-plan.md`](../../_references/emanation-plan.md) —
+including why both shapes are read strictly there: an entry with no props table,
+or a layout with no regions, is a rendering the contracter would have to invent.
 
 Extracting a pattern out of screens that already declare bindings changes nothing
 about those bindings — they are screen-owned, and the promoted layout only gains

@@ -1,16 +1,18 @@
 ---
 kind: bootstrap-stack
 status: active
-profiles: [react, nestjs]
+profiles: [react, angular]
 ---
 
 # Tech stack
 
-The shipped template's own default, and the one configuration the `layer:`
-narrowing cannot rescue: an entity is neither frontend nor backend by
-construction, the domain-versus-service partition is an ADR decision nothing on
-disk states, and both profiles reach `typescript` — so the language axis is
-satisfied and the framework axis refuses.
+Two frameworks sharing one `layer:`. A domain unit takes the whole framework set
+rather than a layer-narrowed one, so the tie reaches an entity as well as a
+screen — which is the half of the old count-based refusal that survives R8':
+`[react, nestjs]` is the ordinary suite and refuses nothing, while nothing on
+disk states which of two frontends builds this entity. Both profiles reach
+`typescript`, so the language axis is satisfied and only the framework one
+refuses.
 
 ## Language
 

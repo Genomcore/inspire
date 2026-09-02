@@ -29,8 +29,10 @@
 # The two region vocabularies, closed, and `screen-coherence.sh`'s own: `Fill`
 # is required|optional and `Accepts` is one or more of data|dispatch|nav|static.
 # An empty cell and a dash are the same non-answer both readers already tolerate
-# — being stricter here than the rule that owns the join would make two readers
-# disagree about what a value IS, which is worse than one lenient cell.
+# — being stricter here than `screen-coherence`, which owns the join, would make
+# two readers disagree about what a value IS. Neither list carries the empty
+# string, so both cells are guarded on presence instead: `Accepts` by its token
+# loop iterating zero times, `Fill` by the test below.
 DERIVE_REGION_FILL=" required optional - — "
 DERIVE_REGION_ACCEPTS=" data dispatch nav static - — "
 
@@ -159,10 +161,12 @@ derive_pattern() {
     seen="$seen|$key|"
     fill="$(derive_norm "${c2//\`/}")"
     accepts="$(derive_norm "${c3//\`/}")"
-    case "$DERIVE_REGION_FILL" in
-      *" $(printf '%s' "$fill" | tr '[:upper:]' '[:lower:]') "*) ;;
-      *) bad="${bad:+$bad, }Fill \`$fill\`" ;;
-    esac
+    if [ -n "$fill" ]; then
+      case "$DERIVE_REGION_FILL" in
+        *" $(printf '%s' "$fill" | tr '[:upper:]' '[:lower:]') "*) ;;
+        *) bad="${bad:+$bad, }Fill \`$fill\`" ;;
+      esac
+    fi
     for tok in $(printf '%s' "$accepts" | tr ',|' '  ' | tr '[:upper:]' '[:lower:]'); do
       case "$DERIVE_REGION_ACCEPTS" in *" $tok "*) continue ;; esac
       bad="${bad:+$bad, }Accepts \`$tok\`"
