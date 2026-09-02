@@ -516,9 +516,14 @@ By the final wave the file carries:
   - the drill's **survivors**, `file:line — mutation applied → the test that
     was missing` (or *no survivors*, the claim worth making, or *drill
     incomplete* / *drill skipped*, with the reason);
-  - the **verify findings** the repo-scoped rules — `criteria-have-tests.sh`,
-    `declared-errors-tested.sh` — reported for this unit at **warning**
-    severity, attributed the same way an error-severity halt already is;
+  - the **verify findings that did not halt** — everything
+    `criteria-have-tests.sh` and `declared-errors-tested.sh` reported in this
+    unit's scope and the unit ran past: its own warnings, *and* the
+    error-severity findings whose subject is a sibling inside the same scoped
+    path (§ verify item 2), which have no other home in this report. Each one
+    attributed to its target the same way an error-severity halt already is, and
+    each carrying the rule's own severity, honored and never rewritten — that a
+    finding is an error is a fact about a path, not a verdict on this piece;
   - the **promote trailers' digest** — run id, `template_sha`, the resolved
     profile hashes, the gate-verdict digest — the same provenance the merge
     commit itself carries (§ promote), read back here so the operator has it
