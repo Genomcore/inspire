@@ -57,6 +57,11 @@ the failing files. Emanating onto a red suite makes every later verdict
 unreadable: `GV-05` cannot tell a pre-existing failure from one this run caused,
 and the first unit would burn its budget on somebody else's defect.
 
+*Realized territory* is the qualifier that keeps this honest: what must be green
+is the code the vault already claims — the tests under the resolved roots, on the
+branch as found. A project with nothing built yet has no such tests and no red
+baseline to have; an empty suite is not a failing one.
+
 **5. Cut the turn branch** (§ The branch scheme) and start wave 1.
 
 ## The branch scheme
@@ -112,7 +117,11 @@ last four run once, after the implementer's harvest.
 
 ### prepare
 
-The worktree is shaped to the phase, and the shape is the freeze:
+**Cut the phase worktree detached at the integration branch's tip.** It must not
+check that branch out: two worktrees cannot check out one branch and verify needs
+it. Detached also means the worktree is the only thing to discard afterwards.
+
+Its content is then shaped to the phase, and the shape is the freeze:
 
 - **contracter** — the full tree. It is writing the declarations everything
   downstream reads.
@@ -191,9 +200,11 @@ routing:
     --label <phase> --discard -- <owned pathspec>...
 ```
 
-The owned pathspec is the phase's, and it is the whole of the freeze: the
-contracter's declarations minus tests, the test paths the framework profile's
-`## Test conventions` declares, the implementer's source minus tests. A persona
+The owned pathspec is the phase's, and it is the whole of the freeze: **source
+minus tests** for the contracter and the implementer, and **the test paths the
+framework profile's `## Test conventions` declares** for the tester — the one
+boundary a pathspec can express, and the one that matters. Declarations versus
+bodies is doctrine each persona doc states, not a path. A persona
 that wrote outside its own paths is **silently dropped, never blocked**, and the
 drop is reported — treat it as a signal about the phase, not as a failure.
 
@@ -439,8 +450,8 @@ mass failure.
 
 **The autopsy is the branch, not the worktree.** The stalled phase's worktree is
 **discarded without harvesting**; what is left to inspect is whatever earlier
-phases already promoted onto the unit's integration branch, which is left in place
-and named in the report. This is deliberate: the worktree path carries no run id,
+phases already harvested onto the unit's integration branch, which is left in
+place and named in the report. This is deliberate: the worktree path carries no run id,
 so a surviving worktree would collide with the next run of the same unit — and
 the next run would then be building on a tree nobody vouched for.
 
