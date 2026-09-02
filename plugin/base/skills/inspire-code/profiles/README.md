@@ -178,6 +178,7 @@ architecture, and architecture is the framework profile's.
 |---|---|---|
 | `## Layering` | framework | the quality overseer (architecture) · `tdd` implementation shape |
 | `## Test conventions` | framework | the tester — **including the test paths harvest accepts** · the quality overseer |
+| `## Test infrastructure` | framework | the probe recipe for the components `stack.md` declares: `tdd`'s precondition · `emanate plan`'s `preflight` (which tests for the section's **presence**, never scraping its prose) · `emanate run`'s t=0 refusal |
 | `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
 | `## Quality gates` | framework | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |

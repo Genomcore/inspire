@@ -19,7 +19,8 @@ thing that ever touches a disk.
 ## CLI
 
 ```
-emanate-plan.sh [--scope PATH]... [--ceiling N]
+emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
+                [--reemanate SEL]... [--goal SEL]
                 [--profiles-root DIR] [--agents-root DIR]
 ```
 
@@ -27,8 +28,16 @@ emanate-plan.sh [--scope PATH]... [--ceiling N]
 |---|---|
 | `--scope PATH` | repeatable. A KB path — a directory or a single file — intersected with each layer through the scope contract every rule obeys. Omitted: the whole knowledge base |
 | `--ceiling N` | the maximum number of waves this run may execute. Unset by default; budgets are invocation arguments, never a KB artifact. A ceiling below the floor is a warning, never a blocker |
+| `--tests-root DIR` | repeatable. The tree(s) walked for `@claim` tokens, to work out which units are already **realized**. **No default**: given none, no tests tree is read and no unit is realized. See § Realization |
+| `--reemanate SEL` | repeatable. Treat the units `SEL` names as unrealized for this run. See § Selectors |
+| `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure and the floor to it, and the ceiling is then measured against **that** floor. May be given once |
 | `--profiles-root DIR` | where the stack profiles live. Default `.claude/skills/inspire-code/profiles`, env override `INSPIRE_PROFILES_ROOT` |
 | `--agents-root DIR` | where the agent shells live. Default `.claude/agents`, env override `INSPIRE_AGENTS_ROOT` |
+
+`--tests-root` mirrors the gate's flag and deliberately drops its default. The
+gate is invoked per unit by an orchestrator that has already resolved the
+profile's own test-path convention; plan is also invoked by hand, and a default
+of `tests` would decide realization off a directory nobody named.
 
 There is no `--mode`: plan is read-only unconditionally, which is why it has no
 act half to guard. The current working directory is the repo root; `SDD_SPEC_ROOT`
@@ -39,7 +48,7 @@ the two layers, as everywhere in `.inspire/bin/`.
 |---|---|---|
 | `0` | **ready** — a plan, and no error-severity finding | the plan, `"ready": true` |
 | `1` | **not ready** — a plan was computed and at least one finding is an error | the plan, `"ready": false` |
-| `2` | usage — unknown flag, a bad `--ceiling`, a `--scope` path that is not there, `-h`/`--help` | empty |
+| `2` | usage — unknown flag, a bad `--ceiling`, a `--scope` or `--tests-root` path that is not there, a `--tests-root` holding a path this tool cannot address (a `:` or a newline in its name), a `--reemanate`/`--goal` selector that names no unit in the frontier, `-h`/`--help` | empty |
 | `4` | **refused** — a precondition of planning failed; nothing is planned | the refusal object |
 | `5` | roots missing: `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | empty |
 | `6` | internal — a `derive` run exited outside `{0,4}`, or produced no readable contract. Defensive; every input it could refuse over is checked first | empty |
@@ -58,6 +67,15 @@ generic catch-all would collapse two different answers into one.
   "floor": 3,
   "ceiling": null,
   "deliverable_waves": 3,
+  "realized": ["users.list"],
+  "realized_all": false,
+  "goal": { "selector": "users.detail", "units": ["auth.user", "auth.user.get",
+                                                  "users.detail"], "floor": 3 },
+  "preflight": { "components": [ { "name": "postgres", "purpose": "the e2e database" } ],
+                 "probe_profiles": ["nestjs"] },
+  "wire_conventions": { "ids": ["rest"],
+                        "decisions": [ { "decision": "Existence leak",
+                                         "answer": "404" } ] },
   "units": [
     { "kind": "entity", "id": "auth.user",
       "path": "inspire_kb/04_domain/auth/user/auth.user.md",
@@ -79,8 +97,25 @@ generic catch-all would collapse two different answers into one.
   when that is not inside it.
 - **`waves`** is an array of arrays of unit ids, each inner array `LC_ALL=C`
   sorted, and `floor == (waves | length)`.
-- **`deliverable_waves`** is `min(floor, ceiling)`, or `floor` when `ceiling` is
-  null. The ceiling stops a run; it never chooses winners.
+- **`deliverable_waves`** is `min(effective floor, ceiling)`, or the effective
+  floor when `ceiling` is null. The **effective floor** is `goal.floor` when
+  `--goal` was given and `floor` otherwise: a ceiling that covers the goal is not
+  under-budgeted merely because some deeper unit is also in scope. The ceiling
+  stops a run; it never chooses winners.
+- **`realized`** is the frontier-eligible units already realized on this branch,
+  sorted — the ones that are **absent from `units[]` and `waves`** for the same
+  reason a `stable` artifact is: they are not in the frontier. Empty whenever no
+  `--tests-root` was given. **`realized_all`** is true when every
+  frontier-eligible unit is realized; see § Realization.
+- **`goal`** is `null` unless `--goal` was given. `units` is the goal's remaining
+  dependency closure — what this run has to execute — and `floor` is the deepest
+  wave in it, which is the minimum number of orchestrator iterations to reach the
+  goal. Note the two are not `waves`-shaped: `waves` still layers the **whole**
+  scope, and `goal.units` names the subset a goal-directed run executes.
+- **`preflight`** is what `00_bootstrap/stack.md`'s `## Test infrastructure`
+  declares plus which resolved framework profiles can probe it; see § Preflight.
+  **`wire_conventions`** is the transport decisions a spawned tester must assert
+  rather than invent; see § Wire conventions.
 - **`units[].claims`** is the count from that unit's derived contract, `0` for a
   refused one. It is the sizing signal the orchestrator budgets on.
 - **`units[].requires`** is derive's edge set verbatim — every declared
@@ -107,6 +142,13 @@ generic catch-all would collapse two different answers into one.
 There is **no `waves`, `floor` or `units` key at all** — nothing was planned, and
 an empty key would read as "planned, and it is empty". Refusals carry no `owner`:
 there is no unit for a skill to own. Every class found is reported, not the first.
+
+**And no `preflight`, `wire_conventions`, `realized` or `goal` either** — worth
+stating, because those four are exactly the fields whose value is "learn it at
+t=0". A run refused for `PR-12` or `PR-13` therefore learns nothing about its
+test infrastructure: the refusal is that there is no plan to preflight *for*, and
+an operator who has just been told their frontier is empty has a shorter question
+to answer first.
 
 ## What a unit is, and which are in the frontier
 
@@ -178,6 +220,108 @@ edge, otherwise `1 + max(wave(d))` over the ones it has. Waves are 1-based.
 known at t=0. Plan reports it against the declared ceiling so an under-budgeted
 scope is known before anything runs. A node the layering cannot consume is a
 cycle (`PR-11`).
+
+## Realization
+
+**A unit is realized when every claim of its *current* derived contract is cited
+under a `--tests-root` by a token carrying a matching fingerprint.** The record is
+the tests themselves — never a KB lifecycle flip, never a registry, never a stamp
+manifest. A realized unit **leaves the frontier and satisfies an edge the way a
+`stable` artifact does**, so a later invocation sees only what remains and the
+floor is relative to what exists.
+
+The citation grammar is
+[`gate-verdict.md`](gate-verdict.md) § Citations: `@claim <id> <fingerprint>`,
+with the fingerprint optional. **An id-only citation never realizes anything** —
+it stays valid for the gate's coverage classes, because coverage asks "did anyone
+test this claim" while realization asks "did anyone test *this version* of it".
+Store-oracle claims are included, which is the stated v1 default.
+
+What follows from the fingerprint being semantic (`derived-contract.md` § The
+fingerprint), rather than a hash of a file:
+
+- an **in-place spec edit** — same claim id, changed meaning — flips the
+  fingerprint, so the unit un-realizes and re-enters the frontier;
+- a **structural** change (a claim added, removed or renamed) surfaces as an
+  uncited claim or, at the gate, a dangling citation;
+- a screen file moving, a list renumbering or a derive output reformat
+  invalidates **nothing**;
+- a unit with **zero claims is not realized**. Vacuous realization would drop a
+  unit `derive` refused out of the frontier and take its `PR-01` with it.
+
+**A frontier that is empty because everything in it is realized is the success
+case**, not `PR-12`: exit 0, `floor: 0`, `realized_all: true`, `units: []`,
+`waves: []` — "the goal is already met". The emptiness question therefore splits
+across the two tiers, and it has to: nothing being `accepted` is knowable before
+a derivation and refuses; everything being realized is knowable only after one
+and succeeds. The two answers are opposite on purpose — one says there is nothing
+to build, the other that there is nothing **left** to build.
+
+## Selectors
+
+One grammar, used by `--reemanate` and `--goal`, resolved against the
+frontier-eligible node set:
+
+| form | means |
+|---|---|
+| `users.list` | one node |
+| `users.*` | a glob over unit ids |
+| `auth.user.list..` | the node and its transitive **dependents** — "from the list action onwards" |
+| `auth.user..users.list` | the **segment**: every node on an ordering path from the first up to the second, inclusive. On a DAG that is the dependents of the left intersected with the dependencies of the right |
+
+**Closures walk ordering edges only — a navigation edge never extends one.** It
+is the same exemption the waves have and it is there for the same reason: list
+and detail screens navigate to each other in every real vault, so a nav-walking
+closure would pull a whole screen cluster into every selection.
+
+**A selector that names no unit in the frontier is a usage error (exit 2), not a
+reported no-match.** A selector is something the operator typed, like `--scope`
+and `--ceiling`; a typo that quietly selected nothing would answer "rebuild
+these" with a green run that rebuilt nothing. Naming a unit that is already
+realized is *not* that case — selectors match over every frontier-**eligible**
+node, so `--goal` on a realized unit answers "nothing left" (`goal.floor: 0`)
+rather than "no such unit".
+
+`--reemanate` is repeatable and its sets union; the selected units are treated as
+unrealized for this run and everything unselected keeps its realization. There
+are **no motive-shaped flags** — why a piece should be rebuilt (a harness moved,
+taste, an A/B) is not a machine question. Breakage of a kept dependent is not
+this tool's business either: it surfaces in the orchestrator's `verify`, and the
+gate stays unit-scoped.
+
+## Preflight
+
+`preflight.components` is the table under `00_bootstrap/stack.md`'s
+`## Test infrastructure` — one row per component the suites run against, its
+first column the **compose service name**. `preflight.probe_profiles` is which of
+the **suite-wide** resolved framework profiles carry a `## Test infrastructure`
+probe recipe of their own. Suite-wide rather than per-unit because "can this
+stack be probed at all" is one run-level fact, true before any unit is known and
+true still when every unit turns out to be realized. A profile is tested for the
+**section's presence**, never by scraping its prose.
+
+**Plan does not probe and does not start anything.** The probe is stack-specific
+(`docker compose config --services`, then a status check demanding *healthy*, not
+merely `Up`) and therefore profile-owned: the tool reports the declaration,
+`emanate run` executes the recipe once at t=0 and refuses the run when a declared
+component is not healthy, and the operator is the only one who ever brings a
+component up.
+
+## Wire conventions
+
+`wire_conventions.ids` is `stack.md`'s `wire_conventions:` frontmatter list — the
+convention *files* the transport follows. `decisions` is the table under its
+`## Wire conventions`, in the order the file writes them, because that is the
+operator's reading order and re-sorting would lose it.
+
+Both halves ship because the ids alone are not enough: the answers to a
+convention's own `## Project policy` table — `403` versus `404`, the validation
+status, the error body shape — are the half that differs between projects, and so
+the half a spawned tester would otherwise invent. **A reported field, not a
+check**: the doctrine rules that an undecided row means the convention's default
+applies *and that recording it is what stops a later test pinning a different
+choice*, so "not decided yet" is a decision and there is nothing to refuse. An
+absent `wire_conventions:` yields empty lists.
 
 ## Profiles
 
@@ -251,7 +395,8 @@ languages, and any declared `layer: language` profile.
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
-| `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
+| `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
+| `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
 
 ### Refusals — nothing is planned, the run exits 4
 
@@ -285,7 +430,9 @@ hardcoded directory name — the roots are configurable everywhere else in
 
 Two runs over one tree produce **byte-identical stdout**. Every list is
 `LC_ALL=C` sorted, no unsorted `find` output reaches the output, and no
-timestamp, temp path or process id appears in it. This is a requirement rather
+timestamp, temp path or process id appears in it. The one list that is not
+sorted is `wire_conventions.decisions`, which keeps its table's order — still
+deterministic, since a file has one order. This is a requirement rather
 than a nicety: the orchestrator diffs plans between runs, and a plan that
 reordered itself would read as a vault that had changed.
 

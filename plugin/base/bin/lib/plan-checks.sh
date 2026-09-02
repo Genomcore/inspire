@@ -177,7 +177,7 @@ plan_cycle_refusals() {
 # edge's ordering question needs the whole frontier to already be known.
 plan_ingest() {
   local n=0 path kind code
-  : > "$PLAN_TMP/nodes"; : > "$PLAN_TMP/idpath.tsv"; : > "$PLAN_TMP/deps.tsv"
+  : > "$PLAN_TMP/nodes.all"; : > "$PLAN_TMP/idpath.tsv"; : > "$PLAN_TMP/deps.tsv"
   while IFS=$'\t' read -r path kind; do
     [ -n "$path" ] || continue
     n=$((n + 1))
@@ -188,10 +188,14 @@ plan_ingest() {
     esac
     plan_ingest_one "$n" "$kind" "$path" || return 1
   done < "$PLAN_TMP/frontier.tsv"
+  # `comm` reads both sides in order, and realization is a set difference over
+  # this file. Frontier order is by path, which is not id order.
+  LC_ALL=C sort -u "$PLAN_TMP/nodes.all" -o "$PLAN_TMP/nodes.all"
 }
 
 plan_ingest_one() {
-  local n="$1" kind="$2" path="$3" recf="$PLAN_TMP/c/$n.rec"
+  local n="$1" kind="$2" path="$3"
+  local recf="$PLAN_TMP/c/$n.rec"
   local t id lifecycle module claims surface f1 f2 f3 f4
   plan_contract_records "$PLAN_TMP/c/$n.json" > "$recf"
   IFS="$PLAN_FS" read -r t id lifecycle module claims < <(head -1 "$recf")
@@ -201,7 +205,7 @@ plan_ingest_one() {
   fi
   surface=""
   [ "$kind" = "screen" ] && surface="$(plan_surface_of "$path")"
-  printf '%s\n' "$id" >> "$PLAN_TMP/nodes"
+  printf '%s\n' "$id" >> "$PLAN_TMP/nodes.all"
   printf '%s\t%s\n' "$id" "$path" >> "$PLAN_TMP/idpath.tsv"
   plan_row units "$id" "$kind" "$path" "$lifecycle" "$module" "$surface" "$claims"
 
@@ -219,8 +223,8 @@ plan_ingest_one() {
 # plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge
 # set. One rule for every edge, whatever its kind — it must resolve, and its
 # target must be stable or in the frontier. Navigation is dropped from the
-# ORDERING alone, after both checks have run, which is why the `continue` for it
-# sits inside the in-frontier arm.
+# ORDERING alone, after both checks have run, which is why the in-frontier arm
+# leaves the layering to `plan_ordering_edges`.
 #
 # ED10 is what makes that one rule reach the catalog kinds. They used to be
 # skipped here and answered by two bespoke readiness errors, which meant a
@@ -228,11 +232,17 @@ plan_ingest_one() {
 # to-extract component is a unit like any other and the screen simply WAITS for
 # its wave; the error form survives only where it always belonged — a target
 # that is neither delivered nor emanatable.
+#
+# The edge set itself is `plan_ordering_edges`', over the post-realization node
+# set: which edges ORDER is one question, and the selector closures ask it too.
 plan_resolve_edges() {
   local uid upath ukind dkind did dpath lc state
-  : > "$PLAN_TMP/edges.tsv"
+  plan_ordering_edges "$PLAN_TMP/nodes" > "$PLAN_TMP/edges.tsv"
   while IFS=$'\t' read -r uid upath ukind dkind did; do
     [ -n "$uid" ] || continue
+    # A realized unit is out of the frontier, so its edges are nobody's
+    # readiness question this run — exactly as an out-of-scope unit's are.
+    LC_ALL=C grep -qxF "$uid" "$PLAN_TMP/nodes" || continue
     dpath="$(plan_dep_path "$dkind" "$did")"
     if [ -z "$dpath" ]; then
       plan_find "PR-02" "error" "$uid" "$did" "$(plan_owner "$upath")" \
@@ -240,11 +250,9 @@ plan_resolve_edges() {
         "$(plan_define_remedy "$dkind" "$did")"
       continue
     fi
-    if LC_ALL=C grep -qxF "$did" "$PLAN_TMP/nodes"; then
-      [ "$ukind" = "screen" ] && [ "$dkind" = "screen" ] && continue
-      printf '%s\t%s\n' "$uid" "$did" >> "$PLAN_TMP/edges.tsv"
-      continue
-    fi
+    # In the frontier: the ordering was already decided above, and neither
+    # lifecycle arm below applies to a unit this run is building.
+    LC_ALL=C grep -qxF "$did" "$PLAN_TMP/nodes" && continue
     lc="$(plan_lifecycle_of "$dpath" "$dkind")"
     if [ "$lc" = "stable" ] && [ "$dkind" = "pattern" ]; then
       plan_check_regions "$uid" "$did" "$dpath"
@@ -260,7 +268,6 @@ plan_resolve_edges() {
       "dependency \`$did\` $state — neither stable nor in the frontier" \
       "$(plan_promote_remedy "$dkind" "$did" "$lc")"
   done < "$PLAN_TMP/deps.tsv"
-  LC_ALL=C sort -u "$PLAN_TMP/edges.tsv" -o "$PLAN_TMP/edges.tsv"
 }
 
 # plan_find_catalog — PR-04 (component) and PR-05 (pattern): the entry's
@@ -312,28 +319,6 @@ plan_promote_remedy() {
     screen) printf '/inspire_screens promote %s accepted' "$2" ;;
     *)      printf '/inspire_domain promote %s accepted' "$2" ;;
   esac
-}
-
-# plan_declared_for <key> <surface> — the declared id list a unit resolves from,
-# materialized once per key. A surface that declares none inherits the
-# suite-wide set; it does not extend it. The file the list came FROM is recorded
-# beside it, because that is the file `PR-07`'s remedy has to name.
-plan_declared_for() {
-  local key="$1" surface="$2" f="$PLAN_TMP/prof/$key.declared"
-  if [ ! -f "$f" ]; then
-    printf '%s' "$SDD_KB_ROOT/00_bootstrap/stack.md" > "$f.source"
-    if [ "$key" = "suite" ]; then
-      cp "$PLAN_TMP/stack-profiles" "$f"
-    else
-      plan_surface_profiles "$surface" > "$f"
-      if [ -s "$f" ]; then
-        printf '%s' "$SDD_KB_ROOT/00_bootstrap/surfaces.md" > "$f.source"
-      else
-        cp "$PLAN_TMP/stack-profiles" "$f"
-      fi
-    fi
-  fi
-  printf '%s' "$f"
 }
 
 # plan_check_profiles — PR-06 and PR-07, plus the `profiles` spool `units[]`
@@ -447,13 +432,57 @@ plan_odd_list() {
       sep = ", " }'
 }
 
+# plan_check_preflight — PR-22, and the `preflight` / `wire_conventions` spools
+# the plan renders them from (ED11-R5/R6). Both blocks are reporting: an
+# undecided wire row is a RECORDED decision (the convention's own default
+# applies), so there is nothing there to refuse.
+#
+# PR-22 is the one finding, and a warning: components declared with no profile
+# able to probe them means an unattended run would read a connection error as
+# red, burn the unit's whole rework budget proving nothing, then cascade the
+# stall. Learning that at t=0 costs a warning; learning it after a four-hour run
+# costs the run. Plan itself never probes and never starts anything — the probe
+# is stack-specific and therefore profile-owned.
+plan_check_preflight() {
+  local name purpose decision answer id n
+  plan_test_components > "$PLAN_TMP/components.tsv"
+  plan_probe_profiles  > "$PLAN_TMP/probes"
+  while IFS=$'\t' read -r name purpose; do
+    [ -n "$name" ] || continue
+    plan_row components "$name" "$purpose"
+  done < "$PLAN_TMP/components.tsv"
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    plan_row probes "$id"
+  done < "$PLAN_TMP/probes"
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    plan_row wireids "$id"
+  done < <(plan_wire_ids)
+  while IFS=$'\t' read -r decision answer; do
+    [ -n "$decision" ] || continue
+    plan_row wirerows "$decision" "$answer"
+  done < <(plan_wire_rows)
+
+  [ -s "$PLAN_TMP/components.tsv" ] || return 0
+  [ -s "$PLAN_TMP/probes" ] && return 0
+  n="$(LC_ALL=C grep -c . "$PLAN_TMP/components.tsv")"
+  plan_find "PR-22" "warning" "" \
+    "$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")" "inspire-bootstrap" \
+    "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and no resolved framework profile carries a \`## Test infrastructure\` probe recipe, so nothing can tell a healthy component from a suite that never ran" \
+    "add a \`## Test infrastructure\` section to a resolved framework profile under \`$(plan_path_norm "$PLAN_PROFILES_ROOT")\`, or remove the components that no longer apply"
+}
+
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low
 # ceiling partial-but-reported delivery in graph order, so it never flips
 # `ready` and a run whose only finding is this one exits 0.
+# the ceiling is measured against the floor the run actually has to reach, which
+# a `--goal` shortens: a ceiling that covers the goal is not under-budgeted just
+# because some deeper unit is also in scope.
 plan_check_ceiling() {
   [ -n "$PLAN_CEILING" ] || return 0
-  [ "$PLAN_CEILING" -lt "$PLAN_FLOOR" ] || return 0
+  [ "$PLAN_CEILING" -lt "$PLAN_EFFECTIVE_FLOOR" ] || return 0
   plan_find "PR-20" "warning" "" "" "" \
-    "the declared ceiling of $PLAN_CEILING wave(s) is below the floor of $PLAN_FLOOR — delivery will be partial, in graph order" \
-    "raise --ceiling to $PLAN_FLOOR, or accept partial-but-reported delivery"
+    "the declared ceiling of $PLAN_CEILING wave(s) is below the floor of $PLAN_EFFECTIVE_FLOOR — delivery will be partial, in graph order" \
+    "raise --ceiling to $PLAN_EFFECTIVE_FLOOR, or accept partial-but-reported delivery"
 }

@@ -156,6 +156,30 @@ owns the entity, never to the shared client's config.
   and make teardown synchronous where the store's drop is asynchronous by default — a
   drop that returns while the table is still detaching is a race the next run inherits.
 
+## Test infrastructure
+
+**The probe recipe — run before the first red test** (the precondition in
+[`../references/tdd.md`](../references/tdd.md)). The components come from `stack.md`'s
+own `## Test infrastructure`; the compose file realizes them, and this section is what
+`emanate plan` looks for when it reports whether the stack can be probed at all:
+
+- Inspect: `docker compose config --services` — every declared component has a service.
+- Status: `docker compose ps` — a service must be **healthy**, not merely `Up`. Compose
+  services carrying a healthcheck report both, and `Up` is where a flaky e2e suite comes
+  from: the container exists, the server is still opening its ports.
+- **Never bring a component up from inside a run.** The operator may have it up on
+  other ports or pointed at a shared instance, so who acts on an unhealthy component
+  depends on whether anyone is there to act:
+  - **attended** (`tdd`, `debug`, `fix-build`) — ask the operator to run
+    `docker compose up -d` (or `--wait`, which blocks until healthchecks pass), and
+    wait for them.
+  - **unattended** (an emanation run) — **refuse**, name the unhealthy components and
+    print that command in the report. There is nobody to ask, and a phase agent that
+    stops to ask spends the whole run waiting on a turn that never comes.
+- Then run `npm run test:e2e` once. A connection error is **not** red; it is a suite that
+  never ran — which is why an unattended run refuses instead of reading it as red and
+  burning a unit's rework budget on it.
+
 ## Forbidden patterns
 - Services throw a **generic `Error` with `cause`**, never HTTP exceptions —
   translating to HTTP is the controller/filter's job.
@@ -385,20 +409,6 @@ shape (concrete class vs. abstract-class contract) follows from the domain/
 infrastructure split in `## Layering` above, stated as a rule under
 `## Forbidden patterns`; and `@ApiProperty` shapes are derived from the descriptor
 plus the language profile's § Rendering.
-
-**Test infrastructure — check before the first red test** (the precondition in
-[`../references/tdd.md`](../references/tdd.md)). The components come from `stack.md`'s
-`## Test infrastructure`; the compose file realizes them:
-
-- Inspect: `docker compose config --services` — every declared component has a service.
-- Status: `docker compose ps` — a service must be **healthy**, not merely `Up`. Compose
-  services carrying a healthcheck report both, and `Up` is where a flaky e2e suite comes
-  from: the container exists, the server is still opening its ports.
-- **Ask the operator to run** `docker compose up -d` (or `--wait`, which blocks until
-  healthchecks pass). Do not start it silently — they may have it up on other ports or
-  pointed at a shared instance.
-- Then run `npm run test:e2e` once. A connection error is **not** red; it is a suite that
-  never ran.
 
 ## References
 

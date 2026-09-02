@@ -20,7 +20,8 @@ PLAN_DERIVE_BATCH=4
 # A FILE scope names one artifact: the finders only walk directories, so the
 # walk runs over its parent and the result is filtered back down to it.
 plan_enumerate() {
-  local s="$1" dir="$s" only=""
+  local s="$1" only=""
+  local dir="$s"
   if [ -n "$s" ] && [ -f "$s" ]; then
     only="$(sdd_scope_norm "$s")"
     case "$only" in */*) dir="${only%/*}" ;; *) dir="." ;; esac

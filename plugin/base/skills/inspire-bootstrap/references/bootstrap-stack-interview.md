@@ -108,6 +108,36 @@ Why this belongs at bootstrap and not in the coding stage: the answers are what 
 acceptance criterion into an executable test. Deferred, every feature re-derives them,
 and two features end up with two contracts for the same error.
 
+### Test infrastructure (declared with the stack)
+
+E2E comes first, so the database / broker / cache the suites run against has to exist
+before the first red test. Which components those are is a **stack** fact, not a
+per-feature one — resolve it here, right after the layers:
+
+1. **Ask which components the suites need**, reading the layers just confirmed: a
+   declared *Data* layer means a database, a messaging layer means a broker, a cache
+   layer means a cache. Nothing else is inferred — a component the stack does not
+   declare is a question, not an assumption.
+2. **Record them** in `stack.md`'s `## Test infrastructure`, one row per component,
+   the first column naming the **compose service** — that name is what a profile's
+   probe recipe inspects (`docker compose config --services`), so a row whose name
+   does not match the compose file is a row no probe can check. Then add the service
+   to the compose file if it is not there.
+3. **Never start one from a skill.** The operator brings the components up — they may
+   already have them on other ports or pointed at a shared instance. State that in
+   the section, since it is the reason the declaration exists at all: a connection
+   error is not a red test, it is a test that never ran.
+4. **Check the resolved profiles carry a probe recipe** for them — each framework
+   profile's own `## Test infrastructure` section. A stack that declares components
+   and resolves no profile that can probe them is what `emanate plan` reports as
+   `PR-22`: an unattended run would read the connection error as red and burn a
+   unit's whole rework budget proving nothing. Offer to author the profile section
+   rather than leaving the warning standing.
+
+Why this belongs at bootstrap: an unattended emanation run refuses at t=0 when a
+declared component is not healthy, and it can only do that against a declaration. A
+project that never made one gets a safety property that is vacuous by construction.
+
 ### Quality gates (installed with the stack)
 
 A project's gates are part of its foundation, not an afterthought: what the operator
