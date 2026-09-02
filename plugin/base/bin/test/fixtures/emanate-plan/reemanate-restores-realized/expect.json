@@ -1,0 +1,23 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests",
+    "--reemanate",
+    "auth.org"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".reemanate.selectors | join(\",\")", "equals": "auth.org" },
+    { "expr": ".reemanate.units | join(\",\")", "equals": "auth.org" },
+    { "expr": ".realized | length", "equals": "0" },
+    { "expr": ".realized_all", "equals": "false" },
+    { "expr": ".floor", "equals": "1" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "auth.org" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

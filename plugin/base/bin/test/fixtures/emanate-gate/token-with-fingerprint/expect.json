@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".verdict", "equals": "pass" },
+    { "expr": ".claims[0].status", "equals": "covered" },
+    { "expr": ".claims[0].citations | length", "equals": "2" },
+    { "expr": "[.claims[0].citations[].line] | join(\",\")", "equals": "5,7" },
+    { "expr": ".findings | length", "equals": "0" }
+  ],
+  "forbidden": ["GV-04"]
+}

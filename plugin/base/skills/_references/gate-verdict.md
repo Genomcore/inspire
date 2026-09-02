@@ -86,12 +86,30 @@ misconfigured `--tests-root`, or the reverse.
 ## Citations
 
 For each `--tests-root`, every regular file is walked and grepped for
-`@claim[[:space:]]+[^[:space:]]+` (`tester.md`'s grammar, normative): the id
-runs from the first non-space after `@claim` to the first whitespace or the
-end of the line, and nothing after that whitespace is part of it — a
-trailing `.` is legal inside an id and is read as part of it. A discovered
-path carrying `:` or a newline is exit 3 (symlinks/exotic paths are a
-declared non-support, `CLAUDE.md`).
+`@claim[[:space:]]+[^[:space:]]+([[:space:]]+sha256:[0-9a-f]+)?` — the shared
+scanner's grammar, of which `tester.md` is normative for the **id** half: the
+id runs from the first non-space after `@claim` to the first whitespace or
+the end of the line — a trailing
+`.` is legal inside an id and is read as part of it. A discovered path
+carrying `:` or a newline is exit 3 (symlinks/exotic paths are a declared
+non-support, `CLAUDE.md`).
+
+**The token takes an optional second word: the claim's fingerprint** —
+`@claim <id> <fingerprint>`, spelled exactly as
+[`derived-contract.md`](derived-contract.md) § The fingerprint emits it,
+`sha256:<hex>`. Anything else after the id is prose and is ignored, as
+everything after the id always was, so a trailing comment can never be
+misread as a fingerprint.
+
+**Both forms are valid here, and gate reads only the id half.** An id-only
+citation covers a claim exactly as it did before the fingerprint existed, and
+so does one naming a *stale* fingerprint: someone did write a test for this
+claim, which is the whole of what coverage asks. The fingerprint is read by
+`emanate plan` instead, where matching it is what makes a unit **realized**
+([`emanation-plan.md`](emanation-plan.md) § Realization) — which is the
+tester's own reason to write one, since an id-only citation leaves the unit
+in the frontier for good. One scanner (`lib/gate-citations.sh`) serves both
+readings; there is no second grammar.
 
 **Granularity is the file.** A citation is `{file, line}`, never a test
 name — a grep knows no test syntax, and binding a token to the test that

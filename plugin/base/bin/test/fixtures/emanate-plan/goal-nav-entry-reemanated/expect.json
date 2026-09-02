@@ -1,0 +1,23 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests",
+    "--goal",
+    "users.detail",
+    "--reemanate",
+    "users.list"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".realized | join(\",\")", "equals": "" },
+    { "expr": ".reemanate.units | join(\",\")", "equals": "users.list" },
+    { "expr": ".goal.units | join(\",\")", "equals": "users.audit,users.detail,users.list" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

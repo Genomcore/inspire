@@ -78,7 +78,11 @@ PLAN_FRAMEWORK_LAYERS=" frontend backend data tooling "
 # file). A declared id with no file stays OUT of the resolved set: "resolved"
 # means a file was read, and what was missing is what `PR-07` names.
 plan_resolve_profiles() {
-  local key="$1" src="$2" out="$PLAN_TMP/prof/$key"
+  # Two statements, not one: bash 3.2 (a supported host) does not see a name
+  # declared earlier in the SAME `local`, so `out=…$key` there resolves against
+  # the caller's scope or fails under `set -u`.
+  local key="$1" src="$2"
+  local out="$PLAN_TMP/prof/$key"
   [ -f "$out.resolved" ] && return 0
   local id file
   : > "$out.resolved.raw"; : > "$out.missing"
@@ -162,6 +166,110 @@ plan_unit_profiles() {
   LC_ALL=C sort -u "$sel.set.raw" -o "$sel.set.raw"
   mv "$sel.set.raw" "$sel.set"
   printf '%s' "$sel"
+}
+
+# plan_declared_for <key> <surface> — the declared id list a unit resolves from,
+# materialized once per key. A surface that declares none inherits the
+# suite-wide set; it does not extend it. The file the list came FROM is recorded
+# beside it, because that is the file `PR-07`'s remedy has to name.
+plan_declared_for() {
+  local key="$1" surface="$2"
+  local f="$PLAN_TMP/prof/$key.declared"
+  if [ ! -f "$f" ]; then
+    printf '%s' "$SDD_KB_ROOT/00_bootstrap/stack.md" > "$f.source"
+    if [ "$key" = "suite" ]; then
+      cp "$PLAN_TMP/stack-profiles" "$f"
+    else
+      plan_surface_profiles "$surface" > "$f"
+      if [ -s "$f" ]; then
+        printf '%s' "$SDD_KB_ROOT/00_bootstrap/surfaces.md" > "$f.source"
+      else
+        cp "$PLAN_TMP/stack-profiles" "$f"
+      fi
+    fi
+  fi
+  printf '%s' "$f"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# The two run-level facts `stack.md` records for a spawn (ED11-R5/R6). Both are
+# REPORTING, not checks: constant across units and knowable at t=0, which is
+# what makes plan their home. `stack.md` stays prose — no probe grammar and no
+# schema is invented for the KB, only a table shape a human already writes.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# plan_table_rows <file> <section> — the DATA rows of the first markdown table
+# in that section, as `cell<TAB>cell…`. The header is the row immediately above
+# the `|---|` separator, so a table is read by its shape rather than by a pinned
+# column count, and a section whose table has no rows yet reads as none.
+#
+# A cell's VALUE, not its markdown: backticks are stripped the way `derive`
+# strips them, so a component declared as `` `postgres` `` is the compose
+# service `postgres` and not a string with punctuation in it.
+plan_table_rows() {
+  sdd_body_section "$1" "$2" | awk '
+    function issep(l) { gsub(/[ \t|:-]/, "", l); return l == "" }
+    function cells(l,   n, i, out, a) {
+      sub(/^[ \t]*\|/, "", l); sub(/\|[ \t]*$/, "", l)
+      n = split(l, a, "|")
+      for (i = 1; i <= n; i++) {
+        gsub(/`/, "", a[i])
+        gsub(/^[ \t]+|[ \t]+$/, "", a[i])
+        out = out (i > 1 ? "\t" : "") a[i]
+      }
+      return out
+    }
+    /^[ \t]*\|/ {
+      if (!sep) { if (issep($0)) sep = 1; next }
+      print cells($0); next
+    }
+    sep { exit }
+  '
+}
+
+# plan_test_components — the compose-service names `stack.md`'s
+# `## Test infrastructure` declares, as `name<TAB>purpose`.
+plan_test_components() {
+  local f="$SDD_KB_ROOT/00_bootstrap/stack.md"
+  [ -f "$f" ] || return 0
+  plan_table_rows "$f" "Test infrastructure"
+}
+
+# plan_wire_ids — the `wire_conventions:` ids, one per line. Absent means the
+# project selected none, which is a legal state and not a finding: `emanate run`
+# briefs a tester with whatever is recorded, and nothing is recorded.
+plan_wire_ids() {
+  local f="$SDD_KB_ROOT/00_bootstrap/stack.md"
+  [ -f "$f" ] || return 0
+  sdd_fm_list "$f" '.wire_conventions'
+}
+
+# plan_wire_rows — the decision rows of `stack.md`'s `## Wire conventions`, as
+# `decision<TAB>answer`. This is the half that differs between projects, so it is
+# the half a spawned tester would otherwise invent.
+plan_wire_rows() {
+  local f="$SDD_KB_ROOT/00_bootstrap/stack.md"
+  [ -f "$f" ] || return 0
+  plan_table_rows "$f" "Wire conventions"
+}
+
+# plan_probe_profiles — the framework profiles in the SUITE-wide resolved set
+# that carry a `## Test infrastructure` probe recipe of their own, one id per
+# line. The suite set rather than a unit's: whether the stack can be probed at
+# all is a run-level fact, true before any unit is known and true still when
+# every unit turns out to be realized.
+#
+# A section's PRESENCE, never its prose — the posture
+# `profile-gates-installed.sh` argues for in its own header.
+plan_probe_profiles() {
+  local sel id
+  plan_resolve_profiles suite "$(plan_declared_for suite "")"
+  sel="$(plan_unit_profiles suite entity)"
+  while IFS=$'\t' read -r id _; do
+    [ -n "$id" ] || continue
+    sdd_has_section "$PLAN_PROFILES_ROOT/$id.md" "Test infrastructure" \
+      && printf '%s\n' "$id"
+  done < "$sel.fw"
 }
 
 # plan_unit_profile_key <kind> <surface> — the declared set a unit resolves

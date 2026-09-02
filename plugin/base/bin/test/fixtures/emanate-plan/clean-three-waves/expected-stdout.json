@@ -8,6 +8,18 @@
   "floor": 3,
   "ceiling": null,
   "deliverable_waves": 3,
+  "realized": [],
+  "realized_all": false,
+  "reemanate": null,
+  "goal": null,
+  "preflight": {
+    "components": [],
+    "probe_profiles": []
+  },
+  "wire_conventions": {
+    "ids": [],
+    "decisions": []
+  },
   "units": [
     {
       "kind": "entity",

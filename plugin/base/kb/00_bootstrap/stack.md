@@ -78,6 +78,48 @@ adding mobile, moving off a deployed database) is an ADR.
   consoles, satellites and SDK — `class-variance-authority` / `clsx` /
   `tailwind-merge` for component variants, ESLint for linting.
 
+## Wire conventions
+
+Which convention set the product's transport follows, and the project's answer to
+each of that set's `## Project policy` questions — the existence-leak choice, the
+validation status, the error body shape. Decided **once**, at
+`/inspire-bootstrap stack`, and never re-asked per feature: the ids go in the
+frontmatter as `wire_conventions: [<id>, …]`, the answers in the table below. The
+catalogue is
+[`_references/conventions/`](../../.claude/skills/_references/conventions/README.md).
+
+| Decision | Answer |
+|---|---|
+
+An unanswered decision is recorded as **not decided yet**, never left out: the
+convention's own default then applies, and saying so is what keeps a later test
+from pinning a different choice as though it were the contract. `emanate plan`
+reports these rows so a spawned tester asserts the project's decision instead of
+inventing one.
+
+## Test infrastructure
+
+The services the test suites run against — a database, a broker, a cache. Each row
+names a **compose service**, so a stack profile's own probe recipe can ask whether
+it is up and *healthy* before the first red test. Declared here, realized in the
+compose file, and brought up **by the operator** — never started silently: a
+connection error is not a red test, it is a test that never ran. A load-bearing
+addition is an ADR.
+
+| Component | Purpose |
+|---|---|
+
+## Quality gates
+
+The **external** gate: which service keeps the history of the aggregate metrics
+(coverage, duplication, bundle size), since the runtime must not store that
+baseline in the repository it is judging. The in-repo half — lint rules, runner
+thresholds, the CI job — is installed from each resolved profile's own
+`## Quality gates` and is not re-listed here.
+
+| Metric | Service | Pass condition |
+|---|---|---|
+
 ## Conventions
 
 - Repository layout, build/run commands, naming and formatting conventions, and

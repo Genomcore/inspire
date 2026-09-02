@@ -9,6 +9,10 @@
 # "`emanate plan` aggregates the stdout objects — it must never parse stderr" —
 # and the entry point is the only surface plan is allowed to depend on.
 #
+# One derivation per frontier unit is the whole fan-out: nothing outside the
+# frontier is ever read. A delivered screen that must gain a nav link is itself
+# work and therefore in the frontier; a `draft` is not emanated at all.
+#
 # Sourced after `_lib.sh`, `_keyed-heads.sh` and `plan-lib.sh`.
 
 # Derive fans out to four validators of its own, so the process count is the
@@ -20,7 +24,8 @@ PLAN_DERIVE_BATCH=4
 # A FILE scope names one artifact: the finders only walk directories, so the
 # walk runs over its parent and the result is filtered back down to it.
 plan_enumerate() {
-  local s="$1" dir="$s" only=""
+  local s="$1" only=""
+  local dir="$s"
   if [ -n "$s" ] && [ -f "$s" ]; then
     only="$(sdd_scope_norm "$s")"
     case "$only" in */*) dir="${only%/*}" ;; *) dir="." ;; esac

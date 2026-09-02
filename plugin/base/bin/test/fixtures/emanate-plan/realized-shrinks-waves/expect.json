@@ -1,0 +1,23 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".realized | join(\",\")", "equals": "auth.org" },
+    { "expr": ".realized_all", "equals": "false" },
+    { "expr": ".floor", "equals": "2" },
+    { "expr": ".waves | length", "equals": "2" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "audit.event,auth.user" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "auth.user.list" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "audit.event,auth.user,auth.user.list" },
+    { "expr": ".deliverable_waves", "equals": "2" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

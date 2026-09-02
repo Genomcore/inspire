@@ -1,0 +1,18 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--reemanate",
+    "auth.user.."
+  ],
+  "stdout_jq": [
+    { "expr": ".reemanate.selectors | join(\",\")", "equals": "auth.user.." },
+    { "expr": ".reemanate.units | join(\",\")", "equals": "auth.user,auth.user.get,auth.user.list,users.detail,users.list" },
+    { "expr": ".reemanate.units | length", "equals": "5" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

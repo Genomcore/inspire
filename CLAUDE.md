@@ -159,9 +159,12 @@ repo is both its source and its own marketplace.
       empty section, and the one place the 0.8 grace on the presence classes is
       paid for — see
       [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)).
-      `emanate-plan` (a scope's frontier snapshot → dependency waves → the floor
-      versus the declared ceiling → every readiness check, JSON on stdout and
-      nothing written anywhere — see
+      `emanate-plan` (a scope's frontier snapshot **minus what the tests show is
+      already realized** → dependency waves → the floor versus the declared
+      ceiling → every readiness check, plus the run-level facts a spawn brief
+      needs — the declared test infrastructure and the project's wire-convention
+      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
+      stdout and nothing written anywhere — see
       [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
       and `emanate-gate` (a unit's claims × the tests citing them × the suite
       result → one pass/fail verdict on stdout, the deterministic evidence an

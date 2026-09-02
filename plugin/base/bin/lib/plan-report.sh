@@ -23,11 +23,23 @@ plan_json_plan() {
     --rawfile profiles "$PLAN_TMP/profiles.spool" \
     --rawfile waves "$PLAN_TMP/waves.spool" \
     --rawfile findings "$PLAN_TMP/findings.spool" \
+    --rawfile realized "$PLAN_TMP/realized" \
+    --rawfile reemsel "$PLAN_TMP/reemanate-args" \
+    --rawfile reemunits "$PLAN_TMP/reemanate" \
+    --rawfile goalunits "$PLAN_TMP/goal.units" \
+    --rawfile components "$PLAN_TMP/components.spool" \
+    --rawfile probes "$PLAN_TMP/probes.spool" \
+    --rawfile wireids "$PLAN_TMP/wireids.spool" \
+    --rawfile wirerows "$PLAN_TMP/wirerows.spool" \
+    --arg goalsel "$PLAN_GOAL" \
+    --argjson goalfloor "$PLAN_GOAL_FLOOR" \
     --argjson floor "$PLAN_FLOOR" \
     --argjson ceiling "${PLAN_CEILING:-null}" \
     --argjson deliverable "$PLAN_DELIVERABLE" \
+    --argjson realizedall "$PLAN_REALIZED_ALL" \
     --argjson ready "$PLAN_READY" \
     "$PLAN_JQ_PRELUDE"'
+      def ids($s): $s | split("\n") | map(select(length > 0));
       (recs($requires) | group_by(.[0])
        | map({key: .[0][0], value: map({kind: .[1], id: .[2]})}) | from_entries) as $req
     | (recs($profiles) | group_by(.[0])
@@ -39,6 +51,22 @@ plan_json_plan() {
        floor: $floor,
        ceiling: $ceiling,
        deliverable_waves: $deliverable,
+       realized: (ids($realized) | sort),
+       realized_all: $realizedall,
+       reemanate: (if (ids($reemsel) | length) == 0 then null
+                   else {selectors: ids($reemsel),
+                         units: (ids($reemunits) | sort)} end),
+       goal: (if $goalsel == "" then null
+              else {selector: $goalsel, units: (ids($goalunits) | sort),
+                    floor: $goalfloor} end),
+       preflight: {components: (recs($components)
+                                | map({name: cel(.;0), purpose: nul(cel(.;1))})
+                                | sort_by(.name)),
+                   probe_profiles: (ids($probes) | sort)},
+       wire_conventions: {ids: (ids($wireids) | sort),
+                          decisions: (recs($wirerows)
+                                      | map({decision: cel(.;0),
+                                             answer: nul(cel(.;1))}))},
        units: (recs($units)
                | map({kind: cel(.;1), id: cel(.;0), path: cel(.;2),
                       lifecycle: cel(.;3), module: nul(cel(.;4)),
@@ -107,11 +135,12 @@ plan_report_findings() {
   } >&2
 }
 
-# plan_report_plan — the frontier, its waves, the floor-versus-ceiling line and
-# the findings.
+# plan_report_plan — the frontier, its waves, what was already realized, the
+# floor-versus-ceiling line and the findings.
 plan_report_plan() {
-  local units
+  local units realized
   units="$(LC_ALL=C grep -c . "$PLAN_TMP/units.spool")"
+  realized="$(LC_ALL=C grep -c . "$PLAN_TMP/realized")"
   plan_banner "$([ "$PLAN_READY" = true ] && echo READY || echo "NOT READY")"
   {
     printf '\nFRONTIER (%s unit%s)\n' "$units" "$([ "$units" = 1 ] || echo s)"
@@ -120,8 +149,21 @@ plan_report_plan() {
         printf "%s%s", sep, $2; sep = " · " }
       END { if (w != "") printf "\n" }
     ' "$PLAN_TMP/waves.tsv"
+    # Silent when nothing is realized, so a run with no --tests-root prints what
+    # it always printed.
+    if [ "$realized" -gt 0 ]; then
+      printf '\nREALIZED (%s, out of the frontier)\n  ' "$realized"
+      awk '{ printf "%s%s", sep, $0; sep = " · " } END { printf "\n" }' "$PLAN_TMP/realized"
+    fi
+    if [ -s "$PLAN_TMP/reemanate" ]; then
+      printf '\nRE-EMANATED (%s, treated as unrealized)\n  ' \
+        "$(LC_ALL=C grep -c . "$PLAN_TMP/reemanate")"
+      awk '{ printf "%s%s", sep, $0; sep = " · " } END { printf "\n" }' "$PLAN_TMP/reemanate"
+    fi
+    [ -n "$PLAN_GOAL" ] && printf '\nGOAL %s · %s piece(s) · FLOOR TO GOAL %s\n' \
+      "$PLAN_GOAL" "$(LC_ALL=C grep -c . "$PLAN_TMP/goal.units")" "$PLAN_GOAL_FLOOR"
     printf '\nFLOOR %s · CEILING %s · DELIVERABLE %s of %s waves\n' \
-      "$PLAN_FLOOR" "${PLAN_CEILING:-—}" "$PLAN_DELIVERABLE" "$PLAN_FLOOR"
+      "$PLAN_FLOOR" "${PLAN_CEILING:-—}" "$PLAN_DELIVERABLE" "$PLAN_EFFECTIVE_FLOOR"
   } >&2
   plan_report_findings
 }

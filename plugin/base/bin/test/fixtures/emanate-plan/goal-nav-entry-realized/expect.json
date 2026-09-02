@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests",
+    "--goal",
+    "users.detail"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".realized | join(\",\")", "equals": "users.list" },
+    { "expr": ".goal.units | join(\",\")", "equals": "users.audit,users.detail" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-23", "PR-", "NOT READY"]
+}
