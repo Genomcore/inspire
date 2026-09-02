@@ -1,0 +1,15 @@
+{
+  "exit": 4,
+  "args": [
+    "pattern",
+    "list"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].class] | unique | join(\",\")", "equals": "DR-C4" },
+    { "expr": ".refused | length", "equals": "2" },
+    { "expr": "[.refused[] | select(.message | test(\"declared twice\"))] | length", "equals": "1" },
+    { "expr": "[.refused[] | select(.message | test(\"carries no key\"))] | length", "equals": "1" },
+    { "expr": "has(\"claims\")", "equals": "false" }
+  ],
+  "forbidden": ["DR-C3"]
+}

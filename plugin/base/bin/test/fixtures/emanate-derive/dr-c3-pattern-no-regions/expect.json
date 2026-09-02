@@ -1,0 +1,14 @@
+{
+  "exit": 4,
+  "args": [
+    "pattern",
+    "list"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].class] | unique | join(\",\")", "equals": "DR-C3" },
+    { "expr": ".refused[0].target", "equals": "spec/kb/05_screens/patterns/list.md" },
+    { "expr": ".refused[0].remedy", "equals": "/inspire_screens extract list" },
+    { "expr": "has(\"claims\")", "equals": "false" }
+  ],
+  "forbidden": ["DR-C1", "DR-C5"]
+}

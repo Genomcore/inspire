@@ -1,0 +1,66 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "pattern",
+    "id": "filtered-list",
+    "path": "spec/kb/05_screens/patterns/filtered-list.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "a roster the user narrows before acting on it.",
+  "requires": [
+    {
+      "kind": "component",
+      "id": "filter"
+    },
+    {
+      "kind": "component",
+      "id": "paginator"
+    }
+  ],
+  "structure": [
+    "The filter bar.",
+    "The records.",
+    "The paginator."
+  ],
+  "variants": [
+    "**Faceted** — a sidebar of facet groups in place of the toolbar."
+  ],
+  "regions": [
+    {
+      "region": "toolbar",
+      "fill": "required",
+      "accepts": "dispatch",
+      "holds": "the filters and the sort control"
+    },
+    {
+      "region": "body",
+      "fill": "required",
+      "accepts": "data",
+      "holds": "the records themselves"
+    },
+    {
+      "region": "status",
+      "fill": "optional",
+      "accepts": "static",
+      "holds": "count, selection, footer meta"
+    }
+  ],
+  "claims": [
+    {
+      "id": "filtered-list/region/toolbar",
+      "oracle": "test",
+      "fingerprint": "sha256:8c3b480d267c439b903f092aba427073e8642b02c9033935ccbe539e13a49cb5"
+    },
+    {
+      "id": "filtered-list/region/body",
+      "oracle": "test",
+      "fingerprint": "sha256:a8b63ae4cf314db7da43905170a9afc66005f1ba56caa1de054516de96b48c51"
+    },
+    {
+      "id": "filtered-list/region/status",
+      "oracle": "test",
+      "fingerprint": "sha256:a416a4daa43853f3b6440bbae8ef1f70f76bbd046af712e6c6f6a695ae8bc0e0"
+    }
+  ]
+}

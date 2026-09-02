@@ -126,8 +126,11 @@ the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md)
 `**Pattern:**` is a **peer layout dependency**, not the screen's definition: it
 constrains presentation and nothing else, and a screen that names none is not a
 special case — it simply inherits no shared layout. Its declarations stand on
-their own either way. Both lines feed the emanation gate: a screen emanates once
-the pattern and components it declares are `stable`.
+their own either way. Both lines are **ordering edges** for the emanation loop: a
+shared layout and a shared component are units it emanates too, so a screen
+declaring them waits for their wave instead of waiting for someone to build them
+by hand first
+([`_references/emanation-plan.md`](../../_references/emanation-plan.md)).
 
 ## `## Purpose` — who comes here, and what for
 

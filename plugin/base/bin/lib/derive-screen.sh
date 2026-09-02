@@ -22,31 +22,6 @@
 # as declared dependencies — id, resolved path, and a component's `**State:**`
 # line — and readiness over those states is the `plan` script's question.
 
-# derive_header_line <file> <marker> — the body of a `**Marker:**` header line.
-derive_header_line() {
-  awk -v pfx="$2" "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      index($0, pfx) == 1 { print substr($0, length(pfx) + 1); exit }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
-}
-
-# derive_header_links <file> <marker> — every wikilink target on that header
-# line, pipe-syntax unwrapped.
-derive_header_links() {
-  awk -v pfx="$2" "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      index($0, pfx) == 1 {
-        s = $0
-        while (match(s, /\[\[[^]]+\]\]/)) {
-          t = substr(s, RSTART + 2, RLENGTH - 4)
-          p = index(t, "|")
-          if (p > 0) t = substr(t, p + 1)
-          print t
-          s = substr(s, RSTART + RLENGTH)
-        }
-        exit
-      }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
-}
-
 # derive_bindings_table <copy> — `## Bindings` as records: `SUB<FS>{name}` per
 # H3 and `R<FS>{cells…}` per data row, in document order, so one pass knows
 # which subsection each row belongs to. The separator row is the discriminator,

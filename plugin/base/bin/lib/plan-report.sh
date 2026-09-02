@@ -41,7 +41,7 @@ plan_json_plan() {
        deliverable_waves: $deliverable,
        units: (recs($units)
                | map({kind: cel(.;1), id: cel(.;0), path: cel(.;2),
-                      lifecycle: cel(.;3), module: cel(.;4),
+                      lifecycle: cel(.;3), module: nul(cel(.;4)),
                       surface: nul(cel(.;5)),
                       profiles: ($prof[cel(.;0)] // []),
                       requires: ($req[cel(.;0)] // []),

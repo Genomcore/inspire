@@ -13,7 +13,7 @@ does not restate the enum.
 |---|---|
 | `draft` | In design. Bindings are still moving; the shape checks report warnings only. |
 | `accepted` | Design closed. The bindings are the contract: keys, actions, outcomes and states are fixed, and the shape checks are errors from here on. The screen is in the emanation frontier. |
-| `stable` | Implementation locked. The screen is realized, its claims are covered by evidence, and every pattern and component it declares is itself stable. |
+| `stable` | Implementation locked. The screen is realized, its claims are covered by evidence, and every pattern and component it declares is at `**State:** implemented`. |
 | `superseded` | The screen exists for backward reference. It carries `superseded_by:` pointing at the screen id that replaced it, and drops out of the frontier. |
 
 The severity of a screen's shape and coherence findings ramps with this field, the
@@ -48,18 +48,21 @@ change is not a change of referent.
 
 ## How the frontier reads it
 
-The emanation frontier takes `accepted` screens. Two orderings meet here and both
-are correct:
+The emanation frontier takes `accepted` screens — and, beside them, the catalog
+entries at `**State:** to-extract`, which is what `accepted` is for an entry that
+carries no `lifecycle:` of its own. Two orderings meet here and both are correct:
 
 - **Birth order** — `/inspire_extract` may discover a shared component *after* the
   screens that adopt it. Discovery running behind adoption is specification-time
   work, not a defect.
-- **Gate order** — a screen emanates only once the patterns and components it
-  declares are stable.
+- **Wave order** — a screen emanates a wave behind the patterns and components it
+  declares, in the same run. It never waits for them to be hand-built: an entry at
+  `to-extract` is a unit the loop emanates, and only an entry stating neither
+  `to-extract` nor `implemented` leaves a screen unready.
 
-There is no circularity: extraction happens while specifying, the gate fires while
-emanating. The sharp edge is accepted knowingly — promoting a recurring block out
-of already-delivered screens changes their composition, so those screens
+There is no circularity: extraction happens while specifying, the ordering applies
+while emanating. The sharp edge is accepted knowingly — promoting a recurring block
+out of already-delivered screens changes their composition, so those screens
 legitimately re-enter the frontier. A refactor *is* a spec change, and claims are
 keyed per binding, so the unchanged ones stay covered and the re-emanation stays
 cheap.

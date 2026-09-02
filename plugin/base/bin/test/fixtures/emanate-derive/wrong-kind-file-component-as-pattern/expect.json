@@ -1,0 +1,11 @@
+{
+  "exit": 3,
+  "args": [
+    "pattern",
+    "--file",
+    "spec/kb/05_screens/components/data-table.md"
+  ],
+  "stdout_jq": [
+    { "expr": ".", "equals": "" }
+  ]
+}

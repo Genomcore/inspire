@@ -18,9 +18,10 @@
 #   has to be stable or in the frontier (`PR-03`). Only the layering is skipped.
 #
 #   AN EDGE ORDERS A WAVE ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
-#   `stable` artifact is satisfied out of band, an edge to an `accepted` unit
-#   outside the scope is someone else's run, and an edge to a pattern or a
-#   component is a readiness check rather than a constraint.
+#   `stable` artifact is satisfied out of band and an edge to an `accepted` unit
+#   outside the scope is someone else's run. A pattern and a component are units
+#   like the rest since ED10, so their edges order like the rest: a screen waits
+#   for its layout's and its components' wave rather than refusing over them.
 #
 # Sourced after `_lib.sh`, `plan-lib.sh`, `plan-scan.sh` and `plan-stack.sh`.
 
@@ -208,8 +209,6 @@ plan_ingest_one() {
     case "$t" in
       R) plan_row requires "$id" "$f1" "$f2"
          printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$path" "$kind" "$f1" "$f2" >> "$PLAN_TMP/deps.tsv" ;;
-      P) plan_check_pattern "$id" "$f1" "$f2" ;;
-      C) plan_check_component "$id" "$f1" "$f2" "$f3" ;;
       X) plan_find "PR-01" "error" "$id" "$(plan_path_norm "$f2")" \
            "$(plan_owner "$f2")" "$f3" "$f4" "$f1" ;;
       *) ;;
@@ -217,41 +216,23 @@ plan_ingest_one() {
   done < "$recf"
 }
 
-# plan_check_pattern — PR-05. `screen-coherence` reports the same shape as a
-# warning on the pattern file; at emanation an unverifiable layout join is a
-# rendering the contracter would guess at, so plan reports it as an error. A
-# pattern link that resolves to nothing is derive's `DR-R4`, already a `PR-01`.
-plan_check_pattern() {
-  local uid="$1" pid="$2" p
-  p="$(plan_path_norm "$3")"
-  [ -f "$p" ] || return 0
-  sdd_has_section "$p" "Regions" && return 0
-  plan_find "PR-05" "error" "$uid" "$p" "$(plan_owner "$p")" \
-    "pattern \`$pid\` declares no \`## Regions\` table, so the screen-to-layout join cannot be checked" \
-    "add a \`## Regions\` table to $p"
-}
-
-# plan_check_component — PR-04 (D10/A10: a screen cannot emanate until the
-# components it declares are stable).
-plan_check_component() {
-  local uid="$1" cid="$2" state="$4" p
-  p="$(plan_path_norm "$3")"
-  [ "$state" = "implemented" ] && return 0
-  plan_find "PR-04" "error" "$uid" "$p" "$(plan_owner "$p")" \
-    "declared component \`$cid\` is at \`**State:** ${state:-—}\`, not \`implemented\`" \
-    "implement \`$cid\`, then set its \`**State:**\` to \`implemented\`"
-}
-
-# plan_resolve_edges — the second pass: PR-02, PR-03 and the ordering edge set.
-# One rule for every edge — it must resolve, and its target must be stable or in
-# the frontier. Navigation is dropped from the ORDERING alone, after both checks
-# have run, which is why the `continue` for it sits inside the in-frontier arm.
+# plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge
+# set. One rule for every edge, whatever its kind — it must resolve, and its
+# target must be stable or in the frontier. Navigation is dropped from the
+# ORDERING alone, after both checks have run, which is why the `continue` for it
+# sits inside the in-frontier arm.
+#
+# ED10 is what makes that one rule reach the catalog kinds. They used to be
+# skipped here and answered by two bespoke readiness errors, which meant a
+# screen could not emanate until its UI kit had been hand-built first. Now a
+# to-extract component is a unit like any other and the screen simply WAITS for
+# its wave; the error form survives only where it always belonged — a target
+# that is neither delivered nor emanatable.
 plan_resolve_edges() {
   local uid upath ukind dkind did dpath lc state
   : > "$PLAN_TMP/edges.tsv"
   while IFS=$'\t' read -r uid upath ukind dkind did; do
     [ -n "$uid" ] || continue
-    case "$dkind" in pattern|component) continue ;; esac
     dpath="$(plan_dep_path "$dkind" "$did")"
     if [ -z "$dpath" ]; then
       plan_find "PR-02" "error" "$uid" "$did" "$(plan_owner "$upath")" \
@@ -264,8 +245,15 @@ plan_resolve_edges() {
       printf '%s\t%s\n' "$uid" "$did" >> "$PLAN_TMP/edges.tsv"
       continue
     fi
-    lc="$(sdd_fm_value "$dpath" '.lifecycle')"
+    lc="$(plan_lifecycle_of "$dpath" "$dkind")"
+    if [ "$lc" = "stable" ] && [ "$dkind" = "pattern" ]; then
+      plan_check_regions "$uid" "$did" "$dpath"
+      continue
+    fi
     case "$lc" in stable|accepted) continue ;; esac
+    case "$dkind" in
+      pattern|component) plan_find_catalog "$uid" "$dkind" "$did" "$dpath"; continue ;;
+    esac
     state="is at lifecycle \`$lc\`"
     [ -n "$lc" ] || state="declares no lifecycle"
     plan_find "PR-03" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
@@ -275,10 +263,44 @@ plan_resolve_edges() {
   LC_ALL=C sort -u "$PLAN_TMP/edges.tsv" -o "$PLAN_TMP/edges.tsv"
 }
 
+# plan_find_catalog — PR-04 (component) and PR-05 (pattern): the entry's
+# `**State:**` is neither `implemented` nor `to-extract`, so it is neither
+# delivered nor a unit anything can emanate, and the screen naming it has
+# nothing to wait for. A `to-extract` entry outside the scope is treated the way
+# an out-of-scope `accepted` unit is — someone else's run.
+plan_find_catalog() {
+  local uid="$1" dkind="$2" did="$3" dpath="$4" owner state msg fix
+  owner="$(plan_owner "$dpath")"
+  state="$(sdd_catalog_state "$dpath")"
+  msg="declared $dkind \`$did\` is at \`**State:** ${state:-—}\` — neither \`implemented\` nor \`to-extract\`, so it is neither delivered nor emanatable"
+  fix="set its \`**State:**\` to \`to-extract\` so it enters the frontier, or to \`implemented\` once its code exists"
+  # Both ids spelled out rather than picked into a variable: `test-plan-lib.sh`
+  # holds the catalogue and the code to the same set of literals, and an id the
+  # grep cannot see is an id the document is free to drift from.
+  case "$dkind" in
+    component) plan_find "PR-04" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
+    *)         plan_find "PR-05" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
+  esac
+}
+
+# plan_check_regions — PR-05's other half, and the only one an `implemented`
+# pattern can reach: a delivered layout is never derived, so nothing else would
+# ever notice that it declares no holes. `screen-coherence` reports the same
+# shape as a warning on the pattern file; at emanation an unverifiable join is a
+# rendering the contracter would guess at.
+plan_check_regions() {
+  local uid="$1" pid="$2" dpath="$3"
+  sdd_has_section "$dpath" "Regions" && return 0
+  plan_find "PR-05" "error" "$uid" "$dpath" "$(plan_owner "$dpath")" \
+    "pattern \`$pid\` declares no \`## Regions\` table, so the screen-to-layout join cannot be checked" \
+    "add a \`## Regions\` table to $dpath"
+}
+
 plan_define_remedy() {
   case "$1" in
-    screen) printf '/inspire_screens create %s' "$2" ;;
-    *)      printf '/inspire_domain define %s' "$2" ;;
+    screen)            printf '/inspire_screens create %s' "$2" ;;
+    pattern|component) printf '/inspire_screens extract %s' "$2" ;;
+    *)                 printf '/inspire_domain define %s' "$2" ;;
   esac
 }
 

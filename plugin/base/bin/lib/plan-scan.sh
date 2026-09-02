@@ -26,10 +26,24 @@ plan_enumerate() {
     case "$only" in */*) dir="${only%/*}" ;; *) dir="." ;; esac
   fi
   {
-    sdd_find_entities "${dir:-$SDD_SPEC_ROOT}" | awk '{ print $0 "\tentity" }'
-    sdd_find_actions  "${dir:-$SDD_SPEC_ROOT}" | awk '{ print $0 "\taction" }'
-    sdd_find_screens  "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tscreen" }'
+    sdd_find_entities   "${dir:-$SDD_SPEC_ROOT}" | awk '{ print $0 "\tentity" }'
+    sdd_find_actions    "${dir:-$SDD_SPEC_ROOT}" | awk '{ print $0 "\taction" }'
+    sdd_find_screens    "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tscreen" }'
+    sdd_find_patterns   "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tpattern" }'
+    sdd_find_components "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tcomponent" }'
   } | if [ -n "$only" ]; then awk -F'\t' -v p="$only" '$1 == p'; else cat; fi
+}
+
+# plan_lifecycle_of <path> <kind> — the lifecycle a unit declares, per kind. A
+# catalog entry carries no `lifecycle:` field and states the same three things
+# on its `**State:**` line; `sdd_catalog_lifecycle` owns that mapping and derive
+# reads it through the same function, so the frontier and the contract cannot
+# disagree about whether a component is already delivered.
+plan_lifecycle_of() {
+  case "$2" in
+    component|pattern) sdd_catalog_lifecycle "$1" ;;
+    *)                 sdd_fm_value "$1" '.lifecycle' ;;
+  esac
 }
 
 # plan_scan — every in-scope unit into `scanned.tsv` (path, kind, lifecycle) and
@@ -53,7 +67,7 @@ plan_scan() {
   while IFS=$'\t' read -r path kind; do
     [ -n "$path" ] || continue
     local lc
-    lc="$(sdd_fm_value "$path" '.lifecycle')"
+    lc="$(plan_lifecycle_of "$path" "$kind")"
     printf '%s\t%s\t%s\n' "$path" "$kind" "$lc" >> "$PLAN_TMP/scanned.tsv"
     [ "$lc" = "accepted" ] && printf '%s\t%s\n' "$path" "$kind" >> "$PLAN_TMP/frontier.tsv"
   done < "$PLAN_TMP/scanned.raw"
@@ -81,18 +95,21 @@ plan_derive_all() {
 }
 
 # plan_contract_records <file> — one contract as the record stream the reader
-# consumes: U identity · R requires edge · P pattern · C component · X refusal.
-# A refused unit needs no marker of its own: derive gives it no `claims` key, so
-# its count is 0 and its `X` records say why.
+# consumes: U identity · R requires edge · X refusal. A refused unit needs no
+# marker of its own: derive gives it no `claims` key, so its count is 0 and its
+# `X` records say why.
+#
+# A screen's `pattern` and `components` keys are NOT read here. They restate
+# edges the `requires[]` set already carries, and since ED10 made both catalog
+# kinds units, one edge rule answers all five kinds — a second reading would be
+# a second place for the pattern-and-component question to be answered
+# differently.
 plan_contract_records() {
   jq -r --arg fs "$PLAN_FS" '
     def row($a): $a | map(tostring) | join($fs);
     [ row(["U", (.unit.id // ""), (.unit.lifecycle // ""), (.unit.module // ""),
            ((.claims // []) | length)]) ]
     + ((.requires // []) | map(row(["R", .kind, .id])))
-    + (if (.pattern // null) == null then []
-       else [row(["P", .pattern.id, .pattern.path])] end)
-    + ((.components // []) | map(row(["C", .id, .path, (.state // "")])))
     + ((.refused // []) | map(row(["X", .class, .target, .message, .remedy])))
     | .[]
   ' "$1" 2>/dev/null
@@ -146,6 +163,12 @@ plan_dep_path() {
     screen)
       plan_screen_index
       plan_index_lookup "$PLAN_TMP/screen-ids.tsv" "$id"
+      return 0 ;;
+    # A catalog entry's name IS its filename stem and both catalogs are
+    # suite-wide, so there is one place to look and no index to fall back to.
+    pattern|component)
+      p="$SDD_KB_ROOT/05_screens/${kind}s/$id.md"
+      [ -f "$p" ] && plan_path_norm "$p"
       return 0 ;;
   esac
   if [ -f "$p" ]; then plan_path_norm "$p"; return 0; fi

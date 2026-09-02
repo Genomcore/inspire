@@ -1,6 +1,7 @@
 # Pattern: detail
 
 **Purpose:** show everything about one entity instance, on its own route.
+**State:** to-extract
 
 A **single-record view** — everything about one entity instance, on its own route.
 Reached by clicking a row in a [`list`](list.md).

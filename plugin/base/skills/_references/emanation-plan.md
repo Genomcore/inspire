@@ -86,9 +86,11 @@ generic catch-all would collapse two different answers into one.
 - **`units[].requires`** is derive's edge set verbatim — every declared
   dependency, ordering or not. Which of them ORDER is visible in `waves`.
 - **`units[].surface`** is the surface a split screens tree puts a screen under,
-  `null` for entities, actions and the flat suite-of-one shape.
-- **`units[].profiles`** is the resolved set: the ids that exist on disk, with
-  each framework profile's named language folded in.
+  `null` for every other kind and for the flat suite-of-one shape.
+  **`units[].module`** is `null` for the two catalog kinds, which have none.
+- **`units[].profiles`** is the resolved set the unit is emanated under: its
+  matching framework profile, that framework's language, and any declared
+  `layer: language` profile. See § Profiles.
 - **`findings[].derive_class`** carries derive's own class id on a `PR-01` and is
   `null` on every other code. `unit`, `target` and `owner` are `null` on a
   finding that names none.
@@ -108,9 +110,11 @@ there is no unit for a skill to own. Every class found is reported, not the firs
 
 ## What a unit is, and which are in the frontier
 
-**Unit kinds are exactly derive's three** — `entity`, `action`, `screen`.
-Patterns and components are not units; their readiness is read off a component's
-`**State:**` (`PR-04`) and a pattern's `## Regions` (`PR-05`).
+**Unit kinds are exactly derive's five** — `entity`, `action`, `screen`,
+`component`, `pattern`. A shared layout and a shared component are units the
+loop emanates, not readiness errors on the screens that declare them (ED10):
+refusing there would have made the loop unable to touch any screen whose UI kit
+had not been hand-built first.
 
 **The frontier is every unit at `lifecycle: accepted`, within scope.** `accepted`
 is design closed and the contract being implemented, which is exactly what
@@ -118,14 +122,27 @@ emanates. `draft` is still in design, `stable` is already delivered, `superseded
 is history. An empty frontier refuses (`PR-12`) rather than emitting a green
 zero-wave plan, so a run cannot build worktrees for nothing.
 
+**A catalog entry says the same thing on its `**State:**` line**, since it
+carries no `lifecycle:` field: `to-extract` is the analogue of `accepted` and
+enters the frontier, `implemented` the analogue of `stable` and satisfies an
+edge out of band. Anything else — a third word, or no line — states neither, and
+a screen declaring such an entry is `PR-04` / `PR-05`. `sdd_catalog_lifecycle`
+in `_lib.sh` is the one implementation of that mapping, which derive reads too:
+two answers to "is this component delivered?" would be one too many.
+
+A catalog entry's `units[].module` is `null` and its `surface` always is: both
+catalogs are suite-wide and a shared entry belongs to every module that
+instantiates it.
+
 ## The ordering edge set
 
 **Every `requires[]` edge is checked the same way, whatever its kind: it must
-resolve (`PR-02`), and its target must be `stable` or in the frontier (`PR-03`).**
+resolve (`PR-02`), and its target must be delivered or in the frontier —
+otherwise `PR-03`, or `PR-04` / `PR-05` when the target is a catalog entry.**
 What the edge set below narrows is the ORDERING, and only the ordering.
 
-The ordering edge set is derive's `requires[]`, minus two kinds of edge that are
-not build-time dependencies:
+The ordering edge set is derive's `requires[]`, minus one kind of edge that is
+not a build-time dependency:
 
 - **Navigation never orders a wave.** A `screen`-kinded edge out of a screen unit
   is a route reference — a route derives from `module` + `screen` without the
@@ -134,13 +151,17 @@ not build-time dependencies:
   The **only** thing navigation skips is the wave ordering: a navigation target
   that resolves to nothing is still `PR-02`, and one at `draft` or `superseded`
   is still `PR-03`. A screen that navigates somewhere unfinished is not ready.
-- **Pattern and component edges are readiness checks, never constraints.** They
-  are answered by `PR-04` and `PR-05`.
+
+**Pattern and component edges order like every other kind** since ED10 made both
+units: a screen waits for its layout's and its components' wave. A17's sibling
+rule survives — a pattern and a component order only by a *declared* edge
+between them (a pattern's own `**Components:**` line), never by an assumed tier.
 
 **An edge orders a wave only when its target is itself in the frontier.** An edge
-to a `stable` artifact is satisfied out of band; an edge to an `accepted` unit
-outside the scope is another run's business; an edge to anything else — `draft`,
-`superseded`, or a lifecycle nothing states — is `PR-03`.
+to a `stable` artifact — or an `implemented` catalog entry — is satisfied out of
+band; an edge to an `accepted` unit outside the scope is another run's business;
+an edge to anything else — `draft`, `superseded`, or a lifecycle nothing states
+— is `PR-03`, `PR-04` or `PR-05` by the target's kind.
 
 An edge whose target resolves to no artifact at all is `PR-02`. Resolution is
 vault-wide even when ordering is scope-wide, or a narrowed run would report every
@@ -211,9 +232,9 @@ languages, and any declared `layer: language` profile.
 |---|---|---|---|
 | `PR-01` | derive refused this unit — one finding per class in its `refused[]`, carrying derive's `class` (as `derive_class`), `target`, `message` and `remedy` verbatim, never re-worded | error | the target's layer |
 | `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it | error | the depending unit's layer |
-| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from | error | the target's layer |
-| `PR-04` | a screen declares a component whose `**State:**` is not `implemented`: a screen cannot emanate until the components it declares are stable | error | `inspire-screens` |
-| `PR-05` | a screen names a pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. `screen-coherence` reports the same shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
+| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from. A catalog target takes `PR-04` / `PR-05` instead | error | the target's layer |
+| `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
+| `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
 | `PR-07` | the unit's matching framework set is not a singleton: two or more, and nothing states which one a spawn is briefed with; or none, and nothing states how the unit is built at all. For a domain kind the ambiguity is inherent — the domain-versus-service partition is an ADR decision nothing on disk states — and refusing it is the alternative to guessing | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |

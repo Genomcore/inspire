@@ -14,7 +14,9 @@
 #
 # The frontier is every unit at `lifecycle: accepted` within the scope: design
 # closed, contract being implemented, which is exactly what emanates. `draft` is
-# still in design, `stable` is already delivered, `superseded` is history.
+# still in design, `stable` is already delivered, `superseded` is history. A
+# catalog entry says the same thing on its `**State:**` line, `to-extract`
+# standing in for `accepted` and `implemented` for `stable`.
 #
 # The stdout JSON shape, the `PR-*` catalogue, the frontier rule, the edge rule
 # and the wave algorithm: `.claude/skills/_references/emanation-plan.md`.

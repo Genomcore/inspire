@@ -11,28 +11,44 @@ copied here, because two catalogues of one class is one catalogue too many.
 
 ## What a unit is
 
-Three kinds, and the kind is always given explicitly:
+Five kinds, and the kind is always given explicitly:
 
 | kind | artifact | id |
 |---|---|---|
 | `entity` | `04_domain/{module}/{entity}/{module}.{entity}.md` | `auth.user` |
 | `action` | `04_domain/{module}/{entity}/{module}.{entity}.{action}.md` | `auth.user.create` |
 | `screen` | `05_screens/[{surface}/]{module}/{screen}.md` | `users.list` · `admin.users.list` |
+| `component` | `05_screens/components/{name}.md` | `data-table` |
+| `pattern` | `05_screens/patterns/{name}.md` | `filtered-list` |
 
 The kind is positional rather than inferred because a 2-segment id is an entity
-*or* a screen and a 3-segment id an action *or* a collision-minted screen.
+*or* a screen, a 3-segment id an action *or* a collision-minted screen, and a
+bare word a component *or* a pattern.
 
-**Patterns and components are not derive kinds.** A screen's contract lists them
-as declared dependencies — id, resolved path, and a component's `**State:**`
-line — and reading readiness off those states is `emanate plan`'s question, not
-this one's. A use-case file is not a unit either: its `OS-F*` classes are
-review's, and nothing emanates from a use case directly.
+**A catalog entry's id is its filename stem** — the opposite of a screen, whose
+id is minted write-once and never re-derived from location. An entry carries no
+identity block at all, and both catalogs are suite-wide and never move into a
+surface tree, so there is exactly one place to look and nothing positional to
+lose. A catalog entry has no `module` either: a shared layout or component
+belongs to every module that instantiates it, so the key is absent rather than
+guessed.
+
+**A catalog entry's lifecycle is its `**State:**` line**, over a closed
+vocabulary: `to-extract` (authored, no code behind it yet) is the analogue of
+`accepted`, and `implemented` the analogue of `stable`. `unit.lifecycle` carries
+the analogue, `unit.state` the line as written, and anything else is `DR-C1`.
+The line's own meaning is
+[`inspire-screens/references/screen-catalog.md`](../inspire-screens/references/screen-catalog.md)
+§ "`**State:**` is the entry's lifecycle".
+
+**A use-case file is not a unit.** Its `OS-F*` classes are review's, and nothing
+emanates from a use case directly.
 
 ## CLI
 
 ```
-emanate-derive.sh <entity|action|screen> <id>
-emanate-derive.sh <entity|action|screen> --file <path>
+emanate-derive.sh <entity|action|screen|component|pattern> <id>
+emanate-derive.sh <entity|action|screen|component|pattern> --file <path>
 ```
 
 The current working directory is the repo root; `SDD_SPEC_ROOT` (default
@@ -55,8 +71,8 @@ the grouped human report.
 
 ```json
 { "schema": "inspire.derived-contract/1",
-  "unit": { "kind", "id", "path", "lifecycle", "module",
-            "entity"? , "action"?, "screen"? },
+  "unit": { "kind", "id", "path", "lifecycle", "module"?,
+            "entity"? , "action"?, "screen"?, "state"? },
   "purpose": "…",
   "requires": [ { "kind", "id" } … ],
   … kind-specific sections …
@@ -64,20 +80,25 @@ the grouped human report.
 ```
 
 - **`unit`** carries the identity as declared, never as inferred from location.
-  A screen with no identity block is refused, not renamed.
-- **`purpose`** is the `## Purpose` prose, whitespace-collapsed to one line. It
-  is the unit's intent, which the contracter would otherwise have to
+  A screen with no identity block is refused, not renamed. `module` is absent
+  for the two catalog kinds, and `state` is theirs alone.
+- **`purpose`** is the unit's intent, whitespace-collapsed to one line — the
+  `## Purpose` prose, or the `**Purpose:**` header line for a catalog entry,
+  which has no such section. It is what the contracter would otherwise have to
   reconstruct from links.
 - **`requires`** is the dependency edge set, deduplicated and sorted: an
   action's frontmatter `requires:` plus every entity it touches; an entity's
   `references(…)` targets; a screen's data and dispatch actions, its navigation
   targets (including a dispatch outcome that navigates), its pattern and its
-  components. Whether a required id exists is `emanate plan`'s question — derive
-  records the edge.
+  components; a pattern's own `**Components:**` line. A component declares none
+  — A17's rule is that a pattern and a component order only by a *declared* edge
+  between them, never by an assumed tier. Whether a required id exists is
+  `emanate plan`'s question — derive records the edge.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order then the invariants; for an action the
   input constraints, preconditions, behavior steps, postconditions and errors;
-  for a screen the data, dispatch, navigation and state bindings.
+  for a screen the data, dispatch, navigation and state bindings; for a
+  component its props then its states; for a pattern its regions.
 
 ### Shared shapes
 
@@ -114,6 +135,8 @@ vocabulary.
 | `entity` | `fields` (each `{name, type, notes, constraints[]}`) · `invariants` |
 | `action` | `inputs` (each `{name, type, required, description, constraints[]}`) · `outputs` · `entities` · `preconditions` · `behavior` · `postconditions` · `errors` |
 | `screen` | `features` · `pattern` · `components` · `bindings` · `route` |
+| `component` | `structure` · `variants` · `props` (each `{name, carries}`) · `states` (each `{key, when, presentation}`) |
+| `pattern` | `structure` · `variants` · `regions` (each `{region, fill, accepts, holds}`) |
 
 - **`outputs`** is `{ "entity", "fields" }`. The whole-entity one-liner
   (`An array of [[auth.user|auth::user]] entities.`) sets `entity` and leaves
@@ -133,11 +156,23 @@ vocabulary.
   `admin.users.list` still renders `/users/list`. `default` is the
   stack-agnostic rendering `/{module}/{screen}`; the shell prefix and the exact
   rendering belong to the framework profile.
+- **`structure`** and **`variants`** are the list items of `## Structure` and
+  `## Variants`, ordinals stripped. Both are **carried and never claimed**: a
+  structural bullet is prose no oracle checks, and a claim no oracle can cover
+  reads as covered by construction. The tokens paragraph those sections sit
+  beside points at the design system and restates nothing the entry owns, so it
+  is not read at all.
+- **`regions`** carries the pattern's holes verbatim, `Fill` and `Accepts`
+  lowercased by nobody: the two vocabularies are `screen-coherence.sh`'s own
+  (`required` | `optional`, and one or more of `data` · `dispatch` · `nav` ·
+  `static`), and a value outside them is `DR-C5`. A region is a hole — it says
+  what kind of content it takes, never which fields that content shows.
 
 ## Claim ids
 
 Domain claim ids are exactly `keyed-heads.md` § Keyspaces, screen claim ids
-exactly `format-screen.md` § Claims:
+exactly `format-screen.md` § Claims; a catalog entry's are keyed by its own
+declared key, the way every other kind's are:
 
 ```
 {module}.{entity}/field/{field}/{op}     {module}.{entity}/inv/I{n}
@@ -146,11 +181,14 @@ exactly `format-screen.md` § Claims:
 {action}/error/{code}
 {screen-id}/data/{key}                   {screen-id}/dispatch/{key}
 {screen-id}/nav/{key}                    {screen-id}/state/{key}
+{component-id}/prop/{name}               {component-id}/state/{key}
+{pattern-id}/region/{key}
 ```
 
 `{op}` is the constraint word itself, one claim per word, so changing a
 constraint retires that claim and mints the new one while every sibling stays
-covered.
+covered. A row keyed by nothing, or by a key already taken in the same table, is
+`DR-C4`: both break the claim's one job, which is to name one thing.
 
 ## The fingerprint
 
@@ -170,6 +208,9 @@ whitespace-collapsed and trimmed:
 | screen dispatch | action id · trigger · canonical `on_success` · canonical `on_error` |
 | screen navigation | target screen id · trigger |
 | screen state | when · presentation |
+| component prop | what it carries |
+| component state | when · presentation |
+| pattern region | fill · accepts · what it holds |
 
 The **canonical head text** is `word` or `word(a1,a2)` with each argument
 trimmed, so `len(3, 64)` and `len(3,64)` are one claim. A dispatch's outcomes
@@ -193,10 +234,10 @@ D7). On exit `4` stdout carries every class found, not the first, and no
   "refused": [ { "class", "target", "message", "remedy" } … ] }
 ```
 
-`remedy` names the owning skill's touch command — `/inspire-domain update {id}`
-or `/inspire-screens update {id}`. Nothing machine-edits the knowledge base:
-naming an invariant is judgment, and judgment happens inside the touch
-interview.
+`remedy` names the owning skill's touch command — `/inspire-domain update {id}`,
+`/inspire-screens update {id}`, or `/inspire-screens extract {id}` for a catalog
+entry. Nothing machine-edits the knowledge base: naming an invariant is
+judgment, and judgment happens inside the touch interview.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the
 severity review reported it at.** The 0.8 grace that keeps the five presence
@@ -216,15 +257,25 @@ second copy of a check to drift. The rules consulted, and nothing else:
 |---|---|
 | `entity` · `action` | `keys-present` · `constraints-mechanics` · `head-referents` · `sections-present` |
 | `screen` | `screen-coherence` · `sections-present` |
+| `component` · `pattern` | none |
 
 Nothing a consulted rule reports against the unit is ignored. A message carrying
 an `OS-*` prefix is filed under that class; the rest map to the `DR-*` ids below;
 anything neither is filed under `DR-U1` rather than dropped.
 
+**The catalog kinds consult none, and that is a fact about the rules rather than
+a relaxation.** No review rule owns a catalog entry's own shape:
+`screen-coherence` reaches a pattern only through an adopting screen, so a
+pattern-scoped run finds no screen to reach it from and a consulted rule would
+report nothing at all — silence that would read as a clean entry. The `DR-C*`
+classes below are therefore the whole of the strictness for these two kinds,
+not half of it.
+
 ### `DR-*` — the classes derive names itself
 
-`DR-T*` and `DR-R*` are derive-only: no rule owns them, because they are
-questions only a reader that has to *render* the unit needs answered. `DR-S*`
+`DR-T*`, `DR-R*` and `DR-C*` are derive-only: no rule owns them, because they
+are questions only a reader that has to *render* the unit needs answered — and
+for `DR-C*`, because no rule owns a catalog entry's shape at all. `DR-S*`
 and `DR-D1` are shapes the screen and section rules already report and no
 catalogue had numbered; derive numbers them so a golden fixture, a finding and
 this table name the same thing.
@@ -250,6 +301,11 @@ this table name the same thing.
 | `DR-S10` | a state whose `When` anchors nothing declared | touch the screen |
 | `DR-S11` | the pattern join: a required region finds no binding of a kind it accepts | touch the screen |
 | `DR-S12` | a `stable` screen declaring a `to-extract` component | touch the screen |
+| `DR-C1` | a catalog entry's `**State:**` is absent, or outside the closed pair `implemented` \| `to-extract` — so its lifecycle is unstated and no run can place it | touch the entry |
+| `DR-C2` | a component entry declares no `## API / Slots` props table, or one with no rows: its props are the whole of what it owns | touch the entry |
+| `DR-C3` | a pattern entry declares no `## Regions` table, or one with no rows: it has no holes to inject and nothing to join a screen against | touch the entry |
+| `DR-C4` | a keyed row in a catalog table carries no key, or repeats one already taken in that table | touch the entry |
+| `DR-C5` | a region's `Fill` or `Accepts` value falls outside the closed vocabularies `screen-coherence.sh` reads for the join | touch the entry |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |

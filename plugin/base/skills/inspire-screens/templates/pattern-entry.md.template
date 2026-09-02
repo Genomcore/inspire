@@ -8,6 +8,7 @@
 # Pattern: {pattern-name}
 
 **Purpose:** {one-line description of what this pattern is for — first body line, greppable}
+**State:** implemented | to-extract
 **Components:** [[../components/{component-name}]]
 
 {One-paragraph description of the pattern.}
