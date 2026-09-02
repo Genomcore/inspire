@@ -1,0 +1,3 @@
+PASS  test/accounts/account.e2e-spec.ts
+  POST /accounts
+    ok provisions an account end to end (12 ms)

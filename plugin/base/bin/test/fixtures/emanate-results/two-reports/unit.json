@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "testResults": [
+    {
+      "name": "src/accounts/account.service.spec.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["AccountService"],
+          "title": "creates an account",
+          "fullName": "AccountService creates an account",
+          "status": "passed",
+          "failureMessages": []
+        }
+      ]
+    }
+  ]
+}

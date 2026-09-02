@@ -1,0 +1,5 @@
+{
+  "exit": 5,
+  "args": ["--from", "runner.out"],
+  "stdout_jq": [{ "expr": ".schema", "equals": "" }]
+}

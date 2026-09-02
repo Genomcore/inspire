@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "numTotalTests": 2,
+  "numPassedTests": 2,
+  "testResults": [
+    {
+      "name": "test/accounts/account.e2e-spec.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "provisions an account end to end",
+          "fullName": "POST /accounts provisions an account end to end",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "persists the full document",
+          "fullName": "POST /accounts persists the full document",
+          "status": "passed",
+          "failureMessages": []
+        }
+      ]
+    }
+  ]
+}

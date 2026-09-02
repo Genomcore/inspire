@@ -1,0 +1,18 @@
+{
+  "success": false,
+  "testResults": [
+    {
+      "name": "test/accounts/account.e2e-spec.ts",
+      "status": "failed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "rejects a duplicate email",
+          "fullName": "POST /accounts rejects a duplicate email",
+          "status": "failed",
+          "failureMessages": ["expected 409, received 200"]
+        }
+      ]
+    }
+  ]
+}

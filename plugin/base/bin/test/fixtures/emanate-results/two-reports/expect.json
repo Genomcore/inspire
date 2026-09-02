@@ -1,0 +1,5 @@
+{
+  "exit": 0,
+  "args": ["--from", "unit.json", "--from", "e2e.json"],
+  "stdout": "expected-stdout.json"
+}

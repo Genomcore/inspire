@@ -1,0 +1,15 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    {
+      "file": "test/accounts/account.e2e-spec.ts",
+      "name": "POST /accounts provisions an account end to end",
+      "status": "passed"
+    },
+    {
+      "file": "test/accounts/account.e2e-spec.ts",
+      "name": "POST /accounts persists the full document",
+      "status": "passed"
+    }
+  ]
+}

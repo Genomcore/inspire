@@ -1,0 +1,40 @@
+{
+  "success": false,
+  "numTotalTests": 3,
+  "numFailedTests": 2,
+  "testResults": [
+    {
+      "name": "test/accounts/account.e2e-spec.ts",
+      "status": "failed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "provisions an account end to end",
+          "fullName": "POST /accounts provisions an account end to end",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "rejects a duplicate email",
+          "fullName": "POST /accounts rejects a duplicate email",
+          "status": "failed",
+          "failureMessages": ["expected 409, received 200", "  at Object.<anonymous>"]
+        }
+      ]
+    },
+    {
+      "name": "src/accounts/account.service.spec.ts",
+      "status": "failed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["AccountService"],
+          "title": "raises AccountAlreadyExists",
+          "fullName": "AccountService raises AccountAlreadyExists",
+          "status": "failed",
+          "failureMessages": ["expected AccountAlreadyExists, received undefined"]
+        }
+      ]
+    }
+  ]
+}
