@@ -97,6 +97,25 @@ eq "a zero-assertion job fails the run" "$c_rc" "1"
 check "and is reported as zero assertions, by name" \
   "printf '%s\n' \"\$c\" | grep -q '^FAIL plugin/test/synth/e-empty.sh 0 assertions'"
 
+# --- a red hand-wired sibling fails the run too -----------------------------
+# A sibling's verdict line and output dump are printed by run.sh itself, so its
+# status has to be carried past them deliberately; a FAIL line alone would have
+# left the run green.
+E="$WORK/e"; mk_estate "$E"
+synth "$E" a-green "$GREEN2" "$GREEN2b"
+mkdir -p "$E/plugin/base/bin/test"
+printf '#!/usr/bin/env bash\necho "synth sibling deliberate red"\nexit 1\n' \
+  > "$E/plugin/base/bin/test/test-trust.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$E/plugin/base/bin/test/lib-tests.sh"
+e="$(bash "$E/plugin/test/run.sh" -j 1 2>&1)"; e_rc=$?
+eq "a red sibling job fails the run" "$e_rc" "1"
+eq "it is counted as a failing file, beside the green sibling and job" \
+   "$(printf '%s\n' "$e" | sed -n 's/^Files: \([0-9]*\/[0-9]*\) .*/\1/p')" "2/1"
+check "the red sibling is named" \
+  "printf '%s\n' \"\$e\" | grep -q '^FAIL golden/test-trust.sh'"
+check "its output is dumped under it" \
+  "printf '%s\n' \"\$e\" | grep -q 'synth sibling deliberate red'"
+
 # --- a job that reaches into the shared cache fails the run ----------------
 D="$WORK/d"; mk_estate "$D"
 synth "$D" c-cache "$CACHEJOB" "$CACHEJOB2" "$CACHEJOB3" "$CACHEJOB4"

@@ -130,13 +130,17 @@ launch() {
         file)   bash "$arg" ;;
         golden) bash "$GOLDEN/run-tests.sh" "$arg" ;;
         # Mirrors run-tests.sh's own wiring for these three: one verdict line,
-        # the script's own output shown only when it fails.
+        # the script's own output shown only when it fails. The script's status
+        # is carried out of the block, not the verdict line's or the dump's —
+        # report() reads this block's status as the whole job's verdict.
         sibling)
-          if bash "$GOLDEN/$arg" > "$TMP/$idx.sib" 2>&1; then
+          bash "$GOLDEN/$arg" > "$TMP/$idx.sib" 2>&1; sib_rc=$?
+          if [ "$sib_rc" -eq 0 ]; then
             echo "PASS $label"
           else
             echo "FAIL $label"; cat "$TMP/$idx.sib"
-          fi ;;
+          fi
+          ( exit "$sib_rc" ) ;;
       esac
     } > "$TMP/$idx.out" 2>&1
     echo "$?" > "$TMP/$idx.rc"
