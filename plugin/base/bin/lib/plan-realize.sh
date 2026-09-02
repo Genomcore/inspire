@@ -62,8 +62,12 @@ plan_realize() {
   awk -F"$GATE_FS" -v OFS="$PLAN_FS" '$2 != "" { print $1, $2 }' \
     "$PLAN_TMP/citations" | LC_ALL=C sort -u > "$PLAN_TMP/cited"
   plan_claim_pairs > "$PLAN_TMP/claims"
-  awk -F"$PLAN_FS" '
-    FNR == NR { cited[$0] = 1; next }
+  # File identity, never `FNR == NR`: `cited` is legitimately empty whenever
+  # every citation is id-only, and awk then reads no record from it at all — so
+  # NR and FNR advance in lockstep through `claims` and the record-count guard
+  # swallows EVERY claim row into the cited set instead of counting it.
+  awk -F"$PLAN_FS" -v citedf="$PLAN_TMP/cited" '
+    FILENAME == citedf { cited[$0] = 1; next }
     { total[$1]++; if (($2 FS $3) in cited) ok[$1]++ }
     END { for (u in total) if (ok[u] + 0 == total[u]) print u }
   ' "$PLAN_TMP/cited" "$PLAN_TMP/claims" | LC_ALL=C sort > "$PLAN_TMP/realized"
@@ -132,9 +136,16 @@ plan_match_sel() {
 #   X..Y     the segment: every node on an ordering path from X up to Y,
 #            inclusive — the dependents of X intersected with the dependencies
 #            of Y, which is what "on a path between" means on a DAG
+#
+# $PLAN_SEL_REASON carries WHY it named none, because the two ways differ in what
+# the operator has to change: an endpoint no unit answers to is a typo, while a
+# segment whose endpoints both resolve is a direction mistake — the same care the
+# empty frontier gets, where "no such unit" and "nothing left" are opposite
+# answers.
 plan_selector_set() {
   local sel="$1" nodes="$2" edges="$3" out="$4" left right
   : > "$out"
+  PLAN_SEL_REASON="names no unit in the frontier"
   case "$sel" in
     *..*)
       left="${sel%%..*}"; right="${sel#*..}"
@@ -149,6 +160,7 @@ plan_selector_set() {
         plan_reach "$edges" "$out.l" up   > "$out.up"
         plan_reach "$edges" "$out.r" down > "$out.down"
         LC_ALL=C comm -12 "$out.up" "$out.down" > "$out"
+        [ -s "$out" ] || PLAN_SEL_REASON="names both endpoints ($left, $right), but no ordering path runs from the first up to the second — a segment has a direction; try it the other way round"
       fi ;;
     *) plan_match_sel "$sel" "$nodes" > "$out" ;;
   esac
@@ -164,7 +176,8 @@ plan_edges_all() {
 }
 
 # plan_apply_reemanate — every `--reemanate` selector's set, unioned, out of the
-# realized set. Sets $PLAN_BAD_SELECTOR and returns 1 on one that names nothing.
+# realized set. Sets $PLAN_BAD_SELECTOR (and $PLAN_SEL_REASON) and returns 1 on
+# one that names nothing.
 plan_apply_reemanate() {
   local sel n=0
   : > "$PLAN_TMP/reemanate"

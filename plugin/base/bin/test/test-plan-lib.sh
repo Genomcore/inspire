@@ -4,7 +4,7 @@
 #
 # `run-tests.sh` runs one fixture at a time and compares one run's stdout with
 # one golden file or one `jq` probe, which covers every per-scope claim the
-# goldens state. Four kinds of assertion do not fit that shape and live here
+# goldens state. Six kinds of assertion do not fit that shape and live here
 # instead, wired in by hand exactly as `test-derive-lib.sh` is:
 #
 #   ACROSS TWO RUNS — that two plans over one tree are byte-identical. A golden
@@ -28,6 +28,11 @@
 #   AGAINST A BROKEN BIN TREE — the overseer shape's other four writing tools,
 #   and the exit-6 path a working `derive` never reaches. A fixture cannot state
 #   either: the harness runs the real scripts.
+#
+#   POSITIVELY ABOUT STDERR — WHICH diagnosis a rejected selector printed. A
+#   fixture's `forbidden` can only say a substring is absent, and "the operator
+#   can tell a typo from a wrong-way segment" is a claim about what the message
+#   does say.
 #
 # Usage: bash plugin/base/bin/test/test-plan-lib.sh
 
@@ -253,6 +258,36 @@ eq "a --tests-root that is not there is a usage error" \
 eq "and the same flags with arguments that resolve exit 0" \
   "$(usage_run canonical-example --reemanate 'users.*' --goal users.detail)" \
   "$(printf '0\tSOMETHING')"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# A segment has a direction. `X..X` is the degenerate one — it has to resolve to
+# X alone rather than to X's whole cone — and the reversed one has to SAY it is
+# reversed: both endpoints are right there in the frontier, so the diagnosis a
+# typo gets would send the operator hunting for a unit that exists.
+# ─────────────────────────────────────────────────────────────────────────────
+
+eq "the degenerate segment X..X selects exactly X" \
+  "$(plan_in clean-three-waves --reemanate 'auth.user..auth.user' \
+     | jq -c '.reemanate | {units}')" '{"units":["auth.user"]}'
+
+# sel_diag <fixture> <arg>… — the exit code, whether stdout was empty, and which
+# of the two selector diagnoses stderr carried.
+sel_diag() {
+  local fx="$1" out code diag=other; shift
+  out="$( cd "$FX/$fx" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
+            bash "$BIN/emanate-plan.sh" --profiles-root spec/profiles \
+              --agents-root spec/agents "$@" 2>"$TMP/sel.err" )"
+  code=$?
+  case "$(cat "$TMP/sel.err")" in
+    *"names both endpoints"*)          diag=wrong-way ;;
+    *"names no unit in the frontier"*) diag=no-such-unit ;;
+  esac
+  printf '%s\t%s\t%s' "$code" "$([ -z "$out" ] && echo empty || echo SOMETHING)" "$diag"
+}
+
+eq "a reversed segment is diagnosed as a direction, not as a missing unit" \
+  "$(sel_diag clean-three-waves --reemanate 'auth.user.list..auth.org')" \
+  "$(printf '2\tempty\twrong-way')"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # One grammar, two readings — the claim that no single fixture can hold, since a

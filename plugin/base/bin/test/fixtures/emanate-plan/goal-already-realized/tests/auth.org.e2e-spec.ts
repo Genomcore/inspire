@@ -1,6 +1,7 @@
 // Every claim of auth.org's current contract, cited with a matching
-// fingerprint: the unit is realized and leaves the frontier, which shrinks the
-// waves from three to two. Three units remain — the frontier is NOT empty.
+// fingerprint: the unit is realized, so `--goal auth.org` names a unit that is
+// no longer a node. Selectors match over every frontier-ELIGIBLE unit, so the
+// answer is "nothing left" — exit 0, an empty closure — never a usage error.
 describe('auth.org', () => {
   // @claim auth.org/field/id/nonnull sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109
   // @claim auth.org/field/id/unique sha256:c2720445a45267813688ff73fa188aa060c1b661aefaf1650d42f690697b5ab3

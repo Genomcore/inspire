@@ -477,7 +477,7 @@ plan_check_preflight() {
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low
 # ceiling partial-but-reported delivery in graph order, so it never flips
 # `ready` and a run whose only finding is this one exits 0.
-# the ceiling is measured against the floor the run actually has to reach, which
+# The ceiling is measured against the floor the run actually has to reach, which
 # a `--goal` shortens: a ceiling that covers the goal is not under-budgeted just
 # because some deeper unit is also in scope.
 plan_check_ceiling() {

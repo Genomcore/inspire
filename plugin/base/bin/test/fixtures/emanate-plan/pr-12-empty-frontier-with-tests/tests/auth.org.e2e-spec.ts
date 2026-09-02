@@ -1,6 +1,7 @@
-// Every claim of auth.org's current contract, cited with a matching
-// fingerprint: the unit is realized and the whole frontier is empty because of
-// it, which is the success case rather than PR-12's refusal.
+// Every claim of auth.org's contract, cited with a matching fingerprint — and
+// it changes nothing: auth.org is `draft`, so the frontier is empty before any
+// derivation and PR-12 refuses in tier 1. A populated tests root never rescues
+// an empty frontier; realization is only reachable once there is one.
 describe('auth.org', () => {
   // @claim auth.org/field/id/nonnull sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109
   // @claim auth.org/field/id/unique sha256:c2720445a45267813688ff73fa188aa060c1b661aefaf1650d42f690697b5ab3

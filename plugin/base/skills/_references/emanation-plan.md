@@ -48,7 +48,7 @@ the two layers, as everywhere in `.inspire/bin/`.
 |---|---|---|
 | `0` | **ready** — a plan, and no error-severity finding | the plan, `"ready": true` |
 | `1` | **not ready** — a plan was computed and at least one finding is an error | the plan, `"ready": false` |
-| `2` | usage — unknown flag, a bad `--ceiling`, a `--scope` or `--tests-root` path that is not there, a `--tests-root` holding a path this tool cannot address (a `:` or a newline in its name), a `--reemanate`/`--goal` selector that names no unit in the frontier, `-h`/`--help` | empty |
+| `2` | usage — unknown flag, a bad `--ceiling`, a `--scope` or `--tests-root` path that is not there, a `--tests-root` holding a path this tool cannot address (a `:` or a newline in its name), a `--reemanate`/`--goal` selector that selects nothing, `-h`/`--help` | empty |
 | `4` | **refused** — a precondition of planning failed; nothing is planned | the refusal object |
 | `5` | roots missing: `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | empty |
 | `6` | internal — a `derive` run exited outside `{0,4}`, or produced no readable contract. Defensive; every input it could refuse over is checked first | empty |
@@ -149,12 +149,12 @@ There is **no `waves`, `floor` or `units` key at all** — nothing was planned, 
 an empty key would read as "planned, and it is empty". Refusals carry no `owner`:
 there is no unit for a skill to own. Every class found is reported, not the first.
 
-**And no `preflight`, `wire_conventions`, `realized` or `goal` either** — worth
-stating, because those four are exactly the fields whose value is "learn it at
-t=0". A run refused for `PR-12` or `PR-13` therefore learns nothing about its
-test infrastructure: the refusal is that there is no plan to preflight *for*, and
-an operator who has just been told their frontier is empty has a shorter question
-to answer first.
+**And no `preflight`, `wire_conventions`, `realized`, `realized_all`,
+`reemanate` or `goal` either** — worth stating, because those six are exactly
+the fields whose value is "learn it at t=0". A run refused for `PR-12` or
+`PR-13` therefore learns nothing about its test infrastructure: the refusal is
+that there is no plan to preflight *for*, and an operator who has just been told
+their frontier is empty has a shorter question to answer first.
 
 ## What a unit is, and which are in the frontier
 
@@ -280,13 +280,20 @@ is the same exemption the waves have and it is there for the same reason: list
 and detail screens navigate to each other in every real vault, so a nav-walking
 closure would pull a whole screen cluster into every selection.
 
-**A selector that names no unit in the frontier is a usage error (exit 2), not a
-reported no-match.** A selector is something the operator typed, like `--scope`
-and `--ceiling`; a typo that quietly selected nothing would answer "rebuild
-these" with a green run that rebuilt nothing. Naming a unit that is already
-realized is *not* that case — selectors match over every frontier-**eligible**
-node, so `--goal` on a realized unit answers "nothing left" (`goal.floor: 0`)
-rather than "no such unit".
+**A selector that selects nothing is a usage error (exit 2), not a reported
+no-match.** A selector is something the operator typed, like `--scope` and
+`--ceiling`; a typo that quietly selected nothing would answer "rebuild these"
+with a green run that rebuilt nothing. Naming a unit that is already realized is
+*not* that case — selectors match over every frontier-**eligible** node, so
+`--goal` on a realized unit answers "nothing left" (exit 0, `goal.units: []`,
+`goal.floor: 0`) rather than "no such unit".
+
+**Stderr distinguishes the two ways a selector can select nothing**, because
+they call for different corrections. An endpoint no frontier unit answers to
+"names no unit in the frontier" — a typo. A segment whose endpoints *both*
+resolve but which spans no ordering path says so, and names the direction: a
+segment runs from dependency up to dependent, so `users.list..auth.user` is the
+reversal of a segment that would have resolved, not a misspelling.
 
 `--reemanate` is repeatable and its sets union; the selected units are treated as
 unrealized for this run and everything unselected keeps its realization. There
@@ -436,11 +443,13 @@ hardcoded directory name — the roots are configurable everywhere else in
 
 Two runs over one tree produce **byte-identical stdout**. Every list is
 `LC_ALL=C` sorted, no unsorted `find` output reaches the output, and no
-timestamp, temp path or process id appears in it. The one list that is not
-sorted is `wire_conventions.decisions`, which keeps its table's order — still
-deterministic, since a file has one order. This is a requirement rather
-than a nicety: the orchestrator diffs plans between runs, and a plan that
-reordered itself would read as a vault that had changed.
+timestamp, temp path or process id appears in it. **Two lists are not sorted**,
+and both are still deterministic because their source has exactly one order:
+`wire_conventions.decisions` keeps its table's order, and `reemanate.selectors`
+keeps the order the operator typed — re-sorting the latter would only make the
+usage error name a different selector than the first mistake. This is a
+requirement rather than a nicety: the orchestrator diffs plans between runs, and
+a plan that reordered itself would read as a vault that had changed.
 
 ## Consumers
 

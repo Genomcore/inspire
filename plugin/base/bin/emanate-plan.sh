@@ -71,8 +71,10 @@
 #        The verdict vocabulary is `review.sh`'s, not an internal-failure code.
 #   2    usage — unknown flag, a bad --ceiling, a --scope or --tests-root path
 #        that is not there, a --tests-root holding a path this tool cannot
-#        address, a --reemanate/--goal selector that names no unit in the
-#        frontier, or -h/--help.
+#        address, a --reemanate/--goal selector that selects nothing (no unit in
+#        the frontier answers to an endpoint, or a segment's endpoints both
+#        resolve with no ordering path between them in that direction), or
+#        -h/--help.
 #   4    REFUSED. A precondition of planning failed and nothing is planned.
 #        Stdout carries every class found, not the first.
 #   5    roots missing — $SDD_KB_ROOT or $SDD_SPEC_ROOT is not a directory.
@@ -153,6 +155,7 @@ die_usage() {
 PLAN_CEILING=""
 PLAN_BROKE=""
 PLAN_BAD_SELECTOR=""
+PLAN_SEL_REASON=""
 PLAN_FLOOR=0
 PLAN_GOAL=""
 PLAN_GOAL_FLOOR=0
@@ -304,7 +307,7 @@ plan_derive_all
 plan_ingest || { echo "emanate-plan.sh: $PLAN_BROKE" >&2; exit "$EXIT_INTERNAL"; }
 plan_realize || { echo "emanate-plan.sh: $PLAN_BROKE" >&2; exit "$EXIT_USAGE"; }
 plan_apply_reemanate || {
-  echo "emanate-plan.sh: $PLAN_BAD_SELECTOR names no unit in the frontier" >&2
+  echo "emanate-plan.sh: $PLAN_BAD_SELECTOR $PLAN_SEL_REASON" >&2
   exit "$EXIT_USAGE"; }
 plan_narrow
 plan_resolve_edges
@@ -318,7 +321,7 @@ fi
 
 if [ -n "$PLAN_GOAL" ]; then
   plan_goal "$PLAN_GOAL" || {
-    echo "emanate-plan.sh: $PLAN_BAD_SELECTOR names no unit in the frontier" >&2
+    echo "emanate-plan.sh: $PLAN_BAD_SELECTOR $PLAN_SEL_REASON" >&2
     exit "$EXIT_USAGE"; }
 fi
 

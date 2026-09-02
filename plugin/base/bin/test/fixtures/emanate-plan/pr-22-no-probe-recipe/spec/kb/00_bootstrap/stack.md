@@ -8,8 +8,9 @@ wire_conventions: [rest]
 # Tech stack
 
 The stack this fixture's units are emanated under. It declares test
-infrastructure and wire-convention decisions, and `nestjs` carries the probe
-recipe for the former — so `preflight` is populated and nothing is a finding.
+infrastructure and wire-convention decisions, and NO resolved framework profile
+carries a `## Test infrastructure` probe recipe — so `preflight.components` is
+populated, `preflight.probe_profiles` is empty, and `PR-22` warns.
 
 ## Language
 
