@@ -315,9 +315,9 @@ anything.
   shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
   holds no tests and the runner never runs it.
 
-  A run takes three to four minutes, and that is fixture builds and process
-  spawns, not a hang. Measured solo: **~207 s** for the whole estate at the
-  default `-j`, from 160–169 s before the component and pattern unit kinds
+  A run takes about three and a half minutes, and that is fixture builds and
+  process spawns, not a hang. Measured solo: **~207 s** for the whole estate at
+  the default `-j`, from 160–169 s before the component and pattern unit kinds
   brought their goldens, 267 s before the batched runtime and 106 s before
   `emanate-derive`'s goldens existed at all. It is spawn-bound, not critical-path bound — every job
   inflates roughly twofold beside eight peers, so cutting a long file shortens
