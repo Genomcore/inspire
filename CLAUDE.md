@@ -307,7 +307,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its six hand-wired siblings. `golden/emanate-derive` is the estate's longest job (62 s solo, 83 fixtures): derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape |
+  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its six hand-wired siblings. `golden/emanate-derive` is among the estate's heaviest jobs, at 83 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -315,20 +315,17 @@ anything.
   shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
   holds no tests and the runner never runs it.
 
-  A run takes about three and a half minutes, and that is fixture builds and
-  process spawns, not a hang. Measured solo: **~207 s** for the whole estate at
-  the default `-j`, from 160–169 s before the component and pattern unit kinds
-  brought their goldens, 267 s before the batched runtime and 106 s before
-  `emanate-derive`'s goldens existed at all. It is spawn-bound, not critical-path bound — every job
-  inflates roughly twofold beside eight peers, so cutting a long file shortens
-  that file and leaves the wall where it was. Run on its own, every file is under
-  20 s but four: `upgrade/18b-e2e-resolution-flags.sh` (27 s, four pre-0.3
-  fixtures and four updates), `upgrade/23-agents-class.sh` (27 s),
-  `upgrade/22c-derive-equal-resolutions.sh` (20–23 s) and
-  `materialize/01-init-current-tree.sh` (22 s); of the golden jobs,
-  `golden/emanate-plan` runs 39 s over 35 fixtures, and the longest job of any
-  kind is `golden/emanate-derive` at 62 s, which is 83 fixtures, most of them
-  spawning the validators that own the refusal classes. Every job is
+  A run takes minutes rather than seconds, and that is fixture builds and
+  process spawns, not a hang. **Wall-clock figures are deliberately not recorded
+  here** — measurements of the same job on the same machine have varied by more
+  than they differ from each other, so any number in this file would be
+  measuring load rather than the estate. Measure it yourself when you need to
+  know. What is stable is the shape: the run is **spawn-bound, not
+  critical-path bound** — every job inflates roughly twofold beside eight peers,
+  so cutting a long file shortens that file and leaves the wall where it was.
+  The two golden jobs `emanate-derive` and `emanate-plan` dominate, over 83 and
+  60 fixtures respectively; a handful of `upgrade/` and `materialize/` files
+  that build several period-correct fixtures each come next. Every job is
   **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
   only ever read, so any number of copies — several worktrees at once, the same
   file twice over, a single file beside a full run — can run concurrently without
