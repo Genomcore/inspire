@@ -2,7 +2,8 @@
 
 The structured projection `.inspire/bin/emanate-gate.sh` prints on stdout —
 claim coverage x citing tests x suite result, folded into one pass/fail
-verdict the orchestrator weighs before it walks `accepted -> stable` (D8).
+verdict the orchestrator weighs before it promotes a unit (D8) — a merge,
+never a lifecycle edit; see § Consumers.
 This file owns its JSON shape, the suite-results schema it consumes, the
 exit codes and the `GV-*` catalogue gate names itself. A separate file from
 [`derived-contract.md`](derived-contract.md) on purpose: two schemas, two
@@ -87,10 +88,12 @@ misconfigured `--tests-root`, or the reverse.
 
 For each `--tests-root`, every regular file is walked and grepped for
 `@claim[[:space:]]+[^[:space:]]+([[:space:]]+sha256:[0-9a-f]+)?` — the shared
-scanner's grammar, of which `tester.md` is normative for the **id** half: the
+scanner's grammar, for which `tester.md` is normative in **both** halves: the
 id runs from the first non-space after `@claim` to the first whitespace or
 the end of the line — a trailing
-`.` is legal inside an id and is read as part of it. A discovered path
+`.` is legal inside an id and is read as part of it — and the optional second
+word is the fingerprint below, which `tester.md` § The fingerprint half tells
+the tester to write. A discovered path
 carrying `:` or a newline is exit 3 (symlinks/exotic paths are a declared
 non-support, `CLAUDE.md`).
 
@@ -245,8 +248,11 @@ implementation, so the two packages evolve independently.
 
 ## Consumers
 
-`emanate gate` is the entry point; nothing else runs it. The orchestrator
-reads the verdict as one more piece of evidence before it walks
-`accepted -> stable` — see `_references/lifecycle-rules.md` § How `promote`
-walks. Gate itself calls nothing, edits no frontmatter, and never writes
-`lifecycle:`.
+`/inspire-emanate run`'s gate step is the entry point; nothing else runs it.
+The orchestrator reads the verdict as the deterministic half of its promote
+decision — and **promote is git-side**: the unit's integration branch merges
+into the run's turn branch, carrying the verdict's digest in the merge
+commit's trailers. **No `lifecycle:` is walked and no KB file is written**,
+because a run never touches the knowledge base
+(`inspire-emanate/references/run.md` § promote). Gate itself calls nothing,
+edits no frontmatter, and never writes `lifecycle:` either.
