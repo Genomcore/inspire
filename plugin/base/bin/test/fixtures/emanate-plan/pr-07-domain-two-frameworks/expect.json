@@ -1,0 +1,20 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-07" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/00_bootstrap/stack.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-bootstrap" },
+    { "expr": ".findings[0].unit", "equals": "auth.org" },
+    { "expr": ".findings[0].message | test(\"2 framework profiles\")", "equals": "true" },
+    { "expr": ".findings[0].message | test(\"domain-versus-service\")", "equals": "true" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "nestjs,react,typescript" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["PR-06"]
+}

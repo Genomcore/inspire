@@ -2,6 +2,7 @@
 kind: inspire-code-profile
 id: angular
 layer: frontend
+language: typescript
 ---
 
 ## Layering

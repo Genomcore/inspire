@@ -158,24 +158,50 @@ cycle (`PR-11`).
 
 ## Profiles
 
-Resolution order, per unit:
+**Which set is declared**, per unit:
 
 1. the suite-wide `profiles:` in `00_bootstrap/stack.md`, or — when it declares
    none — the ids inferable from its `## Layer: Name` sections;
 2. for a screen under a surface, that surface's own `**Profiles:**` line from
    `00_bootstrap/surfaces.md`, falling back to the suite-wide set when it
-   declares none. Entities and actions always take the suite-wide set: the
-   domain-versus-service partition is an ADR decision and is not machine-readable;
-3. each resolved framework profile pulls in the profile its `language:` names —
-   which counts as a rendering home only when that file's own `layer:` is
-   `language`. A framework naming another framework, or naming itself, resolves
-   to a file and still states nothing about how a semantic type renders.
+   declares none. Every other kind takes the suite-wide set: a catalog entry is
+   suite-wide by construction, and for an entity or an action the
+   domain-versus-service partition is an ADR decision nothing on disk states.
 
-The resolved set must contain at least one language profile that exists on disk,
-or the unit is `PR-06`. This is where D5's amendment lands: "missing profiles
-never block" holds for every attended subcommand, and emanation alone draws the
-line differently, because an unattended run with no rendering table emits a guess
-that compiles.
+A declared id whose file is not on disk stays OUT of the resolved set:
+"resolved" means a file was read.
+
+**Which framework the unit is built under**, from that resolved set — narrowed
+by the unit's kind through the profile's own `layer:`:
+
+| kind | matching layer |
+|---|---|
+| `screen` · `component` · `pattern` | `frontend` — a UI unit is frontend by construction |
+| `entity` · `action` | every framework layer (`frontend` · `backend` · `data` · `tooling`) |
+
+**That matching set must be a singleton, or the unit is `PR-07`.** A persona
+spawn is briefed with exactly one framework profile, so two say nothing about
+which and none says nothing at all. The `layer:` narrowing is what keeps the
+common `[react, nestjs]` suite out of it — a screen's frontend set is a
+singleton there — and leaves only the domain kinds ambiguous, which is the one
+case no field on disk answers.
+
+**Which language profile renders its types.** Each framework profile in the
+matching set pulls in the profile its own `language:` names, and that counts as
+a rendering home only when the named file's `layer:` is `language`. A framework
+naming another framework, or naming itself, resolves to a file and still states
+nothing about how a semantic type renders.
+
+**Every framework in the matching set must reach a language profile, or the unit
+is `PR-06`** — per framework, never per set. Set-level was the older shape and
+it let a mixed suite resolve one framework's language and emanate every *other*
+framework's units under it. This is where D5's amendment lands: "missing
+profiles never block" holds for every attended subcommand, and emanation alone
+draws the line differently, because an unattended run with no rendering table
+emits a guess that compiles.
+
+`units[].profiles` is the result: the matching frameworks, their resolved
+languages, and any declared `layer: language` profile.
 
 ## `PR-*` — the readiness catalogue
 
@@ -188,7 +214,8 @@ that compiles.
 | `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier — navigation targets included, since ordering is the only question navigation is exempt from | error | the target's layer |
 | `PR-04` | a screen declares a component whose `**State:**` is not `implemented`: a screen cannot emanate until the components it declares are stable | error | `inspire-screens` |
 | `PR-05` | a screen names a pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. `screen-coherence` reports the same shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
-| `PR-06` | the unit's resolved profile set yields no language profile — none declared, a framework profile's `language:` naming a file that is absent or that is not itself `layer: language`, or the framework profile itself absent so nothing can name a language | error | `inspire-code` |
+| `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
+| `PR-07` | the unit's matching framework set is not a singleton: two or more, and nothing states which one a spawn is briefed with; or none, and nothing states how the unit is built at all. For a domain kind the ambiguity is inherent — the domain-versus-service partition is an ADR decision nothing on disk states — and refusing it is the alternative to guessing | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the floor. **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 
 ### Refusals — nothing is planned, the run exits 4

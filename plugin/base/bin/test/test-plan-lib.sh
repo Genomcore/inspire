@@ -20,6 +20,11 @@
 #   doc stays the authority a human reads; this is what keeps the two from
 #   drifting.
 #
+#   AGAINST THE SHIPPED PROFILES — that every framework profile INSPIRE installs
+#   satisfies the resolver. A fixture carries its own `spec/profiles` tree, so no
+#   golden can say anything about the profiles a real project gets, and `PR-06`
+#   is per framework: one missing `language:` line refuses a whole stack's units.
+#
 #   AGAINST A BROKEN BIN TREE — the overseer shape's other four writing tools,
 #   and the exit-6 path a working `derive` never reaches. A fixture cannot state
 #   either: the harness runs the real scripts.
@@ -102,6 +107,44 @@ else
   eq "every PR-* the code emits is catalogued, and every catalogued id is emitted" \
     "$code_ids" "$doc_ids"
   ne "and the catalogue is not empty" "$code_ids" " "
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# The SHIPPED profiles satisfy the resolver they are read by. A fixture carries
+# its own `spec/profiles` tree, so no golden can state anything about the
+# profiles a real project installs — and `PR-06` is per framework now, which
+# makes every shipped framework profile's `language:` line load-bearing.
+# ─────────────────────────────────────────────────────────────────────────────
+
+PROFILES="$SKILLS/inspire-code/profiles"
+. "$BIN/_lib.sh"
+
+# profile_language <id> — that profile's `language:` value, or empty.
+profile_language() { sdd_fm_value "$PROFILES/$1.md" '.language'; }
+
+if [ ! -d "$PROFILES" ]; then
+  bad "the shipped profiles directory is where the resolver's default says it is"
+else
+  broken=""
+  for p in "$PROFILES"/*.md; do
+    case "$(basename "$p")" in README.md|_*) continue ;; esac
+    [ "$(sdd_fm_value "$p" '.layer')" = "language" ] && continue
+    lang="$(sdd_fm_value "$p" '.language')"
+    [ -n "$lang" ] || continue
+    [ -f "$PROFILES/$lang.md" ] \
+      && [ "$(sdd_fm_value "$PROFILES/$lang.md" '.layer')" = "language" ] \
+      && continue
+    broken="$broken $(basename "$p" .md)->$lang"
+  done
+  eq "every shipped framework profile that names a language resolves one" "$broken" ""
+  # R2: angular closes with one line, and the two native stacks refuse on
+  # purpose — no `swift` or `kotlin` profile ships, and inventing a thin one
+  # would put the loop's least-checked doctrine on its least-checked stacks.
+  eq "angular names the typescript language profile" "$(profile_language angular)" "typescript"
+  eq "react names it too" "$(profile_language react)" "typescript"
+  eq "nestjs names it too" "$(profile_language nestjs)" "typescript"
+  eq "ios deliberately names none" "$(profile_language ios)" ""
+  eq "and android deliberately names none" "$(profile_language android)" ""
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────

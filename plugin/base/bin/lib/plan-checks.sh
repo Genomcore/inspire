@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the seven
+# Library — the readiness catalogue. Every `PR-*` class lives here: the eight
 # findings that leave a plan standing and flip it to not-ready, and the four
 # refusals that mean nothing is planned at all. The catalogue itself — what each
 # id means, its severity and its owner — is
@@ -294,44 +294,108 @@ plan_promote_remedy() {
 
 # plan_declared_for <key> <surface> — the declared id list a unit resolves from,
 # materialized once per key. A surface that declares none inherits the
-# suite-wide set; it does not extend it.
+# suite-wide set; it does not extend it. The file the list came FROM is recorded
+# beside it, because that is the file `PR-07`'s remedy has to name.
 plan_declared_for() {
   local key="$1" surface="$2" f="$PLAN_TMP/prof/$key.declared"
   if [ ! -f "$f" ]; then
+    printf '%s' "$SDD_KB_ROOT/00_bootstrap/stack.md" > "$f.source"
     if [ "$key" = "suite" ]; then
       cp "$PLAN_TMP/stack-profiles" "$f"
     else
       plan_surface_profiles "$surface" > "$f"
-      [ -s "$f" ] || cp "$PLAN_TMP/stack-profiles" "$f"
+      if [ -s "$f" ]; then
+        printf '%s' "$SDD_KB_ROOT/00_bootstrap/surfaces.md" > "$f.source"
+      else
+        cp "$PLAN_TMP/stack-profiles" "$f"
+      fi
     fi
   fi
   printf '%s' "$f"
 }
 
-# plan_check_profiles — PR-06, and the `profiles` spool `units[]` renders from.
+# plan_check_profiles — PR-06 and PR-07, plus the `profiles` spool `units[]`
+# renders from. The two are reported independently: a suite naming two framework
+# profiles of which one has no rendering table has two defects, and suppressing
+# either would hide half the repair.
 plan_check_profiles() {
-  local uid kind path lifecycle module surface claims key why gap miss fix pid
+  local uid kind path lifecycle module surface claims key sel pid
   while IFS="$PLAN_FS" read -r uid kind path lifecycle module surface claims; do
     [ -n "$uid" ] || continue
     key="$(plan_unit_profile_key "$kind" "$surface")"
     plan_resolve_profiles "$key" "$(plan_declared_for "$key" "$surface")"
+    sel="$(plan_unit_profiles "$key" "$kind")"
     while IFS= read -r pid; do
       [ -n "$pid" ] || continue
       plan_row profiles "$uid" "$pid"
-    done < "$PLAN_TMP/prof/$key"
-    why=""; gap=""
-    IFS=$'\t' read -r why gap < "$PLAN_TMP/prof/$key.gap"
-    [ -n "$gap" ] || continue
-    miss="\`$gap\` is not there"
-    fix="add $gap"
-    if [ "$why" = "not-language" ]; then
-      miss="\`$gap\` is not one — its \`layer:\` is not \`language\`"
-      fix="point that \`language:\` at a \`layer: language\` profile"
-    fi
-    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
-      "the resolved profile set yields no language profile — $miss, so nothing states how a semantic type renders" \
-      "declare a language profile in \`00_bootstrap/stack.md\`, or $fix"
+    done < "$sel.set"
+    plan_check_language "$uid" "$sel"
+    plan_check_framework "$uid" "$kind" "$key" "$sel"
   done < "$PLAN_TMP/units.spool"
+}
+
+# plan_check_language — PR-06, one finding per resolved framework profile with
+# no rendering home. Set-level was the older shape and it let a mixed suite
+# resolve one framework's language and emanate every OTHER framework's units
+# under it, which is the guess D5 forbids wearing a clean exit code.
+plan_check_language() {
+  local uid="$1" sel="$2" why fw gap miss fix
+  while IFS=$'\t' read -r why fw gap; do
+    [ -n "$why" ] || continue
+    case "$why" in
+      not-language)
+        miss="names \`$gap\` as its language profile and it is not one — its \`layer:\` is not \`language\`"
+        fix="point \`$fw\`'s \`language:\` at a \`layer: language\` profile" ;;
+      no-language-declared)
+        miss="declares no \`language:\` at all"
+        fix="add a \`language:\` line to $gap naming a \`layer: language\` profile, and author that profile" ;;
+      *)
+        miss="names a language profile that is not there — \`$gap\`"
+        fix="add $gap, or point \`$fw\`'s \`language:\` at a \`layer: language\` profile that exists" ;;
+    esac
+    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
+      "framework profile \`$fw\` $miss, so nothing states how a semantic type renders" \
+      "declare a language profile in \`00_bootstrap/stack.md\`, or $fix"
+  done < "$sel.gap"
+}
+
+# plan_check_framework — PR-07. A persona spawn is briefed with exactly ONE
+# framework profile, so two say nothing about which and none says nothing at
+# all. The `layer:` narrowing is what keeps the common `[react, nestjs]` suite
+# out of this: a screen's frontend set is a singleton there, and only a domain
+# unit — whose owning layer nothing on disk states — is left ambiguous.
+plan_check_framework() {
+  local uid="$1" kind="$2" key="$3" sel="$4" n want src named why miss fix target
+  n="$(LC_ALL=C grep -c . "$sel.fw")"
+  [ "$n" = 1 ] && return 0
+  want="$(plan_unit_layer "$kind")"
+  named="${want:+\`layer: $want\` }framework"
+  # A screen's owning layer is readable, so its ambiguity is the operator's to
+  # narrow; a domain unit's is not, and saying so is what keeps the refusal from
+  # reading as a tool defect.
+  why=" and nothing states which one this $kind is built under"
+  [ -n "$want" ] || why="$why — the domain-versus-service partition is an ADR decision nothing on disk states"
+  src="$(plan_path_norm "$(cat "$PLAN_TMP/prof/$key.declared.source")")"
+  target="$src"
+  if [ "$n" -gt 1 ]; then
+    miss="names $n $named profiles ($(plan_id_list "$sel.fw"))$why"
+    fix="declare exactly one $named profile in \`$src\`"
+  elif [ -s "$PLAN_TMP/prof/$key.missing" ]; then
+    target="$(plan_path_norm "$PLAN_PROFILES_ROOT")"
+    miss="names no $named profile: $(plan_id_list "$PLAN_TMP/prof/$key.missing") is declared and no profile file of that name is on disk"
+    fix="add the missing profile under \`$target\`, or declare a $named profile that is there in \`$src\`"
+  else
+    miss="names no $named profile, so nothing states how this $kind is built"
+    fix="declare a $named profile in \`$src\`"
+  fi
+  plan_find "PR-07" "error" "$uid" "$target" "$(plan_owner "$target")" \
+    "the resolved profile set $miss" "$fix"
+}
+
+# plan_id_list <file> — the ids in a one-per-line file as a backticked,
+# comma-separated phrase, sorted so a message is stable across runs.
+plan_id_list() {
+  LC_ALL=C sort "$1" | awk '{ printf "%s`%s`", sep, $0; sep = ", " }'
 }
 
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low
