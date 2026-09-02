@@ -188,7 +188,7 @@ architecture, and architecture is the framework profile's.
 | `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
 | `## Quality gates` | framework | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |
-| `## Build & verify` | framework | `fix-build` · `review` build step · `debug` |
+| `## Build & verify` | framework | `fix-build` · `review` build step · `debug` · `/inspire-emanate run`'s verify step · `emanate-results.sh` (the machine-readable form of the same commands) |
 | `## Bindings` | framework | the contracter (emitted surface) · derived binding claims · `/inspire-emanate`'s gate step |
 | `## Routes` | framework (UI) | the contracter (route table) · screen nav claims |
 | `## Persistence` | framework | the contracter (model + migration skeleton) · the implementer |

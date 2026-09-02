@@ -328,6 +328,15 @@ equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx 
 filtered form exists. E2E still runs against a real database — filter which package's
 suite runs, never what it runs against.
 
+**Machine-readable results.** The unattended loop needs the suite's outcome as
+data, not as console text: `npm run test -- --json --outputFile={file}` and
+`npm run test:e2e -- --json --outputFile={file}`, then
+`.inspire/bin/emanate-results.sh --from {file} [--from {file}]…` to convert both
+reports into the `inspire.suite-results/1` manifest `emanate-gate.sh --results`
+reads. **Both commands are tolerated non-zero** — a red suite is precisely the run
+whose report the gate needs. `--outputFile` rather than stdout because the suite's
+console output shares that stream.
+
 ## Bindings
 
 > **Seed.** Everything below is a default this template ships, not a rule INSPIRE

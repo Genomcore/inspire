@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "testResults": [
+    {
+      "status": "passed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "provisions an account end to end",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

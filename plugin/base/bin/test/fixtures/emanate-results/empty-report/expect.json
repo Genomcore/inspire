@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "args": ["--from", "jest-report.json"],
+  "stdout": "expected-stdout.json",
+  "stdout_jq": [{ "expr": ".tests | length", "equals": "0" }]
+}

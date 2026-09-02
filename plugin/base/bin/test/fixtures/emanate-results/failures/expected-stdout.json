@@ -1,0 +1,22 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    {
+      "file": "test/accounts/account.e2e-spec.ts",
+      "name": "POST /accounts provisions an account end to end",
+      "status": "passed"
+    },
+    {
+      "file": "test/accounts/account.e2e-spec.ts",
+      "name": "POST /accounts rejects a duplicate email",
+      "status": "failed",
+      "message": "expected 409, received 200\n  at Object.<anonymous>"
+    },
+    {
+      "file": "src/accounts/account.service.spec.ts",
+      "name": "AccountService raises AccountAlreadyExists",
+      "status": "failed",
+      "message": "expected AccountAlreadyExists, received undefined"
+    }
+  ]
+}

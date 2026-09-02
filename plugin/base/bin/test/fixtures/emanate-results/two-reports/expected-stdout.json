@@ -1,0 +1,16 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    {
+      "file": "src/accounts/account.service.spec.ts",
+      "name": "AccountService creates an account",
+      "status": "passed"
+    },
+    {
+      "file": "test/accounts/account.e2e-spec.ts",
+      "name": "POST /accounts rejects a duplicate email",
+      "status": "failed",
+      "message": "expected 409, received 200"
+    }
+  ]
+}

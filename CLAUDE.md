@@ -187,7 +187,7 @@ repo is both its source and its own marketplace.
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
       unchanged and still correct on its own; `plugin/test/run.sh` drives it one
-      rule at a time (`run-tests.sh <rule>`) plus its six hand-wired siblings,
+      rule at a time (`run-tests.sh <rule>`) plus its seven hand-wired siblings,
       which turns the estate's slowest single job into twenty-five short ones.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
@@ -322,7 +322,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its six hand-wired siblings. `golden/emanate-derive` is among the estate's heaviest jobs, at 83 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. `golden/emanate-derive` is among the estate's heaviest jobs, at 83 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
