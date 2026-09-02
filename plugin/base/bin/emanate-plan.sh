@@ -263,7 +263,8 @@ plan_init_spools units requires profiles waves findings refused \
 # Every list the renderers read has to EXIST before the run can take a path that
 # skips filling it: `--rawfile` fails on a missing file, and "there were none"
 # must not read as a broken run.
-: > "$PLAN_TMP/realized"; : > "$PLAN_TMP/goal.units"
+: > "$PLAN_TMP/realized"; : > "$PLAN_TMP/realized.delivered"
+: > "$PLAN_TMP/goal.units"
 : > "$PLAN_TMP/components.tsv"; : > "$PLAN_TMP/probes"
 # Sorted and deduplicated before anything reads it: two --scope flags name one
 # vault, so neither the order they were typed in nor a repeat may reach stdout.

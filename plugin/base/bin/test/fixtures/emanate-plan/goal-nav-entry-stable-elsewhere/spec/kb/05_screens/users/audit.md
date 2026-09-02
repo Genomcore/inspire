@@ -13,7 +13,9 @@ lifecycle: stable
 
 An administrator reads what was done to an account here. The screen is already
 delivered, and it navigates nowhere — so it is no way into the roster slice, and
-a vault holding it is still a vault whose roster has no entry.
+a vault holding it is still a vault whose roster has no entry. Were it to gain a
+link into the roster, that edit would be work and the screen would belong in the
+frontier, which is why plan never reads a delivered screen's navigation.
 
 ## Bindings
 

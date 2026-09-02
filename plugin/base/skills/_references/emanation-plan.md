@@ -106,7 +106,9 @@ generic catch-all would collapse two different answers into one.
 - **`realized`** is the frontier-eligible units already realized on this branch,
   sorted — the ones that are **absent from `units[]` and `waves`** for the same
   reason a `stable` artifact is: they are not in the frontier. Empty whenever no
-  `--tests-root` was given. **`realized_all`** is true when every
+  `--tests-root` was given, and a `--reemanate` selection is subtracted from it:
+  the field is what this run treats as realized, which is why the reachability
+  class reads realization on disk instead. **`realized_all`** is true when every
   frontier-eligible unit is realized; see § Realization.
 - **`reemanate`** is `null` unless `--reemanate` was given: `selectors` as typed,
   `units` the resolved union. It is reported rather than left implicit because a
@@ -116,8 +118,9 @@ generic catch-all would collapse two different answers into one.
 - **`goal`** is `null` unless `--goal` was given. `units` is the goal's remaining
   closure — its dependencies plus the screens that navigate to it, which is what
   this run has to execute; see § Selectors — and `floor` is the deepest wave in
-  it, which is the minimum number of orchestrator iterations to reach the goal. Note the two are not `waves`-shaped: `waves` still layers the **whole**
-  scope, and `goal.units` names the subset a goal-directed run executes.
+  it, which is the minimum number of orchestrator iterations to reach the goal.
+  Note the two are not `waves`-shaped: `waves` still layers the **whole** scope,
+  and `goal.units` names the subset a goal-directed run executes.
 - **`preflight`** is what `00_bootstrap/stack.md`'s `## Test infrastructure`
   declares plus which resolved framework profiles can probe it; see § Preflight.
   **`wire_conventions`** is the transport decisions a spawned tester must assert
@@ -301,21 +304,27 @@ walk are deliberate:
 nav predecessor sits deeper than the goal itself deepens with it. And a slice
 with no navigable entry at all is `PR-23`, a warning.
 
-**That reachability question is answered exactly, and asked lazily** (0.9). The
-backward walk sees only the frontier, so a screen that is already delivered
-navigates invisibly: plan derives nothing at `lifecycle: stable`. So unless a
-slice screen is already realized — which settles it for free — the screens the
-frontier does *not* hold are derived too, through `emanate-derive.sh` like every
-other unit and never by a second reading of the bindings table, and asked
-whether any of them links into the slice. That fan-out is the whole added cost,
-and three things bound it: only a `--goal` run asks the question at all, only a
-slice holding screens reaches it, and the derivations are exactly the screens
-outside the frontier — so a vault whose every screen is `accepted` has none to
-run. Answering it exactly is what makes the class worth having: a `stable`
-screen *somewhere* in the vault does not silence it, and nearly every mature
-vault holds one. A screen the strict parser refuses is the one answer plan
-cannot get: it stays silent and says so as `PR-24`, since an unreadable screen
-might be the entry.
+**Reachability is decided from the frontier and from the disk, and from nothing
+else** (0.9). Exactly two things are a way in: a slice screen already
+**realized**, which exists; and a **nav root** — a slice screen nothing in the
+frontier navigates to, which is the app's own entry. A slice where every screen
+is linked only from inside it is a rootless cycle, and that is `PR-23`. Plan
+therefore derives the frontier and no more; the two screens it never reads are
+absent for a reason rather than by risk-taking:
+
+- **A delivered screen is not read, and does not need to be.** If a `stable`
+  screen must gain a nav link for a new screen to be reachable, editing it *is*
+  work — so it is a screen to build, belongs in the frontier at `accepted`, and
+  plan sees the edge for free. There is no invisible entry hiding among
+  delivered screens.
+- **A `draft` screen is not read either.** A draft is by definition not
+  emanated, so plan has no business reasoning about its links in either
+  direction: a draft contributes nothing to whether a slice is reachable, and
+  the screen it points at still reads as a nav root.
+
+Realization is read **on disk**, not per run. `--reemanate` says "rebuild
+this", never "this was never built", so a re-emanated entry keeps the class
+silent — the same reason a `--reemanate` closure takes no nav walk.
 
 **A selector that selects nothing is a usage error (exit 2), not a reported
 no-match.** A selector is something the operator typed, like `--scope` and
@@ -447,8 +456,7 @@ languages, and any declared `layer: language` profile.
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
-| `PR-23` | the `--goal`'s closure holds screens and **none of them has a navigable entry**. Since a goal's closure pulls in every screen that navigates to it, this can never be an artifact of too narrow a goal — it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by path, since no single screen is at fault — what is missing is a link from outside. Three things are a way in and none of them may warn: a **nav root** — a slice screen NOTHING in the vault navigates to, which is the app's own entry; an **already-realized** slice screen, which exists; and an inbound link from a screen that exists or is being delivered (`stable`, `implemented`, `accepted`). An inbound **`draft`** link is none of the three — a draft screen is neither built nor being built — so it un-roots the screen it points at without being a way in, and the slice still warns | warning | `inspire-screens` |
-| `PR-24` | while `PR-23` was being decided, a screen outside the frontier could not be derived, so whether it navigates into the slice is **unknown** and an entry cannot be ruled out. One finding per such screen. **An `info`**, never a warning: what it reports is that the question has no answer, not that the vault has a gap — it cannot flip `ready`, and it exists so an operator can tell "no entry" from "could not tell", which silence alone cannot say | info | the screen's layer |
+| `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing in the frontier navigates to, which is the app's own entry — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
 
 ### Refusals — nothing is planned, the run exits 4
 

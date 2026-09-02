@@ -22,5 +22,5 @@
     { "expr": ".findings[0].message | test(\"no navigable entry\")", "equals": "true" },
     { "expr": "[.units[].id] | index(\"users.audit\")", "equals": "null" }
   ],
-  "forbidden": ["PR-24", "PR-11", "NOT READY"]
+  "forbidden": ["PR-11", "NOT READY"]
 }

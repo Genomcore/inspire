@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the eleven
+# Library — the readiness catalogue. Every `PR-*` class lives here: the ten
 # findings that leave a plan standing (seven of which flip it to not-ready; the
-# ceiling, preflight and reachability classes are warnings, and the
-# unknown-reachability class an `info`), and the four refusals that mean nothing
-# is planned at all. The catalogue itself — what each id means, its severity and
-# its owner — is
+# ceiling, preflight and reachability classes are warnings), and the four
+# refusals that mean nothing is planned at all. The catalogue itself — what each
+# id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
 # duplicated into a second table.
 #
@@ -500,60 +499,32 @@ plan_closure_screens() {
   ' "$PLAN_TMP/scanned.tsv" "$PLAN_TMP/idpath.tsv" "$PLAN_TMP/goal.closure"
 }
 
-# plan_unknown_entry — PR-24, one per screen the probe could not read. An
-# `info`, never a warning: the slice may well be reachable through exactly that
-# screen, so withholding `PR-23` is the honest answer — and saying so is what
-# lets the operator tell "no entry" from "could not tell".
-plan_unknown_entry() {
-  local class path
-  while IFS=$'\t' read -r class path; do
-    [ -n "$path" ] || continue
-    plan_find "PR-24" "info" "" "$path" "$(plan_owner "$path")" \
-      "derive refuses this screen, so whether it navigates into the goal \`$PLAN_GOAL\`'s slice is unknown — an entry cannot be ruled out, and the unreachability warning is withheld rather than guessed at" \
-      "review the screen so its shape derives, then re-run the plan to get a reachability answer"
-  done < <(LC_ALL=C grep '^?' "$PLAN_TMP/goal.probe")
-}
-
-# plan_check_reachable — PR-23, and PR-24 where the question has no answer. A
-# goal's closure holds every FRONTIER screen that links into the slice already,
-# so a slice with no way in is a gap in the vault rather than too narrow a goal.
-# What is left to ask is whether a screen OUTSIDE the frontier links in, and only
-# derivation answers that — so it is asked here alone, and only once the free
-# answer has failed. Roothood is part of the same question: a `draft` link is no
-# way in, but it does mean the vault navigates to what it points at.
+# plan_check_reachable — PR-23. The frontier and the disk are the whole of what
+# is consulted, and neither omission loses an entry: a delivered screen that
+# must GAIN a nav link is itself work and therefore in the frontier, and a
+# `draft` is not emanated. What is left is a slice every screen of which is
+# linked only from inside it — a rootless cycle.
 plan_check_reachable() {
   local screens first
   [ -n "$PLAN_GOAL" ] || return 0
   plan_closure_screens > "$PLAN_TMP/goal.screens"
   [ -s "$PLAN_TMP/goal.screens" ] || return 0
-  # The free answer: a realized screen in the slice exists, which is why it is
-  # out of `goal.units` while still in the closure.
-  LC_ALL=C comm -12 "$PLAN_TMP/goal.screens" "$PLAN_TMP/realized" \
+  # On disk, not run-scoped: a `--reemanate` rebuild does not un-deliver a page.
+  LC_ALL=C comm -12 "$PLAN_TMP/goal.screens" "$PLAN_TMP/realized.delivered" \
     | LC_ALL=C grep -q . && return 0
-  plan_nav_probe "$PLAN_TMP/goal.screens" > "$PLAN_TMP/goal.probe"
-  LC_ALL=C grep -q '^E' "$PLAN_TMP/goal.probe" && return 0
-  # A nav root is a slice screen NOTHING navigates to — the app's own entry — so
-  # inbound is counted from anywhere: the slice's own edges plus the probe's,
-  # whatever the lifecycle of the screen carrying one.
-  { awk -F'\t' -v screensf="$PLAN_TMP/goal.screens" '
-      FILENAME == screensf { s[$1] = 1; next }
-      $2 in s { print $2 }
-    ' "$PLAN_TMP/goal.screens" "$PLAN_TMP/nav.all"
-    awk -F'\t' '$1 == "L" { print $2 }' "$PLAN_TMP/goal.probe"
-  } | LC_ALL=C sort -u > "$PLAN_TMP/goal.reached"
+  # A nav root — nothing in the frontier navigates to it — is the app's entry.
+  awk -F'\t' -v screensf="$PLAN_TMP/goal.screens" '
+    FILENAME == screensf { s[$1] = 1; next }
+    $2 in s { print $2 }
+  ' "$PLAN_TMP/goal.screens" "$PLAN_TMP/nav.all" \
+    | LC_ALL=C sort -u > "$PLAN_TMP/goal.reached"
   LC_ALL=C comm -23 "$PLAN_TMP/goal.screens" "$PLAN_TMP/goal.reached" \
     | LC_ALL=C grep -q . && return 0
-  if LC_ALL=C grep -q '^?' "$PLAN_TMP/goal.probe"; then
-    plan_unknown_entry
-    return 0
-  fi
   screens="$(awk '{ printf "%s`%s`", sep, $0; sep = ", " }' "$PLAN_TMP/goal.screens")"
-  # No single screen is at fault — what is missing is a link from outside — so
-  # the target is the slice's first by path, and the owner falls out of the root
-  # it sits under rather than being named here.
+  # No single screen is at fault, so the target is the slice's first by id.
   first="$(plan_path_norm \
     "$(plan_index_lookup "$PLAN_TMP/idpath.tsv" "$(head -1 "$PLAN_TMP/goal.screens")")")"
   plan_find "PR-23" "warning" "" "$first" "$(plan_owner "$first")" \
-    "the goal \`$PLAN_GOAL\` resolves a slice whose screens ($screens) have no navigable entry — every link in comes from inside the slice or from a screen that is itself neither built nor being built, and none of them is already delivered, so the run would build pages with no way in" \
-    "author a navigation binding into one of those screens from a screen that is already delivered, or promote the draft one that links in — which then joins the slice; widening the goal cannot fix it, since a goal already pulls in every screen that navigates to it"
+    "the goal \`$PLAN_GOAL\` resolves a slice whose screens ($screens) have no navigable entry — every link in comes from inside the slice, and none of them is already delivered, so the run would build pages with no way in" \
+    "author a navigation binding into one of those screens from a screen this run can see — one already in the frontier, or a delivered one promoted back to \`accepted\`, since editing it to carry the link is itself work; widening the goal cannot fix it, as a goal already pulls in every screen that navigates to it"
 }

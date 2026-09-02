@@ -2,7 +2,7 @@
 id: users.home
 module: users
 screen: home
-lifecycle: stable
+lifecycle: draft
 ---
 
 # People
@@ -11,10 +11,10 @@ lifecycle: stable
 
 ## Purpose
 
-An administrator lands here and opens the roster. The screen is delivered, so it
-would be the slice's way in — but it still carries the retired section an older
-INSPIRE wrote, which derive refuses to read rather than read as empty. Plan can
-therefore rule it neither in nor out.
+An administrator would land here and open the roster, but this screen is still
+in design. A draft is not emanated, so plan never reads it: the link it carries
+is neither a way into the roster nor a reason to stop calling the roster the
+app's own entry.
 
 ## Bindings
 
@@ -35,7 +35,3 @@ therefore rule it neither in nor out.
 | Key | When | Presentation |
 |---|---|---|
 | `empty` | `summary` returns zero rows | the no-accounts-yet message |
-
-## Instantiation
-
-The retired section: what a pre-0.8 screen file spelled its layout adoption in.

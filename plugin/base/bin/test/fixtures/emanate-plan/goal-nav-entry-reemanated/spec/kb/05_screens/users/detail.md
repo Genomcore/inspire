@@ -11,8 +11,8 @@ lifecycle: accepted
 
 ## Purpose
 
-An administrator comes here to read one account in full, and goes back to the
-roster when they are done.
+An administrator comes here to read one account in full, and goes on to its
+history when the record alone does not answer the question.
 
 ## Bindings
 
@@ -26,7 +26,7 @@ roster when they are done.
 
 | Key | Target | Trigger |
 |---|---|---|
-| `roster` | [[users.list]] | leaving the account |
+| `history` | [[users.audit]] | asking what changed |
 
 ### States
 

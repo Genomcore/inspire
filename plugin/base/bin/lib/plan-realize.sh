@@ -213,9 +213,15 @@ plan_goal_edges() {
 # plan_apply_reemanate — every `--reemanate` selector's set, unioned, out of the
 # realized set. Sets $PLAN_BAD_SELECTOR (and $PLAN_SEL_REASON) and returns 1 on
 # one that names nothing.
+#
+# `realized.delivered` keeps the answer BEFORE the narrowing, because two
+# questions read this set and only one of them is run-scoped: what to build is,
+# and whether a page was ever delivered is not — a selector means "rebuild
+# this", never "this was never built".
 plan_apply_reemanate() {
   local sel n=0
   : > "$PLAN_TMP/reemanate"
+  cp "$PLAN_TMP/realized" "$PLAN_TMP/realized.delivered"
   [ -s "$PLAN_TMP/reemanate-args" ] || return 0
   plan_edges_all
   while IFS= read -r sel; do
