@@ -55,9 +55,11 @@ plan_realize() {
     PLAN_BROKE="$GATE_SCAN_ERROR"
     return 1
   fi
+  # Read in the scanner's separator and written out in plan's — the same byte
+  # today, and spelling both makes the boundary between the two tools legible.
   # Only fingerprinted citations count: an id-only token is valid for the gate's
   # coverage classes and says nothing about WHICH version of the claim was tested.
-  awk -F"$PLAN_FS" -v OFS="$PLAN_FS" '$2 != "" { print $1, $2 }' \
+  awk -F"$GATE_FS" -v OFS="$PLAN_FS" '$2 != "" { print $1, $2 }' \
     "$PLAN_TMP/citations" | LC_ALL=C sort -u > "$PLAN_TMP/cited"
   plan_claim_pairs > "$PLAN_TMP/claims"
   awk -F"$PLAN_FS" '

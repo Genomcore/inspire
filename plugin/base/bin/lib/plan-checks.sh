@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the eight
-# findings that leave a plan standing and flip it to not-ready, and the four
-# refusals that mean nothing is planned at all. The catalogue itself — what each
+# Library — the readiness catalogue. Every `PR-*` class lives here: the nine
+# findings that leave a plan standing (seven of which flip it to not-ready; the
+# ceiling and preflight classes are warnings), and the four refusals that mean
+# nothing is planned at all. The catalogue itself — what each
 # id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
 # duplicated into a second table.
