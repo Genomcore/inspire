@@ -161,7 +161,7 @@ owns the entity, never to the shared client's config.
 **The probe recipe — run before the first red test** (the precondition in
 [`../references/tdd.md`](../references/tdd.md)). The components come from `stack.md`'s
 own `## Test infrastructure`; the compose file realizes them, and this section is what
-`emanate plan` looks for when it reports whether the stack can be probed at all:
+`/inspire-emanate plan` looks for when it reports whether the stack can be probed at all:
 
 - Inspect: `docker compose config --services` — every declared component has a service.
 - Status: `docker compose ps` — a service must be **healthy**, not merely `Up`. Compose

@@ -25,23 +25,23 @@ nothing to the gate however good it is.
 
 ## Citing a claim
 
-Write `@claim <claim-id>` in a comment, on the test's own line or on the line above
-it:
+Write `@claim <claim-id> <fingerprint>` in a comment, on the test's own line or on
+the line above it:
 
 ```
-// @claim auth.user.create/pre/P1
+// @claim auth.user.create/pre/P1 sha256:9f2c…
 it('rejects a caller who is not an administrator', () => { … })
 
-it('stores one row per email', () => { … })   // @claim auth.user/field/email/unique
+it('stores one row per email', () => { … })   // @claim auth.user/field/email/unique sha256:41ab…
 ```
 
-**The grammar, exactly.** The gate reads test source with
-`@claim[[:space:]]+[^[:space:]]+`, so:
+**The grammar, exactly.** The scanner both tools share reads test source with
+`@claim[[:space:]]+[^[:space:]]+([[:space:]]+sha256:[0-9a-f]+)?`, so:
 
 - the id runs from the first non-space after `@claim` to the **first whitespace or
-  the end of the line**, and **nothing follows it** — not a closing bracket, not a
-  sentence period. A `.` is legal inside an id, so a trailing one is read as part of
-  it and cites a claim that does not exist;
+  the end of the line**, and **nothing may follow it but the fingerprint** — not a
+  closing bracket, not a sentence period. A `.` is legal inside an id, so a trailing
+  one is read as part of it and cites a claim that does not exist;
 - **one claim per token.** A test covering several carries several tokens;
 - the comment marker is whatever the language uses. The **token** is what is fixed;
 - copy the id from the contract verbatim. A claim id is a referent, not a
@@ -57,6 +57,42 @@ is one of that catalogue's entries.
 
 The token is a comment because a comment survives every language, every test runner
 and every formatter, and needs no runner plugin to be read.
+
+## The fingerprint half — write it, and copy it
+
+The second word is the claim's **fingerprint**, spelled exactly as the contract
+emits it: `sha256:` followed by lowercase hex
+([`_references/derived-contract.md`](../../../_references/derived-contract.md) § The
+fingerprint). Copy it from the claim verbatim, like the id. Nothing here computes
+one — `derive` owns them, and a fingerprint you assembled yourself pins nothing.
+
+**The two halves are read by two different readers, and that asymmetry is the whole
+point.**
+
+- **Coverage reads the id.** An id-only citation covers a claim exactly as it did
+  before fingerprints existed, and so does one naming a *stale* fingerprint:
+  somebody did write a test for this claim, which is all coverage asks.
+- **Realization reads the fingerprint.** A unit is realized only when every claim of
+  its current contract is cited with a **matching** fingerprint. Coverage asks "did
+  anyone test this claim"; realization asks "did anyone test **this version** of
+  it".
+
+So an **id-only citation leaves the unit unrealized for good**. It will pass the
+gate and then be re-emanated by every run afterwards, because nothing on disk says
+which version of the claim was tested. Writing the fingerprint is what retires the
+work.
+
+Two consequences worth holding:
+
+- **A stale fingerprint is a signal, not a defect to paper over.** When a claim's
+  meaning changes in place — same id, new fingerprint — the citation stops matching
+  and the unit re-enters the frontier. That is the mechanism working: the test is
+  asserting a contract that has moved. Re-read the claim and fix the test; never
+  refresh the token to silence it.
+- **Only `sha256:<hex>` is read as a fingerprint.** Anything else after the id is
+  prose and is ignored, exactly as everything after the id always was — so a
+  trailing comment can never be misread as one, and the failure direction of a
+  malformed token is always "not realized" rather than "realized on a stale claim".
 
 ## Test structure: GIVEN / WHEN / THEN
 

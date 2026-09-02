@@ -124,7 +124,7 @@ carry one doctrine document each, in
 [`references/roles/`](references/roles/README.md).
 
 The same docs are read by the **agent shells** INSPIRE ships to `.claude/agents/`, one
-per role: `emanate` (the unattended loop) dispatches them with a permission envelope
+per role: `/inspire-emanate` (the unattended loop, its own skill) dispatches them with a permission envelope
 and the unit's resolved profile set, where an attended subcommand simply reads the
 doctrine and applies it. One doctrine, two dispatch shapes —
 [`references/roles/README.md`](references/roles/README.md) is the one page for the
@@ -182,7 +182,7 @@ skill's own subcommands. They are project-owned conventions, so treat them as fa
 when you meet emitted code that follows them: an API shape or a table name that
 matches the profile is correct by declaration, not something to flag. **Every
 subcommand here keeps the never-block rule** — a missing profile degrades to generic
-and says so. The single exception is unattended: `emanate plan` refuses a unit whose
+and says so. The single exception is unattended: `/inspire-emanate plan` refuses a unit whose
 stack declares no language profile, per `profiles/README.md` § The one exception.
 
 ## Rules

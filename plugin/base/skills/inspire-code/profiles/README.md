@@ -63,7 +63,7 @@ surface roster exists, whichever profile the target surface declares in its
 "Missing profiles never block" holds for every **attended** subcommand — `tdd`,
 `review`, `debug`, `fix-build`, `fix-vulns` — where an operator is present to judge a
 generic answer. Emanation has no operator in the loop, so it draws the line
-differently: **`emanate plan` refuses a unit whose stack declares no language
+differently: **`/inspire-emanate plan` refuses a unit whose stack declares no language
 profile**, and reports it as a readiness error naming the missing file.
 
 The reason is that the two failures are not the same size. A missing *framework*
@@ -71,7 +71,7 @@ profile costs generic-but-correct architecture. A missing *language* profile mea
 nothing knows what `timestamp` renders as, and an unattended run would emit a guess
 that compiles — a silent wrong contract, discovered downstream. A spec gap is a
 defect of the readiness check, not something to paper over at emission time. The
-refusal is enforced by `emanate plan`; this section is where the rule is declared.
+refusal is enforced by `/inspire-emanate plan`; this section is where the rule is declared.
 
 The same refusal covers a project semantic type with neither a base type nor a row
 in the language profile: declared, unrenderable, and therefore not ready.
@@ -102,8 +102,8 @@ review Phase 4.
 ## Test infrastructure       # optional — the probe recipe
 How to check that the components `stack.md` declares are up and **healthy** before
 the first red test, in both modes: attended asks the operator to start them,
-unattended refuses and names the command. Never starts one. `emanate plan` tests
-for this section's presence (`PR-22`); `emanate run` executes it at t=0.
+unattended refuses and names the command. Never starts one. `/inspire-emanate plan`
+tests for this section's presence (`PR-22`); `/inspire-emanate run` executes it at t=0.
 
 ## Forbidden patterns
 Stack-specific anti-patterns beyond the universal authoring rules. Feeds `review`
@@ -184,12 +184,12 @@ architecture, and architecture is the framework profile's.
 |---|---|---|
 | `## Layering` | framework | the quality overseer (architecture) · `tdd` implementation shape |
 | `## Test conventions` | framework | the tester — **including the test paths harvest accepts** · the quality overseer |
-| `## Test infrastructure` | framework | the probe recipe for the components `stack.md` declares: `tdd`'s precondition · `emanate plan`'s `preflight` (which tests for the section's **presence**, never scraping its prose) · `emanate run`'s t=0 refusal |
+| `## Test infrastructure` | framework | the probe recipe for the components `stack.md` declares: `tdd`'s precondition · `/inspire-emanate plan`'s `preflight` (which tests for the section's **presence**, never scraping its prose) · `/inspire-emanate run`'s t=0 refusal |
 | `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
 | `## Quality gates` | framework | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |
 | `## Build & verify` | framework | `fix-build` · `review` build step · `debug` |
-| `## Bindings` | framework | the contracter (emitted surface) · derived binding claims · `emanate gate` |
+| `## Bindings` | framework | the contracter (emitted surface) · derived binding claims · `/inspire-emanate`'s gate step |
 | `## Routes` | framework (UI) | the contracter (route table) · screen nav claims |
 | `## Persistence` | framework | the contracter (model + migration skeleton) · the implementer |
 | `## Rendering` · `## Mapping tokens` · `## Project semantic types` · `## Engine notes` | language | the contracter (every emitted signature, schema and column) |

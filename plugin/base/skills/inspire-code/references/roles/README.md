@@ -119,7 +119,7 @@ and D3 gives an oracle no way to act on what it sees.
 
 - A project **adds** an overseer — compliance, accessibility, a domain lens — by
   dropping one more `*-overseer.md` shell there and a doctrine doc beside these.
-- The two INSPIRE ships are **non-removable**. `emanate` refuses to run when either is
+- The two INSPIRE ships are **non-removable**. `/inspire-emanate` refuses to run when either is
   missing, and when any `*-overseer.md` fails the shape above.
 
 The ceiling only rises. A gate its author can lower is not a gate. An

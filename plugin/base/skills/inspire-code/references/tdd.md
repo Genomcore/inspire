@@ -29,7 +29,7 @@ doctrine has one home. Read it as you enter the position:
 
 Attended, the list under test is the feature's acceptance criteria rather than a
 unit's derived claims, and the separation between the two positions is discipline
-rather than a harvest filter. The judgment is the same one `emanate` dispatches as
+rather than a harvest filter. The judgment is the same one `/inspire-emanate` dispatches as
 agents.
 
 ## Precondition: the test infrastructure runs, or the cycle cannot start

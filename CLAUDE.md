@@ -67,12 +67,12 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 14 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 15 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
         (external verticals) · `adr`.
-      - **Codification** (1) — `inspire-code`: the coding stage that turns the KB
+      - **Codification** (2) — `inspire-code`: the coding stage that turns the KB
         into production code under `source/` (subcommands `tdd` · `review` ·
         `debug` · `fix-build` · `fix-vulns`), always re-anchoring to the ADRs,
         descriptors and acceptance criteria that specify it, and handing drift
@@ -88,7 +88,7 @@ repo is both its source and its own marketplace.
         that only `react`, `nestjs` and `angular` currently declare a
         `language:` — `ios` and `android` deliberately declare none, and so
         refuse. Attended subcommands never block on a
-        missing profile; `emanate plan` refuses **per unit** on profile
+        missing profile; `/inspire-emanate`'s plan stage refuses **per unit** on profile
         resolution — `PR-06` when a framework profile the unit is built under
         reaches no `layer: language` profile, and `PR-07` when a `layer:` the
         unit resolves carries two framework profiles, or none at all. A unit
@@ -97,11 +97,23 @@ repo is both its source and its own marketplace.
         `references/roles/` holds one doc per position of the loop — contracter ·
         tester · implementer · security overseer · quality overseer — beside a
         README carrying the role model, the envelope's two halves and the
-        additive-only roster rule. `tdd` (attended) and `emanate` (unattended)
-        read the same docs; `review` holds the two overseer lenses; `fix-vulns`
+        additive-only roster rule. `tdd` (attended, here) and `/inspire-emanate`
+        (unattended, its own skill) read the same docs;
+        `review` holds the two overseer lenses; `fix-vulns`
         shares the security overseer's standing rules. The subcommand references
         keep their own flow and point there for the doctrine, so a rule has one
         home.
+        · `inspire-emanate`: the **unattended emanation loop**, its own skill
+        rather than an `inspire-code` subcommand — the session that loads it *is*
+        the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
+        condition with zero human turns between t=0 and the report: `plan` reads
+        `emanate-plan.sh` and refuses rather than start a run that provably cannot
+        reach its goal; `run` walks each wave, spawning the five role shells per
+        unit into their own phase worktrees, gating on the overseers and on
+        `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
+        a merge with trailers, never a KB write, lifecycle included. It consumes
+        `inspire-code` as the doctrine router (the roles README) and never
+        authors role judgment of its own.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
@@ -139,8 +151,8 @@ repo is both its source and its own marketplace.
       `inspire-code/references/roles/`. The **overseer roster is additive-only
       and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
       whose `tools:` line is present and names no writing tool; a project adds
-      its own, and the two shipped ones are non-removable — `emanate` refuses to
-      run when either is missing or fails that shape.
+      its own, and the two shipped ones are non-removable — `/inspire-emanate`
+      refuses to run when either is missing or fails that shape.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
