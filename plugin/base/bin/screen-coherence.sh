@@ -9,7 +9,7 @@
 #     `{surface}.{module}.{screen}` for this file's OWN declared module/screen;
 #     `module:` agreeing with the module directory in the path; a `superseded`
 #     screen pointing at the screen id that replaced it. Plus the two
-#     contradictions that cannot fire on a pre-0.8 file and are therefore errors
+#     contradictions that cannot fire on a pre-0.9 file and are therefore errors
 #     at every state: two screens declaring one `id`, and two screens deriving
 #     one route in one shell.
 #
@@ -33,7 +33,7 @@
 # warning, accepted / stable → error, superseded → warning), except where the
 # check list above says otherwise. A screen with no frontmatter at all — every
 # screen written before the identity block existed — reads as draft, so nothing
-# authored before 0.8 starts blocking a commit.
+# authored before 0.9 starts blocking a commit.
 #
 # Scope: the rule receives one `$1` and checks `$1 ∩ 05_screens` — see
 # `bin/README.md` §Scope. The duplicate-id and route-collision indexes are built
@@ -238,7 +238,7 @@ check_identity() {
   fi
 
   # A declared-but-broken enum value is mechanical, like the domain layer's
-  # `lifecycle-valid`: error at every state. It cannot fire on a pre-0.8 file —
+  # `lifecycle-valid`: error at every state. It cannot fire on a pre-0.9 file —
   # a file with no lifecycle at all takes the missing-field path above — and
   # every OTHER check reads the broken value as draft, so the file gets one
   # blocking finding rather than a cascade.
@@ -295,7 +295,7 @@ check_identity() {
   fi
 
   # Two screens, one id. Both sides need declared frontmatter, so this can never
-  # fire on a pre-0.8 file: error at every state.
+  # fire on a pre-0.9 file: error at every state.
   if [ -n "$id" ]; then
     other="$(awk -F'\t' -v k="$id" -v self="$file" '$2 == k && $1 != self { print $1; exit }' "$SC_INDEX")"
     if [ -n "$other" ]; then

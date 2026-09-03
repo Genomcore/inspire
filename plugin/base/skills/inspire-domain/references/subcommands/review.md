@@ -28,7 +28,7 @@ The gate composes rule families across three severity tiers, plus the style chec
 
 | Rule | What it catches |
 |---|---|
-| `sections-present` | Missing or empty mandatory body sections. Actions: the pre-0.8 core six (`## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Behavior` · `## Errors`); entities: four. Section ORDER is checked against the full canonical eight, so a misplaced `## Preconditions` or `## Postconditions` is caught here while their *presence* is `keys-present`'s, where in 0.8 it is a warning at every lifecycle rather than an error from `accepted` |
+| `sections-present` | Missing or empty mandatory body sections. Actions: the pre-0.9 core six (`## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Behavior` · `## Errors`); entities: four. Section ORDER is checked against the full canonical eight, so a misplaced `## Preconditions` or `## Postconditions` is caught here while their *presence* is `keys-present`'s, where in 0.9 it is a warning at every lifecycle rather than an error from `accepted` |
 | `no-todos` | `TODO` / `FIXME` / `XXX` / `HACK` markers in body (D19: files state present truth only) |
 | `action-fields-in-entity` | Action touches a field the entity doc's `## Fields` table does not declare |
 | `entity-coherence` | field-conflict (error), field-unsourced (error), field-orphan-write (warning) across actions sharing an entity |
@@ -53,15 +53,17 @@ those table cells only, never per-field H3 prose. It never ramps and never
 blocks — recognising a constraint word inside prose is a heuristic, and a
 heuristic does not get to fail a gate.
 
-**Five classes in the three keyed-head rules do not ramp in 0.8** and sit
+**Five classes in the three keyed-head rules do not ramp in 0.9** and sit
 outside the table above: `OS-A1` (no `B{n}` on the first `## Behavior` step),
 `OS-A3` / `OS-A4` (no `## Preconditions` / `## Postconditions`), `OS-E1` (no
 `Constraints:` line on `id`) and `OS-E3` (prose or unkeyed `## Invariants`).
 These are the *presence* classes — the shape an upgrade inherits, indistinguishable
 from a new artifact someone forgot to key — so they are **warnings at every
 lifecycle state**, at pre-commit, pre-PR and `promote` alike, and their messages
-end `— derive refuses old-shape artifacts`. Everything else these rules report
-ramps exactly as the table says. The five ramp too, in the release after 0.8.
+end `— derive refuses old-shape artifacts`. 0.8.0 shipped without these classes,
+so the inherited shape is what every existing vault holds, not an older tail of
+one. Everything else these rules report ramps exactly as the table says. The five
+ramp too, in the release after 0.9.
 
 **Style — the mechanical subset of the writing contract:**
 

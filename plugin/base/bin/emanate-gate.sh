@@ -2,8 +2,8 @@
 # .inspire/bin/emanate-gate.sh
 #
 # gate — claim coverage x citing tests x suite result -> stdout VERDICT (D8).
-# One of the emanation loop's four independent bin scripts (derive, plan,
-# gate, harvest); composes on derive's OUTPUT only — it never calls
+# One of the emanation loop's five independent bin scripts (derive, plan,
+# gate, results, harvest); composes on derive's OUTPUT only — it never calls
 # emanate-derive.sh and never sources its lib/derive-*.sh, so the two
 # packages can evolve independently. The shared bulk lives in
 # `lib/gate-{contract,citations,results,verdict}.sh`.

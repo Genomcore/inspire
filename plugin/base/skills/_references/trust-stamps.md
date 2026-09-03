@@ -47,9 +47,8 @@ by machinery: nothing checks that anyone was asked, so the discipline lives in p
 |---|---|---|
 | `01_adr` – `05_screens` artifacts, `design-system.md` included | yes | yes |
 | Screens `patterns/` + `components/` entries | yes — an authored layout contract since T2, not rebuilt output | yes |
-| Screens `_index.md`, the catalog's own `patterns/_index.md` / `components/_index.md` included | no — rebuilt nav content, so endorsing it is drift by construction | yes |
+| An `_index.md` hub at any path — screens' and the catalog's own `patterns/_index.md` / `components/_index.md` among them | no — rebuilt nav content, so endorsing it is drift by construction | yes |
 | `00_bootstrap/project.md`, `stack.md` | yes | no — the operator interview generated them, not a skill run |
-| `00_bootstrap/glossary.md` | yes | no — the operator's own terms, settled in interview, not a skill run |
 | `theme.md`, `_template.md`, `README.md` | no | no |
 | `06_spikes`, `98_lessons`, `99_tracker` | no | no — meta layers; lessons keep their own version stamping |
 
@@ -57,6 +56,13 @@ Exclusions go **by path and filename, never by frontmatter**: the live `design-s
 inherits `status: template` from the copy of `theme.md` that seeded it, so a frontmatter
 predicate would excuse a project's real design system. Where a file has no frontmatter at
 all — screens by design, most ADRs and features in practice — `stamp` creates the block.
+
+**What `report` walks is narrower than the table**: every `*.md` under `01_adr` –
+`05_screens`, plus `00_bootstrap/project.md` and `00_bootstrap/stack.md` by name and
+nothing else from that layer. So a file elsewhere in `00_bootstrap` is neither counted nor
+reported whatever it carries in frontmatter — `surfaces.md` included, though the Ownership
+map below still names its owner. The table says which blocks a path may carry; it does not
+promise the report measures every path.
 
 ## Ownership
 

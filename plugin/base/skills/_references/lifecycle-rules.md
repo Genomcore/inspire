@@ -83,7 +83,7 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 
 The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
 
-Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.8, columns and all. "New but unkeyed" and "pre-0.8" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote`. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.8. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
+Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.9, columns and all. "New but unkeyed" and "pre-0.9" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote` — and since 0.8.0 shipped none of these classes, that is every vault there is, not an older tail of them. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.9. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
 
 ### Screens — the same columns, read in `05_screens`
 
@@ -99,10 +99,11 @@ Screen files carry `lifecycle:`, so the columns above are readable there too:
 
 A screen file with **no frontmatter at all** — every screen written before the
 identity block existed — reads as `draft` and emits warnings only. That is the
-migration path working as designed: nothing authored before 0.8 starts blocking a
-commit, while the same file at `accepted` does.
+migration path working as designed: nothing authored before 0.9 — which is every
+screen any released version wrote — starts blocking a commit, while the same file
+at `accepted` does.
 
-The two identity rows that never ramp cannot fire on a pre-0.8 file at all: both
+The two identity rows that never ramp cannot fire on a pre-0.9 file at all: both
 sides need declared frontmatter, and both findings are contradictions rather than
 incompleteness. A contradiction blocks at every state.
 

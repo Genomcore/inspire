@@ -308,12 +308,12 @@ keyed entry: vocabulary, arity, duplicate keys, referents, the `unique`+`create`
 join, a misplaced `Constraints:` line — `OS-E4`–`OS-E8`, `OS-A2`, `OS-A5`–`OS-A10`,
 `OS-F2`–`OS-F5`, `OS-X1`–`OS-X4`.
 
-**The five presence classes are flat warnings at every lifecycle state in 0.8**
+**The five presence classes are flat warnings at every lifecycle state in 0.9**
 — `OS-A1`, `OS-A3`, `OS-A4`, `OS-E1`, `OS-E3`, the same posture `W-1` carries.
 Their messages end `— derive refuses old-shape artifacts`, so the operator can
 see what the warning costs.
 
-The reason is that **"new but unkeyed" and "pre-0.8" are the same shape on
+The reason is that **"new but unkeyed" and "pre-0.9" are the same shape on
 disk.** A presence class fires on exactly the artifacts an upgrade inherits: no
 `B{n}` on the first step, no `## Preconditions`, no `Constraints:` line on `id`,
 prose invariants. Ramping them with the lifecycle would put every `accepted` and
@@ -322,10 +322,15 @@ and an upgrade that leaves a vault broken is not an upgrade, whatever the
 version file claims. A grace is the only posture that keeps that promise while
 the format is still arriving.
 
+**And 0.9 is where the keyed shape first ships at all.** 0.8.0 released from
+`main` carrying none of these classes, so there is no older tail to reason about
+separately: every vault on every released version holds artifacts the five fire
+on, and the grace covers the whole installed base rather than its older part.
+
 The strictness has a home regardless: **`derive` refuses an old-shape artifact
 outright** (design D7), so nothing emanates from an unkeyed descriptor no matter
 how quietly review reported it. The five are **scheduled to ramp with the
-lifecycle in the release after 0.8**, by which time a touch pass will have had a
+lifecycle in the release after 0.9**, by which time a touch pass will have had a
 release to run.
 
 ### Entity document

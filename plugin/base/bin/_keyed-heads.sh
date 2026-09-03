@@ -84,7 +84,7 @@ kh_oracle_of() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Severity — the 0.8 grace on the presence classes
+# Severity — the 0.9 grace on the presence classes
 # ─────────────────────────────────────────────────────────────────────────────
 
 # The five OLD-SHAPE PRESENCE classes: no `B{n}` on the first `## Behavior`
@@ -92,15 +92,17 @@ kh_oracle_of() {
 # (`OS-A4`), no `Constraints:` line on `id` (`OS-E1`), unkeyed or prose
 # `## Invariants` (`OS-E3`).
 #
-# They are FLAT WARNINGS at every lifecycle state in 0.8, the way `W-1` is, and
-# the reason is that "new but unkeyed" and "pre-0.8" are the same shape on disk.
-# Ramping them with the artifact's own lifecycle would turn every `accepted` or
-# `stable` artifact in an upgraded vault red at pre-PR and at `promote` — an
-# upgrade that leaves the vault broken, which `/inspire:update` may never do.
+# They are FLAT WARNINGS at every lifecycle state in 0.9, the way `W-1` is, and
+# the reason is that "new but unkeyed" and "pre-0.9" are the same shape on disk.
+# 0.8.0 shipped none of these classes, so that is every vault there is rather
+# than an older tail of them. Ramping them with the artifact's own lifecycle
+# would turn every `accepted` or `stable` artifact in an upgraded vault red at
+# pre-PR and at `promote` — an upgrade that leaves the vault broken, which
+# `/inspire:update` may never do.
 # The strict refusal has a home already: `derive` refuses an old-shape artifact
 # outright (design D7), which is what the appended note tells the operator the
 # warning costs. These five are scheduled to ramp with the lifecycle in the
-# release after 0.8, once a touch pass has had a release to run.
+# release after 0.9, once a touch pass has had a release to run.
 #
 # Every OTHER old-shape class — the CONTENT of a keyed entry: vocabulary,
 # arity, duplicate keys, referents, `unique`+`create`, a misplaced
@@ -501,7 +503,7 @@ kh_dotted() {
 #
 #   The rules built on this file strip comments in EVERY layer, which is a
 #   deliberate divergence from `sections-present.sh` (which strips only outside
-#   `04_domain`). The reason is new: the 0.8 action and entity templates carry
+#   `04_domain`). The reason is new: the 0.9 action and entity templates carry
 #   guidance comments that name the very keys and Constraints lines these rules
 #   look for, so a descriptor copied from a template and not yet filled in would
 #   otherwise read as though it declared them.

@@ -41,12 +41,13 @@
 #
 #   PRESENCE classes — `OS-A1`, `OS-A3`, `OS-A4` here, `OS-E1` in
 #   `constraints-mechanics.sh`, and `OS-E3` — are FLAT WARNINGS at every
-#   lifecycle in 0.8, the way `W-1` is. "New but unkeyed" and "pre-0.8" are the
-#   same shape on disk, so ramping these would turn every `accepted` or
+#   lifecycle in 0.9, the way `W-1` is. "New but unkeyed" and "pre-0.9" are the
+#   same shape on disk — and 0.8.0 shipped none of these classes, so that is
+#   every vault there is — so ramping these would turn every `accepted` or
 #   `stable` artifact in an upgraded vault red at pre-PR and at `promote`, and
 #   an upgrade that leaves the vault broken is not an upgrade. Their messages
 #   end `— derive refuses old-shape artifacts`, which is where the strictness
-#   actually lives. `_keyed-heads.sh` § "Severity — the 0.8 grace on the
+#   actually lives. `_keyed-heads.sh` § "Severity — the 0.9 grace on the
 #   presence classes" holds the class list and the ramp schedule.
 #
 # Use-case files carry no `lifecycle:` at all, so they land on the warning side
@@ -118,7 +119,7 @@ kp_keyed_section() {
   fi
 
   # Severity resolves per CLASS, not per section. The five presence classes are
-  # graced to a flat warning in 0.8 while the content classes ramp with the
+  # graced to a flat warning in 0.9 while the content classes ramp with the
   # lifecycle, and one section emits both kinds — `## Invariants` reports
   # `OS-E3` next to `OS-E5` and `OS-E6`.
   local sev_empty sev_unkeyed sev_badhead sev_dup
@@ -196,10 +197,10 @@ check_action() {
   copy="$(kp_read_copy "$file")" || return 0
   sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
 
-  # Presence of the two 0.8 sections is this rule's, not sections-present's —
+  # Presence of the two 0.9 sections is this rule's, not sections-present's —
   # see the header. An absent section and a section saying "nothing holds here"
   # are different claims, so `None.` satisfies presence and emptiness both.
-  # OS-A3 / OS-A4 are presence classes: flat warning at every lifecycle in 0.8.
+  # OS-A3 / OS-A4 are presence classes: flat warning at every lifecycle in 0.9.
   local class psev pnote
   for section in Preconditions Postconditions; do
     class="OS-A3"

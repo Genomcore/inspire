@@ -30,7 +30,8 @@ The current working directory is the repo root, as everywhere in
 
 - `--contract FILE` — the derived contract (`emanate-derive.sh`'s stdout),
   one JSON object; `-` reads stdin. Required.
-- `--results FILE` — the suite results, § below. Required.
+- `--results FILE` — the suite results (`emanate-results.sh`'s stdout),
+  § below. Required.
 - `--tests-root DIR` — repeatable. The tree(s) grepped for `@claim` tokens.
   Defaults to `tests` (CWD-relative) when none given. Gate never resolves a
   stack profile's own test-path convention — this is always an argument
@@ -40,14 +41,22 @@ The current working directory is the repo root, as everywhere in
 
 ## Suite results — `inspire.suite-results/1`
 
-A small JSON manifest, produced by the orchestrator — not JUnit XML. JUnit's
+A small JSON manifest — not JUnit XML. JUnit's
 "zero adapters" claim breaks on the one field gate needs, the
 testcase-to-**file** binding, which is optional or differently-spelled
 across runners (jest-junit, go-junit-report, vitest, pytest all disagree). A
-format gate can read only *sometimes* is worse than one the orchestrator
-normalizes once, and the manifest keeps gate on `jq` alone. JUnit stays
-cheap to add later: `lib/gate-results.sh` is the one place a second format
-would go.
+format gate can read only *sometimes* is worse than one that is normalized
+once, and the manifest keeps gate on `jq` alone.
+
+**`.inspire/bin/emanate-results.sh` is what normalizes it**, from whatever a
+real runner prints; that script declares two authorities for the shape and
+this file is one, `lib/gate-results.sh` — the reader — being the other, so
+the three cannot drift. The orchestrator invokes it rather than
+authoring the manifest itself — handing that to judgement would put a schema
+inside prose doctrine, the one place a persona could produce a
+plausible-but-wrong shape and have every claim read as not-run. A second
+runner dialect is a reader function there; a second *format* gate accepts is
+`lib/gate-results.sh`, the one place JUnit would go.
 
 ```json
 { "schema": "inspire.suite-results/1",
@@ -61,13 +70,25 @@ would go.
 
 - `status` is one of `passed` | `failed` | `skipped`. Anything else is
   exit 5.
-- `message` is optional and carried into the human report; nothing else is
-  read.
-- A missing/duplicated `schema`, a non-array `tests`, or an entry missing
-  `file`/`name`/`status` is exit 5 — an old or foreign shape is an error,
+- `message` is optional. It is spooled and then never read again — no
+  verdict field, no finding and no line of the stderr report interpolates
+  it — so it is validated for shape and ignored.
+- A missing, duplicated or wrongly-valued `schema`, a non-array `tests`, an entry whose
+  `file` or `name` is not a string or whose `message` is neither a string
+  nor absent, or an entry any of whose four fields carries the record
+  separator `U+001F`, is exit 5 — an old or foreign shape is an error,
   never a silently-empty section (D7's strictness, applied to gate's own
   input: a silent misread would mark every claim not-run, the vacuity trap
   in a new coat).
+- Two of those want saying plainly. A key is checked by **type**, not
+  presence: a missing key reads as null, so the type test subsumes the
+  presence test, while an object-valued `file` would satisfy a presence
+  test and then empty the spool. And the separator is **refused rather
+  than escaped**, because the spool joins the four fields with it: one
+  inside `file` or `name` shifts every field after it, forging a `passed`
+  status for a test the suite skipped. Covering all four — `message`
+  included, which cannot forge — keeps that property structural rather
+  than resting on `message` being last. No runner emits `U+001F`.
 - **Sniffed before parsing**: a file whose first non-whitespace byte is `<`
   is rejected as XML at exit 5 without ever reaching the JSON parser.
 

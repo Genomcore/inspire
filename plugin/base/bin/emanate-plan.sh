@@ -3,8 +3,10 @@
 #
 # plan — the frontier snapshot, its dependency waves, the floor and every
 # readiness check, for one scope (D5/D8/D10/D11). One of the emanation loop's
-# four independent bin scripts (derive, plan, gate, harvest); the shared bulk
-# lives in `lib/plan-{lib,scan,stack,waves,checks,report}.sh`.
+# five independent bin scripts (derive, plan, gate, results, harvest); the
+# shared bulk lives in `lib/plan-{lib,scan,stack,waves,realize,checks,
+# report}.sh`, plus `lib/gate-citations.sh` — the `@claim` token has one
+# scanner and two readings, coverage for gate and realization here.
 #
 # It COMPOSES ON DERIVE: one `emanate-derive.sh` run per frontier unit, read
 # from stdout and nothing else. `derived-contract.md` draws that line:

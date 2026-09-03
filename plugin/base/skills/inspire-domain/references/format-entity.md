@@ -144,7 +144,7 @@ the requirement.
   written in this format from one written before it — which is why a strict
   reader can refuse the old shape per-artifact instead of guessing. An entity
   with no `id` row at all is a separate defect, reported separately, so the
-  marker can never pass vacuously. In 0.8 review reports a missing `id`
+  marker can never pass vacuously. In 0.9 review reports a missing `id`
   Constraints line as a **warning at every lifecycle**, not an error at
   `accepted` — see "What review blocks on" below.
 - **A constraint stated twice drifts.** Once a constraint is on the Constraints
@@ -164,10 +164,11 @@ out-of-vocabulary word, a wrong arity, a duplicate key, a misplaced
 lifecycle: warning at `draft`, **error at `accepted` and `stable`**, at pre-commit,
 at pre-PR and at `promote` alike. Whether the *keyed shape is there at all* —
 no `Constraints:` line on `id` (`OS-E1`), prose or unkeyed `## Invariants`
-(`OS-E3`) — is a **flat warning at every lifecycle in 0.8**, because those are
-the shapes an upgrade inherits and a vault that upgrades cleanly may not go red
+(`OS-E3`) — is a **flat warning at every lifecycle in 0.9**, because those are
+the shapes an upgrade inherits — 0.8.0 shipped without these classes, so that is
+every entity written to date — and a vault that upgrades cleanly may not go red
 on every entity it already had. `derive` refuses an old-shape entity regardless,
-and the presence classes ramp in the release after 0.8.
+and the presence classes ramp in the release after 0.9.
 
 ## Entity lifecycle (symmetric with actions)
 

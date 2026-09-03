@@ -126,10 +126,12 @@ with the descriptor's lifecycle: warning at `draft`, **error at `accepted` and
 `stable`**, at pre-commit, at pre-PR and at `promote` alike. Whether the keyed
 shape *is there at all* — no `B{n}` on the first step (`OS-A1`), no
 `## Preconditions` (`OS-A3`), no `## Postconditions` (`OS-A4`) — is a **flat
-warning at every lifecycle in 0.8**: those are precisely the shapes an upgrade
-inherits, and a vault that upgrades cleanly may not go red on every descriptor
-it already had. `derive` refuses an old-shape descriptor regardless, and the
-presence classes ramp with the lifecycle in the release after 0.8.
+warning at every lifecycle in 0.9**: those are precisely the shapes an upgrade
+inherits — 0.8.0 shipped without these classes, so that is every existing
+descriptor rather than an older subset — and a vault that upgrades cleanly may
+not go red on every descriptor it already had. `derive` refuses an old-shape
+descriptor regardless, and the presence classes ramp with the lifecycle in the
+release after 0.9.
 
 ## Pure-contract scope
 

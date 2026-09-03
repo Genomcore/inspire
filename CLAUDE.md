@@ -138,7 +138,7 @@ repo is both its source and its own marketplace.
       because an additive class moves nothing, and a second layout id could only
       reuse 0.3's own markers — leaving `verify_layout` unable to tell them apart
       and `detect_version` refusing any project that ties across them. That file's
-      header carries the full argument, and no `0.8.0` hop exists because nothing
+      header carries the full argument, and no `0.9.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
       class's own README is a `.txt` for exactly that reason. It ships the **five
@@ -162,27 +162,39 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **`emanate-*` scripts are the same class of thing** — the emanation
-      loop's mechanics (D8), tools outside `review.sh`'s rule list, sharing
-      sourced units in `base/bin/lib/` → `.inspire/bin/lib/`: `emanate-harvest.sh`
-      (a phase worktree's owned diff → one integration commit) and
+      The **five `emanate-*` scripts are the same class of thing** — the
+      emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
       `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
       the **strict** parser that refuses an old shape rather than read it as an
-      empty section, and the one place the 0.8 grace on the presence classes is
+      empty section, and the one place the 0.9 grace on the presence classes is
       paid for — see
-      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)).
-      `emanate-plan` (a scope's frontier snapshot **minus what the tests show is
+      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
+      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
       already realized** → dependency waves → the floor versus the declared
       ceiling → every readiness check, plus the run-level facts a spawn brief
       needs — the declared test infrastructure and the project's wire-convention
       decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
       stdout and nothing written anywhere — see
       [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
-      and `emanate-gate` (a unit's claims × the tests citing them × the suite
+      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
       result → one pass/fail verdict on stdout, the deterministic evidence an
       overseer's approval can never stand in for — see
       [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
-      join them and compose on derive.
+      are the three big enough to decompose, each into its own family of sourced
+      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
+      `gate-*`). Plan and gate **compose on derive's output, never its
+      implementation** — neither sources a `derive-*` unit — and the one unit
+      they do share is `gate-citations.sh`, because the `@claim` token has one
+      scanner and two readings: coverage for gate, realization for plan.
+      `emanate-results.sh` (a test runner's own report → the
+      `inspire.suite-results/1` manifest on stdout) exists because gate reads
+      that one shape and nothing else, and leaving its production to the
+      orchestrator's judgement would put a schema inside prose doctrine — the
+      one place a persona could hand gate a plausible-but-wrong shape and have
+      every claim read as not-run. `emanate-harvest.sh` (a phase worktree's owned
+      diff → one integration commit) is pure git. Those last two source no lib
+      unit at all, and each says so in its own header, so a reader is never left
+      wondering which half of the package they are missing.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,

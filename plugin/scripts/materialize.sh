@@ -222,9 +222,9 @@ resolve_paths() {
 # dest_map entry on the layout that already describes this tree, not a new
 # layout id. Opening one would mint a second id with 0.3's own structural
 # markers — undiscriminable by verify_layout — and would turn every ordinary
-# score tie between the 0.7 and 0.8 manifests into a cross-layout tie, which
+# score tie between the 0.8 and 0.9 manifests into a cross-layout tie, which
 # detect_version refuses outright rather than resolving to the higher version.
-# The full argument, and why no 0.8.0 hop exists, is in scripts/hops/layouts.tsv.
+# The full argument, and why no 0.9.0 hop exists, is in scripts/hops/layouts.tsv.
 # ---------------------------------------------------------------------------
 TARGET_LAYOUT='0.3'
 

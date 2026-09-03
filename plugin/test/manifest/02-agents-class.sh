@@ -10,9 +10,9 @@ GEN="$HERE/../scripts/gen-manifest.sh"
 # ---------------------------------------------------------------------------
 # The agents payload class (base/agents/ → .claude/agents/).
 #
-# A class added at 0.8 must cost every EARLIER manifest nothing: the generator
+# A class added at 0.9 must cost every EARLIER manifest nothing: the generator
 # reads the map per class, and a release that predates the class simply has no
-# tree entries under it. The nine-manifest sweep below is the load-bearing half
+# tree entries under it. 03-reproduction-sweep.sh is the load-bearing half
 # of that; these are the two directed halves it cannot state — that a past tag
 # emits zero agents entries, and that a revision which HAS the directory emits
 # them at .claude/agents/ under the unchanged 0.3 layout id.
