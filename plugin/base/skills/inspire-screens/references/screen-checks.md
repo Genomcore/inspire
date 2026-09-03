@@ -57,6 +57,7 @@ defect to report and walk away from: offer the migration, one screen at a time �
 mint the id, move the `## Instantiation` declarations into keyed `## Bindings`
 rows, drop the route from the H1, ask for the `## Purpose` paragraph (an
 old-shape file carries no sentence to convert into one), set `lifecycle: draft`.
-The old-shape catalogue
+`update` is where that conversion runs, step by step
+([`screen-update.md`](screen-update.md)). The old-shape catalogue
 is [`format-screen.md`](format-screen.md) § Old shape → new shape; until the file
 carries an id, every finding on it stays a warning.

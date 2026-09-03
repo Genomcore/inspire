@@ -23,6 +23,11 @@ frontmatter at all — every screen written before the identity block existed �
 reads as `draft` and keeps emitting warnings, so no existing project's commit
 starts failing.
 
+`stable` gates one thing besides promotion: `update` refuses a stable screen
+([`screen-update.md`](screen-update.md)). The way back is a `stable → accepted`
+regression, walked by `promote` like every other transition — screens have no
+`demote` verb.
+
 ## How `promote` walks
 
 `/inspire_screens promote {id} {state}` confirms the target state, then re-runs
