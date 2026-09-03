@@ -13,8 +13,13 @@
 # `_references/gate-verdict.md` maps to exactly one spot below; nothing here
 # invents a class the doc does not carry.
 
+# The record separator is a parameter because the spools disagree on it: the
+# results spool is NUL-framed (a suite message may carry newlines — see
+# gate-results.sh), every other spool is line-framed and holds no free text.
 GATE_JQ_PRELUDE='
-  def recs($s; $fs): $s | split("\n") | map(select(length > 0)) | map(split($fs));
+  def nul: [0] | implode;
+  def recs($s; $rs; $fs): $s | split($rs) | map(select(length > 0)) | map(split($fs));
+  def recs($s; $fs): recs($s; "\n"; $fs);
 '
 
 # gate_render_refused — the GV-00 exit-4 verdict: no claims, one finding per
@@ -61,7 +66,7 @@ gate_render_verdict() {
     (recs($claims_raw; $fs) | map({id: .[0], oracle: .[1], fingerprint: .[2]})) as $claims
     | (recs($citations_raw; $fs) | map({id: .[0], file: .[1], line: (.[2] | tonumber)})) as $citations
     | (recs($gv04_raw; $fs) | map({file: .[0], line: (.[1] | tonumber)})) as $gv04rows
-    | (recs($results_raw; $fs) | map({file: .[0], name: .[1], status: .[2], message: .[3]})) as $results
+    | (recs($results_raw; nul; $fs) | map({file: .[0], name: .[1], status: .[2], message: .[3]})) as $results
     | ($citations | group_by(.id)
        | map({key: .[0].id, value: (map({file, line}) | sort_by(.file, .line))})
        | from_entries) as $cbc
@@ -153,7 +158,7 @@ gate_check_no_match_diagnostic() {
   mismatch="$(jq -n --rawfile r "$GATE_TMP/results.spool" --rawfile c "$GATE_TMP/citations.spool" \
     --arg fs "$GATE_FS" \
     "$GATE_JQ_PRELUDE"'
-    (recs($r; $fs) | map(.[0]) | unique) as $rf
+    (recs($r; nul; $fs) | map(.[0]) | unique) as $rf
     | (recs($c; $fs) | map(.[1]) | unique) as $cf
     | (($rf | length) > 0) and ( [ $rf[] | select(. as $x | $cf | index($x)) ] | length == 0 )
   ')"

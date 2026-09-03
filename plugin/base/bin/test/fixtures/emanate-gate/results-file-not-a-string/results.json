@@ -1,0 +1,4 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": { "path": "tests/create.spec.ts" },
+               "name": "declares the key the schema asks for, with the wrong type",
+               "status": "passed" } ] }
