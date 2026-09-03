@@ -4,8 +4,10 @@ What each INSPIRE release changed. **The convention starts at 0.9.0** — releas
 0.1.0 through 0.8.0 are not back-filled, and their record is the commit history.
 
 Each section leads with what an existing project must do, then what the release
-ships. Versions are the runtime identity in `plugin/.claude-plugin/plugin.json`,
-which `/inspire:init` freezes into a project's `.inspire.lock`.
+ships: **Breaking for existing vaults**, **Added**, **Changed**, **Fixed**, in
+that order, and a release omits any heading it has nothing under. Versions are
+the runtime identity in `plugin/.claude-plugin/plugin.json`, which
+`/inspire:init` freezes into a project's `.inspire.lock`.
 
 ## 0.9.0 — 2026-09-03
 
@@ -32,12 +34,13 @@ now inside artifact trust's endorsement scope; through 0.8.0 they were excluded
 by construction. So `trust.sh report --summary`, which the pre-PR hook prints,
 counts every existing catalog entry as unendorsed the moment a project upgrades.
 This gates nothing — the trust report carries measurements, never findings, and
-is never a gate — but the number is real and it will not fall on its own. No
-command proposes an endorsement: `trust.sh endorse <file>`, run only after an
-explicit operator yes, is the only thing that writes the block, and
-`/inspire-screens promote` reaches no endorsement moment. Endorsement is a
-human act and stays one, so a project that wants the count down endorses the
-entries by hand.
+is never a gate — but the number is real and it will not fall on its own.
+`trust.sh endorse <file>`, run only after an explicit operator yes, is the only
+thing that writes the block. A skill may recognize an endorsement moment and
+propose one at a top-rung promotion, as `/inspire-domain promote` does, but
+`/inspire-screens promote` — the skill that owns these entries — reaches no
+such moment, so nothing will offer. Endorsement is a human act and stays one,
+so a project that wants the count down endorses the entries by hand.
 
 **The five old-shape presence classes warn everywhere in 0.9 and ramp in the
 release after it.** `OS-A1`, `OS-A3`, `OS-A4`, `OS-E1` and `OS-E3` report a
@@ -65,10 +68,10 @@ on the same ramp.
   skill and the second of the codification family. It is not an `inspire-code`
   subcommand: the session that loads it is the orchestrator. `plan` answers
   readiness read-only and refuses rather than start a run that provably cannot
-  reach its goal; `run` walks each wave, spawns five role shells per unit into
-  their own phase worktrees, gates on the overseers and on a deterministic
-  verdict, and promotes git-side — a merge carrying trailers, never a knowledge
-  base write.
+  reach its goal; `run` walks each wave, spawning each of a unit's three
+  personas into its own phase worktree, gating on the two overseers (which
+  write nothing) and on a deterministic verdict, and promotes git-side — a
+  merge carrying trailers, never a knowledge base write.
 - **The `.claude/agents/` payload class**, carrying the loop's five role shells:
   `inspire-contracter`, `inspire-tester`, `inspire-implementer`,
   `inspire-security-overseer`, `inspire-quality-overseer`. A shell is an
@@ -113,9 +116,6 @@ on the same ramp.
   and `react`, `nestjs` and `angular` declare it. `ios` and `android`
   deliberately declare none, so the loop refuses a unit built under them
   (`PR-06`) rather than emanating it under a language it never chose.
-- **Pattern and component entries become endorsable.** A screens `_index.md`
-  stays derived at any path: it is rebuilt nav content, so endorsing one is
-  drift by construction.
 - **Reference documents** for each new contract — `derived-contract.md`,
   `emanation-plan.md`, `gate-verdict.md`, `keyed-heads.md` — and the coding
   loop's judgment refiled **by role** under
@@ -125,6 +125,13 @@ on the same ramp.
 
 ### Changed
 
-- `/inspire:init` and `/inspire:update` hash in batches. Materialization is
-  faster; its output is byte-identical.
+- **Artifact trust's endorsement scope admits pattern and component entries** —
+  the change behind the count jump above. A screens `_index.md` stays outside
+  it at any path: it is rebuilt nav content, so endorsing one is drift by
+  construction.
+- `/inspire:init` and `/inspire:update` hash in batches. Only the speed
+  changes: every path materialization writes is still byte-identical to what
+  the plugin ships, which is what the estate asserts. The payload itself does
+  grow this release — 196 shipped paths against 0.8.0's 144 — so an upgraded
+  project does gain files; the batching is not why.
 - The manual documents fifteen skills, in a seven / two / six family split.
