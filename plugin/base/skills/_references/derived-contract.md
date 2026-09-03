@@ -93,7 +93,7 @@ the grouped human report.
   components; a pattern's own `**Components:**` line. A component declares none
   — A17's rule is that a pattern and a component order only by a *declared* edge
   between them, never by an assumed tier. Whether a required id exists is
-  `emanate plan`'s question — derive records the edge.
+  `/inspire-emanate plan`'s question — derive records the edge.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order then the invariants; for an action the
   input constraints, preconditions, behavior steps, postconditions and errors;
@@ -317,11 +317,11 @@ recognise would be exactly the silent-green trap the strictness exists to close.
 
 ## Consumers
 
-[`emanate plan`](emanation-plan.md) aggregates the stdout objects — it must never
-parse stderr — and turns refusals into readiness findings grouped by owning
-skill. [`emanate gate`](gate-verdict.md) reads `claims` and matches them against
-citing tests. The contracter agent reads everything else. All three read this
-file for what a field means.
+[`/inspire-emanate plan`](emanation-plan.md) aggregates the stdout objects — it
+must never parse stderr — and turns refusals into readiness findings grouped by
+owning skill. [`/inspire-emanate run`'s gate step](gate-verdict.md) reads
+`claims` and matches them against citing tests. The contracter agent reads
+everything else. All three read this file for what a field means.
 
 **Sourcing the units instead of running the entry** is the other way in, and the
 line between the two is worth stating. The reuse surface is

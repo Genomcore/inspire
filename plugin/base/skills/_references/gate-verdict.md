@@ -108,9 +108,9 @@ misread as a fingerprint.
 citation covers a claim exactly as it did before the fingerprint existed, and
 so does one naming a *stale* fingerprint: someone did write a test for this
 claim, which is the whole of what coverage asks. The fingerprint is read by
-`emanate plan` instead, where matching it is what makes a unit **realized**
-([`emanation-plan.md`](emanation-plan.md) § Realization) — which is the
-tester's own reason to write one, since an id-only citation leaves the unit
+`/inspire-emanate plan` instead, where matching it is what makes a unit
+**realized** ([`emanation-plan.md`](emanation-plan.md) § Realization) — which is
+the tester's own reason to write one, since an id-only citation leaves the unit
 in the frontier for good. One scanner (`lib/gate-citations.sh`) serves both
 readings; there is no second grammar.
 

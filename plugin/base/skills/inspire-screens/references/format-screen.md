@@ -105,14 +105,14 @@ there is no second place to write a route down; and moving or reusing a screen
 across UI surfaces is free and declaration-only — the id, the route and every claim
 survive the move, and the surface list is the only edit. Screen files therefore
 carry **no route text**: not in the H1, not in a section of their own. The derived
-map is rendered on demand by `/inspire_screens routes`.
+map is rendered on demand by `/inspire-screens routes`.
 
 ## Lifecycle
 
 `lifecycle:` takes the shared 4-state enum — `draft` → `accepted` → `stable`,
 plus `superseded` as the escape hatch — defined once in
 [`_references/lifecycle-rules.md`](../../_references/lifecycle-rules.md) and
-walked by `/inspire_screens promote`. What each state gates for a screen, and how
+walked by `/inspire-screens promote`. What each state gates for a screen, and how
 the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md).
 
 ## Header lines

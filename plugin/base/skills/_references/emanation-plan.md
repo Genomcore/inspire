@@ -376,9 +376,9 @@ true still when every unit turns out to be realized. A profile is tested for the
 **Plan does not probe and does not start anything.** The probe is stack-specific
 (`docker compose config --services`, then a status check demanding *healthy*, not
 merely `Up`) and therefore profile-owned: the tool reports the declaration,
-`emanate run` executes the recipe once at t=0 and refuses the run when a declared
-component is not healthy, and the operator is the only one who ever brings a
-component up.
+`/inspire-emanate run` executes the recipe once at t=0 and refuses the run when a
+declared component is not healthy, and the operator is the only one who ever
+brings a component up.
 
 ## Wire conventions
 
@@ -514,7 +514,7 @@ a plan that reordered itself would read as a vault that had changed.
 
 ## Consumers
 
-`emanate run` executes plan internally first and refuses the whole run at t=0 on
-any readiness blocker — all questions die in plan mode, and run mode never asks.
-An operator reads the same answer on stderr, grouped by class, then by owning
-skill, then by target: the shape `derive` and `harvest` already print.
+`/inspire-emanate run` executes plan internally first and refuses the whole run
+at t=0 on any readiness blocker — all questions die in plan mode, and run mode
+never asks. An operator reads the same answer on stderr, grouped by class, then
+by owning skill, then by target: the shape `derive` and `harvest` already print.
