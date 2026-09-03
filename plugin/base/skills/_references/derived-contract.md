@@ -241,9 +241,10 @@ catalog entry. Nothing machine-edits the knowledge base: naming an invariant is
 judgment, and judgment happens inside the touch interview.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the
-severity review reported it at.** The 0.8 grace that keeps the five presence
-classes at warning exists so an upgraded vault is not red everywhere; the
-strictness lives here instead. `W-1` is never a refusal — recognising a
+severity review reported it at.** The 0.9 grace that keeps the five presence
+classes at warning exists so an upgraded vault is not red everywhere — 0.8.0
+shipped without those classes, so that is every vault there is; the strictness
+lives here instead. `W-1` is never a refusal — recognising a
 constraint word inside prose is a heuristic, and a heuristic does not get to
 block anything.
 
@@ -290,7 +291,7 @@ this table name the same thing.
 | `DR-R2` | a screen binding names an action id that resolves to no descriptor | touch the screen |
 | `DR-R3` | a transition target — a `### Navigation` row, or a `→ [[…]]` dispatch outcome — resolves to no screen id | touch the screen |
 | `DR-R4` | a `**Pattern:**` or `**Components:**` link resolves to no catalog entry | touch the screen |
-| `DR-S1` | the screen identity block is absent or incomplete — the pre-0.8 screen | touch the screen |
+| `DR-S1` | the screen identity block is absent or incomplete — the pre-0.9 screen | touch the screen |
 | `DR-S2` | the identity contradicts itself or the vault: lifecycle enum, id shape, module-versus-path, `superseded_by`, a duplicate id, a route collision | touch the screen |
 | `DR-S3` | a route authored into the H1 | touch the screen |
 | `DR-S4` | a required screen part absent or empty — the H1, `**Features:**`, `## Purpose`, `## Bindings` | touch the screen |

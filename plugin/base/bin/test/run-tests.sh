@@ -84,11 +84,6 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   fi
 
   pushd "$fixture" >/dev/null
-  # Run per-fixture setup (e.g., mtime-controlled touch commands).
-  # Uses a sub-shell so the cd inside setup.sh cannot pollute the parent state.
-  if [ -f "setup.sh" ]; then
-    ( cd "$fixture" && bash setup.sh ) 2>/dev/null
-  fi
   actual_stderr="$(mktemp)"
   actual_stdout="$(mktemp)"
   SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \

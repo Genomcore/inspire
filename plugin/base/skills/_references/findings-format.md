@@ -82,7 +82,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | Type | Rule | Meaning |
 |---|---|---|
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
-| `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.8** — the shapes an upgrade inherits — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
+| `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.9** — the shapes an upgrade inherits, which is all of them, since 0.8.0 shipped none of these classes — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
 | `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |
 | `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `03_features/` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
 | `OS-F5: AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
@@ -122,7 +122,7 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 | `stable screen declares a to-extract component` | screen-coherence | Error at `stable` only, exempt elsewhere: a component still to extract is a promise, not a dependency. |
 
 Two screen findings never ramp, because both need declared frontmatter on both
-sides and neither can fire on a pre-0.8 file — they are **errors at every state**:
+sides and neither can fire on a pre-0.9 file — they are **errors at every state**:
 
 | Type | Rule | Meaning |
 |---|---|---|

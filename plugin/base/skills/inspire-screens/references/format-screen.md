@@ -234,7 +234,8 @@ artifact where props and regions meet.
 
 ## Old shape → new shape
 
-The shapes below are what a pre-0.8 screen carries. Each is a **derivation
+The shapes below are what a pre-0.9 screen carries — every screen any released
+version wrote, since the identity block first ships at 0.9. Each is a **derivation
 refusal**, named so the operator is told which skill touches the file rather than
 handed an empty section:
 

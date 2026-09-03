@@ -45,10 +45,11 @@
 # `OS-E8`, since a misplaced line is something the current format's own author
 # got wrong. Check (1)'s `OS-E1` is the exception: it is one of the five
 # OLD-SHAPE PRESENCE classes, which are FLAT WARNINGS at every lifecycle in
-# 0.8 so that a vault upgraded to this release is not red at pre-PR and at
-# `promote` on every entity it already had. The full reasoning, the class list
-# and the ramp schedule live in `_keyed-heads.sh` § "Severity — the 0.8 grace
-# on the presence classes"; `keys-present.sh` carries the same split.
+# 0.9 so that a vault upgraded to this release is not red at pre-PR and at
+# `promote` on every entity it already had — and since 0.8.0 shipped none of
+# these classes, that is every vault there is. The full reasoning, the class
+# list and the ramp schedule live in `_keyed-heads.sh` § "Severity — the 0.9
+# grace on the presence classes"; `keys-present.sh` carries the same split.
 #
 # This rule resolves nothing on the filesystem: whether a `references(...)`
 # argument names a real entity, and whether a head's arguments name real fields,
@@ -231,8 +232,8 @@ check_entity() {
 
   if [ "$has_id" = "yes" ]; then
     if ! kh_constraints_of "$copy" "Fields" "id" >/dev/null 2>&1; then
-      # OS-E1 is a presence class: flat warning at every lifecycle in 0.8 —
-      # see `_keyed-heads.sh` § "Severity — the 0.8 grace on the presence
+      # OS-E1 is a presence class: flat warning at every lifecycle in 0.9 —
+      # see `_keyed-heads.sh` § "Severity — the 0.9 grace on the presence
       # classes".
       local e1_sev e1_note
       e1_sev="$(kh_class_severity "OS-E1" "$sev")"

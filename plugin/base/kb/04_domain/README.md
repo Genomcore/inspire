@@ -25,7 +25,7 @@ reader refuses are one contract, in
 `keys-present`, `constraints-mechanics` and `head-referents` check it. What a
 keyed entry *says* blocks from `accepted` onward — a word outside the
 vocabulary, a wrong arity, a duplicate key, an unresolvable referent. Whether
-the keyed shape *is there at all* is a warning in 0.8, at every lifecycle, so a
+the keyed shape *is there at all* is a warning in 0.9, at every lifecycle, so a
 vault upgraded to this release is not red on every artifact it already had;
 `derive` refuses an old-shape artifact regardless, and those classes ramp in the
 release after.

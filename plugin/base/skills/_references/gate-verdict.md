@@ -61,13 +61,25 @@ would go.
 
 - `status` is one of `passed` | `failed` | `skipped`. Anything else is
   exit 5.
-- `message` is optional and carried into the human report; nothing else is
-  read.
-- A missing/duplicated `schema`, a non-array `tests`, or an entry missing
-  `file`/`name`/`status` is exit 5 — an old or foreign shape is an error,
+- `message` is optional. It is spooled and then never read again — no
+  verdict field, no finding and no line of the stderr report interpolates
+  it — so it is validated for shape and ignored.
+- A missing or duplicated `schema`, a non-array `tests`, an entry whose
+  `file` or `name` is not a string or whose `message` is neither a string
+  nor absent, or an entry any of whose four fields carries the record
+  separator `U+001F`, is exit 5 — an old or foreign shape is an error,
   never a silently-empty section (D7's strictness, applied to gate's own
   input: a silent misread would mark every claim not-run, the vacuity trap
   in a new coat).
+- Two of those want saying plainly. A key is checked by **type**, not
+  presence: a missing key reads as null, so the type test subsumes the
+  presence test, while an object-valued `file` would satisfy a presence
+  test and then empty the spool. And the separator is **refused rather
+  than escaped**, because the spool joins the four fields with it: one
+  inside `file` or `name` shifts every field after it, forging a `passed`
+  status for a test the suite skipped. Covering all four — `message`
+  included, which cannot forge — keeps that property structural rather
+  than resting on `message` being last. No runner emits `U+001F`.
 - **Sniffed before parsing**: a file whose first non-whitespace byte is `<`
   is rejected as XML at exit 5 without ever reaching the JSON parser.
 
