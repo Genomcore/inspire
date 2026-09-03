@@ -33,7 +33,7 @@
 # warning, accepted / stable → error, superseded → warning), except where the
 # check list above says otherwise. A screen with no frontmatter at all — every
 # screen written before the identity block existed — reads as draft, so nothing
-# authored before 0.8 starts blocking a commit.
+# authored before 0.9 starts blocking a commit.
 #
 # Scope: the rule receives one `$1` and checks `$1 ∩ 05_screens` — see
 # `bin/README.md` §Scope. The duplicate-id and route-collision indexes are built

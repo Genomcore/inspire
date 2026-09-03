@@ -22,31 +22,32 @@
 # skills/…, agents/…) is stable across every released version — only the roots
 # moved.
 #
-# A NEW PAYLOAD CLASS IS NOT A NEW LAYOUT (decision, 0.8's base/agents/).
-# `agents:.claude/agents` was added to the 0.3 row rather than opening a `0.8`
-# row, and no 0.8.0 hop exists, because nothing MOVED — a hop's absence is the
+# A NEW PAYLOAD CLASS IS NOT A NEW LAYOUT (decision, 0.9's base/agents/).
+# `agents:.claude/agents` was added to the 0.3 row rather than opening a `0.9`
+# row, and no 0.9.0 hop exists, because nothing MOVED — a hop's absence is the
 # no-op. Three reasons, in order of force:
 #
 #   1. A second row would be UNDISCRIMINABLE. This file identifies a layout by
 #      the SHAPE of the tree, and an additive class changes no shape: no root
 #      moved, and `.claude/agents/` is a directory an operator may create or
 #      delete freely, so its presence is not a legal marker (content markers are
-#      forbidden here for the same reason). A `0.8` row could only reuse 0.3's
+#      forbidden here for the same reason). A `0.9` row could only reuse 0.3's
 #      own markers, i.e. two layout ids verify_layout cannot tell apart.
 #   2. It would make detect_version REFUSE REAL PROJECTS. A tie between two
 #      manifests is resolved by taking the higher version when they share a
 #      layout, and refused outright when they do not (lib/manifest.sh:114-129).
-#      Give 0.8 its own layout id and any 0.8 project whose 0.7-era files are
+#      Give 0.9 its own layout id and any 0.9 project whose 0.8-era files are
 #      all unmodified scores 100% against BOTH manifests, across layouts — an
 #      upgrade refused with "proceeding would mean guessing". Under one layout
-#      the same tie resolves to 0.8, which is the right answer.
+#      the same tie resolves to 0.9, which is the right answer.
 #   3. The addition is inert for every past version. A dest_map entry is read
 #      only by _middle/_from_middle (prefix translation) and by the two walkers
 #      in lib/merge.sh, both of which skip an entry whose `base/<name>` is
 #      absent. `.claude/agents` is a prefix no shipped manifest occupies and
 #      that neither contains nor is contained by any other dest, so no path can
-#      now translate that did not before, and the nine shipped manifests
-#      reproduce byte-identically (plugin/test/test-manifest.sh proves it).
+#      now translate that did not before, and the ten shipped manifests
+#      reproduce byte-identically (plugin/test/manifest/03-reproduction-sweep.sh
+#      proves it).
 #      Nothing here is a presence or completeness check, so an operator who
 #      deletes `.claude/agents/` still upgrades.
 #

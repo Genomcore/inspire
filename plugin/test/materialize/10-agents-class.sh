@@ -22,7 +22,7 @@ fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
 # ---------------------------------------------------------------------------
 # UPDATE reaches the agents payload class — and touches nothing else in it.
 #
-# The class is new at 0.8, so no shipped manifest lists a path under
+# The class is new at 0.9, so no shipped manifest lists a path under
 # .claude/agents/. That makes an upgrade the interesting direction: the class
 # arrives through the TARGET map, an operator's own file there must survive by
 # construction, and an edited copy of ours must never be clobbered on a re-run.

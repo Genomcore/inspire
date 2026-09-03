@@ -503,7 +503,7 @@ kh_dotted() {
 #
 #   The rules built on this file strip comments in EVERY layer, which is a
 #   deliberate divergence from `sections-present.sh` (which strips only outside
-#   `04_domain`). The reason is new: the 0.8 action and entity templates carry
+#   `04_domain`). The reason is new: the 0.9 action and entity templates carry
 #   guidance comments that name the very keys and Constraints lines these rules
 #   look for, so a descriptor copied from a template and not yet filled in would
 #   otherwise read as though it declared them.

@@ -10,7 +10,7 @@
 #
 # STRICT, AND THAT IS THE ONE NEW BEHAVIOUR IN THE LOOP (D7): an old shape is a
 # DERIVATION ERROR naming the skill to touch the artifact with, never a
-# silently-empty section, and never softened by the 0.8 lifecycle grace review
+# silently-empty section, and never softened by the 0.9 lifecycle grace review
 # gives the five presence classes. Each `OS-*` class is checked by RUNNING the
 # rule that owns it, so no class has a second implementation here to drift from
 # the one review uses.

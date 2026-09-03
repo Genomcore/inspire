@@ -323,10 +323,9 @@ version file claims. A grace is the only posture that keeps that promise while
 the format is still arriving.
 
 **And 0.9 is where the keyed shape first ships at all.** 0.8.0 released from
-`main` carrying none of these classes, so there is no pre-0.8 tail to reason
-about separately: every vault on every released version holds artifacts the five
-fire on, and the grace covers the whole installed base rather than its older
-part.
+`main` carrying none of these classes, so there is no older tail to reason about
+separately: every vault on every released version holds artifacts the five fire
+on, and the grace covers the whole installed base rather than its older part.
 
 The strictness has a home regardless: **`derive` refuses an old-shape artifact
 outright** (design D7), so nothing emanates from an unkeyed descriptor no matter

@@ -52,7 +52,7 @@
 # with the ACTION's lifecycle, since it is the action that is missing something.
 #
 # Every file is read through a comment-stripped copy, for the reason stated in
-# `_keyed-heads.sh`: the 0.8 templates carry guidance comments naming the very
+# `_keyed-heads.sh`: the 0.9 templates carry guidance comments naming the very
 # heads this rule resolves, and a commented-out example must not produce a
 # finding about a name that was never claimed.
 #

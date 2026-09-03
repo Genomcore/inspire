@@ -49,8 +49,9 @@ format gate can read only *sometimes* is worse than one that is normalized
 once, and the manifest keeps gate on `jq` alone.
 
 **`.inspire/bin/emanate-results.sh` is what normalizes it**, from whatever a
-real runner prints; this file is that script's declared authority for the
-shape, so the two cannot drift. The orchestrator invokes it rather than
+real runner prints; that script declares two authorities for the shape and
+this file is one, `lib/gate-results.sh` — the reader — being the other, so
+the three cannot drift. The orchestrator invokes it rather than
 authoring the manifest itself — handing that to judgement would put a schema
 inside prose doctrine, the one place a persona could produce a
 plausible-but-wrong shape and have every claim read as not-run. A second
@@ -72,7 +73,7 @@ runner dialect is a reader function there; a second *format* gate accepts is
 - `message` is optional. It is spooled and then never read again — no
   verdict field, no finding and no line of the stderr report interpolates
   it — so it is validated for shape and ignored.
-- A missing or duplicated `schema`, a non-array `tests`, an entry whose
+- A missing, duplicated or wrongly-valued `schema`, a non-array `tests`, an entry whose
   `file` or `name` is not a string or whose `message` is neither a string
   nor absent, or an entry any of whose four fields carries the record
   separator `U+001F`, is exit 5 — an old or foreign shape is an error,

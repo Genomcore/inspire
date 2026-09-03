@@ -423,7 +423,7 @@ check_screen() {
   # Screens carry `lifecycle:`, so their findings ramp with it like a domain
   # object's. A screen with no frontmatter at all — every screen written before
   # the identity block existed — reads as draft and keeps emitting warnings.
-  # `## Purpose` is required from 0.8 on, and it ramps with the same lifecycle:
+  # `## Purpose` is required from 0.9 on, and it ramps with the same lifecycle:
   # no file written before it existed starts blocking a commit.
   sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The agents payload class - base/agents/ -> .claude/agents/ (0.8).
+# The agents payload class - base/agents/ -> .claude/agents/ (0.9).
 # Moved from test-upgrade.sh:1961-2153.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
@@ -18,17 +18,17 @@ MAP_PRE="$(layout_map "$PLUGIN_ROOT" pre-0.3)"
 MZ="$PLUGIN_ROOT/scripts/materialize.sh"
 
 # ---------------------------------------------------------------------------
-# The agents payload class — base/agents/ → .claude/agents/ (0.8)
+# The agents payload class — base/agents/ → .claude/agents/ (0.9)
 #
 # ADDITIVE, so it extends the 0.3 layout row's dest_map instead of minting a
-# `0.8` layout id: an additive class moves nothing and changes no tree SHAPE, a
+# `0.9` layout id: an additive class moves nothing and changes no tree SHAPE, a
 # second id could only reuse 0.3's own markers (undiscriminable by
 # verify_layout), and any score tie between the two manifests would then be the
 # CROSS-LAYOUT tie detect_version refuses outright rather than the intra-layout
 # one it resolves to the higher version. The whole argument lives in
 # scripts/hops/layouts.tsv; this block is the coverage it needs.
 #
-# No 0.8.0 hop exists, and none should: a hop's absence is the no-op (lib/chain.sh).
+# No 0.9.0 hop exists, and none should: a hop's absence is the no-op (lib/chain.sh).
 # ---------------------------------------------------------------------------
 
 # --- the table itself ------------------------------------------------------

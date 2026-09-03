@@ -138,7 +138,7 @@ repo is both its source and its own marketplace.
       because an additive class moves nothing, and a second layout id could only
       reuse 0.3's own markers — leaving `verify_layout` unable to tell them apart
       and `detect_version` refusing any project that ties across them. That file's
-      header carries the full argument, and no `0.8.0` hop exists because nothing
+      header carries the full argument, and no `0.9.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
       class's own README is a `.txt` for exactly that reason. It ships the **five
