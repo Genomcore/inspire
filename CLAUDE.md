@@ -108,8 +108,9 @@ repo is both its source and its own marketplace.
         the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
         condition with zero human turns between t=0 and the report: `plan` reads
         `emanate-plan.sh` and refuses rather than start a run that provably cannot
-        reach its goal; `run` walks each wave, spawning the five role shells per
-        unit into their own phase worktrees, gating on the overseers and on
+        reach its goal; `run` walks each wave, spawning each of a unit's three
+        personas into its own phase worktree (the two overseers get none: an
+        overseer writes nothing), gating on the overseers and on
         `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
         a merge with trailers, never a KB write, lifecycle included. It consumes
         `inspire-code` as the doctrine router (the roles README) and never
@@ -374,8 +375,14 @@ anything.
 - **Symlinks are not supported** anywhere in a managed path. Nothing INSPIRE ships is
   one; this is a declared limitation, not a gap to close.
 - A release needs both `plugin/.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json` bumped together and a matching
-  `plugin/manifests/<version>.json`. `.claude/hooks/template-runtime-version.sh`
+  `.claude-plugin/marketplace.json` bumped together, a matching
+  `plugin/manifests/<version>.json`, and a `CHANGELOG.md` section — the root
+  changelog is the release-note channel, one section per release, and the
+  convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
   blocks `gh pr create` if the two versions diverge, if the runtime changed without a
   bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
-  exempt from that check: it decides how every install behaves.
+  exempt from that check: it decides how every install behaves. The manifest is
+  generated **last**, from the commit carrying the bump: it hashes
+  `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
+  classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
+  `.manual/`, `docs/`, `base/kb/` and `base/templates/` do not perturb it.
