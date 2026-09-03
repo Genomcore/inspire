@@ -374,8 +374,14 @@ anything.
 - **Symlinks are not supported** anywhere in a managed path. Nothing INSPIRE ships is
   one; this is a declared limitation, not a gap to close.
 - A release needs both `plugin/.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json` bumped together and a matching
-  `plugin/manifests/<version>.json`. `.claude/hooks/template-runtime-version.sh`
+  `.claude-plugin/marketplace.json` bumped together, a matching
+  `plugin/manifests/<version>.json`, and a `CHANGELOG.md` section — the root
+  changelog is the release-note channel, one section per release, and the
+  convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
   blocks `gh pr create` if the two versions diverge, if the runtime changed without a
   bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
-  exempt from that check: it decides how every install behaves.
+  exempt from that check: it decides how every install behaves. The manifest is
+  generated **last**, from the commit carrying the bump: it hashes
+  `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
+  classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
+  `.manual/`, `docs/`, `base/kb/` and `base/templates/` do not perturb it.
