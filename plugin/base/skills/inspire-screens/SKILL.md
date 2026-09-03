@@ -8,6 +8,8 @@ description: "Create and validate screens (a screen is the UI spec for one view)
 ## When to use
 
 - **Creating a new screen** for a module or feature
+- **Iterating on an existing screen** — its bindings, its layout, its prose — or
+  bringing one of an older shape to the current one
 - **Validating existing screens** against their bindings, patterns and components
 - **Detecting drift** between a screen spec and the layout it names — **including
   reverse drift** where the prototype is ahead of the spec
@@ -161,6 +163,7 @@ index, not the flow.
 |---|---|---|
 | The on-disk shape (every flow) | [`references/format-screen.md`](references/format-screen.md) | — |
 | Create a screen | [`references/screen-create.md`](references/screen-create.md) **and** the format reference | `create {module}/{screen}` |
+| Update a screen | [`references/screen-update.md`](references/screen-update.md) **and** the format reference | `update {id}` |
 | Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
 | Promote through the lifecycle | [`references/screen-lifecycle.md`](references/screen-lifecycle.md) | `promote {id} {state}` |
 | Render the derived route map | [`references/screen-routes.md`](references/screen-routes.md) | `routes` |
@@ -258,8 +261,8 @@ When uncertain which layer a finding belongs to, ask the user.
    whether to propagate visible UI changes to the prototype — which edits trigger
    the ask, and what each answer leads to, are
    [`references/screen-propagation.md`](references/screen-propagation.md)'s.
-11. **Stamp every write.** After `create`, `validate`, or `extract` writes a
-   screen or catalog file, run
+11. **Stamp every write.** After `create`, `update`, `validate`, or `extract`
+   writes a screen or catalog file, run
    `.inspire/bin/trust.sh stamp <file> --skill screens`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first
@@ -268,6 +271,7 @@ When uncertain which layer a finding belongs to, ask the user.
 ## Skill invocations
 
 - `/inspire-screens create {module}/{screen}` — scaffold a new screen: mint its id, declare its bindings, name a layout if one fits
+- `/inspire-screens update {id} [args]` — iterate on an existing screen, or bring an older shape to the current one (blocks on stable — regress it with `promote` first)
 - `/inspire-screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
 - `/inspire-screens promote {id} {state}` — walk a screen through the 4-state lifecycle
 - `/inspire-screens routes` — render the derived route map and the transition graph; writes nothing
