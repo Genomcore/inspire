@@ -30,7 +30,7 @@ regression, walked by `promote` like every other transition — screens have no
 
 ## How `promote` walks
 
-`/inspire_screens promote {id} {state}` confirms the target state, then re-runs
+`/inspire-screens promote {id} {state}` confirms the target state, then re-runs
 the checks that apply there. An error finding refuses the promotion.
 
 - **`draft → accepted`** — confirm explicitly. The shape and coherence checks
@@ -57,7 +57,7 @@ The emanation frontier takes `accepted` screens — and, beside them, the catalo
 entries at `**State:** to-extract`, which is what `accepted` is for an entry that
 carries no `lifecycle:` of its own. Two orderings meet here and both are correct:
 
-- **Birth order** — `/inspire_extract` may discover a shared component *after* the
+- **Birth order** — `/inspire-extract` may discover a shared component *after* the
   screens that adopt it. Discovery running behind adoption is specification-time
   work, not a defect.
 - **Wave order** — a screen emanates a wave behind the patterns and components it

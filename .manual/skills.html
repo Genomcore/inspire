@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INSPIRE — Skills reference</title>
-<meta name="description" content="Reference for the fourteen INSPIRE agent skills across three families: seven that specify the product, one that codifies it into production code, and six for housekeeping (setup, the surface roster, brownfield onboarding, tracking, vault review, lessons). Every subcommand, explained.">
+<meta name="description" content="Reference for the fifteen INSPIRE agent skills across three families: seven that specify the product, two that codify it into production code, and six for housekeeping (setup, the surface roster, brownfield onboarding, tracking, vault review, lessons). Every subcommand, explained.">
 <meta property="og:title" content="INSPIRE — Skills reference">
-<meta property="og:description" content="The fourteen /inspire-* skills and what every subcommand does — seven for specification, one for codification, six for housekeeping.">
+<meta property="og:description" content="The fifteen /inspire-* skills and what every subcommand does — seven for specification, two for codification, six for housekeeping.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#FAFAF8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2357D9A3'/%3E%3Cstop offset='0.5' stop-color='%2356B4F8'/%3E%3Cstop offset='1' stop-color='%235E5CE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='url(%23g)' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='url(%23g)'/%3E%3C/svg%3E">
@@ -70,7 +70,7 @@
     <div class="wrap">
       <p class="eyebrow reveal">Reference</p>
       <h1 class="reveal d1">The skills.</h1>
-      <p class="lede reveal d2">INSPIRE ships fourteen agent skills, each invoked as <code>/inspire_&lt;skill&gt; &lt;subcommand&gt;</code>. Seven <b>specify</b> the product, one <b>codifies</b> it into production code under <code>source/</code>, and six handle <b>housekeeping</b> — project setup, the surface roster, brownfield onboarding, work tracking, vault-wide review and the lessons catalog. Every subcommand is listed below.</p>
+      <p class="lede reveal d2">INSPIRE ships fifteen agent skills, each invoked as <code>/inspire-&lt;skill&gt; &lt;subcommand&gt;</code>. Seven <b>specify</b> the product, two <b>codify</b> it into production code under <code>source/</code>, and six handle <b>housekeeping</b> — project setup, the surface roster, brownfield onboarding, work tracking, vault-wide review and the lessons catalog. Every subcommand is listed below.</p>
     </div>
   </section>
 
@@ -165,6 +165,9 @@
             <tbody>
               <tr><th scope="row"><code>create</code></th><td>Author a new screen spec from a shared pattern.</td></tr>
               <tr><th scope="row"><code>validate</code></th><td>Check a screen against its pattern and components; flag drift (incl. reverse drift from the prototype).</td></tr>
+              <tr><th scope="row"><code>update</code></th><td>Iterate on an existing screen — blocks on <code>stable</code>, regress it first.</td></tr>
+              <tr><th scope="row"><code>promote</code></th><td>Walk a screen through its four-state lifecycle.</td></tr>
+              <tr><th scope="row"><code>routes</code></th><td>Render the derived route map and the transition graph (read-only).</td></tr>
               <tr><th scope="row"><code>extract</code></th><td>Promote repeated UI blocks into shared components or patterns.</td></tr>
               <tr><th scope="row"><code>audit</code></th><td>Sweep a module's screens for pattern and component compliance.</td></tr>
             </tbody>
@@ -208,7 +211,7 @@
     <div class="wrap">
       <div class="family-head reveal">
         <h3>Codification</h3>
-        <p>one skill that realizes the knowledge base as production code under <code>source/</code></p>
+        <p>two skills that realize the knowledge base as production code under <code>source/</code> — one attended, one unattended</p>
       </div>
 
       <div class="skill-blocks">
@@ -228,9 +231,23 @@
             </tbody>
           </table>
         </div>
+
+        <div class="skill-block reveal">
+          <div class="skill-head">
+            <span class="sk-name">/inspire-emanate</span>
+            <span class="kb-chip">source/</span>
+            <p class="sk-line">The unattended loop — one goal, no human turns between the start and the report. It walks the knowledge base in dependency waves, giving every unit a contracter, a tester, an implementer and two overseers.</p>
+          </div>
+          <table class="skill-tbl">
+            <tbody>
+              <tr><th scope="row"><code>plan</code></th><td>Read-only: the waves it would build, what blocks each one, and a refusal rather than a run that provably cannot reach its goal.</td></tr>
+              <tr><th scope="row"><code>run</code></th><td>Walk every wave hands-off, each persona in its own worktree. A unit is promoted only once both overseers approve and the tests citing its claims are green — and promotion is a merge carrying that verdict, never a knowledge-base write.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <p class="note reveal"><b>Stack-agnostic by design.</b> <code>/inspire-code</code> layers optional <b>stack profiles</b> — resolved on demand from <code>00_bootstrap/stack.md</code> — that add a framework's concrete conventions (layering, test conventions, review focus, build commands) on top of its generic checks. The template ships lean <code>react</code> and <code>nestjs</code> defaults; a fork adds its own.</p>
+      <p class="note reveal"><b>Stack-agnostic by design.</b> Both codification skills layer optional <b>stack profiles</b> — resolved on demand from <code>00_bootstrap/stack.md</code> — that add a framework's concrete conventions (layering, test conventions, review focus, build commands) on top of the generic checks. The template ships lean <code>react</code>, <code>angular</code>, <code>nestjs</code>, <code>ios</code> and <code>android</code> defaults plus a <code>typescript</code> language profile; a fork adds its own.</p>
     </div>
   </section>
 

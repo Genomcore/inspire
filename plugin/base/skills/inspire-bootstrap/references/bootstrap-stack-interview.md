@@ -78,10 +78,11 @@ generic coding-stage checks. After confirming the layers:
    profile in, and the language profile is where a semantic type's rendering lives
    (`typescript.md` ships). A framework profile without one, or a `language:` naming a
    file that does not exist, is worth fixing here rather than later: attended
-   `/inspire-code` runs degrade to generic, but `emanate plan` **refuses** a unit whose
-   stack has no language profile — a missing rendering home is a readiness error, not
-   a silent generic emission. A language whose only surface is a plain library needs
-   no framework profile; list its language profile in `profiles:` directly.
+   `/inspire-code` runs degrade to generic, but `/inspire-emanate plan` **refuses** a
+   unit whose stack has no language profile — a missing rendering home is a readiness
+   error, not a silent generic emission. A language whose only surface is a plain
+   library needs no framework profile; list its language profile in `profiles:`
+   directly.
 
 ### Wire conventions (selected with the stack)
 
@@ -129,10 +130,10 @@ per-feature one — resolve it here, right after the layers:
    error is not a red test, it is a test that never ran.
 4. **Check the resolved profiles carry a probe recipe** for them — each framework
    profile's own `## Test infrastructure` section. A stack that declares components
-   and resolves no profile that can probe them is what `emanate plan` reports as
-   `PR-22`: an unattended run would read the connection error as red and burn a
-   unit's whole rework budget proving nothing. Offer to author the profile section
-   rather than leaving the warning standing.
+   and resolves no profile that can probe them is what `/inspire-emanate plan`
+   reports as `PR-22`: an unattended run would read the connection error as red and
+   burn a unit's whole rework budget proving nothing. Offer to author the profile
+   section rather than leaving the warning standing.
 
 Why this belongs at bootstrap: an unattended emanation run refuses at t=0 when a
 declared component is not healthy, and it can only do that against a declaration. A

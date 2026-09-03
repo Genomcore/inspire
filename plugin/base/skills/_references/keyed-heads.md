@@ -399,7 +399,7 @@ the prose-style heuristics carry.
 ## Remediation
 
 Every class above is fixed the same way: **touch the artifact through its owning
-skill** — `/inspire_domain update` for an entity or action, `/inspire_feature
+skill** — `/inspire-domain update` for an entity or action, `/inspire-feature
 update` for a use case. The touch flow rewrites the artifact in the current
 format and refreshes its trust stamp; naming an invariant or stating a
 postcondition is judgment, and judgment happens inside the interview where it

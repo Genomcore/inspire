@@ -52,7 +52,7 @@ Which of the three homes a new type belongs in is decided by who would recognize
 
 Two consequences worth stating:
 
-- A project semantic type with neither a base type nor a rendering row is caught at emanation, not authoring time: `emanate plan` refuses a unit in that state as a readiness error (`profiles/README.md:76-77`), rather than emitting a guess.
+- A project semantic type with neither a base type nor a rendering row is caught at emanation, not authoring time: `/inspire-emanate plan` refuses a unit in that state as a readiness error (`profiles/README.md:76-77`), rather than emitting a guess.
 - The `enum<...>` form is parametric. If the variants change between actions on the same entity, `entity-coherence` flags it as a field-conflict (different type-strings, even though the semantic kind matches).
 
 ## Type aliases (rejected)

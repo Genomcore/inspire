@@ -35,7 +35,7 @@ drift** (prototype ahead of spec).
    With two or more UI surfaces the prototype is one shell per surface behind a
    suite landing: start the browse at that landing and walk the shell owning the
    tree being audited, every shell in turn when the audit spans the suite.
-2. **Enumerate routes** by deriving them — `/inspire_screens routes` over the
+2. **Enumerate routes** by deriving them — `/inspire-screens routes` over the
    scope being audited ([`screen-routes.md`](screen-routes.md)), plus each tab
    variant and a representative record for a detail screen. A `shared/` screen is browsed in every
    shell that serves it — the same spec, one visit per shell, since a shell can
