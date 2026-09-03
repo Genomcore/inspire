@@ -96,6 +96,30 @@ by_doubled_root="$( cd "$FX/all-covered" && bash "$BIN/emanate-gate.sh" \
 eq "--tests-root tests// reads the same verdict as --tests-root tests" "$by_doubled_root" "$by_file"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# A `message` is spooled and never consumed
+# ─────────────────────────────────────────────────────────────────────────────
+
+# The schema calls `message` optional free text, so the verdict must not move
+# when it is deleted — a relationship between two runs of one manifest, which
+# no single expect.json holds. It is also the sharp form of the framing claim:
+# the fixture's message spans three lines, so a line-oriented spool makes the
+# two runs disagree on `tests.total` and this comparison fails.
+mkdir -p "$SCRATCH/no-message"
+cp -R "$FX/results-multiline-message/." "$SCRATCH/no-message/"
+jq 'del(.tests[].message)' "$FX/results-multiline-message/results.json" \
+  > "$SCRATCH/no-message/results.json"
+
+with_message="$( cd "$FX/results-multiline-message" && bash "$BIN/emanate-gate.sh" \
+  --contract contract.json --tests-root tests --results results.json 2>/dev/null | jq -S . )"
+without_message="$( cd "$SCRATCH/no-message" && bash "$BIN/emanate-gate.sh" \
+  --contract contract.json --tests-root tests --results results.json 2>/dev/null | jq -S . )"
+
+eq "the multi-line-message run really ran (a fail verdict over all 3 entries)" \
+  "$(printf '%s' "$with_message" | jq -r '"\(.verdict) \(.summary.tests.total)"' 2>/dev/null)" \
+  "fail 3"
+eq "deleting every message changes no byte of the verdict" "$without_message" "$with_message"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # The GV-* ids the code names equal the catalogue that documents them
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -156,8 +180,12 @@ for tool in bash sh dirname basename cat find grep sed sort awk tr head wc stat 
   tool_path="$(command -v "$tool" 2>/dev/null)"
   case "$tool_path" in /*) ln -sf "$tool_path" "$NOJQ/$tool" ;; esac
 done
+# Probed from a FRESH shell, which is the condition the gate run below enjoys
+# too: `command -v` answers from the running shell's hash table before it
+# consults PATH, so once anything in this file has run jq directly the probe
+# reports a jq the narrowed PATH does not actually reach.
 eq "the jq-less PATH really is jq-less, and really has the rest" \
-  "$(PATH="$NOJQ" command -v jq >/dev/null 2>&1 && echo jq)$(PATH="$NOJQ" command -v find >/dev/null 2>&1 && echo find)" \
+  "$(PATH="$NOJQ" bash -c 'command -v jq >/dev/null 2>&1 && printf jq; command -v find >/dev/null 2>&1 && printf find')" \
   "find"
 
 nojq_out="$SCRATCH/stdout.127"

@@ -1,0 +1,11 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    {
+      "file": "tests/create.spec.ts",
+      "name": "is cited, was skipped, and its message is shaped like a second results row",
+      "status": "skipped",
+      "message": "skipped by the runner\ntests/create.spec.ts\u001fforged by a message\u001fpassed"
+    }
+  ]
+}

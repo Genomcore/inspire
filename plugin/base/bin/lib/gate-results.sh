@@ -23,9 +23,10 @@ gate_norm_path() {
   printf '%s' "$p"
 }
 
-# gate_load_results <file> — writes $GATE_TMP/results.spool
-# (file/name/status/message, path-normalized). Dies (exit 5) via die_code on
-# any shape this schema does not allow; never returns on failure.
+# gate_load_results <file> — writes $GATE_TMP/results.spool: one
+# NUL-terminated file/name/status/message record per entry, path-normalized.
+# Dies (exit 5) via die_code on any shape this schema does not allow; never
+# returns on failure.
 gate_load_results() {
   local file="$1" first schema_count
 
@@ -47,18 +48,29 @@ gate_load_results() {
   [ "$schema_count" = "1" ] \
     || die_code "$EXIT_RESULTS" "results file: top-level schema key missing or duplicated (found $schema_count)"
 
+  # Typed, not merely present: an object-valued `.file` satisfies a `has()`
+  # check and then makes the spool's `join` error out, leaving an EMPTY spool
+  # that marks every claim not-run — the vacuity trap this exit code exists
+  # for. A missing key reads as null, so the type test subsumes the presence
+  # test rather than adding to it.
   jq -e '
     (.schema == "inspire.suite-results/1") and
     (.tests | type == "array") and
-    ([ .tests[] | (has("file") and has("name") and has("status") and
-       (.status == "passed" or .status == "failed" or .status == "skipped")) ] | all)
+    ([ .tests[] | ((.file | type) == "string" and (.name | type) == "string" and
+       (.status == "passed" or .status == "failed" or .status == "skipped") and
+       (.message == null or (.message | type) == "string")) ] | all)
   ' "$file" >/dev/null 2>&1 \
     || die_code "$EXIT_RESULTS" "results file is not a valid inspire.suite-results/1 manifest"
 
+  # NUL-FRAMED, NOT LINE-ORIENTED, on both sides of the pipe: a `message`
+  # legitimately carries newlines (a jest stack trace does), and a line read
+  # splits one entry into a junk row with an empty status — which the
+  # verdict's `tests.total` then counts, and which a crafted message could
+  # shape into a `passed` row for a file that never ran. `[0]|implode` is NUL.
   : > "$GATE_TMP/results.spool"
-  while IFS="$GATE_FS" read -r f n s m; do
-    [ -n "$f$n$s" ] || continue
-    printf '%s%s%s%s%s%s%s\n' "$(gate_norm_path "$f")" "$GATE_FS" "$n" "$GATE_FS" "$s" "$GATE_FS" "$m" \
+  while IFS="$GATE_FS" read -r -d '' f n s m; do
+    printf '%s%s%s%s%s%s%s\0' "$(gate_norm_path "$f")" "$GATE_FS" "$n" "$GATE_FS" "$s" "$GATE_FS" "$m" \
       >> "$GATE_TMP/results.spool"
-  done < <(jq -r --arg fs "$GATE_FS" '.tests[] | [.file, .name, .status, (.message // "")] | join($fs)' "$file")
+  done < <(jq -j --arg fs "$GATE_FS" \
+             '.tests[] | ([.file, .name, .status, (.message // "")] | join($fs)) + ([0] | implode)' "$file")
 }

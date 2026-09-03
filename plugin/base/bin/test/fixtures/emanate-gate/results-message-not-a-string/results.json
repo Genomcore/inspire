@@ -1,0 +1,5 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts",
+               "name": "carries an optional key with the wrong type",
+               "status": "failed",
+               "message": 42 } ] }
