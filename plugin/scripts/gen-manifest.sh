@@ -19,8 +19,9 @@
 # A PAYLOAD CLASS ADDED LATER COSTS PAST MANIFESTS NOTHING. The map below is
 # read per class, and a class the release predates simply has no tree entries:
 # `git ls-tree -r <commit> -- plugin/base/agents` is empty at every tag up to
-# v0.7.0, so those manifests regenerate byte-identically with `agents` in the
-# map — which is what test-manifest.sh's nine-manifest sweep asserts, and it is
+# v0.8.0 — the class first ships at 0.9.0 — so every pre-0.9 manifest
+# regenerates byte-identically with `agents` in the map, which is what
+# test/manifest/03-reproduction-sweep.sh asserts over the lot, and it is
 # the mechanical half of the argument for extending the 0.3 layout rather than
 # minting a new one (see scripts/hops/layouts.tsv). The layout id is therefore
 # still decided by the release-identity file alone, never by which classes exist.
@@ -52,9 +53,10 @@ done
 # in the same PR, and the tag is only cut once that merges. Requiring a tag here made
 # `--tag HEAD` impossible and left `template_sha` as the literal "unknown" for the
 # whole pre-tag window, which is precisely the provenance hole this field exists to
-# close. Regenerate from the real tag once it is cut; test-manifest.sh's sweep marks
-# any manifest whose tag does not exist yet as SKIPPED so the pending step stays
-# visible rather than silently passing.
+# close. Regenerate from the real tag once it is cut; until then the sweep in
+# test/manifest/03-reproduction-sweep.sh checks the manifest against the commit
+# it names, and only SKIPS when neither resolves — counted, so a pending step
+# stays visible rather than silently passing.
 if git -C "$REPO" rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
   commit="$(git -C "$REPO" rev-list -n1 "refs/tags/$TAG")"
 elif git -C "$REPO" rev-parse -q --verify "$TAG^{commit}" >/dev/null; then
@@ -95,8 +97,8 @@ tmp="$(mktemp)"; work="$(mktemp -d)"; arc="$(mktemp -d)"
 trap 'rm -f "$tmp"; rm -rf "$work" "$arc"' EXIT
 
 # One archive rather than a `git show` per blob. The bytes are the same bytes:
-# this repo has no .gitattributes, so archive is a plain blob extraction, and the
-# nine shipped manifests still regenerate byte-for-byte.
+# this repo has no .gitattributes, so archive is a plain blob extraction, and
+# every shipped manifest still regenerates byte-for-byte.
 git -C "$REPO" archive "$commit" -- "$SRC_PREFIX" | tar -x -C "$arc" \
   || { log "gen-manifest.sh: cannot read $SRC_PREFIX at $TAG"; exit 1; }
 

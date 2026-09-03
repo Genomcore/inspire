@@ -43,11 +43,11 @@
 #   3. The addition is inert for every past version. A dest_map entry is read
 #      only by _middle/_from_middle (prefix translation) and by the two walkers
 #      in lib/merge.sh, both of which skip an entry whose `base/<name>` is
-#      absent. `.claude/agents` is a prefix no shipped manifest occupies and
-#      that neither contains nor is contained by any other dest, so no path can
-#      now translate that did not before, and the ten shipped manifests
-#      reproduce byte-identically (plugin/test/manifest/03-reproduction-sweep.sh
-#      proves it).
+#      absent. `.claude/agents` is a prefix no manifest before 0.9.0 occupies —
+#      that is where the class first ships — and it neither contains nor is
+#      contained by any other dest, so no path can now translate that did not
+#      before, and every shipped manifest reproduces byte-identically
+#      (plugin/test/manifest/03-reproduction-sweep.sh proves it).
 #      Nothing here is a presence or completeness check, so an operator who
 #      deletes `.claude/agents/` still upgrades.
 #
