@@ -238,7 +238,7 @@ check_entity() {
       e1_sev="$(kh_class_severity "OS-E1" "$sev")"
       e1_note="$(kh_class_note "OS-E1")"
       sdd_finding "$e1_sev" "constraints-mechanics" "$file" \
-        "OS-E1: entity document's \`id\` field carries no \`Constraints:\` line — the marker of a pre-keying entity; touch it with /inspire_domain update$e1_note"
+        "OS-E1: entity document's \`id\` field carries no \`Constraints:\` line — the marker of a pre-keying entity; touch it with /inspire-domain update$e1_note"
       sdd_count_by_severity "$e1_sev"
     fi
   fi

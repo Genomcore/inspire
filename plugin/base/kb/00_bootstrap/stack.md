@@ -93,9 +93,9 @@ catalogue is
 
 An unanswered decision is recorded as **not decided yet**, never left out: the
 convention's own default then applies, and saying so is what keeps a later test
-from pinning a different choice as though it were the contract. `emanate plan`
-reports these rows so a spawned tester asserts the project's decision instead of
-inventing one.
+from pinning a different choice as though it were the contract.
+`/inspire-emanate plan` reports these rows so a spawned tester asserts the
+project's decision instead of inventing one.
 
 ## Test infrastructure
 

@@ -5,9 +5,9 @@
 # the frontier, one `emanate-derive.sh` run per frontier unit, and the record
 # stream each contract is read back as.
 #
-# Derive is INVOKED, never sourced. `derived-contract.md` draws that line —
-# "`emanate plan` aggregates the stdout objects — it must never parse stderr" —
-# and the entry point is the only surface plan is allowed to depend on.
+# Derive is INVOKED, never sourced. `derived-contract.md` draws that line:
+# "`/inspire-emanate plan` aggregates the stdout objects — it must never parse
+# stderr". The entry point is the only surface plan is allowed to depend on.
 #
 # One derivation per frontier unit is the whole fan-out: nothing outside the
 # frontier is ever read. A delivered screen that must gain a nav link is itself

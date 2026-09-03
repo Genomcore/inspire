@@ -38,9 +38,9 @@ derive_remedy() {
   id="$(awk -F'\t' -v p="$path" '$1 == p { print $2; exit }' "$DERIVE_TMP/targets.tsv")"
   kind="$(awk -F'\t' -v p="$path" '$1 == p { print $3; exit }' "$DERIVE_TMP/targets.tsv")"
   case "$kind" in
-    screen)            printf '/inspire_screens update %s' "$id" ;;
-    component|pattern) printf '/inspire_screens extract %s %s' "$kind" "$id" ;;
-    *)                 printf '/inspire_domain update %s' "$id" ;;
+    screen)            printf '/inspire-screens update %s' "$id" ;;
+    component|pattern) printf '/inspire-screens extract %s %s' "$kind" "$id" ;;
+    *)                 printf '/inspire-domain update %s' "$id" ;;
   esac
 }
 

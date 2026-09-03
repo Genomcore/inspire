@@ -61,11 +61,11 @@ plan_check_stack() {
   if [ -f "$f" ]; then
     plan_refuse "PR-13" "$(plan_path_norm "$f")" \
       "the stack declares no \`profiles:\` and no \`## Layer: Name\` section an id could be inferred from" \
-      "/inspire_bootstrap stack"
+      "/inspire-bootstrap stack"
   else
     plan_refuse "PR-13" "$(plan_path_norm "$f")" \
       "there is no stack: nothing declares which profiles a unit is emanated under" \
-      "/inspire_bootstrap stack"
+      "/inspire-bootstrap stack"
   fi
   return 1
 }
@@ -124,7 +124,8 @@ plan_check_overseers() {
 }
 
 # plan_check_frontier — PR-12. An empty frontier refuses rather than emitting a
-# green zero-wave plan, so `emanate run` cannot build worktrees for nothing.
+# green zero-wave plan, so `/inspire-emanate run` cannot build worktrees for
+# nothing.
 plan_check_frontier() {
   [ -s "$PLAN_TMP/frontier.tsv" ] && return 0
   plan_refuse "PR-12" "$PLAN_SCOPE_LABEL" \
@@ -318,9 +319,9 @@ plan_check_regions() {
 
 plan_define_remedy() {
   case "$1" in
-    screen)            printf '/inspire_screens create %s' "$2" ;;
-    pattern|component) printf '/inspire_screens extract %s %s' "$1" "$2" ;;
-    *)                 printf '/inspire_domain define %s' "$2" ;;
+    screen)            printf '/inspire-screens create %s' "$2" ;;
+    pattern|component) printf '/inspire-screens extract %s %s' "$1" "$2" ;;
+    *)                 printf '/inspire-domain define %s' "$2" ;;
   esac
 }
 
@@ -329,8 +330,8 @@ plan_promote_remedy() {
     superseded) printf 're-point the edge at what superseded %s' "$2"; return 0 ;;
   esac
   case "$1" in
-    screen) printf '/inspire_screens promote %s accepted' "$2" ;;
-    *)      printf '/inspire_domain promote %s accepted' "$2" ;;
+    screen) printf '/inspire-screens promote %s accepted' "$2" ;;
+    *)      printf '/inspire-domain promote %s accepted' "$2" ;;
   esac
 }
 
