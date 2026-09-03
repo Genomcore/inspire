@@ -1,0 +1,10 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    {
+      "file": "tests/create.spec.ts",
+      "name": "skipped, but its name carries \u001fpassed\u001f so the fields would shift",
+      "status": "skipped"
+    }
+  ]
+}

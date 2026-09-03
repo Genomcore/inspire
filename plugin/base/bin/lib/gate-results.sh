@@ -62,11 +62,22 @@ gate_load_results() {
   ' "$file" >/dev/null 2>&1 \
     || die_code "$EXIT_RESULTS" "results file is not a valid inspire.suite-results/1 manifest"
 
+  # And SEPARATOR-FREE, over the same four fields the spool joins: a `$fs` in
+  # `file` or `name` shifts the fields after it, forging a `passed` status for
+  # a test the suite skipped. Refusing beats escaping — no runner emits one —
+  # and covering all four keeps the property structural rather than positional,
+  # while stopping the split from truncating a `message` at its first one.
+  jq -e --arg fs "$GATE_FS" '
+    [ .tests[] | ([.file, .name, .status, (.message // "")] | join("") | contains($fs) | not) ] | all
+  ' "$file" >/dev/null 2>&1 \
+    || die_code "$EXIT_RESULTS" \
+         "results file: a test entry carries the record separator (U+001F) in file, name, status or message"
+
   # NUL-FRAMED, NOT LINE-ORIENTED, on both sides of the pipe: a `message`
   # legitimately carries newlines (a jest stack trace does), and a line read
-  # splits one entry into a junk row with an empty status — which the
-  # verdict's `tests.total` then counts, and which a crafted message could
-  # shape into a `passed` row for a file that never ran. `[0]|implode` is NUL.
+  # splits one entry into a junk row with an empty status that the verdict's
+  # `tests.total` then counts. Shaping that row into a forged `passed` needs a
+  # separator as well, which is what the check above refuses.
   : > "$GATE_TMP/results.spool"
   while IFS="$GATE_FS" read -r -d '' f n s m; do
     printf '%s%s%s%s%s%s%s\0' "$(gate_norm_path "$f")" "$GATE_FS" "$n" "$GATE_FS" "$s" "$GATE_FS" "$m" \
