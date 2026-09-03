@@ -1,0 +1,21 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--ceiling",
+    "1"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-20" },
+    { "expr": ".findings[0].severity", "equals": "warning" },
+    { "expr": ".findings[0].unit", "equals": "null" },
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".floor", "equals": "2" },
+    { "expr": ".ceiling", "equals": "1" },
+    { "expr": ".deliverable_waves", "equals": "1" }
+  ],
+  "forbidden": ["NOT READY"]
+}

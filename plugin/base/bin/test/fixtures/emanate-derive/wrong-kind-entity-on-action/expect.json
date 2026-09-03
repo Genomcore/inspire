@@ -1,0 +1,13 @@
+{
+  "exit": 3,
+  "args": [
+    "entity",
+    "auth.user.create"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
+  ]
+}

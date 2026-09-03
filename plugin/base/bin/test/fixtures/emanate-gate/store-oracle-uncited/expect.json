@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".verdict", "equals": "pass" },
+    { "expr": ".claims[0].oracle", "equals": "store" },
+    { "expr": ".claims[0].status", "equals": "store-uncited" },
+    { "expr": ".findings | length", "equals": "0" },
+    { "expr": ".summary.store_uncited", "equals": "1" }
+  ]
+}

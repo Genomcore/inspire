@@ -7,14 +7,24 @@
 # installed project has on disk — because that is what gets compared to disk.
 # Two layouts exist:
 #   pre-0.3 : install.sh copied .inspire/{skills,bin,hooks} → .claude/{skills,bin,hooks}
-#   0.3     : materialize.sh copies base/{bin,hooks,skills}  → .inspire/bin,
-#             .claude/inspire/hooks, .claude/skills — excluding whatever
-#             lib/merge.sh's _base_excluded rejects (today: the top-level
+#   0.3     : materialize.sh copies base/{bin,hooks,skills,agents} → .inspire/bin,
+#             .claude/inspire/hooks, .claude/skills, .claude/agents — excluding
+#             whatever lib/merge.sh's _base_excluded rejects (today: the top-level
 #             base/bin/test/ entry and any top-level template-*.sh entry).
 #             That function is SOURCED here rather than re-expressed: it is the
 #             single definition of the rule, and a manifest that disagreed with
 #             the applier about what ships would make every such path read as
 #             either a phantom deletion or a phantom creation.
+#
+# A PAYLOAD CLASS ADDED LATER COSTS PAST MANIFESTS NOTHING. The map below is
+# read per class, and a class the release predates simply has no tree entries:
+# `git ls-tree -r <commit> -- plugin/base/agents` is empty at every tag up to
+# v0.8.0 — the class first ships at 0.9.0 — so every pre-0.9 manifest
+# regenerates byte-identically with `agents` in the map, which is what
+# test/manifest/03-reproduction-sweep.sh asserts over the lot, and it is
+# the mechanical half of the argument for extending the 0.3 layout rather than
+# minting a new one (see scripts/hops/layouts.tsv). The layout id is therefore
+# still decided by the release-identity file alone, never by which classes exist.
 #
 # Only read-only git is used. Content hashes come from the blob, which is
 # identical to the installed file: no installer transforms a runtime file
@@ -43,9 +53,10 @@ done
 # in the same PR, and the tag is only cut once that merges. Requiring a tag here made
 # `--tag HEAD` impossible and left `template_sha` as the literal "unknown" for the
 # whole pre-tag window, which is precisely the provenance hole this field exists to
-# close. Regenerate from the real tag once it is cut; test-manifest.sh's sweep marks
-# any manifest whose tag does not exist yet as SKIPPED so the pending step stays
-# visible rather than silently passing.
+# close. Regenerate from the real tag once it is cut; until then the sweep in
+# test/manifest/03-reproduction-sweep.sh checks the manifest against the commit
+# it names, and only SKIPS when neither resolves — counted, so a pending step
+# stays visible rather than silently passing.
 if git -C "$REPO" rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
   commit="$(git -C "$REPO" rev-list -n1 "refs/tags/$TAG")"
 elif git -C "$REPO" rev-parse -q --verify "$TAG^{commit}" >/dev/null; then
@@ -62,8 +73,8 @@ if git -C "$REPO" cat-file -e "$commit:plugin/.claude-plugin/plugin.json" 2>/dev
   LAYOUT="0.3"
   IDENTITY_PATH="plugin/.claude-plugin/plugin.json"
   SRC_PREFIX="plugin/base"
-  MAP_NAMES="bin hooks skills"
-  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills"
+  MAP_NAMES="bin hooks skills agents"
+  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills .claude/agents"
 else
   LAYOUT="pre-0.3"
   IDENTITY_PATH=".inspire/manifest.json"
@@ -82,31 +93,46 @@ identity="$(git -C "$REPO" show "$commit:$IDENTITY_PATH" 2>/dev/null)" \
 version="$(printf '%s' "$identity"  | jq -r '.version  // "unknown"')"
 released="$(printf '%s' "$identity" | jq -r '.released // "unknown"')"
 
-tmp="$(mktemp)"; blobtmp="$(mktemp)"
-trap 'rm -f "$tmp" "$blobtmp"' EXIT
+tmp="$(mktemp)"; work="$(mktemp -d)"; arc="$(mktemp -d)"
+trap 'rm -f "$tmp"; rm -rf "$work" "$arc"' EXIT
+
+# One archive rather than a `git show` per blob. The bytes are the same bytes:
+# this repo has no .gitattributes, so archive is a plain blob extraction, and
+# every shipped manifest still regenerates byte-for-byte.
+git -C "$REPO" archive "$commit" -- "$SRC_PREFIX" | tar -x -C "$arc" \
+  || { log "gen-manifest.sh: cannot read $SRC_PREFIX at $TAG"; exit 1; }
 
 i=0
 for name in $MAP_NAMES; do
   i=$((i+1))
   dest="$(printf '%s' "$MAP_DESTS" | cut -d' ' -f"$i")"
+  : > "$work/list"; : > "$work/map"
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     rel="${path#"$SRC_PREFIX/$name/"}"
-    # What 0.3 ships is one rule, defined once, in lib/merge.sh: the applier
-    # (apply_base), the classifier (_base_src) and this generator all ask
-    # _base_excluded. It was duplicated here until the final review; the copy
-    # never diverged, but the only place a rule CAN drift is a second copy of it.
-    # (Pre-0.3 needs no filter: install.sh copied .inspire/{skills,bin,hooks}
-    # wholesale, bin/test/ included — that is precisely why 114 fixture paths sit
-    # in the 0.2.1 manifest.)
+    # What 0.3 ships is one rule with one definition, in lib/merge.sh; a second
+    # copy here is the only place it could drift. Pre-0.3 needs no filter at all:
+    # install.sh copied .inspire/{skills,bin,hooks} wholesale, bin/test/ included,
+    # which is why 114 fixture paths sit in the 0.2.1 manifest.
     if [ "$LAYOUT" = "0.3" ]; then
       _base_excluded "$name" "$rel" && continue
     fi
-    git -C "$REPO" show "$commit:$path" > "$blobtmp" \
-      || { log "gen-manifest.sh: cannot read $path at $TAG"; exit 1; }
-    h="$(sha256_of "$blobtmp")"
-    printf '%s\t%s\n' "$dest/$rel" "$h" >> "$tmp"
+    printf '%s\0' "$path" >> "$work/list"
+    printf '%s\t%s\n' "$path" "$dest/$rel" >> "$work/map"
   done < <(git -C "$REPO" ls-tree -r --name-only "$commit" -- "$SRC_PREFIX/$name")
+
+  hash_paths "$arc" "$work/list" "$work/table"
+  # Joined BY PATH, never by position: a tree entry the extraction cannot produce
+  # as a regular file has no hash, and must fail as loudly as `git show` did
+  # rather than shift every later row onto the wrong path.
+  tf="$work/table" LC_ALL=C awk -F'\t' '
+    BEGIN { tf = ENVIRON["tf"] }
+    FILENAME == tf { h[$2] = $1; next }
+    { if ($1 in h) printf "%s\t%s\n", $2, h[$1]
+      else { print "gen-manifest.sh: cannot read " $1 > "/dev/stderr"; miss = 1 } }
+    END { if (miss) exit 1 }
+  ' "$work/table" "$work/map" >> "$tmp" \
+    || { log "gen-manifest.sh: the path(s) above are missing at $TAG"; exit 1; }
 done
 
 files_json="$(LC_ALL=C sort "$tmp" | jq -R -s '

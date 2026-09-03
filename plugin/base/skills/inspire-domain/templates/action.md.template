@@ -18,6 +18,18 @@ superseded_by: null
 | `{{INPUT_FIELD}}` | `{{TYPE}}` | yes | {{DESCRIPTION}} |
 | `{{INPUT_FIELD_2}}` | `{{TYPE}}` | no | {{DESCRIPTION}} |
 
+### {{INPUT_FIELD}}
+Constraints: `{{CLOSED_VOCABULARY_LIST}}`
+
+{{WHY_THOSE_BOUNDS}}
+
+<!--
+  A per-input H3 is needed only for a CONSTRAINED parameter; delete it otherwise. The
+  Constraints line is its first line, drawn from the closed V1 vocabulary in
+  `_references/keyed-heads.md`. `nonnull` is NOT available here — the Required column above
+  is the only home for required-ness, and two spellings of one fact drift.
+-->
+
 ## Outputs
 
 <!--
@@ -41,9 +53,48 @@ superseded_by: null
 |---|---|---|---|---|
 | `{{FIELD}}` | {{TOUCH}} | `{{TYPE}}` | {{MAPPING}} | {{NOTES}} |
 
+## Preconditions
+- `P1` — {{OPTIONAL_HEAD_FROM_V3_ELSE_DELETE_THIS_SEGMENT}} — {{WHAT_MUST_HOLD_BEFORE}}.
+- `P2` — {{PRECONDITION_PROSE_WITH_NO_HEAD}}.
+
+<!--
+  Heads come from the closed V3 vocabulary in `_references/keyed-heads.md`:
+  actor(role) · exists(module.entity) · absent(module.entity) · state(module.entity, value).
+  An actor or trust-boundary constraint belongs HERE, never as a surface annotation: it is
+  true wherever the action runs. If the action is genuinely unconditional, replace both
+  bullets with the single line `None.` — the section still has to be present.
+-->
+
 ## Behavior
-1. {{STEP_DESCRIPTION}}, following the model defined in [[{{BACK_SOURCE}}|{{BACK_SOURCE_DISPLAY}}]].
-2. {{STEP_DESCRIPTION_2}}.
+1. `B1` — {{STEP_DESCRIPTION}}, following the model defined in [[{{BACK_SOURCE}}|{{BACK_SOURCE_DISPLAY}}]].
+2. `B2` — {{STEP_DESCRIPTION_2}}.
+
+<!--
+  Every step is keyed, and keys are write-once: the markdown ordinal is presentation, the
+  `Bn` key is identity. Deleting a step leaves a gap; nothing is renumbered or reused.
+-->
+
+## Postconditions
+- `Q1` — {{OPTIONAL_HEAD_FROM_V4_ELSE_DELETE_THIS_SEGMENT}} — {{WHAT_HOLDS_AFTERWARDS}}.
+- `Q2` — {{POSTCONDITION_PROSE_WITH_NO_HEAD}}.
+
+<!--
+  Heads come from the closed V4 vocabulary: created(module.entity) · updated(module.entity) ·
+  deleted(module.entity) · unchanged(module.entity) · returns(output_field). State
+  `unchanged(...)` deliberately for an entity the action could plausibly have touched and
+  does not — it is the regression guard.
+-->
 
 ## Errors
-- `{{ERROR_CODE}}` — operator-facing message: "{{MESSAGE}}"
+- `{{ERROR_CODE}}` — {{OPTIONAL_HEAD_FROM_V5_ELSE_DELETE_THIS_SEGMENT}} — operator-facing message: "{{MESSAGE}}"
+
+<!--
+  An error's head names what it reports the violation OF, drawn from V1 ∪ V3 — e.g.
+  `unique(email)` for a conflict, `actor(admin)` for a forbidden call. A written field
+  carrying `unique` obliges its action to declare a matching `unique(...)` error head.
+  An action with no error cases still says so explicitly, with a single `none` bullet —
+  and the BACKTICKS ARE PART OF THE SPELLING. Backticked, `none` reads as an error code
+  with no head, which is clean. Unbackticked, `- none` reads as a head attempt and is
+  reported as OS-A8, an unknown head. Every descriptor shipped so far writes it
+  backticked; write it that way.
+-->

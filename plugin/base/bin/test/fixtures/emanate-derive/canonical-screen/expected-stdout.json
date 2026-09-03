@@ -1,0 +1,144 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "screen",
+    "id": "users.list",
+    "path": "spec/kb/05_screens/users/list.md",
+    "lifecycle": "draft",
+    "module": "users",
+    "screen": "list"
+  },
+  "purpose": "An administrator comes here to find one user among many. The roster leads, so the first thing the reader sees is who exists in the workspace at all; everything else on the screen serves that search.",
+  "requires": [
+    {
+      "kind": "action",
+      "id": "auth.user.create"
+    },
+    {
+      "kind": "action",
+      "id": "auth.user.delete"
+    },
+    {
+      "kind": "action",
+      "id": "auth.user.list"
+    },
+    {
+      "kind": "component",
+      "id": "data-table"
+    },
+    {
+      "kind": "pattern",
+      "id": "list"
+    },
+    {
+      "kind": "screen",
+      "id": "users.detail"
+    }
+  ],
+  "features": [
+    "FEAT-01",
+    "FEAT-02"
+  ],
+  "pattern": {
+    "id": "list",
+    "path": "spec/kb/05_screens/users/../patterns/list.md"
+  },
+  "components": [
+    {
+      "id": "data-table",
+      "path": "spec/kb/05_screens/users/../components/data-table.md",
+      "state": "implemented"
+    }
+  ],
+  "bindings": {
+    "data": [
+      {
+        "key": "main",
+        "action": "auth.user.list",
+        "notes": "primary table feed"
+      }
+    ],
+    "dispatches": [
+      {
+        "key": "create",
+        "action": "auth.user.create",
+        "trigger": "primary action",
+        "on_success": "nav:users.detail",
+        "on_error": "state:form-error"
+      },
+      {
+        "key": "delete",
+        "action": "auth.user.delete",
+        "trigger": "row action",
+        "on_success": "refresh:main",
+        "on_error": "state:error"
+      }
+    ],
+    "navigation": [
+      {
+        "key": "row",
+        "target": "users.detail",
+        "trigger": "clicking a row"
+      }
+    ],
+    "states": [
+      {
+        "key": "empty",
+        "when": "`main` returns zero rows",
+        "presentation": "the empty-collection message and the create action"
+      },
+      {
+        "key": "form-error",
+        "when": "`create` rejects",
+        "presentation": "the field errors, inline, with the form still filled"
+      },
+      {
+        "key": "error",
+        "when": "`delete` rejects",
+        "presentation": "the failure message, with the row still in place"
+      }
+    ]
+  },
+  "route": {
+    "module": "users",
+    "screen": "list",
+    "default": "/users/list"
+  },
+  "claims": [
+    {
+      "id": "users.list/data/main",
+      "oracle": "test",
+      "fingerprint": "sha256:78dc85a7b6afda99fe15f5a9de6c20bd90190d7585640bbff1b9c3169d548b35"
+    },
+    {
+      "id": "users.list/dispatch/create",
+      "oracle": "test",
+      "fingerprint": "sha256:7e0e7dc580e90265707049883e944e9ba672dcb96a5ca3dcba577c4f309f4a6a"
+    },
+    {
+      "id": "users.list/dispatch/delete",
+      "oracle": "test",
+      "fingerprint": "sha256:4d03081d4e9133294cae9419a7462373fd14b4fe02d6b9347258b8cc689bf5bc"
+    },
+    {
+      "id": "users.list/nav/row",
+      "oracle": "test",
+      "fingerprint": "sha256:8fd9be6d595011fe2fe4933972431002d2bfe24078a1ef5c175a7dad02954d61"
+    },
+    {
+      "id": "users.list/state/empty",
+      "oracle": "test",
+      "fingerprint": "sha256:30a21d5c590442ec7b75cbc4f4b0809c110ce6d5f7e5df0a568b8f87a482ef78"
+    },
+    {
+      "id": "users.list/state/form-error",
+      "oracle": "test",
+      "fingerprint": "sha256:e14de6e18bd9cc5ec54f941816066a55ca0af0f8b5a169f616fe660ef5a36d4c"
+    },
+    {
+      "id": "users.list/state/error",
+      "oracle": "test",
+      "fingerprint": "sha256:89957264d02b430eb3e37a88ed6a3a02b80322f42293a4a573f973882a9e1fdf"
+    }
+  ]
+}

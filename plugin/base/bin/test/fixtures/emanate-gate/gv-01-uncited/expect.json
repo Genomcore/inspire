@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".verdict", "equals": "fail" },
+    { "expr": ".claims[0].status", "equals": "uncited" },
+    { "expr": "[.findings[].class] | join(\",\")", "equals": "GV-01" },
+    { "expr": ".summary.uncited", "equals": "1" },
+    { "expr": ".summary.findings_by_class[\"GV-01\"]", "equals": "1" }
+  ]
+}

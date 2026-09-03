@@ -41,10 +41,10 @@ or *spec*:
 
 ### 5. Fix
 1. **Write a failing test first** that reproduces the bug (structure in
-   [`tdd.md`](tdd.md)). The test is the proof you understood it.
+   [`roles/tester.md`](roles/tester.md)). The test is the proof you understood it.
 2. Fix the **root cause**, minimally and without opportunistic refactors, following
-   the project's standards and the authoring rules in [`tdd.md`](tdd.md) (never
-   silence the toolchain, never swallow errors).
+   the project's standards and the authoring rules in
+   [`roles/implementer.md`](roles/implementer.md).
 
 ### 6. Regression prevention
 1. Verify the new test passes, the failing scenario is gone, and the full suite is

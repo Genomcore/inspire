@@ -1,6 +1,8 @@
 # Consolidation step
 
-After any subcommand that changes a descriptor (`define`, `update`, `refactor`, `delete`, `promote` to stable or superseded, `demote` across the stable↔accepted boundary), the agent reconciles the affected entity document. The entity document is itself an authored object — consolidation does **not** rewrite it from scratch. It rebuilds only the two derived sections (`## Fields` and `## Touched by`) by joining every action descriptor in `{module}/{entity}/` and re-projecting the field-touch and action-touch data. The operator-authored sections (`## Purpose`, `## Rationale`, `## Invariants`, and any per-field `### {field-name}` H3 sub-sections) are preserved untouched.
+After any subcommand that changes a descriptor (`define`, `update`, `refactor`, `delete`, `promote` to stable or superseded, `demote` across the stable↔accepted boundary), the agent reconciles the affected entity document. The entity document is itself an authored object — consolidation does **not** rewrite it from scratch. It rebuilds only the two derived sections (`## Fields` and `## Touched by`) by joining every action descriptor in `{module}/{entity}/` and re-projecting the field-touch and action-touch data. The operator-authored sections (`## Purpose`, `## Rationale`, `## Invariants`, and every per-field `### {field-name}` H3 sub-section) are preserved untouched.
+
+**A per-field H3's `Constraints:` line is operator-authored too, and is never regenerated.** Consolidation knows which fields exist, because that is what it joins; it does not know what may not be violated, because no descriptor declares it. The same holds on the descriptor side: an action's `## Preconditions`, `## Behavior` and `## Postconditions`, and every keyed entry in them, are authored and never reconciled from anything. Nothing in this step mints, renumbers or retires a key — an `I{n}`, `B{n}`, `P{n}` or `Q{n}` is minted in the interview and lives untouched thereafter, which is what makes the derived claims stable across consolidation passes.
 
 ## What consolidation updates
 
@@ -10,9 +12,9 @@ After any subcommand that changes a descriptor (`define`, `update`, `refactor`, 
 
 When a descriptor change introduces a field that does not yet appear in the entity document's `## Fields` table, the agent does not silently append the row. Instead it pauses and surfaces the rationale question to the operator:
 
-> "This descriptor adds `signup_ip` to `auth::user`. What's the rationale? — I'll fold it into `## Rationale` before adding the field row."
+> "This descriptor adds `signup_ip` to `auth::user`. What's the rationale? — I'll fold it into `## Rationale` before adding the field row. And any constraints on it: required, immutable, a length range?"
 
-The new row lands in `## Fields` only after `## Rationale` has been updated. This is the **discussion-forcing discipline** at work — entities stay design-discipline artefacts rather than accumulating residue.
+The new row lands in `## Fields` only after `## Rationale` has been updated. This is the **discussion-forcing discipline** at work — entities stay design-discipline artefacts rather than accumulating residue. The constraints half of that question rides along for the same reason: a field row added without one is a field nobody decided the shape of, and the moment to decide is while the operator is already thinking about it.
 
 ## Show-then-approve gate
 

@@ -1,0 +1,37 @@
+{
+  "success": true,
+  "testResults": [
+    {
+      "testFilePath": "./test/accounts/account.e2e-spec.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "is pending",
+          "status": "pending",
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "is a todo",
+          "status": "todo"
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "is disabled",
+          "status": "disabled"
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "is skipped",
+          "status": "skipped"
+        },
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "is focused",
+          "status": "focused"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-06" },
+    { "expr": ".findings[0].target", "equals": "spec/profiles/typescript.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-code" },
+    { "expr": ".findings[0].remedy", "equals": "add spec/profiles/typescript.md, or point `nestjs`'s `language:` at a `layer: language` profile that exists" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "nestjs" },
+    { "expr": ".ready", "equals": "false" }
+  ]
+}

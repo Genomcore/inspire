@@ -21,10 +21,11 @@ Ask what the action accomplishes in one sentence, and which feature / ADR ground
 ## Inputs prompts
 
 ### Categorical
-Ask what the caller provides and which inputs are required vs. defaultable vs. validated where. The answer becomes the `## Inputs` 4-column table.
+Ask what the caller provides and which inputs are required vs. defaultable vs. validated where. The answer becomes the `## Inputs` 4-column table, plus a per-input `Constraints:` line for any parameter whose value space is bounded.
 
 ### Probes
 - **Necessity probe.** "Is `<input>` required, defaultable, or validated where?" Use for every input where the answer isn't obvious from the action's purpose.
+- **Constraints probe.** "Bounds on `<input>` — a length range, an enum, a pattern, a default, a reference into another entity? Anything you name goes on a `Constraints:` line under the table, in the closed vocabulary, where a validator can read it. Required-ness stays in the `Required` column; don't say it twice." Use for every input whose type alone does not pin the value space. When the answer is prose ("it has to look like a phone number"), push once for the machine-readable form (`pattern(/…/)`) — and accept prose in the Description if the rule genuinely resists it.
 - **Type probe.** "You said `email` — that maps to the canonical semantic type, validation rules sourced from the feature email-validation section. Is that the type, or is this a free-form string with action-local rules?" Use to surface where validation lives (here vs. feature vs. entity invariant).
 - **Implication probe.** "If the caller passes `<input>` with `<edge-case-value>`, should the action accept it, reject it, or normalize it?" Use when an input has a non-trivial value space (empty strings, whitespace, mixed case, unicode).
 
@@ -49,10 +50,21 @@ Ask which entities the action touches and how — for each: the effect verb (`cr
 - **Field-declaration probe.** "You said the action writes `<field>` to `<entity>`. Is `<field>` already declared on the entity doc? If not, we need to update `## Rationale` there before the field lands in `## Fields` — that's the discussion-forcing discipline." Always ask when a write touches a field not visible in the current entity doc.
 - **Mapping probe.** "Mapping for `<field>`: `input.<x>`, `uuid()`, `now()`, `current_user`, derived expression? The Mapping column has to read unambiguously to a downstream implementer." Use for every written field.
 
+## Preconditions prompts
+
+### Categorical
+Ask what must already be true for the action to be allowed to run at all. The answer becomes the keyed `## Preconditions` list. `None.` is a valid body — but ask before accepting it, because a genuinely unconditional mutation is rare.
+
+### Probes
+- **Actor probe.** "Who may invoke this — any authenticated caller, an administrator, the row's own owner? That is `actor(<role>)`, and it belongs here rather than on any surface, because it is true wherever the action runs." Always ask for a mutation. A surface name surfacing in the answer ("admin console only") is the signal that this probe was the missing one.
+- **Existence probe.** "Does the action assume a row already exists (`exists(<entity>)`) or that none does (`absent(<entity>)`)? A `create` almost always has an absence precondition — and that absence is usually the uniqueness constraint restated from the caller's side." Use for every action with an `As input` identification.
+- **State probe.** "Is there a state the row has to be in — active, not-yet-verified, unlocked? That is `state(<entity>, <value>)`, and it should match a real declared value, not an ad-hoc word." Use whenever the entity is lifecycled.
+- **Caller-vs-contract probe.** "Is that a precondition (the action refuses when it does not hold) or a validation step (the action checks it and raises an error)? Both are legitimate; the difference is whether the error is in `## Errors`." Use whenever the operator's answer would fit either section.
+
 ## Behavior prompts
 
 ### Categorical
-Ask for the step-by-step description, in order, with the feature/ADR back-source for each non-obvious claim. The answer becomes the numbered `## Behavior` list, with wikilinks woven prosaically into each step.
+Ask for the step-by-step description, in order, with the feature/ADR back-source for each non-obvious claim. The answer becomes the keyed, numbered `## Behavior` list, with wikilinks woven prosaically into each step. Each step carries a `Bn` key; on a revision, an existing step keeps the key it already has and a new step takes the next free number — never renumber, never reuse.
 
 ### Probes
 - **Sourcing probe.** "Step `<N>` references `<concept>` (validation rules / hashing algorithm / audit emission). Which feature or ADR grounds it? The wikilink weaves into the sentence." Ask for every step that makes a sourceable claim — back-sourcing is not optional.
@@ -60,12 +72,24 @@ Ask for the step-by-step description, in order, with the feature/ADR back-source
 - **Error-correspondence probe.** "Step `<N>` mentions `<failure condition>`. Does that correspond to a row in `## Errors`, or is it a precondition the caller is expected to handle?" Use when a step describes a failure mode without a paired error code.
 - **Conflict-mechanism probe.** "Step `<N>` says the action inserts a row with a unique constraint on `<field>`. Is the DB constraint the conflict-detection mechanism (fall through to error), or is there an explicit pre-check?" Use for any step involving uniqueness or referential integrity.
 
+## Postconditions prompts
+
+### Categorical
+Ask what an observer can assert once the action has succeeded. The answer becomes the keyed `## Postconditions` list — and it is the section a test writer works from, so vagueness here becomes a vague test.
+
+### Probes
+- **Effect probe.** "For each entity in the table above: `created`, `updated`, `deleted`, or deliberately `unchanged`? The effect verb up there says what the action *does*; this says what an observer can *check*." Always ask; the two lists should agree, and where they disagree one of them is wrong.
+- **Regression-guard probe.** "Is there an entity this action could plausibly have touched and does not? Stating `unchanged(<entity>)` turns 'we didn't mean to write that' into something a test asserts." Use for any action near a side-effect-heavy neighbour (audit, cache, notification).
+- **Return probe.** "Which output fields are guaranteed populated on success? `returns(<field>)` names them; a field the caller may or may not get is a different claim and needs saying in prose." Use whenever `## Outputs` has more than one row.
+- **Observability probe.** "That postcondition — how would anyone check it? If the honest answer is 'you can't', it is prose, and prose is fine: it becomes a claim a human or an agent has to write an assertion for, rather than one the schema carries for free." Use whenever a proposed head does not quite fit and the operator is reaching for one anyway.
+
 ## Errors prompts
 
 ### Categorical
-Ask which error codes the action emits and the operator-facing message for each. The answer becomes the `## Errors` bullet list.
+Ask which error codes the action emits and the operator-facing message for each. The answer becomes the `## Errors` bullet list, each bullet optionally carrying a head naming what it reports the violation of.
 
 ### Probes
+- **Constraint-correspondence probe.** "Error `<code>` — what exactly does it report the violation of? If it is a uniqueness conflict on `<field>`, the head is `unique(<field>)`; if it is a rejected caller, `actor(<role>)`. The head is what lets the entity's constraint and this error be checked against each other." Always ask for a conflict or authorization error. A written field carrying `unique` with no matching error head is a finding.
 - **Coverage probe.** "Listed errors: `<list>`. Does this cover every failure path described in `## Behavior`? Walk back through the steps — any branch missing its error?" Always ask after errors are drafted.
 - **Code-naming probe.** "Error code `<code>` — does it match conventions used elsewhere in this module (snake_case, verb-noun, etc.)? Consistency matters at review time." Use when the proposed code shape diverges from neighboring actions.
 - **Message-tone probe.** "Operator-facing message for `<code>` — is it actionable (tells the operator what to do) or just descriptive? UI consumers surface this string verbatim." Use for any message that reads as pure description.

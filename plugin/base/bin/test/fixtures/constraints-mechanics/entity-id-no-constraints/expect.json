@@ -1,0 +1,4 @@
+{ "exit": 0,
+  "findings": [{"rule":"constraints-mechanics","severity":"warning","message_substring":"OS-E1: entity document's `id` field carries no"},
+               {"rule":"constraints-mechanics","severity":"warning","message_substring":"derive refuses old-shape artifacts"}],
+  "forbidden": ["OS-E2", "\"severity\":\"error\""] }

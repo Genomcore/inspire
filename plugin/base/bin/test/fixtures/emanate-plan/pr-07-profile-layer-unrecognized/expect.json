@@ -1,0 +1,20 @@
+{
+  "exit": 1,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-07" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/00_bootstrap/stack.md" },
+    { "expr": ".findings[0].unit", "equals": "auth.org" },
+    { "expr": ".findings[0].message | test(\"`mobile-kit` \\\\(`layer: mobile`\\\\) was read and discarded\")", "equals": "true" },
+    { "expr": ".findings[0].remedy", "equals": "correct that profile's `layer:`, or declare a framework profile in `spec/kb/00_bootstrap/stack.md`" },
+    { "expr": ".units[0].profiles | length", "equals": "0" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["PR-06", "PR-13"]
+}

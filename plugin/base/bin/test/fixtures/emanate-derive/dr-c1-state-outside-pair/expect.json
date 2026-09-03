@@ -1,0 +1,15 @@
+{
+  "exit": 4,
+  "args": [
+    "component",
+    "data-table"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].class] | unique | join(\",\")", "equals": "DR-C1" },
+    { "expr": ".refused[0].target", "equals": "spec/kb/05_screens/components/data-table.md" },
+    { "expr": ".refused[0].remedy", "equals": "/inspire-screens extract component data-table" },
+    { "expr": ".unit.state", "equals": "planned" },
+    { "expr": ".unit.lifecycle", "equals": "" },
+    { "expr": "has(\"claims\")", "equals": "false" }
+  ]
+}

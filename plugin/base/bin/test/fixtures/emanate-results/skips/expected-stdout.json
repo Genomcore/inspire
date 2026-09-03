@@ -1,0 +1,10 @@
+{
+  "schema": "inspire.suite-results/1",
+  "tests": [
+    { "file": "test/accounts/account.e2e-spec.ts", "name": "POST /accounts is pending",  "status": "skipped" },
+    { "file": "test/accounts/account.e2e-spec.ts", "name": "POST /accounts is a todo",   "status": "skipped" },
+    { "file": "test/accounts/account.e2e-spec.ts", "name": "POST /accounts is disabled", "status": "skipped" },
+    { "file": "test/accounts/account.e2e-spec.ts", "name": "POST /accounts is skipped",  "status": "skipped" },
+    { "file": "test/accounts/account.e2e-spec.ts", "name": "POST /accounts is focused",  "status": "passed" }
+  ]
+}

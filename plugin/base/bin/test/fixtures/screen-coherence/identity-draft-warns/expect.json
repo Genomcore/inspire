@@ -1,0 +1,16 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "screen id shape: 'users.roster' is neither 'users.list'"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "screen module mismatch"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}

@@ -1,0 +1,23 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": ".floor", "equals": "3" },
+    { "expr": ".waves | length", "equals": "3" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "auth.user,filter,list,paginator" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "auth.user.get,auth.user.list,filtered-list" },
+    { "expr": ".waves[2] | join(\",\")", "equals": "users.detail,users.list" },
+    { "expr": "[.waves[] | length] | join(\",\")", "equals": "4,3,2" },
+    { "expr": "[.units[] | .kind] | unique | join(\",\")", "equals": "action,component,entity,pattern,screen" },
+    { "expr": "[.units[] | select(.id == \"filtered-list\") | .requires | map(.kind + \":\" + .id) | join(\",\")] | join(\"\")", "equals": "component:filter,component:list,component:paginator" },
+    { "expr": "[.units[] | select(.id == \"users.list\") | .requires | map(.kind + \":\" + .id) | join(\",\")] | join(\"\")", "equals": "action:auth.user.list,pattern:filtered-list,screen:users.detail" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

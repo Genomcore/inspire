@@ -39,8 +39,8 @@ A bare `define <id>` is almost always fresh authoring; surface it explicitly so 
 
 **Step 3 — Walk the sections, one question at a time.** Weave the operator's own language into each question:
 
-- **Action**: Purpose → Inputs → Outputs → Entities (effect verb + field touches) → Behavior → `requires` → Errors.
-- **Entity**: Purpose → Rationale → Invariants → Fields → per-field H3.
+- **Action**: Purpose → Inputs (+ per-input constraints) → Outputs → Entities (effect verb + field touches) → Preconditions → Behavior → Postconditions → `requires` → Errors.
+- **Entity**: Purpose → Rationale → Invariants → Fields → per-field H3 (constraints, then rationale).
 
 Capture each resolved section incrementally (see Conversation capture). Only after the operator confirms the whole shape do you run consolidation.
 
@@ -121,7 +121,15 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - Entity document → [`references/format-entity.md`](references/format-entity.md);
   copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
 - Semantic types → [`references/type-mapping.md`](references/type-mapping.md) — the
-  authority for the `Type` vocabulary and `Mapping` tokens used by both formats.
+  authority for the `Type` vocabulary and `Mapping` tokens used by both formats,
+  and the project's own types in `00_bootstrap/semantic-types.md`.
+- Keyed entries and machine-readable heads →
+  [`_references/keyed-heads.md`](../_references/keyed-heads.md) — the authority for
+  every keyed section in both formats (entity `## Invariants` and per-field
+  `Constraints:` lines; action `## Preconditions`, `## Behavior`,
+  `## Postconditions`, `## Errors` and per-input `Constraints:` lines): the entry
+  grammar, the closed head vocabularies, the derived claim ids, which oracle
+  asserts what, and the catalogue of old shapes a strict reader refuses.
 - Externally populated entities use `population: external` — see `references/format-entity.md`.
 
 ## Rules
@@ -135,7 +143,8 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 
 > **Writing contract.** Descriptor prose follows
 > [`_references/writing-style.md`](../_references/writing-style.md). `## Purpose`,
-> `## Rationale` and `## Behavior` are normative prose (R1–R6); the `## Inputs`,
+> `## Rationale`, `## Behavior`, `## Preconditions` and `## Postconditions` are
+> normative prose (R1–R6); the `## Inputs`,
 > `## Outputs`, `## Entities` and `## Fields` tables are structured sections
 > (R3, R4, R6). Prosaic back-sourcing is stated there as a principle; the per-section
 > mechanics stay in [`references/format-action.md`](references/format-action.md).
@@ -170,6 +179,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 - [`references/format-action.md`](references/format-action.md) / [`references/format-entity.md`](references/format-entity.md) — on-disk format specs.
 - [`references/consolidation.md`](references/consolidation.md) — the entity-document reconciliation step.
 - [`references/subcommands/`](references/subcommands/) — full flow per subcommand.
+- [`_references/keyed-heads.md`](../_references/keyed-heads.md) — the keyed-entry grammar, the closed head vocabularies, the derived claim ids, the oracle split and the old-shape refusal catalogue.
 - [`_references/lifecycle-rules.md`](../_references/lifecycle-rules.md) — 4-state lifecycle, per-state gate table, regression + supersession rules.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared finding rendering format used by `review`.
 - [`examples/define-interview.md`](examples/define-interview.md) — annotated interview walkthrough.

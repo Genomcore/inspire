@@ -1,0 +1,13 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "action",
+    "id": "auth.user.create",
+    "path": "spec/sdd/auth/user/auth.user.create.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user",
+    "action": "create"
+  },
+  "claims": []
+}

@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "pattern join: required region 'body' of list accepts data"
+    }
+  ],
+  "forbidden": ["region 'header'", "region 'toolbar'"]
+}

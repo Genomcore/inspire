@@ -1,14 +1,14 @@
 # Lifecycle rules (shared reference)
 
-Every SDD object — **action descriptor** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`) and **entity document** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The two object kinds share the same 4-state enum and the same state machine.
+Every SDD object — **action descriptor** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`), **entity document** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`) and **screen file** (`inspire_kb/05_screens/**/{screen}.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The three object kinds share the same 4-state enum and the same state machine; what each state *gates* differs per kind, and each owning skill says so ([`inspire-screens/references/screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) for screens).
 
 ## The 4-state enum
 
 | State | Meaning |
 |---|---|
 | `draft` | In design. Free authoring; very few invariants enforced. |
-| `accepted` | Design closed. The contract is being implemented; for entities, the field shape is locked. |
-| `stable` | Implementation locked. For actions, all `requires:` deps and all touched entities must be at least accepted (entities must themselves be ≥ accepted; deps must be stable). Treated as a release contract. |
+| `accepted` | Design closed. The contract is being implemented; for entities, the field shape is locked; for screens, the bindings are locked. |
+| `stable` | Implementation locked. For actions, all `requires:` deps and all touched entities must be at least accepted (entities must themselves be ≥ accepted; deps must be stable). For screens, every declared component is `**State:** implemented`. Treated as a release contract. |
 | `superseded` | Escape hatch. The object exists for backward reference but is no longer authoritative; carries a `superseded_by:` pointer. |
 
 ## State diagram
@@ -56,15 +56,14 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 
-`sections-present` is the one rule that splits its severity by **layer**, because
-this table's columns only exist in `04_domain`: a use-case file, an ADR and a
-screen file carry no `lifecycle:` at all, so nothing there can ramp. The rule
-checks their shapes too — sections, the `AC-N` id format, `### Breaking changes`,
-the screen's required parts — and every finding it makes outside `04_domain` is a
-**warning**, at every moment of that artifact's life. The table above is the
-`04_domain` half. Its second row is the exception within the exception: the order
-check *does* ramp, because what a draft may still be reshaping an accepted or
-stable object has fixed.
+`sections-present` splits its severity by **layer**, because two of the layers it
+checks carry no `lifecycle:` field at all: a use-case file and an ADR have no
+column to read, so nothing there can ramp, and every finding the rule makes in
+`03_features` or `01_adr` is a **warning** at every moment of that artifact's life.
+The table above is the `04_domain` half. Its second row is the exception within the
+exception: the order check *does* ramp, because what a draft may still be reshaping
+an accepted or stable object has fixed. The `05_screens` half is the § Screens
+table below.
 
 Some shapes are deliberately presence-only rather than non-empty: an entity's
 `## Touched by` (consolidation owns its body, and a zero-toucher entity
@@ -78,8 +77,40 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | `field-coverage` (every entity Fields row touched by ≥1 action) | warning | error | error | warning |
 | `rationale-wikilink` (≥1 wikilink in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `wikilinks-resolve` (every `[[wikilink]]` resolves to a file) | warning | error | error | warning |
+| `keys-present` — what a keyed entry says (`OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6`) | warning | error | error | warning |
+| `constraints-mechanics` — vocabulary, arity and placement (`OS-E2` · `OS-E4` · `OS-E8`) | warning | error | error | warning |
+| `head-referents` — every name a head mentions exists (`OS-E7` · `OS-X1`–`OS-X4`) | warning | error | error | warning |
 
 The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
+
+Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.9, columns and all. "New but unkeyed" and "pre-0.9" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote` — and since 0.8.0 shipped none of these classes, that is every vault there is, not an older tail of them. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.9. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
+
+### Screens — the same columns, read in `05_screens`
+
+Screen files carry `lifecycle:`, so the columns above are readable there too:
+
+| Rule | draft | accepted | stable | superseded |
+|---|---|---|---|---|
+| `sections-present` (screen required parts: H1 · `**Features:**` line · non-empty `## Purpose` · non-empty `## Bindings`; and the retired `## Instantiation`) | warning | error | error | warning |
+| `screen-coherence` (identity fields, keyed bindings, internal references, the pattern↔region join) | warning | error | error | warning |
+| `screen-coherence` (duplicate `id`; two screens deriving one route in one shell) | error | error | error | error |
+| `screen-coherence` (a `stable` screen declaring a `**State:** to-extract` component) | exempt | exempt | error | exempt |
+| `wikilinks-resolve` (every `[[wikilink]]` in a screen resolves) | warning | error | error | warning |
+
+A screen file with **no frontmatter at all** — every screen written before the
+identity block existed — reads as `draft` and emits warnings only. That is the
+migration path working as designed: nothing authored before 0.9 — which is every
+screen any released version wrote — starts blocking a commit, while the same file
+at `accepted` does.
+
+The two identity rows that never ramp cannot fire on a pre-0.9 file at all: both
+sides need declared frontmatter, and both findings are contradictions rather than
+incompleteness. A contradiction blocks at every state.
+
+`prose-style` is deliberately absent from this table. Style findings stay flat
+warnings in every layer outside `04_domain`, screens included: a screen ramps on
+the rules that describe its contract — its shape, its identity, its bindings —
+never on the ones that read its prose.
 
 ### Style — the mechanical subset of the writing contract
 
@@ -92,8 +123,9 @@ The tier-3 rules ramp severity by the *current object's* lifecycle, not by the l
 [`writing-style.md`](writing-style.md); the authoring skills carry the whole
 contract as judgment. R1 and R3 are heuristics, so they are warnings at every
 state and never ramp — a guess does not block a commit. The other four ramp with
-this table's columns in `04_domain`, and are flat warnings in `03_features`,
-`01_adr` and `05_screens`, which carry no `lifecycle:` for the columns to read.
+this table's columns in `04_domain` and are flat warnings everywhere else:
+`03_features` and `01_adr` have no `lifecycle:` for the columns to read, and
+`05_screens` has one that these checks deliberately do not read (§ Screens).
 The checks are **English-only in 0.7**: a project whose `output_language` is not
 `en` gets one info-level note and no findings at all.
 
@@ -101,10 +133,12 @@ Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`
 
 ## How `promote` walks
 
+Each object kind is promoted by the skill that owns it — `/inspire-domain promote` for actions and entities, `/inspire-screens promote` for screens — and both walk the state machine above. The walk below is the domain one; the screen gates are [`screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) § How `promote` walks.
+
 `/inspire-domain promote {id}` confirms the target state, then re-runs the gates that would apply at that state. If any error finding is emitted, the promotion is refused — operator fixes, then retries.
 
 - `draft → accepted` — confirm explicitly; the mechanical and coherence tiers already applied at draft, so promotion is a contract-locking act.
-- `accepted → stable` — run stable-blockers + touched-entity-lifecycle; refuse if any `requires` target is not yet stable, or any touched entity is below `accepted`. The two gates are **one-directional**: stable actions need their `requires:` deps at `stable` and their touched entities at ≥ `accepted`. Entities promote independently; the bipartite touch graph means stabilising an entity never has consumer-side preconditions.
+- `accepted → stable` — run stable-blockers + touched-entity-lifecycle; refuse if any `requires` target is not yet stable, or any touched entity is below `accepted`. The two gates are **one-directional**: stable actions need their `requires:` deps at `stable` and their touched entities at ≥ `accepted`. Entities promote independently; the bipartite touch graph means stabilising an entity never has consumer-side preconditions. The unattended `/inspire-emanate run` loop **does not walk this transition at all**: it never writes the knowledge base, so its own promotion is git-side — the unit's integration branch merges into the run's turn branch, carrying the `emanate-gate.sh` verdict's digest in the merge commit's trailers. `stable` therefore keeps its meaning as the operator's spec-level statement about a contract, and what a run built is recorded by that branch and by the tests citing each claim's fingerprint. See [`gate-verdict.md`](gate-verdict.md) § Consumers and `.claude/skills/inspire-emanate/references/run.md` § promote.
 - `stable → accepted` (regression) — confirm explicitly; no gates rerun (the contract is loosening, not tightening).
 - `accepted → draft` (regression) — confirm explicitly; no gates rerun (drafts are permissive).
 - `{any} → superseded` — confirm explicitly; require `superseded_by` to point to an existing action; do not rerun other gates (the descriptor is being archived, not promoted).

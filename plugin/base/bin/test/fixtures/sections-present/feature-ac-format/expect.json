@@ -4,7 +4,7 @@
     {
       "rule": "sections-present",
       "severity": "warning",
-      "message_substring": "AC-id format"
+      "message_substring": "OS-F5: AC-id format"
     }
   ],
   "forbidden": ["missing required section", "empty section(s)", "AC-id duplicate"]

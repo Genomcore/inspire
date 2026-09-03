@@ -1,18 +1,84 @@
-<!-- Required: H1, the Features and Pattern header lines, ## Instantiation.
-     Optional / presence-free: ## Module-specific deviations, ## Current prototype, ## Notes.
-     This split is the single source of truth for the two lists the validator encodes. -->
-# {Screen Title} — `/{path}`
+---
+id: {module}.{screen}
+module: {module}
+screen: {screen}
+lifecycle: draft
+---
+
+<!-- Required: the frontmatter identity block (id · module · screen · lifecycle),
+     the H1 title, the Features line, a non-empty ## Purpose, and ## Bindings
+     with at least one of its four subsections (### Data · ### Dispatches ·
+     ### Navigation · ### States).
+     Optional / presence-free: the Pattern and Components lines,
+     ## Module-specific deviations, ## Current prototype, ## Notes.
+     This split is the single source of the two lists the validator encodes.
+
+     `id` is minted once and never re-derived from location: the default mint is
+     {module}.{screen}, and a newcomer whose default is already taken mints
+     {surface}.{module}.{screen}. Moving the file never touches it. The route is
+     NOT authored here — it derives from `module` + `screen`; see
+     references/format-screen.md. -->
+# {Screen Title}
 
 **Features:** FEAT-01, FEAT-02
 **Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
+**Components:** [[{rel-to-05_screens}/components/{component-name}]]
 
-## Instantiation
+<!-- One paragraph of prose — no table, no list: who comes to this screen, for
+     which task, and what they see first. It orients a human reader and gives
+     the emanating agent the screen's intent, which the feature links alone do
+     not carry. It never restates the bindings below (those rows are the
+     contract) and never names a route (routes derive from `module` +
+     `screen`). Present state, the product's own words, kept short. -->
+## Purpose
 
-- **Data:** {the data source — a spec entity or the prototype's mock table}
-- **Primary action:** `[+ New X]` → `/{path}/new`
-- {other pattern slots per the pattern's API}
+{who comes here} {for which task}. {what they see first, and what they do from there.}
 
-<!-- Optional — only when the screen deviates from the pattern's defaults. -->
+## Bindings
+
+<!-- The screen's own semantics, declared whether or not a Pattern is named.
+     Keys are screen-local and unique per subsection; each row generates one
+     claim ({id}/data/{key} · {id}/dispatch/{key} · {id}/nav/{key} ·
+     {id}/state/{key}). Drop a subsection this screen has nothing to declare in.
+     A pipe-syntax wikilink inside a table cell escapes its pipe (`\|`) — an
+     unescaped one would end the cell. A bare colon-form link is equally valid.
+
+     One transition, one declaration, one claim: a transition a dispatch causes
+     is that dispatch's `On success`/`On error` outcome and never also a
+     Navigation row. ### Navigation declares only the transitions no dispatch on
+     this screen causes — a row click, a menu link, a back link, a tab.
+
+     A state's `When` anchors by naming a declared key in BACKTICKS
+     (`main` returns zero rows) — an unbackticked mention is not read as an
+     anchor and the state is reported as free-floating. -->
+
+### Data
+
+| Key | Action | Notes |
+|---|---|---|
+| `main` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what this feed is for} |
+
+### Dispatches
+
+| Key | Action | Trigger | On success | On error |
+|---|---|---|---|---|
+| `create` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what the user does} | → [[{target-screen-id}]] | state `{state-key}` |
+
+### Navigation
+
+| Key | Target | Trigger |
+|---|---|---|
+| `back` | [[{target-screen-id}]] | {what the user does} |
+
+### States
+
+| Key | When | Presentation |
+|---|---|---|
+| `empty` | `main` returns zero rows | {what the user sees} |
+| `{state-key}` | `create` rejects | {what the user sees} |
+
+<!-- Optional — only when the screen deviates from the pattern's defaults, or
+     when which component fills which region needs saying. -->
 ## Module-specific deviations
 
 - {describe only what deviates from the pattern defaults}
@@ -20,7 +86,7 @@
 <!-- Optional — leave empty when aligned; omit the section entirely until a prototype target exists. -->
 ## Current prototype
 
-- **Target:** {prototype route(s) realizing this screen — e.g. `/prototype` at `/{path}`, shell-prefixed in a multi-UI suite — or `none yet`}
+- **Target:** {prototype route(s) realizing this screen — the derived route, shell-prefixed in a multi-UI suite — or `none yet`}
 - **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
   - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
 

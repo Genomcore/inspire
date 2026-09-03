@@ -8,8 +8,21 @@
 # Every layer below is checked against the format spec that owns it:
 #
 #   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
-#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Behavior · ## Errors
+#     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Preconditions ·
+#     ## Behavior · ## Postconditions · ## Errors
 #     in that fixed order (inspire-domain/references/format-action.md).
+#
+#     Six of those eight are checked for PRESENCE here, at flat error severity:
+#     the pre-0.9 core. `## Preconditions` and `## Postconditions` are 0.9
+#     additions, and their presence is checked by `keys-present.sh` instead,
+#     where in 0.9 it is a FLAT WARNING at every lifecycle state (`OS-A3` /
+#     `OS-A4` are two of the five graced presence classes) — a vault upgraded to
+#     0.9 must not go red at pre-PR and at `promote` on every descriptor it
+#     already had, and since 0.8.0 shipped neither section that is every vault
+#     there is. Both names are still in the ORDER list, because an order
+#     check is a subsequence match: a descriptor that has not gained them yet
+#     skips them cleanly, and one that has gained them in the wrong place is
+#     genuinely out of canonical order.
 #
 #   Entity document — `04_domain`, 2-segment leaf filename (severity: error)
 #     ## Purpose · ## Rationale · ## Invariants · ## Fields · ## Touched by
@@ -24,14 +37,19 @@
 #     ## Context · ## Decision · ## Consequences · ## Alternatives considered ·
 #     ## Related ADRs, plus `### Breaking changes` under ## Consequences.
 #
-#   Screen — `05_screens/**` (severity: warning)
-#     an H1 title, the `**Features:**` and `**Pattern:**` header lines, and
-#     ## Instantiation. `## Module-specific deviations`, `## Current prototype`
-#     and `## Notes` are optional and presence-free: never flagged either way.
+#   Screen — `05_screens/**` (severity: lifecycle-progressive)
+#     an H1 title, the `**Features:**` header line, a non-empty ## Purpose and
+#     a non-empty ## Bindings. `**Pattern:**`, `**Components:**`,
+#     `## Module-specific deviations`, `## Current prototype` and `## Notes` are
+#     optional and presence-free: never flagged either way. A lingering
+#     ## Instantiation is reported as a retired section — its declarations
+#     belong in keyed ## Bindings rows.
 #
-# The three non-domain layers carry no `lifecycle:` field, so nothing there can
-# ramp: their findings are warnings at every moment of their life. Only the
-# domain layer's order check ramps, by the checked object's own lifecycle.
+# `03_features` and `01_adr` carry no `lifecycle:` field, so nothing there can
+# ramp: their findings are warnings at every moment of their life. The domain
+# layer's order check and every screen finding ramp with the checked object's own
+# lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
+# file written before the identity block existed starts blocking a commit.
 #
 # A section is "present" when an H2 header with the exact name exists in the
 # body — not inside frontmatter, not inside a fenced code block (a template
@@ -77,12 +95,18 @@ sdd_init_counters
 
 SCOPE="${1:-}"
 
-ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
+ACTION_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Preconditions" \
+                 "Behavior" "Postconditions" "Errors")
+# The subset whose ABSENCE is a flat error at every lifecycle — see the header.
+# Defined as a second array rather than an index range so that reordering the
+# canonical list above cannot silently move which sections are mandatory.
+ACTION_CORE_SECTIONS=("Purpose" "Inputs" "Outputs" "Entities" "Behavior" "Errors")
 ENTITY_SECTIONS=("Purpose" "Rationale" "Invariants" "Fields" "Touched by")
 FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
 ADR_SECTIONS=("Context" "Decision" "Consequences" "Alternatives considered" \
               "Related ADRs")
+SCREEN_SECTIONS=("Purpose" "Bindings")
 
 # The canonical orders are the section arrays themselves: the format specs
 # state one list, in order, and a second copy here could only drift from it.
@@ -222,7 +246,7 @@ join_list() {
   printf '%s\n' "$out"
 }
 
-# check_order <file> <kind> <canonical section...>
+# check_order <file> <kind> <class-id|-> <canonical section...>
 #   Subsequence match over the H2 stream: the file's KNOWN sections must appear
 #   in the canonical relative order. Unknown or optional H2s are skipped, so a
 #   file that adds a section is not penalised for it. The comparison is
@@ -232,10 +256,16 @@ join_list() {
 #   the H2 stream genuinely is out of canonical order.
 #   Lifecycle-progressive: what a draft may still be reshaping, an accepted or
 #   stable object has fixed.
+#   <class-id> is the old-shape class the finding is catalogued under in
+#   `_references/keyed-heads.md`, prefixed to the message so a golden fixture,
+#   a finding and the catalogue all name the same thing. `-` for the kinds that
+#   predate that catalogue and are therefore in no class.
 check_order() {
-  local file="$1" kind="$2"
-  shift 2
+  local file="$1" kind="$2" class="$3"
+  shift 3
   local canon=("$@")
+  local prefix=""
+  [ "$class" != "-" ] && prefix="$class: "
   local idx_list="" name_list="" h i idx section
 
   while IFS= read -r h; do
@@ -259,7 +289,7 @@ check_order() {
       local sev
       sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
       sdd_finding "$sev" "sections-present" "$file" \
-        "$kind section order: known sections appear out of canonical order (expected: $(join_list "${canon[@]}"); found: $name_list)"
+        "$prefix$kind section order: known sections appear out of canonical order (expected: $(join_list "${canon[@]}"); found: $name_list)"
       sdd_count_by_severity "$sev"
       return 0
     fi
@@ -270,8 +300,8 @@ check_order() {
 check_action() {
   local file="$1"
   sections_report "$file" "$file" "action descriptor" "error" "" \
-    "${ACTION_SECTIONS[@]}"
-  check_order "$file" "action descriptor" "${ACTION_SECTIONS[@]}"
+    "${ACTION_CORE_SECTIONS[@]}"
+  check_order "$file" "action descriptor" "OS-A10" "${ACTION_SECTIONS[@]}"
 }
 
 check_entity() {
@@ -279,7 +309,7 @@ check_entity() {
   # `## Touched by` is presence-only: see the header comment.
   sections_report "$file" "$file" "entity document" "error" "Touched by" \
     "${ENTITY_SECTIONS[@]}"
-  check_order "$file" "entity document" "${ENTITY_SECTIONS[@]}"
+  check_order "$file" "entity document" "-" "${ENTITY_SECTIONS[@]}"
 }
 
 # check_acceptance_criteria <read_file> <target>
@@ -318,7 +348,7 @@ check_acceptance_criteria() {
       esac
     else
       sdd_finding "warning" "sections-present" "$target" \
-        "AC-id format: acceptance criterion is not of the form '- [ ] AC-N: ...': $line"
+        "OS-F5: AC-id format: acceptance criterion is not of the form '- [ ] AC-N: ...': $line"
       sdd_count_warning
     fi
   done < <(sdd_body_prose "$file" "Acceptance criteria")
@@ -386,28 +416,52 @@ check_adr() {
 }
 
 check_screen() {
-  local file="$1" missing=""
+  local file="$1" missing="" empty="" sev section
   sp_strip_to_tmp "$file" || return 0
   local tmp="$SP_TMP"
 
+  # Screens carry `lifecycle:`, so their findings ramp with it like a domain
+  # object's. A screen with no frontmatter at all — every screen written before
+  # the identity block existed — reads as draft and keeps emitting warnings.
+  # `## Purpose` is required from 0.9 on, and it ramps with the same lifecycle:
+  # no file written before it existed starts blocking a commit.
+  sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
+
   has_line_prefix "$tmp" "# "            || missing="${missing:+$missing,}H1 title"
   has_line_prefix "$tmp" "**Features:**" || missing="${missing:+$missing,}**Features:** line"
-  has_line_prefix "$tmp" "**Pattern:**"  || missing="${missing:+$missing,}**Pattern:** line"
 
-  if sdd_has_section "$tmp" "Instantiation"; then
-    if [ "$(section_has_content "$tmp" "Instantiation")" != "1" ]; then
-      sdd_finding "warning" "sections-present" "$file" \
-        "screen file has empty section(s) (header present but no body content): Instantiation"
-      sdd_count_warning
+  # Both required sections in document order, each present AND non-empty. A
+  # header with nothing under it is the empty-section finding rather than the
+  # missing-part one, so the operator is told which of the two to fix.
+  for section in "${SCREEN_SECTIONS[@]}"; do
+    if ! sdd_has_section "$tmp" "$section"; then
+      missing="${missing:+$missing,}## $section"
+      continue
     fi
-  else
-    missing="${missing:+$missing,}## Instantiation"
-  fi
+    if [ "$(section_has_content "$tmp" "$section")" != "1" ]; then
+      empty="${empty:+$empty,}$section"
+    fi
+  done
 
   if [ -n "$missing" ]; then
-    sdd_finding "warning" "sections-present" "$file" \
+    sdd_finding "$sev" "sections-present" "$file" \
       "screen file missing required part(s): $missing"
-    sdd_count_warning
+    sdd_count_by_severity "$sev"
+  fi
+
+  if [ -n "$empty" ]; then
+    sdd_finding "$sev" "sections-present" "$file" \
+      "screen file has empty section(s) (header present but no body content): $empty"
+    sdd_count_by_severity "$sev"
+  fi
+
+  # `## Instantiation` retired into `## Bindings`: its declarations became keyed
+  # rows. Reported as its own type, so the operator is told to MOVE
+  # declarations rather than to write a section that is already there.
+  if sdd_has_section "$tmp" "Instantiation"; then
+    sdd_finding "$sev" "sections-present" "$file" \
+      "screen file carries a retired section: ## Instantiation — its declarations move to keyed ## Bindings rows"
+    sdd_count_by_severity "$sev"
   fi
 }
 

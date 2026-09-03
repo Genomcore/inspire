@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--goal",
+    "users.detail"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".goal.units | join(\",\")", "equals": "users.detail,users.home,users.list" },
+    { "expr": ".goal.units | index(\"users.audit\")", "equals": "null" },
+    { "expr": ".goal.floor", "equals": "1" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "users.audit,users.detail,users.home,users.list" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

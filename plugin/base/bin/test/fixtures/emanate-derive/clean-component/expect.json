@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "args": [
+    "component",
+    "data-table"
+  ],
+  "stdout": "expected-stdout.json"
+}

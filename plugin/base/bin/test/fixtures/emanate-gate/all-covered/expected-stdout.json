@@ -1,0 +1,197 @@
+{
+  "schema": "inspire.gate-verdict/1",
+  "unit": {
+    "kind": "action",
+    "id": "auth.user.create",
+    "path": "spec/sdd/auth/user/auth.user.create.md",
+    "lifecycle": "accepted",
+    "module": "auth",
+    "entity": "user",
+    "action": "create"
+  },
+  "verdict": "pass",
+  "claims": [
+    {
+      "id": "auth.user.create/input/email/pattern",
+      "oracle": "test",
+      "fingerprint": "sha256:a5c79eafb8e59c8c78c5bece27fad8f93ec352bf86762c0da908f1ea8be71d44",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 1
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/input/org_id/references",
+      "oracle": "store",
+      "fingerprint": "sha256:6ddcb66483f838cd11a6aa4a3e5b7cd475b48474a43102664bc08a5d8ecbe299",
+      "citations": [],
+      "status": "store-uncited",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/input/status/enum",
+      "oracle": "test",
+      "fingerprint": "sha256:3f0a2c91d73ca450a50f829a43f6adc4b4a9468adf688f154f6797b248d5fbb8",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 2
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/input/status/default",
+      "oracle": "store",
+      "fingerprint": "sha256:cf096fb38557a71ec5ef1a920acaacf0e7599e37aec1d43923798900582d5a54",
+      "citations": [],
+      "status": "store-uncited",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/pre/P1",
+      "oracle": "test",
+      "fingerprint": "sha256:8e746ffcf64b9207c235eec51c1166d77b6a1bb590f1e013663b7d30ef4e9963",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 3
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/pre/P2",
+      "oracle": "test",
+      "fingerprint": "sha256:d3ab97e9157a1253002cdf7d5aea88fe5e1add13b9a5ed78a99c15018f76e690",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 4
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/step/B1",
+      "oracle": "test",
+      "fingerprint": "sha256:2893b84386088f905c2700fa037dc34cd5e1d40d004e48611370b910b2432130",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 5
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/step/B2",
+      "oracle": "test",
+      "fingerprint": "sha256:687e897afd3f6056aa98dfd6e04e41668c54b61d75bbe685dad1b4e228946351",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 6
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/step/B3",
+      "oracle": "test",
+      "fingerprint": "sha256:c06adb061923702da207acca4e302e174c3f4adfb4a8e271f4f81e540fe7e022",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 7
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/post/Q1",
+      "oracle": "test",
+      "fingerprint": "sha256:f4684bc8abb6962282f78217fe05f3be8637b10b0ac07918ee882970a71374b0",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 8
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/post/Q2",
+      "oracle": "test",
+      "fingerprint": "sha256:f3bb55eb1bd3c0138a7992a4da6ea4d32d6dc4247ea9a542cfb2292af0c357a8",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 9
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/post/Q3",
+      "oracle": "test",
+      "fingerprint": "sha256:e93e0ed78d8d1e7d484997fdc8701791b4ede358d064220454ac5451c1839a27",
+      "citations": [
+        {
+          "file": "tests/create.spec.ts",
+          "line": 10
+        }
+      ],
+      "status": "covered",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/error/email_exists",
+      "oracle": "store",
+      "fingerprint": "sha256:435e76d08014c8484fba245dad5ef483f303b983be25a3dc338f534dc9512482",
+      "citations": [],
+      "status": "store-uncited",
+      "findings": []
+    },
+    {
+      "id": "auth.user.create/error/org_conflict",
+      "oracle": "store",
+      "fingerprint": "sha256:e4c5985c6d21fd29f1e94b6fceaab90ebe10234b6d4a9715eab8cbd2fa89c390",
+      "citations": [],
+      "status": "store-uncited",
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "summary": {
+    "claims": 14,
+    "covered": 10,
+    "uncited": 0,
+    "cited_not_run": 0,
+    "cited_failed": 0,
+    "store_uncited": 4,
+    "oracles": {
+      "test": 10,
+      "store": 4
+    },
+    "tests": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "findings_by_class": {}
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "screen",
+    "id": "admin.users.list",
+    "path": "spec/kb/05_screens/admin/users/list.md",
+    "lifecycle": "accepted",
+    "module": "users",
+    "screen": "list"
+  },
+  "purpose": "An administrator comes here to find one account among many. The roster leads, so the reader sees who exists before choosing anyone to act on.",
+  "requires": [
+    {
+      "kind": "action",
+      "id": "auth.user.create"
+    },
+    {
+      "kind": "action",
+      "id": "auth.user.get"
+    },
+    {
+      "kind": "component",
+      "id": "data-table"
+    },
+    {
+      "kind": "pattern",
+      "id": "list"
+    },
+    {
+      "kind": "screen",
+      "id": "users.detail"
+    }
+  ],
+  "features": [
+    "FEAT-01",
+    "FEAT-02"
+  ],
+  "pattern": {
+    "id": "list",
+    "path": "spec/kb/05_screens/patterns/list.md"
+  },
+  "components": [
+    {
+      "id": "data-table",
+      "path": "spec/kb/05_screens/components/data-table.md",
+      "state": "implemented"
+    }
+  ],
+  "bindings": {
+    "data": [
+      {
+        "key": "main",
+        "action": "auth.user.get",
+        "notes": "the primary table feed"
+      }
+    ],
+    "dispatches": [
+      {
+        "key": "create",
+        "action": "auth.user.create",
+        "trigger": "primary action",
+        "on_success": "nav:users.detail",
+        "on_error": "state:form-error"
+      }
+    ],
+    "navigation": [
+      {
+        "key": "row",
+        "target": "users.detail",
+        "trigger": "clicking a row"
+      }
+    ],
+    "states": [
+      {
+        "key": "empty",
+        "when": "`main` returns zero rows",
+        "presentation": "the empty-collection message"
+      },
+      {
+        "key": "form-error",
+        "when": "`create` rejects",
+        "presentation": "the field errors, inline"
+      }
+    ]
+  },
+  "route": {
+    "module": "users",
+    "screen": "list",
+    "default": "/users/list"
+  },
+  "claims": [
+    {
+      "id": "admin.users.list/data/main",
+      "oracle": "test",
+      "fingerprint": "sha256:543f27f43d6d6477fba086e3a9e2e1dc150da2d80cd4fe1ac76e6073b3bb0817"
+    },
+    {
+      "id": "admin.users.list/dispatch/create",
+      "oracle": "test",
+      "fingerprint": "sha256:7e0e7dc580e90265707049883e944e9ba672dcb96a5ca3dcba577c4f309f4a6a"
+    },
+    {
+      "id": "admin.users.list/nav/row",
+      "oracle": "test",
+      "fingerprint": "sha256:8fd9be6d595011fe2fe4933972431002d2bfe24078a1ef5c175a7dad02954d61"
+    },
+    {
+      "id": "admin.users.list/state/empty",
+      "oracle": "test",
+      "fingerprint": "sha256:653f0a759630ea1b0c360ffccf7e47cd8538a93b5d9cd0874aeb510c27461b3c"
+    },
+    {
+      "id": "admin.users.list/state/form-error",
+      "oracle": "test",
+      "fingerprint": "sha256:496792488fed96b5083f5e8ac413fc1a700e834d00c0580ddb783676f154f60e"
+    }
+  ]
+}

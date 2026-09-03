@@ -32,11 +32,14 @@ files under `inspire_kb/03_features/{module}/`.
   surface; `05_screens/{surface}/{module}/` plus `05_screens/shared/{module}/`
   once it has two or more. Each such folder carries `_index.md` + one file per
   screen.
-- `_index.md` contains the route map + feature-coverage table; every screen in
-  the map exists on disk, and every screen file is referenced in the map.
-- Every screen header carries `**Features:**` and `**Pattern:**`; every pattern
-  resolves to a file in `inspire_kb/05_screens/patterns/` (or `bespoke` with
-  justification).
+- `_index.md` lists the module's screens by id, with their feature coverage;
+  every listed screen exists on disk, and every screen file is listed. Routes are
+  derived, never written into the index.
+- Every screen carries its identity block (`id` · `module` · `screen` ·
+  `lifecycle`), a `**Features:**` line, a non-empty `## Purpose` and a non-empty
+  `## Bindings`. A `**Pattern:**` line is optional; where it is there, it
+  resolves to a file in `inspire_kb/05_screens/patterns/` and that layout's
+  required regions find the bindings they need.
 - No screen redefines design tokens (those live in `design-system.md`); no inline
   mock data (reference the data source); each screen stays focused (~250 lines).
 

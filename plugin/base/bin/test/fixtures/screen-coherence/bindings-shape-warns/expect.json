@@ -1,0 +1,21 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "duplicate binding key: 'main' is used twice under '### Data'"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "binding row has no key"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "unknown bindings subsection: '### Slots'"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\"", "'### Data' (the set is closed"]
+}

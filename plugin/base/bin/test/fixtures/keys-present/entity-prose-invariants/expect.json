@@ -1,0 +1,4 @@
+{ "exit": 0,
+  "findings": [{"rule":"keys-present","severity":"warning","message_substring":"OS-E3: ## Invariants carries content that is neither a declared-none body"},
+               {"rule":"keys-present","severity":"warning","message_substring":"derive refuses old-shape artifacts"}],
+  "forbidden": ["OS-E5", "\"severity\":\"error\""] }

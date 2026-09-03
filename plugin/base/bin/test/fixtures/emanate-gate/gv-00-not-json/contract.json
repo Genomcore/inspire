@@ -1,0 +1,4 @@
+emanate-derive.sh: OS-E1: entity document's `id` field carries no `Constraints:` line
+GATE never sees this shape as JSON — a shell that redirected stderr into the
+contract file writes exactly this, and gate says so rather than reading it as
+an empty claims[].

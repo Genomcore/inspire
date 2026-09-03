@@ -36,7 +36,9 @@ repo is both its source and its own marketplace.
   - `plugin/scripts/hops/` — `layouts.tsv` (each layout's structural markers and
     where it materializes `base/`) plus one executable bash script per version that
     moved something. A version that moved nothing has no file: a hop's **absence**
-    is the no-op.
+    is the no-op. A payload class that is only *added* moves nothing either, so it
+    extends the existing row's `dest_map` instead of opening a new layout — the
+    rule, and why a new layout id would break detection, is in the file's header.
   - `plugin/scripts/materialize.sh` — the mechanics the skills call. Modes:
     `--mode plan` (read-only: detect, verify the layout, enumerate the chain,
     classify content, print the grouped report to stderr and a JSON summary to
@@ -65,21 +67,54 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 14 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 15 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
         (external verticals) · `adr`.
-      - **Codification** (1) — `inspire-code`: the coding stage that turns the KB
+      - **Codification** (2) — `inspire-code`: the coding stage that turns the KB
         into production code under `source/` (subcommands `tdd` · `review` ·
         `debug` · `fix-build` · `fix-vulns`), always re-anchoring to the ADRs,
         descriptors and acceptance criteria that specify it, and handing drift
         back to the specifying skills. Stack-agnostic, layering optional **stack
         profiles** (`inspire-code/profiles/`, resolved on demand from
-        `00_bootstrap/stack.md`) — the template ships lean defaults (`react`,
-        `nestjs`, `angular`, `ios`, `android`), each keeping its deep material
-        in `profiles/{id}/references/` loaded only on need; a project adds its
-        own.
+        `00_bootstrap/stack.md`), composed along **two axes**: a **framework**
+        profile (`react`, `nestjs`, `angular`, `ios`, `android`) carries
+        architecture plus the project-owned binding / route / persistence
+        **seeds**, keeps its deep material in `profiles/{id}/references/` loaded
+        only on need, and names the **language** profile (`typescript`) that
+        carries semantic-type rendering and the declaration-only-tree recipe.
+        The template ships those lean defaults; a project adds its own — note
+        that only `react`, `nestjs` and `angular` currently declare a
+        `language:` — `ios` and `android` deliberately declare none, and so
+        refuse. Attended subcommands never block on a
+        missing profile; `/inspire-emanate`'s plan stage refuses **per unit** on profile
+        resolution — `PR-06` when a framework profile the unit is built under
+        reaches no `layer: language` profile, and `PR-07` when a `layer:` the
+        unit resolves carries two framework profiles, or none at all. A unit
+        resolves a *set* and the applied rules are the union of its members',
+        so the ordinary fullstack suite spanning two layers refuses nothing. Its **judgment is filed by role**, not by subcommand:
+        `references/roles/` holds one doc per position of the loop — contracter ·
+        tester · implementer · security overseer · quality overseer — beside a
+        README carrying the role model, the envelope's two halves and the
+        additive-only roster rule. `tdd` (attended, here) and `/inspire-emanate`
+        (unattended, its own skill) read the same docs;
+        `review` holds the two overseer lenses; `fix-vulns`
+        shares the security overseer's standing rules. The subcommand references
+        keep their own flow and point there for the doctrine, so a rule has one
+        home.
+        · `inspire-emanate`: the **unattended emanation loop**, its own skill
+        rather than an `inspire-code` subcommand — the session that loads it *is*
+        the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
+        condition with zero human turns between t=0 and the report: `plan` reads
+        `emanate-plan.sh` and refuses rather than start a run that provably cannot
+        reach its goal; `run` walks each wave, spawning each of a unit's three
+        personas into its own phase worktree (the two overseers get none: an
+        overseer writes nothing), gating on the overseers and on
+        `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
+        a merge with trailers, never a KB write, lifecycle included. It consumes
+        `inspire-code` as the doctrine router (the roles README) and never
+        authors role judgment of its own.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
@@ -93,18 +128,80 @@ repo is both its source and its own marketplace.
         instructions that teach the skills how to behave in this project;
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
-        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`); it is
+        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
+        `keyed-heads.md`); it is
         **not** matched by an `inspire-*` glob.
+    - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
+      definitions, materialized where Claude Code discovers them and merged with
+      the skills' never-clobber rules (an edited shipped agent is kept or asked
+      about; an operator's own agent file is kept by construction). It is **not**
+      a new layout: `layouts.tsv`'s 0.3 row gained `agents:.claude/agents`,
+      because an additive class moves nothing, and a second layout id could only
+      reuse 0.3's own markers — leaving `verify_layout` unable to tell them apart
+      and `detect_version` refusing any project that ties across them. That file's
+      header carries the full argument, and no `0.9.0` hop exists because nothing
+      moved. Claude Code parses **every** `*.md` under this root as an agent
+      definition, so nothing without valid agent frontmatter may ship here — the
+      class's own README is a `.txt` for exactly that reason. It ships the **five
+      role shells** of the emanation loop — `inspire-contracter` ·
+      `inspire-tester` · `inspire-implementer` · `inspire-security-overseer` ·
+      `inspire-quality-overseer`. A shell is an identity, a permission envelope
+      (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
+      only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
+      Bash can write) and a pointer at its doctrine in
+      `inspire-code/references/roles/`. The **overseer roster is additive-only
+      and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
+      whose `tools:` line is present and names no writing tool; a project adds
+      its own, and the two shipped ones are non-removable — `/inspire-emanate`
+      refuses to run when either is missing or fails that shape.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
-      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`). `trust.sh` is here as a
+      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`); the rules that check the
+      other KB layers read `SDD_KB_ROOT` instead, `screen-coherence.sh` among them —
+      screen identity, keyed bindings and the screen↔layout join. `trust.sh` is here as a
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
+      The **five `emanate-*` scripts are the same class of thing** — the
+      emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
+      `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
+      the **strict** parser that refuses an old shape rather than read it as an
+      empty section, and the one place the 0.9 grace on the presence classes is
+      paid for — see
+      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
+      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
+      already realized** → dependency waves → the floor versus the declared
+      ceiling → every readiness check, plus the run-level facts a spawn brief
+      needs — the declared test infrastructure and the project's wire-convention
+      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
+      stdout and nothing written anywhere — see
+      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
+      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
+      result → one pass/fail verdict on stdout, the deterministic evidence an
+      overseer's approval can never stand in for — see
+      [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
+      are the three big enough to decompose, each into its own family of sourced
+      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
+      `gate-*`). Plan and gate **compose on derive's output, never its
+      implementation** — neither sources a `derive-*` unit — and the one unit
+      they do share is `gate-citations.sh`, because the `@claim` token has one
+      scanner and two readings: coverage for gate, realization for plan.
+      `emanate-results.sh` (a test runner's own report → the
+      `inspire.suite-results/1` manifest on stdout) exists because gate reads
+      that one shape and nothing else, and leaving its production to the
+      orchestrator's judgement would put a schema inside prose doctrine — the
+      one place a persona could hand gate a plausible-but-wrong shape and have
+      every claim read as not-run. `emanate-harvest.sh` (a phase worktree's owned
+      diff → one integration commit) is pure git. Those last two source no lib
+      unit at all, and each says so in its own header, so a reader is never left
+      wondering which half of the package they are missing.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
-      authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`.
+      authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
+      unchanged and still correct on its own; `plugin/test/run.sh` drives it one
+      rule at a time (`run-tests.sh <rule>`) plus its seven hand-wired siblings,
+      which turns the estate's slowest single job into twenty-five short ones.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
       (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
@@ -123,7 +220,10 @@ repo is both its source and its own marketplace.
       (ADRs, features, pattern/component entries, tickets) declare a blast radius
       in a `surfaces:` frontmatter field, where absent means suite-wide; screens
       instead scope *positionally*, splitting to
-      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist. The
+      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist — while
+      their identity does not move with them: a screen carries a write-once
+      `id`/`module`/`screen`/`lifecycle` block, declares its own keyed `## Bindings`,
+      and derives its route from `module` + `screen`, so a move is free. The
       `04_domain` tree is never surface-scoped — one domain truth spans the whole
       suite — and a project that declares no surfaces is a suite-of-one whose KB is
       byte-identical to one written before surfaces existed. See
@@ -178,8 +278,9 @@ plugin installed:
 /inspire:init
 ```
 
-It materializes `plugin/base/{skills,bin,hooks,kb,templates}` into the project
-(`.claude/skills/`, `.inspire/bin/`, `.claude/inspire/hooks/`, `inspire_kb/`, plus
+It materializes `plugin/base/{skills,agents,bin,hooks,kb,templates}` into the
+project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
+`.claude/inspire/hooks/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
 `05_screens/design-system.md` from `00_bootstrap/theme.md`, and writes
@@ -215,21 +316,53 @@ anything.
   `inspire_kb/`, not here.
 - The KB ships as a **skeleton** — each layer has a README (and, where useful,
   starter files); a real project fills the rest in via the skills.
-- **Six test suites, all run by hand — there is no CI.** Run the ones your change
-  touches; run all six before a release:
+- **One command runs the whole estate, by hand — there is no CI:**
+  `bash plugin/test/run.sh`. It discovers every test file, builds each released
+  fixture the estate needs once into a run-scoped cache, and runs the lot
+  concurrently (`-j N`, default `min(ncpu, 8)`; `-j 1` is serial). One line per
+  file as it finishes, a failing file's output dumped under it, and **a file that
+  produced zero assertions fails the run** — a test that silently did nothing is
+  not coverage. `--inventory FILE` writes every `PASS`/`FAIL`/`SKIP` line of the
+  run, sorted; that file is how a refactor of the tests proves it lost no
+  assertion. A bare word narrows the run to the jobs whose name contains it
+  (`run.sh upgrade`, `run.sh 06-hop-ops`, `run.sh golden`).
 
-  | suite | covers |
+  | area | covers |
   |---|---|
-  | `bash plugin/base/bin/test/run-tests.sh` | the validators, via golden fixtures |
-  | `bash plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `arr_to_json`, `version_cmp` |
-  | `bash plugin/test/test-fixtures.sh` | the period-correct fixture builder |
-  | `bash plugin/test/test-manifest.sh` | `gen-manifest.sh` + every shipped manifest reproduces |
-  | `bash plugin/test/test-upgrade.sh` | detection, layout signatures, hops, the merge, end-to-end upgrades |
-  | `bash plugin/test/test-materialize.sh` | `init` and `update` against scratch projects |
+  | `plugin/test/upgrade/` | detection, layout signatures, hop ops, the chain, the merge, end-to-end upgrades — one file per concern |
+  | `plugin/test/materialize/` | `init` and `update` against scratch projects |
+  | `plugin/test/manifest/` | `gen-manifest.sh` + every shipped manifest reproduces |
+  | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
+  | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
+  | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
+  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. `golden/emanate-derive` is among the estate's heaviest jobs, at 83 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
-  The last two take minutes — that is the fixture builds, not a hang. Neither is
-  parallel-safe: `test-upgrade.sh` uses literal `/tmp` paths, so two copies at once
-  produce phantom failures.
+  **Every file also runs on its own**, from any directory and with no
+  environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
+  prints its own summary; the cache is an accelerator, never a dependency. The
+  shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
+  holds no tests and the runner never runs it.
+
+  A run takes minutes rather than seconds, and that is fixture builds and
+  process spawns, not a hang. **Wall-clock figures are deliberately not recorded
+  here** — measurements of the same job on the same machine have varied by more
+  than they differ from each other, so any number in this file would be
+  measuring load rather than the estate. Measure it yourself when you need to
+  know. What is stable is the shape: the run is **spawn-bound, not
+  critical-path bound** — every job inflates roughly twofold beside eight peers,
+  so cutting a long file shortens that file and leaves the wall where it was.
+  The two golden jobs `emanate-derive` and `emanate-plan` dominate, over 83 and
+  60 fixtures respectively; a handful of `upgrade/` and `materialize/` files
+  that build several period-correct fixtures each come next. Every job is
+  **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
+  only ever read, so any number of copies — several worktrees at once, the same
+  file twice over, a single file beside a full run — can run concurrently without
+  interfering. The one shared tree is the fixture cache each `run.sh` builds
+  inside its own `mktemp -d`: read-only to the jobs, fingerprinted after the
+  build and again before exit, so a job that reached into it fails the run —
+  naming the cache, not the job — instead of poisoning its siblings. Keep it that
+  way: a fixed path under `/tmp` is what made the upgrade suite produce phantom
+  failures before.
 - Fixtures are free and cost the repo nothing: every tag ships a runnable installer,
   so `git archive <tag>` plus that era's own installer yields a genuine
   period-correct project tree. `plugin/test/lib/fixtures.sh` does this — prefer it
@@ -242,8 +375,14 @@ anything.
 - **Symlinks are not supported** anywhere in a managed path. Nothing INSPIRE ships is
   one; this is a declared limitation, not a gap to close.
 - A release needs both `plugin/.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json` bumped together and a matching
-  `plugin/manifests/<version>.json`. `.claude/hooks/template-runtime-version.sh`
+  `.claude-plugin/marketplace.json` bumped together, a matching
+  `plugin/manifests/<version>.json`, and a `CHANGELOG.md` section — the root
+  changelog is the release-note channel, one section per release, and the
+  convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
   blocks `gh pr create` if the two versions diverge, if the runtime changed without a
   bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
-  exempt from that check: it decides how every install behaves.
+  exempt from that check: it decides how every install behaves. The manifest is
+  generated **last**, from the commit carrying the bump: it hashes
+  `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
+  classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
+  `.manual/`, `docs/`, `base/kb/` and `base/templates/` do not perturb it.

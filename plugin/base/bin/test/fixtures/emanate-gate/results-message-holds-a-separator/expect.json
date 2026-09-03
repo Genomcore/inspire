@@ -1,0 +1,5 @@
+{
+  "exit": 5,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "forbidden": ["GATE pass"]
+}

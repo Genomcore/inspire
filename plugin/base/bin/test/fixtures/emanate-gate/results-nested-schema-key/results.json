@@ -1,0 +1,6 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/create.spec.ts",
+               "name": "carries the runner's own schema tag as an extra key",
+               "status": "passed",
+               "schema": "junit/1",
+               "duration_ms": 12 } ] }

@@ -1,0 +1,22 @@
+{
+  "exit": 4,
+  "args": [
+    "screen",
+    "--file",
+    "spec/kb/05_screens/users/list.md"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "DR-S1"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    },
+    {
+      "expr": ".unit.kind",
+      "equals": "screen"
+    }
+  ]
+}

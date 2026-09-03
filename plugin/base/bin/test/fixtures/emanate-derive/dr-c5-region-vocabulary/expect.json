@@ -1,0 +1,15 @@
+{
+  "exit": 4,
+  "args": [
+    "pattern",
+    "list"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].class] | unique | join(\",\")", "equals": "DR-C5" },
+    { "expr": ".refused | length", "equals": "1" },
+    { "expr": ".refused[0].message | test(\"Fill .mandatory.\")", "equals": "true" },
+    { "expr": ".refused[0].message | test(\"Accepts .records.\")", "equals": "true" },
+    { "expr": "has(\"claims\")", "equals": "false" }
+  ],
+  "forbidden": ["DR-C3", "DR-C4"]
+}

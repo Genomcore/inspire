@@ -1,0 +1,14 @@
+{
+  "exit": 3,
+  "args": [
+    "screen",
+    "--file",
+    "spec/kb/05_screens/patterns/list.md"
+  ],
+  "stdout_jq": [
+    {
+      "expr": ".",
+      "equals": ""
+    }
+  ]
+}

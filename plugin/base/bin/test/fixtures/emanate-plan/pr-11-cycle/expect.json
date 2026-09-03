@@ -1,0 +1,15 @@
+{
+  "exit": 4,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.refused[].code] | unique | join(\",\")", "equals": "PR-11" },
+    { "expr": "[.refused[].target] | join(\",\")", "equals": "spec/sdd/auth/user/auth.user.get.md,spec/sdd/auth/user/auth.user.list.md" },
+    { "expr": "has(\"waves\")", "equals": "false" },
+    { "expr": ".ready", "equals": "false" }
+  ]
+}

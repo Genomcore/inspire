@@ -1,0 +1,20 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--reemanate",
+    "auth.user*"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".reemanate.selectors | join(\",\")", "equals": "auth.user*" },
+    { "expr": ".reemanate.units | join(\",\")", "equals": "auth.user,auth.user.list" },
+    { "expr": ".reemanate.units | index(\"auth.org\")", "equals": "null" },
+    { "expr": ".reemanate.units | index(\"audit.event\")", "equals": "null" },
+    { "expr": ".floor", "equals": "3" }
+  ],
+  "forbidden": ["PR-", "NOT READY"]
+}

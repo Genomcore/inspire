@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".verdict", "equals": "fail" },
+    { "expr": ".claims[0].status", "equals": "cited-failed" },
+    { "expr": "[.findings[].class] | join(\",\")", "equals": "GV-03" },
+    { "expr": ".summary.tests.total", "equals": "3" },
+    { "expr": ".summary.tests | (.passed + .failed + .skipped) == .total", "equals": "true" }
+  ]
+}

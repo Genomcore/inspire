@@ -1,0 +1,1 @@
+{ "schema": "junit/1", "schema": "inspire.suite-results/1", "tests": [ { "file": "tests/create.spec.ts", "name": "declares its schema twice on one line", "status": "passed" } ] }

@@ -8,6 +8,8 @@
 # Pattern: {pattern-name}
 
 **Purpose:** {one-line description of what this pattern is for — first body line, greppable}
+**State:** implemented | to-extract
+**Components:** [[../components/{component-name}]]
 
 {One-paragraph description of the pattern.}
 
@@ -19,11 +21,20 @@
 Tokens (spacing, type, colors, density) come from the design system
 ([`../design-system.md`](../design-system.md)) — do not restate them here.
 
-## Slots
+## Regions
 
-| Slot | What the screen provides |
-|------|--------------------------|
-| `{slot}` | {what it carries} |
+<!-- Regions are HOLES, never prop mirrors: a region says what kind of content it
+     accepts, never which fields that content shows. A component's props belong to
+     its own catalog entry, and the screen is where props and regions meet.
+     `Fill`: required | optional. `Accepts`: one or more of `data` · `dispatch` ·
+     `nav` · `static` — the first three name the binding kind a screen must declare
+     for a required region, and `static` means screen-authored content with no
+     binding behind it. The join-check reads these two columns, and both
+     vocabularies are closed: a value outside them is a warning on THIS file. -->
+
+| Region | Fill | Accepts | What it holds |
+|---|---|---|---|
+| `{region}` | required | static | {the content this hole takes} |
 
 ## Variants
 

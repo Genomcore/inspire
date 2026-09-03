@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "testResults": [
+    {
+      "name": "test/accounts/account.e2e-spec.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["POST /accounts"],
+          "title": "provisions an account end to end",
+          "status": "flaked"
+        }
+      ]
+    }
+  ]
+}

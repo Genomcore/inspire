@@ -1,0 +1,14 @@
+{
+  "exit": 2,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--reemanate",
+    "auth.org",
+    "--reemanate",
+    "billing.*"
+  ],
+  "forbidden": ["READY", "FRONTIER", "\"schema\""]
+}

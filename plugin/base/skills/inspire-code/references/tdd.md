@@ -1,8 +1,9 @@
 # /inspire-code tdd — write production code test-first
 
-**No implementation without tests first.** This reference carries two things: the
-red-green-refactor loop with its test conventions, and the non-negotiable authoring
-rules that hold for *any* code this skill writes (not only under `tdd`).
+**No implementation without tests first.** This reference carries the attended loop:
+the unit of work, the red-green-refactor cycle, and the KB anchoring around it. The
+judgment it runs on is shared with the unattended loop and lives per role in
+[`roles/`](roles/README.md).
 
 The unit of work is a **feature**: `tdd {feature-id}` implements the use case at
 `inspire_kb/03_features/{module}/{feature-id}.md`, and its **acceptance criteria
@@ -12,8 +13,24 @@ before writing code.
 
 > **Stack profile.** Resolve the active profile(s) first (SKILL.md → Stack
 > profiles). When one is present, its `## Test conventions`, `## Layering`, and
-> `## Forbidden patterns` refine the generic rules below, and its `## Build &
-> verify` gives the exact commands to run. No profile → the generic rules stand.
+> `## Forbidden patterns` refine the generic rules in [`roles/`](roles/README.md),
+> and its `## Build & verify` gives the exact commands to run. No profile → those
+> generic rules stand alone.
+
+## Two roles, in sequence
+
+Writing the test and writing the code are different positions, and each one's
+doctrine has one home. Read it as you enter the position:
+
+| step | role | what its doc carries |
+|---|---|---|
+| write the failing test | **tester** — [`roles/tester.md`](roles/tester.md) | test structure (GIVEN/WHEN/THEN), one test one scenario, mocking at the boundary |
+| make it pass | **implementer** — [`roles/implementer.md`](roles/implementer.md) | the non-negotiable authoring rules, which bind every subcommand that writes code |
+
+Attended, the list under test is the feature's acceptance criteria rather than a
+unit's derived claims, and the separation between the two positions is discipline
+rather than a harvest filter. The judgment is the same one `/inspire-emanate` dispatches as
+agents.
 
 ## Precondition: the test infrastructure runs, or the cycle cannot start
 
@@ -269,40 +286,10 @@ random inputs behind a weak assertion still prove nothing.
 
 ## Test structure: GIVEN / WHEN / THEN
 
-Every test has three phases, blank-line separated:
-
-```
-it('describes one behavior', () => {
-  // GIVEN   — setup; the method-under-test arguments come last, close to WHEN
-  // WHEN    — a single statement exercising the logic under test
-  // THEN    — the assertions
-})
-```
-
-- **One test = one scenario.** A single WHEN and one asserted outcome; never bundle
-  several calls into one test.
-- **Test behavior, not implementation.** Assert the observable outcome and the
-  contract, not private internals — and build the expected value from the domain
-  entity, never from the value under test.
-- **For a collection or paginated response, "the whole object" is the envelope plus the
-  identity and order of the members** — not every field of every member. Asserting 200
-  records × 40 fields is unmaintainable and breaks on every unrelated field addition, so
-  it degrades into `toHaveLength`, which is the real failure. Assert instead: the
-  envelope's **exact key set** (no extra, no missing), the members' **natural keys in
-  order**, and the paging fields. A count alone cannot tell a correct page from an
-  off-by-one that returned the same number of wrong rows — and that mutation is the one
-  a paging bug actually is. Each member's field shape is the subject of the
-  single-record tests; re-asserting it per member buys nothing.
-- **Prefer exact values over weak matchers.** Reach for "any"/"contains"/regex
-  matchers only for values that are genuinely non-deterministic (generated ids,
-  timestamps) — each weakening hides drift.
-- **Mock at the boundary, not the internals.** Replace external systems, never the
-  collaborators whose interaction is the thing being verified. Integration/e2e tests
-  use the real thing and mock only the outermost external HTTP.
-
-Which tools, which levels, and how they run are the active profile's
-`## Test conventions`; with no profile, match the test to the layer under test, not
-the file.
+The three-phase shape, the one-scenario rule, behaviour-over-implementation, what
+"the whole object" means for a collection, exact values over weak matchers and where
+to mock: [`roles/tester.md`](roles/tester.md) § Test structure. Which tools and which
+levels are the active profile's `## Test conventions`.
 
 ## Choosing the test level
 
@@ -367,58 +354,17 @@ disagree, surface it — never quietly pick one.
 
 ## Non-negotiable authoring rules
 
-These hold for **every** subcommand that writes code (`tdd`, `debug`'s fix,
-`fix-build`), and they are what `review` flags when violated. They are the
-generic, stack-agnostic core — the toolchain enforces the mechanical rest.
+They hold for **every** subcommand that writes code (`tdd`, `debug`'s fix,
+`fix-build`), and they are what `review` flags when violated. Their one home is
+[`roles/implementer.md`](roles/implementer.md) § Non-negotiable authoring rules; the
+resolved framework profile's `## Forbidden patterns` adds what is specific to the
+stack.
 
-- **Never silence the toolchain.** A lint disable, a suppressed type error
-  (`@ts-ignore` / `@ts-expect-error`, `as any`, a cast that bypasses a real error,
-  a non-null assertion), or a formatter-ignore pragma treats a real defect as noise.
-  Change the code, the type or the design instead, and narrow with a guard. The only
-  acceptable use is a documented, reviewed, time-boxed escape hatch — never a
-  silent one.
-- **Never swallow errors silently.** A `catch` re-throws (original, or wrapped with
-  `cause`), handles meaningfully, or logs a "do nothing" that was a conscious,
-  explained choice. An empty `catch {}` makes incidents undebuggable.
-- **Validate input at the boundary that owns it** — the entry DTO/schema where there
-  is one, the application/service layer where there isn't. Data-access code assumes
-  valid input; pushing validation into it couples storage to domain rules and hides
-  it from callers. A type signature cannot prove external data (JSON, request
-  bodies, DB rows) — the boundary check stays even where the type system already
-  encodes the invariant.
-- **Never commit commented-out code.** Git history is the archive; the exception is
-  a short comment explaining *why* something non-obvious was removed.
-- **Never leave anonymous TODOs.** Every deferred item names an owner **and** a
-  closing trigger — and in INSPIRE the trigger is a real ticket:
-  `/inspire-task create`. If you can't name an owner or a trigger, it isn't
-  deferred, it's forgotten: do it now, or open the ticket first.
+## A flaky test is fixed, never re-run
 
-**A flaky test is fixed, never re-run.**
-**A test that fails and passes on the next run is a defect, and the flakiness is the defect
-— not the run that caught it.** Fix it before continuing with anything else. Re-running to
-get green is forbidden, and so is recording the failure as unexplained and moving on.
-
-The reason is not tidiness. Every mechanical gate in a project is worth exactly what a red
-result is worth. One test that fails at random teaches everybody — operator and agent alike
-— that red might mean nothing, and from then on the honest failures get re-run too. A suite
-that is 99% reliable is not 99% as useful as a reliable one; it is a suite nobody reads.
-
-So, in order:
-
-1. **Capture the failure first.** Root cause before fix (Rule 4) has no exception here, and
-   an intermittent bug is exactly where a plausible guess is most expensive: it "works"
-   afterwards whether or not it was the cause, and the next occurrence is weeks away. Loop
-   the suite retaining each run's output until one goes red, and read *that* output.
-2. **Rule causes out with evidence, and say which you ruled out.** "The suites run in
-   parallel" is checkable in one line; asserting it without checking sends the fix in the
-   wrong direction and leaves the reader unable to re-derive the reasoning.
-3. **Only then fix**, and prove it by looping the suite again — a fix for an intermittent
-   failure is not verified by one green run, which is the state the bug already produced.
-
-The usual causes, in the order they are worth suspecting for an e2e suite against a real
-store: shared mutable state between test files, DDL or setup racing itself, a read issued
-before the write it depends on is visible, and time or ordering assumed rather than
-controlled.
+Why a suite nobody trusts is worth nothing, and the capture → rule-out → fix order
+that gets one back: [`roles/tester.md`](roles/tester.md) § A flaky test is fixed,
+never re-run.
 
 ## Anchoring back to the KB
 

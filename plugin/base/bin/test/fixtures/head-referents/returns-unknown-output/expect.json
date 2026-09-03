@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"head-referents","severity":"error","message_substring":"OS-X4: ## Postconditions `Q2` returns(`user_id`) names no row in ## Outputs"}],
+  "forbidden": [] }

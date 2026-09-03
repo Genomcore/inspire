@@ -107,11 +107,28 @@ subcommand, read its reference file** — the table below is an index, not the f
 
 | Subcommand | What it does |
 |---|---|
-| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor → mutation drill, GIVEN/WHEN/THEN, and the non-negotiable authoring rules. Anchored to the feature's acceptance criteria. |
+| [`tdd`](references/tdd.md) | Write production code test-first: red → green → refactor → mutation drill, anchored to the feature's acceptance criteria. The test-authoring and code-authoring doctrine it applies lives per role in [`references/roles/`](references/roles/README.md). |
 | [`review`](references/review-dimensions.md) | Judgment review of a diff. Phase 0 checks KB alignment (ADRs, action descriptors, acceptance criteria); phases 1–4 cover architecture, correctness, security, tests. Fans out to dimension agents in thorough mode. |
 | [`debug`](references/debug.md) | Reproduce → hypothesize → eliminate → root cause → fix → prevent regression. A root cause that is a spec gap routes back to `/inspire-feature` or `/inspire-domain`. |
 | [`fix-build`](references/fix-build.md) | Parse build/compile errors, diagnose root cause, apply the minimal fix, rebuild to verify. |
 | [`fix-vulns`](references/fix-vulns.md) | Reach the agreed severity bar with the fewest `overrides` possible, without breaking build or tests. **npm only.** |
+
+## Roles
+
+A **role** is where the judgment lives, and the subcommands above play the roles in
+sequence. `tdd` is the tester and then the implementer; `review` holds both overseer
+lenses at once, addressing the operator instead of an orchestrator; `debug` and
+`fix-build` write code, so the implementer's authoring rules bind them too. The five
+roles — contracter · tester · implementer · security overseer · quality overseer —
+carry one doctrine document each, in
+[`references/roles/`](references/roles/README.md).
+
+The same docs are read by the **agent shells** INSPIRE ships to `.claude/agents/`, one
+per role: `/inspire-emanate` (the unattended loop, its own skill) dispatches them with a permission envelope
+and the unit's resolved profile set, where an attended subcommand simply reads the
+doctrine and applies it. One doctrine, two dispatch shapes —
+[`references/roles/README.md`](references/roles/README.md) is the one page for the
+whole model, the envelope and the overseer roster included.
 
 ## SDD anchoring — the thing that makes this different from a generic linter
 
@@ -143,17 +160,30 @@ This skill is stack-agnostic; a **stack profile** layers a framework's concrete
 conventions onto its generic dimensions. At the start of any subcommand, resolve the
 active profile set per [`profiles/README.md`](profiles/README.md) § Resolution. That
 contract is also where the load rules live — which files a resolved set reads from
-[`profiles/`](profiles/), that profiles compose, and that a declared framework with no
-profile file runs purely generic instead of blocking — so read it there rather than
-from here. When the suite has a surface roster, the target surface's `Profiles` field
-is the selector instead; see *Surfaces and the monorepo* above.
+[`profiles/`](profiles/), that profiles compose along two axes (a framework profile
+pulls in the **language profile** its `language:` field names), and that a declared
+framework with no profile file runs purely generic instead of blocking — so read it
+there rather than from here. When the suite has a surface roster, the target
+surface's `Profiles` field is the selector instead; see *Surfaces and the monorepo*
+above.
 
 What this skill adds is where a profile's sections land in its own flow:
-`## Layering` → review Phase 1 / implementation shape; `## Test conventions` → `tdd`
-+ review Phase 4; `## Forbidden patterns` → review + authoring rules;
+`## Layering` → the quality overseer's architecture lens and the implementation shape;
+`## Test conventions` → [`roles/tester.md`](references/roles/tester.md), which also
+reads it for **the test paths harvest accepts**; `## Forbidden patterns` →
+[`roles/implementer.md`](references/roles/implementer.md)'s authoring rules;
 `## Review focus` → extra review dimensions; `## Build & verify` → the real
 build/test commands. When a framework the project declared has no profile, say so in
 the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
+
+The seed sections — `## Bindings`, `## Routes`, `## Persistence` — and the language
+profile's rendering tables are read by the emanation stages rather than by this
+skill's own subcommands. They are project-owned conventions, so treat them as fact
+when you meet emitted code that follows them: an API shape or a table name that
+matches the profile is correct by declaration, not something to flag. **Every
+subcommand here keeps the never-block rule** — a missing profile degrades to generic
+and says so. The single exception is unattended: `/inspire-emanate plan` refuses a unit whose
+stack declares no language profile, per `profiles/README.md` § The one exception.
 
 ## Rules
 
@@ -193,9 +223,10 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
    check once is itself the defect.
 4. **Root cause before fix.** `debug` and `fix-build` never patch a symptom. Fix
    the cause, then check whether the same pattern exists elsewhere.
-5. **Never silence the toolchain and never swallow errors.** See
-   [`references/tdd.md`](references/tdd.md) — these authoring rules hold across
-   every subcommand that writes code, not just `tdd`.
+5. **The authoring rules bind every subcommand that writes code**, not just `tdd`.
+   They live in
+   [`references/roles/implementer.md`](references/roles/implementer.md) § Non-negotiable
+   authoring rules.
 6. **Infrastructure before the first test.** E2E comes first, so the database / broker /
    cache it runs against has to exist before the cycle starts. A component the tests need
    is declared in `stack.md`'s `## Test infrastructure` (an ADR when load-bearing), then
@@ -227,17 +258,23 @@ the run's opening statement and offer `/inspire-bootstrap` to scaffold one.
 
 ## References
 
-- [`references/tdd.md`](references/tdd.md) — test-first loop, GIVEN/WHEN/THEN, the
-  language-agnostic SOLID design principles, and non-negotiable authoring rules
-  (toolchain, error handling, dead code, TODOs).
+- [`references/roles/README.md`](references/roles/README.md) — the role model: the
+  three personas, the two overseers, the permission envelope's two halves, and the
+  additive-only overseer roster. The five role docs sit beside it — `contracter.md`
+  (emission over the derived contract), `tester.md` (test structure and claim
+  citation), `implementer.md` (the non-negotiable authoring rules),
+  `security-overseer.md`, `quality-overseer.md`.
+- [`references/tdd.md`](references/tdd.md) — the attended test-first loop, its KB
+  anchoring, the language-agnostic SOLID design principles and the mutation drill.
 - [`references/review-dimensions.md`](references/review-dimensions.md) — the review
-  phases + the fan-out dimensions and what each one checks.
+  phases, the fan-out, and the report format.
 - [`references/fix-build.md`](references/fix-build.md) — build-error taxonomy + process.
 - [`references/fix-vulns.md`](references/fix-vulns.md) — npm vulnerability workflow.
 - [`references/debug.md`](references/debug.md) — the 6-step root-cause framework.
-- [`profiles/README.md`](profiles/README.md) — the stack-profile contract; the
-  lean default profiles (`react`, `nestjs`, `angular`, `ios`, `android`) live
-  beside it, each with its deep material under `profiles/{id}/references/`.
+- [`profiles/README.md`](profiles/README.md) — the stack-profile contract, both axes;
+  the lean defaults live beside it — framework profiles `react`, `nestjs`, `angular`,
+  `ios` and `android`, each keeping its deep material under `profiles/{id}/references/`,
+  and language profile `typescript`.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
 - [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer

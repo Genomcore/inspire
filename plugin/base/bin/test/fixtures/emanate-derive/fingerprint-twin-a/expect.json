@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "args": [
+    "action",
+    "auth.user.create"
+  ],
+  "stdout": "expected-stdout.json"
+}

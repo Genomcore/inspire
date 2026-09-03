@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "route collision: 'users/list' is derived by this screen and by"
+    }
+  ],
+  "forbidden": ["duplicate screen id", "screen id shape"]
+}

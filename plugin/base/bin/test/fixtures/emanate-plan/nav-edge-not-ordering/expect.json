@@ -1,0 +1,17 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": ".floor", "equals": "1" },
+    { "expr": ".waves | length", "equals": "1" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "users.detail,users.list" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-11", "NOT READY"]
+}

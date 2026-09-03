@@ -1,0 +1,18 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".preflight.components | length", "equals": "0" },
+    { "expr": ".preflight.probe_profiles | join(\",\")", "equals": "nestjs" },
+    { "expr": ".wire_conventions.ids | length", "equals": "0" },
+    { "expr": ".wire_conventions.decisions | length", "equals": "0" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-22", "PR-", "NOT READY"]
+}

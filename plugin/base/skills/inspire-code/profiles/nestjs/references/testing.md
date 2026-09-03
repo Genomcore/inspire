@@ -276,8 +276,11 @@ declarations), **defined at the bottom of the `describe`**, after the last `it()
 
 ## General rules
 
-- One test = one scenario. A single WHEN statement and one asserted outcome per
-  `it()`. Never bundle several endpoint/method calls into one test — split them.
+- The universal test-structure rules — one scenario per test, behaviour over
+  implementation, exact values over weak matchers, mocking at the boundary — are the
+  tester's, not this profile's:
+  [`../../references/roles/tester.md`](../../references/roles/tester.md) § Test
+  structure. What follows is only what NestJS adds to them.
 - One `describe` per endpoint (e2e) or per method (unit) — **never group tests by a
   cross-cutting concern** (`authorization`, `validation`, `pagination`, …). A test
   that checks authorization on `GET /x` belongs in the `GET /x` block. Cases that

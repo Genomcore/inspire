@@ -1,0 +1,14 @@
+{
+  "exit": 0,
+  "args": [
+    "pattern",
+    "filtered-list"
+  ],
+  "stdout_jq": [
+    { "expr": "has(\"refused\")", "equals": "false" },
+    { "expr": "[.regions[] | select(.region == \"status\") | .fill]", "equals": "[\n  \"\"\n]" },
+    { "expr": "[.regions[] | select(.region == \"status\") | .accepts]", "equals": "[\n  \"\"\n]" },
+    { "expr": "[.regions[].region] | join(\",\")", "equals": "toolbar,body,status" }
+  ],
+  "forbidden": ["DR-C5"]
+}

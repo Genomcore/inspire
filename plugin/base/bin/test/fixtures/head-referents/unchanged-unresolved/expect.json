@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"head-referents","severity":"error","message_substring":"OS-X3: ## Postconditions `Q2` unchanged(`auth.event`) resolves to no entity document"}],
+  "forbidden": ["does not touch"] }

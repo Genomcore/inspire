@@ -3,10 +3,12 @@
 
 ## After modifying a screen spec — propagation check
 
-Whenever a `create` / `validate` / `extract` changes a screen in a way
-that affects the UI (new pattern, new slot, renamed data source, added/removed
-section or tab), the skill MUST ask the user whether to propagate the change to the
-prototype before ending the turn.
+Whenever a `create` / `update` / `validate` / `extract` changes a screen in a way
+that affects the UI (a new pattern, a new or removed binding, a changed dispatch
+outcome, a new state, an added or removed tab), the skill MUST ask the user whether
+to propagate the change to the prototype before ending the turn. A binding row is
+the unit here: adding one is a UI change, and editing a dispatch's `On success` is
+one too.
 
 1. **Detect the prototype target** from the screen's `## Current prototype` section.
 2. **Classify the change** — structural (propagation strongly recommended),

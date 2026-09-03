@@ -1,0 +1,21 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
+    { "expr": "[.units[] | .kind + \":\" + .id] | join(\",\")", "equals": "component:data-table,screen:users.list" },
+    { "expr": ".floor", "equals": "2" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "data-table" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "users.list" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | .lifecycle] | join(\"\")", "equals": "accepted" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | (.module == null) and (.surface == null)] | join(\"\")", "equals": "true" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | .profiles | join(\",\")] | join(\"\")", "equals": "react,typescript" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-04", "NOT READY"]
+}

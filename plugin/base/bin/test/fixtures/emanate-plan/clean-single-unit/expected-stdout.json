@@ -1,0 +1,47 @@
+{
+  "schema": "inspire.emanation-plan/1",
+  "scope": [
+    "spec/kb",
+    "spec/sdd"
+  ],
+  "ready": true,
+  "floor": 1,
+  "ceiling": null,
+  "deliverable_waves": 1,
+  "realized": [],
+  "realized_all": false,
+  "reemanate": null,
+  "goal": null,
+  "preflight": {
+    "components": [],
+    "probe_profiles": []
+  },
+  "wire_conventions": {
+    "ids": [],
+    "decisions": []
+  },
+  "units": [
+    {
+      "kind": "entity",
+      "id": "auth.org",
+      "path": "spec/sdd/auth/org/auth.org.md",
+      "lifecycle": "accepted",
+      "module": "auth",
+      "surface": null,
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [],
+      "wave": 1,
+      "claims": 5
+    }
+  ],
+  "waves": [
+    [
+      "auth.org"
+    ]
+  ],
+  "findings": []
+}

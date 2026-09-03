@@ -203,12 +203,12 @@ resolve_paths() {
 # The layout this plugin version installs. Its dest_map — and every source
 # version's — comes from layouts.tsv via layout_map, never from a literal here.
 #
-# There is no copy plan any more. base/{bin,hooks,skills} reach the project
-# through lib/merge.sh's apply_base, driven by the target layout's dest_map and
-# by classify's verdicts, so "in the project but never shipped by us" is a KEEP
-# row and the file survives by construction. The function this replaced,
-# materialize_entry, did `rm -rf` on a whole owned entry before `cp -R` — which
-# destroyed a project-authored file living inside an INSPIRE-owned directory
+# There is no copy plan any more. base/{bin,hooks,skills,agents} reach the
+# project through lib/merge.sh's apply_base, driven by the target layout's
+# dest_map and by classify's verdicts, so "in the project but never shipped by
+# us" is a KEEP row and the file survives by construction. The function this
+# replaced, materialize_entry, did `rm -rf` on a whole owned entry before a
+# `cp -R` — which destroyed a project-authored file inside an INSPIRE-owned dir
 # (say .claude/skills/inspire-code/references/go-best-practices.md) with nothing
 # able to protect it: the lock never tracked it, so drift-check never reported
 # it and --skip could never cover it.
@@ -216,6 +216,15 @@ resolve_paths() {
 # base/kb is deliberately outside that map. Everything in the map is
 # INSPIRE-owned runtime; the KB is product content and is only ever *seeded*
 # (see seed_kb), never replaced, in either mode.
+#
+# STILL '0.3' AFTER base/agents/ ARRIVED, and that is the decision, not an
+# oversight: a payload class that ADDS a root moves nothing, so it is a new
+# dest_map entry on the layout that already describes this tree, not a new
+# layout id. Opening one would mint a second id with 0.3's own structural
+# markers — undiscriminable by verify_layout — and would turn every ordinary
+# score tie between the 0.8 and 0.9 manifests into a cross-layout tie, which
+# detect_version refuses outright rather than resolving to the higher version.
+# The full argument, and why no 0.9.0 hop exists, is in scripts/hops/layouts.tsv.
 # ---------------------------------------------------------------------------
 TARGET_LAYOUT='0.3'
 
@@ -304,17 +313,33 @@ seed_kb() {
 # chmod +x every .sh this run copied under .inspire/bin/ and .claude/inspire/hooks/,
 # derived from the SOURCE tree so a foreign script sitting in either dir is never
 # touched — same ownership rule as the copy itself.
+#
+# THOSE TWO CLASSES ONLY. Skills and agents are read by Claude Code, never
+# executed by it, so nothing under .claude/skills/ or .claude/agents/ is walked
+# here — the find below names its two roots explicitly rather than sweeping
+# base/, which is what keeps a new payload class from silently acquiring the
+# executable bit.
+#
+# A chmod failure is ignored, as it always was: a bit that will not set is no
+# reason to abort an upgrade that has already written the file. STDERR STAYS OPEN
+# for the same reason it did per file — `chmod: Unable to change file mode on
+# <path>` is the only signal an operator gets that a registered hook or a
+# validator was left non-executable, and the exit status is never checked.
 chmod_executables() {
   [ "$DRY_RUN" = 1 ] && return 0
-  local src_sh rel
+  local src_sh rel list
+  list="$(mktemp)"
   while IFS= read -r src_sh; do
     rel="${src_sh#"$PLUGIN_ROOT"/base/}"
     case "$rel" in
       bin/*) rel=".inspire/${rel}" ;;
       hooks/*) rel=".claude/inspire/${rel}" ;;
     esac
-    [ -f "$PROJECT_ROOT/$rel" ] && chmod +x "$PROJECT_ROOT/$rel"
+    [ -f "$PROJECT_ROOT/$rel" ] && printf '%s\0' "$PROJECT_ROOT/$rel" >> "$list"
   done < <(find "$PLUGIN_ROOT/base/bin" "$PLUGIN_ROOT/base/hooks" -type f -name '*.sh' ! -path '*/test/*' 2>/dev/null)
+  [ -s "$list" ] && xargs -0 chmod +x < "$list"
+  rm -f "$list"
+  return 0
 }
 
 # Seed the live design system from the bootstrap theme, once. Never clobbers an
@@ -425,9 +450,12 @@ $GITIGNORE_MARK_END"
 # adds could fix it.
 #
 # So: report, never rewrite. The operator's .gitignore is the operator's.
+# The paths checked are the 0.3 dest_map's destination roots, one per payload
+# class — keep them in step with scripts/hops/layouts.tsv. A class missing from
+# this list is a class whose absence from git nobody is told about.
 warn_shadowed_runtime() {
   local shadowed=() p
-  for p in .claude/skills .claude/inspire/hooks .inspire/bin; do
+  for p in .claude/skills .claude/agents .claude/inspire/hooks .inspire/bin; do
     if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$p" 2>/dev/null; then
       shadowed+=("$p")
     fi
