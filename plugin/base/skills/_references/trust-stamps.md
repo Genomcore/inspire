@@ -57,10 +57,12 @@ inherits `status: template` from the copy of `theme.md` that seeded it, so a fro
 predicate would excuse a project's real design system. Where a file has no frontmatter at
 all — screens by design, most ADRs and features in practice — `stamp` creates the block.
 
-`00_bootstrap` contributes **`project.md` and `stack.md` and nothing else** to what
-`report` walks: the rest of that layer is not scanned, so no other file there is counted
-or reported whatever it carries in frontmatter. The table above is the scope of the two
-blocks, not a promise that every path it names is measured.
+**What `report` walks is narrower than the table**: every `*.md` under `01_adr` –
+`05_screens`, plus `00_bootstrap/project.md` and `00_bootstrap/stack.md` by name and
+nothing else from that layer. So a file elsewhere in `00_bootstrap` is neither counted nor
+reported whatever it carries in frontmatter — `surfaces.md` included, though the Ownership
+map below still names its owner. The table says which blocks a path may carry; it does not
+promise the report measures every path.
 
 ## Ownership
 

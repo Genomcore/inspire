@@ -30,7 +30,8 @@ The current working directory is the repo root, as everywhere in
 
 - `--contract FILE` — the derived contract (`emanate-derive.sh`'s stdout),
   one JSON object; `-` reads stdin. Required.
-- `--results FILE` — the suite results, § below. Required.
+- `--results FILE` — the suite results (`emanate-results.sh`'s stdout),
+  § below. Required.
 - `--tests-root DIR` — repeatable. The tree(s) grepped for `@claim` tokens.
   Defaults to `tests` (CWD-relative) when none given. Gate never resolves a
   stack profile's own test-path convention — this is always an argument
@@ -40,14 +41,21 @@ The current working directory is the repo root, as everywhere in
 
 ## Suite results — `inspire.suite-results/1`
 
-A small JSON manifest, produced by the orchestrator — not JUnit XML. JUnit's
+A small JSON manifest — not JUnit XML. JUnit's
 "zero adapters" claim breaks on the one field gate needs, the
 testcase-to-**file** binding, which is optional or differently-spelled
 across runners (jest-junit, go-junit-report, vitest, pytest all disagree). A
-format gate can read only *sometimes* is worse than one the orchestrator
-normalizes once, and the manifest keeps gate on `jq` alone. JUnit stays
-cheap to add later: `lib/gate-results.sh` is the one place a second format
-would go.
+format gate can read only *sometimes* is worse than one that is normalized
+once, and the manifest keeps gate on `jq` alone.
+
+**`.inspire/bin/emanate-results.sh` is what normalizes it**, from whatever a
+real runner prints; this file is that script's declared authority for the
+shape, so the two cannot drift. The orchestrator invokes it rather than
+authoring the manifest itself — handing that to judgement would put a schema
+inside prose doctrine, the one place a persona could produce a
+plausible-but-wrong shape and have every claim read as not-run. A second
+runner dialect is a reader function there; a second *format* gate accepts is
+`lib/gate-results.sh`, the one place JUnit would go.
 
 ```json
 { "schema": "inspire.suite-results/1",
