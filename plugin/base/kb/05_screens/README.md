@@ -86,7 +86,7 @@ built — in the prototype ([`/prototype`](../../prototype)) or in production.
   dependencies, both of them: they constrain presentation and gate promotion,
   never define the screen.
 - **No route.** Routes derive from `module:` + `screen:`, prefixed by the
-  surface's shell. `/inspire_screens routes` renders the map; nothing stores it.
+  surface's shell. `/inspire-screens routes` renders the map; nothing stores it.
 
 The full on-disk shape, the claim families and the old-shape catalogue are in
 `.claude/skills/inspire-screens/references/format-screen.md`.
@@ -94,4 +94,4 @@ The full on-disk shape, the claim families and the old-shape catalogue are in
 Screens realise features ([`03_features`](../03_features)) and must stay aligned
 with the specs in [`04_domain`](../04_domain). Their `lifecycle:` takes the same
 4-state enum as the domain layer — `draft` → `accepted` → `stable`, plus
-`superseded` — walked by `/inspire_screens promote`.
+`superseded` — walked by `/inspire-screens promote`.

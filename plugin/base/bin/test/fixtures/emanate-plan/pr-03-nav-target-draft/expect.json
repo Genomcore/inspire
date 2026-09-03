@@ -13,7 +13,7 @@
     { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/users/detail.md" },
     { "expr": ".findings[0].owner", "equals": "inspire-screens" },
     { "expr": ".findings[0].message | test(\"buildable\")", "equals": "true" },
-    { "expr": ".findings[0].remedy", "equals": "/inspire_screens promote users.detail accepted" },
+    { "expr": ".findings[0].remedy", "equals": "/inspire-screens promote users.detail accepted" },
     { "expr": ".waves | length", "equals": "1" },
     { "expr": ".waves[0] | join(\",\")", "equals": "users.list" },
     { "expr": ".ready", "equals": "true" }

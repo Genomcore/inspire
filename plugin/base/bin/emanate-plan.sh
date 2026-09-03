@@ -7,10 +7,10 @@
 # lives in `lib/plan-{lib,scan,stack,waves,checks,report}.sh`.
 #
 # It COMPOSES ON DERIVE: one `emanate-derive.sh` run per frontier unit, read
-# from stdout and nothing else. `derived-contract.md` draws that line — "`emanate
-# plan` aggregates the stdout objects — it must never parse stderr" — so an old
-# shape is derive's refusal, restated here as a readiness finding rather than
-# re-detected.
+# from stdout and nothing else. `derived-contract.md` draws that line:
+# "`/inspire-emanate plan` aggregates the stdout objects — it must never parse
+# stderr". So an old shape is derive's refusal, restated here as a readiness
+# finding rather than re-detected.
 #
 # The frontier is every unit at `lifecycle: accepted` within the scope: design
 # closed, contract being implemented, which is exactly what emanates. `draft` is

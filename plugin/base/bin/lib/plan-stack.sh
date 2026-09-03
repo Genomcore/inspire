@@ -4,13 +4,14 @@
 # Library — the stack half of `plan`: which profiles a unit is emanated under,
 # and whether that set has a rendering home at all.
 #
-# D5 amends "missing profiles never block" for emanation alone: `emanate plan`
-# REFUSES a unit whose stack declares no language profile, because an
-# unattended run with no rendering table emits a guess that compiles. The
-# resolution order — suite-wide `profiles:`, a UI surface's own `**Profiles:**`,
-# then each framework profile's `language:` — is `inspire-code/profiles/
-# README.md` § Resolution and `inspire-surface/references/roster-format.md`
-# § Body; this file implements it and owns no rule of its own.
+# D5 amends "missing profiles never block" for emanation alone:
+# `/inspire-emanate plan` REFUSES a unit whose stack declares no language
+# profile, because an unattended run with no rendering table emits a guess
+# that compiles. The resolution order — suite-wide `profiles:`, a UI surface's
+# own `**Profiles:**`, then each framework profile's `language:` — is
+# `inspire-code/profiles/README.md` § Resolution and
+# `inspire-surface/references/roster-format.md` § Body; this file implements it
+# and owns no rule of its own.
 #
 # There are TWO axes and each has its own refusal. The framework axis picks the
 # SET a persona spawn is briefed with — the applied rules are its members' union,
@@ -236,8 +237,9 @@ plan_test_components() {
 }
 
 # plan_wire_ids — the `wire_conventions:` ids, one per line. Absent means the
-# project selected none, which is a legal state and not a finding: `emanate run`
-# briefs a tester with whatever is recorded, and nothing is recorded.
+# project selected none, which is a legal state and not a finding:
+# `/inspire-emanate run` briefs a tester with whatever is recorded, and nothing
+# is recorded.
 plan_wire_ids() {
   local f="$SDD_KB_ROOT/00_bootstrap/stack.md"
   [ -f "$f" ] || return 0

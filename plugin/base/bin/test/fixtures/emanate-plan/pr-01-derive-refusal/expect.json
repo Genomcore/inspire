@@ -10,7 +10,7 @@
     { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-01" },
     { "expr": "[.findings[].derive_class] | unique | join(\",\")", "equals": "OS-E3" },
     { "expr": ".findings[0].owner", "equals": "inspire-domain" },
-    { "expr": ".findings[0].remedy", "equals": "/inspire_domain update auth.user" },
+    { "expr": ".findings[0].remedy", "equals": "/inspire-domain update auth.user" },
     { "expr": ".units[0].claims", "equals": "0" },
     { "expr": ".ready", "equals": "false" }
   ]

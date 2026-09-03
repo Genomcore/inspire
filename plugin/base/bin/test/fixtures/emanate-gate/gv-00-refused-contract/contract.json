@@ -13,7 +13,7 @@
       "class": "DR-T2",
       "target": "spec/sdd/auth/user/auth.user.md",
       "message": "DR-T2: field `status` declares no semantic type",
-      "remedy": "/inspire_domain update auth.user"
+      "remedy": "/inspire-domain update auth.user"
     }
   ]
 }

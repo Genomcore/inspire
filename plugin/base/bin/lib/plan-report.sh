@@ -107,7 +107,7 @@ plan_json_refused() {
 
 # plan_banner <verdict>
 plan_banner() {
-  printf 'INSPIRE emanate plan — %s (%s)\n' "$PLAN_SCOPE_LABEL" "$1" >&2
+  printf 'INSPIRE emanation plan — %s (%s)\n' "$PLAN_SCOPE_LABEL" "$1" >&2
 }
 
 # plan_report_findings — grouped by class, then owning skill, then target. A
