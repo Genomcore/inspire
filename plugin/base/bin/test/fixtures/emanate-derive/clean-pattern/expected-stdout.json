@@ -11,11 +11,13 @@
   "requires": [
     {
       "kind": "component",
-      "id": "filter"
+      "id": "filter",
+      "ordering": true
     },
     {
       "kind": "component",
-      "id": "paginator"
+      "id": "paginator",
+      "ordering": true
     }
   ],
   "structure": [

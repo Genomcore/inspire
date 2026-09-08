@@ -340,7 +340,11 @@ report_derived() {
     printf 'DERIVED %s %s (%s)\n' "$KIND" "$U_ID" "$U_PATH"
     printf '  path      %s\n' "$U_PATH"
     printf '  lifecycle %s\n' "${U_LIFECYCLE:-—}"
-    printf '  requires  %s\n' "$(grep -c . "$DERIVE_TMP/requires.spool")"
+    # Counted on (kind, id), not on rows: two fields pointing at one entity with
+    # different nullability are two spool rows and one `requires[]` entry, and a
+    # report that disagreed with the contract would be reporting the spool.
+    printf '  requires  %s\n' \
+      "$(cut -d"$DERIVE_FS" -f1,2 "$DERIVE_TMP/requires.spool" | LC_ALL=C sort -u | grep -c .)"
     printf '  claims    %s (%s store · %s test)\n' \
       "$(grep -c . "$DERIVE_TMP/claims.spool")" \
       "$(cut -d"$DERIVE_FS" -f2 "$DERIVE_TMP/claims.spool" | grep -c '^store$')" \

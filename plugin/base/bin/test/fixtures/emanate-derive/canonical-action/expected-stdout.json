@@ -13,11 +13,13 @@
   "requires": [
     {
       "kind": "action",
-      "id": "auth.password.hash"
+      "id": "auth.password.hash",
+      "ordering": true
     },
     {
       "kind": "entity",
-      "id": "auth.user"
+      "id": "auth.user",
+      "ordering": true
     }
   ],
   "inputs": [

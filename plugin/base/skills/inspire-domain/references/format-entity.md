@@ -136,6 +136,15 @@ live under.
 `nonnull` is nullability. The quiet case is the common one; the marked case is
 the requirement.
 
+**Beside a `references(…)`, `nonnull` also decides build order**, so state it
+deliberately. `` Constraints: `nonnull, references(auth.org)` `` says the row
+cannot exist before its organisation, and `/inspire-emanate` builds `auth.org`
+in an earlier wave. Leave `nonnull` off and the reference is a **back-pointer**
+— `case.current_report_id` next to `report.case_id` — populated once both sides
+exist, so neither side has to precede the other. That is what lets a mutual pair
+plan at all; ordering on both directions would be a cycle. See
+[`keyed-heads.md`](../../_references/keyed-heads.md) § V1.
+
 **Two per-field rules that are not conventions but checks:**
 
 - **`id` always carries a Constraints line.** Every entity has an `id`, and its

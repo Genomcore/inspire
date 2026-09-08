@@ -30,7 +30,7 @@
 #   refused the artifact over it before derivation began.
 derive_constraints() {
   local copy="$1" parent="$2" name="$3" spool="$4" owner="$5" prefix="$6"
-  local list token oracle
+  local list token oracle refs="" nonnull=no ordering=""
   list="$(kh_constraints_of "$copy" "$parent" "$name")" || return 0
   while IFS= read -r token; do
     [ -n "$token" ] || continue
@@ -40,9 +40,20 @@ derive_constraints() {
     [ "$prefix" = "-" ] && continue
     derive_claim "$prefix/$name/$DERIVE_HWORD" "$oracle" "$DERIVE_HCANON"
     case "$DERIVE_HWORD" in
-      references) derive_row requires entity "${DERIVE_HARGS//::/.}" ;;
+      nonnull)    nonnull=yes ;;
+      references) refs="$refs${DERIVE_HARGS//::/.}"$'\n' ;;
     esac
   done < <(kh_split_constraints "$list")
+  # On a FIELD, `nonnull` is what makes a `references(...)` structural — the row
+  # cannot exist before its target — and without it the token is a DEFERRED
+  # back-pointer whose ordering turns an ordinary mutual pair into a cycle. An
+  # INPUT is never deferred: `nonnull` is barred there (OS-A7), so its absence
+  # says nothing, and the entity an argument keys into must exist to be keyed into.
+  [ "$parent" = "Fields" ] && [ "$nonnull" = no ] && ordering="deferred"
+  # Emitted after the loop: the verdict needs the whole list, in any order.
+  while IFS= read -r token; do
+    [ -n "$token" ] && derive_row requires entity "$token" "$ordering"
+  done <<< "$refs"
 }
 
 # derive_type_cell <cell> <where> <target> — resolves into $DERIVE_TNAME /

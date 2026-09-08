@@ -182,6 +182,15 @@ so the two screens co-emanate in the last wave. Hence
 realized by an earlier, kept run, the remaining graph is
 `auth.user.get` → `users.detail`: floor 2, one piece per iteration.
 
+**The same reasoning covers mutual foreign keys**, which is the shape a data
+model hits first. A case pointing at its current report while the report carries
+a `nonnull` case id is two edges in opposite directions, and ordering on both
+would refuse a correct model. `nonnull` is the discriminator, already on disk: it
+is what makes a reference structural, so the nullable back-pointer is a
+**deferred** edge and does not order. A **self** reference — a `supersedes_id`
+chain, a comment's `parent_id` — never orders either, since no unit precedes
+itself. Both still gate readiness, exactly as a nav edge does.
+
 The components and the pattern are units here because they are emanatable kinds,
 not readiness errors on the screen that declares them: a loop that refused every
 screen whose UI kit had not been hand-built first would not be hands-off at all.

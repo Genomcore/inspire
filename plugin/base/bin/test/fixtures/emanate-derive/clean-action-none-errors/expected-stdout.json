@@ -13,7 +13,8 @@
   "requires": [
     {
       "kind": "entity",
-      "id": "auth.user"
+      "id": "auth.user",
+      "ordering": true
     }
   ],
   "inputs": [

@@ -12,27 +12,33 @@
   "requires": [
     {
       "kind": "action",
-      "id": "auth.user.create"
+      "id": "auth.user.create",
+      "ordering": true
     },
     {
       "kind": "action",
-      "id": "auth.user.delete"
+      "id": "auth.user.delete",
+      "ordering": true
     },
     {
       "kind": "action",
-      "id": "auth.user.list"
+      "id": "auth.user.list",
+      "ordering": true
     },
     {
       "kind": "component",
-      "id": "data-table"
+      "id": "data-table",
+      "ordering": true
     },
     {
       "kind": "pattern",
-      "id": "list"
+      "id": "list",
+      "ordering": true
     },
     {
       "kind": "screen",
-      "id": "users.detail"
+      "id": "users.detail",
+      "ordering": true
     }
   ],
   "features": [

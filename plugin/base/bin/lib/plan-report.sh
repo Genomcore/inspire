@@ -41,7 +41,9 @@ plan_json_plan() {
     "$PLAN_JQ_PRELUDE"'
       def ids($s): $s | split("\n") | map(select(length > 0));
       (recs($requires) | group_by(.[0])
-       | map({key: .[0][0], value: map({kind: .[1], id: .[2]})}) | from_entries) as $req
+       | map({key: .[0][0], value: map({kind: .[1], id: .[2],
+                                        ordering: (.[3] != "deferred")})})
+       | from_entries) as $req
     | (recs($profiles) | group_by(.[0])
        | map({key: .[0][0], value: map(.[1])}) | from_entries) as $prof
     | (recs($waves) | map({key: .[1], value: (.[0] | tonumber)}) | from_entries) as $wave

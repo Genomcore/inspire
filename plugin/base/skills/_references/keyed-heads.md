@@ -171,6 +171,15 @@ prose that explains them.
 `nonnull` *is* nullability. This makes the common case the quiet one and the
 requirement the marked one.
 
+**`nonnull` beside a `references(…)` carries build-order meaning too**, so it is
+never redundant next to a foreign key. A `nonnull` reference is STRUCTURAL — the
+row cannot exist before its target — and emanation builds the target first.
+Without it the reference is DEFERRED: the column is populated once both sides
+exist, and `/inspire-emanate` does not order the wave on it, which is what lets a
+mutual pair (a case pointing at its current report, the report carrying a
+`nonnull` case id) plan at all. State `nonnull` where the key is genuinely
+required and leave it off a back-pointer, and the ordering follows.
+
 Two locality rules follow from where the line lives:
 
 - **A field's own H3 is the only home for its single-field constraints.** A

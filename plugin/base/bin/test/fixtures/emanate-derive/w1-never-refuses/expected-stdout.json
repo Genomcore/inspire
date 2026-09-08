@@ -12,7 +12,8 @@
   "requires": [
     {
       "kind": "entity",
-      "id": "auth.org"
+      "id": "auth.org",
+      "ordering": true
     }
   ],
   "fields": [

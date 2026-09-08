@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "args": [
+    "entity",
+    "auth.user"
+  ],
+  "stdout_jq": [
+    { "expr": "[.requires[] | \"\\(.kind):\\(.id):\\(.ordering)\"] | join(\",\")",
+      "equals": "entity:auth.org:true,entity:auth.user:false" },
+    { "expr": ".requires | length", "equals": "2" }
+  ]
+}
