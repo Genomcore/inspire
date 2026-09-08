@@ -9,6 +9,40 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.2 — 2026-09-08
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk
+and nothing in a vault has to be re-authored: 0.9.2 keeps the 0.3 layout and the
+0.9.0 payload classes, and no rule, refusal class or contract shape changes.
+
+### Changed
+
+**`/inspire:init` and `/inspire:update` do about half the process spawning they
+did.** The per-file installer forked six processes for every file it wrote —
+`dirname`, `mkdir -p`, `mktemp`, `cp`, `chmod`, `mv` — around 200 files per run.
+The temporary file is now created by a redirect under a umask the applier pins,
+so 0644 is the mode it is born with and only the two executable classes
+(`bin/*.sh`, `hooks/*.sh`) still need a `chmod`; the parent directory is derived
+by parameter expansion and created only when it is absent. An init drops from
+~1100 spawns to ~625.
+
+The guarantees are unchanged, and deliberately so: the write is still
+temp-then-rename per file, so an interrupted run still leaves either the old
+bytes or the new ones and never a half-written file; the mode still lands before
+the rename; and the materialized tree is byte-for-byte and mode-for-mode
+identical to what 0.9.1 produced.
+
+**Every validator starts a little faster.** `_lib.sh` called `dirname` four
+times at every source to derive the sibling KB layer roots from the spec root.
+It derives the parent once, with parameter expansion, and answers exactly what
+`dirname` answered — including the trailing-slash, no-slash and root cases. This
+is per *invocation*, and `/inspire-emanate` spawns a validator per unit per rule,
+so it compounds where it matters.
+
+No rule, severity or refusal class changes in this release. The two runtime files
+above are the only ones whose hashes moved, so an upgrade reports them as ours
+and updates them; a project that had edited either is asked, as always.
+
 ## 0.9.1 — 2026-09-08
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk
