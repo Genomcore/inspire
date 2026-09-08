@@ -14,16 +14,39 @@ set -uo pipefail
 # exactly what it has always been: the root of the `04_domain` tree.
 SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-inspire_kb/04_domain}"
 
+# The parent of the spec root, computed once. Every layer below is a sibling of
+# the spec layer, so `dirname` was called four times at every source of this
+# file — four forks before a rule has read a byte, and derive spawns four rules
+# per unit while plan spawns a derive per unit, which multiplies them by the
+# thousand. `_SDD_PARENT` assigns rather than prints for the same reason: a
+# `$(...)` around a helper is the fork it was meant to remove.
+#
+# It answers exactly what `dirname` answered: a trailing slash is stripped
+# first, a path with no slash left has parent `.`, and a path whose only slash
+# is the leading one has parent `/`.
+_SDD_PARENT="$SDD_SPEC_ROOT"
+while :; do
+  case "$_SDD_PARENT" in
+    /) break ;;
+    */) _SDD_PARENT="${_SDD_PARENT%/}" ;;
+    *) break ;;
+  esac
+done
+case "$_SDD_PARENT" in
+  */*) _SDD_PARENT="${_SDD_PARENT%/*}"; [ -n "$_SDD_PARENT" ] || _SDD_PARENT="/" ;;
+  *)   _SDD_PARENT="." ;;
+esac
+
 # The features layer sits beside the spec layer in the same knowledge base, so it is
 # derived rather than configured twice — a fixture that redirects SDD_SPEC_ROOT gets
 # the matching features root for free. Override explicitly when they are not siblings.
-SDD_FEATURES_ROOT="${SDD_FEATURES_ROOT:-$(dirname "$SDD_SPEC_ROOT")/03_features}"
+SDD_FEATURES_ROOT="${SDD_FEATURES_ROOT:-$_SDD_PARENT/03_features}"
 
 # Same derivation, same reason: the decision layer is a sibling of the spec layer.
-SDD_ADR_ROOT="${SDD_ADR_ROOT:-$(dirname "$SDD_SPEC_ROOT")/01_adr}"
+SDD_ADR_ROOT="${SDD_ADR_ROOT:-$_SDD_PARENT/01_adr}"
 
 # ...and the foundation layer, where the stack declares which profiles are resolved.
-SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$(dirname "$SDD_SPEC_ROOT")/00_bootstrap}"
+SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$_SDD_PARENT/00_bootstrap}"
 
 # Where the product's code lives. Resolution order: the env var, then the project's own
 # declaration (`source_root:` in stack.md's frontmatter — a brownfield install sets it
@@ -32,7 +55,7 @@ SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$(dirname "$SDD_SPEC_ROOT")/00_bootstr
 # brownfield project would look for a `source/` that does not exist, see zero test
 # files, and quietly pass — enforced-looking and inert.
 _sdd_stack_source_root() {
-  local stack="$(dirname "$SDD_SPEC_ROOT")/00_bootstrap/stack.md"
+  local stack="$_SDD_PARENT/00_bootstrap/stack.md"
   [ -f "$stack" ] || return 0
   awk '
     NR == 1 && $0 != "---" { exit }
