@@ -52,33 +52,99 @@ keep() {
 }
 
 : > "$TMP/files"
-sizes=""
+# EVERY job is weighted into ONE largest-first order, golden ones included.
+# They used to be appended after the sorted files, unsorted — so the estate's
+# two heaviest jobs by far, golden/emanate-plan and golden/emanate-derive,
+# launched last and ran out the tail nearly alone. The wall is the heaviest job
+# plus whatever is launched after it, which is exactly what that ordering
+# maximised.
+#
+# The proxies:
+#   file    — its byte size, the one cost that cannot go stale as blocks move.
+#   golden  — its fixture count × FIXTURE_WEIGHT. A fixture runs the rule and,
+#             for the emanate ones, up to four validators under it, so it is
+#             worth far more than a byte of test script. The constant only has
+#             to order the list, and 250 is the figure that puts the estate's
+#             heaviest golden job (67 fixtures) next to its heaviest file
+#             (~17 KB), which is where measurement puts them.
+#   sibling — one behavioural script, weighted like a mid-sized file, since
+#             nothing about it can be counted without running it.
+FIXTURE_WEIGHT=250
+SIBLING_WEIGHT=8000
+
+# Sharding: a rule with more than SHARD_MIN fixtures is split into jobs of
+# about SHARD_SIZE, never more shards than there are slots to run them in.
+# SHARD_MIN keeps the small rules whole — a 4-fixture rule is a second's work
+# and three more processes would cost more than they save.
+SHARD_MIN=12
+SHARD_SIZE=10
+
+# Row order is weight, kind, arg, name, LABEL LAST — and that is not cosmetic.
+# Tab is IFS whitespace even when IFS is set to exactly a tab, so `read`
+# collapses a run of them and strips a trailing one. `label` is the only field
+# that is legitimately empty (every kind but `sibling` has none), so it goes
+# last, where being stripped to empty is the right answer instead of shifting
+# every field after it.
+weights=""
+w_add() { weights="$weights$1$TAB$2$TAB$3$TAB$4$TAB$5
+"; }
+
 for f in "$HERE"/*.sh "$HERE"/*/*.sh; do
   [ -f "$f" ] || continue
   case "$f" in "$HERE"/run.sh|"$HERE"/lib/*) continue ;; esac
-  sizes="$sizes$(wc -c < "$f" | tr -d ' ')$TAB$f
-"
-done
-# Largest first: the wall is the heaviest job plus whatever is launched after
-# it, and file size is the one cost proxy that cannot go stale as blocks move.
-while IFS="$TAB" read -r _sz f; do
-  [ -n "$f" ] || continue
   n="${f#$REPO/}"
   keep "$n" || continue
-  add file "$f" "" "$n"
-  printf '%s\n' "$f" >> "$TMP/files"
-done <<EOF
-$(printf '%s' "$sizes" | LC_ALL=C sort -rn)
-EOF
+  w_add "$(wc -c < "$f" | tr -d ' ')" file "$f" "$n" ""
+done
 
 # The golden estate joins as jobs, not as a rewrite: run-tests.sh already
 # narrows to one rule, and the siblings it hand-wires keep the labels it prints
 # for them — those labels are part of the estate's inventory.
+#
+# A rule with many fixtures is SHARDED, because a single run-tests.sh is one
+# process and therefore one core however many the machine has — which made the
+# estate's two longest jobs, at 84 and 67 fixtures, its floor: no ordering can
+# make a run shorter than its longest job, and no -j helps a job that cannot
+# use a second core. Each shard is an ordinary job over a named subset, so the
+# PASS/FAIL lines — and with them the run's inventory — are exactly the ones an
+# unsharded run prints. Scenario names are directory names and carry no spaces
+# (asserted by test-run.sh), which is what lets one job's argv ride in one
+# string.
 if [ -d "$GOLDEN/fixtures" ]; then
   for d in "$GOLDEN/fixtures"/*/; do
     [ -d "$d" ] || continue
-    r="$(basename "$d")"
-    keep "golden/$r" && add golden "$r" "" "golden/$r"
+    r="${d%/}"; r="${r##*/}"
+    keep "golden/$r" || continue
+    scen=""; nfix=0
+    for x in "$d"*/; do
+      [ -d "$x" ] || continue
+      s="${x%/}"; scen="$scen ${s##*/}"; nfix=$((nfix + 1))
+    done
+    [ "$nfix" -gt 0 ] || continue
+    if [ "$nfix" -le "$SHARD_MIN" ]; then
+      w_add "$((nfix * FIXTURE_WEIGHT))" golden "$r" "golden/$r" ""
+      continue
+    fi
+    # Round-robin, not consecutive blocks: fixture cost within a rule is
+    # uneven and alphabetical neighbours are the ones most alike, so dealing
+    # them out spreads the expensive ones instead of piling them into one shard.
+    nshard=$(( (nfix + SHARD_SIZE - 1) / SHARD_SIZE ))
+    [ "$nshard" -gt "$jobs_n" ] && nshard="$jobs_n"
+    SHARD=(); SHARDN=()
+    k=0
+    while [ "$k" -lt "$nshard" ]; do SHARD[$k]=""; SHARDN[$k]=0; k=$((k + 1)); done
+    i=0
+    for s in $scen; do
+      k=$(( i % nshard )); i=$((i + 1))
+      SHARD[$k]="${SHARD[$k]} $s"
+      SHARDN[$k]=$(( SHARDN[$k] + 1 ))
+    done
+    k=0
+    while [ "$k" -lt "$nshard" ]; do
+      w_add "$(( SHARDN[$k] * FIXTURE_WEIGHT ))" golden "$r${SHARD[$k]}" \
+            "golden/$r#$((k + 1))" ""
+      k=$((k + 1))
+    done
   done
 fi
 for s in "lib-tests.sh${TAB}_lib.sh/readers" \
@@ -90,8 +156,17 @@ for s in "lib-tests.sh${TAB}_lib.sh/readers" \
          "test-results.sh${TAB}emanate-results.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
-  keep "golden/$script" && add sibling "$script" "$label" "golden/$script"
+  keep "golden/$script" || continue
+  w_add "$SIBLING_WEIGHT" sibling "$script" "golden/$script" "$label"
 done
+
+while IFS="$TAB" read -r _w kind arg name label; do
+  [ -n "$kind" ] || continue
+  add "$kind" "$arg" "$label" "$name"
+  [ "$kind" = file ] && printf '%s\n' "$arg" >> "$TMP/files"
+done <<EOF
+$(printf '%s' "$weights" | LC_ALL=C sort -rn)
+EOF
 
 njobs=${#KIND[@]}
 if [ "$njobs" -eq 0 ]; then
@@ -129,7 +204,11 @@ launch() {
     {
       case "$kind" in
         file)   bash "$arg" ;;
-        golden) bash "$GOLDEN/run-tests.sh" "$arg" ;;
+        # DELIBERATELY unquoted: a sharded job's arg is the rule followed by
+        # its scenario names, and this is where that one string becomes argv.
+        # Safe because a scenario name is a directory name with no whitespace
+        # and no glob character in it.
+        golden) bash "$GOLDEN/run-tests.sh" $arg ;;
         # Mirrors run-tests.sh's own wiring for these three: one verdict line,
         # the script's own output shown only when it fails. The script's status
         # is carried out of the block, not the verdict line's or the dump's —

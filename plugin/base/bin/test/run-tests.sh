@@ -2,8 +2,15 @@
 # plugin/base/bin/test/run-tests.sh — run quality_lib rules against fixtures
 #
 # Usage:
-#   plugin/base/bin/test/run-tests.sh                # run all tests
-#   plugin/base/bin/test/run-tests.sh <rule-name>    # run tests for one rule
+#   plugin/base/bin/test/run-tests.sh                     # run all tests
+#   plugin/base/bin/test/run-tests.sh <rule>              # one rule, every scenario
+#   plugin/base/bin/test/run-tests.sh <rule> <scenario>…  # named scenarios only
+#
+# The third form exists so one rule's fixtures can be split across processes:
+# a rule with 80 fixtures is otherwise a single-core job however many cores the
+# machine has, and it is the estate's longest. plugin/test/run.sh shards the
+# big ones that way. The PASS/FAIL lines are per scenario either way, so the
+# run's inventory does not depend on how the work was divided.
 #
 # Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
@@ -51,16 +58,91 @@ FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 BIN_DIR="$SCRIPT_DIR/.."
 
 filter="${1:-}"
+[ $# -gt 0 ] && shift
+# Any remaining words name individual scenarios of that rule, which is what
+# lets a caller split one rule's fixtures across processes. Nothing is required
+# to pass them: no words means every scenario the rule has, exactly as before.
+scenarios=("$@")
 total=0
 failed=0
 
-for fixture in "$FIXTURES_DIR"/*/*/; do
-  rule="$(basename "$(dirname "$fixture")")"
-  scenario="$(basename "$fixture")"
+TAB="$(printf '\t')"
 
-  if [ -n "$filter" ] && [ "$filter" != "$rule" ]; then
-    continue
-  fi
+# One `jq` per expect.json, not one per key and three more per expected finding:
+# a 400-fixture sweep spent more time forking jq than running the rules. The
+# keys come back as tagged, tab-delimited records, one per line —
+#
+#   E exit · A argv word · F severity,rule,message_substring
+#   C finding_count · B forbidden substring · S golden stdout file
+#   T a value this protocol cannot carry
+#
+# — and the reader below turns them back into the same variables the assertions
+# always used.
+#
+# `T` is the protocol's own guard, and it is not hypothetical: the delimiters
+# are tab and newline, so a value containing either would be read as two fields
+# or two records and would then assert something other than what the fixture
+# says. `stdout_jq` is READ SEPARATELY BELOW for exactly that reason — its
+# `equals` is the one value in the estate that legitimately spans lines (a
+# pretty-printed JSON array), and folding it in here truncated it at the first
+# newline and compared against "[". Nothing this reader handles has ever
+# carried either delimiter; a fixture that starts to fails loudly instead.
+EXPECT_READER='
+  def vals: [ .args[]?, (.findings[]? | .rule, .message_substring, (.severity // "")),
+              .forbidden[]?, (.stdout // "") ]
+            | map(tostring);
+  [ (if (vals | any(test("[\t\n]"))) then ["T"] else [] end),
+    ["E\t" + (.exit | tostring)],
+    (.args // [] | map("A\t" + .)),
+    (.findings // [] | map("F\t" + (.severity // "") + "\t" + (.rule // "")
+                              + "\t" + (.message_substring // ""))),
+    (if has("finding_count") then ["C\t" + (.finding_count | tostring)] else [] end),
+    (.forbidden // [] | map("B\t" + .)),
+    (if (.stdout // "") != "" then ["S\t" + .stdout] else [] end)
+  ] | flatten | .[]
+'
+
+# Two scratch files for the whole sweep instead of two mktemp calls per fixture.
+# Truncated by the `>` redirection on every run, and private to this process, so
+# any number of run-tests.sh can run side by side.
+RUN_TMP="$(mktemp -d)"
+trap 'rm -rf "$RUN_TMP"' EXIT
+actual_stdout="$RUN_TMP/stdout"
+actual_stderr="$RUN_TMP/stderr"
+
+# A filter narrows the GLOB, not each iteration. Walking all 400-odd fixture
+# directories to skip all but one rule's cost three processes apiece — and
+# run.sh calls this script once per rule, so naming the directory it wants is
+# the difference between 400 iterations and a dozen. nullglob is set, so a
+# filter naming no fixture directory yields no fixtures, which is what filtering
+# every one of them out did before.
+if [ -n "$filter" ] && [ ${#scenarios[@]} -gt 0 ]; then
+  # Named scenarios. A name that resolves to nothing is a FAILURE, not a skip:
+  # the caller built it from a glob over this very directory, so a miss means
+  # the tree moved under it — and a shard that quietly ran nothing is the
+  # vacuity class again.
+  miss=0
+  for s in "${scenarios[@]}"; do
+    [ -d "$FIXTURES_DIR/$filter/$s" ] && continue
+    echo "FAIL $filter/$s (no such fixture directory)" >&2
+    miss=$((miss + 1))
+  done
+  set --
+  for s in ${scenarios[@]+"${scenarios[@]}"}; do
+    [ -d "$FIXTURES_DIR/$filter/$s" ] && set -- ${1+"$@"} "$FIXTURES_DIR/$filter/$s/"
+  done
+  total=$((total + miss)); failed=$((failed + miss))
+elif [ -n "$filter" ]; then
+  set -- "$FIXTURES_DIR/$filter"/*/
+else
+  set -- "$FIXTURES_DIR"/*/*/
+fi
+
+for fixture in ${1+"$@"}; do
+  # .../fixtures/<rule>/<scenario>/ — split with parameter expansion, since
+  # basename and dirname are two forks each and this runs per fixture.
+  scenario="${fixture%/}"; rule="${scenario%/*}"
+  scenario="${scenario##*/}"; rule="${rule##*/}"
 
   total=$((total + 1))
   expect_file="$fixture/expect.json"
@@ -69,13 +151,28 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     continue
   fi
 
-  expected_exit="$(jq -r '.exit' "$expect_file")"
-  # Optional argv. Read before the pushd so the expect file is found by the
-  # absolute path it already has.
-  fixture_args=()
-  while IFS= read -r fixture_arg; do
-    fixture_args+=("$fixture_arg")
-  done < <(jq -r '.args[]?' "$expect_file")
+  # Read before the pushd so the expect file is found by the absolute path it
+  # already has. `args` is optional and defaults to none.
+  expected_exit=""; expected_count=""; expected_stdout=""; undelimitable=0
+  fixture_args=(); exp_findings=(); exp_forbidden=()
+  while IFS= read -r rec; do
+    case "$rec" in
+      T)   undelimitable=1 ;;
+      E*)  expected_exit="${rec#E$TAB}" ;;
+      A*)  fixture_args+=("${rec#A$TAB}") ;;
+      F*)  exp_findings+=("${rec#F$TAB}") ;;
+      C*)  expected_count="${rec#C$TAB}" ;;
+      B*)  exp_forbidden+=("${rec#B$TAB}") ;;
+      S*)  expected_stdout="${rec#S$TAB}" ;;
+    esac
+  done < <(jq -r "$EXPECT_READER" "$expect_file")
+
+  if [ "$undelimitable" = 1 ]; then
+    echo "FAIL $rule/$scenario (expect.json value holds a tab or newline — unreadable)" >&2
+    failed=$((failed + 1))
+    continue
+  fi
+
   script="$BIN_DIR/${rule}.sh"
   if [ ! -x "$script" ]; then
     echo "FAIL $rule/$scenario (rule script not executable: $script)" >&2
@@ -84,8 +181,6 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   fi
 
   pushd "$fixture" >/dev/null
-  actual_stderr="$(mktemp)"
-  actual_stdout="$(mktemp)"
   SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \
     "$script" ${fixture_args[@]+"${fixture_args[@]}"} >"$actual_stdout" 2>"$actual_stderr"
   actual_exit=$?
@@ -97,10 +192,11 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     echo "FAIL $rule/$scenario (exit: expected $expected_exit, got $actual_exit)" >&2
   fi
 
-  while IFS= read -r exp_finding; do
-    rule_match="$(echo "$exp_finding" | jq -r '.rule')"
-    msg_substr="$(echo "$exp_finding" | jq -r '.message_substring')"
-    sev_match="$(echo "$exp_finding" | jq -r '.severity // ""')"
+  for exp_finding in ${exp_findings[@]+"${exp_findings[@]}"}; do
+    sev_match="${exp_finding%%$TAB*}"
+    exp_finding="${exp_finding#*$TAB}"
+    rule_match="${exp_finding%%$TAB*}"
+    msg_substr="${exp_finding#*$TAB}"
     # sdd_finding emits severity before rule (_lib.sh), so a severity claim
     # anchors to the left of the rule id in the same JSON line.
     if [ -n "$sev_match" ]; then
@@ -114,7 +210,7 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
       pass=false
       echo "FAIL $rule/$scenario (missing finding: $label, msg~='$msg_substr')" >&2
     fi
-  done < <(jq -c '.findings[]?' "$expect_file")
+  done
 
   # Optional `finding_count`: assert HOW MANY findings the rule emitted, not just that
   # the expected ones are among them.
@@ -125,7 +221,6 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   # are all behaviours whose only observable difference is a count, so a suite that cannot
   # express one cannot defend them. Absent from expect.json = not checked, so every
   # existing fixture is unaffected.
-  expected_count="$(jq -r '.finding_count // empty' "$expect_file")"
   if [ -n "$expected_count" ]; then
     # `grep -c` exits 1 when the count is zero, so `|| echo 0` appended a SECOND zero and
     # produced "0\n0" — which never equals "0", so `finding_count: 0` could not pass. Count
@@ -140,13 +235,13 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   fi
 
   # Absence assertions: each entry is a literal substring that must not appear.
-  while IFS= read -r forbidden; do
+  for forbidden in ${exp_forbidden[@]+"${exp_forbidden[@]}"}; do
     [ -z "$forbidden" ] && continue
     if grep -Fq "$forbidden" "$actual_stderr"; then
       pass=false
       echo "FAIL $rule/$scenario (forbidden output present: '$forbidden')" >&2
     fi
-  done < <(jq -r '.forbidden[]?' "$expect_file")
+  done
 
   # A tool's product is its stdout, so a fixture may pin it whole … Each side is
   # normalized separately and the normalization's own exit status is checked: a
@@ -154,9 +249,8 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
   # golden regenerated from a broken run would freeze the breakage. An EMPTY file
   # is the sharp case: `jq -S .` reads one happily and prints nothing, so two
   # empty sides compare equal — a fixture that pins stdout needs stdout.
-  expected_stdout="$(jq -r '.stdout // ""' "$expect_file")"
   if [ -n "$expected_stdout" ]; then
-    want_norm="$(mktemp)"; got_norm="$(mktemp)"
+    want_norm="$RUN_TMP/want"; got_norm="$RUN_TMP/got"
     if [ ! -f "$fixture/$expected_stdout" ]; then
       pass=false
       echo "FAIL $rule/$scenario (missing golden stdout: $expected_stdout)" >&2
@@ -172,12 +266,16 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
       echo "FAIL $rule/$scenario (stdout differs from $expected_stdout)" >&2
       diff -u "$want_norm" "$got_norm" | head -40 >&2
     fi
-    rm -f "$want_norm" "$got_norm"
   fi
 
   # … or state one thing about it at a time. An entry missing either key is a
   # defect in the fixture, not a pass: `jq -r '.equals'` on an entry without one
   # yields "null", and "null" is what an unreadable stdout yields too.
+  #
+  # These keep their own jq calls, unlike every other key: `equals` may be a
+  # pretty-printed JSON value and so may span lines, which the tagged-record
+  # reader above cannot carry. Command substitution keeps a value's interior
+  # newlines, which is precisely what makes this form the right one here.
   while IFS= read -r probe; do
     [ -n "$probe" ] || continue
     if ! echo "$probe" | jq -e 'has("expr") and has("equals")' >/dev/null 2>&1; then
@@ -200,7 +298,6 @@ for fixture in "$FIXTURES_DIR"/*/*/; do
     failed=$((failed + 1))
     cat "$actual_stderr" >&2
   fi
-  rm -f "$actual_stderr" "$actual_stdout"
 done
 
 # _lib.sh is a library, not a rule: it emits no findings and has no fixture

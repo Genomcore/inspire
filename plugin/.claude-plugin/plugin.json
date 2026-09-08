@@ -1,7 +1,7 @@
 {
   "name": "inspire",
   "description": "INSPIRE — a specification-driven software engineering methodology for the agentic era. Installs a guardrail runtime and knowledge-base skeleton into your project.",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "released": "2026-09-08",
   "author": {
     "name": "Genomcore"

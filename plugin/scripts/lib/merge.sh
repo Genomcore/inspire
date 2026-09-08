@@ -352,22 +352,38 @@ keepset_of() {
 #
 # The mode is set on the temp file BEFORE the rename, so what appears at the
 # destination is already complete AND correctly permissioned — never briefly
-# 0600 (mktemp's mode) or briefly non-executable.
+# non-executable.
 #
 # The mode rule mirrors materialize.sh's chmod_executables rather than the
 # source file's own bit: base/hooks/*.sh are committed 644, yet the two
 # registered hooks are invoked BY PATH from .claude/settings.json, so a 644
-# dispatch.sh is a broken runtime. Everything else gets 644, not mktemp's 0600 —
-# an upgrade that silently tightened hundreds of files would be a nasty
-# surprise, and cp does not copy the source mode onto an existing temp file.
+# dispatch.sh is a broken runtime.
+#
+# The temp is created by a REDIRECT rather than by mktemp, and 0644 is what it
+# is born with: apply_base pins umask 022 around the whole pass, so the redirect
+# creates 0666 & ~022, and `cp` onto a file that already exists leaves that
+# file's mode alone. The default mode is therefore reached with no chmod at all,
+# and only the 755 classes still need one — mktemp's 0600 had to be chmodded
+# away on every single file. The mode still lands before the rename, and the
+# result does not depend on the operator's own umask or on the mode the plugin's
+# own checkout happens to carry.
+#
+# The temp name carries the pid, so the only file that can already sit there is
+# this same pid's leftover from a crashed run. It is unlinked rather than
+# truncated, because a redirect resets a file's bytes but not its mode.
+# Atomicity is unchanged: it comes from the rename, never from the temp name
+# being unguessable.
 _apply_write() {
-  local src="$1" dst="$2" mid="$3" tmp
-  mkdir -p "$(dirname "$dst")" 2>/dev/null
-  tmp="$(mktemp "$dst.XXXXXX" 2>/dev/null)" || {
+  local src="$1" dst="$2" mid="$3" tmp dir
+  case "$dst" in */*) dir="${dst%/*}" ;; *) dir="." ;; esac
+  [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null
+  tmp="$dst.inspire-$$"
+  [ -e "$tmp" ] && rm -f "$tmp"
+  if ! : > "$tmp" 2>/dev/null; then
     log "INSPIRE: could not write '$dst' — no temporary file could be created next to it."
     log "  It was left exactly as it was."
     return 1
-  }
+  fi
   if ! cp "$src" "$tmp" 2>/dev/null; then
     rm -f "$tmp"
     log "INSPIRE: could not write '$dst' — the copy failed. It was left as it was."
@@ -375,8 +391,7 @@ _apply_write() {
   fi
   case "$mid" in
     bin/*.sh|hooks/*.sh) chmod 755 "$tmp" 2>/dev/null ;;
-    *) if [ -x "$src" ]; then chmod 755 "$tmp" 2>/dev/null
-       else chmod 644 "$tmp" 2>/dev/null; fi ;;
+    *) [ -x "$src" ] && chmod 755 "$tmp" 2>/dev/null ;;
   esac
   if mv "$tmp" "$dst" 2>/dev/null; then return 0; fi
   rm -f "$tmp"
@@ -405,7 +420,7 @@ _prune_up() {
   local d="$1" stop="$2"
   while [ -n "$d" ] && [ "$d" != "$stop" ] && [ "$d" != "/" ] && [ "$d" != "." ]; do
     rmdir "$d" 2>/dev/null || break
-    d="$(dirname "$d")"
+    case "$d" in */?*) d="${d%/*}" ;; *) break ;; esac
   done
   return 0
 }
@@ -444,6 +459,12 @@ _prune_up() {
 apply_base() {
   local keep="$1" mf="$2" root="$3" base="$4" src_map="$5" tgt_map="$6" record="$7"
   local pair name dest abs rel target state mid rc=0
+  # _apply_write's default mode is the one a redirect is born with, so the umask
+  # in force decides it. Pinned here for the whole pass and restored on the way
+  # out, which is what keeps a project's files at 644/755 whatever the operator's
+  # own umask is.
+  local umask0; umask0="$(umask)"
+  umask 022
   local w; w="$(mktemp -d)"
   local kf="$keep"
   # The old grep tolerated a missing keep-set file (2>/dev/null); awk would not.
@@ -569,9 +590,10 @@ apply_base() {
     # `rel` is `mid` minus its base/ directory name, so stripping one from the
     # other leaves <dest> with no second lookup to keep in step.
     tgt_root="${found%"/${mid#*/}"}"
-    _prune_up "$(dirname "$root/$found")" "$root/$tgt_root"
+    _prune_up "${root}/${found%/*}" "$root/$tgt_root"
   done < "$w/p2act"
 
   rm -rf "$w"
+  umask "$umask0"
   return "$rc"
 }

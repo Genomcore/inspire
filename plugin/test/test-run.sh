@@ -116,6 +116,54 @@ check "the red sibling is named" \
 check "its output is dumped under it" \
   "printf '%s\n' \"\$e\" | grep -q 'synth sibling deliberate red'"
 
+# --- sharding a golden rule keeps every scenario, exactly once -------------
+#
+# run.sh hands a sharded job its scenarios as ONE string that `launch` expands
+# unquoted, so the property that makes that safe — no whitespace and no glob
+# character in a scenario name — is asserted here against the real fixture
+# tree, not merely assumed by the comment at the call site.
+bad_names="$(ls -d "$HERE/../base/bin/test/fixtures"/*/*/ 2>/dev/null \
+             | sed 's:/$::; s:.*/::' | grep -cE '[[:space:]*?[]]' )"
+eq "no real fixture scenario name holds whitespace or a glob character" \
+   "$bad_names" "0"
+
+# And the property that matters: dividing a rule's fixtures across processes
+# must not lose, duplicate or rename one. A rule of 15 fixtures crosses
+# SHARD_MIN, so the runner splits it; the inventory must still name all 15.
+mk_golden() {
+  local d="$1" rule="$2" n="$3" i=1
+  mkdir -p "$d/plugin/base/bin/test/fixtures/$rule"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$d/plugin/base/bin/$rule.sh"
+  chmod 755 "$d/plugin/base/bin/$rule.sh"
+  cp "$HERE/../base/bin/test/run-tests.sh" "$d/plugin/base/bin/test/run-tests.sh"
+  while [ "$i" -le "$n" ]; do
+    mkdir -p "$d/plugin/base/bin/test/fixtures/$rule/scen-$i"
+    printf '{"exit":0}\n' > "$d/plugin/base/bin/test/fixtures/$rule/scen-$i/expect.json"
+    i=$((i + 1))
+  done
+}
+
+G="$WORK/g"; mk_estate "$G"; mk_golden "$G" synthrule 15
+synth "$G" a-green "$GREEN2"
+g="$(bash "$G/plugin/test/run.sh" -j 4 --inventory "$WORK/invg" golden 2>&1)"; g_rc=$?
+eq "a sharded golden estate exits 0" "$g_rc" "0"
+check "premise: the rule was actually split into more than one job" \
+  "[ \"\$(printf '%s\n' \"\$g\" | grep -c '^PASS golden/synthrule#')\" -gt 1 ]"
+eq "every scenario of a sharded rule is reported" \
+   "$(grep -c '^PASS synthrule/scen-' "$WORK/invg")" "15"
+eq "and none of them twice" \
+   "$(grep '^PASS synthrule/scen-' "$WORK/invg" | sort -u | wc -l | tr -d ' ')" "15"
+
+# A shard naming a scenario that is not there must FAIL, never skip: run.sh
+# builds those names by globbing the very directory run-tests.sh then reads, so
+# a miss means the tree moved — and a shard that quietly ran nothing is the
+# vacuity class in a new coat.
+miss="$(bash "$G/plugin/base/bin/test/run-tests.sh" synthrule scen-1 nope-not-here 2>&1)"
+check "a named scenario that does not exist is reported FAIL" \
+  "printf '%s\n' \"\$miss\" | grep -q '^FAIL synthrule/nope-not-here'"
+check "and it makes the run non-green" \
+  "printf '%s\n' \"\$miss\" | grep -q 'Failed: 1'"
+
 # --- a job that reaches into the shared cache fails the run ----------------
 D="$WORK/d"; mk_estate "$D"
 synth "$D" c-cache "$CACHEJOB" "$CACHEJOB2" "$CACHEJOB3" "$CACHEJOB4"

@@ -199,9 +199,11 @@ repo is both its source and its own marketplace.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
-      unchanged and still correct on its own; `plugin/test/run.sh` drives it one
-      rule at a time (`run-tests.sh <rule>`) plus its seven hand-wired siblings,
-      which turns the estate's slowest single job into twenty-five short ones.
+      correct on its own and in three forms — every rule, one rule
+      (`run-tests.sh <rule>`), or named scenarios of one
+      (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
+      rule at a time plus its seven hand-wired siblings, and uses the third form
+      to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
       (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
@@ -335,7 +337,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — one `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. `golden/emanate-derive` is among the estate's heaviest jobs, at 83 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, which otherwise made an 84-fixture rule the floor of the whole run. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 84 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -348,12 +350,18 @@ anything.
   here** — measurements of the same job on the same machine have varied by more
   than they differ from each other, so any number in this file would be
   measuring load rather than the estate. Measure it yourself when you need to
-  know. What is stable is the shape: the run is **spawn-bound, not
-  critical-path bound** — every job inflates roughly twofold beside eight peers,
-  so cutting a long file shortens that file and leaves the wall where it was.
-  The two golden jobs `emanate-derive` and `emanate-plan` dominate, over 83 and
-  60 fixtures respectively; a handful of `upgrade/` and `materialize/` files
-  that build several period-correct fixtures each come next. Every job is
+  know. What is stable is the shape: the run is **spawn-bound** — it is roughly
+  four-fifths kernel time, `fork` and `exec` rather than computation, which is
+  why raising `-j` past the core count buys nothing and why the lever that works
+  is always "spawn fewer processes", never "schedule better". Cost follows the
+  process count almost exactly: the `emanate-plan` fixtures run ~28,000 of them
+  per sweep, and measured system time matches that at the few milliseconds each
+  that a `fork`+`exec` costs. The heavy jobs are `emanate-derive` and
+  `emanate-plan`, at 84 and 67 fixtures, because each fixture spawns a rule and
+  the validators under it — those two are **sharded** by `run.sh` (see below), so
+  neither is the wall on its own any more; a handful of `upgrade/` and
+  `materialize/` files that build several period-correct fixtures each come next.
+  Every job is
   **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
   only ever read, so any number of copies — several worktrees at once, the same
   file twice over, a single file beside a full run — can run concurrently without
