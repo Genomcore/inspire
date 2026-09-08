@@ -12,23 +12,28 @@
   "requires": [
     {
       "kind": "action",
-      "id": "auth.user.create"
+      "id": "auth.user.create",
+      "ordering": true
     },
     {
       "kind": "action",
-      "id": "auth.user.get"
+      "id": "auth.user.get",
+      "ordering": true
     },
     {
       "kind": "component",
-      "id": "data-table"
+      "id": "data-table",
+      "ordering": true
     },
     {
       "kind": "pattern",
-      "id": "list"
+      "id": "list",
+      "ordering": true
     },
     {
       "kind": "screen",
-      "id": "users.detail"
+      "id": "users.detail",
+      "ordering": true
     }
   ],
   "features": [

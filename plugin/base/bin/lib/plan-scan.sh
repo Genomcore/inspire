@@ -104,6 +104,10 @@ plan_derive_all() {
 # marker of its own: derive gives it no `claims` key, so its count is 0 and its
 # `X` records say why.
 #
+# An R record carries `deferred` only where the contract states `ordering:
+# false`. A key that is absent — an older contract — reads as ordering, which is
+# the safe direction: a wave too many, never a dependency built too late.
+#
 # A screen's `pattern` and `components` keys are NOT read here. They restate
 # edges the `requires[]` set already carries, and since ED10 made both catalog
 # kinds units, one edge rule answers all five kinds — a second reading would be
@@ -114,7 +118,8 @@ plan_contract_records() {
     def row($a): $a | map(tostring) | join($fs);
     [ row(["U", (.unit.id // ""), (.unit.lifecycle // ""), (.unit.module // ""),
            ((.claims // []) | length)]) ]
-    + ((.requires // []) | map(row(["R", .kind, .id])))
+    + ((.requires // []) | map(row(["R", .kind, .id,
+         (if .ordering == false then "deferred" else "" end)])))
     + ((.refused // []) | map(row(["X", .class, .target, .message, .remedy])))
     | .[]
   ' "$1" 2>/dev/null

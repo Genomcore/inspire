@@ -128,7 +128,11 @@ generic catch-all would collapse two different answers into one.
 - **`units[].claims`** is the count from that unit's derived contract, `0` for a
   refused one. It is the sizing signal the orchestrator budgets on.
 - **`units[].requires`** is derive's edge set verbatim — every declared
-  dependency, ordering or not. Which of them ORDER is visible in `waves`.
+  dependency, ordering or not — and each entry's `ordering` flag says which it
+  is. A `false` there is a **deferred reference**, and it is the reason a unit
+  may legitimately share a wave with something it lists, or precede it.
+  Ordering `true` is still not a promise of an earlier wave: the planner drops
+  navigation and self edges as well; see § The ordering edge set.
 - **`units[].surface`** is the surface a split screens tree puts a screen under,
   `null` for every other kind and for the flat suite-of-one shape.
   **`units[].module`** is `null` for the two catalog kinds, which have none.
@@ -196,8 +200,8 @@ differs is the SEVERITY of the answer: an ordering edge refuses, a navigation
 edge warns.** What the edge set below narrows is the ORDERING, and only the
 ordering.
 
-The ordering edge set is derive's `requires[]`, minus one kind of edge that is
-not a build-time dependency:
+The ordering edge set is derive's `requires[]`, minus three kinds of edge that
+are not build-time dependencies:
 
 - **Navigation never orders a wave.** A `screen`-kinded edge out of a screen unit
   is a route reference — a route derives from `module` + `screen` without the
@@ -210,6 +214,28 @@ not a build-time dependency:
   what it is not is a page nothing can build. The operator who knows `home` must
   link to a roster that is still `draft` emanates `home` today, rather than
   promoting the roster to `accepted` — which would have got it built too.
+
+- **A self edge never orders a wave.** No unit precedes itself. A `supersedes_id`
+  chain and a comment's `parent_id` are ordinary fields, and ordering on one
+  would make every vault that has one a cycle. The exemption is unconditional —
+  it does not consult `ordering`, because a `nonnull` self reference is
+  unsatisfiable as data anyway and refusing the *plan* over it would put a
+  modelling verdict in the planner. A self `requires:` on an action is an
+  authoring error with its own owner: `acyclic-deps.sh` reports it as a
+  self-loop, at error severity, long before a run is planned.
+- **A deferred reference never orders a wave** — an edge whose
+  `requires[].ordering` is `false`, which is a `references(…)` on an entity field
+  that does not carry `nonnull`. The column is populated once both sides exist,
+  so build order is free. Without this, the mutual pair present in every real
+  data model — a case pointing at its current report while the report carries a
+  `nonnull` case id — is a cycle, and `PR-11` refuses a correct model. The
+  `nonnull` edge still orders, so the pair still layers the right way round.
+
+Both, like navigation, skip **the ordering alone**. A deferred edge still gates
+readiness at **error** severity: `PR-02` on an unresolvable target, `PR-03` on
+one that is neither delivered nor in the frontier. The edge is not dropped, and
+a vault cannot reach an entity it never plans to build by making the reference
+nullable.
 
 **Pattern and component edges order like every other kind** since ED10 made both
 units: a screen waits for its layout's and its components' wave. A17's sibling
@@ -477,7 +503,7 @@ languages, and any declared `layer: language` profile.
 | id | shape | remedy |
 |---|---|---|
 | `PR-10` | the overseer roster fails: either shipped overseer absent, or any `*-overseer.md` under the agents root failing the shape (a `tools:` line present, naming none of `Bash`, `Write`, `Edit`, `NotebookEdit`, `Agent`) | restore the shell, or fix its `tools:` line |
-| `PR-11` | a cycle in the ordering edge set. `acyclic-deps.sh` owns the action-to-action case and is run rather than re-implemented; a cycle the wider edge set forms is reported off the layering, which already knows which nodes it could not consume. A unit `derive` refused contributes no edges at all, so a cycle running through one surfaces only once its `PR-01` is remedied — nothing proceeds meanwhile, because `PR-01` is an error and already forces `ready: false` | fix the `requires:` chain |
+| `PR-11` | a cycle in the ordering edge set. `acyclic-deps.sh` owns the action-to-action case and is run rather than re-implemented; a cycle the wider edge set forms is reported off the layering, which already knows which nodes it could not consume. A unit `derive` refused contributes no edges at all, so a cycle running through one surfaces only once its `PR-01` is remedied — nothing proceeds meanwhile, because `PR-01` is an error and already forces `ready: false`. The two arms remedy differently, because they cannot be the same mistake: the action-to-action arm is always a `requires:` chain, while the wider arm now only fires on edges the three exemptions did not drop — so a `nonnull` that is really a back-pointer is the first thing to look at | break the cycle: drop `nonnull` from a `references(...)` that is really a back-pointer, or fix the `requires:` chain |
 | `PR-12` | empty frontier: no unit in scope is at `lifecycle: accepted` | promote something, or widen `--scope` |
 | `PR-13` | no stack: `00_bootstrap/stack.md` is absent, or declares no `profiles:` and no inferable stack section | `/inspire-bootstrap stack` |
 

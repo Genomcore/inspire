@@ -167,7 +167,7 @@ plan_cycle_refusals() {
     [ -n "$id" ] || continue
     plan_refuse "PR-11" "$(plan_index_lookup "$PLAN_TMP/idpath.tsv" "$id")" \
       "the ordering edges among the frontier form a cycle: \`$id\` can never reach a wave" \
-      "fix the \`requires:\` chain"
+      "break the cycle: drop \`nonnull\` from the \`references(...)\` that is really a back-pointer, or re-point the \`requires:\` chain"
   done < "$PLAN_TMP/unconsumed"
 }
 
@@ -215,8 +215,8 @@ plan_ingest_one() {
 
   while IFS="$PLAN_FS" read -r t f1 f2 f3 f4; do
     case "$t" in
-      R) plan_row requires "$id" "$f1" "$f2"
-         printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$path" "$kind" "$f1" "$f2" >> "$PLAN_TMP/deps.tsv" ;;
+      R) plan_row requires "$id" "$f1" "$f2" "$f3"
+         printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$path" "$kind" "$f1" "$f2" "$f3" >> "$PLAN_TMP/deps.tsv" ;;
       X) plan_find "PR-01" "error" "$id" "$(plan_path_norm "$f2")" \
            "$(plan_owner "$f2")" "$f3" "$f4" "$f1" ;;
       *) ;;
@@ -227,7 +227,8 @@ plan_ingest_one() {
 # plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge
 # set. One question for every edge, whatever its kind — it must resolve, and its
 # target must be stable or in the frontier — asked at two severities: an
-# ordering edge refuses, a navigation edge warns. Navigation is dropped from the
+# ordering edge refuses, a navigation edge warns. Every exemption
+# `plan_ordering_edges` makes — navigation, self, deferred — is dropped from the
 # ORDERING alone, after both checks have run, which is why the in-frontier arm
 # leaves the layering to `plan_ordering_edges`.
 #
@@ -241,9 +242,11 @@ plan_ingest_one() {
 # The edge set itself is `plan_ordering_edges`', over the post-realization node
 # set: which edges ORDER is one question, and the selector closures ask it too.
 plan_resolve_edges() {
-  local uid upath ukind dkind did dpath lc state sev nav
+  local uid upath ukind dkind did dord dpath lc state sev nav
   plan_ordering_edges "$PLAN_TMP/nodes" > "$PLAN_TMP/edges.tsv"
-  while IFS=$'\t' read -r uid upath ukind dkind did; do
+  # `dord` is read and never used: it is the 6th `deps.tsv` column, and naming it
+  # is what keeps every field before it in its own variable.
+  while IFS=$'\t' read -r uid upath ukind dkind did dord; do
     [ -n "$uid" ] || continue
     # A realized unit is out of the frontier, so its edges are nobody's
     # readiness question this run — exactly as an out-of-scope unit's are.

@@ -292,7 +292,14 @@ DERIVE_JQ_PRELUDE='
     (recs($s) | group_by(.[0])
      | map({key: .[0][0], value: map(cons(.[$n:]))}) | from_entries);
   def claimlist($s): recs($s) | map({id: .[0], oracle: .[1], fingerprint: .[2]});
-  def reqlist($s): recs($s) | map({kind: .[0], id: .[1]});
+  # Grouped, not mapped: `sort -u` over the spool deduplicates whole LINES, so
+  # an entity reached by both a structural and a deferred field is two rows
+  # there and must stay ONE edge here — ordering, because a single nonnull
+  # field is enough to make the target precede this unit.
+  def reqlist($s): recs($s)
+    | group_by([.[0], .[1]])
+    | map({kind: .[0][0], id: .[0][1],
+           ordering: (map(.[2] != "deferred") | any)});
 '
 
 # derive_rawfile_args — the `--rawfile` triples for every spool this run

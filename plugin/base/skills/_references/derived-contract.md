@@ -74,7 +74,7 @@ the grouped human report.
   "unit": { "kind", "id", "path", "lifecycle", "module"?,
             "entity"? , "action"?, "screen"?, "state"? },
   "purpose": "…",
-  "requires": [ { "kind", "id" } … ],
+  "requires": [ { "kind", "id", "ordering" } … ],
   … kind-specific sections …
   "claims": [ { "id", "oracle", "fingerprint" } … ] }
 ```
@@ -94,6 +94,20 @@ the grouped human report.
   — A17's rule is that a pattern and a component order only by a *declared* edge
   between them, never by an assumed tier. Whether a required id exists is
   `/inspire-emanate plan`'s question — derive records the edge.
+- **`requires[].ordering`** says whether the edge is a *build-time* dependency —
+  whether the target must be finished first. It is `true` everywhere except on a
+  **deferred reference**: a `references(…)` on an entity **field** whose
+  `Constraints:` line does not carry `nonnull`. `nonnull` is what makes a
+  reference structural — a row carrying one cannot exist before its target, so
+  the target must be built first. Drop it and the column is populated once both
+  sides exist, so build order is free. An action **input**'s `references(…)` is
+  always `true`: `nonnull` is barred from an input's line (the `Required` column
+  owns required-ness), so its absence there says nothing, and the entity an
+  argument keys into must exist to be keyed into.
+  Whether an ordering edge actually *orders a wave* is still the planner's
+  policy, not derive's — `plan` drops navigation and self edges too. Derive
+  carries the fact; `_references/emanation-plan.md` § *The ordering edge set*
+  states what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order then the invariants; for an action the
   input constraints, preconditions, behavior steps, postconditions and errors;

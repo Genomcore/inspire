@@ -68,7 +68,8 @@
       "requires": [
         {
           "kind": "entity",
-          "id": "auth.org"
+          "id": "auth.org",
+          "ordering": true
         }
       ],
       "wave": 2,
@@ -89,7 +90,8 @@
       "requires": [
         {
           "kind": "entity",
-          "id": "auth.user"
+          "id": "auth.user",
+          "ordering": true
         }
       ],
       "wave": 3,

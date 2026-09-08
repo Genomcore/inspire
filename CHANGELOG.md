@@ -9,6 +9,62 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.1 — 2026-09-08
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk
+and nothing in a vault has to be re-authored: 0.9.1 keeps the 0.3 layout and the
+0.9.0 payload classes.
+
+### Fixed
+
+**A mutual or self foreign key no longer refuses the whole run.**
+`/inspire-emanate plan` treated every `references({module}.{entity})` constraint
+as an edge that orders a wave, so the two shapes present in any real data model
+— a mutual pair (a case pointing at its current report while the report carries
+a `nonnull` case id) and a self reference (a `supersedes_id` chain, a comment's
+`parent_id`) — were cycles, and `PR-11` refused every unit in them. Nothing
+warned beforehand: `acyclic-deps.sh` reads an action's frontmatter `requires:`
+chain, and these edges are field constraints, so `review.sh` exits 0 on a vault
+the planner then refuses.
+
+The discriminator was already authored, and is not new vocabulary: **`nonnull`
+is what makes a reference structural.** A row carrying a `nonnull` foreign key
+cannot exist before its target, so the target is built first. Without `nonnull`
+the reference is *deferred* — the column is populated once both sides exist —
+and build order is free. Two exemptions now sit beside the navigation one, and
+both **drop the ordering only**: the edge still gates readiness at error
+severity, so `PR-02` and `PR-03` fire on a deferred edge exactly as before.
+
+- **A deferred reference never orders a wave** — a `references(…)` on an entity
+  **field** whose `Constraints:` line does not carry `nonnull`. An action
+  **input**'s `references(…)` always orders: `nonnull` is barred from an input's
+  line (`OS-A7` — the `Required` column owns required-ness), so its absence
+  there says nothing.
+- **A self edge never orders a wave**, unconditionally — no unit precedes
+  itself, and a `nonnull` self reference is unsatisfiable as data anyway. A self
+  `requires:` on an action keeps its own owner: `acyclic-deps.sh` reports it as
+  a self-loop, at error severity.
+
+**`PR-11`'s remedy names the actual lever.** The cycle arm that fires on the
+wider edge set said "fix the `requires:` chain", which no field constraint has.
+
+### Changed
+
+**`requires[]` entries carry `ordering: bool`**, in the derived contract
+(`inspire.derived-contract/1`) and in `units[].requires` of the plan
+(`inspire.emanation-plan/1`). Both additions are additive — a consumer reading
+`.kind` / `.id` is unaffected — and an entity reached by both a structural and a
+deferred field is still **one** entry, ordering `true`.
+
+**A `--goal` or `--reemanate` closure no longer pulls in a unit reachable only
+through a deferred edge.** Closures walk ordering edges, and such a unit is not
+a build-time dependency. This is the intended reading and it narrows what some
+selectors match.
+
+**A floor can shrink, never grow.** A vault whose nullable edges lengthened its
+critical path gets a shorter floor, so a run that refused an under-budget
+`--ceiling` may now succeed. Nothing that planned before stops planning.
+
 ## 0.9.0 — 2026-09-03
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

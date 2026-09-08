@@ -82,16 +82,28 @@ plan_realize() {
 }
 
 # plan_ordering_edges <nodes-file> — the ordering edge set over those nodes, as
-# `from<TAB>to`. Two exemptions, and they are the whole rule: an edge whose
+# `from<TAB>to`. Four exemptions, and they are the whole rule: an edge whose
 # target is not itself a node is satisfied out of band (a `stable` artifact, a
-# realized unit, an `accepted` unit in another run's scope), and a screen->screen
-# edge is navigation, which never orders a wave.
+# realized unit, an `accepted` unit in another run's scope); a screen->screen
+# edge is navigation, which never orders a wave; a SELF edge cannot order one
+# either, since no unit precedes itself; and a DEFERRED reference is populated
+# once both sides exist, so build order is free. The last two are the self-FK and
+# mutual-FK shapes every real data model carries — a comment threading under its
+# parent, a case pointing at its current report — and ordering on them made the
+# ordinary case a `PR-11` cycle.
+#
+# All four still gate readiness in `plan_resolve_edges`, which walks `deps.tsv`
+# itself: the ORDERING is dropped, the edge is not. A self `requires:` on an
+# action is exempt here and still an authoring error — `acyclic-deps.sh` owns it,
+# at error severity, long before a run is planned.
 plan_ordering_edges() {
   local nodes="$1"
   awk -F'\t' -v nodesf="$nodes" '
     FILENAME == nodesf { node[$1] = 1; next }
     !($1 in node) || !($5 in node) { next }
     $3 == "screen" && $4 == "screen" { next }
+    $1 == $5 { next }
+    $6 == "deferred" { next }
     { print $1 "\t" $5 }
   ' "$nodes" "$PLAN_TMP/deps.tsv" | LC_ALL=C sort -u
 }
