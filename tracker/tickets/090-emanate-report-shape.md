@@ -24,7 +24,8 @@ harvest paths, the drill and verify measurements, the pre-PR list, and the opera
 next act. The first field run left a 299-line file that has none of that shape. It is a
 well-written **diary** — wave-1 narrative, findings, the orchestrator's decisions — with
 no opening skeleton, no per-wave block and no closing section. Its last line says
-`form → proceeding`, which was false within the minute. The file is untracked.
+`form → proceeding`, which was false within the minute. The file is untracked in that
+project, which nothing INSPIRE ships caused — see the fourth criterion.
 
 The operator, meanwhile, received eight status essays in the chat and no summary, and had
 to probe the session to learn where things stood. The chat and the log had swapped roles:
@@ -46,15 +47,36 @@ its author no longer holds is claiming something that did not happen.
 - [ ] **Progress goes to the log; the chat receives the report once** — at the run's
       end, or when a stall cascade empties the frontier. Interim operator-facing prose is
       limited to a one-line pointer at the log.
+      **Already met when this ticket was written.** `run.md` § Liveness says exactly
+      this, in the paragraph `090-emanate-turn-liveness` landed: "The chat gets the
+      report, once", the log named as progress's home, and a turn between two wave
+      closes having "nothing operator-facing to write at all". What was missing is the
+      thing that paragraph points at — it defers to "the schedule § The run report
+      sets", and no such schedule existed until the skeleton below. The referent, not
+      the rule, was the gap.
 - [ ] **The last position wins.** A conclusion the orchestrator revises later in the same
       session is corrected in place in the log, never appended beside the old one.
-- [ ] Whether `.inspire/last-emanation.log` is git-tracked or ignored is decided and
-      `/inspire:init`'s seeded `.gitignore` block says so — the same call already made for
-      `.inspire/last-upgrade.log`.
+- [ ] Whether `.inspire/last-emanation.log` is git-tracked or ignored is decided, and the
+      decision is stated where an orchestrator reads it.
+      **The premise stated when this ticket was written is false: no such call was ever
+      made for `.inspire/last-upgrade.log`.** `materialize.sh:400` `seed_gitignore` writes
+      a marker-delimited block whose entire content is `.claude/settings.local.json`. No
+      release has ever named either log there, so both are tracked by default rather than
+      by a decision. The marker also makes a second run a no-op, so a line added to the
+      block would reach **new inits only** and never an upgraded project.
+      **Resolved: tracked, stated in doctrine, no `materialize.sh` change.** INSPIRE
+      never excluded the file; a project whose own `*.log` rule hides it did that itself,
+      and `materialize.sh`'s standing rule (lines 431–452, "report, never rewrite — the
+      operator's .gitignore is the operator's") forbids editing it to fix that.
 - [ ] **Or the ticket closes Done with the skeleton alone**, if the honest finding is that
       § The run report already says everything above and only the orchestrator ignored it.
       Then the skeleton is the whole deliverable, because a shape is harder to ignore than
       a paragraph.
+      **This exit was not taken, and it was close.** § The run report did specify every
+      line of content, so the criterion is nearly true — but it specified *content* and
+      never a shape, and the two rules above (last position wins, tracking) were absent
+      rather than ignored. The skeleton is the bulk of the deliverable; it is not the
+      whole of it.
 
 ## Notes
 

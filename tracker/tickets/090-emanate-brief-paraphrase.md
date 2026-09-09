@@ -26,7 +26,10 @@ of its own sentences caused real damage:
 - The entity brief said to emit *"domain type, DTOs, semantic-type validators at the
   owning boundary, the Prisma model, and one migration"*. `contracter.md` § Emission maps
   an entity's fields to the persistence model and one migration; a DTO derives from an
-  **action's** inputs. The contracter obeyed, both overseers rejected the DTO as a
+  **action's** inputs — that second half is a reading, not a quote: the table states the
+  entity row outright and never names where a DTO comes from, so the decisive fact is the
+  **absence** of an entity-to-DTO row rather than a rule saying otherwise.
+  The contracter obeyed, both overseers rejected the DTO as a
   mass-assignment shape, and a rework cycle was spent on an instruction the persona never
   chose. The orchestrator recorded the fault as its own.
 - A rework hand-back told the `workspace.user` contracter to rewrite a stale sentence in
@@ -39,8 +42,11 @@ Two related lane violations from the same session. The orchestrator wrote a lint
 **inside a persona's worktree** to verify a finding, then deleted it before harvest. And
 in the conversation after the run it ran `INSERT`/`UPDATE`/`DELETE` by hand against the
 shared development database to test a claim. § One unit, eight phases gives the
-orchestrator two writes — a worktree at prepare, a commit at harvest — and no phase in
-which it touches a plane.
+orchestrator **four** writes, not the two stated when this ticket was written: a worktree
+at prepare, one commit at harvest, the results manifest at verify, one merge commit at
+promote. The two later ones are outside any phase worktree, which is what makes the
+criterion below the right shape — the bound is *inside a phase worktree*, not a count.
+No phase touches a plane either way.
 
 ## Acceptance criteria
 
