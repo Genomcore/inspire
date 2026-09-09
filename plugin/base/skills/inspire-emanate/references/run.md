@@ -543,7 +543,8 @@ outside still leaves a readable partial account rather than nothing. What
 **overwrites** is the next *invocation*: its own t=0 truncates whatever the
 previous run left, the same way `/inspire:update` starts
 `.inspire/last-upgrade.log` fresh on every upgrade. Within one run the file only
-grows; across runs it never survives the next one's t=0. That file and git are
+grows, but for a slot whose own answer changed (below); across runs it never
+survives the next one's t=0. That file and git are
 the only things a run writes outside a worktree, and neither is the knowledge
 base.
 
@@ -553,7 +554,37 @@ standalone or as `run`'s own t=0 step, never touches
 `.inspire/last-emanation.log`. The log is `run`'s alone, and only from the
 moment a turn branch exists.
 
-By the final wave the file carries:
+**The file is a skeleton, and the skeleton is
+[`report-skeleton.md`](report-skeleton.md).** Three block kinds, each written at
+one fixed moment: an identity block at t=0, one block as each wave closes, one
+closing block at the exit. That file is the form — the blocks in order, a slot
+per line this section names — and it exists because a shape is harder to ignore
+than a paragraph. **Fill it; never compose a shape of your own.** A run that
+narrates instead produces a diary: readable, even useful, and missing every line
+an operator opens the file for.
+
+The division between the two files is the one that decides which to edit. **This
+section is the meaning; the skeleton is the form.** A line added to the list
+below gets a slot there carrying its label and nothing more.
+
+**Two rules bind every slot, and the second is a decision, not a default.**
+
+- **The last position wins.** A conclusion this run revises is corrected where it
+  stands, never left in place with a correction appended beside it. The file
+  carries one position on any question and it is the current one — two paragraphs
+  disagreeing about the same oracle leave the operator to guess what the run
+  meant, and a report carrying a position its author no longer holds is claiming
+  something that did not happen. Everything else is append-only: in-place editing
+  is for a slot whose answer changed, not for tidying a wave that closed.
+- **The file is tracked.** So is `.inspire/last-upgrade.log`. INSPIRE's seeded
+  `.gitignore` block names `.claude/settings.local.json` and nothing else, so no
+  release has ever excluded either log — this states that rather than leaving it
+  to a default, and it needs no change to `/inspire:init`. A project whose own
+  `*.log` rule hides the file chose that itself, and init reports what a rule
+  shadows rather than editing an operator's `.gitignore`.
+
+By the final wave the file carries — spread across its blocks, each line landing
+in the block the skeleton gives it:
 
 - **the run's identity** — the run id, the turn branch, the base branch, the
   scope, the goal and the selectors as typed;
