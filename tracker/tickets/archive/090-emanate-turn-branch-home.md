@@ -4,13 +4,13 @@ title: "090 — emanate: the turn branch has no stated home, so the operator's c
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: Mid
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-turn-liveness]
 ---
@@ -32,18 +32,46 @@ assumption warns about without naming.
 
 ## Acceptance criteria
 
-- [ ] § The branch scheme states where the turn branch is checked out during a run:
+- [x] § The branch scheme states where the turn branch is checked out during a run:
       either a dedicated worktree under the house convention
       (`.claude/worktrees/emanate-turn`, discarded at the run's end), or explicitly the
       launching checkout — in which case the doctrine says so and requires restoration.
-- [ ] A run **ends with the operator's checkout on the branch it was launched from**,
+- [x] A run **ends with the operator's checkout on the branch it was launched from**,
       whichever home is chosen. The closing block of the run report names the turn branch
       and that the checkout was restored.
-- [ ] `unattended.md` § The morning after is checked against the choice: "delete the turn
+- [x] `unattended.md` § The morning after is checked against the choice: "delete the turn
       branch" must not be a command the operator runs while standing on it.
 - [ ] **Or Done with zero code changed**, if the ruling is that the launching checkout is
       the intended home and only the restoration sentence was missing — then that
       sentence is the deliverable.
+
+## Resolution
+
+**The first option: a worktree of the run's own**, `.claude/worktrees/emanate-<run-id>`,
+cut with the branch in one `git worktree add -b` and removed at the run's end,
+immediately before the closing block is written — which is what lets that block report
+whether the removal happened. The branch outlives the worktree; promote merges there.
+
+The name carries the **run id** rather than the ticket's `emanate-turn`, and the
+difference is not cosmetic: a fixed path makes the *next* run fail on a directory a
+crashed one left behind, while a run-id path never collides and says which run left it.
+Phase worktrees already embed the unit slug for the same reason.
+
+**Criterion 2 is met by construction rather than by restoring anything**, and the report
+says what happened rather than a word for what did not: the closing block gains **where
+the work is** — the turn branch, whether its worktree survives, and that the launch
+checkout was never moved. There is no restoration step to get wrong, and nothing to
+restore after a crash.
+
+`unattended.md` § The morning after now carries the reason "delete the turn branch" is a
+command an operator can run: nobody is standing on it. § promote states that the merge
+runs in that worktree and never in the launch checkout.
+
+**The zero-change exit stays unticked.** It would have ratified the launching checkout as
+the home and asked for a restoration sentence. Restoration narrows the window and never
+closes it — between t=0 and the exit the operator's tree still stands on a branch nothing
+has vouched for, and a run that dies mid-wave restores nothing at all. The same rule that
+detaches every phase worktree answers this one.
 
 ## Notes
 
