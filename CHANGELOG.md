@@ -184,6 +184,30 @@ catalog entry is ruled **not carried**, stated in `derived-contract.md` and
 warned about in the pattern template, so a requirement written there is visibly a
 requirement lost rather than a silent one.
 
+**Nothing shipped links into `docs/adr/` any more.** The lessons layer README
+carried a relative link that resolves to nothing in a materialized project, and
+`inspire-lesson`'s `SKILL.md` and `lessons-format.md` sent an operator out of
+their project by absolute URL to read the methodology's internals. All three now
+state what the runtime does: nothing re-applies or archives a lesson yet, so
+until that flow exists both are the operator's, and capturing still pays.
+
+**A stamp is a column only where the entity declares the field.** `nestjs.md`'s
+"Keys and stamps" read as putting `created_at` and `updated_at` on every table,
+which contradicts the format it serves — stamps are declared per entity as
+fields. The clause now fixes their *rendering* and never their presence, and
+`contracter.md` § Emission carries the general rule: a profile's § Persistence
+decides how a column is rendered, never which columns exist. An entity declaring
+one stamp and not the other withheld the second.
+
+**The canonical compile stub passes the profiles' own lint gate.** The stub rule
+asked for "the smallest thing its language needs to type-check", and
+`strictTypeChecked` turns `no-unused-vars` on for parameters while no framework
+profile declares an `argsIgnorePattern` — so the obvious stub was a lint error,
+with no escape for a class method and none the escape-hatch ratchet permits.
+`typescript.md` § Compile stub now states the idiom (a throw whose message names
+every parameter) and the trap. The gate is unchanged: relaxing it would weaken
+`no-unused-vars` permanently for an artifact the implementer deletes.
+
 ## 0.9.3 — 2026-09-09
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk
