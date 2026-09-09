@@ -35,8 +35,13 @@ its doctrine that the contract is complete by construction, froze an interface t
 not express the variant; the quality overseer caught it at the boundary; a rework cycle
 was spent on a defect the tooling introduced. The orchestrator audited all six contracts
 in the run and found the truncation once — which says the input was lucky, not that the
-reader is safe. The domain reader is unaffected: `_keyed-heads.sh` joins continuation
-lines the way the AC-id reader does, so this is a catalog-side inconsistency.
+reader is safe. The domain reader is unaffected, though **not for the reason stated when
+this ticket was written**: neither `_keyed-heads.sh` nor the AC-id reader *joins* a
+continuation. Both anchor their marker at line start so a continuation is not mistaken
+for a second entry, and then ignore it. The domain side survives that because a keyed
+entry's identity — its key and its head — is on the first line, and the prose after them
+is diagnostic. A catalog bullet has no key: the prose **is** the contract, which is the
+real asymmetry and why only this reader needs the join.
 
 Beside it, a **`## Notes`** section on a catalog entry is read by nothing. `form.md`'s
 notes carried two requirements the run never saw — *"a field bound to a value set states
@@ -56,7 +61,9 @@ not and the pattern template should stop inviting requirements into it.
       and a fixture asserts it. **Not carried:** `derived-contract.md` says so in one
       sentence, and the pattern and component templates under `inspire-screens` say that
       Notes is commentary a run never reads, so a requirement placed there is a
-      requirement lost.
+      requirement lost. **Resolved: not carried.** Only the *pattern* template carries the
+      warning, because the *component* template has no `## Notes` section to warn about —
+      adding one to say "do not use this" would invite the section it forbids.
 - [ ] `plugin/test/run.sh golden/emanate-derive` is green, and no other fixture's
       expected output moves — a joined continuation must not change a single-line item.
 

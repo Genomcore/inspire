@@ -95,6 +95,12 @@ derive_catalog_state() {
 # derive_catalog_prose <copy> — the `## Structure` items and the `## Variants`
 # items, spooled. List items only: the tokens paragraph both sections sit beside
 # points at the design system and restates nothing the entry owns.
+#
+# An item is its marker line plus its INDENTED continuations: a vault kept at 80
+# columns wraps a bullet, and a half-sentence freezes an interface that cannot
+# express the rest. A flush-left line stays out — it is indistinguishable from
+# that tokens paragraph, and swallowing prose is the same defect as dropping it.
+# An indented sub-bullet still opens its own item: the marker rules run first.
 derive_catalog_prose() {
   local copy="$1" section spool line
   for section in Structure Variants; do
@@ -103,8 +109,12 @@ derive_catalog_prose() {
       derive_norm_g "$line"
       [ -n "$DERIVE_NORM" ] && derive_row "$spool" "$DERIVE_NORM"
     done < <(sdd_body_section "$copy" "$section" | awk '
-        /^[ \t]*[0-9]+\.[ \t]/ { sub(/^[ \t]*[0-9]+\.[ \t]+/, ""); print; next }
-        /^[ \t]*[-*][ \t]/     { sub(/^[ \t]*[-*][ \t]+/, "");     print; next }
+        function flush() { if (item != "") print item; item = "" }
+        /^[ \t]*[0-9]+\.[ \t]/ { flush(); sub(/^[ \t]*[0-9]+\.[ \t]+/, ""); item = $0; next }
+        /^[ \t]*[-*][ \t]/     { flush(); sub(/^[ \t]*[-*][ \t]+/, "");     item = $0; next }
+        /^[ \t]+[^ \t]/        { if (item != "") item = item " " $0; next }
+        { flush() }
+        END { flush() }
       ')
   done
 }

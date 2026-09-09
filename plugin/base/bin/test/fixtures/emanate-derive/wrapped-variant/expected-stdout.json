@@ -1,0 +1,46 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "pattern",
+    "id": "form",
+    "path": "spec/kb/05_screens/patterns/form.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "a set of fields the user fills in and submits.",
+  "requires": [],
+  "structure": [
+    "The field stack.",
+    "The submit row."
+  ],
+  "variants": [
+    "**Coded** — fields bound to the study's configured value sets ([[adr-coded-terminology]]), each showing the code system alongside the display text.",
+    "**Inline** — the stack rendered inside a row it edits in place."
+  ],
+  "regions": [
+    {
+      "region": "fields",
+      "fill": "required",
+      "accepts": "data",
+      "holds": "the labelled inputs"
+    },
+    {
+      "region": "actions",
+      "fill": "required",
+      "accepts": "dispatch",
+      "holds": "submit and cancel"
+    }
+  ],
+  "claims": [
+    {
+      "id": "form/region/fields",
+      "oracle": "test",
+      "fingerprint": "sha256:f8700c4ebbae67b3da717e19dcca078cfe3e33a0f44b0a3ffe1cbebc8921b7b7"
+    },
+    {
+      "id": "form/region/actions",
+      "oracle": "test",
+      "fingerprint": "sha256:f9ba1a1dceb99cf12f73c96b2b1489fe3834cd721ec28e60cbc7959a631279c5"
+    }
+  ]
+}
