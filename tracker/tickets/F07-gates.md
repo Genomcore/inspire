@@ -2,7 +2,7 @@
 id: F07-gates
 title: "F7 GATES — enforcement the author cannot negotiate with"
 created: 2026-08-13
-updated: 2026-08-25
+updated: 2026-09-09
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -48,6 +48,16 @@ roster posture:** the shipped overseer pair is non-removable, projects may only
 *add* overseers — the ceiling only rises. Remaining on this ticket after the
 epic: the external profile source machinery and suppression accounting (AC-2,
 AC-3), plus writing the ADR down as an ADR.
+
+**Amended 2026-09-09 (first field run of `/inspire-emanate`, gs project):** one defect
+for the suppression-accounting tranche (AC-3). `escape-hatch-ratchet.sh` counts a
+**mention**, not only a use — its regex has no use/mention distinction, so a persona that
+explained in a doc comment why a suppression was unavailable turned the ratchet red at
+1/0 on that sentence. It reworded rather than raising a ceiling, correctly. The
+consequence is that no file under a scoped directory can document why a hatch was
+avoided, which is perverse for a gate whose purpose is making hatches justified in place.
+Fold into AC-3's "in-place justification": the counted form must be distinguishable from
+prose that names it.
 
 The rearchitecture release — moves doctrine from tier-2 prose into tier-1 machinery. Soft
 edge: after F06-tdd (prove the cheap checks first); the ADR can be drafted during F06.
