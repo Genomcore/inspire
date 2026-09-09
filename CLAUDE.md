@@ -240,7 +240,12 @@ repo is both its source and its own marketplace.
   release-identity bump); never shipped to a project.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).
-- `docs/adr/` — hand-authored, core-level ADRs about INSPIRE itself.
+- `docs/adr/` — hand-authored, core-level ADRs about INSPIRE itself. It does not
+  materialize, so **nothing under `plugin/base/` ever links into it** — not by
+  relative path, which resolves to nothing in a project, and not by absolute URL,
+  which sends a project's operator out of their project to read the methodology's
+  internals. Shipped payload explains itself where it ships: the relevant skill's
+  `references/`, or the KB layer's README.
 
 The above is the runtime surface — what `/inspire:init` copies from `plugin/base/`
 into `.claude/`, `.inspire/` and `.inspire.lock`. Separately, and every time it

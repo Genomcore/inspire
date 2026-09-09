@@ -19,9 +19,8 @@ Two audiences read the catalog:
 1. **This project, across releases** — the catalog is what keeps the agents behaving
    as you taught them once a release moves the base underneath them. The flow that
    writes lessons into a skill, and re-derives them against a new base, is **not
-   built**: its design is D5 and D6 of
-   [`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md),
-   and building it is future work the operator tracks. Capturing still pays now —
+   built**: an update leaves the catalog untouched, so applying a lesson to the
+   skills is the operator's until it exists. Capturing still pays now —
    a lesson written today is one that flow will find.
 2. **INSPIRE core, via the observer** — an external pull-from-above reads the catalog
    across many forks and distills the patterns worth folding into the next release.

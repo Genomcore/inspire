@@ -4,13 +4,13 @@ title: "090 — profiles: the canonical compile stub fails the profile's own lin
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: Mid
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F14-semantic-types]
 ---
@@ -41,16 +41,39 @@ anywhere.
 
 ## Acceptance criteria
 
-- [ ] The idiom has **one home**. Either `profiles/typescript.md` (the language profile,
+- [x] The idiom has **one home**. Either `profiles/typescript.md` (the language profile,
       where the declaration-only-tree recipe already lives) states the stub form — a
       thrown message that names its parameters — or the framework profiles' § Quality
       gates declare `argsIgnorePattern: '^_'` and the stub uses the underscore. One of the
       two, stated once, and `contracter.md` points at it instead of describing the stub in
       the abstract.
-- [ ] The escape-hatch ceilings stay at zero either way. Whatever the idiom is, it is not
+- [x] The escape-hatch ceilings stay at zero either way. Whatever the idiom is, it is not
       a suppression.
-- [ ] A sentence in the chosen home names the trap — `strictTypeChecked` turns on
+- [x] A sentence in the chosen home names the trap — `strictTypeChecked` turns on
       `no-unused-vars` for parameters — so the next profile author does not rediscover it.
+
+## Resolution
+
+**The first option: the idiom is the stub's form, stated once in
+`profiles/typescript.md` § Compile stub.** The gate is not relaxed —
+`argsIgnorePattern: '^_'` would have bought this stub by weakening
+`no-unused-vars` permanently, for every parameter in the project, to accommodate an
+artifact the implementer deletes. A stub throws and its message names every parameter,
+which reads each one without suppressing anything; the section carries the shape, the
+trap (`strictTypeChecked` turns `no-unused-vars` on for parameters and the framework
+profiles declare no `argsIgnorePattern`), and why the two obvious escapes fail — an `_`
+prefix buys nothing without that option, and a class method has no per-member escape.
+
+Ceilings stay at zero, untouched: the ratchet is what rules a suppression out, and it is
+the reason the answer had to be the form of the stub.
+
+`contracter.md` no longer describes the stub in the abstract. It kept "a raised *not
+implemented* and never a partial implementation" and dropped "the smallest thing its
+language needs to type-check" — the phrase that invited a stub which type-checks and
+fails lint — pointing at the language profile's § Compile stub for the exact form.
+
+Verified rather than assumed: `strictTypeChecked` is installed by `react`, `nestjs` and
+`angular`, and no profile in the directory declares an `argsIgnorePattern`.
 
 ## Notes
 

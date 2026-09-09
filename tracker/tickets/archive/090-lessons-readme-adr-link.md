@@ -4,13 +4,13 @@ title: "090 — the lessons layer README links to an ADR the project does not ha
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: Mid
 skills: [lesson]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-lesson-skill-adr-citations, F11-lessons]
 ---
@@ -34,16 +34,36 @@ README already has the floor and can simply say the thing.
 
 ## Acceptance criteria
 
-- [ ] `98_lessons/README.md` no longer links into `docs/adr/`, by relative path or
+- [x] `98_lessons/README.md` no longer links into `docs/adr/`, by relative path or
       absolute URL.
-- [ ] What the citation was carrying — that re-application across releases is designed
+- [x] What the citation was carrying — that re-application across releases is designed
       but not built — is stated in the README's own words, or dropped as already implied
       by the "roadmap, v1" it sits beside.
-- [ ] No other file under `plugin/base/kb/` links into `docs/`; the sweep is one grep and
+- [x] No other file under `plugin/base/kb/` links into `docs/`; the sweep is one grep and
       its result is recorded here either way.
 - [ ] Ratifying part of the status quo closes this: if the sentence reads correctly with
       the parenthetical simply gone, deleting it is the fix and this closes **Done** with
       nothing written.
+
+## Resolution
+
+Fixed with `090-lesson-skill-adr-citations` in one change: one theme, one fix, and the
+two should never have been separate files.
+
+The bullet now states the behaviour in its own words — re-application is not built, an
+update leaves the catalog untouched, applying a lesson is the operator's, capture anyway
+— and drops the "roadmap, v1" framing along with the link. **The ratification exit was
+not taken and stays unticked:** the parenthetical was the only thing telling an operator
+that nothing re-applies their lessons, so deleting it would have removed the answer
+rather than the dead link.
+
+`docs/adr/` is now ruled out as a destination for anything under `plugin/base/`, in
+`CLAUDE.md`'s own `docs/adr/` bullet, so the next author meets the rule rather than the
+precedent.
+
+**Sweep, recorded:** `grep -rn 'docs/adr\|/docs/' plugin/base/` over every `.md`,
+`.template`, `.txt` and `.sh` outside `base/bin/test/` returned this file plus the two in
+`090-lesson-skill-adr-citations`, and returns nothing now.
 
 ## Notes
 

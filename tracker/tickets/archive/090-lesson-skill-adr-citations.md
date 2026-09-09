@@ -4,13 +4,13 @@ title: "090 — `inspire-lesson` sends a project's operator to a harness-only AD
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: Mid
 skills: [lesson]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-lessons-readme-adr-link, F11-lessons]
 ---
@@ -38,19 +38,41 @@ cited, not cited-by-URL.
 
 ## Acceptance criteria
 
-- [ ] Neither `SKILL.md` nor `lessons-format.md` links into `docs/adr/`.
-- [ ] What each sentence actually needs stays, in the skill's own references: that
+- [x] Neither `SKILL.md` nor `lessons-format.md` links into `docs/adr/`.
+- [x] What each sentence actually needs stays, in the skill's own references: that
       re-application and archiving are designed and unbuilt (so an operator writing a
       lesson today knows what does and does not happen to it), and the archive semantics
       `lessons-format.md` § Archive already owns as an on-disk contract.
-- [ ] The prose stays present-tense about the runtime — the C5-P2 rule that removed the
+- [x] The prose stays present-tense about the runtime — the C5-P2 rule that removed the
       roadmap section in the first place is not undone by re-importing the roadmap in
       another form.
-- [ ] The rule is written where the next author meets it: `CLAUDE.md`'s `docs/adr/` bullet
+- [x] The rule is written where the next author meets it: `CLAUDE.md`'s `docs/adr/` bullet
       says ADRs are about the harness itself and are never a destination for shipped
       payload; shipped explanation goes to the skill's `references/` or the layer README.
-- [ ] No other file under `plugin/base/skills/` links into `docs/`; the sweep is one grep
+- [x] No other file under `plugin/base/skills/` links into `docs/`; the sweep is one grep
       and its result is recorded here either way.
+
+## Resolution
+
+Fixed with `090-lessons-readme-adr-link` in one change — one theme, one fix.
+
+Both sentences now say what the runtime does instead of citing the design that would
+change it. `SKILL.md`: the flow is not built, an update leaves the catalog untouched, so
+applying a lesson to the skills is the operator's until it exists. `lessons-format.md`
+§ Archive: nothing moves a lesson on its own, the classification stated there is the
+contract that flow will implement, and an operator absorbing a lesson by hand performs
+the same move. Both are present-tense about the runtime, so the C5-P2 rule stands — no
+roadmap re-imported in another form, and the D-number references are gone rather than
+reworded.
+
+`CLAUDE.md`'s `docs/adr/` bullet now carries the rule: `docs/` does not materialize, so
+nothing under `plugin/base/` links into it — not relatively, which resolves to nothing in
+a project, and not by absolute URL, which sends a project's operator out of their project
+to read the methodology's internals. Shipped payload explains itself in the skill's
+`references/` or the layer README.
+
+**Sweep, recorded:** the same grep across all of `plugin/base/` returned these two files
+plus `kb/98_lessons/README.md`, and returns nothing now.
 
 ## Notes
 

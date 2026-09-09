@@ -9,8 +9,10 @@ A lesson can be *learned* or *taught*; the folder is a **catalog of lessons** th
 fork holds. Two audiences read it:
 
 - **This project, across releases** — on update, lessons are re-applied to the new
-  base so the agents keep behaving as taught (materialization / update model —
-  roadmap, v1; see [`docs/adr/adr-runtime-lifecycle-and-lessons`](../../docs/adr/adr-runtime-lifecycle-and-lessons.md)).
+  base so the agents keep behaving as taught. That re-application is **not built
+  yet**: an update leaves this catalog untouched, so a lesson written today is
+  captured and kept, and applying it is still yours. Capture anyway — a lesson
+  written now is one that flow will find.
 - **INSPIRE core, via the observer** — an external pull-from-above reads the catalog
   across many forks and distills the patterns worth folding into the next release.
   The fork only ever writes lessons.

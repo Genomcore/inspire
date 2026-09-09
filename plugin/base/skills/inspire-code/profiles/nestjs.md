@@ -410,8 +410,14 @@ actor constraint.
   repository convention is invisible to raw SQL and to the next repository, and
   TypeORM's own `update: false` only silences the write it builds — Postgres still
   runs anyone else's `UPDATE`.
-- **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` primary key;
-  `created_at` / `updated_at` as `TIMESTAMPTZ`.
+- **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` is the primary-key
+  convention. A stamp is a **column only when the entity declares the field** —
+  this clause fixes the rendering (`created_at` / `updated_at` as `TIMESTAMPTZ`),
+  never the presence. **No clause in this profile adds a column the contract does
+  not carry**, which is the field→column rule the section already opens with: an
+  entity that declares `created_at` and not `updated_at` withheld the second one,
+  and a table given it anyway holds the insert time forever under a name that
+  promises last-change.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`
   beside its repository and `toDomain()` mapper; the domain interface never imports
   the ORM (see `## Layering`).
