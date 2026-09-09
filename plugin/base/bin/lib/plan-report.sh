@@ -77,7 +77,7 @@ plan_json_plan() {
        units: (recs($units)
                | map({kind: cel(.;1), id: cel(.;0), path: cel(.;2),
                       lifecycle: cel(.;3), module: nul(cel(.;4)),
-                      surface: nul(cel(.;5)),
+                      surface: nul(cel(.;5)), population: nul(cel(.;7)),
                       profiles: ($prof[cel(.;0)] // []),
                       requires: ($req[cel(.;0)] // []),
                       wave: ($wave[cel(.;0)] // null),

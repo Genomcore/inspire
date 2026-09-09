@@ -23,6 +23,11 @@ not a summary of the unit. It is the list you are accountable for.
 Coverage is counted from the citations below, so a test that cites nothing proves
 nothing to the gate however good it is.
 
+**`unit.population: external` on an entity means there is no write path to exercise** —
+nothing in the SDD layer writes it, so a claim about its rows is asserted where they are
+read or against the schema, and a test that creates a row to test it is testing your own
+fixture. The default is `internal`, where nothing about this changes.
+
 ## Citing a claim
 
 Write `@claim <claim-id> <fingerprint>` in a comment, on the test's own line or on

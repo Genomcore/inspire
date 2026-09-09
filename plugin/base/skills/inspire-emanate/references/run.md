@@ -309,7 +309,10 @@ contract file, the profile set, the wire rows, the environment prefix, the
 worktree it runs in — things the role doc cannot know. **A unit-specific "what
 you emit" paragraph is forbidden**, however carefully written. The role doc says
 what the role emits, the derived contract says what this unit needs, and a third
-sentence on the subject can only agree redundantly or disagree wrongly.
+sentence on the subject can only agree redundantly or disagree wrongly. An
+entity's `population` is the shape of that trap: the plan JSON carries it, the
+contract carries it, both role docs already say what it changes — so a brief
+that repeats it has written the forbidden paragraph.
 
 *The disagreement is the case that happened.* A brief told an entity's contracter
 to emit "domain type, DTOs, semantic-type validators at the owning boundary, the

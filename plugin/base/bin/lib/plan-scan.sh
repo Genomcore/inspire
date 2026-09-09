@@ -104,6 +104,11 @@ plan_derive_all() {
 # or error. A refused unit needs no marker of its own: derive gives it no
 # `claims` key, so its count is 0 and its `X` records say why.
 #
+# The U record's `population` is carried, never read: it decides nothing about
+# waves or readiness, and it is here so a spawn brief can be built from the plan
+# JSON alone. It is empty for every kind but `entity`, which is the only one that
+# declares the marker.
+#
 # An A record carries the entry's key and its prose and says nothing about
 # whether it matters — the vocabulary that decides is `_keyed-heads.sh`'s and is
 # applied in one pass per unit, since one `awk` per bullet is what a whole-vault
@@ -123,7 +128,7 @@ plan_contract_records() {
   jq -r --arg fs "$PLAN_FS" '
     def row($a): $a | map(tostring) | join($fs);
     [ row(["U", (.unit.id // ""), (.unit.lifecycle // ""), (.unit.module // ""),
-           ((.claims // []) | length)]) ]
+           ((.claims // []) | length), (.unit.population // "")]) ]
     + ((.requires // []) | map(row(["R", .kind, .id,
          (if .ordering == false then "deferred" else "" end)])))
     + ((.refused // []) | map(row(["X", .class, .target, .message, .remedy])))

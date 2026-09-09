@@ -39,6 +39,12 @@ rendering for the field that declares it, so an entity declaring one stamp and n
 other withheld the second deliberately. Emitting it anyway makes every field declaration
 in the domain layer advisory.
 
+**`unit.population: external` says nothing writes this entity.** Emit its persistence
+model and migration as usual — the rows exist, they arrive from outside the SDD layer —
+and emit **no write path**: no writer method, and so no compile stub awaiting one. The
+marker is in the contract precisely so this is not a fact you go to the knowledge base
+for; an `internal` entity, which is the default, is unaffected.
+
 **A store-oracle constraint is yours alone.** `unique`, `nonnull`, `default`,
 `references` and `immutable` are asserted against the schema you emit
 ([`_references/keyed-heads.md`](../../../_references/keyed-heads.md) § Oracles), so no

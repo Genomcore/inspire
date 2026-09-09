@@ -83,6 +83,7 @@ generic catch-all would collapse two different answers into one.
     { "kind": "entity", "id": "auth.user",
       "path": "inspire_kb/04_domain/auth/user/auth.user.md",
       "lifecycle": "accepted", "module": "auth", "surface": null,
+      "population": "internal",
       "profiles": ["nestjs", "typescript"],
       "requires": [ { "kind": "action", "id": "auth.password.hash" } ],
       "wave": 1, "claims": 12 } ],
@@ -139,6 +140,12 @@ generic catch-all would collapse two different answers into one.
 - **`units[].surface`** is the surface a split screens tree puts a screen under,
   `null` for every other kind and for the flat suite-of-one shape.
   **`units[].module`** is `null` for the two catalog kinds, which have none.
+  **`units[].population`** is the entity marker derive carries — `internal`,
+  `external`, or `null` for every kind that is not an entity. Plan decides
+  nothing with it: no wave, no readiness class and no refusal reads it. It is
+  here so which entities have no write path is legible from this JSON alone,
+  without opening five contracts to find out. A **persona** reads it from the
+  derived contract, never from a plan the orchestrator paraphrases.
 - **`units[].profiles`** is the resolved set the unit is emanated under: its
   matching framework profile, that framework's language, and any declared
   `layer: language` profile. See § Profiles.

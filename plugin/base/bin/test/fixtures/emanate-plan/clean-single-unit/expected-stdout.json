@@ -29,6 +29,7 @@
       "lifecycle": "accepted",
       "module": "auth",
       "surface": null,
+      "population": "internal",
       "profiles": [
         "nestjs",
         "react",
