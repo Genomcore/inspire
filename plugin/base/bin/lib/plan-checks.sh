@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the eleven
-# findings that leave a plan standing (the ceiling, preflight and reachability
-# classes are warnings, `PR-02` and `PR-03` are a warning on a navigation edge
-# and an error on an ordering one, and the rest are errors), and the four
-# refusals that mean nothing is planned at all. The catalogue itself — what each
-# id means, its severity and its owner — is
+# Library — the readiness catalogue. Every `PR-*` class lives here: the twelve
+# findings that leave a plan standing (the ceiling, preflight, reachability and
+# authorization classes are warnings, `PR-02` and `PR-03` are a warning on a
+# navigation edge and an error on an ordering one, and the rest are errors), and
+# the four refusals that mean nothing is planned at all. The catalogue itself —
+# what each id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
 # duplicated into a second table.
 #
@@ -177,8 +177,9 @@ plan_cycle_refusals() {
 
 # plan_ingest — one pass over the derived contracts. Identity, claim count,
 # declared edges and the per-unit findings that need only the unit itself
-# (`PR-01`, `PR-04`, `PR-05`); edges are spooled for a second pass because an
-# edge's ordering question needs the whole frontier to already be known.
+# (`PR-01`, `PR-04`, `PR-05`, `PR-25`); edges are spooled for a second pass
+# because an edge's ordering question needs the whole frontier to already be
+# known.
 plan_ingest() {
   local n=0 path kind code
   : > "$PLAN_TMP/nodes.all"; : > "$PLAN_TMP/idpath.tsv"; : > "$PLAN_TMP/deps.tsv"
@@ -219,9 +220,39 @@ plan_ingest_one() {
          printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$path" "$kind" "$f1" "$f2" "$f3" >> "$PLAN_TMP/deps.tsv" ;;
       X) plan_find "PR-01" "error" "$id" "$(plan_path_norm "$f2")" \
            "$(plan_owner "$f2")" "$f3" "$f4" "$f1" ;;
+      A) printf '%s\t%s\n' "$f1" "$f2" >> "$PLAN_TMP/c/$n.authz" ;;
       *) ;;
     esac
   done < "$recf"
+  plan_check_authorization "$n" "$id" "$path"
+}
+
+# plan_check_authorization <n> <unit-id> <path> — PR-25, over the unit's
+# prose-only preconditions and errors. Why the check exists and why it warns
+# rather than refuses: `emanation-plan.md` § An access rule stated in prose.
+#
+# It fires during INGEST, so it covers the whole frontier rather than what
+# survives narrowing: an already-realized unit's route is public today, which is
+# more worth saying than less. One finding per unit, naming every key, because
+# the remedy is one touch of the descriptor.
+plan_check_authorization() {
+  local n="$1" uid="$2" path="$3"
+  local f="$PLAN_TMP/c/$n.authz"
+  local k p ln hit seen="" keys=""
+  local -a akeys=() aprose=()
+  [ -s "$f" ] || return 0
+  while IFS=$'\t' read -r k p; do akeys+=("$k"); aprose+=("$p"); done < "$f"
+  while IFS=$'\t' read -r ln hit; do
+    k="${akeys[$((ln - 1))]}"
+    case "$seen" in *"$KH_FS$k$KH_FS"*) continue ;; esac
+    seen="$seen$KH_FS$k$KH_FS"
+    keys="${keys:+$keys, }\`$k\`"
+  done < <(printf '%s\n' "${aprose[@]}" | kh_prose_hits "$KH_PROSE_AUTHZ_PHRASES")
+  [ -n "$keys" ] || return 0
+  plan_find "PR-25" "warning" "$uid" "$(plan_path_norm "$path")" \
+    "$(plan_owner "$path")" \
+    "an access rule is stated in prose alone at $keys — no \`actor(...)\` head, so the binding renders no guard and the route emanates public, and the only claim derived is a test-oracle one about the prose itself" \
+    "give each one an \`actor({role})\` head (vocabulary V3 of \`keyed-heads.md\`) through \`/inspire-domain update\`, or confirm the route is meant to be reachable by anyone"
 }
 
 # plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge

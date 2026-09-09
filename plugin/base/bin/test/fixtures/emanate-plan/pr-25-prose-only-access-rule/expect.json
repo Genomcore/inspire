@@ -1,0 +1,19 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-25" },
+    { "expr": ".findings[0].severity", "equals": "warning" },
+    { "expr": ".findings[0].owner", "equals": "inspire-domain" },
+    { "expr": ".findings[0].unit", "equals": "auth.user.list" },
+    { "expr": ".findings[0].target", "equals": "spec/sdd/auth/user/auth.user.list.md" },
+    { "expr": ".findings[0].message | test(\"`P2`, `not_permitted`\")", "equals": "true" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["NOT READY"]
+}

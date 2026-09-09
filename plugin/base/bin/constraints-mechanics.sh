@@ -111,29 +111,6 @@ cm_table_column() {
     '
 }
 
-# cm_prose_hits <text> — the W-1 phrases the text carries, one per line.
-cm_prose_hits() {
-  printf '%s\n' "$1" | awk -v phrases="$KH_PROSE_CONSTRAINT_PHRASES" '
-    BEGIN { np = split(phrases, P, ";") }
-    {
-      s = tolower($0)
-      # Inline code is a token quoted as a token, not a claim about the system —
-      # the same exemption prose-style.sh applies. `unique` in backticks is the
-      # constraint being named, not a constraint left behind in prose.
-      gsub(/`[^`]*`/, " ", s)
-      # Non-letters become spaces so a phrase is matched as whole words without
-      # needing anchors inside an alternation, which not every awk accepts.
-      gsub(/[^a-z-]/, " ", s)
-      s = " " s " "
-      for (i = 1; i <= np; i++) {
-        p = P[i]
-        if (p == "") continue
-        if (index(s, " " p " ") > 0) print p
-      }
-    }
-  '
-}
-
 # cm_check_line <file> <target> <parent_h2> <name> <severity> <class>
 #               <reject_nonnull>
 #   The vocabulary pass over one `Constraints:` line, wherever in the H3 body
@@ -191,19 +168,20 @@ cm_check_line() {
 
 # cm_notes_pass <file> <target> <section> <column>
 #   W-1: flat warning, one finding per (name, phrase) pair so the operator sees
-#   exactly which cell to trim.
+#   exactly which cell to trim. One cell is fed at a time, so `kh_prose_hits`'
+#   line number is always 1 and only the phrase is read back.
 cm_notes_pass() {
   local file="$1" target="$2" section="$3" col="$4"
   local name cell hit
   while IFS=$'\t' read -r name cell; do
     [ -z "$name" ] && continue
     [ -z "$cell" ] && continue
-    while IFS= read -r hit; do
+    while IFS=$'\t' read -r _ hit; do
       [ -z "$hit" ] && continue
       sdd_finding "warning" "constraints-mechanics" "$target" \
         "W-1: \`$name\` still states \"$hit\" in prose — a constraint belongs on the Constraints line, and the cell says what it means to a reader, not that it exists"
       sdd_count_warning
-    done < <(cm_prose_hits "$cell")
+    done < <(printf '%s\n' "$cell" | kh_prose_hits "$KH_PROSE_CONSTRAINT_PHRASES")
   done < <(cm_table_column "$file" "$section" "$col")
 }
 

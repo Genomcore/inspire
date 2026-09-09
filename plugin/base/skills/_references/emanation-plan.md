@@ -500,6 +500,31 @@ emits a guess that compiles.
 `units[].profiles` is the result: the matching frameworks, their resolved
 languages, and any declared `layer: language` profile.
 
+## An access rule stated in prose
+
+A framework profile's `## Bindings` derives a route's guard from its
+`actor({role})` precondition, and derives **no guard at all** — a public route —
+from the absence of one. That is the right design: the guard cannot disagree with
+the specification, because there is only one place the specification says it. It
+also means the failure is silent in both directions at once. A precondition that
+states its access rule in prose instead of in a head renders nothing, and the
+prose derives a **test**-oracle claim about itself, so no denial is asserted, no
+guard is emitted and the suite is green over an unguarded endpoint. `PR-25` is
+the warning for that shape.
+
+It lives here rather than in `review.sh` for one reason: **an emanation run never
+runs `review.sh`**. The check exists for the hands-off run, so it has to speak in
+the layer that run actually reads. What review already owns is the vocabulary's
+other half — `W-1`, the same heuristic over constraint words in a table cell —
+and the two share `_keyed-heads.sh`'s matcher and sit beside each other there, so
+the words are inspectable in one place and cannot drift into two answers.
+
+Being a heuristic is what fixes its severity. Matching an access rule in prose
+means matching words that have legitimate prose uses, so `PR-25` is a flat
+warning that never flips `ready`, exactly as `W-1` is never a refusal. A vault
+that writes every access rule as prose is one run away from shipping every route
+public; saying so at t=0 costs a warning, and a warning is all it may cost.
+
 ## `PR-*` — the readiness catalogue
 
 ### Findings — a plan is emitted; an `error` flips `ready` and exits 1
@@ -517,6 +542,7 @@ languages, and any declared `layer: language` profile.
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
 | `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing frontier-*eligible* navigates to, which is the app's own entry; eligible rather than in the frontier, because a realized screen has left the frontier and its outbound links are still real — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
 | `PR-24` | `stack.md` declares test-infrastructure components and its `## Worktree recipe` declares **no step**, so nothing states how a fresh phase worktree reaches them. **A warning**, for `PR-22`'s reason and keyed on the same declaration: the run can improvise one, and the first field run did — fourteen minutes of it, before the first spawn, arriving at values a second run would have inferred differently. A heading with no rows reads as absent, since that is the state a seeded project starts in. Silent when no component is declared: the environment half of a recipe has nothing to point at, and installing dependencies is the framework profile's `## Build & verify`, not the project's | warning | `inspire-bootstrap` |
+| `PR-25` | a precondition or error entry carries **no head** and its prose names an authorization concept — the framework profile's `## Bindings` renders a guard from `actor({role})` and a **public route** from its absence, so the rule the prose states is enforced by nothing, while the entry itself derives a test-oracle claim about that prose and the suite goes green. **A warning, and a heuristic**, exactly `W-1`'s posture: recognising an access rule in prose means matching words that have legitimate prose uses, and a heuristic does not get to block anything. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`, beside `W-1`'s list and read by the same matcher. Reported over the **whole frontier**, before realization narrows it: an already-realized unit's route is public today. One finding per unit, naming every key, since the remedy is one touch of the descriptor | warning | the unit's layer |
 
 ### Refusals — nothing is planned, the run exits 4
 
