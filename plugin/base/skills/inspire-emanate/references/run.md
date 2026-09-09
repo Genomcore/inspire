@@ -226,8 +226,8 @@ Its content is then shaped to the phase, and the shape is the freeze:
   guessing.
 
 **Then make it runnable, from the recipe and not from judgement.** A checked-out
-tree is not a tree the suites run in, and the two things missing are the same two
-in every project:
+tree is not a tree the suites run in, and the three things missing are the same
+three in every project:
 
 - **Environment** — from `preflight.worktree_recipe`'s own step, and **never from
   the operator's `.env`**. That is not a preference: an agent's harness refuses
@@ -240,6 +240,10 @@ in every project:
   the order it writes them. Not a fresh install per phase: three personas per
   unit and several units per wave make a per-worktree install the run's largest
   cost, and the recipe exists because a project usually has a cheaper way.
+- **A migration plane of its own** — the environment step is what points the tree
+  at a store, so which store it names decides whether a wave's units can run
+  side by side at all; see below.
+
 **Run the recipe's steps as written and change none of them.** A step that fails
 is an infrastructural failure (§ An infrastructural failure is not a rejection),
 not a puzzle to solve: the recipe is the project's declaration, and an
@@ -253,6 +257,33 @@ before the first persona spawns, and paid for once rather than per phase. It
 cannot be re-proven per worktree in any case: the tester's tree has no bodies in
 it, so nothing green could run there and a green result would mean the freeze
 did not happen.
+
+**Nothing the loop runs shares a migration plane, and none of them is a plane the
+operator shares.** The units of a wave run in parallel against whatever the
+recipe points them at, so a shared one has two personas writing one migration
+history: the first field run ended a wave with one entity's migration applied and
+its sibling's pending, from two contracters that both saw the hazard and drew
+opposite conclusions. The plane a phase worktree gets is **its own and
+disposable** — a schema, a database, a container; which of those provides it is
+the recipe's business. A store that offers no unit of isolation at all is a store
+this loop cannot run a wave against, and the honest answer there is to say so in
+the report, never to share one plane and hope. Two consequences follow, and they
+are the whole of the migration question:
+
+- **A persona may apply its own migrations**, because a plane that is thrown away
+  records no checksum that outlives it and therefore freezes nothing the
+  overseers have not approved —
+  [`contracter.md`](../../inspire-code/references/roles/contracter.md)
+  § Persistence is append-shaped carries the checksum fact it turns on.
+- **The loop never applies anything to a plane the operator keeps.** It merges
+  nothing either — the hard ceiling holds regardless of `--halt` — so a run the
+  operator discards must leave their database exactly as it found it. The
+  migrations reach a shared plane when the operator deploys the merged PR, in the
+  order the files landed on the turn branch, which **is** the promote order:
+  a wave contains no ordering edges by construction, so its migrations commute,
+  and a later wave's are generated after the wave it depended on promoted.
+  Nothing in that chain consults a filename's timestamp, and no part of it is
+  the loop's to perform.
 
 ### persona — the spawn brief
 
