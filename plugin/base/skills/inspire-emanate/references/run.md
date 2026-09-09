@@ -168,6 +168,28 @@ are doing.
 The first four repeat per persona: contracter, then tester, then implementer. The
 last four run once, after the implementer's harvest.
 
+**The `writes` column is normative, not descriptive.** It is the whole of what
+each actor may write in that phase, and the orchestrator's four rows are the
+tight ones: a worktree at prepare, one commit at harvest, the results manifest at
+verify, one merge commit at promote. **Outside prepare and harvest the
+orchestrator writes nothing inside a phase worktree** — not a probe, not a
+scratch file, not a fix, and deleting it before harvest does not make it a
+non-write. The worktree is a persona's evidence, and a boundary the overseers
+read must be the persona's work or the gate is grading a mixture.
+
+**A claim the orchestrator wants verified goes to an overseer, or into the report
+as unverified.** Those are the two options, and the second one is honest. A run
+that cannot say who established a fact is worth less than a run that says nobody
+did.
+
+**Live infrastructure is touched by verify's declared commands and by personas in
+their own worktrees. By nothing else.** No ad hoc SQL, no shell against a plane —
+during the run, and in the conversation that follows it. This extends the rule t=0
+already states for the same reason: **the loop never starts a service**, because
+the operator may have that component pointed somewhere shared and a loop racing
+them is worse than a refusal. Writing to a shared plane by hand to test a claim is
+that same race, with the operator's data in it.
+
 ### prepare
 
 **Cut the phase worktree detached at the integration branch's tip.** It must not
@@ -208,6 +230,39 @@ Every brief is the same four things, and nothing in it is hard-coded here:
 
 **Both 3 and 4 are read from the plan JSON, never from `stack.md`.** The tool
 emits them precisely so this skill has no second reader of the bootstrap layer.
+
+**A brief is pointers and facts, and that is the whole of it.** Paths, the
+contract file, the profile set, the wire rows, the environment prefix, the
+worktree it runs in — things the role doc cannot know. **A unit-specific "what
+you emit" paragraph is forbidden**, however carefully written. The role doc says
+what the role emits, the derived contract says what this unit needs, and a third
+sentence on the subject can only agree redundantly or disagree wrongly.
+
+*The disagreement is the case that happened.* A brief told an entity's contracter
+to emit "domain type, DTOs, semantic-type validators at the owning boundary, the
+Prisma model, and one migration". `contracter.md` § Emission has no such row: an
+entity's `fields` map to **the persistence model and one migration**, and a DTO
+renders from an **action's** inputs. The contracter obeyed the brief over its
+doctrine, both overseers rejected the DTO as a mass-assignment shape, and a
+rework cycle went on an instruction no persona chose. **A brief cannot make a
+role's judgment better, and it is the only thing that can make it worse.**
+
+**A rework hand-back is a brief too, and it carries less.** The overseer's
+findings **verbatim**, plus any input the orchestrator corrected — a truncated
+bullet, a clause a tool dropped. Nothing else: no restatement, no ranking of the
+findings, no remedy of the orchestrator's own. **Where this session disagrees
+with an overseer, it says so in the log and hands the findings back unchanged.**
+A rejection is not the persona's to argue with (§ the overseer gate), which is
+exactly why it must reach the persona unedited.
+
+*This one also happened.* A hand-back told a contracter to rewrite a stale
+sentence in the header of an **applied** migration. The persona refused and
+measured why: Prisma checksums migration files, so one comment line made
+`migrate dev` demand a schema reset while `migrate status` and `migrate deploy`
+still passed. The instruction would have cleared every check in the run and
+detonated in the next worktree. **The refusal is the loop working** — the role
+doc gave the persona enough to decline with evidence. The fix is fewer sentences
+in which the orchestrator can be wrong, not a more compliant persona.
 
 **A unit resolves a SET of framework profiles, and the applied rules are the union
 of its members'.** A brief naming `nestjs` and `react` follows both — that is the
