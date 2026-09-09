@@ -9,6 +9,54 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.5 — 2026-09-09
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk,
+no refusal class is added or changed, and **there is nothing to do by hand
+afterwards**: 0.9.5 keeps the 0.3 layout and the 0.9.0 payload classes. Both
+changes come out of the same field run 0.9.4 was written from — one fact the
+emanation loop could not see, and one thing it had no home for.
+
+### Added
+
+**`unit.population` reaches the derived contract, so no phase reads the vault for
+it.** An entity's `population: external` marker is a structural claim — no
+SDD-layer action writes this entity — and until now it stopped at the knowledge
+base: three rules consulted it and nothing carried it into a run. That left the
+one fact telling a contracter *there is no write path to declare* and a tester
+*there is none to exercise* to be inferred by personas who are forbidden to open
+the vault. In the field run a contracter got it right from an invariant's prose,
+and an overseer then re-derived the same fact from the entity document to rule on
+the unit. `inspire.derived-contract/1` now carries it as `unit.population`, the
+frontmatter value or `internal` where the field is absent, on the entity kind
+alone and on the refusal object as well — a unit does not stop being externally
+populated because its document is malformed. The addition is additive: a consumer
+reading `.unit.kind` or `.unit.id` is untouched. `emanate-plan.sh` carries it into
+`units[]` — `null` for every kind that is not an entity — and **decides nothing
+with it**: no wave, no readiness class and no refusal reads the key. It is there
+so which entities have no write path is legible from the plan JSON, not so a brief
+can repeat it; `contracter.md` § Emission and `tester.md` § The claim list say what
+it changes for each role, and `run.md` § the spawn brief now uses the marker as the
+worked example of the unit-specific paragraph a brief may never write.
+
+### Fixed
+
+**The turn branch has a stated home, and it is not the operator's checkout.**
+§ The branch scheme said where the turn branch is cut from and never where it
+lives while the run does, though promote needs it checked out somewhere — a merge
+commit with trailers cannot be made against a bare ref. The field run answered by
+default: its reflog shows the operator's own working tree moving to the turn
+branch at t=0 and still standing there a day later. Nothing was merged into it,
+because that run never reached promote; the exposure is that it could have been.
+A run now cuts the turn branch into a worktree of its own,
+`.claude/worktrees/emanate-<run-id>`, removed at the run's end immediately before
+the closing block — which is what lets that block report whether the removal
+happened. **The launch checkout is never moved**, by the rule that already
+detaches every phase worktree: a run that has vouched for nothing does not stand
+in the operator's tree. The run report's closing block gains **where the work
+is**, and `unattended.md` § The morning after now says why "delete the turn
+branch" is a command the operator can actually run — nobody is standing on it.
+
 ## 0.9.4 — 2026-09-09
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk,
