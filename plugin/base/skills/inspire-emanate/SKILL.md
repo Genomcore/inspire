@@ -60,6 +60,10 @@ invocation.
 - **Exits, all three of them written up:** the goal is reached · the ceiling or a
   budget is exhausted · a stall cascades. **Zero human turns between t=0 and the
   report** — never a waiting prompt, whatever happens.
+- **A waiting prompt has a second form, and it is the one that happens** — an
+  ended turn with units short of terminal and no agent in flight, which asks
+  nothing and waits forever all the same. Which of this session's own acts may
+  end a turn is [`references/run.md`](references/run.md) § Liveness.
 - **Pieces are the reuse unit, so convergence is free.** The frontier is every
   frontier-eligible unit in scope minus the pieces whose realization is current on
   the base branch, computed from the tests themselves. A second invocation is
@@ -117,7 +121,7 @@ read its reference** — the table is an index, not the flow.
 | Subcommand | What its reference holds |
 |---|---|
 | [`plan`](references/plan.md) | The read-only readiness answer: invoking `emanate-plan.sh`, acting on every exit code, reporting waves, the floor against the declared ceiling, and each `PR-*` finding with its remedy |
-| [`run`](references/run.md) | The orchestrator doctrine: the t=0 preflight, the wave schedule, the eight phases of a unit, arbitration, the branch scheme, the stall cascade and the run report |
+| [`run`](references/run.md) | The orchestrator doctrine: the t=0 preflight, the wave schedule, what may end a turn, the eight phases of a unit, arbitration, the branch scheme, the stall cascade and the run report |
 
 ## Plan-first, and run mode never asks
 
@@ -194,6 +198,16 @@ itself. Both still gate readiness, exactly as a nav edge does.
 The components and the pattern are units here because they are emanatable kinds,
 not readiness errors on the screen that declares them: a loop that refused every
 screen whose UI kit had not been hand-built first would not be hands-off at all.
+
+**Iteration 1 also shows what keeps a run alive.** `auth.user`'s contracter
+harvests and both overseers approve while the three components are still inside
+their own phases. The next act in that same turn is `auth.user`'s tester spawn —
+before the log line about the handoff, not after it, and without waiting for a
+sibling whose result this unit is forbidden to use. That turn then ends with
+agents in flight, which is one of the two states a turn may end in
+([`references/run.md`](references/run.md) § Liveness). Had the turn ended on the
+sentence describing the harvest instead, nothing would have been left to wake
+the run.
 
 ## Rules
 
