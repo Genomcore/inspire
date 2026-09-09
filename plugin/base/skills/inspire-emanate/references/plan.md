@@ -69,15 +69,16 @@ order:
    frontier. **`realized_all: true` with `floor: 0` is the success answer**, not
    an empty result: the goal is already met, and the honest report is "there is
    nothing left to build", never "nothing was planned".
-4. **`preflight`** — the components `stack.md` declares and which resolved
-   framework profiles can probe them. Under `run` this is what the operator sees
-   first, because it is the one thing they may have to act on before a run can
-   start at all.
+4. **`preflight`** — the components `stack.md` declares, which resolved framework
+   profiles can probe them, and the worktree recipe that makes a phase worktree
+   able to reach them. Under `run` this is what the operator sees first, because
+   it is the one thing they may have to act on before a run can start at all.
 5. **Every warning, with its owner.** A warning never blocks: `PR-20` (ceiling
    below the effective floor) is surfaced together with `deliverable_waves`, so
    the report says how far the run would actually get rather than merely that the
-   budget is short. `PR-22` (components declared, no profile probe) and `PR-23`
-   (a goal slice with no navigable way in) are reported the same way.
+   budget is short. `PR-22` (components declared, no profile probe), `PR-23` (a
+   goal slice with no navigable way in) and `PR-24` (components declared, no
+   worktree recipe) are reported the same way.
 6. **`reemanate`**, when a selection was given: the selectors as typed and the
    units they resolved to. An operator asking "what would this rebuild?" deserves
    the answer before the run rather than after it.
@@ -110,7 +111,8 @@ carries forward from the JSON, and reads from nowhere else:
   derive refused;
 - `wire_conventions` — the ids **and** the decision rows, both of which go into
   every persona brief;
-- `preflight` — the components the t=0 probe checks;
+- `preflight` — the components the t=0 probe checks, and the
+  `worktree_recipe` steps every prepare runs;
 - `goal.units` and `goal.floor` — the subset a goal-directed run executes, and
   the floor the ceiling is measured against.
 

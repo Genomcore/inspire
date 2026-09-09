@@ -8,9 +8,11 @@ wire_conventions: [rest]
 # Tech stack
 
 The stack this fixture's units are emanated under. It declares test
-infrastructure, a worktree recipe and wire-convention decisions, and `nestjs`
-carries the probe recipe for the first — so `preflight` is populated and nothing
-is a finding.
+infrastructure and `nestjs` carries the probe recipe for it — so `PR-22` is
+silent — but its `## Worktree recipe` is the skeleton's own empty table, so
+nothing says how a fresh phase worktree reaches those components and `PR-24`
+warns. A heading with no rows is the state a seeded project starts in, and it
+has to read as absent rather than as a declared recipe of nothing.
 
 ## Language
 
@@ -21,19 +23,14 @@ is a finding.
 | Decision | Answer |
 |---|---|
 | Existence leak | `404` |
-| Validation failure status | not decided yet |
 
 ## Test infrastructure
 
 | Component | Purpose |
 |---|---|
 | `postgres` | the e2e database |
-| `redis` | the cache the session store runs on |
 
 ## Worktree recipe
 
 | Step | Command |
 |---|---|
-| environment | `set -a; . ops/emanate.env; set +a` |
-| dependencies | `cp -Rc ../../node_modules node_modules` |
-| generated artifacts | `npm run -w api prisma:generate` |

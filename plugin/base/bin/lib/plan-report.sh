@@ -29,6 +29,7 @@ plan_json_plan() {
     --rawfile goalunits "$PLAN_TMP/goal.units" \
     --rawfile components "$PLAN_TMP/components.spool" \
     --rawfile probes "$PLAN_TMP/probes.spool" \
+    --rawfile recipe "$PLAN_TMP/recipe.spool" \
     --rawfile wireids "$PLAN_TMP/wireids.spool" \
     --rawfile wirerows "$PLAN_TMP/wirerows.spool" \
     --arg goalsel "$PLAN_GOAL" \
@@ -64,7 +65,11 @@ plan_json_plan() {
        preflight: {components: (recs($components)
                                 | map({name: cel(.;0), purpose: nul(cel(.;1))})
                                 | sort_by(.name)),
-                   probe_profiles: (ids($probes) | sort)},
+                   probe_profiles: (ids($probes) | sort),
+                   # Unsorted, unlike its siblings: the order is the recipe.
+                   worktree_recipe: (recs($recipe)
+                                     | map({step: cel(.;0),
+                                            command: nul(cel(.;1))}))},
        wire_conventions: {ids: (ids($wireids) | sort),
                           decisions: (recs($wirerows)
                                       | map({decision: cel(.;0),
