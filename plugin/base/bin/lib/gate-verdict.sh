@@ -99,7 +99,7 @@ gate_render_verdict() {
                         "claim " + $co.id + " is cited, but every citing file is absent from the results or ran with every entry skipped"
                       else
                         "claim " + $co.id + " is cited by a file with at least one failed entry" end),
-            remedy: (if $cls == "GV-01" then "have the tester cite this claim, or report it as untestable"
+            remedy: (if $cls == "GV-01" then "have the tester cite this claim, or fix the artifact that declares a claim no test can reach"
                      elif $cls == "GV-02" then "run the suite that covers the citing file(s), or scope --results to include them"
                      else "fix the failing test, or the code it exercises" end)}
        ]) as $claim_findings

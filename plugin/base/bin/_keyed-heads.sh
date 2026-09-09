@@ -72,7 +72,12 @@ KH_V5="unique:+ nonnull:+ immutable:+ enum:+ min:+ max:+ len:+ pattern:+ referen
 
 # Which oracle asserts a claim carrying this head. Everything not listed here —
 # every other head, and every prose-only entry — is a test-oracle claim.
-KH_STORE_ORACLE="unique nonnull default references"
+#
+# `immutable` is here because no test can reach it: the write path is a
+# repository the entity unit never emits, and a declaration-only `readonly` is
+# erased before the store sees the update. It takes a column form instead — see
+# keyed-heads.md § Oracles.
+KH_STORE_ORACLE="unique nonnull default references immutable"
 
 # kh_oracle_of <word> — "store" or "test".
 kh_oracle_of() {

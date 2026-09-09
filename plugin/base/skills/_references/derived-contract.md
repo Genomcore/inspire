@@ -126,8 +126,8 @@ error) is:
 
 `head` is `null` for a prose-only entry and for every behavior step (a step
 carries no head by design). `oracle` is `keyed-heads.md`'s split: `store` for
-`unique` · `nonnull` · `default` · `references`, `test` for everything else and
-for every prose-only entry.
+`unique` · `nonnull` · `default` · `references` · `immutable`, `test` for
+everything else and for every prose-only entry.
 
 A **type** is `{ "name", "base" }`, always. Every `Type` cell must resolve —
 `## Entities` field-touch rows included — and an empty one is `DR-T2` rather than

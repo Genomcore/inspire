@@ -30,7 +30,17 @@ better.
 | a `constraint` on a field or input | a validator predicate at the owning boundary | language profile § Rendering and § Mapping tokens |
 | the unit id, plus an `actor(...)` precondition head | the binding — route, command or tool name — and its guard | framework profile § Bindings |
 | a screen's `route` | the route entry for that surface | framework profile § Routes |
-| an entity's `fields` | the persistence model and one migration | framework profile § Persistence |
+| an entity's `fields` | the persistence model and one migration, **carrying every store-oracle constraint on those fields** | framework profile § Persistence |
+
+**A store-oracle constraint is yours alone.** `unique`, `nonnull`, `default`,
+`references` and `immutable` are asserted against the schema you emit
+([`_references/keyed-heads.md`](../../../_references/keyed-heads.md) § Oracles), so no
+test cites them, the gate expects none, and no later phase of the unit emits them
+either. One left out of the migration is enforced by nothing while reading as enforced.
+`immutable` is the one that bites: a repository convention or a `readonly` on a
+declaration constrains your own write path and nobody else's, so the profile's own
+form — a trigger, a rule, whatever it declares — is the emission. If it declares none,
+refuse under § Refusal rather than emit the field bare.
 
 **Bindings are derived, never authored.** The shipped `nestjs` seed derives an
 action's route from its id: `auth::user::create` renders as `POST /auth/users`, since
@@ -82,7 +92,8 @@ Report to the orchestrator, and emit nothing for that part, when:
 
 - the surface's profile declares **no convention** for what you would emit — no
   `## Bindings` for an invocable action, no `## Routes` for a screen, no
-  `## Persistence` for an entity that stores state;
+  `## Persistence` for an entity that stores state, no form for a store-oracle
+  constraint the contract carries;
 - a semantic type has **no rendering row and no universal base type**;
 - the contract's own `requires` names something you would have to invent to render.
 

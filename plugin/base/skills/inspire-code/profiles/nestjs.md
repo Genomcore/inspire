@@ -392,8 +392,16 @@ actor constraint.
   *Rendering* table ([`typescript.md`](typescript.md)), never from a guess here.
   The field's `Constraints:` line renders as column constraints — `unique` → a unique
   index, `nonnull` → `NOT NULL`, `default(v)` → the expansion in that profile's
-  *Mapping tokens*. `immutable` has no column form: it is enforced in the repository
-  and asserted by a test.
+  *Mapping tokens*.
+- **`immutable` → a `BEFORE UPDATE` trigger** in the same migration that creates the
+  column, raising when the column's value changes:
+  `IF NEW.<col> IS DISTINCT FROM OLD.<col> THEN RAISE EXCEPTION …`. One trigger
+  function per table covers every immutable column on it. The trigger is what makes
+  `immutable` a **store** claim rather than a test one
+  ([`keyed-heads.md`](../../_references/keyed-heads.md) § Oracles): a
+  repository convention is invisible to raw SQL and to the next repository, and
+  TypeORM's own `update: false` only silences the write it builds — Postgres still
+  runs anyone else's `UPDATE`.
 - **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` primary key;
   `created_at` / `updated_at` as `TIMESTAMPTZ`.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`

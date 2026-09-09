@@ -132,7 +132,7 @@
             {
               "word": "immutable",
               "args": [],
-              "oracle": "test"
+              "oracle": "store"
             }
           ]
         },
@@ -154,7 +154,7 @@
             {
               "word": "immutable",
               "args": [],
-              "oracle": "test"
+              "oracle": "store"
             },
             {
               "word": "references",
@@ -207,7 +207,7 @@
             {
               "word": "immutable",
               "args": [],
-              "oracle": "test"
+              "oracle": "store"
             },
             {
               "word": "default",

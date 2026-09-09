@@ -38,7 +38,7 @@
         {
           "word": "immutable",
           "args": [],
-          "oracle": "test"
+          "oracle": "store"
         }
       ]
     },
@@ -58,7 +58,7 @@
         {
           "word": "immutable",
           "args": [],
-          "oracle": "test"
+          "oracle": "store"
         },
         {
           "word": "references",
@@ -129,7 +129,7 @@
         {
           "word": "immutable",
           "args": [],
-          "oracle": "test"
+          "oracle": "store"
         },
         {
           "word": "default",
@@ -174,7 +174,7 @@
     },
     {
       "id": "auth.user/field/id/immutable",
-      "oracle": "test",
+      "oracle": "store",
       "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
     },
     {
@@ -184,7 +184,7 @@
     },
     {
       "id": "auth.user/field/org_id/immutable",
-      "oracle": "test",
+      "oracle": "store",
       "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
     },
     {
@@ -219,7 +219,7 @@
     },
     {
       "id": "auth.user/field/created_at/immutable",
-      "oracle": "test",
+      "oracle": "store",
       "fingerprint": "sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7"
     },
     {
