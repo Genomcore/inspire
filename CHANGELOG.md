@@ -9,6 +9,55 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.3 — 2026-09-09
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk
+and nothing in a vault has to be re-authored: 0.9.3 keeps the 0.3 layout and the
+0.9.0 payload classes, and no artifact shape, rule or refusal class changes. One
+constraint changes **oracle**, which changes what the gate expects of an entity
+unit — never what an entity document says.
+
+### Changed
+
+**`immutable` is a store-oracle claim, and the migration carries it.** It was a
+*test*-oracle claim with nowhere to be tested: the write path a test would go
+through is a repository, which the entity that declares the field never emits;
+a `readonly` on a declaration is erased before the store sees an update; and the
+`nestjs` profile said as much itself — *"`immutable` has no column form: it is
+enforced in the repository and asserted by a test"*. Nothing enforced it. A raw
+`UPDATE` changed a primary key in one statement, while the gate fired `GV-01` on
+the uncited claim and stalled the unit. So the constraint takes a column form,
+the way `unique` takes an index: `keyed-heads.md` § Oracles moves it to the store
+row and argues it there, and the `nestjs` seed declares the form — a
+`BEFORE UPDATE` trigger in the same migration that creates the column.
+`contracter.md` gains the rule that a store-oracle constraint is the contracter's
+alone, and refuses the emission when a profile declares no form for one rather
+than emitting the field bare.
+
+**For an entity your project already emitted, nothing retroactively grows a
+trigger.** The upgrade changes what the *next* emanation emits and what the gate
+expects; a table created before 0.9.3 keeps whatever it had. Re-emanating that
+piece (`--reemanate`) is what produces the migration, and until then the claim is
+in the same state it was in before this release — asserted by nothing.
+
+**The emanation loop names what may end a turn.** `SKILL.md` promised "zero human
+turns between t=0 and the report — never a waiting prompt", and no reference said
+what a waiting prompt *is* in this harness: an ended turn with units short of
+terminal and no agent in flight. Nothing wakes the orchestrator, so the run stops
+without exiting — no report, no failure, no next wave. `run.md` § Liveness states
+the rule (a turn may end in exactly two states), orders the acts that follow it —
+the next spawn precedes any operator-facing text in the same turn, and the chat
+gets the report once — and § The wave schedule adds the other half: a unit
+advances on its own boundary, never on its wave's. `unattended.md` names the
+`claude -p` turn-boundary question as **unverified** rather than guessing at it.
+
+### Fixed
+
+**`GV-01`'s remedy named a state the verdict schema never had.** It read *"have
+the tester cite this claim, or report it as untestable"*, and no field, status or
+exit represented that second branch. It now reads *"…or fix the artifact that
+declares a claim no test can reach"*.
+
 ## 0.9.2 — 2026-09-08
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk
