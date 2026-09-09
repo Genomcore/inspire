@@ -4,13 +4,13 @@ title: "090 — doctrine: `immutable` is a test-oracle claim no entity unit can 
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: M
 importance: Very High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-derive-population-marker, 090-invariant-filed-on-referrer, 090-reference-data-home, F06-tdd, F07-gates]
 ---
@@ -103,6 +103,8 @@ artifact that declares a claim no test can reach"*.
 
 The two out-of-scope shapes were filed rather than described:
 `090-invariant-filed-on-referrer` (`inv/I1`) and `090-reference-data-home` (`inv/I2`).
+
+Shipped in 0.9.3 (`ea9cf53`).
 
 ## Notes
 

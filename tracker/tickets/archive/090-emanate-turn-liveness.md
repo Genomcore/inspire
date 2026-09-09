@@ -4,13 +4,13 @@ title: "090 — emanate: the loop dies when a turn ends with nothing in flight"
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: Very High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-report-shape, 090-emanate-brief-paraphrase]
 ---
@@ -57,6 +57,14 @@ what ends a turn.
 - [x] `unattended.md` § The headless call says what happens to in-flight agents when a
       `claude -p` turn ends, or names it as unverified so nobody schedules a run on an
       assumption.
+
+## Resolution
+
+`run.md` gains § Liveness — the rule, plus the two orderings under it — and § The wave
+schedule gains the per-unit half. `SKILL.md` names the second form of a waiting prompt in
+the loop contract and shows the rule at one handoff in the worked example; `unattended.md`
+names the `claude -p` turn-boundary question as unverified. Doctrine only, no mechanics.
+Shipped in 0.9.3 (`2a5553f`).
 
 ## Notes
 
