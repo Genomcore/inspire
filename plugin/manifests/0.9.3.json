@@ -1,5 +1,5 @@
 {
-  "commit": "e4fdd961fb9b94080fd2309bbfe0e22872dc150c",
+  "commit": "8f2d5b08d8f7f1e1b1a170be325daa90e4f2cc12",
   "files": {
     ".claude/agents/README.txt": "af28a568eb5928c374c565274e2316b2be3083b1201449f7aa7ffcfa76d02f3d",
     ".claude/agents/inspire-contracter.md": "66556bab3578d1278bc748e7899f0df2f297f00f8e079cbe35e5912d88e688f3",
@@ -84,9 +84,9 @@
     ".claude/skills/inspire-domain/references/consolidation.md": "200c0abd5c5175c58b1a3c93c5a2ff9288a857e305e20b6256ab32eb5b56759c",
     ".claude/skills/inspire-domain/references/effect-touch-matrix.md": "ea6562f0221fd3114538ec08c50da7d7cb803cee64ce0499b557ff394fd13e25",
     ".claude/skills/inspire-domain/references/format-action.md": "35d50de4d59f6aa1bbbad61a30f286d62aafd2dad2089772a055df0fe90b6677",
-    ".claude/skills/inspire-domain/references/format-entity.md": "668bc98afcbdbfef12da8ea4f7663f875c303d66dae3de020e5032d29d38465c",
+    ".claude/skills/inspire-domain/references/format-entity.md": "926b31ce1b1cb3ccbe2766c86615501ba0323d0ee894e0a792947f7c12e8c041",
     ".claude/skills/inspire-domain/references/interview-prompts-action.md": "a09ba4f78a6e9e15106f1417fd626352958e06fa7bb3d27a5eaaaccddf9134e1",
-    ".claude/skills/inspire-domain/references/interview-prompts-entity.md": "6574b7985cfeb4b657da6f8e6d55d22203dcc09a349bb2c9b23419d20d2258c9",
+    ".claude/skills/inspire-domain/references/interview-prompts-entity.md": "0fb909bbbedafbd66a12c61282e83aa2e5f808d3d280925e35de1673a3c6c111",
     ".claude/skills/inspire-domain/references/subcommands/define.md": "387d7b433db3944a01cf05d3cbf534bc3d70fc1e4ac8780befe349dfa86eddae",
     ".claude/skills/inspire-domain/references/subcommands/delete.md": "dabd179a1b1e2ce628d2b1aecd0a34e7a6bf278aad2c10fc6525582d3d9db3d6",
     ".claude/skills/inspire-domain/references/subcommands/demote.md": "977390f27701fbe2d1be5967eb5b8a3f5bea38ea01da86e6170931b76b5d32ff",
