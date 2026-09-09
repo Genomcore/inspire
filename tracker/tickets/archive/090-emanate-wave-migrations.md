@@ -4,13 +4,13 @@ title: "090 — emanate: two contracters in one wave disagree on who applies a m
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-runnable-worktree]
 ---
@@ -42,13 +42,13 @@ overseers have not yet approved.
       frozen by a checksum; or a per-worktree schema (`?schema=<unit>`) so siblings never
       share migration history at all. The ticket picks one and `run.md` § verify (or §
       prepare) says it.
-- [ ] Ordering across siblings follows the wave's **promote order**, never file
+- [x] Ordering across siblings follows the wave's **promote order**, never file
       timestamps. Two migrations from one wave reach the turn branch in dependency order
       because that is the order their units merge.
-- [ ] `contracter.md` § Persistence is append-shaped gains the checksum fact: an applied
+- [x] `contracter.md` § Persistence is append-shaped gains the checksum fact: an applied
       migration is not edited, not even a comment, and a correction goes into the
       declarations or a new migration.
-- [ ] The contracter's own verification (`migrate status` reaching the plane, a
+- [x] The contracter's own verification (`migrate status` reaching the plane, a
       throwaway-schema probe of store behaviours as `workspace.role` did) is named as
       allowed and distinguished from applying.
 

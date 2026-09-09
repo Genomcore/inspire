@@ -4,13 +4,13 @@ title: "090 — emanate: spawn briefs restate doctrine and get it wrong"
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-turn-liveness]
 ---
@@ -50,20 +50,41 @@ No phase touches a plane either way.
 
 ## Acceptance criteria
 
-- [ ] `run.md` § persona carries the negative: **a brief is pointers and facts** — paths,
+- [x] `run.md` § persona carries the negative: **a brief is pointers and facts** — paths,
       the contract file, the profile set, the wire rows, the environment prefix — and
       **never a restatement of what the role emits.** A unit-specific "what you emit"
       paragraph is named as forbidden, with the DTO case as the example.
-- [ ] Rework hand-backs carry the overseer's findings verbatim plus any corrected input
+- [x] Rework hand-backs carry the overseer's findings verbatim plus any corrected input
       (a truncated bullet, a missed clause); they add no instruction of the
       orchestrator's own. Where the orchestrator disagrees with an overseer it says so in
       the log, not in the hand-back.
-- [ ] The eight-phase table's *writes* column is stated as normative: outside prepare
+- [x] The eight-phase table's *writes* column is stated as normative: outside prepare
       and harvest the orchestrator writes nothing in a phase worktree. A claim it wants
       verified goes to an overseer or is recorded as unverified in the log.
-- [ ] Live infrastructure is touched only by verify's declared commands and by
+- [x] Live infrastructure is touched only by verify's declared commands and by
       personas in their worktrees. The orchestrator never runs ad hoc SQL or shell
       against a plane, during the run or in the conversation that follows it.
+
+## Resolution
+
+All four land in `run.md`. § persona now says a brief is pointers and facts and names a
+unit-specific "what you emit" paragraph as **forbidden**, with the DTO case as the
+worked example and the reason it generalizes: a brief cannot make a role's judgment
+better, and it is the only thing that can make it worse. A rework hand-back is named
+as a brief that carries less — the overseer's findings verbatim plus any input the
+orchestrator corrected, and disagreement goes to the log while the findings reach the
+persona unedited. § One unit, eight phases states the writes column as normative:
+outside prepare and harvest nothing of the orchestrator's is written inside a phase
+worktree, deleting a probe before harvest does not make it a non-write, and a claim it
+wants verified goes to an overseer or into the report as unverified. Live
+infrastructure is bounded in the same section, during the run and in the conversation
+after it, as the same race the standing "the loop never starts a service" rule already
+forbids.
+
+The ticket's own count of the orchestrator's writes was wrong and is corrected in the
+description: **four** rows, not two — the two outside a phase worktree (the results
+manifest at verify, the merge commit at promote) are why the rule is bounded by
+*place* rather than by a count.
 
 ## Notes
 

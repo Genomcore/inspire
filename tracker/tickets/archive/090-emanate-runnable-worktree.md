@@ -4,13 +4,13 @@ title: "090 — emanate: § prepare cuts a worktree and says nothing about makin
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: M
 importance: High
 skills: [code, bootstrap]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-wave-migrations]
 ---
@@ -44,19 +44,19 @@ doctrine; the recipe belongs to the project.
 
 ## Acceptance criteria
 
-- [ ] `run.md` § prepare states the **shape** of a runnable worktree: the environment
+- [x] `run.md` § prepare states the **shape** of a runnable worktree: the environment
       comes from a project-declared, non-`.env` source read at t=0 (or exported
       variables), never from the operator's `.env`; dependencies and generated artifacts
       are provisioned by a project-declared recipe rather than a per-phase install; the
       worktree is proven runnable — the baseline suite green in it — **before** the first
       persona spawns.
-- [ ] The recipe itself has a home the tool chain reads: a section of `stack.md`
+- [x] The recipe itself has a home the tool chain reads: a section of `stack.md`
       (`## Worktree recipe` or the like, seeded by `inspire-bootstrap`) or a framework
       profile section, named from `emanation-plan.md`'s run-level facts the same way
       `## Test infrastructure` is. Plan reports its absence as a warning at t=0.
-- [ ] `unattended.md` § Preflight lists it: a scheduled run with no recipe is a run that
+- [x] `unattended.md` § Preflight lists it: a scheduled run with no recipe is a run that
       spends its first quarter-hour improvising.
-- [ ] The gs run's measured recipe (relative workspace links → clone; three nested trees;
+- [x] The gs run's measured recipe (relative workspace links → clone; three nested trees;
       `.vite-temp`) is recorded as the worked example, not as the rule.
 
 ## Resolution

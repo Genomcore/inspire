@@ -4,13 +4,13 @@ title: "090 — an access rule stated in prose emanates as a public route, and n
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: M
 importance: High
 skills: [code, domain]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F07-gates, 090-actor-head-without-a-role]
 ---
@@ -49,20 +49,46 @@ documented way to say "authenticated, no role".
 
 ## Acceptance criteria
 
-- [ ] A check exists, in the cheapest layer that can own it, that **warns** when a
+- [x] A check exists, in the cheapest layer that can own it, that **warns** when a
       precondition or error bullet is prose-only and its prose names an authorization
       concept. The vocabulary (role, membership, permission, administrator, forbidden,
       authenticated, …) lives in **one** place a reader can inspect. Owner decided inside
       the ticket: a plan readiness class (`PR-2x`, warning, so `ready` does not flip) or a
       keyed-heads coherence warning surfaced by `review.sh` — not both.
-- [ ] `nestjs.md` § Bindings' "no head → public" sentence gains the pointer to that
+- [x] `nestjs.md` § Bindings' "no head → public" sentence gains the pointer to that
       check, so the rendering rule and its safety net are read together.
-- [ ] The head grammar question is answered or handed on: either `actor(...)` already
+- [x] The head grammar question is answered or handed on: either `actor(...)` already
       expresses "any authenticated caller" and the format doc says how, or the ticket
       names the V3 gap for `format-action.md`'s owner without solving it here.
-- [ ] Goldens: a fixture with a prose-only bullet naming a role warns; one with an
+- [x] Goldens: a fixture with a prose-only bullet naming a role warns; one with an
       `actor()` head does not; one whose prose is a genuine business precondition with no
       authorization vocabulary does not.
+
+## Resolution
+
+`PR-25`, a warning, in `plan-checks.sh` § `plan_check_authorization`. `derive` emits an
+`A` record per headless precondition or error carrying its key and its prose;
+`plan_ingest` matches them in **one** pass per unit, since an `awk` per bullet is what a
+whole-vault plan cannot afford, and reports one finding per unit naming every key —
+the remedy is one touch of the descriptor. It fires during ingest, so it covers the
+whole frontier rather than what realization leaves: an already-realized unit's route
+is public today, which is more worth saying than less.
+
+The vocabulary is `KH_PROSE_AUTHZ_PHRASES` in `_keyed-heads.sh`, beside `W-1`'s
+constraint list, and the matcher moved there with it — `cm_prose_hits` became
+`kh_prose_hits`, so one answer to "does this prose say X" cannot become two. Both
+lists are heuristics and neither gets to block anything.
+
+`nestjs.md` § Bindings' "no head → public" sentence points at the check, and
+`keyed-heads.md` § V3 carries the other direction: writing an access rule as prose is
+not a weaker claim, it is no claim at all. The head-grammar question is handed on as
+[`090-actor-head-without-a-role`](090-actor-head-without-a-role.md) — V3 can spell
+neither "any authenticated caller" nor a membership relationship, and choosing a head
+changes the closed vocabulary and every profile's rendering contract, which is the
+format owner's call and not a warning's.
+
+Goldens `emanate-plan/pr-25-prose-only-access-rule` (warns, `ready` stays true),
+`pr-25-actor-head-does-not-warn` and `pr-25-business-precondition-does-not-warn`.
 
 ## Notes
 

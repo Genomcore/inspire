@@ -4,13 +4,13 @@ title: "090 — derive: a wrapped catalog bullet loses its continuation, and `##
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: []
 ---
@@ -52,11 +52,11 @@ not and the pattern template should stop inviting requirements into it.
 
 ## Acceptance criteria
 
-- [ ] `derive_catalog_prose` joins a bullet's continuation lines (indented, no marker)
+- [x] `derive_catalog_prose` joins a bullet's continuation lines (indented, no marker)
       into one item, with the same normalization the first line receives. A golden
       fixture under `emanate-derive/` carries a wrapped `## Variants` item and asserts the
       full text in `expected-stdout.json`; a second asserts a wrapped `## Structure` item.
-- [ ] `## Notes` is ruled on. **Carried:** it lands as a fourth prose spool (`notes`,
+- [x] `## Notes` is ruled on. **Carried:** it lands as a fourth prose spool (`notes`,
       never claimed, like `structure`), `derived-contract.md` § the catalog kinds names it,
       and a fixture asserts it. **Not carried:** `derived-contract.md` says so in one
       sentence, and the pattern and component templates under `inspire-screens` say that
@@ -64,8 +64,27 @@ not and the pattern template should stop inviting requirements into it.
       requirement lost. **Resolved: not carried.** Only the *pattern* template carries the
       warning, because the *component* template has no `## Notes` section to warn about —
       adding one to say "do not use this" would invite the section it forbids.
-- [ ] `plugin/test/run.sh golden/emanate-derive` is green, and no other fixture's
+- [x] `plugin/test/run.sh golden/emanate-derive` is green, and no other fixture's
       expected output moves — a joined continuation must not change a single-line item.
+
+## Resolution
+
+`derive-catalog.sh` § `derive_catalog_prose` accumulates an item across its indented
+continuations and flushes on the next marker, a flush-left line or EOF. The three
+lines of `awk` that decide it are the whole fix, and the two exclusions are as
+load-bearing as the join: a flush-left line stays **out**, because it cannot be told
+from the tokens paragraph both sections sit beside, and an indented sub-bullet opens
+its own item, because the marker rules run first. Swallowing prose would be the same
+defect as dropping it.
+
+`## Notes` is **not** carried — argued in `derived-contract.md` § the catalog kinds,
+warned about in `inspire-screens`' pattern template, and left alone in the component
+template, which has no such section to warn about.
+
+Goldens `emanate-derive/wrapped-variant` (the field run's own truncated `Coded`
+variant, asserted whole) and `emanate-derive/wrapped-structure` (a wrapped item
+beside a sub-bullet that must stay separate). The full estate is green and no other
+fixture's expected output moved.
 
 ## Notes
 

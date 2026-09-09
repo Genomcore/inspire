@@ -4,13 +4,13 @@ title: "090 — emanate: the log is a diary, and the report never gets written"
 created: 2026-09-09
 updated: 2026-09-09
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-09
 epic: follow-up
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-emanate-turn-liveness]
 ---
@@ -39,12 +39,12 @@ its author no longer holds is claiming something that did not happen.
 
 ## Acceptance criteria
 
-- [ ] The log has a **skeleton**, written at t=0 and appended to at fixed points: an
+- [x] The log has a **skeleton**, written at t=0 and appended to at fixed points: an
       identity block at t=0; one block per wave close; one closing block at the run's end
       carrying every line § The run report lists. The skeleton lives in `run.md` or in a
       `references/report-skeleton.md` it points at, so an orchestrator fills a shape
       instead of composing one.
-- [ ] **Progress goes to the log; the chat receives the report once** — at the run's
+- [x] **Progress goes to the log; the chat receives the report once** — at the run's
       end, or when a stall cascade empties the frontier. Interim operator-facing prose is
       limited to a one-line pointer at the log.
       **Already met when this ticket was written.** `run.md` § Liveness says exactly
@@ -54,9 +54,9 @@ its author no longer holds is claiming something that did not happen.
       thing that paragraph points at — it defers to "the schedule § The run report
       sets", and no such schedule existed until the skeleton below. The referent, not
       the rule, was the gap.
-- [ ] **The last position wins.** A conclusion the orchestrator revises later in the same
+- [x] **The last position wins.** A conclusion the orchestrator revises later in the same
       session is corrected in place in the log, never appended beside the old one.
-- [ ] Whether `.inspire/last-emanation.log` is git-tracked or ignored is decided, and the
+- [x] Whether `.inspire/last-emanation.log` is git-tracked or ignored is decided, and the
       decision is stated where an orchestrator reads it.
       **The premise stated when this ticket was written is false: no such call was ever
       made for `.inspire/last-upgrade.log`.** `materialize.sh:400` `seed_gitignore` writes
@@ -77,6 +77,22 @@ its author no longer holds is claiming something that did not happen.
       never a shape, and the two rules above (last position wins, tracking) were absent
       rather than ignored. The skeleton is the bulk of the deliverable; it is not the
       whole of it.
+
+## Resolution
+
+`inspire-emanate/references/report-skeleton.md` is the shape: the identity block at
+t=0, one block per wave close, the closing block at the exit, each a slot per line
+`run.md` § The run report names. `run.md` points at it and keeps the meaning — a line
+added to its list gets a slot there carrying its label and nothing more, so the two
+files cannot drift into two answers about what a line means. Two rules bind every
+slot, stated in both files: the last position wins (a revised answer is corrected
+where it stands, and the identity block's `status` is the worked example), and the
+file is tracked.
+
+**The last criterion is deliberately left unticked.** It offered closing on the
+skeleton alone if § The run report already said everything; it did not — it specified
+content and never a shape, and the two rules above were absent rather than ignored.
+Claiming that exit would claim something that did not happen.
 
 ## Notes
 
