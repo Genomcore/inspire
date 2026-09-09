@@ -139,6 +139,56 @@ Why this belongs at bootstrap: an unattended emanation run refuses at t=0 when a
 declared component is not healthy, and it can only do that against a declaration. A
 project that never made one gets a safety property that is vacuous by construction.
 
+### The worktree recipe (declared with the components)
+
+A fresh worktree of this repository is not a tree the suites run in, and the gap is
+the project's own: environment values, installed dependencies, generated artifacts.
+Resolve it here, in the same pass as the components — a recipe pointing at nothing
+is not a recipe.
+
+1. **Ask how a fresh checkout is made runnable**, one step per concern, and record
+   each as a row of `stack.md`'s `## Worktree recipe` — `Step`, then the `Command`
+   that performs it, in the order they must run:
+   - **Environment** — where the values come from. It may **not** be the operator's
+     `.env`: an agent's harness refuses every path whose basename is `.env`, read or
+     write, so a recipe naming one is a recipe no run can execute. Commit a
+     differently-named file (`ops/emanate.env`) or export the variables; either way
+     the row is the command that loads them.
+   - **Dependencies** — the step that resolves them without a full install per
+     worktree, where the project has one. What makes that possible is measurable:
+     workspace links that are *relative* survive a copy of the dependency tree.
+   - **Generated artifacts** — client libraries, codegen output, anything git-ignored
+     that a build needs and a checkout does not carry.
+2. **Say what each command assumes** in the row itself where it is not obvious — a
+   copy that only works from a sibling checkout, a tree that has to be copied more
+   than once. These are the details a run rediscovers by failing.
+3. **Prove it once, by hand**: cut a throwaway worktree, run the recipe in it, and
+   run the suites. A recipe that has never been executed is a guess, and the run
+   that discovers it is wrong is the one with nobody watching.
+
+`/inspire-emanate plan` reports the rows and warns as `PR-24` when components are
+declared and no step is — a run then improvises an environment before its first
+spawn, and the first field run spent a quarter of an hour doing exactly that.
+
+**A worked example, and not a rule.** One measured recipe, for a TypeScript
+monorepo with a Vite front end and an API on Prisma and Postgres:
+
+| Step | Command |
+|---|---|
+| environment | `set -a; . ops/emanate.env; set +a` |
+| dependencies | `cp -Rc ../../node_modules node_modules` (also `apps/web/`, `apps/api/`) |
+| dependencies | `rm -rf node_modules/.vite-temp` |
+| generated artifacts | `npm run -w api prisma:generate` |
+
+Four things in it were discovered by failing, and each is the kind of thing a
+project's own recipe has to state rather than inherit: the copy is only cheap
+because that workspace's links are **relative** (an APFS clone resolved in
+seconds where an install took minutes); there were **three** nested dependency
+trees to copy and not one; a leftover `.vite-temp` broke the app build until it
+was removed; and the generated client is emitted **inside** the API package, so a
+worktree without that step does not compile. Copy the shape, measure your own
+numbers.
+
 ### Quality gates (installed with the stack)
 
 A project's gates are part of its foundation, not an afterthought: what the operator

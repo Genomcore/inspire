@@ -100,9 +100,15 @@ plan_derive_all() {
 }
 
 # plan_contract_records <file> — one contract as the record stream the reader
-# consumes: U identity · R requires edge · X refusal. A refused unit needs no
-# marker of its own: derive gives it no `claims` key, so its count is 0 and its
-# `X` records say why.
+# consumes: U identity · R requires edge · X refusal · A prose-only precondition
+# or error. A refused unit needs no marker of its own: derive gives it no
+# `claims` key, so its count is 0 and its `X` records say why.
+#
+# An A record carries the entry's key and its prose and says nothing about
+# whether it matters — the vocabulary that decides is `_keyed-heads.sh`'s and is
+# applied in one pass per unit, since one `awk` per bullet is what a whole-vault
+# plan cannot afford. Preconditions and errors are the two sections where a
+# missing head silently costs a guard; the rest of a contract has no such shape.
 #
 # An R record carries `deferred` only where the contract states `ordering:
 # false`. A key that is absent — an older contract — reads as ordering, which is
@@ -121,6 +127,9 @@ plan_contract_records() {
     + ((.requires // []) | map(row(["R", .kind, .id,
          (if .ordering == false then "deferred" else "" end)])))
     + ((.refused // []) | map(row(["X", .class, .target, .message, .remedy])))
+    + (((.preconditions // []) + (.errors // []))
+       | map(select(.head == null and (.prose // "") != ""))
+       | map(row(["A", .key, .prose])))
     | .[]
   ' "$1" 2>/dev/null
 }

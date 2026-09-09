@@ -11,6 +11,8 @@
     { "expr": "[.preflight.components[].name] | join(\",\")", "equals": "postgres,redis" },
     { "expr": ".preflight.components[0].purpose", "equals": "the e2e database" },
     { "expr": ".preflight.probe_profiles | join(\",\")", "equals": "nestjs" },
+    { "expr": "[.preflight.worktree_recipe[].step] | join(\",\")", "equals": "environment,dependencies,generated artifacts" },
+    { "expr": ".preflight.worktree_recipe[1].command", "equals": "cp -Rc ../../node_modules node_modules" },
     { "expr": ".wire_conventions.ids | join(\",\")", "equals": "rest" },
     { "expr": "[.wire_conventions.decisions[].decision] | join(\",\")", "equals": "Existence leak,Validation failure status" },
     { "expr": "[.wire_conventions.decisions[].answer] | join(\",\")", "equals": "404,not decided yet" },

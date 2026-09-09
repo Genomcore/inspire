@@ -125,6 +125,16 @@ component, and whether the resolved framework profile can even probe it.
 Bring up what needs bringing up, name what `run` will refuse on, and only then
 hand the invocation to the environment.
 
+**Read the same block's `worktree_recipe` in that pass**, and treat plan's
+`PR-24` as blocking a *schedule* even though it never blocks a run. The recipe is
+what makes a phase worktree runnable — the environment, the dependencies, the
+generated artifacts — and a run without one improvises all three before it
+spawns anything: the first field run spent fourteen minutes there, with a person
+watching. Unattended, that quarter-hour is charged to the window and its
+conclusions are whatever the session happened to infer, differently on the next
+invocation. Declare it in `stack.md` and prove it by hand once (see
+`/inspire-bootstrap`'s stack interview) before any cron line exists.
+
 ## The morning after
 
 A finished run leaves a turn branch of per-piece merges, a report at

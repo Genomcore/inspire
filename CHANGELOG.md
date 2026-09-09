@@ -9,6 +9,205 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.4 — 2026-09-09
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk,
+no artifact shape, rule or refusal class changes, and both findings this release
+adds are **warnings**: 0.9.4 keeps the 0.3 layout and the 0.9.0 payload classes.
+It is the first release written from a *field run* — one unattended
+`/inspire-emanate` against a governed project — so nearly all of it is doctrine
+the loop turned out not to have, rather than code.
+
+**Two things to do in an existing project afterwards, and neither is the
+upgrade's to do for you.** `00_bootstrap/stack.md` gains a `## Worktree recipe`
+section, and KB seeding is additive per path — a `stack.md` already on disk is
+never rewritten — so the heading has to be added by hand; the skeleton shows the
+shape and `/inspire-bootstrap`'s stack interview carries the questions and a
+measured example. Until it is there, `/inspire-emanate plan` warns `PR-24` on
+any project that declares test-infrastructure components. Separately, `PR-25`
+starts warning wherever a precondition or error states its access rule in prose
+— 51 bullets across the field run's vault — which is authoring work the warning
+surfaces, not a defect the upgrade introduces.
+
+### Added
+
+**An access rule stated in prose no longer emanates a public route in silence
+(`PR-25`).** A framework profile derives a route's guard from an
+`actor({role})` precondition and derives a **public** route from its absence,
+and that rule is silent in both directions: a precondition that states the same
+rule in prose renders no guard, derives only a test-oracle claim about its own
+prose, and the suite goes green over an unguarded endpoint. Measured in the
+field vault: 158 precondition bullets, none with an `actor(...)` head, 51
+stating an authorization rule in prose — `workspace.user.create` would have
+emanated as a public user-creation endpoint. `/inspire-emanate plan` now warns
+when a headless precondition or error names an authorization concept, over the
+whole frontier rather than what realization leaves, one finding per unit naming
+every key. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`,
+sitting beside `W-1`'s constraint list and read by the same matcher so that one
+answer to "does this prose say X" cannot become two. Both lists are heuristics,
+so neither blocks anything: `ready` does not flip and the head stays the
+author's to write. Plan owns the check rather than `review.sh`, because an
+emanation run never invokes `review.sh` and a check the hands-off run cannot see
+protects nothing.
+
+V3 has no spelling for "any authenticated caller" and none for a membership
+relationship, which is why some of those bullets are prose in the first place.
+That gap is handed to `format-action.md`'s owner as a ticket rather than settled
+by a warning.
+
+**The worktree recipe: `## Worktree recipe` in `stack.md`, and `PR-24`.** A fresh
+phase worktree is not a tree the suites run in, and the three things missing are
+the same three in every project — environment values, dependencies, generated
+artifacts. The field run improvised all three before its first spawn, for
+fourteen minutes, with a person watching; unattended, that quarter-hour is
+charged to the window and its conclusions are whatever the session inferred. The
+recipe is now project-declared, one row per step in the order they run, read by
+`plan-stack.sh` exactly as `## Test infrastructure` is and reported as
+`preflight.worktree_recipe` — the one list in the plan JSON that is deliberately
+**not** sorted, because the order is the recipe. It is reported and never
+interpreted: which row provisions what is the project's business, and a keyed
+grammar would put a schema in the knowledge base where a human writes prose.
+`PR-24` warns on its absence, keyed on declared components exactly as `PR-22`
+is, and `unattended.md` treats that warning as blocking a *schedule* even though
+it never blocks a run.
+
+The environment source may **not** be the operator's `.env`: an agent's harness
+refuses every path whose basename is `.env`, read or write, so a recipe naming
+one is a recipe no run can execute. That is verified behaviour, not a
+preference.
+
+**The run report has a shape:
+`inspire-emanate/references/report-skeleton.md`.** § The run report always
+specified what the log carries; it never specified a form, and the field run
+produced a 299-line diary with no opening skeleton, no per-wave block and no
+closing section — good content, and none of the lines an operator opens the file
+for. There are now three block kinds written at three fixed moments: an identity
+block at t=0, one per wave close, one at the exit. `run.md` keeps the meaning and
+the skeleton keeps the form, so a line added to the list gets a slot carrying its
+label and nothing more and the two files cannot drift into two answers. A slot
+with no answer is filled with the reason — *drill skipped — no language profile*,
+*nothing dropped* — because an absent slot reads as an oversight.
+
+Two rules bind every slot. **The last position wins**: a conclusion the run
+revises is corrected where it stands, never left beside the correction, since a
+report carrying a position its author no longer holds claims something that did
+not happen. **The file is tracked** — so is `.inspire/last-upgrade.log`; the
+seeded `.gitignore` block names `.claude/settings.local.json` and nothing else,
+so no release ever excluded either, and this states that rather than leaving it
+to a default. No `/inspire:init` change: a project whose own `*.log` rule hides
+the file chose that itself, and init reports what a rule shadows rather than
+editing an operator's `.gitignore`.
+
+### Changed
+
+**A spawn brief is pointers and facts, and a unit-specific "what you emit"
+paragraph is forbidden.** The field run's brief told an entity's contracter to
+emit "domain type, DTOs, semantic-type validators at the owning boundary, the
+Prisma model, and one migration". `contracter.md` § Emission has no such row —
+an entity's fields map to the persistence model and one migration, and a DTO
+renders from an **action's** inputs. The contracter obeyed the brief over its
+doctrine, both overseers rejected the DTO as a mass-assignment shape, and a
+rework cycle went on an instruction no persona chose. A brief cannot make a
+role's judgment better, and it is the only thing that can make it worse.
+
+A rework hand-back is a brief too, and it carries less: the overseer's findings
+**verbatim**, plus any input the orchestrator corrected, and nothing else. Where
+the orchestrator disagrees with an overseer it says so in the log and hands the
+findings back unchanged. The eight-phase table's *writes* column is now
+normative — outside prepare and harvest the orchestrator writes nothing inside a
+phase worktree, and deleting a probe before harvest does not make it a
+non-write, because a boundary the overseers read must be the persona's work or
+the gate is grading a mixture. A claim the orchestrator wants verified goes to an
+overseer or into the report as unverified. And live infrastructure is touched by
+verify's declared commands and by personas in their own worktrees, by nothing
+else: no ad hoc SQL, during the run or in the conversation after it.
+
+**Nothing the loop runs shares a migration plane, and none of them is a plane the
+operator keeps.** A wave's units run in parallel against whatever the recipe
+points them at, so a shared store gives two personas one migration history: the
+field run ended a wave with one entity's migration applied and its sibling's
+pending, from two contracters that both saw the hazard and drew opposite
+conclusions. Each phase worktree, and verify, now gets its own **disposable**
+plane — a schema, a database, a container, whichever the recipe provides. A
+store that offers no unit of isolation at all is one this loop cannot run a wave
+against, and the honest answer there is to say so in the report rather than share
+one plane and hope. Two consequences: a persona may apply its own migrations,
+because a thrown-away plane freezes nothing the overseers have not approved; and
+the loop never applies anything to a plane the operator keeps, so a run they
+discard leaves their database as it found it. The migrations reach a shared plane
+when the operator deploys the merged PR, in the order the files landed on the
+turn branch — which is the promote order, and nothing in that chain consults a
+filename's timestamp.
+
+**An applied migration is immutable even for a comment, and verifying is not
+applying.** A tool that records having run a file records a digest of it too, so
+one appended line makes the file disagree with its own history. Measured on a
+Prisma stack, and the shape is what matters rather than the tool: a status check
+and a deploy both still reported clean while the next development-mode migrate
+demanded a full schema reset — a defect that hides from the two commands anyone
+would run to look for it. `contracter.md` § Persistence is append-shaped carries
+it, together with what a contracter *may* do to a plane it did not create: ask
+whether it is reachable and what it has run, and probe a store behaviour in a
+schema it creates and drops, leaving the shared schema and the migration history
+exactly as found.
+
+**§ prepare says how a worktree becomes runnable, and the proof moved rather than
+being added.** § t=0 step 4 already baselined the suite; it now does so in a
+recipe-provisioned worktree, so a recipe that yields no green suite refuses the
+run in the same breath as a red baseline — once, before the first spawn, rather
+than per phase. It cannot be re-proven per worktree in any case: the tester's
+tree has no bodies in it, so a green suite there would mean the freeze did not
+happen. A recipe step that fails is an infrastructural failure, not a puzzle to
+solve: an orchestrator that improvises around a broken step ships a run nobody
+can reproduce.
+
+### Fixed
+
+**A wrapped catalog bullet no longer loses its continuation.** `derive`'s
+pattern and component reader printed a `## Structure` or `## Variants` line only
+when it started with a list marker, so a bullet wrapped at 80 columns reached the
+derived contract as its first line only, with no refusal and no warning. In the
+field run a variant arrived as *"fields bound to the study's configured value
+sets,"* and lost *"each showing the code system alongside the display text"*; the
+contracter, told by its doctrine that the contract is complete by construction,
+froze an interface that could not express it. An item is now its marker line plus
+its indented continuations, joined and normalized as one. The two exclusions are
+as load-bearing as the join: a flush-left line stays **out**, because it cannot
+be told from the tokens paragraph both sections sit beside, and an indented
+sub-bullet opens its own item. Swallowing prose would be the same defect as
+dropping it.
+
+The domain readers need no such join and did not get one: a keyed entry's
+identity is on its first line and the prose after it is diagnostic, while a
+catalog bullet has no key — the prose **is** the contract. `## Notes` on a
+catalog entry is ruled **not carried**, stated in `derived-contract.md` and
+warned about in the pattern template, so a requirement written there is visibly a
+requirement lost rather than a silent one.
+
+**Nothing shipped links into `docs/adr/` any more.** The lessons layer README
+carried a relative link that resolves to nothing in a materialized project, and
+`inspire-lesson`'s `SKILL.md` and `lessons-format.md` sent an operator out of
+their project by absolute URL to read the methodology's internals. All three now
+state what the runtime does: nothing re-applies or archives a lesson yet, so
+until that flow exists both are the operator's, and capturing still pays.
+
+**A stamp is a column only where the entity declares the field.** `nestjs.md`'s
+"Keys and stamps" read as putting `created_at` and `updated_at` on every table,
+which contradicts the format it serves — stamps are declared per entity as
+fields. The clause now fixes their *rendering* and never their presence, and
+`contracter.md` § Emission carries the general rule: a profile's § Persistence
+decides how a column is rendered, never which columns exist. An entity declaring
+one stamp and not the other withheld the second.
+
+**The canonical compile stub passes the profiles' own lint gate.** The stub rule
+asked for "the smallest thing its language needs to type-check", and
+`strictTypeChecked` turns `no-unused-vars` on for parameters while no framework
+profile declares an `argsIgnorePattern` — so the obvious stub was a lint error,
+with no escape for a class method and none the escape-hatch ratchet permits.
+`typescript.md` § Compile stub now states the idiom (a throw whose message names
+every parameter) and the trap. The gate is unchanged: relaxing it would weaken
+`no-unused-vars` permanently for an artifact the implementer deletes.
+
 ## 0.9.3 — 2026-09-09
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk

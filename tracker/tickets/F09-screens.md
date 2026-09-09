@@ -2,7 +2,7 @@
 id: F09-screens
 title: "F9 SCREENS — the UI layer catches up with the domain layer"
 created: 2026-08-13
-updated: 2026-08-25
+updated: 2026-09-09
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -45,3 +45,14 @@ targets become **navigation outcomes in screen-owned bindings**, targeting
 screens by id, resolvable via the id index added to `wikilinks-resolve.sh`
 (A14 — AC-2's orphan check survives as that resolution); the UX-state
 vocabulary lands as **keyed states** with the `When`-column join-check.
+
+**Amended 2026-09-09 (first field run of `/inspire-emanate`, gs project):** the
+actor/visibility axis has a concrete first customer. `emanate-plan.sh` fired `PR-23`
+(warning: the goal's screens have no navigable entry) on `workspace.login` — and a
+sign-in page is reached by *being unauthenticated*, not by a navigation binding from
+another screen, so the remedy PR-23 proposes is wrong product design for that screen.
+The screen template needs a way to declare a screen as an **entry point** (an
+unauthenticated root, a deep-link target), and plan's nav-root reading should honour it
+so `PR-23` stops warning about the one screen that is entry-less by design. Fold into
+AC-3's actor/visibility axis; the plan-side reading follows the vocabulary, not the
+other way round.

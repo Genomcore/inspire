@@ -30,7 +30,14 @@ better.
 | a `constraint` on a field or input | a validator predicate at the owning boundary | language profile § Rendering and § Mapping tokens |
 | the unit id, plus an `actor(...)` precondition head | the binding — route, command or tool name — and its guard | framework profile § Bindings |
 | a screen's `route` | the route entry for that surface | framework profile § Routes |
-| an entity's `fields` | the persistence model and one migration, **carrying every store-oracle constraint on those fields** | framework profile § Persistence |
+| an entity's `fields` | the persistence model and one migration, **carrying every store-oracle constraint on those fields** — and no column the contract does not carry | framework profile § Persistence |
+
+**Persistence is field-driven.** A profile's § Persistence fixes how a column is
+*rendered*, never which columns exist: the entity's declared fields decide that, stamps
+included. A convention that reads as adding one — a key default, a timestamp pair — is a
+rendering for the field that declares it, so an entity declaring one stamp and not the
+other withheld the second deliberately. Emitting it anyway makes every field declaration
+in the domain layer advisory.
 
 **A store-oracle constraint is yours alone.** `unique`, `nonnull`, `default`,
 `references` and `immutable` are asserted against the schema you emit
@@ -56,10 +63,13 @@ a rendering, and never widen a type to make an emission easier.
 
 **Emission is the gate for the phase after yours.** The tester's worktree is a
 declaration-only tree emitted from what you left behind, and a package that does not
-compile emits nothing. So every method you declare carries a **compile stub** — the
-smallest thing its language needs to type-check, a raised "not implemented" and never
-a partial implementation. A stub is part of the declaration: it leaves through harvest
-with it, and the implementer replaces it.
+compile emits nothing. So every method you declare carries a **compile stub** — a raised
+"not implemented" and never a partial implementation. A stub is part of the declaration:
+it leaves through harvest with it, and the implementer replaces it.
+
+**Its exact form is the language profile's § Compile stub**, not a shape you derive from
+"the smallest thing that type-checks" — a stub can type-check cleanly and still fail the
+project's own lint gate. The profile states the idiom and the trap; follow it.
 
 ## Re-emanation — edit toward the contract, never clobber
 
@@ -85,6 +95,24 @@ changed entity **appends** a migration, and an emitted one is never edited, reor
 or deleted — not even one that has only ever run on a local machine. Generated once is
 generated forever, and a mistake is corrected by the next migration. The model file
 itself is a declaration and merges like any other.
+
+**Once applied, it is immutable even for a comment.** A migration tool that records
+having run a file records a **digest** of it too, so one appended line makes the file
+disagree with its own history. Measured on a Prisma stack, and the shape is what
+matters rather than the tool: a status check and a deploy both still reported clean
+while the next development-mode migrate demanded a full schema reset — a defect that
+hides from the two commands anyone would run to look for it. Correct through the
+declarations or through the next migration; never by touching the file.
+
+**Verifying is not applying, and you may verify.** Ask the plane whether it is
+reachable and what it has already run, and probe a store behaviour by creating a
+schema of your own, exercising it and dropping it — that is how a unique violation, a
+check violation and a not-null violation get confirmed against the real engine
+instead of asserted from a manual. What none of that touches is anything anyone else
+reads: the shared schema and the migration history are left exactly as found.
+Applying belongs to the run, in the disposable plane it gives you
+([`inspire-emanate`](../../../inspire-emanate/references/run.md) § prepare); a plane
+you did not create is one you only read.
 
 ## Refusal — a rendering hole is a readiness defect
 

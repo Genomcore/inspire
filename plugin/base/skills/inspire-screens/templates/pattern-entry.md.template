@@ -42,4 +42,7 @@ Tokens (spacing, type, colors, density) come from the design system
 
 ## Notes
 
+<!-- Commentary a run never reads: no derivation carries this section, so a
+     requirement written here reaches no persona and is lost. Requirements go
+     in **Structure**, **Variants**, or the table that owns them. -->
 - {caveats, related patterns, navigation rules}

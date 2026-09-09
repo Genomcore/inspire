@@ -1,0 +1,44 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "component",
+    "id": "record-card",
+    "path": "spec/kb/05_screens/components/record-card.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "one record rendered as a card.",
+  "requires": [],
+  "structure": [
+    "A header carrying the record's title and its status badge, the badge taking the same palette entry the roster's status column takes.",
+    "The body, one labelled field per configured column.",
+    "The label sits above its value on a narrow viewport.",
+    "A footer carrying the row actions."
+  ],
+  "variants": [
+    "**Compact** — the footer collapses into the header."
+  ],
+  "props": [
+    {
+      "name": "record",
+      "carries": "the record to render"
+    },
+    {
+      "name": "columns",
+      "carries": "which fields become labelled rows, in order"
+    }
+  ],
+  "states": [],
+  "claims": [
+    {
+      "id": "record-card/prop/record",
+      "oracle": "test",
+      "fingerprint": "sha256:2f7b31480b2cba7d6dfb86de5b16bb17132d72b39b6d2c62c0bc4f7c659a54f7"
+    },
+    {
+      "id": "record-card/prop/columns",
+      "oracle": "test",
+      "fingerprint": "sha256:24b07f482cc9888f28758945398509f6c13605efd174feb116cbe84afb1dda9f"
+    }
+  ]
+}

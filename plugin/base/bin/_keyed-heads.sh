@@ -262,15 +262,6 @@ kh_is_head_shape() {
   return 1
 }
 
-# The W-1 phrase list: constraint words with legitimate prose uses, looked for
-# in `Notes` and `Description` cells so that a constraint left behind after its
-# machine-readable form moved to a Constraints line is surfaced. Deliberately
-# short and closed. Every entry is a heuristic, which is why the finding that
-# uses it is a flat warning at every lifecycle and never a refusal.
-# Semicolon-separated on ONE line: a value passed through `awk -v` may not
-# contain a literal newline on every supported host.
-KH_PROSE_CONSTRAINT_PHRASES="unique;immutable;nullable;not null;never updated;write-once;regex;defaults to;at least;at most"
-
 # kh_head_word <head> — the identifier, without arguments.
 kh_head_word() {
   printf '%s\n' "${1%%(*}"
@@ -382,6 +373,60 @@ kh_check_head() {
   fi
   printf '\n'
   return 0
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Prose heuristics — two closed phrase lists and the one matcher over them
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Both lists name words that also have legitimate prose uses, so both are
+# heuristics, and a heuristic does not get to block anything: every finding built
+# on either is a flat warning that never refuses. Both are deliberately short and
+# closed, and both are semicolon-separated on ONE line — a value passed through
+# `awk -v` may not contain a literal newline on every supported host.
+#
+# The two live together because the matcher does, and the matcher is shared so
+# that one answer to "does this prose say X" cannot drift into two.
+
+# W-1: constraint words in a `Notes` or `Description` cell, so that a constraint
+# left behind after its machine-readable form moved to a Constraints line is
+# surfaced.
+KH_PROSE_CONSTRAINT_PHRASES="unique;immutable;nullable;not null;never updated;write-once;regex;defaults to;at least;at most"
+
+# PR-25: authorization words in the prose of a precondition or error entry that
+# carries NO head. A `P{n}` with no `actor(...)` renders no guard — the framework
+# profile's `## Bindings` is explicit that it renders a public route — and
+# derives only a test-oracle claim about its own prose, so nobody asserts the
+# denial and the suite goes green over an unguarded endpoint. The list carries
+# both spellings of the -ise/-ize pairs and the plurals, because matching is on
+# whole words.
+KH_PROSE_AUTHZ_PHRASES="admin;administration;administrator;administrators;authenticated;authorisation;authorised;authorization;authorized;forbidden;membership;memberships;permission;permissions;privilege;privileges;role;roles;unauthenticated;unauthorised;unauthorized"
+
+# kh_prose_hits <phrases>
+#   stdin: one text per line. stdout: `{line number}<TAB>{phrase}`, one record
+#   per hit — the line number so that a caller which fed several entries at once
+#   knows which of them matched, since spawning this per entry is what makes a
+#   whole-vault run expensive.
+kh_prose_hits() {
+  awk -v phrases="$1" '
+    BEGIN { np = split(phrases, P, ";") }
+    {
+      s = tolower($0)
+      # Inline code is a token quoted as a token, not a claim about the system —
+      # the same exemption prose-style.sh applies. `unique` in backticks is the
+      # constraint being named, not a constraint left behind in prose.
+      gsub(/`[^`]*`/, " ", s)
+      # Non-letters become spaces so a phrase is matched as whole words without
+      # needing anchors inside an alternation, which not every awk accepts.
+      gsub(/[^a-z-]/, " ", s)
+      s = " " s " "
+      for (i = 1; i <= np; i++) {
+        p = P[i]
+        if (p == "") continue
+        if (index(s, " " p " ") > 0) printf "%d\t%s\n", NR, p
+      }
+    }
+  '
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

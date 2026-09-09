@@ -374,6 +374,14 @@ guard — `@UseGuards(AuthGuard, RolesGuard)` + `@Roles('{role}')`. No `actor(�
 precondition → no guard and a public route. The guard is derived, so changing the
 precondition changes the guard, and the two can never disagree.
 
+**The safety net for that rule is `PR-25`**, since the rule is silent in both
+directions: a precondition that states its access rule in *prose* renders no
+guard either, and derives only a test-oracle claim about the prose, so nothing
+asserts the denial. Plan warns when a headless precondition or error reads like
+an access rule — see
+[`emanation-plan.md`](../../_references/emanation-plan.md) § An access rule
+stated in prose.
+
 Three claims derive from this section per action, with no authoring: the route
 exists · it dispatches to that action's service method · its guard matches the
 actor constraint.
@@ -402,8 +410,14 @@ actor constraint.
   repository convention is invisible to raw SQL and to the next repository, and
   TypeORM's own `update: false` only silences the write it builds — Postgres still
   runs anyone else's `UPDATE`.
-- **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` primary key;
-  `created_at` / `updated_at` as `TIMESTAMPTZ`.
+- **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` is the primary-key
+  convention. A stamp is a **column only when the entity declares the field** —
+  this clause fixes the rendering (`created_at` / `updated_at` as `TIMESTAMPTZ`),
+  never the presence. **No clause in this profile adds a column the contract does
+  not carry**, which is the field→column rule the section already opens with: an
+  entity that declares `created_at` and not `updated_at` withheld the second one,
+  and a table given it anyway holds the insert time forever under a name that
+  promises last-change.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`
   beside its repository and `toDomain()` mapper; the domain interface never imports
   the ORM (see `## Layering`).

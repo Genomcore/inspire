@@ -221,6 +221,14 @@ that is the normal case for the interesting ones.
 suspend a tenant" is true wherever the action runs, so it is a precondition of
 the action and never a surface-side annotation.
 
+**Writing that rule as prose instead does not make it a weaker claim — it makes
+it no claim at all.** A framework profile derives the route's guard from
+`actor({role})` and derives a public route from its absence, so a prose access
+rule renders nothing and is asserted by nobody. `PR-25` warns about the shape at
+plan time ([`emanation-plan.md`](emanation-plan.md) § An access rule stated in
+prose); it is a heuristic and never a refusal, so the head is still the author's
+to write.
+
 ### V4 — postcondition heads (`Q{n}`)
 
 | head | means |

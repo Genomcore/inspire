@@ -8,8 +8,9 @@ wire_conventions: [rest]
 # Tech stack
 
 The stack this fixture's units are emanated under. It declares test
-infrastructure and wire-convention decisions, and `nestjs` carries the probe
-recipe for the former — so `preflight` is populated and nothing is a finding.
+infrastructure, a worktree recipe and wire-convention decisions, and `nestjs`
+carries the probe recipe for the first — so `preflight` is populated and nothing
+is a finding.
 
 ## Language
 
@@ -28,3 +29,11 @@ recipe for the former — so `preflight` is populated and nothing is a finding.
 |---|---|
 | `postgres` | the e2e database |
 | `redis` | the cache the session store runs on |
+
+## Worktree recipe
+
+| Step | Command |
+|---|---|
+| environment | `set -a; . ops/emanate.env; set +a` |
+| dependencies | `cp -Rc ../../node_modules node_modules` |
+| generated artifacts | `npm run -w api prisma:generate` |

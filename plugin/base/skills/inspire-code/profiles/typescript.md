@@ -79,6 +79,34 @@ substitutions: `UUID` → `CHAR(36)`, `TIMESTAMPTZ` → `DATETIME` /
 `TIMESTAMP WITH TIME ZONE`, `JSONB` → `JSON`, `gen_random_uuid()` → the engine's
 generator, `TEXT CHECK (…)` → a native `ENUM` where one exists.
 
+## Compile stub
+
+The form a declared-but-unimplemented method takes in this language. The contract
+phase emits one per method
+([`../references/roles/contracter.md`](../references/roles/contracter.md)
+§ Emission) and the implementer replaces it.
+
+**A stub throws, and its message names every parameter:**
+
+```ts
+export function find(input: FindInput): Promise<Study> {
+  throw new Error(`not implemented: find(${input.id})`)
+}
+```
+
+Naming them is not decoration — it is what makes the stub legal. **The framework
+profiles' quality gates install `tseslint.configs.strictTypeChecked`, which turns
+on `@typescript-eslint/no-unused-vars` for *parameters*, and they declare no
+`argsIgnorePattern`**, so a parameter a stub never reads is a lint error. Reading
+it in the message is the only escape that costs nothing: an `_` prefix buys
+nothing without that option, and a class method has no per-member escape at all.
+
+**And a stub is never a suppression.** The escape-hatch ratchet holds every
+ceiling at zero, so an inline disable is not available to buy this — which is why
+the idiom is the *form of the stub* rather than a relaxation of the gate.
+Interpolate something the parameter carries (an id, a key); where it carries
+nothing nameable, `String(param)` reads it.
+
 ## Declaration-only tree
 
 How this language produces the bodies-stripped tree the test phase is packed

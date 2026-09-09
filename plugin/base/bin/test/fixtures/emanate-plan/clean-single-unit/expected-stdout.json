@@ -14,7 +14,8 @@
   "goal": null,
   "preflight": {
     "components": [],
-    "probe_profiles": []
+    "probe_profiles": [],
+    "worktree_recipe": []
   },
   "wire_conventions": {
     "ids": [],

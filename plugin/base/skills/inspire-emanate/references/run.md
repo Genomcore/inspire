@@ -51,16 +51,29 @@ whole rework budget proving nothing, and then cascade the stall. Where
 `PR-22`), say so in the report: nothing can tell a healthy component from a suite
 that never ran, and the run proceeds at that risk.
 
-**4. Baseline the suite.** Run the whole suite once on the branch the run was
-launched from. **A red baseline in realized territory refuses the run**, naming
-the failing files. Emanating onto a red suite makes every later verdict
-unreadable: `GV-05` cannot tell a pre-existing failure from one this run caused,
-and the first unit would burn its budget on somebody else's defect.
+**4. Baseline the suite — in a worktree the recipe provisioned.** Cut a throwaway
+worktree at the branch the run was launched from, run `plan`'s
+`preflight.worktree_recipe` in it, then run the whole suite there. **A red
+baseline in realized territory refuses the run**, naming the failing files.
+Emanating onto a red suite makes every later verdict unreadable: `GV-05` cannot
+tell a pre-existing failure from one this run caused, and the first unit would
+burn its budget on somebody else's defect.
 
 *Realized territory* is the qualifier that keeps this honest: what must be green
 is the code the vault already claims — the tests under the resolved roots, on the
 branch as found. A project with nothing built yet has no such tests and no red
 baseline to have; an empty suite is not a failing one.
+
+**A recipe that does not produce a green suite refuses the run in the same
+breath**, naming the step that failed. This is the only moment the recipe is
+proven, and proving it is most of why the baseline moved out of the launch
+checkout: a suite that is green in the operator's own tree says nothing about a
+worktree, which is where every persona will actually work. Discard the worktree
+afterwards; it is not one of the eight phases and it writes nowhere else.
+
+**A run with no declared recipe** (plan's `PR-24`) baselines in the launch
+checkout and says so in the report. It has nothing to prove and nothing to prove
+it with, and every prepare after it improvises.
 
 **5. Cut the turn branch** (§ The branch scheme) and start wave 1.
 
@@ -168,6 +181,28 @@ are doing.
 The first four repeat per persona: contracter, then tester, then implementer. The
 last four run once, after the implementer's harvest.
 
+**The `writes` column is normative, not descriptive.** It is the whole of what
+each actor may write in that phase, and the orchestrator's four rows are the
+tight ones: a worktree at prepare, one commit at harvest, the results manifest at
+verify, one merge commit at promote. **Outside prepare and harvest the
+orchestrator writes nothing inside a phase worktree** — not a probe, not a
+scratch file, not a fix, and deleting it before harvest does not make it a
+non-write. The worktree is a persona's evidence, and a boundary the overseers
+read must be the persona's work or the gate is grading a mixture.
+
+**A claim the orchestrator wants verified goes to an overseer, or into the report
+as unverified.** Those are the two options, and the second one is honest. A run
+that cannot say who established a fact is worth less than a run that says nobody
+did.
+
+**Live infrastructure is touched by verify's declared commands and by personas in
+their own worktrees. By nothing else.** No ad hoc SQL, no shell against a plane —
+during the run, and in the conversation that follows it. This extends the rule t=0
+already states for the same reason: **the loop never starts a service**, because
+the operator may have that component pointed somewhere shared and a loop racing
+them is worse than a refusal. Writing to a shared plane by hand to test a claim is
+that same race, with the operator's data in it.
+
 ### prepare
 
 **Cut the phase worktree detached at the integration branch's tip.** It must not
@@ -190,6 +225,66 @@ Its content is then shaped to the phase, and the shape is the freeze:
   summary: an implementer who cannot read the failing assertion burns its budget
   guessing.
 
+**Then make it runnable, from the recipe and not from judgement.** A checked-out
+tree is not a tree the suites run in, and the three things missing are the same
+three in every project:
+
+- **Environment** — from `preflight.worktree_recipe`'s own step, and **never from
+  the operator's `.env`**. That is not a preference: an agent's harness refuses
+  every path whose basename is `.env`, read or write, so the file can be neither
+  read nor copied into a worktree. A run without a declared source infers the
+  values from whatever example file it can find and hands the personas an
+  improvised export prefix — which is what the first field run did, for fourteen
+  minutes, arriving at one value a second run would have inferred differently.
+- **Dependencies and generated artifacts** — the recipe's remaining steps, run in
+  the order it writes them. Not a fresh install per phase: three personas per
+  unit and several units per wave make a per-worktree install the run's largest
+  cost, and the recipe exists because a project usually has a cheaper way.
+- **A migration plane of its own** — the environment step is what points the tree
+  at a store, so which store it names decides whether a wave's units can run
+  side by side at all; see below.
+
+**Run the recipe's steps as written and change none of them.** A step that fails
+is an infrastructural failure (§ An infrastructural failure is not a rejection),
+not a puzzle to solve: the recipe is the project's declaration, and an
+orchestrator that improvises around a broken step ships a run nobody can
+reproduce.
+
+**The proof is at t=0, once.** § t=0 step 4 baselines the suite in a
+recipe-provisioned worktree rather than in the launch checkout, so a recipe that
+does not yield a green suite refuses the run exactly as a red baseline does —
+before the first persona spawns, and paid for once rather than per phase. It
+cannot be re-proven per worktree in any case: the tester's tree has no bodies in
+it, so nothing green could run there and a green result would mean the freeze
+did not happen.
+
+**Nothing the loop runs shares a migration plane, and none of them is a plane the
+operator shares.** The units of a wave run in parallel against whatever the
+recipe points them at, so a shared one has two personas writing one migration
+history: the first field run ended a wave with one entity's migration applied and
+its sibling's pending, from two contracters that both saw the hazard and drew
+opposite conclusions. The plane a phase worktree gets is **its own and
+disposable** — a schema, a database, a container; which of those provides it is
+the recipe's business. A store that offers no unit of isolation at all is a store
+this loop cannot run a wave against, and the honest answer there is to say so in
+the report, never to share one plane and hope. Two consequences follow, and they
+are the whole of the migration question:
+
+- **A persona may apply its own migrations**, because a plane that is thrown away
+  records no checksum that outlives it and therefore freezes nothing the
+  overseers have not approved —
+  [`contracter.md`](../../inspire-code/references/roles/contracter.md)
+  § Persistence is append-shaped carries the checksum fact it turns on.
+- **The loop never applies anything to a plane the operator keeps.** It merges
+  nothing either — the hard ceiling holds regardless of `--halt` — so a run the
+  operator discards must leave their database exactly as it found it. The
+  migrations reach a shared plane when the operator deploys the merged PR, in the
+  order the files landed on the turn branch, which **is** the promote order:
+  a wave contains no ordering edges by construction, so its migrations commute,
+  and a later wave's are generated after the wave it depended on promoted.
+  Nothing in that chain consults a filename's timestamp, and no part of it is
+  the loop's to perform.
+
 ### persona — the spawn brief
 
 Every brief is the same four things, and nothing in it is hard-coded here:
@@ -208,6 +303,39 @@ Every brief is the same four things, and nothing in it is hard-coded here:
 
 **Both 3 and 4 are read from the plan JSON, never from `stack.md`.** The tool
 emits them precisely so this skill has no second reader of the bootstrap layer.
+
+**A brief is pointers and facts, and that is the whole of it.** Paths, the
+contract file, the profile set, the wire rows, the environment prefix, the
+worktree it runs in — things the role doc cannot know. **A unit-specific "what
+you emit" paragraph is forbidden**, however carefully written. The role doc says
+what the role emits, the derived contract says what this unit needs, and a third
+sentence on the subject can only agree redundantly or disagree wrongly.
+
+*The disagreement is the case that happened.* A brief told an entity's contracter
+to emit "domain type, DTOs, semantic-type validators at the owning boundary, the
+Prisma model, and one migration". `contracter.md` § Emission has no such row: an
+entity's `fields` map to **the persistence model and one migration**, and a DTO
+renders from an **action's** inputs. The contracter obeyed the brief over its
+doctrine, both overseers rejected the DTO as a mass-assignment shape, and a
+rework cycle went on an instruction no persona chose. **A brief cannot make a
+role's judgment better, and it is the only thing that can make it worse.**
+
+**A rework hand-back is a brief too, and it carries less.** The overseer's
+findings **verbatim**, plus any input the orchestrator corrected — a truncated
+bullet, a clause a tool dropped. Nothing else: no restatement, no ranking of the
+findings, no remedy of the orchestrator's own. **Where this session disagrees
+with an overseer, it says so in the log and hands the findings back unchanged.**
+A rejection is not the persona's to argue with (§ the overseer gate), which is
+exactly why it must reach the persona unedited.
+
+*This one also happened.* A hand-back told a contracter to rewrite a stale
+sentence in the header of an **applied** migration. The persona refused and
+measured why: Prisma checksums migration files, so one comment line made
+`migrate dev` demand a schema reset while `migrate status` and `migrate deploy`
+still passed. The instruction would have cleared every check in the run and
+detonated in the next worktree. **The refusal is the loop working** — the role
+doc gave the persona enough to decline with evidence. The fix is fewer sentences
+in which the orchestrator can be wrong, not a more compliant persona.
 
 **A unit resolves a SET of framework profiles, and the applied rules are the union
 of its members'.** A brief naming `nestjs` and `react` follows both — that is the
@@ -269,7 +397,14 @@ branch, and anything else stalls the unit naming the tool.
 ### verify
 
 **Verify is the orchestrator's own evidence, and it is the reason a persona's
-green is never trusted.** It runs on the integration branch, after the harvest.
+green is never trusted.** It runs on the integration branch, after the harvest,
+under the same recipe and the same plane rule as a phase worktree (§ prepare):
+its own disposable plane, never one the operator keeps. Verify is where the
+unit's migrations first run beside every migration promoted before its wave
+opened — the only rehearsal the loop gives them, and not a full one: a sibling
+of the same wave promotes after, so the two meet for the first time on the turn
+branch. They are independent by construction, which is why that is sound rather
+than lucky.
 
 **1. The whole suite.** Not the unit's tests — the whole suite. This is what
 defends the kept dependents of a re-emanated piece: the gate stays unit-scoped by
@@ -543,7 +678,8 @@ outside still leaves a readable partial account rather than nothing. What
 **overwrites** is the next *invocation*: its own t=0 truncates whatever the
 previous run left, the same way `/inspire:update` starts
 `.inspire/last-upgrade.log` fresh on every upgrade. Within one run the file only
-grows; across runs it never survives the next one's t=0. That file and git are
+grows, but for a slot whose own answer changed (below); across runs it never
+survives the next one's t=0. That file and git are
 the only things a run writes outside a worktree, and neither is the knowledge
 base.
 
@@ -553,7 +689,37 @@ standalone or as `run`'s own t=0 step, never touches
 `.inspire/last-emanation.log`. The log is `run`'s alone, and only from the
 moment a turn branch exists.
 
-By the final wave the file carries:
+**The file is a skeleton, and the skeleton is
+[`report-skeleton.md`](report-skeleton.md).** Three block kinds, each written at
+one fixed moment: an identity block at t=0, one block as each wave closes, one
+closing block at the exit. That file is the form — the blocks in order, a slot
+per line this section names — and it exists because a shape is harder to ignore
+than a paragraph. **Fill it; never compose a shape of your own.** A run that
+narrates instead produces a diary: readable, even useful, and missing every line
+an operator opens the file for.
+
+The division between the two files is the one that decides which to edit. **This
+section is the meaning; the skeleton is the form.** A line added to the list
+below gets a slot there carrying its label and nothing more.
+
+**Two rules bind every slot, and the second is a decision, not a default.**
+
+- **The last position wins.** A conclusion this run revises is corrected where it
+  stands, never left in place with a correction appended beside it. The file
+  carries one position on any question and it is the current one — two paragraphs
+  disagreeing about the same oracle leave the operator to guess what the run
+  meant, and a report carrying a position its author no longer holds is claiming
+  something that did not happen. Everything else is append-only: in-place editing
+  is for a slot whose answer changed, not for tidying a wave that closed.
+- **The file is tracked.** So is `.inspire/last-upgrade.log`. INSPIRE's seeded
+  `.gitignore` block names `.claude/settings.local.json` and nothing else, so no
+  release has ever excluded either log — this states that rather than leaving it
+  to a default, and it needs no change to `/inspire:init`. A project whose own
+  `*.log` rule hides the file chose that itself, and init reports what a rule
+  shadows rather than editing an operator's `.gitignore`.
+
+By the final wave the file carries — spread across its blocks, each line landing
+in the block the skeleton gives it:
 
 - **the run's identity** — the run id, the turn branch, the base branch, the
   scope, the goal and the selectors as typed;

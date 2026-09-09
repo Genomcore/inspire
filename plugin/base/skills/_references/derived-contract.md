@@ -175,7 +175,14 @@ vocabulary.
   structural bullet is prose no oracle checks, and a claim no oracle can cover
   reads as covered by construction. The tokens paragraph those sections sit
   beside points at the design system and restates nothing the entry owns, so it
-  is not read at all.
+  is not read at all. An item is its marker line **plus its indented
+  continuation lines**, joined: a vault wrapped at 80 columns says the same
+  thing as one that is not. An indented sub-bullet opens its own item.
+- **`## Notes` is not carried.** A pattern entry's Notes holds caveats, related
+  patterns and navigation rules, a component entry has no such section at all,
+  and carrying it would invent a contract half for one kind of entry. A
+  requirement written there reaches no persona: it belongs in `## Structure`,
+  `## Variants`, or the table that owns it.
 - **`regions`** carries the pattern's holes verbatim, `Fill` and `Accepts`
   lowercased by nobody: the two vocabularies are `screen-coherence.sh`'s own
   (`required` | `optional`, and one or more of `data` · `dispatch` · `nav` ·

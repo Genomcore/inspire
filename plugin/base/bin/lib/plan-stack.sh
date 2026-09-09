@@ -236,6 +236,16 @@ plan_test_components() {
   plan_table_rows "$f" "Test infrastructure"
 }
 
+# plan_worktree_recipe — the steps `stack.md`'s `## Worktree recipe` declares,
+# as `step<TAB>command`, in the order the file writes them. Reported verbatim
+# and never interpreted: the loop runs the commands in a fresh worktree, and
+# which one provisions what is the project's business.
+plan_worktree_recipe() {
+  local f="$SDD_KB_ROOT/00_bootstrap/stack.md"
+  [ -f "$f" ] || return 0
+  plan_table_rows "$f" "Worktree recipe"
+}
+
 # plan_wire_ids — the `wire_conventions:` ids, one per line. Absent means the
 # project selected none, which is a legal state and not a finding:
 # `/inspire-emanate run` briefs a tester with whatever is recorded, and nothing

@@ -261,13 +261,13 @@ export SDD_KB_ROOT SDD_SPEC_ROOT
 plan_scratch >/dev/null || exit "$EXIT_MISSING_TOOL"
 trap 'rm -rf "$PLAN_TMP"' EXIT
 plan_init_spools units requires profiles waves findings refused \
-                 components probes wireids wirerows
+                 components probes recipe wireids wirerows
 # Every list the renderers read has to EXIST before the run can take a path that
 # skips filling it: `--rawfile` fails on a missing file, and "there were none"
 # must not read as a broken run.
 : > "$PLAN_TMP/realized"; : > "$PLAN_TMP/realized.delivered"
 : > "$PLAN_TMP/goal.units"
-: > "$PLAN_TMP/components.tsv"; : > "$PLAN_TMP/probes"
+: > "$PLAN_TMP/components.tsv"; : > "$PLAN_TMP/probes"; : > "$PLAN_TMP/recipe.tsv"
 # Sorted and deduplicated before anything reads it: two --scope flags name one
 # vault, so neither the order they were typed in nor a repeat may reach stdout.
 printf '%s' "$PLAN_SCOPE_ARGS" | LC_ALL=C sort -u > "$PLAN_TMP/scopes"
