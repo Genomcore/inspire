@@ -59,6 +59,32 @@ doctrine; the recipe belongs to the project.
 - [ ] The gs run's measured recipe (relative workspace links → clone; three nested trees;
       `.vite-temp`) is recorded as the worked example, not as the rule.
 
+## Resolution
+
+The recipe's home is a `## Worktree recipe` table in `00_bootstrap/stack.md` — `Step`
+and `Command`, run in the order written — read by `plan-stack.sh` the same way
+`## Test infrastructure` is, reported as `preflight.worktree_recipe`, and the one list
+in the plan JSON that is **not** sorted, because the order is the recipe. It is
+reported and never interpreted: which row provisions the environment and which the
+generated artifacts is the project's business, and a keyed grammar would put a schema
+in the knowledge base where a human writes prose.
+
+`PR-24` warns on its absence, keyed on declared test-infrastructure components exactly
+as `PR-22` is. Keyed rather than unconditional because a project that declares no
+component has nothing for the environment half of a recipe to point at, and installing
+dependencies is the framework profile's `## Build & verify` rather than the project's.
+A heading with no rows reads as absent — that is the state the seeded skeleton ships in.
+
+**The proof moved rather than being added.** `run.md` § t=0 step 4 already baselined the
+suite; it now does so in a worktree the recipe provisioned, so a recipe that yields no
+green suite refuses the run in the same breath as a red baseline, once, before the first
+spawn. It cannot be re-proven per phase worktree in any case: the tester's tree has no
+bodies in it, and a green suite there would mean the freeze did not happen.
+
+**The `.env` premise was verified directly**, not taken from the run's notes: this
+session's own harness refused `/…/.env` under rule `secret.basename.env`, read and write
+alike.
+
 ## Notes
 
 This ticket is the operator-owned half of `TASK-env-blocked`: the harness block is not

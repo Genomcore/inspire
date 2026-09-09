@@ -109,6 +109,20 @@ addition is an ADR.
 | Component | Purpose |
 |---|---|
 
+## Worktree recipe
+
+What turns a fresh checkout into a tree the suites actually run in — the
+**environment** (from a committed, non-`.env` source: an agent's harness refuses
+every path whose basename is `.env`, so the operator's own file can neither be
+read nor copied), then the **dependencies** and the **generated artifacts** that
+are git-ignored and therefore absent from a new worktree. One row per step, run
+in the order written. `/inspire-emanate` runs these in every phase worktree
+before a persona spawns; without them a run improvises its own, differently each
+time. Commands only — no `.env` file is ever written.
+
+| Step | Command |
+|---|---|
+
 ## Quality gates
 
 The **external** gate: which service keeps the history of the aggregate metrics

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/plan-checks.sh
 #
-# Library — the readiness catalogue. Every `PR-*` class lives here: the ten
+# Library — the readiness catalogue. Every `PR-*` class lives here: the eleven
 # findings that leave a plan standing (the ceiling, preflight and reachability
 # classes are warnings, `PR-02` and `PR-03` are a warning on a navigation edge
 # and an error on an ordering one, and the rest are errors), and the four
@@ -449,25 +449,34 @@ plan_odd_list() {
       sep = ", " }'
 }
 
-# plan_check_preflight — PR-22, and the `preflight` / `wire_conventions` spools
-# the plan renders them from (ED11-R5/R6). Both blocks are reporting: an
-# undecided wire row is a RECORDED decision (the convention's own default
-# applies), so there is nothing there to refuse.
+# plan_check_preflight — PR-22 and PR-24, and the `preflight` /
+# `wire_conventions` spools the plan renders them from (ED11-R5/R6). Both blocks
+# are reporting: an undecided wire row is a RECORDED decision (the convention's
+# own default applies), so there is nothing there to refuse.
 #
-# PR-22 is the one finding, and a warning: components declared with no profile
-# able to probe them means an unattended run would read a connection error as
-# red, burn the unit's whole rework budget proving nothing, then cascade the
-# stall. Learning that at t=0 costs a warning; learning it after a four-hour run
-# costs the run. Plan itself never probes and never starts anything — the probe
-# is stack-specific and therefore profile-owned.
+# Both findings are warnings, and both key on declared components, because a
+# declaration whose consumer is missing is the only gap either can see. PR-22:
+# components with no profile able to probe them means an unattended run would
+# read a connection error as red, burn the unit's whole rework budget proving
+# nothing, then cascade the stall. PR-24: components with no worktree recipe
+# means nothing states how a fresh phase worktree reaches them, so the run
+# improvises an environment before its first spawn. Learning either at t=0 costs
+# a warning; learning it after a four-hour run costs the run. Plan itself never
+# probes and never starts anything — the probe is stack-specific and therefore
+# profile-owned, and the recipe is project-owned.
 plan_check_preflight() {
-  local name purpose decision answer id n
-  plan_test_components > "$PLAN_TMP/components.tsv"
-  plan_probe_profiles  > "$PLAN_TMP/probes"
+  local name purpose decision answer step cmd id n
+  plan_test_components  > "$PLAN_TMP/components.tsv"
+  plan_probe_profiles   > "$PLAN_TMP/probes"
+  plan_worktree_recipe  > "$PLAN_TMP/recipe.tsv"
   while IFS=$'\t' read -r name purpose; do
     [ -n "$name" ] || continue
     plan_row components "$name" "$purpose"
   done < "$PLAN_TMP/components.tsv"
+  while IFS=$'\t' read -r step cmd; do
+    [ -n "$step" ] || continue
+    plan_row recipe "$step" "$cmd"
+  done < "$PLAN_TMP/recipe.tsv"
   while IFS= read -r id; do
     [ -n "$id" ] || continue
     plan_row probes "$id"
@@ -482,12 +491,19 @@ plan_check_preflight() {
   done < <(plan_wire_rows)
 
   [ -s "$PLAN_TMP/components.tsv" ] || return 0
-  [ -s "$PLAN_TMP/probes" ] && return 0
   n="$(LC_ALL=C grep -c . "$PLAN_TMP/components.tsv")"
-  plan_find "PR-22" "warning" "" \
-    "$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")" "inspire-bootstrap" \
-    "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and no resolved framework profile carries a \`## Test infrastructure\` probe recipe, so nothing can tell a healthy component from a suite that never ran" \
-    "add a \`## Test infrastructure\` section to a resolved framework profile under \`$(plan_path_norm "$PLAN_PROFILES_ROOT")\`, or remove the components that no longer apply"
+  if [ ! -s "$PLAN_TMP/probes" ]; then
+    plan_find "PR-22" "warning" "" \
+      "$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")" "inspire-bootstrap" \
+      "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and no resolved framework profile carries a \`## Test infrastructure\` probe recipe, so nothing can tell a healthy component from a suite that never ran" \
+      "add a \`## Test infrastructure\` section to a resolved framework profile under \`$(plan_path_norm "$PLAN_PROFILES_ROOT")\`, or remove the components that no longer apply"
+  fi
+  if [ ! -s "$PLAN_TMP/recipe.tsv" ]; then
+    plan_find "PR-24" "warning" "" \
+      "$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")" "inspire-bootstrap" \
+      "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and \`## Worktree recipe\` declares no step, so nothing states how a fresh phase worktree reaches them and the run improvises an environment before its first spawn" \
+      "declare the steps that make a checkout runnable — the non-\`.env\` environment source, then dependencies and generated artifacts — in \`## Worktree recipe\` of \`$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")\`"
+  fi
 }
 
 # plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low

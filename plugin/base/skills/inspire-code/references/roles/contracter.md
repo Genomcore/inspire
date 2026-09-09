@@ -86,6 +86,24 @@ or deleted — not even one that has only ever run on a local machine. Generated
 generated forever, and a mistake is corrected by the next migration. The model file
 itself is a declaration and merges like any other.
 
+**Once applied, it is immutable even for a comment.** A migration tool that records
+having run a file records a **digest** of it too, so one appended line makes the file
+disagree with its own history. Measured on a Prisma stack, and the shape is what
+matters rather than the tool: a status check and a deploy both still reported clean
+while the next development-mode migrate demanded a full schema reset — a defect that
+hides from the two commands anyone would run to look for it. Correct through the
+declarations or through the next migration; never by touching the file.
+
+**Verifying is not applying, and you may verify.** Ask the plane whether it is
+reachable and what it has already run, and probe a store behaviour by creating a
+schema of your own, exercising it and dropping it — that is how a unique violation, a
+check violation and a not-null violation get confirmed against the real engine
+instead of asserted from a manual. What none of that touches is anything anyone else
+reads: the shared schema and the migration history are left exactly as found.
+Applying belongs to the run, in the disposable plane it gives you
+([`inspire-emanate`](../../../inspire-emanate/references/run.md) § prepare); a plane
+you did not create is one you only read.
+
 ## Refusal — a rendering hole is a readiness defect
 
 Report to the orchestrator, and emit nothing for that part, when:

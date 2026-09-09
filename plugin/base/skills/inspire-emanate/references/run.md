@@ -51,16 +51,29 @@ whole rework budget proving nothing, and then cascade the stall. Where
 `PR-22`), say so in the report: nothing can tell a healthy component from a suite
 that never ran, and the run proceeds at that risk.
 
-**4. Baseline the suite.** Run the whole suite once on the branch the run was
-launched from. **A red baseline in realized territory refuses the run**, naming
-the failing files. Emanating onto a red suite makes every later verdict
-unreadable: `GV-05` cannot tell a pre-existing failure from one this run caused,
-and the first unit would burn its budget on somebody else's defect.
+**4. Baseline the suite — in a worktree the recipe provisioned.** Cut a throwaway
+worktree at the branch the run was launched from, run `plan`'s
+`preflight.worktree_recipe` in it, then run the whole suite there. **A red
+baseline in realized territory refuses the run**, naming the failing files.
+Emanating onto a red suite makes every later verdict unreadable: `GV-05` cannot
+tell a pre-existing failure from one this run caused, and the first unit would
+burn its budget on somebody else's defect.
 
 *Realized territory* is the qualifier that keeps this honest: what must be green
 is the code the vault already claims — the tests under the resolved roots, on the
 branch as found. A project with nothing built yet has no such tests and no red
 baseline to have; an empty suite is not a failing one.
+
+**A recipe that does not produce a green suite refuses the run in the same
+breath**, naming the step that failed. This is the only moment the recipe is
+proven, and proving it is most of why the baseline moved out of the launch
+checkout: a suite that is green in the operator's own tree says nothing about a
+worktree, which is where every persona will actually work. Discard the worktree
+afterwards; it is not one of the eight phases and it writes nowhere else.
+
+**A run with no declared recipe** (plan's `PR-24`) baselines in the launch
+checkout and says so in the report. It has nothing to prove and nothing to prove
+it with, and every prepare after it improvises.
 
 **5. Cut the turn branch** (§ The branch scheme) and start wave 1.
 
@@ -212,6 +225,66 @@ Its content is then shaped to the phase, and the shape is the freeze:
   summary: an implementer who cannot read the failing assertion burns its budget
   guessing.
 
+**Then make it runnable, from the recipe and not from judgement.** A checked-out
+tree is not a tree the suites run in, and the three things missing are the same
+three in every project:
+
+- **Environment** — from `preflight.worktree_recipe`'s own step, and **never from
+  the operator's `.env`**. That is not a preference: an agent's harness refuses
+  every path whose basename is `.env`, read or write, so the file can be neither
+  read nor copied into a worktree. A run without a declared source infers the
+  values from whatever example file it can find and hands the personas an
+  improvised export prefix — which is what the first field run did, for fourteen
+  minutes, arriving at one value a second run would have inferred differently.
+- **Dependencies and generated artifacts** — the recipe's remaining steps, run in
+  the order it writes them. Not a fresh install per phase: three personas per
+  unit and several units per wave make a per-worktree install the run's largest
+  cost, and the recipe exists because a project usually has a cheaper way.
+- **A migration plane of its own** — the environment step is what points the tree
+  at a store, so which store it names decides whether a wave's units can run
+  side by side at all; see below.
+
+**Run the recipe's steps as written and change none of them.** A step that fails
+is an infrastructural failure (§ An infrastructural failure is not a rejection),
+not a puzzle to solve: the recipe is the project's declaration, and an
+orchestrator that improvises around a broken step ships a run nobody can
+reproduce.
+
+**The proof is at t=0, once.** § t=0 step 4 baselines the suite in a
+recipe-provisioned worktree rather than in the launch checkout, so a recipe that
+does not yield a green suite refuses the run exactly as a red baseline does —
+before the first persona spawns, and paid for once rather than per phase. It
+cannot be re-proven per worktree in any case: the tester's tree has no bodies in
+it, so nothing green could run there and a green result would mean the freeze
+did not happen.
+
+**Nothing the loop runs shares a migration plane, and none of them is a plane the
+operator shares.** The units of a wave run in parallel against whatever the
+recipe points them at, so a shared one has two personas writing one migration
+history: the first field run ended a wave with one entity's migration applied and
+its sibling's pending, from two contracters that both saw the hazard and drew
+opposite conclusions. The plane a phase worktree gets is **its own and
+disposable** — a schema, a database, a container; which of those provides it is
+the recipe's business. A store that offers no unit of isolation at all is a store
+this loop cannot run a wave against, and the honest answer there is to say so in
+the report, never to share one plane and hope. Two consequences follow, and they
+are the whole of the migration question:
+
+- **A persona may apply its own migrations**, because a plane that is thrown away
+  records no checksum that outlives it and therefore freezes nothing the
+  overseers have not approved —
+  [`contracter.md`](../../inspire-code/references/roles/contracter.md)
+  § Persistence is append-shaped carries the checksum fact it turns on.
+- **The loop never applies anything to a plane the operator keeps.** It merges
+  nothing either — the hard ceiling holds regardless of `--halt` — so a run the
+  operator discards must leave their database exactly as it found it. The
+  migrations reach a shared plane when the operator deploys the merged PR, in the
+  order the files landed on the turn branch, which **is** the promote order:
+  a wave contains no ordering edges by construction, so its migrations commute,
+  and a later wave's are generated after the wave it depended on promoted.
+  Nothing in that chain consults a filename's timestamp, and no part of it is
+  the loop's to perform.
+
 ### persona — the spawn brief
 
 Every brief is the same four things, and nothing in it is hard-coded here:
@@ -324,7 +397,14 @@ branch, and anything else stalls the unit naming the tool.
 ### verify
 
 **Verify is the orchestrator's own evidence, and it is the reason a persona's
-green is never trusted.** It runs on the integration branch, after the harvest.
+green is never trusted.** It runs on the integration branch, after the harvest,
+under the same recipe and the same plane rule as a phase worktree (§ prepare):
+its own disposable plane, never one the operator keeps. Verify is where the
+unit's migrations first run beside every migration promoted before its wave
+opened — the only rehearsal the loop gives them, and not a full one: a sibling
+of the same wave promotes after, so the two meet for the first time on the turn
+branch. They are independent by construction, which is why that is sound rather
+than lucky.
 
 **1. The whole suite.** Not the unit's tests — the whole suite. This is what
 defends the kept dependents of a re-emanated piece: the gate stays unit-scoped by

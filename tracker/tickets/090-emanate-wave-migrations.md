@@ -52,6 +52,40 @@ overseers have not yet approved.
       throwaway-schema probe of store behaviours as `workspace.role` did) is named as
       allowed and distinguished from applying.
 
+## Resolution
+
+**The second candidate, generalized.** Doctrine (`run.md` § prepare) now says that
+nothing the loop runs shares a migration plane and none of them is a plane the operator
+keeps: each phase worktree, and verify, gets its own disposable one. Which mechanism
+provides it — a schema, a database, a container — is the worktree recipe's business, so
+the rule stays stack-agnostic where `?schema=` would not have.
+
+That answers the first criterion by dissolving its reason rather than by its letter. It
+does say a persona applies inside its worktree, which the criterion's lead clause rules
+out; the clause was written for the *first* candidate, whose hazard is the checksum
+freeze, and a plane that is thrown away records no checksum that outlives it. The
+operator's own plane is never written at all — the loop merges nothing, so a run they
+discard has to leave their database as it found it.
+
+**One premise was wrong.** "The two migration timestamps happened to order correctly …
+luck, not design" reads the hazard as an ordering one, and ordering is the part that was
+never at risk. Waves are a Kahn layering over the ordering edges, so **a wave contains no
+ordering edge by construction**: two same-wave migrations have no dependency between them
+and commute in either order. Across waves the later one is generated after the earlier
+promoted, so promote order and timestamp order agree and neither is doing any work. What
+was luck is nothing; what was damage is the shared plane — a wave that ends half-migrated
+leaves the *next* wave's units reading a sibling's absence as drift, and `migrate dev`
+offering a reset.
+
+One case is worth a second look and is out of this package's scope: a **deferred**
+reference (a nullable `references(…)`) is exempted from ordering because the column fills
+later, which is a claim about data and not about DDL — a constraint still needs its
+target table. Two same-wave entities in that shape cannot be planned into an order. It
+does not fail silently: the sibling's model is not in that worktree's schema at all, so
+the contracter has nothing to render the reference against and refuses (§ Refusal — a
+rendering hole is a readiness defect) rather than emitting a migration that would fail to
+apply.
+
 ## Notes
 
 `workspace.role`'s approach — probe the five store behaviours in a schema it created and
