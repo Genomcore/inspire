@@ -94,10 +94,63 @@ sequential: a unit in wave *n* may read the results of wave *n−1* because thos
 are already merged into the turn branch, and may assume nothing about a sibling
 in its own wave.
 
+**Inside a wave, every unit advances on its own boundary.** A unit's next phase
+begins the moment that unit's own handoff clears — its overseers approved and
+its harvest landed, its gate passed — and never at a wave-wide checkpoint. There
+is no phase barrier within a wave: siblings share a wave, not a clock. The
+argument is the one the paragraph above already makes — a unit may assume
+nothing about a sibling in its own wave, so waiting for one is waiting for a
+result it is forbidden to use.
+
 The iteration ends when every unit in the wave has reached a terminal state —
 promoted, stalled, or blocked. Then re-open the next wave. The run ends when the
 frontier empties, the ceiling is reached, or nothing is left that is not
 downstream of a stall.
+
+## Liveness — what may end a turn
+
+**A turn may end in exactly two states: an agent is in flight whose completion
+re-enters this loop, or the run report is written and the run is over.** Any
+other ended turn is the waiting prompt [`SKILL.md`](../SKILL.md) § The loop
+contract forbids. It does not look like one, because nothing was asked — and
+that is what makes it worse. A prompt at least tells the operator it is their
+move.
+
+The mechanism is the harness, so name it rather than assume it. This session
+resumes when a spawned agent finishes and posts back; that notification is the
+only thing that wakes it. End a turn with every persona and overseer already
+returned and units still short of terminal, and nothing wakes it: no next spawn,
+no report, no failure. The run has stopped without exiting. It reads like a slow
+wave from outside, and it is a dead session — the operator finds it an hour later
+exactly as they left it.
+
+Two rules of ordering follow, and both are about what this session does next
+rather than about anything it has to notice:
+
+- **The next spawn precedes any operator-facing text in the same turn.** After a
+  harvest, a rework hand-back or a stall decision, spawn first and write second.
+  Chat prose at the end of a turn is what ends the turn, and a sentence promising
+  to continue is not a continuation. A run can end turn after turn that way and
+  survive every one of them by accident — each had something still running —
+  until the first turn that does not, which is the one that kills it.
+
+  **The chat gets the report, once.** An account of progress already has a home
+  that is not the chat: `.inspire/last-emanation.log` (§ The run report), which
+  the operator can read while the run is still going. That is not licence to
+  narrate into it either — the log takes one block per wave close, on the
+  schedule § The run report sets, so a turn between two wave closes has nothing
+  operator-facing to write at all. One file per run, truncated at the next
+  run's t=0.
+- **Ending the run is a deliberate act, and it has one form.** The three exits —
+  goal reached, ceiling or budget exhausted, stall cascade — are reached by
+  writing the report, never by running out of things to say. If a unit is short
+  of terminal and no agent is in flight, the next act is a spawn, whatever else
+  the turn was going to be about.
+
+A wave with several units in it never lacks a next act, because a unit advances
+on its own boundary and not on its wave's (§ The wave schedule). The turn that
+harvests one unit's contracter spawns that unit's tester, whatever the siblings
+are doing.
 
 ## One unit, eight phases
 

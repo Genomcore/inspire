@@ -21,6 +21,18 @@ type — [`SKILL.md`](../SKILL.md) § Invocation names every argument, `until` /
 about the arguments; it only changes who presses return. `plan` takes the same
 call shape and is the read-only half — see below.
 
+**What a turn boundary does to an agent still running is unverified here, and
+this recipe will not guess it.** Attended, the rule is
+[`run.md`](run.md) § Liveness: a turn may end with an agent in flight, because
+its completion posts back and re-enters the loop. Under `-p` the invocation runs
+to completion and exits, and whether "completion" waits for an agent that is
+still running — or exits and takes it with it — is a property of the harness
+INSPIRE has not tested. **Schedule on the conservative reading:** treat a turn
+that ends as a run that ends, so every spawn is awaited inside the turn that
+made it and the report is written without ever handing the turn back. The
+attended rule's other half is unchanged and matters more here, not less — a turn
+ended with units short of terminal is a hang under any reading of the question.
+
 ## Permission posture: auto mode, and what it does not cover
 
 **The run makes every tool call itself** — the orchestrator's own `Bash` and

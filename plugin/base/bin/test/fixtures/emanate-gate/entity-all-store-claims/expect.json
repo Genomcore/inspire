@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "args": ["--contract", "contract.json", "--tests-root", "tests", "--results", "results.json"],
+  "stdout_jq": [
+    { "expr": ".verdict", "equals": "pass" },
+    { "expr": ".findings | length", "equals": "0" },
+    { "expr": "[.claims[] | select(.status != \"store-uncited\")] | length", "equals": "0" },
+    { "expr": ".claims[] | select(.id == \"auth.user/field/id/immutable\") | .oracle", "equals": "store" },
+    { "expr": ".summary.store_uncited", "equals": "4" },
+    { "expr": ".summary.oracles.test", "equals": "0" }
+  ]
+}

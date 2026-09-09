@@ -226,7 +226,9 @@ every tests root is not a finding — policing the runner is not gate's job,
 though its `failed` status still counts toward `GV-05`. And a unit whose
 claims are *all* `store` gets one stderr line (*"no test-oracle claim in
 this unit — the schema is the oracle"*) plus `summary.oracles`, never a
-finding.
+finding. That is the ordinary shape of an entity whose fields carry only
+store constraints — `nonnull`, `unique`, `references`, `immutable` — not an
+edge case: such a unit passes on the schema its contracter emitted.
 
 ## `GV-00` — the refused-contract shape
 

@@ -252,12 +252,32 @@ is what makes the head worth writing:
 
 | oracle | claims |
 |---|---|
-| **store** — asserted against the schema | `unique` · `nonnull` · `default` · `references` (V1 and V2 alike) |
-| **test** — asserted by the suite | `immutable` · `enum` · `min` · `max` · `len` · `pattern`; every V3, V4 and V5 head; **every prose-only entry** |
+| **store** — asserted against the schema | `unique` · `nonnull` · `default` · `references` · `immutable` (V1 and V2 alike) |
+| **test** — asserted by the suite | `enum` · `min` · `max` · `len` · `pattern`; every V3, V4 and V5 head; **every prose-only entry** |
 
 A prose-only entry is therefore never worthless — it is a test-oracle claim
 whose assertion a human or an agent has to write, rather than one a schema
 carries for free.
+
+**`immutable` is a store claim because nothing else can hold it.** It sat with
+the test oracle through 0.9.2, and the venue that reading assumes does not exist:
+the write path a test would go through is a repository, which the entity that
+declares the field never emits; a `readonly` in the declaration is erased before
+any write happens; and the store, told nothing, updates the column on request. A
+raw `UPDATE` changes a primary key in one statement. The claim was asserted by
+nobody while reading as asserted by somebody, which is the one failure mode the
+split exists to prevent.
+
+So the constraint takes a column form, the way `unique` takes an index: the
+migration that creates the field also carries the rule that rejects a changed
+value — a `BEFORE UPDATE` trigger in a SQL store, whatever the equivalent is
+elsewhere — and the framework profile's `## Persistence` declares which. Two
+consequences follow, and both are the ordinary store-claim ones rather than
+anything new: an uncited `immutable` is `store-uncited`, counted and never a
+finding ([`gate-verdict.md`](gate-verdict.md)), and a store-violation test may
+still cite it, green on arrival by design. A profile that declares **no** form
+for it is a rendering hole, so the contracter refuses the emission and names the
+file to edit — it never emits a field whose immutability nothing enforces.
 
 ## Coherence, beyond grammar
 
