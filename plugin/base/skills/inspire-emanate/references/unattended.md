@@ -144,7 +144,10 @@ of them needs the loop's help:
 
 - **Discard everything.** Delete the turn branch. Its tests and code die with
   it, the knowledge base never knew any of it happened, and the report plus the
-  log are what is left for the autopsy.
+  log are what is left for the autopsy. `git branch -D emanate/<run-id>` is a
+  command the operator can actually run: the run kept that branch in a worktree
+  of its own and left this checkout where it found it, so nobody is standing on
+  the branch being deleted.
 - **Keep a prefix.** Promotion was per-piece merges in dependency order, so
   acceptance follows the graph: accept the earlier waves and stop there,
   leaving the later ones for the PR review to drop.
