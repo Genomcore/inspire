@@ -357,7 +357,7 @@ anything.
   process count almost exactly: the `emanate-plan` fixtures run ~28,000 of them
   per sweep, and measured system time matches that at the few milliseconds each
   that a `fork`+`exec` costs. The heavy jobs are `emanate-derive` and
-  `emanate-plan`, at 84 and 67 fixtures, because each fixture spawns a rule and
+  `emanate-plan`, at 84 and 71 fixtures, because each fixture spawns a rule and
   the validators under it — those two are **sharded** by `run.sh` (see below), so
   neither is the wall on its own any more; a handful of `upgrade/` and
   `materialize/` files that build several period-correct fixtures each come next.

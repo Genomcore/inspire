@@ -12,7 +12,7 @@ importance: High
 skills: [code, domain]
 status: Open
 blocked_by: []
-related_to: [F07-gates]
+related_to: [F07-gates, 090-actor-head-without-a-role]
 ---
 
 ## Description
@@ -70,3 +70,16 @@ The security overseer's doctrine case, verbatim from the run: *an endpoint reach
 without its guard is blocking even when every test passes, because the tests prove what
 they assert and nobody asserted the negative.* This check is the t=0 version of that
 sentence.
+
+**Owner decided: plan, as `PR-25`.** An emanation run never invokes `review.sh` — a
+`grep` over the whole `inspire-emanate` skill returns no reference to it — so a check
+that lived only there would be invisible to the hands-off run this ticket exists to
+protect. The vocabulary sits in `_keyed-heads.sh` beside `W-1`'s constraint-word list and
+shares its matcher, so review's half and plan's half cannot drift into two answers about
+what prose says.
+
+**Head grammar: handed on, as [`090-actor-head-without-a-role`](090-actor-head-without-a-role.md).**
+V3 has no spelling for "any authenticated caller" and none for a membership relationship,
+so `actor(...)` does not already cover the two shapes the field run met. Choosing a head
+changes the closed vocabulary and every framework profile's rendering contract, which is
+the format owner's call and not a warning's.
