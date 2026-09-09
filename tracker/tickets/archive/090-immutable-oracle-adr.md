@@ -12,7 +12,7 @@ importance: Very High
 skills: [code]
 status: Done
 blocked_by: []
-related_to: [090-derive-population-marker, 090-invariant-filed-on-referrer, 090-reference-data-home, F06-tdd, F07-gates]
+related_to: [090-derive-population-marker, 090-reference-data-home, F06-tdd, F07-gates]
 ---
 
 ## Description
@@ -101,8 +101,11 @@ constraints now passes on the schema its contracter emitted. `GV-01`'s remedy dr
 branch that named no state — it now reads *"have the tester cite this claim, or fix the
 artifact that declares a claim no test can reach"*.
 
-The two out-of-scope shapes were filed rather than described:
-`090-invariant-filed-on-referrer` (`inv/I1`) and `090-reference-data-home` (`inv/I2`).
+Of the two out-of-scope shapes, `inv/I1` was **answered in the same branch** rather than
+filed — a cross-entity rule is declared where the reference is, which
+`format-entity.md` § Constraints and invariants now states, and the headed spelling was
+already an error under the V2 argument join. Only `inv/I2` needed a ticket:
+`090-reference-data-home`.
 
 Shipped in 0.9.3 (`ea9cf53`).
 

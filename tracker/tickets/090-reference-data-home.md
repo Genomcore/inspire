@@ -12,7 +12,7 @@ importance: Mid
 skills: [domain, code]
 status: Open
 blocked_by: []
-related_to: [090-immutable-oracle-adr, 090-invariant-filed-on-referrer]
+related_to: [090-immutable-oracle-adr]
 ---
 
 ## Description
@@ -54,6 +54,9 @@ Two halves, and the second only exists once the first is decided:
 ## Notes
 
 Field evidence: the first `/inspire-emanate` run (`gs`, 2026-09-08). `inv/I2` stalled an
-entity unit beside `immutable` and `inv/I1` (`090-invariant-filed-on-referrer`). The
-`immutable` decision named this out of scope and pointed here; it is the larger of the two
-because it needs a home for something the knowledge base currently has no shape for.
+entity unit beside `immutable` and `inv/I1`. The other two were answered in the release
+that surfaced them — `immutable` by the store-oracle decision, `inv/I1` by
+`format-entity.md`'s rule that a cross-entity rule is declared where the reference is.
+This one is filed instead because it is not answerable in a sitting: it needs a home for
+something the knowledge base currently has no shape for, and the answer changes what an
+entity document may contain.

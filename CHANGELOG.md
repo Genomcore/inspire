@@ -40,6 +40,17 @@ expects; a table created before 0.9.3 keeps whatever it had. Re-emanating that
 piece (`--reemanate`) is what produces the migration, and until then the claim is
 in the same state it was in before this release — asserted by nothing.
 
+**A rule spanning two entities is filed on the side that declares the reference.**
+The same field run stalled a unit on an invariant written on the *referenced*
+entity — *"every staff reference resolves to a row here"*. That entity can assert
+nothing of the sort: the rows are another entity's and so is the foreign key.
+Declared where it belongs, on the referring field's `references(...)`, it is a
+store claim the migration already carries. `format-entity.md` § Constraints and
+invariants states it, and a new *which-side* interview probe stops inviting the
+wrong spelling. No rule changes: the **headed** spelling was already an error,
+since every argument of a V2 head must be a field of the entity declaring it, and
+the prose-only spelling is not mechanically distinguishable from legitimate prose.
+
 **The emanation loop names what may end a turn.** `SKILL.md` promised "zero human
 turns between t=0 and the report — never a waiting prompt", and no reference said
 what a waiting prompt *is* in this harness: an ended turn with units short of

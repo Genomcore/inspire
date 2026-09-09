@@ -132,6 +132,18 @@ three, and `pattern`'s argument is one, not two.
 composite case has a home at all: a rule about a tuple has no single field to
 live under.
 
+**A rule spanning two entities is filed on the side that declares the
+reference.** `` Constraints: `nonnull, references(auth.org)` `` already says every
+row of this entity resolves to an organisation, and it derives as a store claim
+the migration carries. The same rule written as an invariant on the *referenced*
+entity — "every user reference resolves to a row here" — mints a claim that
+entity cannot assert: the rows are another entity's, the foreign key is another
+entity's, and nothing this one emits enforces it. **The headed spelling is
+already an error** — every argument of a V2 head must be a row in this entity's
+own `## Fields` table ([`keyed-heads.md`](../../_references/keyed-heads.md)
+§ Coherence). The prose-only spelling is not mechanically distinguishable from
+legitimate prose, which is why the rule is stated here, for the author.
+
 **Fields are nullable by default.** There is no `nullable` word — absence of
 `nonnull` is nullability. The quiet case is the common one; the marked case is
 the requirement.
