@@ -72,7 +72,7 @@ the grouped human report.
 ```json
 { "schema": "inspire.derived-contract/1",
   "unit": { "kind", "id", "path", "lifecycle", "module"?,
-            "entity"? , "action"?, "screen"?, "state"? },
+            "entity"? , "action"?, "screen"?, "state"?, "population"? },
   "purpose": "…",
   "requires": [ { "kind", "id", "ordering" } … ],
   … kind-specific sections …
@@ -82,6 +82,14 @@ the grouped human report.
 - **`unit`** carries the identity as declared, never as inferred from location.
   A screen with no identity block is refused, not renamed. `module` is absent
   for the two catalog kinds, and `state` is theirs alone.
+- **`unit.population`** is an entity's alone — `internal` (the default a missing
+  `population:` field means) or `external`, the marker
+  [`inspire-domain/references/format-entity.md`](../inspire-domain/references/format-entity.md)
+  § *Externally populated entities* defines. It says **no SDD-layer action writes
+  this entity**, which is a fact a phase acts on and would otherwise have to read
+  the knowledge base to learn: there is no write path to declare and none to
+  test. The refusal object carries it too — a unit does not stop being externally
+  populated because its document is malformed.
 - **`purpose`** is the unit's intent, whitespace-collapsed to one line — the
   `## Purpose` prose, or the `**Purpose:**` header line for a catalog entry,
   which has no such section. It is what the contracter would otherwise have to

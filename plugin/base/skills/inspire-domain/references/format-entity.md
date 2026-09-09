@@ -83,11 +83,12 @@ population: external
 
 The enum is `internal` (default, omit the field) | `external`. The marker is a **structural claim**: no SDD-layer action writes this entity. It is not a runtime-immutability claim about the data itself — the rows may still be mutated by mechanisms outside SDD scope.
 
-Three tooling consequences:
+Four tooling consequences:
 
 - `entity-coherence`'s `field-unsourced` check is suppressed for fields on `population: external` entities (no SDD writer is the design, not a gap).
 - `field-coverage` skips `population: external` entities entirely (whole-entity reads do not enumerate fields, so per-field coverage is not a meaningful check).
 - A new `write-on-external` check errors when any action declares a write touch (`create`, `update`, `delete`, `append`, `replace`) on a `population: external` entity. The marker is a contract, not just a permission slip.
+- The derived contract carries it as `unit.population`, so an emanation phase acts on it without reading this vault: there is no write path to declare and none to test. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
 
 ## Section conventions
 

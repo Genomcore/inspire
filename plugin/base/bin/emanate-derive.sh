@@ -258,6 +258,7 @@ U_MODULE="$(derive_fm_scalar "$U_PATH" module)"
 U_ENTITY="$(derive_fm_scalar "$U_PATH" entity)"
 U_ACTION="$(derive_fm_scalar "$U_PATH" action)"
 U_SCREEN="$(derive_fm_scalar "$U_PATH" screen)"
+U_POPULATION="$(derive_fm_scalar "$U_PATH" population)"
 
 # An id-less artifact is an old shape, not an unnameable one: it still has to
 # appear in the refusal object under a name the operator recognizes, so the
@@ -279,6 +280,9 @@ case "$KIND" in
       U_ENTITY="${U_ID#*.}"; U_ENTITY="${U_ENTITY%%.*}"
     fi ;;
 esac
+# The marker is the entity's alone, and its absence is `internal` — the same
+# reading `sdd_entity_population` gives every rule that already consults it.
+[ "$KIND" = "entity" ] && [ -z "$U_POPULATION" ] && U_POPULATION="internal"
 U_ROUTE="/$U_MODULE/$U_SCREEN"
 
 derive_target "$U_PATH" "$U_ID" "$KIND"
@@ -361,12 +365,12 @@ if [ -s "$DERIVE_TMP/refused.spool" ]; then
     --arg schema "$DERIVE_SCHEMA" --arg kind "$KIND" --arg id "$U_ID" \
     --arg path "$U_PATH" --arg lifecycle "$U_LIFECYCLE" --arg module "$U_MODULE" \
     --arg entity "$U_ENTITY" --arg action "$U_ACTION" --arg screen "$U_SCREEN" \
-    --arg state "$U_STATE" \
+    --arg state "$U_STATE" --arg population "$U_POPULATION" \
     "$DERIVE_JQ_PRELUDE"'
       {schema: $schema,
        unit: ({kind: $kind, id: $id, path: $path, lifecycle: $lifecycle}
               + (if $module == "" then {} else {module: $module} end)
-              + (if $kind == "entity" then {entity: $entity}
+              + (if $kind == "entity" then {entity: $entity, population: $population}
                  elif $kind == "action" then {entity: $entity, action: $action}
                  elif $kind == "screen" then {screen: $screen}
                  else {state: $state} end)),

@@ -87,6 +87,10 @@ is reached, the ceiling or a budget is exhausted, a stall cascades. Writing it
 - **pre-PR** — the rules verify did not run (`profile-gates-installed.sh`,
   `adr-maturity-matches-features.sh`) and `criteria-have-tests.sh`'s 🟡
   limitation
+- **where the work is** — the turn branch `<emanate/<run-id>>`, and whether its
+  worktree `.claude/worktrees/emanate-<run-id>` was removed or is still on disk
+  and why. The launch checkout was never moved; say so, because the operator's
+  next command is run from it
 - **next act** — <the PR to open or already opened, and every remedy named above>
 ```
 

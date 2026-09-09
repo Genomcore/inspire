@@ -6,7 +6,8 @@
     "path": "spec/sdd/auth/user/auth.user.md",
     "lifecycle": "accepted",
     "module": "auth",
-    "entity": "user"
+    "entity": "user",
+    "population": "internal"
   },
   "purpose": "The account record a principal signs in with, described in auth-user-management.",
   "requires": [

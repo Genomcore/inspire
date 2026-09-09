@@ -29,6 +29,7 @@
       "lifecycle": "accepted",
       "module": "audit",
       "surface": null,
+      "population": "internal",
       "profiles": [
         "nestjs",
         "react",
@@ -45,6 +46,7 @@
       "lifecycle": "accepted",
       "module": "auth",
       "surface": null,
+      "population": "internal",
       "profiles": [
         "nestjs",
         "react",
@@ -61,6 +63,7 @@
       "lifecycle": "accepted",
       "module": "auth",
       "surface": null,
+      "population": "internal",
       "profiles": [
         "nestjs",
         "react",
@@ -83,6 +86,7 @@
       "lifecycle": "accepted",
       "module": "auth",
       "surface": null,
+      "population": null,
       "profiles": [
         "nestjs",
         "react",

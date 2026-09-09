@@ -201,9 +201,9 @@ plan_ingest() {
 plan_ingest_one() {
   local n="$1" kind="$2" path="$3"
   local recf="$PLAN_TMP/c/$n.rec"
-  local t id lifecycle module claims surface f1 f2 f3 f4
+  local t id lifecycle module claims population surface f1 f2 f3 f4
   plan_contract_records "$PLAN_TMP/c/$n.json" > "$recf"
-  IFS="$PLAN_FS" read -r t id lifecycle module claims < <(head -1 "$recf")
+  IFS="$PLAN_FS" read -r t id lifecycle module claims population < <(head -1 "$recf")
   if [ "${t:-}" != "U" ] || [ -z "${id:-}" ]; then
     PLAN_BROKE="emanate-derive.sh produced no readable contract for $kind $path"
     return 1
@@ -212,7 +212,7 @@ plan_ingest_one() {
   [ "$kind" = "screen" ] && surface="$(plan_surface_of "$path")"
   printf '%s\n' "$id" >> "$PLAN_TMP/nodes.all"
   printf '%s\t%s\n' "$id" "$path" >> "$PLAN_TMP/idpath.tsv"
-  plan_row units "$id" "$kind" "$path" "$lifecycle" "$module" "$surface" "$claims"
+  plan_row units "$id" "$kind" "$path" "$lifecycle" "$module" "$surface" "$claims" "$population"
 
   while IFS="$PLAN_FS" read -r t f1 f2 f3 f4; do
     case "$t" in
@@ -374,8 +374,8 @@ plan_promote_remedy() {
 # profiles of which one has no rendering table has two defects, and suppressing
 # either would hide half the repair.
 plan_check_profiles() {
-  local uid kind path lifecycle module surface claims key sel pid
-  while IFS="$PLAN_FS" read -r uid kind path lifecycle module surface claims; do
+  local uid kind path lifecycle module surface claims population key sel pid
+  while IFS="$PLAN_FS" read -r uid kind path lifecycle module surface claims population; do
     [ -n "$uid" ] || continue
     key="$(plan_unit_profile_key "$kind" "$surface")"
     plan_resolve_profiles "$key" "$(plan_declared_for "$key" "$surface")"

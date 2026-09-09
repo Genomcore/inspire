@@ -75,7 +75,8 @@ afterwards; it is not one of the eight phases and it writes nowhere else.
 checkout and says so in the report. It has nothing to prove and nothing to prove
 it with, and every prepare after it improvises.
 
-**5. Cut the turn branch** (§ The branch scheme) and start wave 1.
+**5. Cut the turn branch into its own worktree** (§ The branch scheme) and start
+wave 1.
 
 ## The branch scheme
 
@@ -86,6 +87,23 @@ cannot coexist.
   on; `run-id` = UTC `yyyymmdd-HHMMSS` plus a short random suffix (two
   invocations in the same second — a scripted A/B pair — must not collide), plus
   `-<scope-slug>` when a scope filter is given.
+- **The turn branch is checked out in a worktree of its own**, under the same
+  house convention as every other: `.claude/worktrees/emanate-<run-id>`, cut with
+  the branch in one step —
+  `git worktree add -b emanate/<run-id> .claude/worktrees/emanate-<run-id> <base-branch>`
+  — and removed at the run's end, immediately before the closing block is
+  written, which is what lets that block report whether the removal happened. The
+  branch outlives the worktree, which is the whole point: promote merges there,
+  and a merge commit with trailers cannot be made against a bare ref.
+  **The launch checkout is never moved** — not to cut the branch, not to merge
+  into it, not once between t=0 and the report. A run that has vouched for
+  nothing yet must not be standing in the operator's tree, which is the same rule
+  that detaches every phase worktree. The first field run had no stated home and
+  answered by default: its reflog shows the operator's own checkout moved to the
+  turn branch at t=0, and it was still there a day later.
+  The worktree carries the run id rather than a fixed name, so a directory left
+  behind by a crash says which run left it and the next run does not collide with
+  it.
 - **Per-unit integration branch** `emanate/<run-id>-<unit-slug>`, cut from the
   turn branch when the unit's wave opens. Phase worktrees prepare from and
   harvest onto it; the orchestrator's verify runs on it; a gate pass **promotes**
@@ -309,7 +327,10 @@ contract file, the profile set, the wire rows, the environment prefix, the
 worktree it runs in — things the role doc cannot know. **A unit-specific "what
 you emit" paragraph is forbidden**, however carefully written. The role doc says
 what the role emits, the derived contract says what this unit needs, and a third
-sentence on the subject can only agree redundantly or disagree wrongly.
+sentence on the subject can only agree redundantly or disagree wrongly. An
+entity's `population` is the shape of that trap: the plan JSON carries it, the
+contract carries it, both role docs already say what it changes — so a brief
+that repeats it has written the forbidden paragraph.
 
 *The disagreement is the case that happened.* A brief told an entity's contracter
 to emit "domain type, DTOs, semantic-type validators at the owning boundary, the
@@ -577,9 +598,10 @@ tests exist and the code does not.
 ### promote
 
 **Promotion is a merge, and nothing else.** Merge the unit's integration branch
-into the turn branch, then delete the branch. The merge commit's trailers carry
-the provenance: the run id, `template_sha`, the resolved profile hashes and the
-gate-verdict digest (verdict plus counts).
+into the turn branch, then delete the branch. The merge runs in the turn branch's
+own worktree (§ The branch scheme), never in the launch checkout. The merge
+commit's trailers carry the provenance: the run id, `template_sha`, the resolved
+profile hashes and the gate-verdict digest (verdict plus counts).
 
 **No run-mode step writes the knowledge base — `lifecycle:` included.** Not
 prose, not frontmatter, not the tracker. `stable` stays the operator's spec-level

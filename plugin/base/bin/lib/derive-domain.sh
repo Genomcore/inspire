@@ -134,12 +134,13 @@ derive_entity_json() {
   jq -n "${args[@]}" \
     --arg schema "$DERIVE_SCHEMA" --arg kind entity --arg id "$U_ID" \
     --arg path "$U_PATH" --arg lifecycle "$U_LIFECYCLE" --arg module "$U_MODULE" \
-    --arg entity "$U_ENTITY" --arg purpose "$U_PURPOSE" \
+    --arg entity "$U_ENTITY" --arg population "$U_POPULATION" \
+    --arg purpose "$U_PURPOSE" \
     "$DERIVE_JQ_PRELUDE"'
       byowner($fieldcons; 1) as $fc
       | {schema: $schema,
          unit: {kind: $kind, id: $id, path: $path, lifecycle: $lifecycle,
-                module: $module, entity: $entity},
+                module: $module, entity: $entity, population: $population},
          purpose: $purpose,
          requires: reqlist($requires),
          fields: (recs($fields)

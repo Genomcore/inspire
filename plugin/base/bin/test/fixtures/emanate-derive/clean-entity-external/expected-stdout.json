@@ -4,12 +4,12 @@
     "kind": "entity",
     "id": "auth.user",
     "path": "spec/sdd/auth/user/auth.user.md",
-    "lifecycle": "draft",
+    "lifecycle": "accepted",
     "module": "auth",
     "entity": "user",
-    "population": "internal"
+    "population": "external"
   },
-  "purpose": "Operator-facing prose stating what this entity is and why it exists as a discrete object, with inline prosaic wikilinks back to feature/ADR. Required, non-empty.",
+  "purpose": "The account record a principal signs in with, described in auth-user-management.",
   "requires": [
     {
       "kind": "entity",
@@ -86,23 +86,30 @@
         {
           "word": "pattern",
           "args": [
-            "/.+@.+/"
+            "/^[a-z]{3,8}@.+$/"
           ],
           "oracle": "test"
         }
       ]
     },
     {
-      "name": "password_hash",
+      "name": "status",
       "type": {
-        "name": "string",
+        "name": "status",
         "base": "string"
       },
-      "notes": "Algorithm decided system-wide.",
+      "notes": "Where the account sits.",
       "constraints": [
         {
           "word": "nonnull",
           "args": [],
+          "oracle": "store"
+        },
+        {
+          "word": "default",
+          "args": [
+            "active"
+          ],
           "oracle": "store"
         }
       ]
@@ -145,13 +152,13 @@
           "email"
         ]
       },
-      "prose": "Email is unique per organisation, not globally, because the identity model in [[adr-auth-01-identity-model]] scopes principals to an org.",
+      "prose": "Email is unique per organisation, never globally.",
       "oracle": "store"
     },
     {
       "key": "I2",
       "head": null,
-      "prose": "A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.",
+      "prose": "A suspended account keeps every row it wrote; suspension changes what may be read.",
       "oracle": "test"
     }
   ],
@@ -194,12 +201,17 @@
     {
       "id": "auth.user/field/email/pattern",
       "oracle": "test",
-      "fingerprint": "sha256:2dab2ea970281a5e0ec47cf6d583ea0503601ad205eed53f620024067cf432a9"
+      "fingerprint": "sha256:a5c79eafb8e59c8c78c5bece27fad8f93ec352bf86762c0da908f1ea8be71d44"
     },
     {
-      "id": "auth.user/field/password_hash/nonnull",
+      "id": "auth.user/field/status/nonnull",
       "oracle": "store",
       "fingerprint": "sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109"
+    },
+    {
+      "id": "auth.user/field/status/default",
+      "oracle": "store",
+      "fingerprint": "sha256:cf096fb38557a71ec5ef1a920acaacf0e7599e37aec1d43923798900582d5a54"
     },
     {
       "id": "auth.user/field/created_at/nonnull",
@@ -219,12 +231,12 @@
     {
       "id": "auth.user/inv/I1",
       "oracle": "store",
-      "fingerprint": "sha256:b17e5c50e2d92b26b4860881c5080118665207acfde797ef3ae8eb83e23c0848"
+      "fingerprint": "sha256:96f54602f847be60f03bc88b8d508870dee0a9330ce603076a4f0b396ceee434"
     },
     {
       "id": "auth.user/inv/I2",
       "oracle": "test",
-      "fingerprint": "sha256:e41255be8f1b3c80cb4808b3b2454e3612dc1c2d7f3a4bf48f68f7f6fd6901af"
+      "fingerprint": "sha256:90a04df857aee90e445894fc621c24fb67852d1a0a08019346de966205b7e838"
     }
   ]
 }
