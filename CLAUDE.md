@@ -337,7 +337,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, which otherwise made an 84-fixture rule the floor of the whole run. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 84 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the ten catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, which otherwise made an 86-fixture rule the floor of the whole run. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 86 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -357,7 +357,7 @@ anything.
   process count almost exactly: the `emanate-plan` fixtures run ~28,000 of them
   per sweep, and measured system time matches that at the few milliseconds each
   that a `fork`+`exec` costs. The heavy jobs are `emanate-derive` and
-  `emanate-plan`, at 84 and 71 fixtures, because each fixture spawns a rule and
+  `emanate-plan`, at 86 and 71 fixtures, because each fixture spawns a rule and
   the validators under it — those two are **sharded** by `run.sh` (see below), so
   neither is the wall on its own any more; a handful of `upgrade/` and
   `materialize/` files that build several period-correct fixtures each come next.
