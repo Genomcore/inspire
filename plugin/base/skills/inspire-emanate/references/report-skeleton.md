@@ -31,7 +31,8 @@ anything. It is the whole of what the file holds until the first wave closes.
 - **budget** — floor <n> · effective floor <n> · declared ceiling <n> ·
   waves permitted <n>
 - **preflight** — <the declared components and their probe verdicts, or
-  *none declared*; plan's `PR-22` where it fired>
+  *none declared*; whether the baseline ran in a recipe-provisioned worktree;
+  plan's `PR-22` and `PR-24` where they fired>
 - **status** — RUNNING
 ```
 
