@@ -1,7 +1,13 @@
 {
   "exit": 0,
   "findings": [
-    { "rule": "prose-style", "severity": "warning", "message_substring": "R2 sentence cap" }
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R2 sentence length: 39 words"
+    }
   ],
-  "forbidden": ["R4 glossary synonym"]
+  "forbidden": [
+    "R4 glossary synonym"
+  ]
 }

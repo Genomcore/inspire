@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R5 paragraph length: 9 sentences"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\"", "R2 sentence length"]
+}

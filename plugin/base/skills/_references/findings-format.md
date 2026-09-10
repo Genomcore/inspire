@@ -133,21 +133,27 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 
 Every one of these carries the rule id `prose-style`. Each names its contract
 rule, the section it was found in and the line, so the message is enough to act
-on without re-running anything. R1 and R3 are heuristics and stay warnings at
-every lifecycle; R2, R4, R5 and R6 ramp with the object's lifecycle in
-`04_domain` and are warnings everywhere else. R1, R3, R4 and R6 read the line
-with its `` `code spans` `` blanked out — a token quoted as a token is not a
+on without re-running anything. Only R4 and R6 ramp with the object's lifecycle
+in `04_domain`, and they are warnings everywhere else; R1, R2, R3, R5 and R7 are
+warnings at every lifecycle and in every layer. R1, R3, R4, R6 and R7 read the
+line with its `` `code spans` `` blanked out — a token quoted as a token is not a
 claim about the system — while R2 keeps them, because a code span is still a
 word the reader reads.
+
+Render R2 and R5 as an invitation to re-read the sentence rather than as a defect
+to fix — they measure length, which the contract treats as a place to look. R8
+(say it once) has no row at all: a restatement is a relationship between two
+places in a document, which no grep sees.
 
 | Type | Rule | Meaning |
 |---|---|---|
 | `R1 passive voice` | prose-style | A be-verb plus a past participle, where the sentence never says who acts. Heuristic — warning always. |
-| `R2 sentence cap` | prose-style | A sentence longer than 25 words. The message carries the count and the first words of the sentence. |
+| `R2 sentence length` | prose-style | A sentence over 35 words. The message carries the count and the first words of the sentence. Where a second claim usually hides — warning always. |
 | `R3 noun cluster` | prose-style | Four or more stacked nouns, where a preposition would name the relationship. Heuristic — warning always. |
 | `R4 glossary synonym` | prose-style | A term the glossary lists as rejected, used in prose. The message names the approved term. Silent when `00_bootstrap/glossary.md` is absent or has no data rows. |
-| `R5 paragraph length` | prose-style | A paragraph of more than 6 sentences. A list is not a paragraph: each item is measured on its own. |
+| `R5 paragraph length` | prose-style | A paragraph over 8 sentences. A list is not a paragraph: each item is measured on its own. Warning always. |
 | `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. |
+| `R7 figurative language` | prose-style | One of the closed intensifier list — `simply`, `simple matter of`, `merely`, `of course`, `needless to say`, `it goes without saying`, `seamless(ly)`, `elegant(ly)`, `effortless(ly)`, `powerful`. First hit per line only: a line opening "Of course this is simply…" has one problem, not two. The metaphor half of R7 is judgment, so a clean run says nothing about whether the prose is direct. Warning always. |
 
 ### Info
 
@@ -156,7 +162,7 @@ reach and stops:
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
+| `prose-style mechanical checks are en-only; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
 
 ## Exit codes
 

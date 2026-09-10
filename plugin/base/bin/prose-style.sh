@@ -8,9 +8,9 @@
 #
 # ─── Language gate ───────────────────────────────────────────────────────────
 #
-# The checks below are English morphology (R1, R3, the R6 token list) keyed on
-# English H2 names (the binding table). A compliant non-`en` fork translates its
-# headers — headers are prose, not machine-read tokens — so even the
+# The checks below are English morphology (R1, R3, the R6 and R7 token lists)
+# keyed on English H2 names (the binding table). A compliant non-`en` fork
+# translates its headers — headers are prose, not machine-read tokens — so even the
 # language-independent rules would have no section kind to bind to. When
 # `$SDD_KB_ROOT/00_bootstrap/project.md` declares an `output_language` other
 # than English, this script emits ONE info-level note and exits 0. Absent or
@@ -24,9 +24,9 @@
 #
 # ─── The checks ──────────────────────────────────────────────────────────────
 #
-#   R2  sentence cap        — at most 25 words per sentence   (contract §R2)
+#   R2  sentence length     — over 35 words in one sentence    (contract §R2)
 #   R4  glossary synonyms   — a rejected synonym from `00_bootstrap/glossary.md`
-#   R5  paragraph length    — at most 6 sentences per paragraph
+#   R5  paragraph length    — over 8 sentences in one paragraph
 #   R6  historical language — the CLOSED token list: `previously`, `used to`,
 #                             `migrated from`, `~~strikethrough~~`. `replaces`
 #                             and `removed` are deliberately NOT checked: both
@@ -40,40 +40,51 @@
 #                             phrase distinguishes.
 #   R1  passive voice       — be-verb + past participle, heuristic
 #   R3  noun clusters       — 4+ consecutive content nouns, heuristic
+#   R7  figurative language — the CLOSED intensifier list in PS_FLOURISH, first
+#                             hit per line. R7's metaphor half is judgment only.
 #
-# Severity. R2, R4, R5 and R6 are lifecycle-progressive where a `lifecycle:`
-# field exists (the `04_domain` layer, via `sdd_progressive_severity`: draft →
-# warning, accepted/stable → error, superseded → warning) and flat warnings
-# everywhere else, because features, ADRs and screens carry no lifecycle at all.
-# R1 and R3 are heuristics: they are warnings at EVERY lifecycle and never ramp,
-# in either layer. A guess does not get to block a commit.
+# Severity. Only R4 and R6 are lifecycle-progressive, and only where a
+# `lifecycle:` field exists (the `04_domain` layer, via
+# `sdd_progressive_severity`: draft → warning, accepted/stable → error,
+# superseded → warning); everywhere else they are flat warnings, because
+# features, ADRs and screens carry no lifecycle at all. R1, R2, R3, R5 and R7
+# are warnings at EVERY lifecycle and never ramp, in either layer. R1, R3 and R7
+# guess, and a guess does not get to block a commit. R2 and R5 do not guess:
+# they measure length, and the rule they serve is one claim per sentence and one
+# idea per paragraph, which a count cannot decide. 35 and 8 are where to look,
+# so a review that failed on one would enforce the symptom and leave the
+# disease.
 #
 # ─── What binds where (the contract's binding table, keyed per layer) ────────
 #
 #   kind        | checks               | sections
 #   ------------|----------------------|------------------------------------
-#   normative   | R1 R2 R3 R4 R5 R6    | everything not named below
-#   ac          | R1 R2 R3 R4 R6       | feature `## Acceptance criteria`
-#   tabular     | R3 R4 R6             | action `## Inputs` `## Outputs`
+#   normative   | R1 R2 R3 R4 R5 R6 R7 | everything not named below
+#   ac          | R1 R2 R3 R4 R6 R7    | feature `## Acceptance criteria`
+#   tabular     | R3 R4 R6 R7          | action `## Inputs` `## Outputs`
 #               |                      | `## Entities` `## Errors`; entity
 #               |                      | `## Fields` `## Touched by`; ADR
 #               |                      | `## Related ADRs` (R6-exempt)
 #
+# R8 (say it once) has no row: a restatement is a relationship between two
+# places in a document, which a section kind cannot express and a grep cannot
+# see. It is judgment, and the contract says so.
+#
 # An H2 the map does not name reads as normative prose — the permissive
 # direction, since a table-only section yields no prose lines to check anyway.
 #
-# ─── What 0.7 mechanically reaches, and what it does not ─────────────────────
+# ─── What the checks mechanically reach, and what they do not ───────────────
 #
 # Every check reads `sdd_body_prose` (_lib.sh), which is `sdd_body_section`
 # minus fenced blocks, minus table rows, minus bare `---` thematic breaks, with
 # wikilinks unwrapped to their display text. That reader draws the boundary, and
 # the boundary is narrower than the contract:
 #
-#   - TABLE CELLS ARE NEVER READ. The prose reader drops table rows, so R3, R4
-#     and R6 reach only the prose that SURROUNDS a table in a tabular section,
-#     never the cells themselves. The contract binds the cells; 0.7 does not
-#     check them. A column header is exactly where a noun cluster hides best,
-#     and that hiding place is left to judgment for now.
+#   - TABLE CELLS ARE NEVER READ. The prose reader drops table rows, so R3, R4,
+#     R6 and R7 reach only the prose that SURROUNDS a table in a tabular
+#     section, never the cells themselves. The contract binds the cells; these
+#     checks do not reach them. A column header is exactly where a noun cluster
+#     hides best, and that hiding place is left to judgment.
 #   - PROSE ABOVE THE FIRST H2 IS NEVER READ. The classification is keyed on H2
 #     names, so a feature's one-line description, a screen's `**Features:**` /
 #     `**Pattern:**` preamble and an ADR's `**Status:**` block sit outside every
@@ -81,9 +92,13 @@
 #   - PER-FIELD `### {field}` PROSE INSIDE `## Fields` READS AS TABULAR. An
 #     entity's per-field H3 notes are normative prose, but H2-level
 #     classification cannot see them: they inherit their parent's kind and get
-#     R3/R4/R6 only. Recorded, not solved, in 0.7.
+#     R3/R4/R6/R7 only. Recorded, not solved.
 #   - R1 AND R3 ARE HEURISTICS, and R2's sentence splitter is one too. They
 #     mis-read some sentences in both directions. That is why they never ramp.
+#   - R7 READS A CLOSED LIST, so it never guesses about a word it matched — but
+#     it cannot see the metaphor half of the rule at all, which is the half that
+#     matters most. It never ramps for that reason: a clean R7 run says nothing
+#     about whether the prose is direct.
 #   - R4 MATCHES WHOLE WORDS ONLY. Boundary matching misses inflections: a
 #     glossary rejecting `organization` does not catch `organizations`. Exact
 #     word, or nothing — judgment owns the rest.
@@ -95,7 +110,7 @@
 #     separately. Written with NO blank line above and below, the two paragraphs
 #     merge into one measurement unit and R5 counts them as one; that shape is a
 #     setext H2 underline in markdown rather than a break, so it is left as is.
-#   - INLINE CODE IS NOT PROSE for R1, R3, R4 and R6: their line is read with
+#   - INLINE CODE IS NOT PROSE for R1, R3, R4, R6 and R7: their line is read with
 #     `` `code spans` `` blanked out, so a token quoted as a token is not a claim
 #     about the system. R2 keeps them — a code span is still a word the reader
 #     reads, and dropping it would under-count the sentence.
@@ -112,9 +127,9 @@
 # preamble the reader never sees, so the exemption holds if such a line is
 # written inside a section body.
 #
-# The exemptions are R6's alone. An exempt line is ordinary prose for R1, R2, R3
-# and R5 — it still carries a sentence, and it still belongs to the paragraph it
-# sits in. Widening them to every rule would silently un-check whole lines on the
+# The exemptions are R6's alone. An exempt line is ordinary prose for R1, R2, R3,
+# R5 and R7 — it still carries a sentence, and it still belongs to the paragraph
+# it sits in. Widening them to every rule would silently un-check whole lines on the
 # strength of a rule about history.
 #
 # ─── R4, in one pass ─────────────────────────────────────────────────────────
@@ -148,9 +163,16 @@ sdd_init_counters
 
 SCOPE="${1:-}"
 
-# The contract's own numbers (writing-style.md §R2, §R5). Encoded once.
-R2_MAX_WORDS=25
-R5_MAX_SENTENCES=6
+# Where the two length signals fire (writing-style.md §R2, §R5). Encoded once.
+R2_WORD_SIGNAL=35
+R5_SENTENCE_SIGNAL=8
+
+# R7's closed intensifier list (writing-style.md § Figurative language). Only
+# words that state nothing in any specification context, so deleting one never
+# changes what a sentence claims. `fast`, `intuitive` and `robust` are absent on
+# purpose: those name a measurable property, so they belong to the vague-language
+# discipline, where the fix is to state the measurement rather than cut the word.
+PS_FLOURISH="simply|simple matter of|merely|of course|needless to say|it goes without saying|seamless|seamlessly|elegant|elegantly|effortless|effortlessly|powerful"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Language gate — first, before anything is read
@@ -173,7 +195,7 @@ case "$PS_LANG" in
   en|en-*|en_*|english) ;;
   *)
     sdd_finding "info" "prose-style" "$PROJECT_FILE" \
-      "output_language: $OUTPUT_LANGUAGE — prose-style mechanical checks are en-only in 0.7; the writing contract still binds as authoring judgment"
+      "output_language: $OUTPUT_LANGUAGE — prose-style mechanical checks are en-only; the writing contract still binds as authoring judgment"
     exit 0
     ;;
 esac
@@ -315,18 +337,19 @@ PS_IRREGULARS="written|shown|done|made|given|taken|seen|known|kept|held|sent|bui
 #   Reads prose on stdin. Emits finding records on stdout.
 prose_scan() {
   local kind="$1" skipbc="$2" exempt6="$3" idxrec="$4"
-  local do_r1=0 do_r2=0 do_r3=0 do_r5=0 do_r6=0
+  local do_r1=0 do_r2=0 do_r3=0 do_r5=0 do_r6=0 do_r7=0
   case "$kind" in
-    normative) do_r1=1; do_r2=1; do_r3=1; do_r5=1; do_r6=1 ;;
-    ac)        do_r1=1; do_r2=1; do_r3=1; do_r6=1 ;;
-    tabular)   do_r3=1; do_r6=1 ;;
+    normative) do_r1=1; do_r2=1; do_r3=1; do_r5=1; do_r6=1; do_r7=1 ;;
+    ac)        do_r1=1; do_r2=1; do_r3=1; do_r6=1; do_r7=1 ;;
+    tabular)   do_r3=1; do_r6=1; do_r7=1 ;;
   esac
   [ "$exempt6" = "1" ] && do_r6=0
 
   awk -v do_r1="$do_r1" -v do_r2="$do_r2" -v do_r3="$do_r3" \
-      -v do_r5="$do_r5" -v do_r6="$do_r6" -v skipbc="$skipbc" \
-      -v maxwords="$R2_MAX_WORDS" -v maxsent="$R5_MAX_SENTENCES" \
+      -v do_r5="$do_r5" -v do_r6="$do_r6" -v do_r7="$do_r7" -v skipbc="$skipbc" \
+      -v maxwords="$R2_WORD_SIGNAL" -v maxsent="$R5_SENTENCE_SIGNAL" \
       -v stopwords="$PS_STOPWORDS" -v irregulars="$PS_IRREGULARS" \
+      -v flourish="$PS_FLOURISH" \
       -v r4stream="${R4_STREAM_ARMED:-}" -v r4index="${R4_INDEX_ARMED:-}" \
       -v idxrec="$idxrec" '
     function trim(s) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
@@ -422,6 +445,7 @@ prose_scan() {
       for (i = 1; i <= n; i++) if (sw[i] != "") STOP[sw[i]] = 1
       passive_ed = "(^|[^A-Za-z])(is|are|was|were|be|been|being|am)[ \t]+[A-Za-z]+ed([^A-Za-z]|$)"
       passive_irr = "(^|[^A-Za-z])(is|are|was|were|be|been|being|am)[ \t]+(" irregulars ")([^A-Za-z]|$)"
+      nflour = split(flourish, FLOUR, /\|/)
       usent = 0
     }
 
@@ -513,6 +537,25 @@ prose_scan() {
         if (nocode ~ /~~[^~]+~~/) emit("R6", raw, "~~strikethrough~~")
       }
 
+      # The R7 intensifiers, read on the code-blanked line for the same reason
+      # R6 uses it: a word quoted as a token is not a claim. FIRST HIT ONLY — a
+      # line opening "Of course this is simply..." has one problem, not two, and
+      # two findings on one line would make the check read as noise. The list is
+      # closed and lives in PS_FLOURISH. The metaphor half of R7 stays judgment:
+      # no list separates a figure of speech from a term of art.
+      # NOTE: no apostrophe may appear anywhere in this awk program — it is
+      # single-quoted, so one would close the quote.
+      if (do_r7) {
+        lc7 = tolower(nocode)
+        for (fi = 1; fi <= nflour; fi++) {
+          if (FLOUR[fi] == "") continue
+          if (match(lc7, "(^|[^a-z])" FLOUR[fi] "([^a-z]|$)")) {
+            emit("R7", raw, FLOUR[fi])
+            break
+          }
+        }
+      }
+
       if (uanchor == "") uanchor = raw
       if (cur == "") curanchor = raw
       cur = cur (cur == "" ? "" : " ") body
@@ -590,8 +633,9 @@ locate_line() {
 emit_finding() {
   local check="$1" anchor="$2" detail="$3"
   local sev line msg
+  # Only R4 and R6 ramp — see the severity note in this file's header.
   case "$check" in
-    R1|R3) sev="warning" ;;
+    R1|R2|R3|R5|R7) sev="warning" ;;
     *) ramp_sev; sev="$RAMP_SEV" ;;
   esac
   line="$(locate_line "$CUR_READ" "$CUR_SECTION" "$anchor")"
@@ -599,13 +643,15 @@ emit_finding() {
     R1)
       msg="R1 passive voice: '$detail' in '## $CUR_SECTION' (line $line) — name the actor" ;;
     R2)
-      msg="R2 sentence cap: sentence of ${detail%%|*} words exceeds $R2_MAX_WORDS in '## $CUR_SECTION' (line $line): ${detail#*|}" ;;
+      msg="R2 sentence length: ${detail%%|*} words in '## $CUR_SECTION' (line $line) — check it carries one claim: ${detail#*|}" ;;
     R3)
       msg="R3 noun cluster: stacked nouns '$detail' in '## $CUR_SECTION' (line $line) — a preposition removes the ambiguity" ;;
     R5)
-      msg="R5 paragraph length: paragraph of $detail sentences exceeds $R5_MAX_SENTENCES in '## $CUR_SECTION' (line $line)" ;;
+      msg="R5 paragraph length: $detail sentences in '## $CUR_SECTION' (line $line) — check it carries one idea" ;;
     R6)
       msg="R6 historical language: '$detail' in '## $CUR_SECTION' (line $line) — state the present, git carries the history" ;;
+    R7)
+      msg="R7 figurative language: '$detail' in '## $CUR_SECTION' (line $line) — cut it, the sentence keeps its meaning" ;;
     *) return 0 ;;
   esac
   sdd_finding "$sev" "prose-style" "$CUR_FILE" "$msg"

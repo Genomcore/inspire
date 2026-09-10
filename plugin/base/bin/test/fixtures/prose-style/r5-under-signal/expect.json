@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "finding_count": 0,
+  "findings": [],
+  "forbidden": ["prose-style"]
+}
