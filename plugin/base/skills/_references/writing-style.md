@@ -377,10 +377,19 @@ section kind to bind to. A non-`en` checking strategy is **deferred and recorded
 solved: until one exists, the validator stays an `en`-only subset of a contract that
 binds everywhere.
 
-**What can reach `error`, and what cannot.** A finding ramps with the artifact's own
-`lifecycle` only where the check reads a claim: R4 and R6. R1, R2, R3, R5 and R7 are
-warnings at every lifecycle state, in every layer, and never escalate. For R1, R3 and
-R7 that is because they guess, and a guess does not block a commit. For R2 and R5 it is
-because they measure length, and length is a place to look rather than a defect — a
-review that failed on a word count would be enforcing the symptom and leaving the
-disease. Nothing here gates a commit on style alone.
+**What can reach `error`, and what cannot.** One check ramps with the artifact's own
+`lifecycle`: R4. Every other rule is a warning at every lifecycle state, in every
+layer, and never escalates. **Nothing gates a commit on style.**
+
+R4 is alone because it is the one check that reads a **declaration** rather than
+judging prose. `00_bootstrap/glossary.md` records that this word is rejected and
+names the approved one, so a hit contradicts something the operator wrote down —
+the same class of defect as a broken wikilink, and the glossary is what makes it
+checkable. Delete the row and the finding goes away, correctly.
+
+Every other rule states a preference about how a sentence reads. R1, R3 and R7
+guess on top of that. R2 and R5 measure length, which is a place to look rather
+than a defect. R6 measures neither: its token list is exact, and it is still a
+warning, because rewriting a settled artifact's prose is not work a commit should
+be held for, and because the list reaches the past alone — a clean R6 run says
+little about the rule as a whole.

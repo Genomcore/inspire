@@ -1,0 +1,12 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "error",
+      "message_substring": "R4 glossary synonym: 'organization' in '## Purpose' .* the glossary's approved term is 'tenant'"
+    }
+  ],
+  "forbidden": ["R1 passive voice", "R2 sentence length", "R6 historical language"]
+}

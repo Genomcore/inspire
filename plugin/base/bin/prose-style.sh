@@ -43,17 +43,23 @@
 #   R7  figurative language — the CLOSED intensifier list in PS_FLOURISH, first
 #                             hit per line. R7's metaphor half is judgment only.
 #
-# Severity. Only R4 and R6 are lifecycle-progressive, and only where a
-# `lifecycle:` field exists (the `04_domain` layer, via
-# `sdd_progressive_severity`: draft → warning, accepted/stable → error,
-# superseded → warning); everywhere else they are flat warnings, because
-# features, ADRs and screens carry no lifecycle at all. R1, R2, R3, R5 and R7
-# are warnings at EVERY lifecycle and never ramp, in either layer. R1, R3 and R7
-# guess, and a guess does not get to block a commit. R2 and R5 do not guess:
-# they measure length, and the rule they serve is one claim per sentence and one
-# idea per paragraph, which a count cannot decide. 35 and 8 are where to look,
-# so a review that failed on one would enforce the symptom and leave the
-# disease.
+# Severity. ONLY R4 IS LIFECYCLE-PROGRESSIVE, and only where a `lifecycle:`
+# field exists (the `04_domain` layer, via `sdd_progressive_severity`: draft →
+# warning, accepted/stable → error, superseded → warning); everywhere else it is
+# a flat warning, because features, ADRs and screens carry no lifecycle at all.
+# R4 is alone there because it is the one check that reads a DECLARATION rather
+# than judging prose: `00_bootstrap/glossary.md` says this word is rejected and
+# names the approved one, so a hit contradicts something the operator wrote
+# down. Every other rule states a preference about how a sentence reads, however
+# well-founded, and a preference does not block a commit.
+#
+# R1, R2, R3, R5, R6 and R7 are warnings at EVERY lifecycle, in every layer.
+# R1, R3 and R7 guess. R2 and R5 do not guess — they measure length, and the
+# rule they serve is one claim per sentence and one idea per paragraph, which a
+# count cannot decide. R6 does not guess either, on its closed token list; it is
+# a warning because rewriting a settled artifact's prose is not the kind of work
+# a commit should be held for, and because the token list reaches only the past,
+# so a clean R6 run says little about the rule as a whole.
 #
 # ─── What binds where (the contract's binding table, keyed per layer) ────────
 #
@@ -633,9 +639,9 @@ locate_line() {
 emit_finding() {
   local check="$1" anchor="$2" detail="$3"
   local sev line msg
-  # Only R4 and R6 ramp — see the severity note in this file's header.
+  # Only R4 ramps — see the severity note in this file's header.
   case "$check" in
-    R1|R2|R3|R5|R7) sev="warning" ;;
+    R1|R2|R3|R5|R6|R7) sev="warning" ;;
     *) ramp_sev; sev="$RAMP_SEV" ;;
   esac
   line="$(locate_line "$CUR_READ" "$CUR_SECTION" "$anchor")"

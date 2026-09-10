@@ -133,9 +133,9 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 
 Every one of these carries the rule id `prose-style`. Each names its contract
 rule, the section it was found in and the line, so the message is enough to act
-on without re-running anything. Only R4 and R6 ramp with the object's lifecycle
-in `04_domain`, and they are warnings everywhere else; R1, R2, R3, R5 and R7 are
-warnings at every lifecycle and in every layer. R1, R3, R4, R6 and R7 read the
+on without re-running anything. Only R4 ramps with the object's lifecycle in
+`04_domain`, and it is a warning everywhere else; every other rule is a warning
+at every lifecycle and in every layer, so nothing here gates a commit on style. R1, R3, R4, R6 and R7 read the
 line with its `` `code spans` `` blanked out — a token quoted as a token is not a
 claim about the system — while R2 keeps them, because a code span is still a
 word the reader reads.
@@ -152,7 +152,7 @@ places in a document, which no grep sees.
 | `R3 noun cluster` | prose-style | Four or more stacked nouns, where a preposition would name the relationship. Heuristic — warning always. |
 | `R4 glossary synonym` | prose-style | A term the glossary lists as rejected, used in prose. The message names the approved term. Silent when `00_bootstrap/glossary.md` is absent or has no data rows. |
 | `R5 paragraph length` | prose-style | A paragraph over 8 sentences. A list is not a paragraph: each item is measured on its own. Warning always. |
-| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. |
+| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. The token list reaches the past only, so the future and the negative space are authoring judgment. Warning always. |
 | `R7 figurative language` | prose-style | One of the closed intensifier list — `simply`, `simple matter of`, `merely`, `of course`, `needless to say`, `it goes without saying`, `seamless(ly)`, `elegant(ly)`, `effortless(ly)`, `powerful`. First hit per line only: a line opening "Of course this is simply…" has one problem, not two. The metaphor half of R7 is judgment, so a clean run says nothing about whether the prose is direct. Warning always. |
 
 ### Info

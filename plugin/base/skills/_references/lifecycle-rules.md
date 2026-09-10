@@ -116,19 +116,21 @@ never on the ones that read its prose.
 
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
-| `prose-style` R4 glossary synonyms · R6 historical language | warning | error | error | warning |
-| `prose-style` R1 passive voice · R2 sentence length · R3 noun clusters · R5 paragraph length · R7 figurative language | warning | warning | warning | warning |
+| `prose-style` R4 glossary synonyms | warning | error | error | warning |
+| `prose-style` R1 passive voice · R2 sentence length · R3 noun clusters · R5 paragraph length · R6 historical language · R7 figurative language | warning | warning | warning | warning |
 
 `prose-style` checks the greppable half of
 [`writing-style.md`](writing-style.md); the authoring skills carry the whole
-contract as judgment. Only R4 and R6 ramp with this table's columns, and only in
-`04_domain` — everywhere else they are flat warnings, because `03_features` and
+contract as judgment. Only R4 ramps with this table's columns, and only in
+`04_domain` — everywhere else it is a flat warning, because `03_features` and
 `01_adr` have no `lifecycle:` for the columns to read and `05_screens` has one
 these checks deliberately do not read (§ Screens).
 
-The five in the second row never reach `error` at any state. R1, R3 and R7 guess,
-and a guess does not block a commit. R2 and R5 measure length, which
-[`writing-style.md`](writing-style.md) § Enforcement keeps out of the ramp.
+R4 is alone because it reads a **declaration**: the glossary records that a word
+is rejected, so a hit contradicts something the operator wrote down. Every rule in
+the second row states a preference about how a sentence reads, and
+[`writing-style.md`](writing-style.md) § Enforcement keeps all of them out of the
+ramp — **nothing gates a commit on style.**
 
 The checks are **English-only**: a project whose `output_language` is not `en`
 gets one info-level note and no findings at all.
