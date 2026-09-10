@@ -1,8 +1,20 @@
 {
-  "exit": 1,
+  "exit": 0,
   "findings": [
-    { "rule": "prose-style", "severity": "error", "message_substring": "R6 historical language: 'previously'" },
-    { "rule": "prose-style", "severity": "error", "message_substring": "R6 historical language: '~~strikethrough~~'" }
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: 'previously'"
+    },
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: '~~strikethrough~~'"
+    }
   ],
-  "forbidden": ["'replaces'", "'removed'"]
+  "forbidden": [
+    "\"severity\":\"error\"",
+    "'replaces'",
+    "'removed'"
+  ]
 }

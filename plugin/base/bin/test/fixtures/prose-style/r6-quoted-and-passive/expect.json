@@ -1,13 +1,14 @@
 {
-  "exit": 1,
+  "exit": 0,
   "findings": [
     {
       "rule": "prose-style",
-      "severity": "error",
+      "severity": "warning",
       "message_substring": "R6 historical language: 'used to' in '## Purpose' .line 14."
     }
   ],
   "forbidden": [
+    "\"severity\":\"error\"",
     "R6 historical language: 'previously'",
     "R6 historical language: 'used to' in '## Purpose' (line 10)",
     "R6 historical language: 'used to' in '## Purpose' (line 12)"

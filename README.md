@@ -148,8 +148,7 @@ at init and is yours from then on.
 > install time — never a files map of its own. A file you add *inside* an
 > `inspire-*` skill directory (a custom stack profile, say) appears in no manifest,
 > so it classifies as `keep` and survives every update untouched. A pre-0.3 install
-> needs no special migration either — it is simply the longest hop chain, which
-> `/inspire:update` replays like any other.
+> is the longest hop chain, which `/inspire:update` replays like any other.
 
 > **Suites.** A product delivered through several UIs and/or services is a *suite* of
 > *surfaces* — `ui`, `headless` (any service without a face) and `lib` (shared
@@ -157,7 +156,7 @@ at init and is yours from then on.
 > with `/inspire-surface add`; the roster at `inspire_kb/00_bootstrap/surfaces.md` then
 > scopes screens by directory, gives spanning artifacts a `surfaces:` blast radius, and
 > tells `/inspire-code` which package it is emanating into. A project that declares none
-> is a suite of one, and its KB looks exactly as it always did.
+> is a suite of one, and its KB carries no surface scoping at all.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
 > language (`inspire_kb/00_bootstrap/project.md`, default English) —

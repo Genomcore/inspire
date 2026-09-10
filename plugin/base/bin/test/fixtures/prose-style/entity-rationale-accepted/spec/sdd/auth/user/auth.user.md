@@ -11,7 +11,7 @@ The tenant owns a set of users.
 
 ## Rationale
 
-Because the model follows the decision recorded in [[adr-auth-sessions]], the tenant stays the billing owner of every account, and a user never pays for anything on its own.
+Because the model follows the decision recorded in [[adr-auth-sessions]], the tenant stays the billing owner of every account, and a user never pays for anything on its own, whichever plan the account happens to sit on today.
 
 ## Fields
 

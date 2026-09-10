@@ -101,7 +101,7 @@ Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariant
 - **`### {field-name}`** — per-field sub-section, immediately under the Fields table, in field-table order. Its **first line carries the field's constraints** when it has any: `` Constraints: `nonnull, unique, immutable` `` — the closed V1 vocabulary of [`keyed-heads.md`](../../_references/keyed-heads.md). A `Constraints:` line further down the body is read and checked too, and reported as misplaced (`OS-E8`) rather than ignored. Everything after that line is the per-field rationale prose: what motivates the design, which ADR or feature grounds it, what consumers need to know. A constrained field **must** carry the H3, even when the Constraints line is all it has to say; an unconstrained field needs one only when its design needs narrating.
 - **`## Touched by`** — auto-populated by consolidation: `| Action | Touch | Notes |` table. **Touch values**: `read` · `write` · `list` · `delete`. Action ids use pipe-syntax wikilinks (`[[module.entity.action|module::entity::action]]`). Operators do not hand-edit this section; it is rewritten on every consolidation pass.
 
-**No `## Findings`, no `## Used by`.** Files state present truth only — findings live in `review` output (git history is the audit trail), and the V2 `## Used by` section is now `## Touched by` with explicit touch semantics.
+**No `## Findings`, no `## Used by`.** Files state present truth only: findings live in `review` output, where git history is the audit trail. `## Touched by` is the section that records which actions reach an entity, with explicit touch semantics.
 
 ## Constraints and invariants
 

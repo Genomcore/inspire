@@ -19,12 +19,12 @@ repo is both its source and its own marketplace.
     and `/inspire:update` (**upgrade from any released version**, in one command —
     it detects the installed version, replays the layout hops between there and
     here, and merges content per file, never overwriting a locally-edited one).
-    A pre-0.3 project is no longer refused; it is simply the longest chain. The
-    run ends by offering the trust report: an upgrade diverges skills en masse.
+    A pre-0.3 project is the longest chain. The run ends by offering the trust
+    report: an upgrade diverges skills en masse.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
-    upgrade tell an operator's edit apart from a file that is merely stale — a
+    upgrade tell an operator's edit apart from a file that is stale — a
     distinction `.inspire.lock` cannot make, since it lives on the operator's
     machine and pre-0.3 installs often wrote no lock at all.
   - `plugin/scripts/lib/` — the sourced units `materialize.sh` is built from:
@@ -52,8 +52,8 @@ repo is both its source and its own marketplace.
     `settings.json` merge (which also retires the unmarked pre-0.3 hook entries),
     and writing `.inspire.lock`. The lock is **provenance only** —
     `inspire_version`/`released`/`template_sha`/`installed_at`, no `files` map:
-    per-file hashes live in the shipped manifests, where they cannot be edited, and
-    two disagreeing answers to "what did we ship?" would be worse than one.
+    per-file hashes live in the shipped manifests, where they cannot be edited, so
+    one place answers "what did we ship?".
     `template_sha` carries the release commit, which `inspire-lesson` stamps onto
     every lesson. In act mode it also saves the grouped report to
     `.inspire/last-upgrade.log` — overwritten each run, so what the last upgrade did
@@ -194,8 +194,7 @@ repo is both its source and its own marketplace.
       one place a persona could hand gate a plausible-but-wrong shape and have
       every claim read as not-run. `emanate-harvest.sh` (a phase worktree's owned
       diff → one integration commit) is pure git. Those last two source no lib
-      unit at all, and each says so in its own header, so a reader is never left
-      wondering which half of the package they are missing.
+      unit at all, and each says so in its own header.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
@@ -274,9 +273,7 @@ reference each other and the validators via the **deployed** paths
 (`.claude/skills/…`, `.inspire/bin/…`). If the payload lived at the plugin's top
 level, those skills and hooks would fire in *this* repo while the template itself
 is edited — so it is nested one level down, under `plugin/base/`, where Claude
-Code never looks. The rationale is unchanged from earlier releases; only the
-mechanism moved (from a dormant `.inspire/` directory to a nested, un-discovered
-plugin path).
+Code never looks.
 
 Instantiating a project is one command, run from a Claude Code session with the
 plugin installed:
@@ -304,12 +301,11 @@ directory is using INSPIRE correctly and none of that may block an upgrade. **ho
 replay the layout moves. **reconcile** merges content per file, seeds any missing KB
 skeleton files, writes `settings.json` once and rewrites the lock.
 
-Three invariants hold throughout, and they are the point of the whole design:
-nothing of the operator's is destroyed — a file INSPIRE never shipped is *kept* by
-construction, not by a special case; nothing is left silently stale while the version
-claims otherwise; and the report never claims something that did not happen. Only a
-genuine conflict — a file both sides changed, differently — asks the operator
-anything.
+Three invariants hold throughout. Nothing of the operator's is destroyed: a file
+INSPIRE never shipped is *kept* by construction, not by a special case. Nothing is
+left silently stale while the version claims otherwise. And the report claims only
+what happened. Only a genuine conflict — a file both sides changed, differently —
+asks the operator anything.
 
 ## Working in this repo
 
@@ -342,7 +338,7 @@ anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, which otherwise made an 86-fixture rule the floor of the whole run. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 86 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 86-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 86 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -351,38 +347,39 @@ anything.
   holds no tests and the runner never runs it.
 
   A run takes minutes rather than seconds, and that is fixture builds and
-  process spawns, not a hang. **Wall-clock figures are deliberately not recorded
-  here** — measurements of the same job on the same machine have varied by more
-  than they differ from each other, so any number in this file would be
-  measuring load rather than the estate. Measure it yourself when you need to
-  know. What is stable is the shape: the run is **spawn-bound** — it is roughly
-  four-fifths kernel time, `fork` and `exec` rather than computation, which is
-  why raising `-j` past the core count buys nothing and why the lever that works
-  is always "spawn fewer processes", never "schedule better". Cost follows the
-  process count almost exactly: the `emanate-plan` fixtures run ~28,000 of them
-  per sweep, and measured system time matches that at the few milliseconds each
-  that a `fork`+`exec` costs. The heavy jobs are `emanate-derive` and
-  `emanate-plan`, at 86 and 71 fixtures, because each fixture spawns a rule and
-  the validators under it — those two are **sharded** by `run.sh` (see below), so
-  neither is the wall on its own any more; a handful of `upgrade/` and
-  `materialize/` files that build several period-correct fixtures each come next.
-  Every job is
-  **parallel-safe**: every scratch tree is a private `mktemp` one and the repo is
-  only ever read, so any number of copies — several worktrees at once, the same
-  file twice over, a single file beside a full run — can run concurrently without
-  interfering. The one shared tree is the fixture cache each `run.sh` builds
-  inside its own `mktemp -d`: read-only to the jobs, fingerprinted after the
-  build and again before exit, so a job that reached into it fails the run —
-  naming the cache, not the job — instead of poisoning its siblings. Keep it that
-  way: a fixed path under `/tmp` is what made the upgrade suite produce phantom
-  failures before.
-- Fixtures are free and cost the repo nothing: every tag ships a runnable installer,
-  so `git archive <tag>` plus that era's own installer yields a genuine
+  process spawns, not a hang. **Do not record wall-clock figures in this file** —
+  measurements of the same job on the same machine vary by more than the jobs
+  differ from each other, so a number here measures load rather than the estate.
+  Measure it yourself when you need to know.
+
+  The shape is stable. The run is **spawn-bound**: roughly four-fifths kernel
+  time, `fork` and `exec` rather than computation. So raising `-j` past the core
+  count buys nothing, and the lever that works is "spawn fewer processes" rather
+  than "schedule better". Cost follows the process count almost exactly — the
+  `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
+  matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
+  `emanate-derive` and `emanate-plan`, at 86 and 71 fixtures, because each
+  fixture spawns a rule and the validators under it; `run.sh` **shards** both
+  (see below). Next come a handful of `upgrade/` and `materialize/` files that
+  build several period-correct fixtures each.
+
+  Every job is **parallel-safe**: every scratch tree is a private `mktemp` one
+  and the repo is only ever read, so any number of copies — several worktrees at
+  once, the same file twice over, a single file beside a full run — run
+  concurrently without interfering. The one shared tree is the fixture cache each
+  `run.sh` builds inside its own `mktemp -d`: read-only to the jobs,
+  fingerprinted after the build and again before exit, so a job that writes into
+  it fails the run and the failure names the cache rather than the job. Keep the
+  cache inside `mktemp -d`: a fixed path under `/tmp` produces phantom failures
+  in the upgrade suite.
+- Fixtures cost the repo nothing: every tag ships a runnable installer, so
+  `git archive <tag>` plus that era's own installer yields a genuine
   period-correct project tree. `plugin/test/lib/fixtures.sh` does this — prefer it
   over hand-built trees, and note that a pre-0.3 project legitimately retains
   `.inspire/{bin,hooks,skills,templates}` as the staged source `install.sh` copied
-  FROM. **Seven assertions in this repo have been vacuous because of that**: "the
-  destination exists" passes whether or not the code under test ran. Assert the
+  FROM. An assertion on the destination alone is **vacuous** here: "the
+  destination exists" passes whether or not the code under test ran, and seven
+  assertions in this repo have been vacuous for exactly that reason. Assert the
   source side too, or pick a path the old installer cannot have staged. When unsure,
   stub the function to a no-op *on a copy* and confirm the assertion fails.
 - **Symlinks are not supported** anywhere in a managed path. Nothing INSPIRE ships is
@@ -410,8 +407,8 @@ anything.
      --notes-file <notes>`. The changelog section *is* the release notes; there
      is no second place to write them.
 
-  The tag is load-bearing twice over, which is why leaving it for later is not
-  harmless. `plugin/test/manifest/03-reproduction-sweep.sh` checks an
+  The tag carries two checks, and both go quiet without it.
+  `plugin/test/manifest/03-reproduction-sweep.sh` checks an
   **untagged** manifest by regenerating from the commit the manifest itself
   names — self-referential, so it only proves the manifest describes the commit
   it claims to; the **tagged** path regenerates from the tag with `.commit`

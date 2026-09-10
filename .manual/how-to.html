@@ -60,6 +60,7 @@
     <a href="#how">How it works</a>
     <a href="#workflow">Workflow</a>
     <a href="#enforcement">Guardrails</a>
+    <a href="#prose">Prose</a>
     <a href="#scenarios">Scenarios</a>
   </div>
 </nav>
@@ -156,6 +157,52 @@
           <div>
             <h4>No <code>--no-verify</code></h4>
             <p>If a hook fails, investigate the root cause. Bypassing the gate is never the answer.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The writing contract -->
+  <section class="enforcement" id="prose">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">How prose is written</p>
+        <h2>A knowledge base is read twice.</h2>
+        <p>Once by a person deciding what to build, once by an agent deciding what to generate. The writing contract makes the prose regular enough that both reach the same conclusion from the same sentence — and it binds the artifacts, the review reports and the session's own replies alike.</p>
+      </div>
+      <table class="skill-tbl reveal d1">
+        <tbody>
+          <tr><th scope="row">Active voice</th><td>A passive sentence can omit its actor, and in a specification the actor is usually the thing being specified.</td></tr>
+          <tr><th scope="row">One sentence, one claim</th><td>A sentence carrying two claims cannot be half-accepted. Length is only where to look for the second one: a forty-word sentence stating one thing is fine.</td></tr>
+          <tr><th scope="row">No noun clusters</th><td>Stacked nouns compress a relationship into adjacency. A preposition costs a word and removes the ambiguity.</td></tr>
+          <tr><th scope="row">One concept, one word</th><td>The approved term is the team's own, recorded in <code>00_bootstrap/glossary.md</code>. Two words for one concept split the graph.</td></tr>
+          <tr><th scope="row">One paragraph, one idea</th><td>Past that it is two ideas sharing a block, and the second is the one nobody remembers.</td></tr>
+          <tr><th scope="row">State what is</th><td>Not what an artifact was, not what it will be, not what it is not or will never be. A present-tense prohibition is a rule, not negative space, and it stays.</td></tr>
+          <tr><th scope="row">Name the thing</th><td>No metaphor, no verbs of mind for a mechanism, no intensifiers. A script returns, refuses and emits; nothing knows or wants.</td></tr>
+          <tr><th scope="row">Say it once</th><td>No paragraph restating the table above it, no conclusion repeated as a note and again as a finding, no caveat repeated per item.</td></tr>
+        </tbody>
+      </table>
+      <div class="enforce reveal d2">
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4>The skills carry the whole contract</h4>
+            <p>Every skill that writes a KB artifact applies it while writing, in whatever language the project declares. A rule the writer follows never becomes a finding. <code>session-start</code> injects the same rules into every session, so a reply is held to them too.</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4><code>prose-style.sh</code> checks the greppable part</h4>
+            <p>Sentence and paragraph length, the closed historical-language tokens, the closed intensifier list, passive voice and noun clusters. The judgment half — metaphor, restatement, the future and the negative space — no script can see. English only: a project declaring another language gets one note and no findings.</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot" aria-hidden="true"></span>
+          <div>
+            <h4>Nothing gates a commit on style</h4>
+            <p>Every style check is a warning at every lifecycle state, with one exception: a synonym the glossary rejects becomes an error once the artifact reaches <code>accepted</code>. That check reads a declaration the team wrote down, rather than judging how a sentence reads.</p>
           </div>
         </div>
       </div>

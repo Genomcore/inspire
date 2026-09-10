@@ -69,10 +69,10 @@ ramp too, in the release after 0.9.
 
 | Rule | What it catches |
 |---|---|
-| `prose-style` R2 · R4 · R5 · R6 | A sentence over 25 words; a synonym the glossary rejects; a paragraph over 6 sentences; one of the closed historical-language tokens. Same ramp as tier 3 — these read the object's own `lifecycle:`. |
-| `prose-style` R1 · R3 | Passive voice; a run of four or more stacked nouns. Heuristics: **warning at every lifecycle, never ramping.** |
+| `prose-style` R4 | A synonym the glossary rejects. Same ramp as tier 3 — it reads the object's own `lifecycle:`, and it is the one style check that can reach `error`, because the glossary declared the term. |
+| `prose-style` R1 · R2 · R3 · R5 · R6 · R7 | Passive voice; a sentence over 35 words; a run of four or more stacked nouns; a paragraph over 8 sentences; one of the closed historical-language tokens; one of the closed intensifier tokens. **Warning at every lifecycle, never ramping.** Report R2 and R5 as an invitation to re-read the sentence. |
 
-The checks are English-only in 0.7. A project whose `output_language` is not
+The checks are English-only. A project whose `output_language` is not
 `en` gets a single info-level note and no findings — report that note as it
 stands, and do not present it as a clean bill of health: the contract in
 [`writing-style.md`](../../../_references/writing-style.md) still binds as

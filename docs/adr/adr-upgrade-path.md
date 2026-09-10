@@ -31,13 +31,12 @@ judgement and the wrong split makes both unsolvable:
    getting it wrong either destroys their work or silently pins them at stale content
    while the version string claims otherwise.
 
-The second problem is the hard one, and it was previously unsolvable for a reason worth
-stating plainly: **answering it requires knowing what INSPIRE shipped at the operator's
-version, and that information did not exist anywhere trustworthy.** Without it, an
-upgrade can see only "disk differs from what I am about to install" — which is the same
-observation for a file the operator carefully customized and a file that is merely
-three releases old. The only safe response to that ambiguity is to prompt about
-everything, which is not an upgrade path; it is a questionnaire.
+The second problem is the hard one, and it turns on one fact: **answering it requires
+knowing what INSPIRE shipped at the operator's version.** Without that record, an
+upgrade sees only "disk differs from what I am about to install" — the same observation
+for a file the operator carefully customized and a file that is three releases old. The
+only safe response to that ambiguity is to prompt about everything, which is a
+questionnaire rather than an upgrade path.
 
 ## Decisions
 
@@ -259,8 +258,8 @@ own commit invalidates it, forever.
 
 **Good.**
 
-- One command upgrades from any released version, including pre-0.3, which is no longer a
-  refusal but simply the longest chain.
+- One command upgrades from any released version, including pre-0.3, which is the
+  longest chain.
 - Prompts collapse from "every file this release touched" to "files both sides changed,
   differently." In a real 0.1→0.4 upgrade of a used project, that was one file.
 - Files the operator added inside directories INSPIRE owns now survive, by construction.

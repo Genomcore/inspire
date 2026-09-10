@@ -62,16 +62,16 @@ blocking a commit over (`sdd_progressive_severity` in `_lib.sh`).
 
 | Script | Checks | Severity model |
 |---|---|---|
-| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence cap (25 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (6 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | R1 and R3 are heuristics: **warning at every lifecycle, never ramping**. R2, R4, R5 and R6 ramp with the object's own lifecycle in `04_domain` and are flat warnings in every other layer: `03_features` and `01_adr` carry no `lifecycle:` for the columns to read, and `05_screens` carries one these checks deliberately do not read — a screen ramps on its contract, never on its prose. |
+| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence length (over 35 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (over 8 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R7 figurative language (the closed intensifier list, first hit per line), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | **Only R4 ramps**, with the object's own lifecycle in `04_domain`, and it is a flat warning in every other layer: `03_features` and `01_adr` carry no `lifecycle:` for the columns to read, and `05_screens` carries one these checks deliberately do not read — a screen ramps on its contract, never on its prose. R4 is alone because it reads a declaration: the glossary records the rejected word and names the approved one. Every other rule is a **warning at every lifecycle, never ramping**, so nothing here gates a commit on style. |
 
-**English-only in 0.7, and it says so.** When `00_bootstrap/project.md` declares
+**English-only, and it says so.** When `00_bootstrap/project.md` declares
 an `output_language` other than English — `en`, `en-*`/`en_*` and `english` are
 all read as English, case-insensitively — `prose-style.sh` emits one **info**-level
-note — *prose-style mechanical checks are en-only in 0.7; the writing contract
+note — *prose-style mechanical checks are en-only; the writing contract
 still binds as authoring judgment* — and exits without checking anything. The
 contract still binds everywhere; only the mechanics are `en`-shaped, because R1,
-R3 and the token list are English morphology and the binding table is keyed on
-English H2 names. The script's own header states what it reaches and what it does
+R3 and the two token lists are English morphology and the binding table is keyed
+on English H2 names. The script's own header states what it reaches and what it does
 not: table cells are never read, prose above the first H2 is never read, and the
 per-field `### {field}` prose inside `## Fields` inherits its parent's tabular
 kind.

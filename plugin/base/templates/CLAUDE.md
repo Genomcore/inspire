@@ -29,4 +29,22 @@ and code is generated from what is specified.
 - **Runtime version** — `.inspire.lock` records which INSPIRE release this
   project was materialized from; `/inspire:update` refreshes it.
 
+## How prose is written here
+
+The writing contract —
+[`.claude/skills/_references/writing-style.md`](.claude/skills/_references/writing-style.md)
+— binds KB artifacts, operator-facing reports and replies in this project alike.
+Five rules cover most of it:
+
+- **State what is.** Not what an artifact was, not what it will be, not what it
+  is not or will never be. A present-tense prohibition is a rule, not negative
+  space, and it stays.
+- **One sentence, one claim; one paragraph, one idea.** Length is only where to
+  look.
+- **Name the thing, not a figure of speech.** No metaphor, no intensifiers.
+- **Say it once.** No paragraph restating the table above it.
+- **Say each fact once, then stop.** Cut the prose, never the evidence.
+
+`.inspire/bin/prose-style.sh` checks the greppable part at review time.
+
 Haven't run it yet? Start with `/inspire-bootstrap init`.

@@ -9,6 +9,77 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.7 — 2026-09-10
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.9.7 keeps the 0.3 layout and the 0.9.0 payload classes. The release comes from a
+governed project whose artifacts run 30–60 words a sentence and were failing
+review for it, and it moves the writing contract's teeth off length and onto what
+a sentence says.
+
+### Breaking for existing vaults
+
+**A vault that was failing review on sentence length stops failing.** `R2` and
+`R5` can no longer reach `error` at any lifecycle state, so an `accepted` or
+`stable` artifact that blocked a commit on a long sentence now reports a warning.
+The counts also move: `R2` warns past 35 words rather than 25, and `R5` past 8
+sentences rather than 6, so a vault sitting between the old and new thresholds
+goes quiet. Nothing has to be done by hand.
+
+**A vault that was failing review on historical language stops failing.** `R6` is
+a warning at every lifecycle state too. `R4` — a synonym
+`00_bootstrap/glossary.md` rejects — is the one style check that still reaches
+`error`, because it reads a declaration the team wrote down rather than judging
+how a sentence reads. **Nothing gates a commit on style.**
+
+**`R7` reports for the first time.** Every artifact is scanned for a closed list
+of intensifiers, so the first run after upgrading may report findings on prose
+that was never checked. They are warnings at every lifecycle state.
+
+### Added
+
+- **`R7` — name the thing, not a figure of speech.** No metaphor, no
+  personification of a mechanism, no intensifiers. The metaphor half is authoring
+  judgment; `prose-style.sh` checks a closed list of 13 intensifiers (`simply`,
+  `merely`, `of course`, `seamless`, `elegant`, `powerful`, …), first hit per line,
+  warning always. `fast`, `intuitive` and `robust` stay out of it — those name a
+  measurable property, and the vague-language discipline already owns them.
+- **`R8` — say it once.** A fact restated is not a fact reinforced. The contract
+  names the five shapes a restatement takes, the paragraph-after-a-table among
+  them. Judgment only: no check separates a restatement from a second claim.
+- **The contract binds a session's replies, and arrives with the session.**
+  `session-start.sh` injects the five rules alongside `output_language`, because a
+  skill reference reaches the prose a skill writes and nothing reaches the prose of
+  a plain reply. The seeded `CLAUDE.md` carries the same summary under
+  § How prose is written here, which `/inspire-bootstrap init` leaves in place. An
+  existing project keeps its own `CLAUDE.md` — the hook is what reaches it.
+- **A § Reports and replies section in the contract.** Room is earned by something
+  to decide or to do, never by effort; the room comes out of the prose and never
+  out of the evidence, provenance included.
+
+### Changed
+
+- **`R6` widens from the past to everything that is not the present.** It now
+  covers the future ("pagination arrives in a later release") and the negative
+  space ("this is not a cache, and it will never persist") beside the history it
+  already covered. A present-tense prohibition stays: "write to this table only
+  through X" constrains the reader rather than describing the artifact by
+  exclusion. The mechanical token list is unchanged and still covers the past
+  alone — every candidate token for the other two halves (`will`, `not`, `never`)
+  carries its present-tense meaning far more often.
+- **`R2` and `R5` state a rule instead of a cap.** One claim per sentence, one idea
+  per paragraph. A forty-word sentence stating one thing satisfies `R2`; a
+  twenty-word sentence stating three does not. The counts are where to look, which
+  is why neither check can fail a review.
+- **`R6` stops ramping.** Historical language is a warning at every lifecycle
+  state, in every layer. Rewriting a settled artifact's prose is not work a commit
+  should be held for, and the token list reaches the past alone, so a clean `R6`
+  run says little about the rule as a whole.
+- **The info note drops its version stamp** — *prose-style mechanical checks are
+  en-only* rather than *en-only in 0.7*.
+- **The manual documents the contract.** How-to gains a § Prose section carrying
+  the eight rules, what the validator reaches, and the severity split.
+
 ## 0.9.6 — 2026-09-10
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk
