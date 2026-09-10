@@ -11,8 +11,8 @@ below it. If no `CLAUDE.md` exists (a brownfield adopter removed it, or
 `/inspire:init` was never run), create one carrying the same INSPIRE-orientation
 content as the stub `/inspire:init` seeds as the project's `CLAUDE.md`, then refine
 it the same way. Leave the rest of the file (the INSPIRE orientation, KB layer
-list, skills, validators, lock note) untouched — that part is generic and correct
-as shipped.
+list, skills, validators, lock note, and the § How prose is written here summary
+of the writing contract) untouched — that part is generic and correct as shipped.
 
 ## Subcommand: readme
 

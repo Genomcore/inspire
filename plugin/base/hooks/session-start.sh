@@ -8,6 +8,14 @@
 # always-present half of the output-language rule; the skills carry the same rule
 # as judgment (see .claude/skills/_references/output-language.md).
 #
+# It injects the writing contract beside it, for one reason the skills cannot
+# cover: a skill reference reaches the prose a skill writes, and nothing reaches
+# the prose of a plain reply. The contract binds both
+# (.claude/skills/_references/writing-style.md § Reports and replies), so the
+# half that binds a reply has to arrive with the session. Kept to the rules
+# themselves — the reasoning and the examples stay in the contract, which a
+# session reads when it needs them.
+#
 # Output contract (SessionStart): stdout is JSON with
 #   {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "…"}}
 # additionalContext is prepended to the session context. Exit 0 always — a missing
@@ -57,7 +65,27 @@ to the operator in their language, but write the *files* in the project language
 Machine-read tokens stay verbatim — frontmatter keys and enum values (\`kind\`, \
 \`status\`, \`maturity\`, lifecycle states), wikilink target slugs, file/directory \
 names, IDs and status-map keys are never translated. See \
-\`.claude/skills/_references/output-language.md\` for the full rule."
+\`.claude/skills/_references/output-language.md\` for the full rule.
+
+INSPIRE writing contract — binds artifacts, reports AND your replies in this project.
+
+- **State what is.** Not what an artifact was, not what it will be, not what it is not \
+or will never be. Each of those describes the document instead of the system, and the \
+reader came for the one description that fits. A present-tense prohibition (\"write to \
+this table only through X\") is a rule, not negative space, and it stays.
+- **One sentence, one claim; one paragraph, one idea.** A long sentence is usually \
+two claims, and two shorter sentences say it more clearly.
+- **Name the thing, not a figure of speech.** No metaphor, no flourish, no \
+intensifiers (\`simply\`, \`of course\`, \`seamless\`, \`elegant\`, \`powerful\`). Verbs \
+of mechanism are fine — a script returns, refuses, emits; nothing here knows or wants.
+- **Say it once.** No paragraph restating the table above it, no conclusion repeated as \
+a note and again as a finding, no caveat repeated per item. A restatement reads as \
+thoroughness and adds no fact.
+- **Say each fact once, then stop.** Room is earned by something to decide or to do, \
+never by effort. Cut the prose, never the evidence: every number, table and \
+measurement stays, provenance included.
+
+The full contract is \`.claude/skills/_references/writing-style.md\`."
 
 # Surface the runtime version (best-effort) from .inspire.lock, written by materialize.sh.
 # Appends a short note so every session knows which INSPIRE release it is running and
