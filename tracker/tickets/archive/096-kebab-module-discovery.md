@@ -4,13 +4,13 @@ title: "096 — a kebab-case module slug is invisible to the domain finders, and
 created: 2026-09-10
 updated: 2026-09-10
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-10
 epic: follow-up
 size: S
 importance: Very High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: [096-wikilink-alias-target]
 ---
@@ -45,9 +45,17 @@ entities discovered, all nine misses in the one kebab-case module.
 
 ## Acceptance criteria
 
-- [ ] Both finders discover a leaf filename whose module segment is kebab-case, and the
-      segment count still separates an entity document from an action descriptor.
-- [ ] `plugin/base/bin/` is audited for the same character class used on a slug elsewhere,
-      and each site is either fixed or recorded as deliberately snake-only.
-- [ ] The regression asserts the artifact is **discovered** — a fixture that asserts an
-      absence of findings passes while the module is skipped, which is the defect.
+- [x] Both finders discover a leaf filename whose module segment is kebab-case, and the
+      segment count still separates an entity document from an action descriptor. — the
+      hyphen is in all three segments of both patterns; the finders identify an artifact by
+      segment count and slug shape is another rule's question, so the class is uniform.
+- [x] `plugin/base/bin/` is audited for the same character class used on a slug elsewhere,
+      and each site is either fixed or recorded as deliberately snake-only. — one other
+      site, `prose-style.sh`'s R4 id stripper, fixed with it. `declared-errors-tested.sh`
+      already carried the hyphen; `_keyed-heads.sh` and `_lib.sh`'s table-cell patterns read
+      field names, which are snake by contract, and are left alone.
+- [x] The regression asserts the artifact is **discovered** — a fixture that asserts an
+      absence of findings passes while the module is skipped, which is the defect. —
+      `lib-tests.sh` asserts both finders return the kebab file;
+      `wikilinks-resolve/kebab-module-is-indexed` asserts a link to one resolves and
+      `kebab-module-is-scanned` asserts a finding names one. All three fail against 0.9.5.

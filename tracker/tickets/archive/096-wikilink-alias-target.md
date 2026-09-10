@@ -4,13 +4,13 @@ title: "096 — an aliased wikilink is resolved by its label, so a correct link 
 created: 2026-09-10
 updated: 2026-09-10
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-10
 epic: follow-up
 size: S
 importance: Very High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: [096-kebab-module-discovery]
 ---
@@ -46,11 +46,22 @@ aliased ADR citation resolves to nothing and the maturity claim behind it goes u
 
 ## Acceptance criteria
 
-- [ ] `[[target|display]]` resolves against the **target**, and the finding on a genuinely
-      dangling link names the target rather than the label.
-- [ ] The escaped table-cell form the 0.9 screens substrate writes
+- [x] `[[target|display]]` resolves against the **target**, and the finding on a genuinely
+      dangling link names the target rather than the label. — the target is the left half
+      unconditionally. The reporting project proposed accepting either half; taking the left
+      only is what the format docs already described, and it leaves one answer rather than
+      two.
+- [x] The escaped table-cell form the 0.9 screens substrate writes
       (`[[a.b\|a::b]]`) still resolves, and the id readers that legitimately want the right
-      half are left alone and distinguishable from the target reader.
-- [ ] Regression cases cover all three shapes: an aliased prose link, an escaped table-cell
-      id pair, and a bare link with no pipe.
-- [ ] Every site that reads a link **target** takes the same half, from one implementation.
+      half are left alone and distinguishable from the target reader. — the trailing
+      backslash is stripped off the target; `sdd_unwrap_wikilink` is untouched and now sits
+      directly above `sdd_wikilink_target`, each stating what the other answers.
+- [x] Regression cases cover all three shapes: an aliased prose link, an escaped table-cell
+      id pair, and a bare link with no pipe. — `alias-left-is-the-target` and
+      `alias-target-is-what-the-finding-names` are new, `screen-action-link-resolves`
+      covers the escaped pair and now pins the target in the message it reports, and the
+      bare shape was already covered by `clean` and `draft-unresolved-warning`.
+- [x] Every site that reads a link **target** takes the same half, from one implementation.
+      — `wikilinks-resolve.sh`'s awk stops at the brackets and calls the shared reader, and
+      `adr-maturity-matches-features.sh`'s `adr_path_for` calls it too; the aliased ADR
+      citation it used to skip is fixture `aliased-prose-link`.
