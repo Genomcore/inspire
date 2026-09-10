@@ -316,6 +316,43 @@ hasnt "find_entities ignores a dotted-basename screen file" \
 hasnt "find_actions ignores a dotted-basename screen file" \
       "user.profile.edit.md" "$(cat "$ROOT/shape.out")"
 
+# A multi-word module slug is kebab-case, and both finders read the module out
+# of the filename. Asserted as DISCOVERY rather than as an absence of errors:
+# a finder that cannot see the hyphen skips the file in silence, and every rule,
+# the id index and the emanation frontier are built on these two lists — so "no
+# findings" is what the defect looks like, not what the fix looks like.
+mkdir -p "$KB/04_domain/knowledge-base/entry"
+: > "$KB/04_domain/knowledge-base/entry/knowledge-base.entry.md"
+: > "$KB/04_domain/knowledge-base/entry/knowledge-base.entry.promote.md"
+(
+  cd "$ROOT" || exit 1
+  SDD_SPEC_ROOT="kb/04_domain"
+  printf 'ENT %s\n' $(sdd_find_entities "kb")
+  printf 'ACT %s\n' $(sdd_find_actions  "kb")
+) > "$ROOT/kebab.out"
+has   "find_entities discovers a kebab-case module slug" \
+      "ENT.*knowledge-base.entry.md" "$(cat "$ROOT/kebab.out")"
+has   "find_actions discovers a kebab-case module slug" \
+      "ACT.*knowledge-base.entry.promote.md" "$(cat "$ROOT/kebab.out")"
+hasnt "the segment count still tells the two apart" \
+      "ENT.*promote" "$(cat "$ROOT/kebab.out")"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# The two wikilink readers — one link, two questions, opposite answers
+#
+# `[[target|display]]` declares an id on the right and points at a file on the
+# left. Each reader is pinned against the other here, because a rule that asked
+# the wrong one reported every aliased prose link in a vault as dangling.
+# ─────────────────────────────────────────────────────────────────────────────
+
+eq "unwrap reads the declared id"           "$(sdd_unwrap_wikilink '[[auth.user|auth::user]]')" "auth::user"
+eq "target reads the file it points at"     "$(sdd_wikilink_target '[[auth.user|auth::user]]')" "auth.user"
+eq "an alias is never the target"           "$(sdd_wikilink_target '[[adr-x|the audit decision]]')" "adr-x"
+eq "a path target survives whole"           "$(sdd_wikilink_target '[[../../01_adr/adr-x|the audit decision]]')" "../../01_adr/adr-x"
+eq "the table-cell escape is not the target" "$(sdd_wikilink_target '[[a.b\|a::b]]')" "a.b"
+eq "a bare link is its own target"          "$(sdd_wikilink_target '[[adr-x]]')" "adr-x"
+eq "only the first pipe divides"            "$(sdd_wikilink_target '[[adr-x|a|b]]')" "adr-x"
+
 echo ""
 echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]

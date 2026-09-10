@@ -437,12 +437,14 @@ prose_scan() {
       # Known limit of the id stripper: a glossary synonym that itself contains a
       # dot or a `::` can never match, because the id shapes are eaten first. A
       # rejected synonym is a word the team says out loud, so this costs nothing
-      # in practice — but it is a silent miss, not a decision.
+      # in practice — but it is a silent miss, not a decision. The hyphen is in
+      # the classes because a multi-word module slug is kebab-case, and an id
+      # the stripper cannot see is an id whose words get read as prose.
       if (r4stream != "") {
         c = tolower(raw)
         gsub(/`[^`]*`/, " ", c)
-        gsub(/[a-z0-9_]+(::[a-z0-9_]+)+/, " ", c)
-        gsub(/[a-z0-9_]+(\.[a-z0-9_]+)+/, " ", c)
+        gsub(/[a-z0-9_-]+(::[a-z0-9_-]+)+/, " ", c)
+        gsub(/[a-z0-9_-]+(\.[a-z0-9_-]+)+/, " ", c)
         gsub(/adr-[a-z0-9_-]+/, " ", c)
         print c >> r4stream
         print idxrec "\t" raw >> r4index

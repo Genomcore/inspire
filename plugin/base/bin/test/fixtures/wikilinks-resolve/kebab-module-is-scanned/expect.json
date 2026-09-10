@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    {
+      "rule": "wikilinks-resolve",
+      "severity": "error",
+      "message_substring": "knowledge-base.entry.promote.md.*this-target-resolves-nowhere"
+    }
+  ]
+}

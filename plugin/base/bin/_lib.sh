@@ -211,6 +211,29 @@ sdd_unwrap_wikilink() {
   printf '%s\n' "$s"
 }
 
+# Strip [[ and ]] wrappers and read the LINK TARGET — the left of `|`.
+# Prints the target to stdout. No-op on already-bare strings.
+#
+# The counterpart of sdd_unwrap_wikilink above, and the contrast is the whole
+# point: that one answers "what id does this link DECLARE?", which the V3
+# convention writes on the right; this one answers "what file does this link
+# POINT AT?", which is always the left — `[[adr-x|the audit decision]]` points
+# at `adr-x`. Reading the right side for a target reports every aliased prose
+# link as dangling, which is the defect this pair exists to keep apart.
+#
+# A pipe escaped for a markdown table cell (`[[a.b\|a::b]]`) leaves its
+# backslash at the end of the target, so it is stripped.
+sdd_wikilink_target() {
+  local s="$1"
+  s="${s#\[\[}"
+  s="${s%\]\]}"
+  if [[ "$s" == *"|"* ]]; then
+    s="${s%%|*}"
+    s="${s%\\}"
+  fi
+  printf '%s\n' "$s"
+}
+
 # Extract a frontmatter list value by path expression (e.g. ".depends_on").
 # Prints one item per line on stdout. Empty output if the list is missing or
 # the value isn't a list. The trailing "?" suppresses errors on missing keys.
@@ -343,13 +366,19 @@ sdd_scope_intersect() {
 # All action descriptor files under inspire_kb/04_domain/. Actions have 3-segment dotted
 # leaf filenames ({module}.{entity}.{action}.md); entity documents
 # ({module}.{entity}.md) have 2 segments and are excluded.
+#
+# The hyphen is in the class because a multi-word module slug is kebab-case, and
+# a finder that cannot see one skips the file in silence: no rule reads it, no id
+# indexes it, no frontier reaches it. The class is uniform across all three
+# segments rather than kebab-for-the-module — these finders identify an artifact
+# by its segment COUNT, and validating slug shape is another rule's job.
 sdd_find_actions() {
   local scope
   scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
   [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
-    | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
+    | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
     | sort
 }
 
@@ -363,8 +392,8 @@ sdd_find_entities() {
   [ -n "$scope" ] || return 0
   [ -d "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
-    | grep -E '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
-    | grep -vE '/[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+\.md$' \
+    | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
+    | grep -vE '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
     | sort
 }
 
