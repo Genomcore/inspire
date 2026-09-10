@@ -5,7 +5,7 @@ Core-level decisions about INSPIRE itself. Project-level ADRs live in a fork's
 
 Ids are slug-only (`adr-{slug}.md`) — see
 [adr-decision-record-ids](adr-decision-record-ids.md) for why. This index carries the
-chronology a numeric prefix used to imply. Newest first.
+chronology, which the ids do not. Newest first.
 
 | Date | ADR | Status |
 |------|-----|--------|

@@ -96,6 +96,6 @@ Nullable until the first successful login, and deliberately carries no `nonnull`
 
 - **Touched by uses pipe-syntax wikilinks and explicit touch verbs.** `[[auth.user.create|auth::user::create]]` resolves cleanly on disk (dotted) while displaying the canonical id (colon form). Touch values are `read` · `write` · `list` · `delete`. The section is **auto-populated** by consolidation — operators do not hand-edit it; the table is rewritten on every consolidation pass.
 
-- **No `## Findings`, no `## Used by`.** Files state present truth only. Findings live in `review` output (git is the audit trail); the V2 `## Used by` is now `## Touched by` with explicit touch semantics.
+- **No `## Findings`, no `## Used by`.** Files state present truth only. Findings live in `review` output, where git is the audit trail. `## Touched by` records which actions reach the entity, with explicit touch semantics.
 
 - **Entity ids in frontmatter are 2-segment dotted** (`auth.user`), matching the on-disk filename. Action descriptors carry 3-segment dotted ids (`auth.user.create`); segment count is what tells the tooling the two object kinds apart.

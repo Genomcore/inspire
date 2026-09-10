@@ -168,8 +168,7 @@ Each lesson is classified (embarrassingly parallel — one agent per lesson, giv
 | **Contradicted** | the base deliberately reversed this behavior | **human gate** — by default respect the local lesson; the operator decides whether to accept the upstream reversal |
 
 Bias is **conservative toward keep**: a false "absorbed" silently regresses taught
-behavior (dangerous), whereas a false "untouched" merely re-applies something redundantly
-(usually harmless). Two human gates bracket the run: a **`plan`** phase (Terraform-style)
+behavior, while a false "untouched" re-applies something redundantly. Two human gates bracket the run: a **`plan`** phase (Terraform-style)
 that shows what will be applied — highlighting archives and contradictions, and flagging
 any pre-update **drift** (uncaptured hand edits about to be lost) — and a post-run review
 of the archive set. Classification runs in parallel; per-skill materialization is
@@ -245,8 +244,8 @@ one level up — deferred to v1 (see *Staging*).
 - De-hardcoding `source`/`prototype` and namespacing `bin`/`hooks` touch many files.
 
 **Load-bearing fact for timing:** no fork is pinned to a *released* version today, so the
-"from" of any update does not yet exist. The update machinery is therefore
-design-now-build-at-v1 **by necessity**, not merely by prudence.
+"from" of any update does not exist. Necessity puts the update machinery at
+design-now-build-at-v1, rather than prudence.
 
 ## Staging
 
