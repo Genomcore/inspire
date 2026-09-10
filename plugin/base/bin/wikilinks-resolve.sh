@@ -157,26 +157,30 @@ check_file() {
   lifecycle="$(sdd_fm_value "$file" '.lifecycle')"
   severity="$(sdd_progressive_severity "$lifecycle")"
 
-  # Extract every [[...]] occurrence from the body (skip frontmatter).
-  # Output one target per line (after unwrapping pipe-syntax). A pipe escaped
-  # for a markdown table cell (`[[a.b\|a::b]]`) unwraps the same way: the
-  # backslash sits on the left of the pipe, and the right side is canonical.
-  local links
-  links="$(awk '
+  # Extract every [[...]] occurrence from the body (skip frontmatter), one raw
+  # token per line. The awk stops at the brackets: reading the target out of a
+  # token is `sdd_wikilink_target`'s single job, and a second copy of that
+  # reading here is exactly how the two halves of a pipe came to disagree.
+  # Deduplication happens after the read, so two aliases of one target are one
+  # finding.
+  local raw links
+  raw="$(awk '
     /^---$/ { fm = !fm; next }
     fm { next }
     {
       s = $0
       while (match(s, /\[\[[^]]+\]\]/)) {
-        token = substr(s, RSTART+2, RLENGTH-4)
-        # Pipe-syntax: right side is canonical.
-        p = index(token, "|")
-        if (p > 0) token = substr(token, p+1)
-        print token
+        print substr(s, RSTART+2, RLENGTH-4)
         s = substr(s, RSTART + RLENGTH)
       }
     }
-  ' "$file" | sort -u)"
+  ' "$file")"
+
+  [ -z "$raw" ] && return 0
+
+  links="$(while IFS= read -r token; do
+    [ -n "$token" ] && sdd_wikilink_target "$token"
+  done <<< "$raw" | sort -u)"
 
   [ -z "$links" ] && return 0
 

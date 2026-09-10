@@ -1,0 +1,12 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    {
+      "rule": "wikilinks-resolve",
+      "severity": "error",
+      "message_substring": "does not resolve: ..auth.user.ghost"
+    }
+  ],
+  "forbidden": ["a phrase a human reads"]
+}

@@ -9,6 +9,53 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.6 — 2026-09-10
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk
+and no refusal class is added or changed: 0.9.6 keeps the 0.3 layout and the
+0.9.0 payload classes. Both fixes come from a governed project running 0.9.1 over
+its own vault, and both are the same shape of defect — a validator that cannot
+see something correct and says nothing about it.
+
+### Breaking for existing vaults
+
+**A vault with a kebab-case module slug is validated for the first time.** Those
+artifacts were skipped in silence by every rule, so a passing `review.sh` on such
+a vault was never full coverage, and the first run after upgrading may report
+findings that were always there. Nothing has to be done by hand to upgrade, and
+nothing refuses; but a module at `accepted` or `stable` puts its findings at error
+severity, where both hooks exit non-zero — so budget for them before promoting.
+The reporting project measured nine such artifacts in one module. Any count taken
+off `review.sh` before this release was counting a partial view of such a vault,
+and is worth re-taking.
+
+### Fixed
+
+**A kebab-case module slug is discovered.** `sdd_find_actions` and
+`sdd_find_entities` recognise a domain artifact by the dotted segment count of
+its leaf filename, and matched those segments without a hyphen — so a module
+whose slug is kebab-case, which is the convention INSPIRE itself gives for a
+multi-word module, was never discovered by anything. No rule read those files, no
+id of theirs entered the index, no frontier could reach them, and
+`emanate-derive.sh` refused a well-formed descriptor when named outright. Nothing
+reported any of it: a rule that discovers no file emits no finding, so the module
+was missing from a passing `review.sh` run. The same audit put the hyphen into
+`prose-style.sh`'s id stripper, where a kebab-case id was being read as prose
+words.
+
+**An aliased wikilink resolves against its target, not its label.**
+`[[../../01_adr/adr-audit|the audit decision]]` was resolved by looking up *the
+audit decision*, so a correct link reported as dangling — 53 such findings in the
+reporting vault, none of them a broken link, and errors rather than warnings on
+any module at `accepted`. The target is the left of the pipe everywhere now,
+including the escaped table-cell form the screens substrate writes
+(`[[a.b\|a::b]]`), and a finding on a genuinely dangling link names the target
+rather than the label. `adr-maturity-matches-features.sh` read the label too, and
+silently skipped the maturity check behind every aliased ADR citation; it now
+reads the target through the same one implementation, `sdd_wikilink_target`. The
+id readers are unchanged and still take the right half — a link declares an id
+there and points at a file on the left, and the two questions have one home each.
+
 ## 0.9.5 — 2026-09-09
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk,

@@ -80,15 +80,16 @@ fi
 
 # Resolve an ADR wikilink target to a file under the ADR root.
 #
-# Targets appear in two forms across the layers — path form from features
-# (`[[../../01_adr/adr-x]]`) and pipe form from descriptors
-# (`[[../../../01_adr/adr-x|adr-x]]`) — so match on the **basename** rather than the
-# written path. That also means a link whose relative depth is wrong still resolves here:
-# depth is `wikilinks-resolve.sh`'s rule, and this gate must not fail to check a maturity
-# claim because a `../` was miscounted.
+# Targets appear in three forms across the layers — path form from features
+# (`[[../../01_adr/adr-x]]`), pipe form from descriptors
+# (`[[../../../01_adr/adr-x|adr-x]]`) and aliased prose form
+# (`[[../../01_adr/adr-x|the audit decision]]`) — so read the target half and match
+# on its **basename** rather than the written path. That also means a link whose
+# relative depth is wrong still resolves here: depth is `wikilinks-resolve.sh`'s rule,
+# and this gate must not fail to check a maturity claim because a `../` was miscounted.
 adr_path_for() {
   local target="$1" base
-  base="$(sdd_unwrap_wikilink "$target")"
+  base="$(sdd_wikilink_target "$target")"
   base="${base##*/}"
   base="${base%.md}"
   [ -z "$base" ] && return 1
