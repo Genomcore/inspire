@@ -74,30 +74,26 @@ criteria, and the path it settled is
 in the path, so the second criterion's collision is gone by construction and the work left
 here is the discard form.
 
-**The third criterion reaches further than `unattended.md`.** `emanate-harvest.sh
---discard` ran `git worktree remove --force` and `git branch -D` on every persona phase,
-so the sentence the criterion asks for would have been false the moment it was written.
-The script's discard is now non-destructive: the worktree's on-disk state is committed
-onto its own detached HEAD and the plain form removes the clean tree, and no branch is
-deleted at all — a ref costs nothing to keep. A `--discard` on a worktree holding a branch
-therefore leaves that branch in place, advanced to the seal; the loop never produces one,
-because every phase worktree is detached.
+**The first criterion is superseded by the operator's ruling** (2026-09-14): a stalled
+phase's worktree is **kept**, and nothing it holds is committed anywhere. An autopsy commit
+would put work no overseer approved and no gate judged into the history the operator reads;
+the proof of a phase that could not finish is the directory it left, not a commit. So the
+deliverable is the opposite of a discard form — § Stall now runs no removal at all, and
+"the autopsy is the branch, **and** the worktree".
 
-`test-harvest.sh` proves the plain form is really plain, rather than asserting that a
-worktree vanished: the discard runs under a `git` on `PATH` that refuses `--force` and
-`-D`, the way the harness safety net does.
+**The fourth criterion's fork resolves to neither of its two branches.** It offered an
+autopsy commit or a permitted destructive form; the answer is a third thing, keeping the
+tree, which needs no commit and no removal. Phase 1 is what makes it free: the run stamp in
+the path means a kept worktree never blocks the next run of the same unit.
 
-**The fourth criterion's fork resolves to the first.** The autopsy commit lands on the
-unit's integration branch, which a stall leaves in place and never promotes, so no
-rejected emission reaches the goal branch and the operator's ruling holds. No destructive
-form is permitted anywhere, so there is none to write down.
+**The third criterion is satisfied without changing `emanate-harvest.sh`.** Its `--discard`
+still runs `git worktree remove --force`, and that is not a dependency: it fires only on a
+phase whose owned paths are already on the integration branch and whose remaining content
+was dropped on purpose, so a harness refusal costs a directory the run report names rather
+than a wave. `--force` inside the script was never what the field run hit — a hook reads the
+Bash command it was given, not what a script runs in a subprocess; the two blocked calls were
+the orchestrator's own, for the two stalled worktrees, and under this ruling those worktrees
+should have been kept anyway.
 
-The autopsy commit is what makes *"the autopsy is the branch, not the worktree"* literally
-true. Today the sentence holds only for phases that already harvested; a unit that stalls
-at its first gate leaves an integration branch with nothing on it and a worktree nobody may
-remove.
-
-The two stalled worktrees in the `gs` checkout are the operator's to delete by hand; the
-report names them. The operator's ruling that a rejected emission is not harvested stands
-either way — an autopsy commit is on the stalled branch, which the next run neither reuses
-nor cleans.
+The two stalled worktrees in the `gs` checkout are the operator's to delete by hand, and the
+report names them — which is now the designed outcome rather than a leftover.

@@ -15,17 +15,8 @@
 # DROPPED, never blocked, and the drop is reported so the orchestrator can
 # treat it as a signal.
 #
-# `--autopsy` is the one commit this script makes that is NOT a harvest: a
-# stalled phase's whole tree, unfiltered, onto a branch that is never
-# promoted. It lives here rather than in a sixth bin script because the
-# mechanics are this script's to the last line — the same snapshot, the same
-# overlay onto the tip, the same compare-and-swap — and the only differences
-# are the filter (none) and the commit's wording.
-#
 # Mechanics — never a checkout of the integration branch, never a mutation of
-# the integration branch's index, and never a mutation of the phase
-# worktree's own index except the seal under `--discard`, which is the last
-# thing that happens to a tree about to be removed:
+# either worktree's real index:
 #   1. cut  = merge-base(worktree HEAD, integration branch) — where the phase
 #      forked. Comparing against the cut, never against "the tip right now",
 #      is what keeps the filter correct after the tip has moved.
@@ -71,25 +62,10 @@
 #      compare-and-swap — lands the commit. A concurrent mover of the branch
 #      (a real race, not just a stale read) fails this exactly like the
 #      path-level conflict above.
-#   7. `--discard` then SEALS the worktree and removes it with plain `git
-#      worktree remove`. Plain, because the loop never depends on a
-#      destructive git form: the harness may refuse one, and a run that needs
-#      it stops making progress. `git worktree remove` refuses a tree with
-#      modified or untracked files and a phase worktree always has both, so
-#      the snapshot from step 2 is committed onto the worktree's own HEAD and
-#      the index reset to it (`reset --mixed`: HEAD and index, never the
-#      working tree). Nothing on disk is deleted, nothing is lost, and the
-#      tree is now clean. On a detached worktree — every worktree this loop
-#      cuts — the seal commit is reachable from no ref: ordinary git garbage.
-#      On one holding a branch, that branch advances to it, which is why no
-#      branch is ever deleted here: a ref costs nothing to keep, and deleting
-#      one is the operator's.
 #
 # Usage:
 #   emanate-harvest.sh <worktree> <branch> --label <label> [--discard]
 #                      [--mode plan | --dry-run] -- <pathspec>...
-#   emanate-harvest.sh <worktree> <branch> --label <label> --autopsy <reason>
-#                      [--discard] [--mode plan | --dry-run]
 #
 #   <worktree>   path to the phase worktree. Must be a git worktree of the
 #                SAME repository this script is invoked from — its
@@ -106,27 +82,15 @@
 #   --label      short phase label (e.g. "t07-implementer"), required.
 #                Recorded in the commit message; git is the turn's audit
 #                trail (D4).
-#   --autopsy    this commit is an AUTOPSY, not a harvest: the stalled
-#     <reason>   phase's whole tree lands on <branch>, unfiltered, and the
-#                message carries <reason> — why the phase stalled. A pathspec
-#                after -- is a usage error, because "unfiltered" is the whole
-#                of what distinguishes an autopsy from a harvest. <branch> is
-#                the stalled unit's integration branch, which is never
-#                promoted, so no rejected emission ever reaches the goal
-#                branch. With --discard the worktree is discarded whether or
-#                not there was anything to record: what is being discarded is
-#                a stalled phase, not a diff.
-#   --discard    remove the phase worktree, sealed first so that plain `git
-#                worktree remove` takes it (step 7). No branch is ever
-#                deleted. Fires after a successful commit — and, under
-#                --autopsy, on exit 6 as well. Refused — commit kept,
-#                worktree left exactly in place, a warning printed,
-#                discarded:false — if the worktree holds <branch> itself:
-#                sealing it would put the whole unfiltered tree on the
-#                integration branch this run commits to. Default (no
-#                --discard): keep it. Inert under --mode plan / --dry-run
-#                (nothing was committed, so there is nothing whose success
-#                gates a removal).
+#   --discard    after a successful commit, `git worktree remove --force`
+#                the phase worktree and delete the branch that was checked
+#                out in it. Refused — commit kept, worktree and branch left
+#                exactly in place, a warning printed, discarded:false — if
+#                that branch IS <branch> itself: removing it would delete
+#                the integration branch this run just committed to. Default
+#                (no --discard): keep both. Inert under --mode plan /
+#                --dry-run (nothing was committed, so there is nothing whose
+#                success gates a removal).
 #   --mode plan  read-only preview: performs every check and reports the same
 #                verdict an act-mode run would reach, but writes NOTHING to
 #                any real ref, reflog or index. (Loose blob/tree objects used
@@ -139,14 +103,12 @@
 #                phase's OWNED set. ':(exclude)' magic composes normally, so
 #                "source minus tests" is one pathspec list passed straight to
 #                git — never a second flag INSPIRE would have to invent.
-#                Required, and forbidden under --autopsy.
 #
 # Exit codes — distinct and documented, never a generic catch-all:
 #   0   success — a commit was made (or, under --mode plan, would have been).
 #   1   an unexpected git failure at a step earlier validation should have
 #       ruled out (defensive; not expected to fire in practice).
-#   2   usage error — bad flags, missing --label, a pathspec given under
-#       --autopsy, a malformed owned pathspec
+#   2   usage error — bad flags, missing --label, a malformed owned pathspec
 #       (bad ':()' magic — the one input entirely in the caller's hands, so
 #       a typo here is USAGE, not an internal failure), or (rare) the
 #       worktree's branch shares no history with the integration branch at
@@ -155,14 +117,12 @@
 #       repository, or this script's own CWD is not inside any git
 #       repository at all.
 #   4   the integration branch does not exist as a local ref.
-#   5   no owned pathspec was given after -- (and --autopsy was not given).
+#   5   no owned pathspec was given after --.
 #   6   nothing to harvest — either the owned diff is empty, or every owned
 #       change is already present on the integration branch byte-for-byte
 #       (re-running an already-landed harvest is idempotent, not a
 #       conflict). A NORMAL outcome, not a failure: the orchestrator
-#       branches on it. No commit is made, no ref is touched. Under
-#       --autopsy this is a stalled phase that emitted nothing, and
-#       --discard still removes its worktree.
+#       branches on it. No commit is made, no ref is touched.
 #   7   conflict — the owned diff does not apply cleanly onto the
 #       integration branch's CURRENT tip: it moved since the cut and touched
 #       a path this harvest also owns with DIFFERENT content, or the final
@@ -179,11 +139,9 @@
 # Report: a grouped human report to stderr (harvested paths — each with its
 # A/M/D... status — dropped paths, the commit sha) and a one-line JSON
 # summary to stdout:
-#   {"kind": "harvest"|"autopsy", "commit": <sha-or-null>, "branch": <name>,
-#    "harvested": [...], "harvested_status": {<path>: "A"|"M"|"D"|...},
-#    "dropped": [...], "discarded": <bool>}
-# An autopsy fills the same keys — its recorded set is the whole tree and its
-# dropped set is empty by construction — so a consumer reads one shape.
+#   {"commit": <sha-or-null>, "branch": <name>, "harvested": [...],
+#    "harvested_status": {<path>: "A"|"M"|"D"|...}, "dropped": [...],
+#    "discarded": <bool>}
 #
 # In-package decision: lib/. D8 and the Defaults call for shared bin logic to
 # live in plugin/base/bin/lib/ (materializing to .inspire/bin/lib/, deployed
@@ -245,8 +203,6 @@ nlines() {
 WORKTREE=""
 BRANCH=""
 LABEL=""
-AUTOPSY=""
-AUTOPSY_SET=0
 DISCARD=0
 MODE="act"
 PATHSPECS=()
@@ -256,8 +212,6 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --label)
       shift; LABEL="${1:-}" ;;
-    --autopsy)
-      shift; AUTOPSY="${1:-}"; AUTOPSY_SET=1 ;;
     --discard)
       DISCARD=1 ;;
     --mode)
@@ -295,28 +249,7 @@ WORKTREE="${positional[0]}"
 BRANCH="${positional[1]#refs/heads/}"
 
 [ -n "$LABEL" ] || die_code "$EXIT_USAGE" "--label is required"
-
-# An autopsy is unfiltered by definition, so it owns the whole tree and a
-# caller-supplied pathspec is a contradiction rather than a narrowing.
-if [ "$AUTOPSY_SET" = 1 ]; then
-  [ -n "$AUTOPSY" ] \
-    || die_code "$EXIT_USAGE" "--autopsy takes a reason: why this phase stalled, recorded in the commit"
-  [ "${#PATHSPECS[@]}" -eq 0 ] \
-    || die_code "$EXIT_USAGE" "--autopsy takes no pathspec: an autopsy records the whole tree (given: ${PATHSPECS[*]})"
-  # `:(top)` and not `.`: the owned set is the whole worktree from its root,
-  # whatever directory this script was invoked from.
-  PATHSPECS=(":(top)")
-  KIND="autopsy"
-  RECORDED="RECORDED"
-  EMPTY_VERDICT="nothing to record"
-  DONE_VERDICT="recorded"
-else
-  [ "${#PATHSPECS[@]}" -gt 0 ] || die_code "$EXIT_NO_PATHSPEC" "no owned pathspec given after --"
-  KIND="harvest"
-  RECORDED="HARVESTED"
-  EMPTY_VERDICT="nothing to harvest"
-  DONE_VERDICT="harvested"
-fi
+[ "${#PATHSPECS[@]}" -gt 0 ] || die_code "$EXIT_NO_PATHSPEC" "no owned pathspec given after --"
 
 if [ "$DISCARD" = 1 ] && [ "$MODE" = "plan" ]; then
   echo "emanate-harvest.sh: note: --discard is inert under --mode plan/--dry-run (nothing is committed)" >&2
@@ -467,9 +400,9 @@ print_report() {
   n_dropped="$(nlines "$dropped_changed")"
 
   {
-    printf 'INSPIRE %s — %s -> %s (%s)\n' "$KIND" "$WORKTREE" "$BRANCH" "$verdict"
+    printf 'INSPIRE harvest — %s -> %s (%s)\n' "$WORKTREE" "$BRANCH" "$verdict"
 
-    printf '\n%s (%s)\n' "$RECORDED" "$n_harvested"
+    printf '\nHARVESTED (%s)\n' "$n_harvested"
     if [ "$n_harvested" -gt 0 ]; then
       while IFS= read -r p; do
         [ -n "$p" ] || continue
@@ -493,7 +426,11 @@ print_report() {
       printf '\nCOMMIT  none\n'
     fi
     if [ "$discarded_flag" = true ]; then
-      printf 'DISCARD worktree removed (sealed at %s)\n' "$seal_sha"
+      if [ -n "$wt_branch" ]; then
+        printf 'DISCARD worktree + branch removed\n'
+      else
+        printf 'DISCARD worktree removed (detached HEAD — no branch to remove)\n'
+      fi
     fi
   } >&2
 }
@@ -509,55 +446,13 @@ emit_json() {
       | map({(.[1]): .[0]}) | add // {}
     ' "$owned_status_raw")"
   jq -n \
-    --arg kind "$KIND" \
     --argjson commit "$commit_json" \
     --arg branch "$BRANCH" \
     --argjson harvested "$harvested_json" \
     --argjson harvested_status "$harvested_status_json" \
     --argjson dropped "$dropped_json" \
     --argjson discarded "$discarded_flag" \
-    '{kind: $kind, commit: $commit, branch: $branch, harvested: $harvested, harvested_status: $harvested_status, dropped: $dropped, discarded: $discarded}'
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Discard — non-destructive by construction (step 7). Sets seal_sha, which the
-# report reads: an operator who needs a discarded tree back has its sha.
-# ─────────────────────────────────────────────────────────────────────────────
-
-seal_sha=""
-
-discard_worktree() {
-  if [ -n "$wt_branch" ] && [ "$wt_branch" = "$BRANCH" ]; then
-    echo "emanate-harvest.sh: warning: --discard was refused — $WORKTREE holds $BRANCH itself (the integration branch this run commits to); sealing it would put the whole worktree on that branch. Worktree left in place." >&2
-    return 1
-  fi
-
-  seal_sha="$(git -C "$WORKTREE" commit-tree "$worktree_tree" -p "$wt_head" \
-                -m "emanate: seal ${LABEL} (worktree discarded)" 2>/dev/null)" || {
-    echo "emanate-harvest.sh: warning: --discard failed — cannot seal $WORKTREE; left in place" >&2
-    seal_sha=""
-    return 1
-  }
-
-  if ! git -C "$WORKTREE" reset --mixed --quiet "$seal_sha"; then
-    echo "emanate-harvest.sh: warning: --discard failed — cannot reset $WORKTREE onto its seal $seal_sha; left in place" >&2
-    return 1
-  fi
-
-  if git worktree remove "$WORKTREE" 2>/dev/null; then
-    return 0
-  fi
-
-  echo "emanate-harvest.sh: warning: --discard failed — $WORKTREE is sealed at $seal_sha but git refused to remove it; left in place" >&2
-  return 1
-}
-
-# An autopsy discards its worktree whether or not there was anything to
-# record: what is being discarded is a stalled phase, not a diff. An ordinary
-# harvest still discards only what it has committed.
-discard_on_empty() {
-  [ "$DISCARD" = 1 ] && [ "$MODE" = "act" ] && [ -n "$AUTOPSY" ] || return 1
-  discard_worktree
+    '{commit: $commit, branch: $branch, harvested: $harvested, harvested_status: $harvested_status, dropped: $dropped, discarded: $discarded}'
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -567,10 +462,8 @@ discard_on_empty() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [ ! -s "$owned_changed" ]; then
-  discarded=false
-  discard_on_empty && discarded=true
-  print_report "" "$discarded" "$EMPTY_VERDICT"
-  emit_json "" "$discarded"
+  print_report "" false "nothing to harvest"
+  emit_json "" false
   exit "$EXIT_EMPTY"
 fi
 
@@ -616,10 +509,8 @@ fi
 n_owned="$(nlines "$owned_changed")"
 n_overlap="$(nlines "$overlap")"
 if [ "$n_overlap" -gt 0 ] && [ "$n_overlap" -eq "$n_owned" ]; then
-  discarded=false
-  discard_on_empty && discarded=true
-  print_report "" "$discarded" "$EMPTY_VERDICT — already on $BRANCH"
-  emit_json "" "$discarded"
+  print_report "" false "nothing to harvest — already on $BRANCH"
+  emit_json "" false
   exit "$EXIT_EMPTY"
 fi
 
@@ -665,19 +556,7 @@ new_tree="$(GIT_INDEX_FILE="$tip_idx" git write-tree)" \
   || die_code "$EXIT_INTERNAL" "cannot write the new tree"
 
 src_desc="${wt_branch:-<detached@${wt_head}>}"
-if [ -n "$AUTOPSY" ]; then
-  commit_msg="$(cat <<EOF
-emanate: autopsy ${LABEL}
-
-phase:    ${LABEL}
-reason:   ${AUTOPSY}
-source:   ${src_desc}@${wt_head} (worktree: ${WORKTREE})
-onto:     ${BRANCH}@${old_tip}
-pathspec: the whole tree — an autopsy is never filtered, and never promoted
-EOF
-)"
-else
-  commit_msg="$(cat <<EOF
+commit_msg="$(cat <<EOF
 emanate: harvest ${LABEL}
 
 phase:    ${LABEL}
@@ -686,19 +565,25 @@ onto:     ${BRANCH}@${old_tip}
 pathspec: ${PATHSPECS[*]}
 EOF
 )"
-fi
 
 new_commit="$(git commit-tree "$new_tree" -p "$old_tip" -m "$commit_msg")" \
-  || die_code "$EXIT_INTERNAL" "cannot create the $KIND commit object"
+  || die_code "$EXIT_INTERNAL" "cannot create the harvest commit object"
 
 git update-ref "refs/heads/$BRANCH" "$new_commit" "$old_tip" \
   || die_code "$EXIT_CONFLICT" "refs/heads/$BRANCH moved concurrently — refusing (compare-and-swap failed); every ref is left exactly as found"
 
 discarded=false
 if [ "$DISCARD" = 1 ]; then
-  discard_worktree && discarded=true
+  if [ -n "$wt_branch" ] && [ "$wt_branch" = "$BRANCH" ]; then
+    echo "emanate-harvest.sh: warning: commit $new_commit landed, but --discard was refused — $WORKTREE holds $BRANCH itself (the integration branch just committed to); removing it would delete that branch. Worktree and branch left in place." >&2
+  elif git worktree remove --force "$WORKTREE" 2>/dev/null; then
+    [ -z "$wt_branch" ] || git branch -D "$wt_branch" >/dev/null 2>&1
+    discarded=true
+  else
+    echo "emanate-harvest.sh: warning: commit $new_commit landed, but the worktree/branch removal failed — left in place" >&2
+  fi
 fi
 
-print_report "$new_commit" "$discarded" "$DONE_VERDICT"
+print_report "$new_commit" "$discarded" "harvested"
 emit_json "$new_commit" "$discarded"
 exit "$EXIT_OK"

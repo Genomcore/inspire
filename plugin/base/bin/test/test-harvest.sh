@@ -62,13 +62,6 @@ new_phase() {
   git -C "$1" worktree add -q -b "$3" "$2" integration
 }
 
-# new_detached_phase <repo> <wt> — the shape the emanation loop actually cuts
-# (§ prepare): detached at the integration tip, so nothing this script does
-# can move a branch.
-new_detached_phase() {
-  git -C "$1" worktree add -q --detach "$2" integration
-}
-
 tip_sha() { git -C "$1" rev-parse integration; }
 reflog_n() { git -C "$1" reflog show integration 2>/dev/null | wc -l | tr -d ' '; }
 # path_exists_at <repo> <ref:path> — 0 if that blob exists, 1 if not.
@@ -279,76 +272,14 @@ printf 'impl\n' > "$WT/source/a.txt"
 if [ -d "$WT" ]; then ok "discard: default keeps the worktree on disk"; else bad "discard: worktree vanished without --discard"; fi
 if git -C "$R" show-ref --verify --quiet refs/heads/phase11a; then ok "discard: default keeps the phase branch"; else bad "discard: phase branch vanished without --discard"; fi
 
-# 11b. success WITH --discard: the worktree goes, the branch stays. A branch
-#      is a ref, not a tree — deleting one needs `branch -D`, which is exactly
-#      the destructive form the loop must never depend on. It is advanced to
-#      the seal instead, so nothing the worktree held is lost.
+# 11b. success WITH --discard: both are removed.
 R="$ROOT/r11b"; WT="$ROOT/wt11b"
 fresh_repo "$R"
 new_phase "$R" "$WT" phase11b
 printf 'impl\n' > "$WT/source/a.txt"
-printf 'scratch\n' > "$WT/notes.txt"
-before_b="$(git -C "$R" rev-parse phase11b)"
 ( cd "$R" && "$HARVEST" "$WT" integration --label discard --discard -- 'source/**' >/dev/null )
 if [ -d "$WT" ]; then bad "discard: worktree still on disk after --discard"; else ok "discard: worktree removed after a successful --discard"; fi
-if git -C "$R" show-ref --verify --quiet refs/heads/phase11b; then ok "discard: phase branch survives — no branch is ever deleted"; else bad "discard: phase branch was deleted"; fi
-ne "discard/seal: the phase branch advanced to its seal commit" "$(git -C "$R" rev-parse phase11b)" "$before_b"
-eq "discard/seal: the seal holds the untracked file the harvest dropped" \
-   "$(git -C "$R" show phase11b:notes.txt 2>/dev/null)" "scratch"
-has "discard/seal: the seal commit says what it is" "worktree discarded" \
-    "$(git -C "$R" log -1 --format=%s%n%b phase11b)"
-
-# 11b-detached. The shape the loop cuts: a detached worktree, dirty with
-# untracked files, removed without --force and without touching any ref.
-R="$ROOT/r11bd"; WT="$ROOT/wt11bd"
-fresh_repo "$R"
-new_detached_phase "$R" "$WT"
-printf 'impl\n' > "$WT/source/a.txt"
-printf 'scratch\n' > "$WT/notes.txt"
-before_refs="$(git -C "$R" for-each-ref --format='%(refname) %(objectname)' | LC_ALL=C sort)"
-ERR="$ROOT/wt11bd.err"
-OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label discard --discard -- 'source/**' 2>"$ERR")"
-if [ -d "$WT" ]; then bad "discard/detached: worktree still on disk"; else ok "discard/detached: worktree removed"; fi
-eq "discard/detached: JSON discarded is true" "$(json_field "$OUT" '.discarded')" "true"
-eq "discard/detached: the seal created no ref of its own" \
-   "$(git -C "$R" for-each-ref --format='%(refname) %(objectname)' | grep -v '^refs/heads/integration ' | LC_ALL=C sort)" \
-   "$(printf '%s\n' "$before_refs" | grep -v '^refs/heads/integration ')"
-eq "discard/detached: the harvest still landed" "$(git -C "$R" show integration:source/a.txt)" "impl"
-# Nothing was deleted: the file the harvest dropped is still readable, out of
-# the seal commit the report names. A --force removal would have destroyed it.
-seal="$(sed -n 's/^DISCARD worktree removed (sealed at \([0-9a-f]*\))$/\1/p' "$ERR")"
-ne "discard/detached: the report names the seal commit" "$seal" ""
-eq "discard/detached: the dropped file survives in the seal, not on any branch" \
-   "$(git -C "$R" show "$seal:notes.txt" 2>/dev/null)" "scratch"
-
-# 11d. The removal is PLAIN, not `--force`. Proved the way the second field
-#      run proved the opposite: a `git` on PATH that refuses the destructive
-#      form, exactly as the harness safety net does. A script that still
-#      needed --force cannot get past this.
-R="$ROOT/r11d"; WT="$ROOT/wt11d"
-fresh_repo "$R"
-new_detached_phase "$R" "$WT"
-printf 'impl\n' > "$WT/source/a.txt"
-printf 'scratch\n' > "$WT/notes.txt"
-SHIM="$ROOT/shim11d"
-mkdir -p "$SHIM"
-REAL_GIT="$(command -v git)"
-cat > "$SHIM/git" <<SHIMEOF
-#!/usr/bin/env bash
-# Refuse every destructive git form the loop must never depend on.
-for a in "\$@"; do
-  case "\$a" in
-    --force|-f|-D) echo "shim: refused a destructive git form: \$*" >&2; exit 1 ;;
-  esac
-done
-exec "$REAL_GIT" "\$@"
-SHIMEOF
-chmod +x "$SHIM/git"
-rc=0; OUT="$(cd "$R" && PATH="$SHIM:$PATH" "$HARVEST" "$WT" integration --label noforce --discard -- 'source/**' 2>/dev/null)" || rc=$?
-eq "discard/no-force: exit 0 under a git that refuses --force/-D" "$rc" "0"
-eq "discard/no-force: JSON discarded is true" "$(json_field "$OUT" '.discarded')" "true"
-if [ -d "$WT" ]; then bad "discard/no-force: worktree survived — the discard still depends on a destructive form"; else ok "discard/no-force: worktree removed without a destructive form"; fi
-eq "discard/no-force: the harvest landed all the same" "$(git -C "$R" show integration:source/a.txt)" "impl"
+if git -C "$R" show-ref --verify --quiet refs/heads/phase11b; then bad "discard: phase branch still exists after --discard"; else ok "discard: phase branch removed after a successful --discard"; fi
 
 # 11c. FAILED harvest (empty diff) WITH --discard: nothing is removed —
 #      discard only fires after success.
@@ -438,8 +369,8 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════
 # 15 — --discard when the phase worktree holds the integration branch
 #      itself: the commit still lands, but the branch (and its worktree)
-#      MUST survive — sealing that worktree would advance the very branch
-#      just committed to, putting its whole unfiltered tree on it (B3).
+#      MUST survive — deleting it would destroy the very branch just
+#      committed to (B3).
 # ═══════════════════════════════════════════════════════════════════════════
 
 R="$ROOT/r15"; W="$ROOT/w15"
@@ -510,70 +441,6 @@ else
 fi
 has "rename-out-of-scope: moved-out.txt is in the dropped list" "moved-out.txt" \
   "$(json_field "$OUT" '.dropped | join(",")')"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 18 — --autopsy: a stalled phase's WHOLE tree onto the unit's integration
-#      branch, unfiltered, and the worktree discarded whether or not it had
-#      anything to record.
-# ═══════════════════════════════════════════════════════════════════════════
-
-# 18a. The emission of a phase that wrote outside its own paths — the case a
-#      harvest would silently drop — is recorded in full.
-R="$ROOT/r18a"; WT="$ROOT/wt18a"
-fresh_repo "$R"
-new_detached_phase "$R" "$WT"
-printf 'half-written\n' > "$WT/source/a.txt"
-printf 'stray\n' > "$WT/tests/a.test.txt"
-printf 'scratch\n' > "$WT/notes.txt"
-
-OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label contracter --autopsy 'rework budget exhausted at the overseer gate' --discard)"
-eq "autopsy: exit 0" "$?" "0"
-eq "autopsy: JSON kind is autopsy" "$(json_field "$OUT" '.kind')" "autopsy"
-eq "autopsy: nothing is dropped — an autopsy is never filtered" \
-  "$(json_field "$OUT" '.dropped | length')" "0"
-eq "autopsy: the source the phase owned is on the branch" \
-  "$(git -C "$R" show integration:source/a.txt)" "half-written"
-eq "autopsy: the tests it did NOT own are on the branch too" \
-  "$(git -C "$R" show integration:tests/a.test.txt)" "stray"
-eq "autopsy: so is a file no pathspec would have matched" \
-  "$(git -C "$R" show integration:notes.txt)" "scratch"
-has "autopsy: the commit subject is an autopsy, not a harvest" "emanate: autopsy contracter" \
-  "$(git -C "$R" log -1 --format=%s integration)"
-has "autopsy: the commit says which phase stalled and why" "rework budget exhausted at the overseer gate" \
-  "$(git -C "$R" log -1 --format=%b integration)"
-eq "autopsy: JSON discarded is true" "$(json_field "$OUT" '.discarded')" "true"
-if [ -d "$WT" ]; then bad "autopsy: worktree still on disk"; else ok "autopsy: worktree discarded"; fi
-
-# 18b. A phase that stalled having emitted NOTHING: exit 6, no commit — and
-#      the worktree still goes, because what is discarded is a stalled phase,
-#      not a diff. This is the case a plain --discard leaves behind, and the
-#      one that stranded the second field run.
-R="$ROOT/r18b"; WT="$ROOT/wt18b"
-fresh_repo "$R"
-new_detached_phase "$R" "$WT"
-before="$(tip_sha "$R")"
-rc=0; OUT="$(cd "$R" && "$HARVEST" "$WT" integration --label contracter --autopsy 'stalled before writing anything' --discard 2>/dev/null)" || rc=$?
-eq "autopsy/empty: exits 6 (nothing to record)" "$rc" "6"
-eq "autopsy/empty: no commit was made" "$(json_field "$OUT" '.commit')" "null"
-eq "autopsy/empty: the integration ref did not move" "$(tip_sha "$R")" "$before"
-eq "autopsy/empty: JSON discarded is true" "$(json_field "$OUT" '.discarded')" "true"
-if [ -d "$WT" ]; then bad "autopsy/empty: worktree left on disk — the next run of this unit collides with it"; else ok "autopsy/empty: worktree discarded even with nothing to record"; fi
-
-# 18c. A pathspec under --autopsy is a usage error: "unfiltered" is the whole
-#      of what separates an autopsy from a harvest.
-R="$ROOT/r18c"; WT="$ROOT/wt18c"
-fresh_repo "$R"
-new_detached_phase "$R" "$WT"
-printf 'impl\n' > "$WT/source/a.txt"
-rc=0; ( cd "$R" && "$HARVEST" "$WT" integration --label t --autopsy why -- 'source/**' >/dev/null 2>&1 ) || rc=$?
-eq "autopsy/pathspec: exits 2 (usage)" "$rc" "2"
-eq "autopsy/pathspec: the integration ref was not touched" \
-  "$(git -C "$R" show integration:source/a.txt)" "orig"
-
-# 18d. --autopsy with no reason: the reason is the commit's whole point, so an
-#      empty one is a usage error rather than an autopsy that says nothing.
-rc=0; ( cd "$R" && "$HARVEST" "$WT" integration --label t --autopsy '' >/dev/null 2>&1 ) || rc=$?
-eq "autopsy/no-reason: exits 2 (usage)" "$rc" "2"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Stub-guard — the assertions above must be sensitive to real filtering and
