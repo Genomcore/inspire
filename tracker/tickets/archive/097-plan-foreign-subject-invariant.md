@@ -2,15 +2,15 @@
 id: 097-plan-foreign-subject-invariant
 title: "097 — plan: a prose-only invariant about another entity passes every gate until GV-01"
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-09-14
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-14
 epic: follow-up
 size: M
 importance: High
 skills: [code, domain]
-status: Open
+status: Done
 blocked_by: []
 related_to: [090-reference-data-home, 090-actor-head-without-a-role]
 ---
@@ -51,17 +51,17 @@ access rule stated in prose.
 
 ## Acceptance criteria
 
-- [ ] `emanate-plan.sh` gains a warning — `PR-26`, in `PR-25`'s vocabulary — that fires on
+- [x] `emanate-plan.sh` gains a warning — `PR-26`, in `PR-25`'s vocabulary — that fires on
       a **prose-only** `## Invariants` entry which either names a token resolving to a
       different entity document (its id, or a field of it), or names no field of its own
       entity at all. A heuristic, never a refusal; `ready` never flips on it.
-- [ ] Goldens for both shapes and a negative: an invariant naming only its own fields does
+- [x] Goldens for both shapes and a negative: an invariant naming only its own fields does
       not fire; the four `gs` claims above, reduced to fixtures, all fire. The
       `golden/emanate-plan` shard count is checked after the fixtures land.
-- [ ] `keyed-heads.md` § Coherence states the limit — a prose-only invariant's subject is
+- [x] `keyed-heads.md` § Coherence states the limit — a prose-only invariant's subject is
       read by nothing — and points at `PR-26` as the safety net, the way the nestjs
       profile's public-route rule points at `PR-25`.
-- [ ] The authoring side says it once, where invariants are written: an invariant's
+- [x] The authoring side says it once, where invariants are written: an invariant's
       subject is the entity it is filed on; a rule about another entity goes on that
       entity, or on the referrer where the reference is, which 0.9.3 already ruled for
       cross-entity rules; a restatement of `population:` or of an action's `Q` head is not
@@ -72,6 +72,39 @@ access rule stated in prose.
       still written.
 
 ## Notes
+
+**The fifth criterion is not taken.** The contracter's `error · specification` exit
+is real detection, and it stays; it is no longer what notices first. Its cost is
+not acceptable as the only detection: it spends a contracter spawn and an overseer
+read per unit, and in the second field run it spent a wave and cascaded onto three
+further units. `PR-26` moves the same finding to t=0, where the vault is fixed
+before anything is spawned. `derived-contract.md` says what derive does and does
+not read, and names both the plan-time net and the contracter exit, so the limit is
+written down whichever way the fork went.
+
+**The second arm was built as specified, and the template's own fixtures were what
+it caught first.** `auth.user/I2` — "A suspended account keeps every row it wrote;
+suspension changes what may be read" — named no field of `auth.user` and fired. It
+was carried by 118 fixtures, which first read as the arm being too blunt to ship.
+It is not: that sentence describes the behaviour of the suspension action, so it
+belongs on the action, and the warning was correct. It is now a structural rule
+about the row. `audit.event/I1` was the same shape one step on — the immutability
+half is structural and has a V2 head, the "a correction is a new event" half is the
+action's — and it now carries `immutable(id, kind, created_at)`. No fixture pinned
+either sentence; four `expected-stdout.json` claim fingerprints and one `@claim`
+citation followed, and `--inventory` over the full estate shows four assertions
+added and none lost.
+
+That is also where the authoring rule's sharpest form came from, and it is what the
+fourth criterion now says: an entity states **structure** — what a row may hold,
+which tuples may coexist, what never changes once written — and behaviour is the
+action's. Every one of the four `gs` claims is a behavioural claim filed on an
+entity, which is why both arms reach them without an arm of their own for it.
+
+**The `golden/emanate-plan` shard count is unchanged**, and was a read rather than
+an edit: 76 fixtures give `ceil(76/10) = 8` shards, and `jobs_n` caps at 8 either
+way, so the four new fixtures move nothing.
+
 
 The remedy for the `gs` vault itself is two `/inspire-domain update` passes, quoted
 verbatim in the run report, and is the project's work.
