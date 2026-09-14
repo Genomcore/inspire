@@ -1,4 +1,4 @@
-# Roles — the five positions the loop dispatches
+# Roles — the six positions the loop dispatches
 
 Every other file under `references/` describes a **subcommand**. These describe a
 **role**: what one agent may do at one handoff, and the judgment it applies while it
@@ -17,7 +17,7 @@ INSPIRE therefore ships one coder agent rather than one per stack. An implemente
 not write tests in any stack, so the envelope is role-shaped; the stack composes in at
 spawn time, and the combinations multiply without the artifacts multiplying.
 
-## The five
+## The six
 
 | role | shell | doctrine | writes |
 |---|---|---|---|
@@ -26,6 +26,7 @@ spawn time, and the combinations multiply without the artifacts multiplying.
 | implementer | `inspire-implementer.md` | [`implementer.md`](implementer.md) | bodies |
 | security overseer | `inspire-security-overseer.md` | [`security-overseer.md`](security-overseer.md) | nothing |
 | quality overseer | `inspire-quality-overseer.md` | [`quality-overseer.md`](quality-overseer.md) | nothing |
+| arbiter | `inspire-arbiter.md` | [`arbiter.md`](arbiter.md) | nothing |
 
 Every shell sits at `.claude/agents/{file}`, where Claude Code discovers it. Per unit
 the three personas run in that order, and both overseers read at every handoff, the
@@ -103,6 +104,11 @@ Findings use the shared shape in
 [`_references/findings-format.md`](../../../_references/findings-format.md) — heading,
 issue, suggested follow-up. Blocking findings are what a REJECT is made of; a
 non-blocking finding is recorded and never rejects on its own.
+
+**The arbiter is read-only like an overseer, and is not one.** It answers a question —
+who is at fault for a red test — rather than gating a boundary, its name does not end
+in `-overseer.md`, and it is spawned only when the gate reports a cited claim failed.
+Its doctrine is [`arbiter.md`](arbiter.md).
 
 ## The roster is additive-only
 
