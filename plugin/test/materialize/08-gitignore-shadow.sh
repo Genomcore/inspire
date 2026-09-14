@@ -54,13 +54,16 @@ shdry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp
 check "gitignore shadow: dry run warns before writing" \
   "printf '%s' \"\$shdry\" | jq -e '.warnings | length > 0' >/dev/null"
 
-# No false positive on a clean repo: the INSPIRE block ignores only
-# settings.local.json, which must never trip the warning.
+# No false positive on a clean repo: the INSPIRE block ignores
+# settings.local.json and .claude/worktrees/, neither of which is a payload
+# class root, so neither may ever trip the warning.
 nsh="$(mktemp -d)/nshproj"; mkdir -p "$nsh"; ( cd "$nsh" && git init -q )
 nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$nsh" \
   --source-root source --prototype-root prototype 2>/dev/null)"
 check "gitignore shadow: no false positive on a clean repo" \
   "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
+check "gitignore shadow: the block's own worktrees line shadows no class" \
+  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && ! git -C '$nsh' check-ignore -q --no-index .claude/skills .claude/agents"
 
 # Per payload class, not per .claude/. A rule that excludes ONLY the agents root
 # leaves every other class committed, so the warning must name that root and no

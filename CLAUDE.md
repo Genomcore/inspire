@@ -358,7 +358,7 @@ asks the operator anything.
   than "schedule better". Cost follows the process count almost exactly — the
   `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
   matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 86 and 71 fixtures, because each
+  `emanate-derive` and `emanate-plan`, at 86 and 72 fixtures, because each
   fixture spawns a rule and the validators under it; `run.sh` **shards** both
   (see below). Next come a handful of `upgrade/` and `materialize/` files that
   build several period-correct fixtures each.

@@ -389,19 +389,33 @@ seed_claude_md() {
   log "  · seeded CLAUDE.md"
 }
 
-# Seed (or extend) the project's .gitignore with the entries INSPIRE needs —
-# chiefly .claude/settings.local.json, Claude Code's personal per-user
-# override file, which must never be committed/shared. A pre-existing
-# .gitignore is never replaced: the block is appended under a marked comment,
-# and the marker makes a second run's append a no-op (idempotent).
+# Seed (or extend) the project's .gitignore with the entries INSPIRE needs.
+# Two of them, and they are there for different reasons:
+#   .claude/settings.local.json  Claude Code's personal per-user override
+#                                file, which must never be committed/shared.
+#   .claude/worktrees/           the house convention for every worktree a
+#                                skill cuts. /inspire-emanate's t=0 REFUSES a
+#                                dirty launch checkout, and its own goal
+#                                worktree lives here — without this line the
+#                                run would dirty the checkout the next run
+#                                then refuses on.
+# A pre-existing .gitignore is never replaced: the block is appended under a
+# marked comment. A block that is already there is EXTENDED with whatever
+# entries it lacks rather than left alone — a project installed before an
+# entry existed would otherwise never receive it, and /inspire:update is the
+# one chance it gets. Lines inside the block that INSPIRE does not ship are
+# the operator's and are never touched.
 GITIGNORE_MARK_BEGIN="# --- INSPIRE (materialize.sh) ---"
 GITIGNORE_MARK_END="# --- end INSPIRE ---"
+GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/")
 
 seed_gitignore() {
   local gi="$PROJECT_ROOT/.gitignore"
-  local block
-  block="$GITIGNORE_MARK_BEGIN
-.claude/settings.local.json
+  local block entry
+  block="$GITIGNORE_MARK_BEGIN"
+  for entry in "${GITIGNORE_ENTRIES[@]}"; do block="$block
+$entry"; done
+  block="$block
 $GITIGNORE_MARK_END"
 
   if [ ! -f "$gi" ]; then
@@ -416,7 +430,7 @@ $GITIGNORE_MARK_END"
   fi
 
   if grep -qF "$GITIGNORE_MARK_BEGIN" "$gi" 2>/dev/null; then
-    log "  · .gitignore already has the INSPIRE block — left as-is"
+    gitignore_extend_block "$gi"
     return 0
   fi
 
@@ -428,12 +442,52 @@ $GITIGNORE_MARK_END"
   log "  · appended the INSPIRE block to .gitignore"
 }
 
+# Add every shipped entry the existing marked block is missing, immediately
+# before its end marker. Membership is tested against the WHOLE file, not just
+# the block: an operator who wrote `.claude/worktrees/` of their own outside it
+# already has the rule, and a second copy would be noise.
+gitignore_extend_block() {
+  local gi="$1" entry missing=() tmp
+  for entry in "${GITIGNORE_ENTRIES[@]}"; do
+    grep -qxF "$entry" "$gi" 2>/dev/null || missing+=("$entry")
+  done
+
+  if [ ${#missing[@]} -eq 0 ]; then
+    log "  · .gitignore already has the INSPIRE block — left as-is"
+    return 0
+  fi
+
+  # No end marker means the operator reshaped the block. Say what is missing
+  # and touch nothing: guessing where the block ends is how a .gitignore gets
+  # a rule in the wrong place.
+  if ! grep -qF "$GITIGNORE_MARK_END" "$gi" 2>/dev/null; then
+    WARNINGS+=("gitignore: the INSPIRE block has no end marker, so these entries were not added: ${missing[*]} — add them by hand.")
+    log "  · .gitignore: INSPIRE block has no end marker — not extended"
+    return 0
+  fi
+
+  if [ "$DRY_RUN" = 1 ]; then
+    log "  · [dry-run] would add to the INSPIRE .gitignore block: ${missing[*]}"
+    return 0
+  fi
+
+  tmp="$(mktemp)" || return 0
+  awk -v end_mark="$GITIGNORE_MARK_END" -v add="$(printf '%s\n' "${missing[@]}")" '
+    $0 == end_mark && !done { printf "%s\n", add; done = 1 }
+    { print }
+  ' "$gi" > "$tmp" && mv "$tmp" "$gi"
+  log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
+}
+
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
 # the repo, so teammates and CI need no plugin. A .gitignore rule that excludes
 # it therefore defeats the whole delivery model, silently: init reports
 # "settings: merged, lock: written" and `git status` shows nothing at all.
 #
-# WHO WROTE THE RULE: not us. No INSPIRE release ever wrote a .gitignore line —
+# WHO WROTE THE RULE: not us. No INSPIRE release ever wrote a .gitignore rule
+# that excludes the runtime — the block seed_gitignore appends names only
+# .claude/settings.local.json and .claude/worktrees/, and pre-0.3 wrote no
+# .gitignore line at all,
 # verified at v0.1.0, v0.2.0 and v0.2.1, where `git grep -il gitignore` is empty
 # tree-wide, and this repo's own .gitignore has three commits, none of them an
 # install. An earlier draft of this warning told operators to "remove the rule (a
@@ -462,7 +516,7 @@ warn_shadowed_runtime() {
   done
   [ "${#shadowed[@]}" -gt 0 ] || return 0
 
-  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: no release ever touched .gitignore. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: the block it seeds names only .claude/settings.local.json and .claude/worktrees/. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
   {
     echo ""
     echo "  WARNING · .gitignore excludes the INSPIRE runtime"
@@ -473,8 +527,9 @@ warn_shadowed_runtime() {
     echo ""
     echo "  v0.3 expects these committed — that is what makes the runtime travel"
     echo "  with the repo, so teammates and CI need no plugin. This rule is not"
-    echo "  ours: no INSPIRE release has ever written to .gitignore. The file it"
-    echo "  came from is named in parentheses above."
+    echo "  ours: the block INSPIRE seeds names only .claude/settings.local.json"
+    echo "  and .claude/worktrees/. The file this rule came from is named in"
+    echo "  parentheses above."
     echo ""
     echo "  Nothing this script appends can undo it: git cannot re-include a path"
     echo "  below an excluded directory. Remove the rule by hand, then commit."
