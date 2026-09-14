@@ -57,6 +57,17 @@ the trade, stated plainly — and it is why the two things that bound a run matt
 Neither is housekeeping. Together they are what keeps a run inside what auto
 mode already covers.
 
+**The loop never depends on a destructive git form to make progress.** `git
+worktree remove --force`, `git clean -fd` and `git branch -D` each delete work
+that exists nowhere else, and a harness may refuse any of them — the second
+field run's did, and the two stalled worktrees it could not remove stayed on
+disk with their rejected emissions inside. A refusal mid-wave has nobody to
+answer it, so the loop asks for none: every worktree it discards is sealed onto
+a commit and removed with plain `git worktree remove`
+([`run.md`](run.md) § The branch scheme), and no branch it creates is ever
+deleted by it. The two forms that do delete a ref are § The morning after's, and
+they are the operator's, run from their own checkout.
+
 **An operator may judge that their own environment justifies a different
 posture.** That call is theirs, and its mechanics belong to the harness's
 documentation rather than to this one — naming that the choice exists is honest,

@@ -11,7 +11,7 @@ size: S
 importance: High
 skills: [code]
 status: Open
-blocked_by: [097-emanate-goal-branch]
+blocked_by: []
 related_to: []
 ---
 
@@ -66,8 +66,31 @@ The dependency is hard in both directions a hard dependency can be: this ticket'
 is a property of the branch scheme (§ Stall's justification quotes "the worktree path
 carries no run id", which stops being true the moment the goal branch lands), and its
 deliverable is a bullet in the same list — `run.md` § The branch scheme's phase-worktree
-bullet, and § Permission posture in `unattended.md`, are edited by both. Clear this entry
-when the blocker closes.
+bullet, and § Permission posture in `unattended.md`, are edited by both.
+
+**`blocked_by` cleared 2026-09-14.** `097-emanate-goal-branch` closed against its eight
+criteria, and the path it settled is
+`.claude/worktrees/emanate-<goal-slug>-<unit-slug>-<run-stamp>-<phase>` — the run stamp is
+in the path, so the second criterion's collision is gone by construction and the work left
+here is the discard form.
+
+**The third criterion reaches further than `unattended.md`.** `emanate-harvest.sh
+--discard` ran `git worktree remove --force` and `git branch -D` on every persona phase,
+so the sentence the criterion asks for would have been false the moment it was written.
+The script's discard is now non-destructive: the worktree's on-disk state is committed
+onto its own detached HEAD and the plain form removes the clean tree, and no branch is
+deleted at all — a ref costs nothing to keep. A `--discard` on a worktree holding a branch
+therefore leaves that branch in place, advanced to the seal; the loop never produces one,
+because every phase worktree is detached.
+
+`test-harvest.sh` proves the plain form is really plain, rather than asserting that a
+worktree vanished: the discard runs under a `git` on `PATH` that refuses `--force` and
+`-D`, the way the harness safety net does.
+
+**The fourth criterion's fork resolves to the first.** The autopsy commit lands on the
+unit's integration branch, which a stall leaves in place and never promotes, so no
+rejected emission reaches the goal branch and the operator's ruling holds. No destructive
+form is permitted anywhere, so there is none to write down.
 
 The autopsy commit is what makes *"the autopsy is the branch, not the worktree"* literally
 true. Today the sentence holds only for phases that already harvested; a unit that stalls
