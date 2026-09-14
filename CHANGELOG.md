@@ -9,6 +9,56 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.9 — 2026-09-14
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.9.9 keeps the 0.3 layout and the 0.9.0 payload classes. The release comes from
+the same field run as 0.9.8 and closes the other half of it. Both entity units of
+that run stalled at their contracter gate on four invariants, and each of the four
+named a different entity as its real subject. Nothing mechanical read an
+invariant's subject, so the vault passed every gate until a spawned contracter
+read the prose and said so — a wave in.
+
+### Added
+
+- **`PR-26`, a plan-time warning for an invariant that may be about another
+  entity.** It reads a **prose-only** `## Invariants` entry two ways: its prose
+  names another entity document of the vault — the dotted id, the name, or one of
+  its fields — or it names no `## Fields` row of its own entity at all. A token
+  the entity itself carries is never foreign, so a field name several entities
+  share reads as its own.
+- **Its vocabulary is the vault's own identifiers**, not a word list, which is
+  what makes it self-calibrating: a suite with an entity named `membership` warns
+  on "membership" in prose, and a suite without one never does. `unique(...)`,
+  `references(...)` and the other V2 heads are already read by
+  `keyed-heads.md` § Coherence; this is the entry that has no head for a rule to
+  read.
+- **A warning, and a heuristic.** It never flips `ready` and never refuses. A
+  subject is not something prose states outright, and where a rule is filed stays
+  the author's.
+
+### Changed
+
+- **The authoring rule is written where invariants are written.** An invariant's
+  subject is the entity it is filed on. An entity states **structure** — what a
+  row may hold, which tuples may coexist, what never changes once written — and
+  behaviour is the action's, in its preconditions, postconditions and errors. A
+  rule about another entity belongs on that entity, or on the referrer that
+  declares the reference. A restatement of a `population:` marker, of a
+  `references(...)`, or of an action's `Q` head is not an invariant at all.
+  `inspire-domain`'s `references/format-entity.md` carries it, and the
+  `04_domain` README states it and points there.
+- **`keyed-heads.md` § Coherence states its own limit.** All four of its joins
+  need a head; a prose-only invariant has none, so no rule there reads its
+  subject, and `PR-26` is named as the net — the way `PR-25` is the net for an
+  access rule stated in prose.
+- **`derived-contract.md` says what derive does not read.** A prose-only entry's
+  prose is carried and its subject is not, deliberately: the subject of a sentence
+  is not a shape a strict reader can refuse over. What follows — that on the wrong
+  entity the claim's only assertable form is an absence, green before anything is
+  built — is written down, with both the plan-time net and the contracter's
+  `error · specification` exit named.
+
 ## 0.9.8 — 2026-09-14
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

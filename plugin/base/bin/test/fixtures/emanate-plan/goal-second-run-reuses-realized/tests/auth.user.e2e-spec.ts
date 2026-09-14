@@ -23,6 +23,6 @@ describe('auth.user', () => {
   // @claim auth.user/field/created_at/immutable sha256:3e58bada6a180c0d7f817bdae51fba96a461575b309bfbc17a6918d20c6617c7
   // @claim auth.user/field/created_at/default sha256:ed6baa0c5da273d87f29c5f46135fa2c98f6032e24294da3dd866067b8b9abb2
   // @claim auth.user/inv/I1 sha256:96f54602f847be60f03bc88b8d508870dee0a9330ce603076a4f0b396ceee434
-  // @claim auth.user/inv/I2 sha256:90a04df857aee90e445894fc621c24fb67852d1a0a08019346de966205b7e838
+  // @claim auth.user/inv/I2 sha256:f9cdb06c22b18ba50406fd38503aeb742d6f3699225beaf5c4a2fd6cf68bc1ac
   it('was delivered by the first run toward this goal', () => {})
 })

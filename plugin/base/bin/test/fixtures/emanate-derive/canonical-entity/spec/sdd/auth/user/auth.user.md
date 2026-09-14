@@ -13,7 +13,7 @@ feature/ADR grounding for the design decisions — why this entity exists at all
 
 ## Invariants
 - `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [[adr-auth-01-identity-model]] scopes principals to an org.
-- `I2` — A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.
+- `I2` — A row that leaves `active` keeps its `email` and `org_id`, so the handle stays reserved to the organisation, never released.
 
 ## Fields
 

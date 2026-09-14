@@ -221,10 +221,13 @@ plan_ingest_one() {
       X) plan_find "PR-01" "error" "$id" "$(plan_path_norm "$f2")" \
            "$(plan_owner "$f2")" "$f3" "$f4" "$f1" ;;
       A) printf '%s\t%s\n' "$f1" "$f2" >> "$PLAN_TMP/c/$n.authz" ;;
+      I) printf '%s\t%s\n' "$f1" "$f2" >> "$PLAN_TMP/c/$n.inv" ;;
+      N) printf '%s\n' "$f1" >> "$PLAN_TMP/c/$n.fields" ;;
       *) ;;
     esac
   done < "$recf"
   plan_check_authorization "$n" "$id" "$path"
+  plan_check_invariant_subject "$n" "$id" "$path"
 }
 
 # plan_check_authorization <n> <unit-id> <path> — PR-25, over the unit's
@@ -253,6 +256,66 @@ plan_check_authorization() {
     "$(plan_owner "$path")" \
     "an access rule is stated in prose alone at $keys — no \`actor(...)\` head, so the binding renders no guard and the route emanates public, and the only claim derived is a test-oracle one about the prose itself" \
     "give each one an \`actor({role})\` head (vocabulary V3 of \`keyed-heads.md\`) through \`/inspire-domain update\`, or confirm the route is meant to be reachable by anyone"
+}
+
+# plan_check_invariant_subject <n> <unit-id> <path> — PR-26, over the unit's
+# prose-only invariants. Why the check exists and why it warns rather than
+# refuses: `emanation-plan.md` § An invariant about another entity.
+#
+# Two arms, both over the same prose and both answered by one `kh_prose_names`
+# pass. FOREIGN: the prose names another entity document of this vault — its
+# dotted id, its name, or one of its fields — and a token this entity also
+# carries is never foreign, so a shared field name like `status` reads as its
+# own. NO OWN FIELD: the prose names no `## Fields` row of this entity at all,
+# which is what an invariant whose real subject is elsewhere looks like when it
+# names that subject in words the vault does not use.
+#
+# It fires during INGEST for `plan_check_authorization`'s reason — the whole
+# frontier, before realization narrows it — and reports one finding per unit
+# naming every key, because the remedy is one touch of the entity document.
+plan_check_invariant_subject() {
+  local n="$1" uid="$2" path="$3"
+  local f="$PLAN_TMP/c/$n.inv"
+  local own="" foreign="" k p ln tag name row rid names
+  local -a ikeys=() iprose=() hit=()
+  [ -s "$f" ] || return 0
+  while IFS=$'\t' read -r k p; do ikeys+=("$k"); iprose+=("$p"); hit+=("none"); done < "$f"
+
+  if [ -s "$PLAN_TMP/c/$n.fields" ]; then
+    own="$(tr '\n' ';' < "$PLAN_TMP/c/$n.fields")"
+  fi
+  # The unit's own row is dropped rather than subtracted name by name: its id and
+  # its name are its own by construction, and its fields are already in `own`.
+  plan_entity_vocab
+  while IFS=$'\t' read -r rid names; do
+    [ "$rid" = "$uid" ] && continue
+    foreign="${foreign:+$foreign;}$names"
+  done < "$PLAN_TMP/entity-vocab.tsv"
+
+  while IFS=$'\t' read -r ln tag name; do
+    row=$((ln - 1))
+    # The first foreign token is the one named: a message wants one example of
+    # the subject it found, and prose order is the order the author wrote.
+    case "$tag" in
+      foreign) case "${hit[$row]}" in foreign:*) ;; *) hit[$row]="foreign: \`$name\`" ;; esac ;;
+      own) [ "${hit[$row]}" = none ] && hit[$row]=ok ;;
+    esac
+  done < <(printf '%s\n' "${iprose[@]}" | kh_prose_names "$own" "$foreign")
+
+  local keys="" why=""
+  for row in "${!ikeys[@]}"; do
+    case "${hit[$row]}" in
+      ok) continue ;;
+      none) why="names no field of \`$uid\`" ;;
+      *) why="${hit[$row]}" ;;
+    esac
+    keys="${keys:+$keys, }\`${ikeys[$row]}\` ($why)"
+  done
+  [ -n "$keys" ] || return 0
+  plan_find "PR-26" "warning" "$uid" "$(plan_path_norm "$path")" \
+    "$(plan_owner "$path")" \
+    "a prose-only invariant may be about another entity at $keys — no head, so no rule reads its subject, and the only claim derived is a test-oracle one about the prose itself, which on this entity can only be asserted as an absence" \
+    "file each rule on the entity it constrains, or on the referrer where the reference is; behaviour belongs on the action as a precondition, postcondition or error, never here — through \`/inspire-domain update\`"
 }
 
 # plan_resolve_edges — the second pass: PR-02, PR-03/04/05 and the ordering edge

@@ -313,6 +313,20 @@ when it fails:
 4. **`returns({field})` names a real output.** The field is a row in
    `## Outputs`.
 
+**All four joins need a head, and that is their limit.** A prose-only invariant
+has none, so **no rule reads its subject**: nothing here separates a rule about
+this entity from a rule about another entity filed on it, and the
+`draft → accepted` gate passes both. The claim such an entry derives is a `test`
+oracle, and on the wrong entity the only assertable form of it is an absence —
+no column, no writer, no sentinel row — which is green before anything is built
+and stays green through every violation.
+
+`PR-26` is the safety net, at plan time and over the vault's own identifiers
+([`emanation-plan.md`](emanation-plan.md) § An invariant about another entity),
+the way `PR-25` is the net for an access rule stated in prose. Like `PR-25` it is
+a heuristic and never a refusal, so where the subject is filed stays the
+author's.
+
 ## Old shapes — the refusal catalogue
 
 A strict reader (the derived-contract parser) **refuses** an artifact in any of

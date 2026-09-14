@@ -151,7 +151,7 @@
     {
       "key": "I2",
       "head": null,
-      "prose": "A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.",
+      "prose": "A row that leaves `active` keeps its `email` and `org_id`, so the handle stays reserved to the organisation, never released.",
       "oracle": "test"
     }
   ],
@@ -224,7 +224,7 @@
     {
       "id": "auth.user/inv/I2",
       "oracle": "test",
-      "fingerprint": "sha256:e41255be8f1b3c80cb4808b3b2454e3612dc1c2d7f3a4bf48f68f7f6fd6901af"
+      "fingerprint": "sha256:a23ea7d7bbb37c355cd218c2bbda7c5977c2bc43d16cb2dfa8f31a3bfdba0cfa"
     }
   ]
 }

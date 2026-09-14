@@ -532,6 +532,45 @@ warning that never flips `ready`, exactly as `W-1` is never a refusal. A vault
 that writes every access rule as prose is one run away from shipping every route
 public; saying so at t=0 costs a warning, and a warning is all it may cost.
 
+## An invariant about another entity
+
+`keyed-heads.md` § Coherence checks that a **headed** V2 invariant names real
+fields of this entity, and that a `P`/`Q` head names a touched entity. A
+prose-only invariant has no head, so no rule reads its subject at all. Nothing
+mechanical separates a rule about this entity from a rule about another entity
+filed here, and the `draft → accepted` gate passes both.
+
+The cost is not that the rule is unenforced. It is that the rule derives a
+`test` oracle, and on the entity it is wrongly filed on the only assertable form
+of it is an **absence** — no column, no writer, no sentinel row. An absence is
+green the moment the declaration-only tree is packed, and stays green through
+every mutation that violates the rule. `PR-26` is the warning for that shape.
+
+It is the same failure as `PR-25` one level up, and it is here for the same
+reason: an emanation run never runs `review.sh`, so a check that exists for the
+hands-off run has to speak in the layer that run reads.
+
+Two arms answer it, over the same prose and in one pass:
+
+- **A foreign subject.** The prose names another entity document of this vault —
+  its dotted id, its name, or one of its fields. A token this entity also carries
+  is never foreign, so a field name several entities share reads as its own.
+- **No own field.** The prose names no `## Fields` row of this entity at all,
+  which is what a rule whose real subject is elsewhere looks like when it names
+  that subject in words the vault does not use.
+
+The vocabulary is the **vault's own identifiers** rather than a list of English
+words, which is what separates this from `PR-25` and `W-1` and what makes it
+self-calibrating: a suite with an entity named `membership` is a suite where
+"membership" in prose plausibly means that entity, and a suite without one never
+warns on the word. It is still a heuristic, and it never flips `ready` — the two
+arms recognise a subject, and a subject is not a thing prose states outright.
+
+A behavioural claim on an entity is caught by one arm or the other in practice,
+because an entity states **structure** — what a row may hold, which tuples may
+coexist — and behaviour written there either names the actor it is really about
+or names no column at all.
+
 ## `PR-*` — the readiness catalogue
 
 ### Findings — a plan is emitted; an `error` flips `ready` and exits 1
@@ -550,6 +589,7 @@ public; saying so at t=0 costs a warning, and a warning is all it may cost.
 | `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing frontier-*eligible* navigates to, which is the app's own entry; eligible rather than in the frontier, because a realized screen has left the frontier and its outbound links are still real — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
 | `PR-24` | `stack.md` declares test-infrastructure components and its `## Worktree recipe` declares **no step**, so nothing states how a fresh phase worktree reaches them. **A warning**, for `PR-22`'s reason and keyed on the same declaration: the run can improvise one, and the first field run did — fourteen minutes of it, before the first spawn, arriving at values a second run would have inferred differently. A heading with no rows reads as absent, since that is the state a seeded project starts in. Silent when no component is declared: the environment half of a recipe has nothing to point at, and installing dependencies is the framework profile's `## Build & verify`, not the project's | warning | `inspire-bootstrap` |
 | `PR-25` | a precondition or error entry carries **no head** and its prose names an authorization concept — the framework profile's `## Bindings` renders a guard from `actor({role})` and a **public route** from its absence, so the rule the prose states is enforced by nothing, while the entry itself derives a test-oracle claim about that prose and the suite goes green. **A warning, and a heuristic**, exactly `W-1`'s posture: recognising an access rule in prose means matching words that have legitimate prose uses, and a heuristic does not get to block anything. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`, beside `W-1`'s list and read by the same matcher. Reported over the **whole frontier**, before realization narrows it: an already-realized unit's route is public today. One finding per unit, naming every key, since the remedy is one touch of the descriptor | warning | the unit's layer |
+| `PR-26` | a **prose-only** `## Invariants` entry whose subject may not be this entity — its prose names another entity document of the vault (its dotted id, its name, or one of its fields), or it names no `## Fields` row of this entity at all. A headed invariant is already read by `keyed-heads.md` § Coherence; a prose-only one is read by nothing, and the claim it derives can only be asserted here as an absence, which is green before anything is built and stays green through every violation. **A warning, and a heuristic**, `PR-25`'s posture: a subject is not something prose states outright. The vocabulary is the vault's own identifiers rather than a word list, so a suite that declares no such entity never warns on the word. One finding per unit, naming every key and the arm it fired on, since the remedy is one touch of the entity document | warning | `inspire-domain` |
 
 ### Refusals — nothing is planned, the run exits 4
 

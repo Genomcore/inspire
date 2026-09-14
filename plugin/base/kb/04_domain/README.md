@@ -30,6 +30,17 @@ vault upgraded to this release is not red on every artifact it already had;
 `derive` refuses an old-shape artifact regardless, and those classes ramp in the
 release after.
 
+**An invariant's subject is the entity it is filed on.** An entity states
+structure — what a row may hold, which tuples may coexist, what never changes
+once written. Behaviour is the action's, in its preconditions, postconditions
+and errors; a rule about another entity belongs on that entity, or on the
+referrer that declares the reference; and a restatement of a `population:`
+marker, of a `references(…)`, or of an action's `Q` head is not an invariant.
+A rule filed on the wrong entity is enforced by nothing there, and the claim it
+mints can only be asserted as an absence. The authoring rule and its worked
+cases are in `inspire-domain`'s `references/format-entity.md`; `PR-26` is the
+plan-time net, and is a heuristic that never blocks.
+
 - **Skill:** `inspire-domain` (define / show / update / refactor / delete /
   promote / demote / review / source / graph).
 - **Layout:**

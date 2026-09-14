@@ -137,6 +137,21 @@ carries no head by design). `oracle` is `keyed-heads.md`'s split: `store` for
 `unique` · `nonnull` · `default` · `references` · `immutable`, `test` for
 everything else and for every prose-only entry.
 
+**Derive reads a prose-only entry's prose and never its subject**, and it is
+right not to: the subject of a sentence is not a shape a strict reader can refuse
+over, and refusing the interesting invariants — which are prose-only by design —
+would cost far more than it catches. So a `## Invariants` entry whose real
+subject is another entity derives here exactly like one about this entity: a
+`test` claim over its prose. What follows is that on the wrong entity the claim
+has no venue — the only assertable form of it is an absence, green before
+anything is built and green through every violation — and derive says nothing
+about that. The net is `PR-26` at plan time, a heuristic over the vault's own
+identifiers, and the authoring rule it points at
+(`inspire-domain`'s `references/format-entity.md`). The contracter reaches the
+same conclusion later, as an `error · specification` exit, after a spawn and an
+overseer read per unit; that exit stays, and is no longer the first thing to
+notice the defect.
+
 A **type** is `{ "name", "base" }`, always. Every `Type` cell must resolve —
 `## Entities` field-touch rows included — and an empty one is `DR-T2` rather than
 a `null`: a field whose type nothing states is a rendering the contracter would
