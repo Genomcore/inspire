@@ -14,7 +14,7 @@ principals to an organisation rather than to the platform.
 
 ## Invariants
 - `I1` — unique(org_id, email) — Email is unique per organisation, never globally.
-- `I2` — A suspended account keeps every row it wrote; suspension changes what may be read.
+- `I2` — A row that leaves `active` keeps its `email` and `org_id`, so the handle stays reserved to the organisation.
 
 ## Fields
 

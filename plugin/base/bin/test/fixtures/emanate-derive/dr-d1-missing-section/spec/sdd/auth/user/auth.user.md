@@ -10,7 +10,7 @@ The account record a principal signs in with, described in [[auth-user-managemen
 
 ## Invariants
 - `I1` — unique(org_id, email) — Email is unique per organisation, never globally.
-- `I2` — A suspended account keeps every row it wrote; suspension changes what may be read.
+- `I2` — A row that leaves `active` keeps its `email` and `org_id`, so the handle stays reserved to the organisation.
 
 ## Fields
 

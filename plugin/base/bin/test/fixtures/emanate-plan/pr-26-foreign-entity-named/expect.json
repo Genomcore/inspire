@@ -1,0 +1,21 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-26" },
+    { "expr": ".findings | length", "equals": "1" },
+    { "expr": ".findings[0].severity", "equals": "warning" },
+    { "expr": ".findings[0].owner", "equals": "inspire-domain" },
+    { "expr": ".findings[0].unit", "equals": "auth.user" },
+    { "expr": ".findings[0].target", "equals": "spec/sdd/auth/user/auth.user.md" },
+    { "expr": ".findings[0].message | test(\"`I3` \\\\(foreign: `org`\\\\)\")", "equals": "true" },
+    { "expr": ".findings[0].message | test(\"`I2`\")", "equals": "false" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["NOT READY"]
+}

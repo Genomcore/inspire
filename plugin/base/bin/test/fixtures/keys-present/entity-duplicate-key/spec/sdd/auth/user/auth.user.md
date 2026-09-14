@@ -13,7 +13,7 @@ Identity model rationale, per [[adr-auth-01-identity-model]].
 
 ## Invariants
 - `I1` — unique(org_id, email) — Email is unique per organisation.
-- `I1` — A suspended account keeps every row it wrote.
+- `I1` — A row that leaves `active` keeps its `email` and `org_id`.
 
 ## Fields
 

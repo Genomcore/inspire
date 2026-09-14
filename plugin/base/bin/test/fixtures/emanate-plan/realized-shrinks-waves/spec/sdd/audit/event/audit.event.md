@@ -13,7 +13,7 @@ The trail is a discrete object because [[adr-audit-01-append-only]] forbids
 editing history in place.
 
 ## Invariants
-- `I1` — An event is never edited after it is written; a correction is a new event.
+- `I1` — immutable(id, kind, created_at) — An event is never edited after it is written.
 
 ## Fields
 

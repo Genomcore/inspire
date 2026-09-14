@@ -429,6 +429,53 @@ kh_prose_hits() {
   '
 }
 
+# kh_prose_names <own> <foreign>
+#   stdin: one text per line. stdout: `{line number}<TAB>own|foreign<TAB>{name}`,
+#   one record per hit, with the line number carrying the same meaning it carries
+#   above. Both vocabularies are semicolon-separated and either may be empty.
+#
+# A sibling of `kh_prose_hits` rather than a mode of it, because the two read
+# prose for different things and would have to disagree on two points to share
+# one body. The vocabulary here is the VAULT'S OWN identifiers — entity ids,
+# entity names, field names — not a closed list of English words:
+#
+#   - A backticked token is the most deliberate way to name an identifier, so
+#     backticks are kept. `kh_prose_hits` strips them for the opposite reason: a
+#     backticked `unique` is the constraint being named, not one left in prose.
+#   - `.`, `_` and digits are word characters, so `workspace.role`,
+#     `case_assignment` and `org_id` are each ONE token. `kh_prose_hits` turns
+#     every non-letter into a space, which would split all three.
+#
+# Two vocabularies in one pass because the caller asks both questions of the
+# same prose, and a second spawn per unit is what a whole-vault plan cannot
+# afford.
+kh_prose_names() {
+  awk -v own="$1" -v foreign="$2" '
+    BEGIN {
+      no = split(own, O, ";"); nf = split(foreign, F, ";")
+      for (i = 1; i <= no; i++) if (O[i] != "") V[O[i]] = "own"
+      # Foreign never overwrites own: a token both vocabularies carry belongs to
+      # this entity too, and reads as its own.
+      for (i = 1; i <= nf; i++) if (F[i] != "" && !(F[i] in V)) V[F[i]] = "foreign"
+    }
+    {
+      s = tolower($0)
+      gsub(/[^a-z0-9._-]/, " ", s)
+      n = split(s, W, " ")
+      delete seen
+      for (i = 1; i <= n; i++) {
+        w = W[i]
+        # Sentence punctuation clings to a token: `it.` and `-- role` are the
+        # word plus a delimiter this split had no reason to drop.
+        gsub(/^[._-]+|[._-]+$/, "", w)
+        if (w == "" || (w in seen) || !(w in V)) continue
+        seen[w] = 1
+        printf "%d\t%s\t%s\n", NR, V[w], w
+      }
+    }
+  '
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Constraints lines
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,19 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-26" },
+    { "expr": ".findings | length", "equals": "2" },
+    { "expr": "[.findings[].severity] | unique | join(\",\")", "equals": "warning" },
+    { "expr": "[.findings[].unit] | sort | join(\",\")", "equals": "workspace.role,workspace.user" },
+    { "expr": "[.findings[] | select(.unit == \"workspace.role\")][0].message | test(\"`I1` \\\\(foreign: `membership`\\\\), `I2` \\\\(names no field of `workspace.role`\\\\)\")", "equals": "true" },
+    { "expr": "[.findings[] | select(.unit == \"workspace.user\")][0].message | test(\"`I1` \\\\(names no field of `workspace.user`\\\\), `I2` \\\\(foreign: `role`\\\\)\")", "equals": "true" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["NOT READY"]
+}

@@ -142,8 +142,33 @@ entity cannot assert: the rows are another entity's, the foreign key is another
 entity's, and nothing this one emits enforces it. **The headed spelling is
 already an error** — every argument of a V2 head must be a row in this entity's
 own `## Fields` table ([`keyed-heads.md`](../../_references/keyed-heads.md)
-§ Coherence). The prose-only spelling is not mechanically distinguishable from
-legitimate prose, which is why the rule is stated here, for the author.
+§ Coherence). The prose-only spelling is caught by nothing at authoring time, and
+at plan time only by the heuristic `PR-26` warns on, which is why the rule is
+stated here, for the author.
+
+**An invariant's subject is the entity it is filed on.** That is the whole of it,
+and three shapes break it:
+
+- **A rule about another entity** goes on that entity, or on the referrer where
+  the reference is — the paragraph above.
+- **A rule about behaviour** goes on the action. An entity states **structure**:
+  what a row may hold, which tuples may coexist, what may never change once
+  written. What happens when something is invoked, who may invoke it, and what
+  follows from it are the action's `## Preconditions`, `## Behavior`,
+  `## Postconditions` and `## Errors`. "A suspended account keeps every row it
+  wrote" is the suspension action's postcondition, not the account's invariant;
+  filed on the entity it derives a `test` oracle whose only assertable form is an
+  absence, which is green before anything is built.
+- **A restatement of something already declared** is not an invariant at all. A
+  `population:` marker already says a catalog ships with the platform and no
+  action writes it; an action's `Q` head already says what that action leaves
+  true; a `references(…)` on the referrer already says every row of it resolves.
+  Saying any of them again here mints a second claim that asserts nothing and
+  can drift from the first.
+
+Prose-only is still the normal case for the interesting invariants. The test is
+not whether a head fits — it is whether **this entity's own rows** are what the
+rule constrains.
 
 **Fields are nullable by default.** There is no `nullable` word — absence of
 `nonnull` is nullability. The quiet case is the common one; the marked case is

@@ -101,8 +101,9 @@ plan_derive_all() {
 
 # plan_contract_records <file> — one contract as the record stream the reader
 # consumes: U identity · R requires edge · X refusal · A prose-only precondition
-# or error. A refused unit needs no marker of its own: derive gives it no
-# `claims` key, so its count is 0 and its `X` records say why.
+# or error · I prose-only invariant · N one of this unit's own field names. A
+# refused unit needs no marker of its own: derive gives it no `claims` key, so
+# its count is 0 and its `X` records say why.
 #
 # The U record's `population` is carried, never read: it decides nothing about
 # waves or readiness, and it is here so a spawn brief can be built from the plan
@@ -114,6 +115,14 @@ plan_derive_all() {
 # applied in one pass per unit, since one `awk` per bullet is what a whole-vault
 # plan cannot afford. Preconditions and errors are the two sections where a
 # missing head silently costs a guard; the rest of a contract has no such shape.
+#
+# An I record carries a prose-only invariant, and an N record one `## Fields`
+# row of the same unit — together they are everything `PR-26` asks of the unit
+# itself, the rest of its question being about the other entity documents in the
+# vault. Both are empty for every kind but `entity`, which is the only one with
+# either section. Prose-only is the same selection an A record makes, for the
+# same reason: a headed entry names its subject in the head, where a rule already
+# reads it.
 #
 # An R record carries `deferred` only where the contract states `ordering:
 # false`. A key that is absent — an older contract — reads as ordering, which is
@@ -135,6 +144,10 @@ plan_contract_records() {
     + (((.preconditions // []) + (.errors // []))
        | map(select(.head == null and (.prose // "") != ""))
        | map(row(["A", .key, .prose])))
+    + ((.invariants // [])
+       | map(select(.head == null and (.prose // "") != ""))
+       | map(row(["I", .key, .prose])))
+    + ((.fields // []) | map(row(["N", .name])))
     | .[]
   ' "$1" 2>/dev/null
 }
@@ -153,6 +166,35 @@ plan_domain_index() {
     [ -n "$id" ] || continue
     printf '%s\t%s\n' "$id" "$(plan_path_norm "$f")" >> "$PLAN_TMP/domain-ids.tsv"
   done < <(sdd_find_entities "$SDD_SPEC_ROOT"; sdd_find_actions "$SDD_SPEC_ROOT")
+}
+
+# plan_entity_vocab — the vault's entity vocabulary, one row per entity
+# document: `{id}<TAB>{names}`, where `names` is semicolon-separated and holds
+# the dotted id, its last segment and every `## Fields` row. It is what `PR-26`
+# matches an invariant's prose against, and it is vault-wide for the reason
+# `plan_domain_index` is: an invariant may name an entity outside the scope, and
+# a narrowed run that could not see it would stop warning about the one case the
+# check exists for.
+#
+# The last segment stands in for the `entity:` field rather than being read from
+# it — one yq per entity is what this loop costs, and a second would double it
+# for a value the path convention already assumes (`plan_dep_path`). Where the
+# two disagree the vocabulary is missing a name, never carrying a wrong one, and
+# a missed name costs a warning that does not fire.
+plan_entity_vocab() {
+  [ -f "$PLAN_TMP/entity-vocab.tsv" ] && return 0
+  local f id names n
+  : > "$PLAN_TMP/entity-vocab.tsv"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    id="$(kh_dotted "$(sdd_fm_value "$f" '.id')")"
+    [ -n "$id" ] || continue
+    names="$id;${id##*.}"
+    while IFS= read -r n; do
+      [ -n "$n" ] && names="$names;$n"
+    done < <(sdd_entity_fields "$f")
+    printf '%s\t%s\n' "$id" "$names" >> "$PLAN_TMP/entity-vocab.tsv"
+  done < <(sdd_find_entities "$SDD_SPEC_ROOT")
 }
 
 # plan_screen_index — id -> path for every screen. A screen's id is minted
