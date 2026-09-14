@@ -17,14 +17,16 @@ from a measurement that came back empty.
 
 ## The identity block, at t=0
 
-Written once, immediately after the turn branch exists, before wave 1 spawns
+Written once, immediately after the goal worktree exists, before wave 1 spawns
 anything. It is the whole of what the file holds until the first wave closes.
 
 ```
 # Emanation run <run-id>
 
-- **base branch** — <the branch the run was launched from>
-- **turn branch** — <emanate/<run-id>>
+- **launch branch** — <the branch the run was launched from>
+- **goal branch** — <emanate/<goal-slug>>, <cut here | advanced from an
+  earlier run>
+- **goal worktree** — <.claude/worktrees/emanate-<goal-slug>>
 - **scope** — <as typed>
 - **goal** — <as typed, or *none*>
 - **selectors** — <as typed, or *none*>
@@ -51,7 +53,8 @@ unit's own measurements land — the closing block never repeats them.
 <one row per unit that reached a terminal state in this wave>
 
 ### <unit id> — delivered | stalled | blocked
-- **integration branch** — <emanate/<run-id>-<unit-slug>, where one was left in place>
+- **integration branch** — <emanate/<goal-slug>-<unit-slug>-<run-stamp>, where
+  one was left in place>
 - **gate verdict** — <the digest>
 - **rework cycles** — <n> · **infrastructural retries** — <n>
 - **harvest dropped** — <paths, or *nothing dropped*>
@@ -87,10 +90,11 @@ is reached, the ceiling or a budget is exhausted, a stall cascades. Writing it
 - **pre-PR** — the rules verify did not run (`profile-gates-installed.sh`,
   `adr-maturity-matches-features.sh`) and `criteria-have-tests.sh`'s 🟡
   limitation
-- **where the work is** — the turn branch `<emanate/<run-id>>`, and whether its
-  worktree `.claude/worktrees/emanate-<run-id>` was removed or is still on disk
-  and why. The launch checkout was never moved; say so, because the operator's
-  next command is run from it
+- **where the work is** — the goal branch `<emanate/<goal-slug>>`, its worktree
+  `.claude/worktrees/emanate-<goal-slug>`, the command that shows the effort
+  (`git -C <worktree> log --oneline <launch-branch>..`) and the diff-stat
+  against the launch branch. The launch checkout was never moved and never
+  written; say so, because the operator's next command is run from it
 - **next act** — <the PR to open or already opened, and every remedy named above>
 ```
 
@@ -106,5 +110,6 @@ Both rules are [`run.md`](run.md) § The run report's, and they apply to the
 - **the last position wins** — a slot whose answer this run revises is corrected
   where it stands, never left with a correction appended beside it. The identity
   block's `status` is the standing example;
-- **the file is tracked** — it is committed with the run, so what it claims is
-  read again in review.
+- **the file is tracked** — each block above is committed on the goal branch as
+  it is written, so what it claims is read again in review and every earlier
+  run's account stays in that branch's history.
