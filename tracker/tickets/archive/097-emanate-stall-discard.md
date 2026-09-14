@@ -4,13 +4,13 @@ title: "097 — emanate: a stalled phase's worktree cannot be discarded, and the
 created: 2026-09-10
 updated: 2026-09-14
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-09-14
 epic: follow-up
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: []
 ---
@@ -45,14 +45,14 @@ predicts: the re-run the report recommends fails at `prepare` for `workspace.rol
       harvest, and on a branch that is never promoted — and the now-clean worktree is
       removed with plain `git worktree remove`. The autopsy commit's message says which
       phase stalled and why.
-- [ ] Phase worktree paths carry the run id — `.claude/worktrees/emanate-<run-id>-<unit-slug>-<phase>`,
+- [x] Phase worktree paths carry the run id — `.claude/worktrees/emanate-<run-id>-<unit-slug>-<phase>`,
       or the goal-and-stamp form `097-emanate-goal-branch` settles on — so a leftover from
       a crashed run never blocks the next run of the same unit, and the closing block lists
       every worktree the run leaves on disk.
-- [ ] `unattended.md` § Permission posture states that the loop never depends on a
+- [x] `unattended.md` § Permission posture states that the loop never depends on a
       destructive git form (`worktree remove --force`, `clean -fd`, `branch -D`) to make
       progress, because the harness may refuse any of them.
-- [ ] **Or Done with zero code changed**, if the ruling is that an autopsy commit puts
+- [x] **Or Done with zero code changed**, if the ruling is that an autopsy commit puts
       rejected code into git history where the operator does not want it and the honest
       answer is a permitted destructive form — then that form, and where it is permitted,
       is the deliverable, in § Stall and § Permission posture.
@@ -68,7 +68,7 @@ carries no run id", which stops being true the moment the goal branch lands), an
 deliverable is a bullet in the same list — `run.md` § The branch scheme's phase-worktree
 bullet, and § Permission posture in `unattended.md`, are edited by both.
 
-**`blocked_by` cleared 2026-09-14.** `097-emanate-goal-branch` closed against its eight
+**`blocked_by` cleared 2026-09-14.** `097-emanate-goal-branch` closed against its nine
 criteria, and the path it settled is
 `.claude/worktrees/emanate-<goal-slug>-<unit-slug>-<run-stamp>-<phase>` — the run stamp is
 in the path, so the second criterion's collision is gone by construction and the work left
@@ -97,3 +97,11 @@ should have been kept anyway.
 
 The two stalled worktrees in the `gs` checkout are the operator's to delete by hand, and the
 report names them — which is now the designed outcome rather than a leftover.
+
+**Closed 2026-09-14 in 0.9.8, three criteria of four ticked and no code changed.** The first
+is unticked and stays that way: it asks for an autopsy commit, which the ruling above
+rejects. § Stall keeps the stalled worktree and runs no removal; § The branch scheme's
+phase-worktree bullets carry both halves of the second criterion, and the report's closing
+block names every worktree left on disk; § Permission posture carries the third, with each
+of the loop's three cases shown to meet it. The net diff is `run.md`, `unattended.md` and
+this file.
