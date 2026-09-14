@@ -2,7 +2,7 @@
 id: 097-emanate-goal-branch
 title: "097 — emanate: the run's home is a goal branch, so delivered work has a name and the next run builds on it"
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-09-14
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -114,3 +114,11 @@ the path so a crashed run's leftover would say which run left it and never colli
 next. With a goal-named path, the leftover is exactly what the next run toward that goal
 wants to find, so the collision argument inverts. Phase worktrees still need the run id in
 their path, for the opposite reason — see `097-emanate-stall-discard`.
+
+**This ticket settles a path scheme a second ticket is waiting on** (recorded 2026-09-14).
+`097-emanate-stall-discard` is `blocked_by` this one and cannot write its own second
+criterion until § The branch scheme's **phase-worktree bullet** is decided here — its
+choice is stated as "`emanate/<run-id>-<unit-slug>-<phase>`, or the goal-and-stamp form
+`097-emanate-goal-branch` settles on". So the phase-worktree path is in scope here even
+though every other criterion above concerns the run's own branch: leaving it for the
+dependent means the dependent picks a name this ticket then rewrites.

@@ -2,7 +2,7 @@
 id: 097-emanate-stall-discard
 title: "097 — emanate: a stalled phase's worktree cannot be discarded, and the next run collides with it"
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-09-14
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -11,8 +11,8 @@ size: S
 importance: High
 skills: [code]
 status: Open
-blocked_by: []
-related_to: [097-emanate-goal-branch]
+blocked_by: [097-emanate-goal-branch]
+related_to: []
 ---
 
 ## Description
@@ -58,6 +58,16 @@ predicts: the re-run the report recommends fails at `prepare` for `workspace.rol
       is the deliverable, in § Stall and § Permission posture.
 
 ## Notes
+
+**Why `blocked_by: [097-emanate-goal-branch]`** (recorded 2026-09-14). The second
+criterion cannot be *written* until that ticket settles the path scheme — it already says
+so in its own words, "or the goal-and-stamp form `097-emanate-goal-branch` settles on".
+The dependency is hard in both directions a hard dependency can be: this ticket's premise
+is a property of the branch scheme (§ Stall's justification quotes "the worktree path
+carries no run id", which stops being true the moment the goal branch lands), and its
+deliverable is a bullet in the same list — `run.md` § The branch scheme's phase-worktree
+bullet, and § Permission posture in `unattended.md`, are edited by both. Clear this entry
+when the blocker closes.
 
 The autopsy commit is what makes *"the autopsy is the branch, not the worktree"* literally
 true. Today the sentence holds only for phases that already harvested; a unit that stalls
