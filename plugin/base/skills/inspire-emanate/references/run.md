@@ -94,8 +94,7 @@ breath**, naming the step that failed. This is the only moment the recipe is
 proven, and proving it is most of why the baseline moved out of the launch
 checkout: a suite that is green in the operator's own tree says nothing about a
 worktree, which is where every persona will actually work. Discard the worktree
-afterwards, by the form § The branch scheme gives; it is not one of the eight
-phases and it writes nowhere else.
+afterwards; it is not one of the eight phases and it writes nowhere else.
 
 **A run with no declared recipe** (plan's `PR-24`) baselines in the goal worktree
 and says so in the report. It has nothing to prove and nothing to prove it with,
@@ -171,28 +170,16 @@ the run says *when*, which is the one thing the next run does not need to know.
   where `<phase>` is `contracter`, `tester`, `implementer`, `verify` or `drill`.
   One rule names all five, and the path says which unit of which run owns the
   tree — so a worktree a crashed run left behind never blocks the next run of the
-  same unit. Each is discarded when its phase ends: a persona's at its own
-  harvest, the drill's the moment the drill stops, verify's once the unit
-  reaches a terminal state, a stalled phase's at the autopsy (§ Stall).
-- **A discard seals the tree, and deletes nothing.** `git worktree remove`
-  refuses a tree with modified or untracked files and every worktree this loop
-  cuts has both, so a discard is three commands:
-
-  ```
-  git -C <worktree> add -A
-  git -C <worktree> commit -q --allow-empty -m "emanate: seal <phase> (worktree discarded)"
-  git worktree remove <worktree>
-  ```
-
-  The seal commit sits on a detached HEAD, reachable from no ref: every byte the
-  tree held stays readable at its sha, nothing on disk is deleted, and the plain
-  `git worktree remove` then takes a clean tree. A persona's phase gets this
-  from `emanate-harvest.sh --discard`, which already holds the snapshot and
-  prints the seal's sha; verify's worktree and the drill's the orchestrator
-  seals itself. No branch is deleted either way — these worktrees are detached,
-  so there is none to delete. That the form is non-destructive is a rule rather
-  than an implementation detail, and [`unattended.md`](unattended.md)
-  § Permission posture states it.
+  same unit. A phase that **completes** has its worktree discarded when it ends:
+  a persona's at its own harvest, the drill's the moment the drill stops,
+  verify's once the unit reaches a terminal state. By then the phase's owned
+  paths are on the integration branch and the rest was dropped on purpose, so
+  the tree holds nothing anyone still needs.
+- **A phase that stalls keeps its worktree** (§ Stall). It is the only copy of
+  what that phase emitted, and the run stamp in the path is what makes keeping
+  it free: the next run of the same unit names a different path, so a kept tree
+  blocks nothing and is reused by nothing. The run report's closing block names
+  every worktree still on disk, and clearing them is the operator's.
 - **One live goal branch per checkout.** Two goals at once want two checkouts.
   The branch namespace holds any number of goal branches; the worktree scheme,
   the migration planes and the budgets are all sized for one run at a time.
@@ -662,7 +649,7 @@ git worktree add --detach \
 **Detached**, for the reason every worktree in this loop is (§ prepare), and its
 own tree rather than verify's because the drill mutates source and verify's
 manifest is the evidence a verdict was already read from. It is discarded
-unconditionally, by the form § The branch scheme gives. Then spawn the
+unconditionally. Then spawn the
 **implementer** shell to run
 [`inspire-code/references/tdd.md`](../../inspire-code/references/tdd.md) step 7
 over the unit's own diff: the catalogue, k = 5–10, one mutation at a time, only
@@ -709,11 +696,10 @@ tests exist and the code does not.
 into the goal branch, then delete the branch with `git branch -d` — plain,
 because the branch has just been merged and the plain form is the one that
 checks. The merge runs in the goal worktree (§ The branch scheme), never in the
-launch checkout, and the unit's verify worktree is discarded in the same step
-(§ The branch scheme) — the unit is terminal, so its last tree goes with its
-branch. The merge commit's trailers carry the provenance: the
-run id, `template_sha`, the resolved profile hashes and the gate-verdict digest
-(verdict plus counts).
+launch checkout, and the unit's verify worktree is removed in the same step — the
+unit is terminal, so its last tree goes with its branch. The merge commit's
+trailers carry the provenance: the run id, `template_sha`, the resolved profile
+hashes and the gate-verdict digest (verdict plus counts).
 
 **The run id in that trailer is what makes one run rejectable.** A goal branch
 accumulates the merges of every run toward the goal, so "revert this run" is
@@ -802,34 +788,28 @@ three different facts — work that landed, work that was tried and failed, work
 that was never attempted — and collapsing them would make a cascade read as a
 mass failure.
 
-**The autopsy is the branch, not the worktree.** The stalled phase's worktree is
-**discarded without harvesting** — it holds a persona's emission that no overseer
-approved and no gate judged, and the next run must not build on a tree nobody
-vouched for — and what is left to inspect is the unit's integration branch, left
-in place and named in the report.
+**The autopsy is the branch and the worktree.** Whatever earlier phases harvested
+is on the unit's integration branch, which is left in place. What the stalled
+phase itself emitted is in its worktree, and **that worktree is kept** — it is
+the only copy, and a unit that stalls at its contracter gate has an empty
+integration branch and nothing else to read.
 
-The discard is one command, and the commit it makes is the only one this loop
-makes that is not a harvest:
+**Nothing of it is committed.** The tree holds a persona's emission that no
+overseer approved and no gate judged; committing it would put work nobody
+vouched for into the history the operator reads, on a branch or anywhere else.
+The worktree is the proof, and a proof is a directory rather than a commit.
 
-```
-.inspire/bin/emanate-harvest.sh <phase-worktree> \
-    emanate/<goal-slug>-<unit-slug>-<run-stamp> \
-    --label <phase> --autopsy "<why this phase stalled>" --discard
-```
+**Nothing is discarded, so the run runs no removal here at all.** That the
+second field run's harness refused `git worktree remove --force` and left two
+stalled worktrees on disk was the right outcome reached the wrong way: the
+doctrine asked for a removal it should never have asked for.
 
-The whole tree lands on the integration branch, **unfiltered**. A harvest's owned
-pathspec holds a persona to its own paths; an autopsy records what an operator
-has to read, which is everything the phase wrote, the paths a harvest would have
-dropped included. The commit message names the phase and the reason. The branch
-is never promoted, so nothing a rejected emission wrote reaches the goal branch,
-and the operator's ruling that a rejected emission is not harvested holds.
-
-A unit that stalls at its contracter gate has an empty integration branch, and
-the autopsy commit is the whole of what there is to read on it. That is what
-makes "the autopsy is the branch" true at every stall.
-
-`--discard` removes the worktree whether or not the autopsy had anything to
-record: what is discarded is a stalled phase, not a diff.
+Keeping a stalled worktree costs nothing. The path carries the run stamp (§ The
+branch scheme), so the next run of the same unit names a different path and
+neither collides with the kept tree nor builds on it — the same rule the stalled
+unit's integration branch already carries. The run report's closing block names
+every kept worktree, and clearing them is the operator's, from their own
+checkout, once they have read them.
 
 ## The run report
 
@@ -909,11 +889,12 @@ in the block the skeleton gives it:
   waves actually executed;
 - **delivered · stalled · blocked**, each unit named, with its integration branch
   where one was left in place;
-- **the worktrees still on disk** — the goal worktree, which persists with its
-  branch, and every phase worktree whose discard was refused, each with the
-  reason `emanate-harvest.sh` printed. The list is empty on a run where every
-  discard took, and is reported empty: an operator reads it to know what is left
-  in their checkout without going to look;
+- **the worktrees still on disk**, each by path — the goal worktree, which
+  persists with its branch; every stalled phase's worktree, kept as the proof of
+  what that phase emitted (§ Stall); and any completed phase's worktree whose
+  discard was refused, with the reason. This is the run's whole claim on the
+  operator's disk, and it is reported even when the only entry is the goal
+  worktree;
 - **per unit, beyond the gate verdict digest** — rework cycles and
   infrastructural retries as two numbers, the paths a harvest dropped, and
   three measurements the trust-report posture governs exactly as it governs

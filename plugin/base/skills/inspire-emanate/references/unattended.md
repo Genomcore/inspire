@@ -59,14 +59,18 @@ mode already covers.
 
 **The loop never depends on a destructive git form to make progress.** `git
 worktree remove --force`, `git clean -fd` and `git branch -D` each delete work
-that exists nowhere else, and a harness may refuse any of them — the second
-field run's did, and the two stalled worktrees it could not remove stayed on
-disk with their rejected emissions inside. A refusal mid-wave has nobody to
-answer it, so the loop asks for none: every worktree it discards is sealed onto
-a commit and removed with plain `git worktree remove`
-([`run.md`](run.md) § The branch scheme), and no branch it creates is ever
-deleted by it. The two forms that do delete a ref are § The morning after's, and
-they are the operator's, run from their own checkout.
+that exists nowhere else, a harness may refuse any of them, and a refusal
+mid-wave has nobody to answer it. Nothing the loop needs sits behind one:
+
+- a worktree it discards has already had its owned paths harvested onto the
+  integration branch and the rest dropped on purpose, so a refused removal costs
+  a directory the run report names, never a wave;
+- a worktree holding work nobody vouched for is **kept** rather than removed
+  ([`run.md`](run.md) § Stall), so that case asks for no removal at all;
+- a branch it deletes is one it has just merged, which `git branch -d` takes.
+
+The forms that do delete a ref belong to § The morning after, and they are the
+operator's, run from their own checkout on work they have read.
 
 **An operator may judge that their own environment justifies a different
 posture.** That call is theirs, and its mechanics belong to the harness's
