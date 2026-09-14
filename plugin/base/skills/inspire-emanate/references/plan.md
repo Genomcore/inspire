@@ -51,7 +51,9 @@ Every code has an answer, and none of them is "try again".
 | `127` | a required tool is missing (`jq`, `yq`, `tsort`, or a sha256 digest) | refuse, naming the tool the message names. Nothing here installs anything |
 
 **A refusal is a finished answer, not a failure to plan.** Report it and stop;
-under `run`, stop before the first worktree exists.
+under `run`, stop before the first unit is spawned. The goal branch and its
+worktree already exist by then and are left in place — [`run.md`](run.md) § t=0
+step 1 says why, and step 2 says this call is made from that worktree.
 
 ## Reporting a ready plan
 

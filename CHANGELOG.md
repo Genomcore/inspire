@@ -9,6 +9,94 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.8 — 2026-09-14
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.9.8 keeps the 0.3 layout and the 0.9.0 payload classes. The release comes from
+the second field run of `/inspire-emanate` and gives the loop's output a home. A
+run promoted its work onto a branch named after the run, the operator standing on
+the launch branch saw a tree identical to the one they started with, and the next
+run rebuilt what the last one had already delivered.
+
+### Breaking for existing vaults
+
+**A branch an earlier run left behind is now orphaned.** Runs on 0.9.5 through
+0.9.7 promoted onto `emanate/<run-id>` and removed its worktree at the exit. A
+0.9.8 run toward the same territory works on `emanate/<goal-slug>` instead and
+reads realization from that branch, so it re-emanates every unit the old branch
+carries. Merge the branches worth keeping before the next run, or delete them.
+Nothing refuses and nothing has to be done to upgrade.
+
+**A run refuses on a dirty launch checkout.** Every branch a run cuts is cut from
+the launch branch, so uncommitted work there — an uncommitted `/inspire:update`
+among it — now ends the run at t=0 with the paths named. Commit or set aside
+before launching, which matters most under `claude -p`, where a refusal is the
+readable outcome and a mid-run prompt is not.
+
+**`/inspire:update` adds a line to the project's `.gitignore`.** The seeded block
+gains `.claude/worktrees/`, and an existing block that lacks it is extended in
+place. Without the line a run's own goal worktree makes the launch checkout dirty
+and the next run refuses on it.
+
+### Added
+
+- **The run's home is a goal branch.** `emanate/<goal-slug>`, from the canonical
+  goal selector with every run of characters outside `a-z0-9` collapsed to a
+  hyphen: `until workspace.login` → `emanate/workspace-login`, a scope-only run
+  → the scope's last path segments, neither → `emanate/all`. It is cut from the
+  launch branch when it does not exist and the launch branch is merged into it
+  when it does, so it is never behind its base. A conflict in that merge refuses
+  at t=0.
+- **Its worktree persists.** `.claude/worktrees/emanate-<goal-slug>` is kept for
+  as long as the branch exists, and a later run toward the same goal finds it,
+  advances it and works in it. `plan` runs there, so a unit an earlier run
+  promoted reads as realized and the next run builds on it instead of rebuilding
+  it. The launch checkout is never moved and never written.
+- **`--variant <word>`** appends `-<word>` to the slug and is the whole of the
+  collision guard, replacing the random suffix: an A/B pair is
+  `emanate/<goal-slug>-a` and `-b`, kept apart because the operator named them.
+- **The report travels with the work.** `.inspire/last-emanation.log` lives in the
+  goal worktree and each block it writes is committed on the goal branch —
+  identity at t=0, one per wave, one at the exit. Every earlier run's account
+  stays in that branch's history where `git log -p` finds it.
+- **The closing block names where the work is** — the goal branch, its worktree
+  path, the one command that shows the effort
+  (`git -C <worktree> log --oneline <launch-branch>..`) and the diff-stat against
+  the launch branch. It also names every worktree the run leaves on disk.
+- **`materialize.sh` seeds `.claude/worktrees/`** into the `.gitignore` block, on
+  init and on update.
+- **A golden for the compounding case.** `emanate-plan`'s
+  `goal-second-run-reuses-realized` shows a second run toward one goal reading the
+  first run's unit as realized, with the floor dropping from 3 to 1.
+
+### Changed
+
+- **Per-unit integration branches carry the run stamp** —
+  `emanate/<goal-slug>-<unit-slug>-<run-stamp>` — and every phase worktree the
+  same name flattened, plus its phase:
+  `.claude/worktrees/emanate-<goal-slug>-<unit-slug>-<run-stamp>-<phase>`. One
+  rule names all five, and a tree a crashed run left behind never blocks the next
+  run of the same unit. The run id stays a trailer and the log's identity.
+- **A stalled phase's worktree is kept.** It is the only copy of what that phase
+  emitted, and nothing it holds is committed anywhere — work no overseer approved
+  and no gate judged does not enter the history the operator reads. A phase that
+  completes still has its worktree discarded at its own harvest. The run report
+  names every kept tree and clearing them is the operator's.
+- **Every tool that reads tests names its working directory.** `plan` runs in the
+  goal worktree; `emanate-results.sh` and the gate run in the unit's verify
+  worktree. The second field run invoked the gate from the launch checkout, where
+  the contracter's specification does not exist, and read `GV-01` on all four of
+  the unit's claims.
+- **`unattended.md` § The morning after and § A/B are rewritten** for the goal
+  branch. `--halt post-PR` opens the pull request from it, and a second run toward
+  the same goal grows that PR rather than opening another. Two goals sharing a
+  unit each emanate it unless the first has merged; v1 keeps one live goal branch
+  per checkout.
+- **§ Permission posture states that the loop never depends on a destructive git
+  form** — `worktree remove --force`, `clean -fd`, `branch -D` — to make progress,
+  because a harness may refuse any of them and a refusal mid-run has nobody to
+  answer it. Each of the loop's three cases is shown to meet it.
+
 ## 0.9.7 — 2026-09-10
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

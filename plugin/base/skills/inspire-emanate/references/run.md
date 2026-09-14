@@ -17,16 +17,40 @@ agent**, and no tool anywhere learns about waves, budgets or personas.
 
 In this order, and each step gates the next.
 
-**1. Plan.** Run [`plan`](plan.md) exactly as that reference specifies and act on
-its exit code. Any error-severity finding or refusal ends the run before a branch
-exists. This is where every question dies.
+**1. A clean launch checkout, and the goal branch.** Every branch this run cuts is
+cut from the launch branch, and the goal worktree is where `plan` reads
+realization from, so both are settled before anything else runs.
+
+**Refuse on a dirty launch checkout**, naming the paths `git status --porcelain`
+reports and the operator's remedy — commit them, or set them aside. The rule is
+the whole of that output rather than modifications to tracked files alone: an
+uncommitted `/inspire:update`, which is what the second field run found at t=0,
+arrives as untracked files, and a run whose base is not the tree the operator is
+looking at reports work against a state nobody has. The check costs one command,
+and this is the last moment a person is there to answer it.
+
+Then cut or advance the goal branch and its worktree (§ The branch scheme). **A
+merge conflict between the launch branch and an existing goal branch refuses
+here**, naming the conflicting paths: the goal branch must never be behind its
+base, and a conflict resolution is a judgment nobody is present to make.
+
+A refusal at any later step of t=0 leaves the goal branch and its worktree in
+place. They are the effort's home rather than this run's, and the next run toward
+the same goal reuses them; where this run created them, they are identical to the
+launch branch and carry nothing of their own.
+
+**2. Plan.** Run [`plan`](plan.md) exactly as that reference specifies and act on
+its exit code, **in the goal worktree** — realization is read from the tests on
+disk, so running it anywhere else measures a tree earlier runs toward this goal
+never touched. Any error-severity finding or refusal ends the run before a unit
+is spawned. This is where every question dies.
 
 A unit `derive` refused is worth naming, because it looks like a gap in the
 schedule and is not: it stays a node in the graph at wave 1 with `claims: 0`, and
 its `PR-01` is an error, so the run refuses. Cycles running through it surface
 only once that `PR-01` is remedied — nothing proceeds meanwhile.
 
-**2. Resolve the goal.** With `--goal`, the run executes `goal.units` in wave
+**3. Resolve the goal.** With `--goal`, the run executes `goal.units` in wave
 order and the floor it is budgeted against is `goal.floor` — the deepest wave over
 the goal's closure, which includes the screens that navigate *to* the goal.
 `deliverable_waves` is what the declared ceiling actually permits. **A ceiling
@@ -34,7 +58,7 @@ below the effective floor refuses here** when a goal was named: a run that
 provably cannot reach its goal never starts. Without a goal the same shortfall is
 `PR-20`, a warning, and the run delivers partially in graph order and says so.
 
-**3. Preflight the test infrastructure.** For every component `plan`'s
+**4. Preflight the test infrastructure.** For every component `plan`'s
 `preflight.components` names, execute the resolved framework profile's own
 `## Test infrastructure` probe — for the shipped `nestjs` profile,
 `docker compose config --services`, then a `ps` demanding **healthy**, not merely
@@ -51,8 +75,9 @@ whole rework budget proving nothing, and then cascade the stall. Where
 `PR-22`), say so in the report: nothing can tell a healthy component from a suite
 that never ran, and the run proceeds at that risk.
 
-**4. Baseline the suite — in a worktree the recipe provisioned.** Cut a throwaway
-worktree at the branch the run was launched from, run `plan`'s
+**5. Baseline the suite — in a worktree the recipe provisioned.** Cut a throwaway
+worktree at the **goal branch's** tip — what every unit is built on, and what an
+earlier run toward this goal already promoted into — run `plan`'s
 `preflight.worktree_recipe` in it, then run the whole suite there. **A red
 baseline in realized territory refuses the run**, naming the failing files.
 Emanating onto a red suite makes every later verdict unreadable: `GV-05` cannot
@@ -71,50 +96,93 @@ checkout: a suite that is green in the operator's own tree says nothing about a
 worktree, which is where every persona will actually work. Discard the worktree
 afterwards; it is not one of the eight phases and it writes nowhere else.
 
-**A run with no declared recipe** (plan's `PR-24`) baselines in the launch
-checkout and says so in the report. It has nothing to prove and nothing to prove
-it with, and every prepare after it improvises.
+**A run with no declared recipe** (plan's `PR-24`) baselines in the goal worktree
+and says so in the report. It has nothing to prove and nothing to prove it with,
+and every prepare after it improvises.
 
-**5. Cut the turn branch into its own worktree** (§ The branch scheme) and start
-wave 1.
+**6. Write the identity block and start wave 1.** The log lives on the goal
+branch (§ The run report), so this is the first commit the run makes.
 
 ## The branch scheme
 
 Flat, hyphenated, one namespace, **no nesting** — a branch `x` and a branch `x/y`
 cannot coexist.
 
-- **Turn branch** `emanate/<run-id>`, cut from the branch the run was launched
-  on; `run-id` = UTC `yyyymmdd-HHMMSS` plus a short random suffix (two
-  invocations in the same second — a scripted A/B pair — must not collide), plus
-  `-<scope-slug>` when a scope filter is given.
-- **The turn branch is checked out in a worktree of its own**, under the same
-  house convention as every other: `.claude/worktrees/emanate-<run-id>`, cut with
-  the branch in one step —
-  `git worktree add -b emanate/<run-id> .claude/worktrees/emanate-<run-id> <base-branch>`
-  — and removed at the run's end, immediately before the closing block is
-  written, which is what lets that block report whether the removal happened. The
-  branch outlives the worktree, which is the whole point: promote merges there,
-  and a merge commit with trailers cannot be made against a bare ref.
-  **The launch checkout is never moved** — not to cut the branch, not to merge
-  into it, not once between t=0 and the report. A run that has vouched for
-  nothing yet must not be standing in the operator's tree, which is the same rule
-  that detaches every phase worktree. The first field run had no stated home and
-  answered by default: its reflog shows the operator's own checkout moved to the
-  turn branch at t=0, and it was still there a day later.
-  The worktree carries the run id rather than a fixed name, so a directory left
-  behind by a crash says which run left it and the next run does not collide with
-  it.
-- **Per-unit integration branch** `emanate/<run-id>-<unit-slug>`, cut from the
-  turn branch when the unit's wave opens. Phase worktrees prepare from and
-  harvest onto it; the orchestrator's verify runs on it; a gate pass **promotes**
-  it — merged into the turn branch, then deleted. This is structural, not
+**The run's home is a goal branch, and a goal outlives the run that works
+toward it.** An effort takes several invocations — a ceiling is reached, a unit
+stalls and the operator fixes the specification, a schedule fires again tomorrow
+— and each one has to build on what the last one delivered. A branch named after
+the run says *when*, which is the one thing the next run does not need to know.
+
+- **Goal branch** `emanate/<goal-slug>`, cut from the branch the run was launched
+  on. The slug is the canonical goal selector with every run of characters
+  outside `a-z0-9` collapsed to a single hyphen, leading and trailing hyphens
+  dropped: `until workspace.login` → `emanate/workspace-login`,
+  `--goal auth.user.list..` → `emanate/auth-user-list`. With no goal it is the
+  last path segment of each `--scope`, joined by hyphens under the same rule
+  (`--scope inspire_kb/04_domain/auth` → `emanate/auth`); with neither it is
+  `emanate/all`. `--variant <word>` appends `-<word>`
+  (`emanate/workspace-login-a`), and it is the whole of the collision guard: two
+  efforts over one selector are kept apart because the operator named them, not
+  because a random suffix did. Two selectors that collapse to one slug —
+  `auth.user.list` and `auth.user.list..` — share a branch, which is the reading
+  this scheme intends: they are two passes over one piece of territory, and
+  `--variant` is how an operator who wants them apart says so.
+- **At t=0 the goal branch is cut from the launch branch when it does not exist,
+  and the launch branch is merged into it when it does.** It is therefore never
+  behind its base, and the run's own work is never rebuilt on a stale one. A
+  conflict in that merge refuses the run (§ t=0 step 1).
+- **The goal branch is checked out in a worktree of its own**, under the same
+  house convention as every other: `.claude/worktrees/emanate-<goal-slug>`, cut
+  with the branch in one step —
+  `git worktree add -b emanate/<goal-slug> .claude/worktrees/emanate-<goal-slug> <launch-branch>`
+  — and **kept for as long as the branch exists**. A later run toward the same
+  goal finds it, advances it, and works in it: that worktree is where `plan`
+  reads realization from, where the log is committed, and where every promote
+  merge lands. A run that finds it already there reuses it rather than cutting a
+  second one.
+  **The launch checkout is never moved and never written** — not to cut the
+  branch, not to merge into it, not once between t=0 and the report. A run that
+  has vouched for nothing yet must not be standing in the operator's tree, which
+  is the same rule that detaches every phase worktree. The first field run had no
+  stated home and answered by default: its reflog shows the operator's own
+  checkout moved to the run's branch at t=0, and it was still there a day later.
+- **Per-unit integration branch** `emanate/<goal-slug>-<unit-slug>-<run-stamp>`,
+  cut from the goal branch when the unit's wave opens; `run-stamp` is the run
+  id's UTC `yyyymmdd-HHMMSS` half. Phase worktrees prepare from and harvest onto
+  it, verify and the gate read it, and a gate pass **promotes** it — merged into
+  the goal branch with today's trailers, then deleted. This is structural, not
   stylistic: two worktrees cannot check out one branch, so parallel units within
-  a wave each need their own integration line.
+  a wave each need their own integration line, and the stamp is what keeps two
+  runs toward one goal from naming the same branch for the same unit.
+- **The run id stays a trailer and the log's identity** — `run-stamp` plus a
+  short random suffix, unchanged. It no longer names anything an operator has to
+  find work by: `git log --oneline <launch-branch>..` on the goal branch shows
+  every run's merges, and each merge commit's trailer says which run made it.
+- **Rejecting one run is reverting the merges carrying its run-id trailer**;
+  rejecting the effort is `git branch -D emanate/<goal-slug>` plus
+  `git worktree remove` on its worktree, standing in neither. Both are the
+  operator's, from the launch checkout, which is where they are already standing.
 - A stalled or gate-failed unit's branch is **left in place** and named in the
   run report, for autopsy; the next run neither reuses nor cleans it.
-- Phase worktrees live under the house convention:
-  `.claude/worktrees/emanate-<unit-slug>-<phase>`, discarded at harvest. v1
-  documents the assumption of **one live run per checkout**.
+- **Phase worktrees carry their unit's integration branch name, flattened, plus
+  the phase**: `.claude/worktrees/emanate-<goal-slug>-<unit-slug>-<run-stamp>-<phase>`,
+  where `<phase>` is `contracter`, `tester`, `implementer`, `verify` or `drill`.
+  One rule names all five, and the path says which unit of which run owns the
+  tree — so a worktree a crashed run left behind never blocks the next run of the
+  same unit. A phase that **completes** has its worktree discarded when it ends:
+  a persona's at its own harvest, the drill's the moment the drill stops,
+  verify's once the unit reaches a terminal state. By then the phase's owned
+  paths are on the integration branch and the rest was dropped on purpose, so
+  the tree holds nothing anyone still needs.
+- **A phase that stalls keeps its worktree** (§ Stall). It is the only copy of
+  what that phase emitted, and the run stamp in the path is what makes keeping
+  it free: the next run of the same unit names a different path, so a kept tree
+  blocks nothing and is reused by nothing. The run report's closing block names
+  every worktree still on disk, and clearing them is the operator's.
+- **One live goal branch per checkout.** Two goals at once want two checkouts.
+  The branch namespace holds any number of goal branches; the worktree scheme,
+  the migration planes and the budgets are all sized for one run at a time.
 
 ## The wave schedule
 
@@ -122,7 +190,7 @@ One iteration is one wave. Take the wave's units from `waves[]` (or from
 `goal.units` intersected with it), open an integration branch for each, and run
 them **in parallel up to whatever the environment sustains**. Waves are strictly
 sequential: a unit in wave *n* may read the results of wave *n−1* because those
-are already merged into the turn branch, and may assume nothing about a sibling
+are already merged into the goal branch, and may assume nothing about a sibling
 in its own wave.
 
 **Inside a wave, every unit advances on its own boundary.** A unit's next phase
@@ -191,18 +259,19 @@ are doing.
 | persona | contracter · tester · implementer | inside its worktree only |
 | overseer gate | security overseer · quality overseer | nothing |
 | harvest | the orchestrator | one commit on the integration branch |
-| verify | the orchestrator | nothing but the results manifest |
+| verify | the orchestrator | its own worktree, and the results manifest |
 | gate | the orchestrator | nothing |
 | drill | implementer, in a throwaway worktree | nothing that survives |
-| promote | the orchestrator | one merge commit on the turn branch |
+| promote | the orchestrator | one merge commit on the goal branch |
 
 The first four repeat per persona: contracter, then tester, then implementer. The
 last four run once, after the implementer's harvest.
 
 **The `writes` column is normative, not descriptive.** It is the whole of what
 each actor may write in that phase, and the orchestrator's four rows are the
-tight ones: a worktree at prepare, one commit at harvest, the results manifest at
-verify, one merge commit at promote. **Outside prepare and harvest the
+tight ones: a worktree at prepare, one commit at harvest, its own worktree plus
+the results manifest at verify, one merge commit at promote. **Outside prepare
+and harvest the
 orchestrator writes nothing inside a phase worktree** — not a probe, not a
 scratch file, not a fix, and deleting it before harvest does not make it a
 non-write. The worktree is a persona's evidence, and a boundary the overseers
@@ -223,9 +292,11 @@ that same race, with the operator's data in it.
 
 ### prepare
 
-**Cut the phase worktree detached at the integration branch's tip.** It must not
-check that branch out: two worktrees cannot check out one branch and verify needs
-it. Detached also means the worktree is the only thing to discard afterwards.
+**Cut the phase worktree detached at the integration branch's tip**, at the path
+§ The branch scheme gives it. It must not check that branch out: two worktrees
+cannot check out one branch, and a unit's three persona phases, its verify and
+its drill all want a tree at that same branch's tip. Detached also means the
+worktree is the only thing to discard afterwards.
 
 Its content is then shaped to the phase, and the shape is the freeze:
 
@@ -268,8 +339,8 @@ not a puzzle to solve: the recipe is the project's declaration, and an
 orchestrator that improvises around a broken step ships a run nobody can
 reproduce.
 
-**The proof is at t=0, once.** § t=0 step 4 baselines the suite in a
-recipe-provisioned worktree rather than in the launch checkout, so a recipe that
+**The proof is at t=0, once.** § t=0 step 5 baselines the suite in a
+recipe-provisioned worktree rather than in the goal worktree, so a recipe that
 does not yield a green suite refuses the run exactly as a red baseline does —
 before the first persona spawns, and paid for once rather than per phase. It
 cannot be re-proven per worktree in any case: the tester's tree has no bodies in
@@ -297,7 +368,7 @@ are the whole of the migration question:
   nothing either — the hard ceiling holds regardless of `--halt` — so a run the
   operator discards must leave their database exactly as it found it. The
   migrations reach a shared plane when the operator deploys the merged PR, in the
-  order the files landed on the turn branch, which **is** the promote order:
+  order the files landed on the goal branch, which **is** the promote order:
   a wave contains no ordering edges by construction, so its migrations commute,
   and a later wave's are generated after the wave it depended on promoted.
   Nothing in that chain consults a filename's timestamp, and no part of it is
@@ -398,7 +469,8 @@ routing:
 ### harvest
 
 ```
-.inspire/bin/emanate-harvest.sh <worktree> emanate/<run-id>-<unit-slug> \
+.inspire/bin/emanate-harvest.sh <worktree> \
+    emanate/<goal-slug>-<unit-slug>-<run-stamp> \
     --label <phase> --discard -- <owned pathspec>...
 ```
 
@@ -418,14 +490,30 @@ branch, and anything else stalls the unit naming the tool.
 ### verify
 
 **Verify is the orchestrator's own evidence, and it is the reason a persona's
-green is never trusted.** It runs on the integration branch, after the harvest,
-under the same recipe and the same plane rule as a phase worktree (§ prepare):
-its own disposable plane, never one the operator keeps. Verify is where the
+green is never trusted.** It runs after the implementer's harvest, under the same
+recipe and the same plane rule as a phase worktree (§ prepare): its own
+disposable plane, never one the operator keeps. Verify is where the
 unit's migrations first run beside every migration promoted before its wave
 opened — the only rehearsal the loop gives them, and not a full one: a sibling
-of the same wave promotes after, so the two meet for the first time on the turn
+of the same wave promotes after, so the two meet for the first time on the goal
 branch. They are independent by construction, which is why that is sound rather
 than lucky.
+
+**Verify has a working directory, and naming it is the whole of this
+paragraph.** Cut the **verify worktree** — detached at the integration branch's
+tip, at the path § The branch scheme gives it — and run every command below
+inside it. It is the second field run's lesson: the gate was first invoked from
+the launch checkout, where the contracter's specification does not exist, and
+returned `GV-01` on all four of the unit's claims; re-invoked from a tree at the
+integration branch's tip it passed. A tool that reads tests reads the tests of
+whatever directory it is run in, so a doctrine that names every argument and no
+directory has specified half of the call.
+
+**It is cut once per unit and discarded when the unit reaches a terminal state.**
+The gate runs in it too, and a rework cycle re-points it at the integration
+branch's new tip (`git -C <verify-worktree> checkout --detach <tip>`) rather than
+cutting a second one: the recipe's provisioning is the expensive half of a
+worktree, and a unit that reworks twice would otherwise pay for it three times.
 
 **1. The whole suite.** Not the unit's tests — the whole suite. This is what
 defends the kept dependents of a re-emanated piece: the gate stays unit-scoped by
@@ -472,8 +560,8 @@ a defect, not a stylistic choice.
 .inspire/bin/escape-hatch-ratchet.sh
 ```
 
-Run it per unit, and **once more over the turn branch before the halt point**:
-the ratchet is an aggregate, so per-unit passes do not imply a turn-branch pass,
+Run it per unit, and **once more over the goal branch before the halt point**:
+the ratchet is an aggregate, so per-unit passes do not imply a goal-branch pass,
 and a run that reported success into a PR that is already blocked would be
 lying. It takes no positional scope — the count is repo-wide by design, the same
 call `pre-pr.sh` makes. On a breach, halt the unit and state the operator's
@@ -510,6 +598,10 @@ homes, no drift.
     [--tests-root DIR]... [--previous <the prior contract>]
 ```
 
+- **It runs in the unit's verify worktree**, the same tree that produced the
+  manifest (§ verify). `--tests-root` is a relative path and the citations the
+  gate counts are the files under it, so the directory decides the verdict as
+  much as the arguments do.
 - **`--results` is the unit's own run.** That scoping is `GV-05`'s discipline: a
   `failed` entry in a file that cites nothing for this unit is *suite red
   elsewhere*, a finding about the run and not about the unit, and handing the gate
@@ -549,12 +641,15 @@ its gate is never drilled, because survivors cannot change a verdict and drillin
 it would only burn suite runs.
 
 ```
-git worktree add --detach .claude/worktrees/emanate-<unit-slug>-drill <integration-branch-tip>
+git worktree add --detach \
+    .claude/worktrees/emanate-<goal-slug>-<unit-slug>-<run-stamp>-drill \
+    <integration-branch-tip>
 ```
 
-**Detached**, because two worktrees cannot check out one branch and verify has
-that branch checked out already; detaching also leaves the worktree as the only
-thing to discard, and it is discarded unconditionally. Then spawn the
+**Detached**, for the reason every worktree in this loop is (§ prepare), and its
+own tree rather than verify's because the drill mutates source and verify's
+manifest is the evidence a verdict was already read from. It is discarded
+unconditionally. Then spawn the
 **implementer** shell to run
 [`inspire-code/references/tdd.md`](../../inspire-code/references/tdd.md) step 7
 over the unit's own diff: the catalogue, k = 5–10, one mutation at a time, only
@@ -598,10 +693,18 @@ tests exist and the code does not.
 ### promote
 
 **Promotion is a merge, and nothing else.** Merge the unit's integration branch
-into the turn branch, then delete the branch. The merge runs in the turn branch's
-own worktree (§ The branch scheme), never in the launch checkout. The merge
-commit's trailers carry the provenance: the run id, `template_sha`, the resolved
-profile hashes and the gate-verdict digest (verdict plus counts).
+into the goal branch, then delete the branch with `git branch -d` — plain,
+because the branch has just been merged and the plain form is the one that
+checks. The merge runs in the goal worktree (§ The branch scheme), never in the
+launch checkout, and the unit's verify worktree is removed in the same step — the
+unit is terminal, so its last tree goes with its branch. The merge commit's
+trailers carry the provenance: the run id, `template_sha`, the resolved profile
+hashes and the gate-verdict digest (verdict plus counts).
+
+**The run id in that trailer is what makes one run rejectable.** A goal branch
+accumulates the merges of every run toward the goal, so "revert this run" is
+reverting the merges whose trailer carries its run id, and nothing else on the
+branch moves.
 
 **No run-mode step writes the knowledge base — `lifecycle:` included.** Not
 prose, not frontmatter, not the tracker. `stable` stays the operator's spec-level
@@ -611,8 +714,10 @@ history where it travels, cherry-picks at merge granularity (`-m 1`), and dies
 with the code it describes.
 
 Realization follows for free: the tests the tester wrote cite each claim with its
-fingerprint, so the next invocation's `plan` sees the unit as realized and it
-leaves the frontier. There is no registry to update and no stamp to write.
+fingerprint, so the next invocation's `plan` — run in the goal worktree, where
+this merge just landed — sees the unit as realized and it leaves the frontier.
+There is no registry to update and no stamp to write. This is what makes a second
+run toward one goal a smaller problem than the first rather than a repeat of it.
 
 ## Budgets
 
@@ -683,12 +788,28 @@ three different facts — work that landed, work that was tried and failed, work
 that was never attempted — and collapsing them would make a cascade read as a
 mass failure.
 
-**The autopsy is the branch, not the worktree.** The stalled phase's worktree is
-**discarded without harvesting**; what is left to inspect is whatever earlier
-phases already harvested onto the unit's integration branch, which is left in
-place and named in the report. This is deliberate: the worktree path carries no run id,
-so a surviving worktree would collide with the next run of the same unit — and
-the next run would then be building on a tree nobody vouched for.
+**The autopsy is the branch and the worktree.** Whatever earlier phases harvested
+is on the unit's integration branch, which is left in place. What the stalled
+phase itself emitted is in its worktree, and **that worktree is kept** — it is
+the only copy, and a unit that stalls at its contracter gate has an empty
+integration branch and nothing else to read.
+
+**Nothing of it is committed.** The tree holds a persona's emission that no
+overseer approved and no gate judged; committing it would put work nobody
+vouched for into the history the operator reads, on a branch or anywhere else.
+The worktree is the proof, and a proof is a directory rather than a commit.
+
+**Nothing is discarded, so the run runs no removal here at all.** That the
+second field run's harness refused `git worktree remove --force` and left two
+stalled worktrees on disk was the right outcome reached the wrong way: the
+doctrine asked for a removal it should never have asked for.
+
+Keeping a stalled worktree costs nothing. The path carries the run stamp (§ The
+branch scheme), so the next run of the same unit names a different path and
+neither collides with the kept tree nor builds on it — the same rule the stalled
+unit's integration branch already carries. The run report's closing block names
+every kept worktree, and clearing them is the operator's, from their own
+checkout, once they have read them.
 
 ## The run report
 
@@ -701,15 +822,31 @@ outside still leaves a readable partial account rather than nothing. What
 previous run left, the same way `/inspire:update` starts
 `.inspire/last-upgrade.log` fresh on every upgrade. Within one run the file only
 grows, but for a slot whose own answer changed (below); across runs it never
-survives the next one's t=0. That file and git are
-the only things a run writes outside a worktree, and neither is the knowledge
-base.
+survives the next one's t=0.
+
+**The file lives in the goal worktree, and each block it writes is committed on
+the goal branch.** The commit is the block: `emanate(log): <run-id> — identity`
+at t=0, `— wave <n>` as each wave closes, `— closing` at the exit. Three
+consequences, and each of them is why:
+
+- **the launch checkout is never written**, which is what lets t=0 refuse a dirty
+  one (§ t=0 step 1) without the run making it dirty on its first act;
+- **the report travels with the work.** An operator who opens the PR from the
+  goal branch reads the account of the run that produced it in the same diff, and
+  an operator who deletes the branch discards both together;
+- **truncation stops destroying the previous run's account.** The next
+  invocation's t=0 truncates the file, and every earlier run's report stays in
+  the goal branch's history where `git log -p .inspire/last-emanation.log` finds
+  it. The working copy still answers one question only — what the last run did.
+
+Git is therefore the only thing a run writes outside a worktree, and it is not
+the knowledge base.
 
 **`plan` writes nothing, that file included** — [`plan`](plan.md) already
 says so for the tool, and it holds here without exception: a `plan` invocation,
 standalone or as `run`'s own t=0 step, never touches
 `.inspire/last-emanation.log`. The log is `run`'s alone, and only from the
-moment a turn branch exists.
+moment the goal worktree exists.
 
 **The file is a skeleton, and the skeleton is
 [`report-skeleton.md`](report-skeleton.md).** Three block kinds, each written at
@@ -734,21 +871,30 @@ below gets a slot there carrying its label and nothing more.
   something that did not happen. Everything else is append-only: in-place editing
   is for a slot whose answer changed, not for tidying a wave that closed.
 - **The file is tracked.** So is `.inspire/last-upgrade.log`. INSPIRE's seeded
-  `.gitignore` block names `.claude/settings.local.json` and nothing else, so no
-  release has ever excluded either log — this states that rather than leaving it
-  to a default, and it needs no change to `/inspire:init`. A project whose own
-  `*.log` rule hides the file chose that itself, and init reports what a rule
-  shadows rather than editing an operator's `.gitignore`.
+  `.gitignore` block names `.claude/settings.local.json` and
+  `.claude/worktrees/`, and neither log is under either, so no release has ever
+  excluded one. A project whose own `*.log` rule hides the file chose that
+  itself, and init reports what a rule shadows rather than editing an operator's
+  `.gitignore`. The `.claude/worktrees/` line is what keeps every worktree this
+  loop cuts out of `git status` — without it, t=0's own goal worktree would make
+  the launch checkout dirty and the next run would refuse on it.
 
 By the final wave the file carries — spread across its blocks, each line landing
 in the block the skeleton gives it:
 
-- **the run's identity** — the run id, the turn branch, the base branch, the
-  scope, the goal and the selectors as typed;
+- **the run's identity** — the run id, the goal branch and whether this run cut
+  it or advanced an existing one, the launch branch, the scope, the goal and the
+  selectors as typed;
 - **the budget answer** — floor, effective floor with a goal, declared ceiling,
   waves actually executed;
 - **delivered · stalled · blocked**, each unit named, with its integration branch
   where one was left in place;
+- **the worktrees still on disk**, each by path — the goal worktree, which
+  persists with its branch; every stalled phase's worktree, kept as the proof of
+  what that phase emitted (§ Stall); and any completed phase's worktree whose
+  discard was refused, with the reason. This is the run's whole claim on the
+  operator's disk, and it is reported even when the only entry is the goal
+  worktree;
 - **per unit, beyond the gate verdict digest** — rework cycles and
   infrastructural retries as two numbers, the paths a harvest dropped, and
   three measurements the trust-report posture governs exactly as it governs
@@ -775,6 +921,12 @@ in the block the skeleton gives it:
   still check is a surprise;
 - **a gate-defect stall's next act is `/inspire-lesson note`** (§ gate),
   alongside every other stall's remedy;
+- **where the work is** — the goal branch, its worktree path, the one command
+  that shows what the effort holds
+  (`git -C .claude/worktrees/emanate-<goal-slug> log --oneline <launch-branch>..`)
+  and the diff-stat against the launch branch. This is the line the second field
+  run did not have: its report named a branch and a commit, and the operator
+  standing on `main` saw a tree identical to the one they started with;
 - **the operator's next act** — the PR to open or already opened, and the
   remedies every stall named.
 
@@ -783,18 +935,21 @@ in the block the skeleton gives it:
 Both are the operator's, and their recipes are [`unattended.md`](unattended.md).
 What belongs here is why nothing extra is needed to support them:
 
-- **Reject everything** — delete the turn branch. The tests and the code die with
-  it, the knowledge base never knew, and the report plus the log remain for the
-  autopsy.
+- **Reject one run** — revert the merges whose trailer carries its run id. The
+  goal branch keeps every earlier run's work and the effort continues.
+- **Reject the effort** — delete the goal branch and remove its worktree. The
+  tests and the code die with it, the knowledge base never knew, and every run's
+  report died with them, which is the trade a branch-resident log makes: an
+  operator who wants the autopsy copies the file out before deleting the branch.
 - **Keep parts** — promotion was per-piece merges in dependency order, so
   acceptance follows the graph: keep a prefix of the run, or revert the leaf
   pieces in the PR. Every kept piece keeps its tests (its realization) and its
   verdict trailer, and every discarded piece re-enters the next frontier
-  automatically, because its citations no longer exist on the base branch.
+  automatically, because its citations no longer exist on the goal branch.
 - **A/B** — two invocations off the same base with the same `--reemanate` segment
-  and different arguments (profiles, models, doctrine variants). The run-id scheme
-  already isolates them into two turn branches; compare the PRs, merge the winner,
-  whose trailers record which run produced what.
+  and different arguments (profiles, models, doctrine variants), each given its
+  own `--variant`. That is what isolates them into two goal branches; compare the
+  PRs, merge the winner, whose trailers record which run produced what.
 - **Harness drift is a measurement, never a trigger.** Drift between the current
   harness and a piece's promote trailers (`template_sha`, profile hashes) is
   surfaced, and the operator answers it — if at all — with a segment selection.

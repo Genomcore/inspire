@@ -57,6 +57,21 @@ the trade, stated plainly — and it is why the two things that bound a run matt
 Neither is housekeeping. Together they are what keeps a run inside what auto
 mode already covers.
 
+**The loop never depends on a destructive git form to make progress.** `git
+worktree remove --force`, `git clean -fd` and `git branch -D` each delete work
+that exists nowhere else, a harness may refuse any of them, and a refusal
+mid-wave has nobody to answer it. Nothing the loop needs sits behind one:
+
+- a worktree it discards has already had its owned paths harvested onto the
+  integration branch and the rest dropped on purpose, so a refused removal costs
+  a directory the run report names, never a wave;
+- a worktree holding work nobody vouched for is **kept** rather than removed
+  ([`run.md`](run.md) § Stall), so that case asks for no removal at all;
+- a branch it deletes is one it has just merged, which `git branch -d` takes.
+
+The forms that do delete a ref belong to § The morning after, and they are the
+operator's, run from their own checkout on work they have read.
+
 **An operator may judge that their own environment justifies a different
 posture.** That call is theirs, and its mechanics belong to the harness's
 documentation rather than to this one — naming that the choice exists is honest,
@@ -96,12 +111,16 @@ exactly what `run` already owns, and building any of it again outside the
 invocation would be the external loop this design specifically avoids.
 
 **A re-invocation is simply a smaller problem, by construction.** Realization
-is read from the tests on the base branch, never from a registry the scheduler
-would have to maintain: whatever a prior run promoted has left the frontier, so
-the next `run` — same command, same cron line, nothing to reconfigure — sees
-only what remains, budgeted fresh. There is no run-to-run state to reconcile
-and nothing to clean up between invocations beyond what `run` itself already
-leaves (a stalled unit's branch, named in its own report, for autopsy).
+is read from the tests in the **goal worktree**, never from a registry the
+scheduler would have to maintain: whatever a prior run toward the same goal
+promoted is on that branch and has left the frontier, so the next `run` — same
+command, same cron line, nothing to reconfigure — sees only what remains,
+budgeted fresh. This is what the goal branch buys a schedule. A cron line that
+repeats one goal converges on it, because each invocation starts where the last
+one stopped; the same line against a per-run branch would rebuild the same units
+every morning. There is no run-to-run state to reconcile and nothing to clean up
+between invocations beyond what `run` itself already leaves (a stalled unit's
+branch, named in its own report, for autopsy).
 
 `plan` is the cheap way to check whether scheduling another `run` is even
 worth it: it is read-only, it writes nothing, and it answers `realized_all:
@@ -135,19 +154,36 @@ conclusions are whatever the session happened to infer, differently on the next
 invocation. Declare it in `stack.md` and prove it by hand once (see
 `/inspire-bootstrap`'s stack interview) before any cron line exists.
 
+**A scheduled run also refuses on a dirty launch checkout** (§ t=0, step 1), and
+that is the refusal a cron line hits first. The checkout a schedule fires in is
+the one a person leaves work in: an uncommitted `/inspire:update`, a half-edited
+specification, a build artifact. Give the schedule a checkout nobody edits by
+hand, or commit before the window opens. The goal worktree the run cuts is not a
+dirtying write — the seeded `.gitignore` block excludes `.claude/worktrees/`.
+
 ## The morning after
 
-A finished run leaves a turn branch of per-piece merges, a report at
-`.inspire/last-emanation.log`, and nothing merged anywhere — the hard ceiling
-holds regardless of `--halt`. Three things an operator does with that, and none
-of them needs the loop's help:
+A finished run leaves a **goal branch** — `emanate/<goal-slug>`, in the worktree
+`.claude/worktrees/emanate-<goal-slug>` — carrying this run's per-piece merges on
+top of every earlier run toward the same goal, its report committed on the same
+branch at `.inspire/last-emanation.log`, and nothing merged anywhere else: the
+hard ceiling holds regardless of `--halt`. The closing block names the branch,
+the worktree and the one command that shows the whole effort:
 
-- **Discard everything.** Delete the turn branch. Its tests and code die with
-  it, the knowledge base never knew any of it happened, and the report plus the
-  log are what is left for the autopsy. `git branch -D emanate/<run-id>` is a
-  command the operator can actually run: the run kept that branch in a worktree
-  of its own and left this checkout where it found it, so nobody is standing on
-  the branch being deleted.
+```
+git -C .claude/worktrees/emanate-<goal-slug> log --oneline <launch-branch>..
+```
+
+Four things an operator does with that, and none of them needs the loop's help:
+
+- **Discard the effort.** `git branch -D emanate/<goal-slug>`, then
+  `git worktree remove .claude/worktrees/emanate-<goal-slug>`. Every run's tests
+  and code die with it and the knowledge base never knew any of it happened. The
+  report dies with it too, so copy the log out first when the autopsy matters —
+  it is a file on the branch, not in this checkout.
+- **Discard one run, keep the effort.** Revert the merges whose trailer carries
+  that run's id. Everything earlier runs promoted stays, and the reverted pieces
+  re-enter the next run's frontier by themselves.
 - **Keep a prefix.** Promotion was per-piece merges in dependency order, so
   acceptance follows the graph: accept the earlier waves and stop there,
   leaving the later ones for the PR review to drop.
@@ -155,8 +191,25 @@ of them needs the loop's help:
   graph — drop specific pieces with nothing downstream of them, and merge
   everything else. Either way, every kept piece keeps its own tests and its own
   verdict trailer, and every dropped piece re-enters the next `run`'s frontier
-  automatically, because its citations no longer exist on the base branch once
+  automatically, because its citations no longer exist on the goal branch once
   it is reverted.
+
+Every one of those commands runs **from the launch checkout**, which is where the
+operator is already standing: the run never moved it and never wrote to it, so
+nobody is standing on the branch being deleted.
+
+**`--halt post-PR` opens the pull request from the goal branch**, against the
+launch branch, and stops there. A second run toward the same goal promotes onto
+that same branch, so the open PR grows — which is the point: the PR is the
+effort's review, and one effort is one review.
+
+**Two goals that share a unit each emanate it, unless the first has already
+merged.** Realization is read from the tests on the goal branch the run works in,
+and a sibling goal branch is not that branch. The remedy is the operator's and it
+is the ordinary one: merge the first goal's PR, and the second run — cut or
+advanced from the launch branch at its own t=0 — finds the unit realized and
+skips it. v1 keeps **one live goal branch per checkout**; two efforts at once
+want two checkouts.
 
 **The mutation-drill survivors are the other half of this morning's work, and
 they are a work list, not a verdict.** The run report names them per unit —
@@ -174,15 +227,20 @@ says so plainly for that reason.
 ## A/B
 
 Two invocations off the same base, the same `--reemanate` segment, and
-different arguments — a profile, a model, a doctrine variant:
+different arguments — a profile, a model, a doctrine variant — **each with its
+own `--variant`**:
 
 ```
-claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-A]"
-claude -p "/inspire-emanate run --reemanate auth.user.. --halt post-PR [args-B]"
+claude -p "/inspire-emanate run until auth.user.list --reemanate auth.user.. --variant a --halt post-PR [args-A]"
+claude -p "/inspire-emanate run until auth.user.list --reemanate auth.user.. --variant b --halt post-PR [args-B]"
 ```
 
-The run-id scheme already isolates the two into two turn branches — nothing
-else is needed to keep them from colliding, on disk or in the report. Compare
-the two PRs on their own terms and merge the winner; its merge trailers already
-record which run produced what, so the losing branch is discarded exactly like
-any other rejected run.
+`--variant` is what isolates the two, into `emanate/auth-user-list-a` and
+`emanate/auth-user-list-b`: the slug comes from the goal, so without it both
+invocations resolve one branch and the second would merge into the first's work.
+Compare the two PRs on their own terms and merge the winner; its merge trailers
+already record which run produced what, so the losing branch is discarded exactly
+like any other rejected effort.
+
+**Run them in two checkouts.** One live goal branch per checkout is the scheme's
+own assumption, and an A/B pair is two live goal branches by construction.

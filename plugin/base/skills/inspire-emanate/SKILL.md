@@ -66,9 +66,9 @@ invocation.
   end a turn is [`references/run.md`](references/run.md) § Liveness.
 - **Pieces are the reuse unit, so convergence is free.** The frontier is every
   frontier-eligible unit in scope minus the pieces whose realization is current on
-  the base branch, computed from the tests themselves. A second invocation is
-  simply a smaller graph with fresh budgets; re-running needs no loop design of
-  its own.
+  the **goal branch**, computed from the tests themselves. A goal outlives the run
+  that works toward it, so a second invocation toward the same goal is simply a
+  smaller graph with fresh budgets; re-running needs no loop design of its own.
 - **The reach ceiling is hard.** A fully-green run ends at most in a PR — never a
   merge, never production.
 
@@ -99,7 +99,8 @@ partially in graph order.
 | `in N steps max` / `--ceiling N` | **unset** — the scope filter is the throttle | the maximum number of waves this run may execute |
 | `--scope PATH` | the whole knowledge base | repeatable KB path, intersected per layer through the scope contract every rule obeys |
 | `--rework N` | **2** per handoff — a third rejection at the same handoff stalls the unit | overseer rework attempts at one handoff. The **per-unit budget is the sum of the handoff allowances**; there is no separate per-unit knob in v1 |
-| `--halt pre-PR\|post-PR` | **pre-PR** | where a green run stops. `post-PR` opens the pull request and stops there; it is never a merge and never a deploy |
+| `--variant WORD` | none | appended to the goal slug (`emanate/<goal-slug>-<word>`), so two efforts over one selector — an A/B pair — get two goal branches |
+| `--halt pre-PR\|post-PR` | **pre-PR** | where a green run stops. `post-PR` opens the pull request **from the goal branch** and stops there; it is never a merge and never a deploy |
 | `--reemanate SEL` | none | repeatable. Treat a graph selection as unrealized for this run; everything unselected keeps its realization |
 | `--tests-root DIR` | resolved from the framework profile's `## Test conventions` | repeatable. The tree(s) `@claim` tokens are read from. Passed to both the plan tool and the gate, so realization and coverage read one set of files |
 | `--profiles-root DIR` | `.claude/skills/inspire-code/profiles` | passthrough to the plan tool |
@@ -219,5 +220,6 @@ the run.
 > **Writing contract.** The report and any prose this skill produces follow
 > [`_references/writing-style.md`](../_references/writing-style.md).
 
-> **One live run per checkout.** The branch and worktree scheme assumes it
-> (`references/run.md` § The branch scheme). Two runs at once want two checkouts.
+> **One live goal branch per checkout.** The branch and worktree scheme assumes
+> it (`references/run.md` § The branch scheme). Two efforts at once — an A/B pair
+> included — want two checkouts.

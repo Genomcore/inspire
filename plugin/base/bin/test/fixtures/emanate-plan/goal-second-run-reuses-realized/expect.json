@@ -1,0 +1,29 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents",
+    "--tests-root",
+    "tests",
+    "--goal",
+    "auth.user.list"
+  ],
+  "stdout_jq": [
+    { "expr": ".ready", "equals": "true" },
+    { "expr": ".realized | join(\",\")", "equals": "auth.user" },
+    { "expr": ".realized_all", "equals": "false" },
+    { "expr": ".goal.selector", "equals": "auth.user.list" },
+    { "expr": ".goal.units | join(\",\")", "equals": "auth.org,auth.user.list" },
+    { "expr": ".goal.units | index(\"auth.user\") == null", "equals": "true" },
+    { "expr": ".goal.floor", "equals": "1" },
+    { "expr": ".floor", "equals": "1" },
+    { "expr": ".waves | length", "equals": "1" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
+    { "expr": ".deliverable_waves", "equals": "1" },
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
+  ],
+  "forbidden": ["PR-", "NOT READY", "REFUSED"]
+}

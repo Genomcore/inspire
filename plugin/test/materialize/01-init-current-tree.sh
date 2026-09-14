@@ -132,6 +132,10 @@ check "CLAUDE.md seeded"              "[ -f '$proj/CLAUDE.md' ]"
 check "CLAUDE.md is the stub"         "grep -q 'Provisional stub' '$proj/CLAUDE.md'"
 check ".gitignore created"            "[ -f '$proj/.gitignore' ]"
 check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local.json' '$proj/.gitignore'"
+# .claude/worktrees/ is the house convention for every worktree a skill cuts,
+# and /inspire-emanate's t=0 refuses a dirty launch checkout — so a run that
+# left its own goal worktree showing as untracked would refuse the next run.
+check ".gitignore ignores .claude/worktrees/" "grep -qxF '.claude/worktrees/' '$proj/.gitignore'"
 
 # Directory shipping is a GIT property, not a working-tree one: git tracks
 # files only, so a base/kb directory whose last tracked file was deleted still
@@ -226,12 +230,28 @@ rm -f "$dc_err"
 # purpose — it started from a project the first update had already reconciled to
 # the current tree, which is exactly the unidentifiable state the fixture exists
 # to avoid.
+
+# An entry added to the seeded .gitignore block after a project was installed
+# reaches it on update or never: /inspire:update is the only pass that runs
+# again. v0.6.0 shipped the block with settings.local.json alone, which is the
+# premise — without it the "gained" assertion below would pass whether or not
+# the extension ran.
+check "premise: the v$FIXTURE_VERSION fixture's block has no worktrees line" \
+  "grep -qF '.claude/settings.local.json' '$dproj/.gitignore' && ! grep -qF '.claude/worktrees/' '$dproj/.gitignore'"
+
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$dproj" \
   --source-root source --prototype-root prototype \
   --skip "$drift_rel" >/dev/null 2>&1
 check "missing file restored"          "[ -x '$dproj/.inspire/bin/no-todos.sh' ]"
 check "SKIPPED FILE UNTOUCHED" \
   "[ '$drift_edited' = \"\$(shasum -a 256 '$drift' | cut -d' ' -f1)\" ]"
+check "update: .gitignore block gained .claude/worktrees/" \
+  "grep -qxF '.claude/worktrees/' '$dproj/.gitignore'"
+check "update: the entry landed inside the marked block" \
+  "sed -n '/INSPIRE (materialize.sh)/,/end INSPIRE/p' '$dproj/.gitignore' | grep -qxF '.claude/worktrees/'"
+check "update: the older entry survives"  "grep -qxF '.claude/settings.local.json' '$dproj/.gitignore'"
+check "update: still exactly one INSPIRE block" \
+  "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$dproj/.gitignore')\" = 1 ]"
 rm -rf "$(dirname "$dproj")"
 
 # --dry-run writes nothing.
