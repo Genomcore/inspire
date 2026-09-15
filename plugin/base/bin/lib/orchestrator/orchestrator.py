@@ -15,7 +15,7 @@ from . import start as startmod
 from .config import load_config
 from .constants import CONFIG_PATH, LOG_PATH, ROLES, RUNS_DIR
 from .errors import Infrastructural, Refusal, Stall
-from .findings import gate_digest
+from .findings import conflict_findings, conflict_role, gate_digest
 from .shells import read_shells
 from .state import State
 from .util import read_json, write_json_atomic
@@ -201,13 +201,24 @@ class Orchestrator:
             ustate["done"].append(role)
             ustate["phase"] = None
             self.save()
-        ustate["phase"] = "gate"
-        self.save()
-        verdict = gatemod.gate_loop(self, ustate)
-        ustate["gate_digest"] = gate_digest(verdict)
-        self.save()
-        gatemod.drill(self, ustate)
-        gitmod.promote(self, ustate, verdict)
+        while True:
+            ustate["phase"] = "gate"
+            self.save()
+            verdict = gatemod.gate_loop(self, ustate)
+            ustate["gate_digest"] = gate_digest(verdict)
+            self.save()
+            gatemod.drill(self, ustate)
+            conflicting = gitmod.promote(self, ustate, verdict)
+            if not conflicting:
+                return
+            # A sibling promoted first onto a path this unit also wrote. One more
+            # edge back to the persona that owns the path, inside its rework
+            # budget, and the whole boundary — overseers, gate, promote — again.
+            gitmod.advance_onto_goal(self, ustate, conflicting)
+            role = conflict_role(self.config["tests_roots"], conflicting)
+            findings = conflict_findings(ustate, conflicting)
+            handoffmod.spend_rework(self, ustate, role, findings, "promote")
+            handoffmod.handoff(self, ustate, role, findings)
 
     def record_stall(self, ustate, stall):
         ustate["status"] = "stalled"

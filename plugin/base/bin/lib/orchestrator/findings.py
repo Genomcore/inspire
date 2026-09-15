@@ -82,6 +82,22 @@ def route_gate_verdict(verdict):
     return ("rework", "implementer")
 
 
+def conflict_role(tests_roots, paths):
+    """Who reworks a promote conflict: the tester when every path is a test, the
+    implementer otherwise — the same split the owned pathspecs draw."""
+    roots = tuple(root.rstrip("/") + "/" for root in tests_roots)
+    return "tester" if all(path.startswith(roots) for path in paths) else "implementer"
+
+
+def conflict_findings(ustate, paths):
+    return [finding("promote", "the goal branch moved under this unit",
+                    "a sibling promoted first and also wrote: %s. The branch now carries "
+                    "the goal branch's version of each; this unit's own is one commit "
+                    "back (`git show %s^:<path>`)." % (", ".join(paths),
+                                                        ustate["integration_branch"]),
+                    "re-emit those paths so both units' work coexists.")]
+
+
 def gate_findings(verdict):
     """The gate's own `{class, target, message, remedy}` rows, in this process's shape."""
     return [finding("emanate-gate", "%s — %s" % (row.get("class"), row.get("target")),

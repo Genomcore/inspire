@@ -397,4 +397,43 @@ check "G: the findings are tagged with emanate-gate" \
 check "G: and with the arbiter that routed them" \
   "grep -lq 'inspire-arbiter' $GRD/spawns/auth-org-*implementer*.json"
 
+# ---------------------------------------------------------------------------
+# H. A promote conflict. Both wave-1 units write one shared source file with
+#    their own content; the second to promote cannot merge. That is a rework at
+#    the implementer — the branch advanced onto the goal, the paths in the brief —
+#    never a stall, and the goal branch ends with both units and no markers.
+# ---------------------------------------------------------------------------
+H="$TMP/h"; HF="$TMP/h-fake"
+mkrepo "$H"
+mkfake "$HF" <<'EOF'
+{ "personas": { "contracter":  { "mode": "stub-source" },
+                "tester":      { "mode": "tests-from-contract" },
+                "implementer": { "mode": "stub-source",
+                                 "attempts": { "1": { "shared": "registry.ts" } } } } }
+EOF
+rc="$(orun "$H" "$HF")"
+[ "$rc" = 0 ] || sed -n '1,40p' "$H.err"
+eq "H: the run recovers and ends"           "$rc" "0"
+eq "H: all four units are promoted"         "$(st "$H" "count('promoted')")" "4"
+eq "H: exactly one wave-1 unit reworked its implementer, once" \
+   "$(st "$H" "sorted([rework('audit.event','implementer'), rework('auth.org','implementer')])")" "[0, 1]"
+eq "H: the tester spent nothing"            "$(st "$H" "[rework(i,'tester') for i in IDS]")" "[0, 0, 0, 0]"
+HRD="$(rundir "$H")"
+check "H: the rework brief names the conflicting path" \
+  "grep -lq 'registry.ts' $HRD/spawns/*implementer*.json"
+check "H: and says the goal branch moved" \
+  "grep -lq 'the goal branch moved under this unit' $HRD/spawns/*implementer*.json"
+HWT="$(goalwt "$H")"
+check "H: the shared file is on the goal branch"     "[ -f '$HWT/source/registry.ts' ]"
+check "H: with no conflict markers"                  "! grep -q '^<<<<<<<' '$HWT/source/registry.ts'"
+eq "H: and one unit's content, not both"    "$(grep -c 'registered by' "$HWT/source/registry.ts")" "1"
+check "H: both wave-1 bodies are on the goal branch" \
+  "[ -f '$HWT/source/audit-event.implementer.ts' ] && [ -f '$HWT/source/auth-org.implementer.ts' ]"
+eq "H: the advance commit is in the goal branch's history" \
+   "$(git -C "$HWT" log --format=%s | grep -c '^emanate: advance ')" "1"
+eq "H: every integration branch is deleted after promote" \
+   "$(git -C "$H" branch --list 'emanate/all-*' | wc -l | tr -d ' ')" "0"
+left="$(ls "$H/.inspire/worktrees" 2>/dev/null | grep -cv '^emanate-all$')"
+eq "H: no phase worktree is left on disk" "$left" "0"
+
 summary

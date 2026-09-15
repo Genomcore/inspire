@@ -24,8 +24,9 @@ from orchestrator.citations import classify_citations, scan_citations
 from orchestrator.config import load_config, validate_config
 from orchestrator.constants import MIN_CLAUDE_VERSION, STATE_SCHEMA
 from orchestrator.errors import Refusal
-from orchestrator.findings import (finding, gate_digest, gate_findings, render_brief,
-                                   render_findings, route_gate_verdict, targets_unit)
+from orchestrator.findings import (conflict_role, finding, gate_digest, gate_findings,
+                                   render_brief, render_findings, route_gate_verdict,
+                                   targets_unit)
 from orchestrator.shells import is_read_only, parse_tools_line
 from orchestrator.state import State
 from orchestrator.util import parse_jsonl, parse_version, slugify, write_json_atomic
@@ -272,6 +273,18 @@ class StateWrites(unittest.TestCase):
             self.assertEqual(os.listdir(root), ["state.json"])
             with open(path) as stream:
                 self.assertEqual(json.load(stream), {"a": 2})
+
+
+class ConflictRouting(unittest.TestCase):
+
+    def test_only_test_paths_go_to_the_tester(self):
+        self.assertEqual(conflict_role(["tests"], ["tests/a.spec.ts", "tests/b.spec.ts"]),
+                         "tester")
+
+    def test_any_source_path_goes_to_the_implementer(self):
+        self.assertEqual(conflict_role(["tests"], ["tests/a.spec.ts", "source/x.ts"]),
+                         "implementer")
+        self.assertEqual(conflict_role(["tests"], ["tests-fixtures/x.ts"]), "implementer")
 
 
 class Findings(unittest.TestCase):

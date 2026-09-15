@@ -99,11 +99,14 @@ def promote(run, ustate, verdict):
         merge = git(run, ["merge", "--no-ff", "-m", message, ustate["integration_branch"]],
                     cwd=run.goal_worktree, check=False)
         if merge.returncode != 0:
+            conflicting = git(run, ["diff", "--name-only", "--diff-filter=U"],
+                              cwd=run.goal_worktree).stdout.split()
             git(run, ["merge", "--abort"], cwd=run.goal_worktree, check=False)
-            raise Stall("promote conflict",
-                        "%s does not merge into %s: %s"
-                        % (ustate["integration_branch"], run.goal_branch,
-                           tail(merge.stdout + merge.stderr, 600)))
+            if not conflicting:
+                raise Stall("promote", "%s does not merge into %s: %s"
+                            % (ustate["integration_branch"], run.goal_branch,
+                               tail(merge.stdout + merge.stderr, 600)))
+            return sorted(conflicting)
         git(run, ["branch", "-d", ustate["integration_branch"]], cwd=run.goal_worktree)
     discard(run, ustate["verify_worktree"])
     ustate["verify_worktree"] = None
@@ -111,6 +114,26 @@ def promote(run, ustate, verdict):
     ustate["status"] = "promoted"
     ustate["phase"] = None
     run.save()
+    return None
+
+
+def advance_onto_goal(run, ustate, conflicting):
+    """A sibling promoted first and both wrote `conflicting`. Merge the goal branch
+    into the integration branch, taking the goal's version of every conflicting
+    path; the unit's own version stays one commit back for the persona to read.
+    Done in the verify worktree, which already sits detached at the tip."""
+    worktree = ustate["verify_worktree"]
+    with run.git_lock:
+        git(run, ["merge", "--no-commit", run.goal_branch], cwd=worktree, check=False)
+        # ponytail: add/add and modify/modify only — a path the goal side deleted has
+        # no "theirs" and fails here; widen when a run meets one.
+        git(run, ["checkout", "--theirs", "--"] + conflicting, cwd=worktree)
+        git(run, ["add", "--"] + conflicting, cwd=worktree)
+        git(run, ["commit", "-m", "emanate: advance %s onto %s\n\nconflicting: %s\n"
+                  % (ustate["id"], run.goal_branch, " ".join(conflicting))], cwd=worktree)
+        git(run, ["update-ref", "refs/heads/" + ustate["integration_branch"], "HEAD"],
+            cwd=worktree)
+    run.last_results.pop(ustate["id"], None)
 
 
 def template_sha(run):

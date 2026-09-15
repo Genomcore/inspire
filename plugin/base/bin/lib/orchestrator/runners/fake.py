@@ -79,6 +79,12 @@ class FakeRunner:
         with open(path, "w") as stream:
             stream.write("// fake %s, attempt %d\nexport const attempt = %d;\n"
                          % (role, attempt, attempt))
+        # `shared` writes one more file under a name every unit of the wave uses,
+        # with content only this unit would write: the promote conflict.
+        if attempts.get("shared"):
+            path = os.path.join(cwd, self.config["source_roots"][0], attempts["shared"])
+            with open(path, "w") as stream:
+                stream.write("// registered by %s, attempt %d\n" % (brief["unit_slug"], attempt))
 
     def _write_tests(self, cwd, brief, attempt, attempts):
         contract = read_json(brief["contract_path"])
