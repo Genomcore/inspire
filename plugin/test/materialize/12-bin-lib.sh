@@ -52,9 +52,9 @@ check "BIN-LIB: the entry that sources them landed too" \
 # `.inspire/bin/emanate-orchestrator.py` dying on `ModuleNotFoundError:
 # orchestrator` in every project with the estate still green.
 premise "base/bin/lib/orchestrator/ ships modules in the plugin" \
-  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/orchestrator.py' ]"
-premise "one of them sits a second level down" \
-  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/runners/fake.py' ]"
+  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/orchestrator/orchestrator.py' ]"
+premise "one of them sits a third level down" \
+  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/runners/fake/fake.py' ]"
 
 missing=""
 while IFS= read -r src; do

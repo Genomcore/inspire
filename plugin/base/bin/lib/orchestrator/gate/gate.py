@@ -4,13 +4,13 @@ import json
 import os
 import subprocess
 
-from . import git as gitmod
-from .constants import ARBITER_SCHEMA, ARBITER_SHELL, DRILL_SCHEMA, PERSONA_SHELLS
-from .errors import Infrastructural, Internal, Stall
-from .findings import finding, gate_findings, route_gate_verdict
-from .handoff import (handoff, next_verify_dir, run_recipe, spawn, spend_rework,
+from .. import git as gitmod
+from ..constants import ARBITER_SCHEMA, ARBITER_SHELL, DRILL_SCHEMA, PERSONA_SHELLS
+from ..errors import Infrastructural, Internal, Stall
+from ..findings import finding, gate_findings, route_gate_verdict
+from ..handoff import (handoff, next_verify_dir, run_recipe, spawn, spend_rework,
                       tests_root_args, unit_brief, verify_suite)
-from .util import tail, write_json_atomic
+from ..util import tail, write_json_atomic
 
 
 def gate_loop(run, ustate):

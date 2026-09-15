@@ -2,7 +2,7 @@
 
 import threading
 
-from .util import read_json, tail, write_json_atomic
+from ..util import read_json, tail, write_json_atomic
 
 
 class State:

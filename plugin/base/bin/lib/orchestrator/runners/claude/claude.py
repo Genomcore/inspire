@@ -5,9 +5,9 @@ import subprocess
 import time
 import uuid
 
-from ..findings import render_brief
-from ..state import SpawnResult
-from ..util import tail
+from ...findings import render_brief
+from ...state import SpawnResult
+from ...util import tail
 
 # Deny rules for every spawned agent. These match the COMMAND STRING and are a
 # speed bump, not a fence: an agent that spells the same call differently walks
@@ -60,19 +60,23 @@ class ClaudeRunner:
         except ValueError:
             return SpawnResult("crash", text=tail(proc.stdout) + "\n" + tail(proc.stderr))
         text = str(payload.get("result", ""))
-        ending = "exit"
-        subtype = payload.get("subtype")
-        if subtype == "max_turns":
-            ending = "exhausted"
-        elif subtype == "budget":
-            ending = "budget"
-        elif payload.get("is_error"):
-            if "rate limit" in text.lower():
-                ending = "ratelimit"
-                self.ratelimit_retries += 1
-                time.sleep(min(60, 5 * self.ratelimit_retries))
-            else:
-                ending = "crash"
+        ending = ending_of(payload)
+        if ending == "ratelimit":
+            self.ratelimit_retries += 1
+            time.sleep(min(60, 5 * self.ratelimit_retries))
         return SpawnResult(ending, text=text, structured=payload.get("structured_output"),
                            session_id=payload.get("session_id", ""),
                            cost_usd=float(payload.get("total_cost_usd") or 0.0))
+
+
+def ending_of(payload):
+    """How one headless session ended, read off its JSON envelope."""
+    subtype = payload.get("subtype")
+    if subtype == "max_turns":
+        return "exhausted"
+    if subtype == "budget":
+        return "budget"
+    if payload.get("is_error"):
+        return "ratelimit" if "rate limit" in str(payload.get("result", "")).lower() \
+            else "crash"
+    return "exit"

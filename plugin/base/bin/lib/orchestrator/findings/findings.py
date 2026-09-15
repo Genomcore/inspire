@@ -1,6 +1,6 @@
 """The one finding shape, how a brief renders it, and what a gate verdict means."""
 
-from .constants import TESTER_GATE_CLASSES
+from ..constants import TESTER_GATE_CLASSES
 
 
 def finding(source, title, issue, follow_up, severity="error", cls=None):

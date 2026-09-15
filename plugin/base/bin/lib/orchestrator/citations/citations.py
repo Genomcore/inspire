@@ -3,7 +3,7 @@
 import os
 import re
 
-from .findings import finding
+from ..findings import finding
 
 # The tester's own grammar (`roles/tester.md` § Citing a claim), shared with
 # `lib/gate-citations.sh`: an id, and an optional fingerprint after it.

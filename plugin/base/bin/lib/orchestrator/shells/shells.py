@@ -3,8 +3,8 @@
 import os
 import re
 
-from .constants import ARBITER_SHELL, PERSONA_SHELLS, REQUIRED_OVERSEERS, WRITING_TOOLS
-from .errors import Refusal
+from ..constants import ARBITER_SHELL, PERSONA_SHELLS, REQUIRED_OVERSEERS, WRITING_TOOLS
+from ..errors import Refusal
 
 
 def parse_tools_line(text):

@@ -6,12 +6,12 @@ import json
 import os
 import subprocess
 
-from . import git as gitmod
-from .citations import classify_citations, scan_citations
-from .constants import OVERSEER_SCHEMA, PERSONA_SHELLS
-from .errors import Infrastructural, Stall
-from .findings import finding, targets_unit
-from .util import parse_jsonl, read_json, sh, tail, write_json_atomic
+from .. import git as gitmod
+from ..citations import classify_citations, scan_citations
+from ..constants import OVERSEER_SCHEMA, PERSONA_SHELLS
+from ..errors import Infrastructural, Stall
+from ..findings import finding, targets_unit
+from ..util import parse_jsonl, read_json, sh, tail, write_json_atomic
 
 
 # ------------------------------------------------------------- the substrate

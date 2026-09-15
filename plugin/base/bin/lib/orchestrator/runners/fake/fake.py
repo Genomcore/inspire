@@ -4,9 +4,9 @@ import os
 import sys
 import threading
 
-from ..constants import ROLES
-from ..state import SpawnResult
-from ..util import read_json, write_json_atomic
+from ...constants import ROLES
+from ...state import SpawnResult
+from ...util import read_json, write_json_atomic
 
 
 class FakeRunner:

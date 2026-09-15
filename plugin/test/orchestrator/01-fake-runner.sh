@@ -20,7 +20,7 @@ REPO="$(cd -P "$HERE/../.." && pwd -P)"
 BIN="$PLUGIN_ROOT/base/bin"
 ORCH="$BIN/emanate-orchestrator.py"
 FIXTURE="$BIN/test/fixtures/emanate-plan/clean-three-waves/spec"
-UNITTEST="plugin/base/bin/test/test-orchestrator.py"
+LIB="$BIN/lib"   # every module folder carries its own test_<module>.py
 
 # Commits must work on a machine with no git identity of its own, and the estate
 # runs unattended. These are the run's identity, not the operator's.
@@ -35,11 +35,12 @@ premise "the process ships and is executable" "[ -x '$ORCH' ]"
 premise "the three-wave plan fixture ships its spec tree" "[ -d '$FIXTURE/sdd' ]"
 
 # ---------------------------------------------------------------------------
-# The pure-logic suite runs first and counts as ONE assertion here: it has its
-# own summary, and restating its count in this file's would make the estate's
-# inventory move whenever a unittest case is added.
+# The per-module suites run first and count as ONE assertion here: they have
+# their own summary, and restating their count in this file's would make the
+# estate's inventory move whenever a unittest case is added.
 # ---------------------------------------------------------------------------
-( cd "$REPO" && python3 -m unittest "$UNITTEST" ) >"$TMP/unittest.out" 2>&1
+( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s . -t . -p 'test_*.py' ) \
+  >"$TMP/unittest.out" 2>&1
 ut=$?
 [ "$ut" -eq 0 ] || sed -n '1,40p' "$TMP/unittest.out"
 check "unit: the pure-logic suite passes" "[ $ut -eq 0 ]"

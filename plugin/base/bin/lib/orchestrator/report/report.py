@@ -3,7 +3,7 @@
 import os
 import threading
 
-from .constants import ROLES, TRAILER_ORDER
+from ..constants import ROLES, TRAILER_ORDER
 
 
 class Report:

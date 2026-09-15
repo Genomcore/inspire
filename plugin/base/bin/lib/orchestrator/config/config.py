@@ -2,9 +2,9 @@
 
 import os
 
-from .constants import CONFIG_SCHEMA
-from .errors import Refusal
-from .util import read_json
+from ..constants import CONFIG_SCHEMA
+from ..errors import Refusal
+from ..util import read_json
 
 
 def validate_config(config):
