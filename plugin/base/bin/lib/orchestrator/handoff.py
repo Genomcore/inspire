@@ -60,11 +60,9 @@ def verify_suite(run, ustate, cwd, out_dir):
 
 def tests_root_args(run, worktree):
     """The tests roots that exist in this tree, as the tools take them."""
-    arguments = []
-    for root in run.config["tests_roots"]:
-        if os.path.isdir(os.path.join(worktree, root)):
-            arguments += ["--tests-root", root]
-    return arguments
+    return [a for r in run.config["tests_roots"]
+            if os.path.isdir(os.path.join(worktree, r))
+            for a in ("--tests-root", r)]
 
 
 def next_verify_dir(run, ustate):
@@ -74,7 +72,7 @@ def next_verify_dir(run, ustate):
 
 
 def recipe_steps(run):
-    return run.plan.get("preflight", {}).get("worktree_recipe", []) or []
+    return run.plan.get("preflight", {}).get("worktree_recipe") or []
 
 
 def run_recipe(run, worktree):
@@ -124,10 +122,8 @@ def persona_brief(run, ustate, role, worktree, findings):
 
 
 def environment_step(run):
-    for step in recipe_steps(run):
-        if step.get("step") == "environment":
-            return step.get("command")
-    return None
+    return next((step.get("command") for step in recipe_steps(run)
+                 if step.get("step") == "environment"), None)
 
 
 # -------------------------------------------------------------- the sequence
@@ -227,7 +223,8 @@ def checks_a(run, ustate, role, worktree, tip_before):
                         "orchestrator's to move.")]
     if not gitmod.git(run, ["status", "--porcelain"], cwd=worktree).stdout.strip():
         raise Infrastructural("the %s emitted nothing" % role)
-    dropped = harvest_plan(run, ustate, role, worktree)
+    proc = gitmod.run_harvest(run, ustate, role, worktree, ["--mode", "plan"])
+    dropped = json.loads(proc.stdout).get("dropped") or []
     if dropped:
         ustate["dropped"] = sorted(set(ustate["dropped"]) | set(dropped))
         run.save()
@@ -241,10 +238,6 @@ def checks_a(run, ustate, role, worktree, tip_before):
             contract, scan_citations(run.config["tests_roots"], worktree))
     return []
 
-
-def harvest_plan(run, ustate, role, worktree):
-    proc = gitmod.run_harvest(run, ustate, role, worktree, ["--mode", "plan"])
-    return json.loads(proc.stdout).get("dropped") or []
 
 
 # ---- B: harvest ----
@@ -357,14 +350,12 @@ def overseer_gate(run, ustate, role, changed):
     brief = {"heading": "overseer read — %s at the %s boundary" % (ustate["id"], role),
              "role": "overseer", "boundary": role, "unit_kind": ustate["kind"],
              "worktree": worktree, "changed_paths": changed,
+             "results_path": run.last_results.get(ustate["id"]),
+             "verdict_path": run.last_verdict.get(ustate["id"]),
              "profiles": run.plan_units[ustate["id"]].get("profiles") or [],
              "notes": ["answer in the structured shape: verdict APPROVE or REJECT, "
                        "plus findings."],
              **unit_brief(run, ustate)}
-    for key, path in (("results_path", run.last_results.get(ustate["id"])),
-                      ("verdict_path", run.last_verdict.get(ustate["id"]))):
-        if path:
-            brief[key] = path
     shells = run.overseer_shells
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(shells)) as pool:
         answers = list(pool.map(

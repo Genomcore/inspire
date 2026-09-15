@@ -62,8 +62,7 @@ class FakeRunner:
                                cost_usd=self.COST)
         spec = (self.script.get("personas") or {}).get(role) or {}
         attempts = (spec.get("attempts") or {}).get(str(attempt)) or {}
-        mode = spec.get("mode") or ("tests-from-contract" if role == "tester" else "stub-source")
-        if mode == "tests-from-contract":
+        if spec["mode"] == "tests-from-contract":
             self._write_tests(cwd, brief, attempt, attempts)
         else:
             self._write_stub(cwd, brief, role, attempt, attempts)
@@ -84,8 +83,6 @@ class FakeRunner:
     def _write_tests(self, cwd, brief, attempt, attempts):
         contract = read_json(brief["contract_path"])
         lines = ["// fake tester, attempt %d" % attempt]
-        if attempts.get("pass"):
-            lines.append("// PASS")
         fingerprint_mode = attempts.get("fingerprint")
         for index, claim in enumerate(contract.get("claims", [])):
             fingerprint = claim.get("fingerprint") or ""
@@ -113,19 +110,14 @@ class FakeRunner:
         return SpawnResult("exit", structured=payload, cost_usd=self.COST)
 
     def _arbiter(self, brief):
-        unit_id = brief["unit_id"]
-        payload = (self.script.get("arbiter") or {}).get(unit_id)
-        if payload is None:
-            payload = {"verdicts": [
-                {"test_file": path, "at_fault": "body",
-                 "finding": {"title": "the test agrees with the contract",
-                             "issue": "the assertion follows the derived contract; the body does not.",
-                             "follow_up": "fix the body."}}
-                for path in brief.get("failing_files") or []]}
+        payload = {"verdicts": [
+            {"test_file": path, "at_fault": "body",
+             "finding": {"title": "the test agrees with the contract",
+                         "issue": "the assertion follows the derived contract; the body does not.",
+                         "follow_up": "fix the body."}}
+            for path in brief.get("failing_files") or []]}
         return SpawnResult("exit", structured=payload, cost_usd=self.COST)
 
     def _drill(self, brief):
-        payload = (self.script.get("drill") or {}).get(brief["unit_id"])
-        if payload is None:
-            payload = {"complete": True, "survivors": []}
-        return SpawnResult("exit", structured=payload, cost_usd=self.COST)
+        return SpawnResult("exit", structured={"complete": True, "survivors": []},
+                           cost_usd=self.COST)

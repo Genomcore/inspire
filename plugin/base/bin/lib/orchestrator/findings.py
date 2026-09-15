@@ -14,17 +14,14 @@ def finding(source, title, issue, follow_up, severity="error", cls=None):
 
 
 def render_findings(findings):
-    if not findings:
-        return ""
-    out = ["## Findings from the last attempt", ""]
+    out =["## Findings from the last attempt", ""]
     for item in findings:
-        out.append("### %s · %s — %s" % (item.get("severity", "error"),
-                                         item.get("source", "unknown"),
-                                         item.get("title", "")))
+        out.append("### %s · %s — %s"
+                   % (item["severity"], item["source"], item["title"]))
         out.append("")
-        out.append("**Issue.** %s" % item.get("issue", ""))
+        out.append("**Issue.** %s" % item["issue"])
         out.append("")
-        if item.get("follow_up"):
+        if item["follow_up"]:
             out.append("**Suggested follow-up.** %s" % item["follow_up"])
             out.append("")
     return "\n".join(out)

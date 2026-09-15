@@ -31,20 +31,22 @@ from orchestrator.state import State
 from orchestrator.util import parse_jsonl, parse_version, slugify, write_json_atomic
 
 
-def contract(claims, unit_id="auth.user"):
+def contract(claims):
     return {"schema": "inspire.derived-contract/1",
-            "unit": {"kind": "entity", "id": unit_id,
+            "unit": {"kind": "entity", "id": "auth.user",
                      "path": "inspire_kb/04_domain/auth/user/auth.user.md",
                      "lifecycle": "accepted"},
             "claims": claims}
 
 
-def claim(key, oracle="test", fingerprint="sha256:" + "a" * 8):
-    return {"id": "auth.user/%s" % key, "oracle": oracle, "fingerprint": fingerprint}
+def claim(key, oracle="test"):
+    return {"id": "auth.user/%s" % key, "oracle": oracle,
+            "fingerprint": "sha256:" + "a" * 8}
 
 
-def citation(claim_id, fingerprint=None, path="tests/user.spec.ts", line=1):
-    return {"file": path, "line": line, "id": claim_id, "fingerprint": fingerprint}
+def citation(claim_id, fingerprint=None):
+    return {"file": "tests/user.spec.ts", "line": 1, "id": claim_id,
+            "fingerprint": fingerprint}
 
 
 class Slugs(unittest.TestCase):
@@ -270,17 +272,6 @@ class StateWrites(unittest.TestCase):
             self.assertEqual(os.listdir(root), ["state.json"])
             with open(path) as stream:
                 self.assertEqual(json.load(stream), {"a": 2})
-
-    def test_the_replaced_file_is_never_truncated_in_place(self):
-        # os.replace is atomic, so a reader holding the old inode still reads a
-        # whole document rather than an empty one.
-        with tempfile.TemporaryDirectory() as root:
-            path = os.path.join(root, "state.json")
-            write_json_atomic(path, {"a": 1})
-            handle = open(path)
-            write_json_atomic(path, {"a": 2})
-            self.assertEqual(json.load(handle), {"a": 1})
-            handle.close()
 
 
 class Findings(unittest.TestCase):

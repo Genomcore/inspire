@@ -47,15 +47,11 @@ def contract_path(run, unit_id):
     return os.path.join(run.run_dir, "contracts", "%s.json" % unit_id)
 
 
-def phase_worktree(run, unit_slug, phase):
-    return os.path.join(run.repo, WORKTREES_DIR, "emanate-%s-%s-%s-%s"
-                        % (run.goal_slug, unit_slug, run.stamp, phase))
-
-
 def fresh_worktree(run, unit_slug, phase, ref):
     """A phase worktree at `ref`, cut anew: a tree left behind by a killed run is
     discarded rather than reused half-built."""
-    worktree = phase_worktree(run, unit_slug, phase)
+    worktree = os.path.join(run.repo, WORKTREES_DIR, "emanate-%s-%s-%s-%s"
+                            % (run.goal_slug, unit_slug, run.stamp, phase))
     if os.path.exists(worktree):
         discard(run, worktree)
     git_write(run, ["worktree", "add", "--detach", worktree, ref])

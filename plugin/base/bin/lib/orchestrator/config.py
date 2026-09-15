@@ -26,15 +26,9 @@ def validate_config(config):
         for entry in suite:
             if not isinstance(entry, dict) or not isinstance(entry.get("command"), str):
                 problems.append("every suite entry needs a command string")
-    for key in ("frozen_paths", "checks"):
-        if key in config and not isinstance(config[key], list):
-            problems.append("%s must be a list" % key)
     for entry in config.get("checks") or []:
         if not isinstance(entry, dict) or not isinstance(entry.get("command"), str):
             problems.append("every checks entry needs a command string")
-    for key in ("declaration_only", "narrowed_test"):
-        if key in config and not isinstance(config[key], str):
-            problems.append("%s must be a command string" % key)
     return problems
 
 
@@ -53,4 +47,5 @@ def load_config(path):
                       % (path, "; ".join(problems)))
     config.setdefault("frozen_paths", [])
     config.setdefault("checks", [])
+    config.setdefault("wall_clock", 3600)
     return config

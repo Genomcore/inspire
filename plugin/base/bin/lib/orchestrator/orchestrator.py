@@ -13,7 +13,7 @@ from . import handoff as handoffmod
 from . import report as reportmod
 from . import start as startmod
 from .config import load_config
-from .constants import LOG_PATH, ROLES, RUNS_DIR
+from .constants import CONFIG_PATH, LOG_PATH, ROLES, RUNS_DIR
 from .errors import Infrastructural, Refusal, Stall
 from .findings import gate_digest
 from .shells import read_shells
@@ -33,11 +33,8 @@ class Orchestrator:
         self.last_verdict = {}
         self.baseline_line = "baseline skipped — nothing planned"
         self.truncated = False
-        self.plan = {}
         self.plan_units = {}
         self.shells = {}
-        self.state = None
-        self.report = None
 
     @property
     def overseer_shells(self):
@@ -60,7 +57,7 @@ class Orchestrator:
         self.repo = gitmod.repo_root()
         startmod.check_launch_checkout(self)
 
-        self.config = load_config(os.path.join(self.repo, self.args.config))
+        self.config = load_config(os.path.join(self.repo, CONFIG_PATH))
         self.bin = self.args.bin or os.environ.get("INSPIRE_BIN") or \
             os.path.join(self.repo, ".inspire", "bin")
         if not os.path.exists(os.path.join(self.bin, "emanate-plan.sh")):
@@ -68,8 +65,7 @@ class Orchestrator:
                           "this project's `.inspire/bin`." % self.bin)
 
         self.goal_slug = startmod.compute_goal_slug(self)
-        now = datetime.datetime.utcnow()
-        self.stamp = now.strftime("%Y%m%d-%H%M%S")
+        self.stamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
         self.run_id = "%s-%s" % (self.stamp, uuid.uuid4().hex[:4])
         self.run_dir = os.path.join(self.repo, RUNS_DIR, self.run_id)
         os.makedirs(os.path.join(self.run_dir, "contracts"), exist_ok=True)
@@ -158,7 +154,7 @@ class Orchestrator:
         if spend_exhausted:
             return "exhausted — spend ceiling %s USD reached" % self.args.budget_usd
         cascade = [unit for unit in blocked
-                   if (unit.get("reason") or "").startswith("downstream of")]
+                   if (unit["reason"] or "").startswith("downstream of")]
         if stalled and cascade:
             return "stall cascade"
         if stalled:
@@ -245,7 +241,7 @@ class Orchestrator:
         state_path = os.path.join(self.run_dir, "state.json")
         if not os.path.exists(state_path):
             raise Refusal("no run %s under %s." % (self.args.run_id, RUNS_DIR))
-        self.state = State.load(state_path)
+        self.state = State(state_path, read_json(state_path))
         data = self.state.data
         if data["status"] == "ENDED":
             raise Refusal("run %s already ended: %s. Start a new run toward the same goal."
@@ -270,7 +266,7 @@ class Orchestrator:
         self.open_report()
         for unit in data["units"].values():
             if unit["status"] == "in-phase":
-                phase = unit.get("phase")
+                phase = unit["phase"]
                 if phase in ROLES:
                     unit["infra_retries"][phase] += 1
                 unit["phase"] = None

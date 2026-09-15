@@ -33,9 +33,7 @@ page that explains the whole model.
 
 The three personas carry a full working set including Bash and Agent. The two
 overseers carry Read, Grep and Glob and nothing else: an overseer writes nothing,
-and Bash can write. The arbiter carries the same read-only set and is not an
-overseer — it rules on who is at fault for a red test rather than gating a
-boundary, which is why its name does not end in -overseer.md.
+and Bash can write. The arbiter carries the same read-only set.
 
 The overseer roster is additive-only
 ------------------------------------

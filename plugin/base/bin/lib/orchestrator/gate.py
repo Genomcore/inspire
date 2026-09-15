@@ -23,10 +23,10 @@ def gate_loop(run, ustate):
         if action == "pass":
             return verdict
         if action == "stall":
+            findings = gate_findings(verdict)
             raise Stall("gate", "the gate returned %s: %s"
-                        % (subject, "; ".join(row.get("message", "")
-                                              for row in verdict.get("findings") or [])),
-                        gate_findings(verdict))
+                        % (subject, "; ".join(row["issue"] for row in findings)),
+                        findings)
         if action == "arbitrate":
             role, findings = arbitrate(run, ustate, verdict, results_path, verdict_path)
         else:

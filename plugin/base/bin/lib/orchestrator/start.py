@@ -76,8 +76,9 @@ def build_runner(run):
                           % (proc.stdout.strip() or "?",
                              ".".join(str(part) for part in MIN_CLAUDE_VERSION)))
         run.harness = "claude %s" % proc.stdout.strip()
-        return ClaudeRunner(contracts, run.args.wall_clock, run.args.max_turns,
-                            run.args.spawn_budget_usd)
+        return ClaudeRunner(contracts, run.config["wall_clock"],
+                            run.config.get("max_turns"),
+                            run.config.get("spawn_budget_usd"))
     if spec.startswith("fake:"):
         directory = spec[len("fake:"):]
         if not os.path.isdir(directory):
@@ -193,13 +194,14 @@ def derive_units(run, planned, waves):
     answers are read in plan order, so the first refusal names the same unit
     however they were scheduled."""
     runnable = set(unit for wave in waves for unit in wave)
+    planned_ids = set(unit for wave in planned for unit in wave)
     units = {}
     pending = []
     for entry in run.plan["units"]:
-        if not any(entry["id"] in wave for wave in planned):
+        if entry["id"] not in planned_ids:
             continue
         run.plan_units[entry["id"]] = entry
-        unit = blank_unit(entry, planned)
+        unit = blank_unit(entry)
         units[entry["id"]] = unit
         if entry["id"] not in runnable:
             unit["status"] = "blocked"
@@ -225,17 +227,16 @@ def derive_unit(run, entry):
         stream.write(proc.stdout)
 
 
-def blank_unit(entry, waves):
-    wave_index = next(index for index, wave in enumerate(waves) if entry["id"] in wave)
+def blank_unit(entry):
     return {"id": entry["id"], "kind": entry["kind"], "path": entry["path"],
-            "slug": slugify(entry["id"]), "wave": wave_index + 1,
+            "slug": slugify(entry["id"]),
             "status": "pending", "phase": None, "done": [],
             "integration_branch": None, "verify_worktree": None,
             "rework": dict((role, 0) for role in ROLES),
             "infra_retries": dict((role, 0) for role in ROLES),
             "dropped": [], "verify_findings": [], "gate_digest": None,
             "drill": None, "trailers": {}, "stall_class": None, "reason": None,
-            "next_act": None, "findings": [], "graded_on": "derived claims"}
+            "next_act": None, "findings": []}
 
 
 def new_state(run, waves, units):
@@ -245,12 +246,8 @@ def new_state(run, waves, units):
         "launch_branch": run.launch_branch, "goal_branch": run.goal_branch,
         "goal_worktree": run.goal_worktree, "cut_here": run.cut_here,
         "run_dir": run.run_dir, "config": run.config, "bin": run.bin,
-        "args": {"goal": run.args.goal, "ceiling": run.args.ceiling,
-                 "scope": run.args.scope, "reemanate": run.args.reemanate,
-                 "rework": run.args.rework, "variant": run.args.variant,
-                 "parallel": run.args.parallel, "budget_usd": run.args.budget_usd,
-                 "profiles_root": run.args.profiles_root,
-                 "agents_root": run.args.agents_root},
+        "args": dict((key, value) for key, value in vars(run.args).items()
+                     if key not in ("command", "runner", "bin")),
         "waves": waves, "wave_index": 0, "spend_usd": 0.0, "spawn_count": 0,
         "truncated": run.truncated, "harness": run.harness,
         "shells": run.shells, "plan_units": run.plan_units,
@@ -262,7 +259,8 @@ def baseline(run):
     """A red baseline in realized territory refuses: GV-05 cannot tell a
     pre-existing failure from one this run caused."""
     roots = [root for root in run.config["tests_roots"]
-             if tree_holds_files(os.path.join(run.goal_worktree, root))]
+             if any(files for _, _, files in
+                    os.walk(os.path.join(run.goal_worktree, root)))]
     if not roots:
         run.baseline_line = "baseline skipped — no tests under the tests roots"
         return
@@ -283,9 +281,3 @@ def baseline(run):
     finally:
         gitmod.discard(run, worktree)
 
-
-def tree_holds_files(path):
-    for _, _, filenames in os.walk(path):
-        if filenames:
-            return True
-    return False

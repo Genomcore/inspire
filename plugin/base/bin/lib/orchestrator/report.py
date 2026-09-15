@@ -75,13 +75,15 @@ def wave_block(run, number, wave):
         unit = run.state.unit(unit_id)
         lines += unit_rows(unit)
     lines += ["### Findings", "", "*none recorded by the process*", "",
-              "- **frontier after this wave** — %d units" % frontier(run)]
+              "- **frontier after this wave** — %d units"
+              % sum(1 for unit in run.state.data["units"].values()
+                    if unit["status"] not in ("promoted", "stalled", "blocked"))]
     return "\n".join(lines)
 
 
 def unit_rows(unit):
     status = {"promoted": "delivered"}.get(unit["status"], unit["status"])
-    trailers = unit.get("trailers") or {}
+    trailers = unit["trailers"]
     rows = ["### %s — %s" % (unit["id"], status), ""]
     rows.append("- **integration branch** — %s"
                 % (unit["integration_branch"] if unit["status"] != "promoted"
@@ -100,21 +102,16 @@ def unit_rows(unit):
                 % ("; ".join("%s %s" % (key, trailers[key]) for key in TRAILER_ORDER
                              if key in trailers) or "*none — not promoted*"))
     if unit["status"] in ("stalled", "blocked"):
-        remedy = unit.get("next_act") or "read the integration branch, then re-run"
+        remedy = unit["next_act"] or "read the integration branch, then re-run"
         rows.append("- **stalled or blocked only** — %s: %s. Next act: %s"
-                    % (unit.get("stall_class") or "blocked",
-                       unit.get("reason") or "", remedy))
-        for item in unit.get("findings") or []:
-            rows.append("  - %s · %s — %s" % (item.get("source"), item.get("title"),
-                                              item.get("issue")))
-    rows.append("- **graded on** — %s" % unit["graded_on"])
+                    % (unit["stall_class"] or "blocked",
+                       unit["reason"] or "", remedy))
+        for item in unit["findings"]:
+            rows.append("  - %s · %s — %s" % (item["source"], item["title"],
+                                              item["issue"]))
+    rows.append("- **graded on** — derived claims")
     rows.append("")
     return rows
-
-
-def frontier(run):
-    return sum(1 for unit in run.state.data["units"].values()
-               if unit["status"] not in ("promoted", "stalled", "blocked"))
 
 
 def closing_block(run, exit_reason):
@@ -132,11 +129,11 @@ def closing_block(run, exit_reason):
              "- **delivered** — %s"
              % (", ".join("%s (merged)" % unit["id"] for unit in delivered) or "*none*"),
              "- **stalled** — %s"
-             % ("; ".join("%s — %s, %s" % (unit["id"], unit.get("stall_class"),
+             % ("; ".join("%s — %s, %s" % (unit["id"], unit["stall_class"],
                                            unit["integration_branch"])
                           for unit in stalled) or "*none*"),
              "- **blocked** — %s"
-             % ("; ".join("%s — %s" % (unit["id"], unit.get("reason"))
+             % ("; ".join("%s — %s" % (unit["id"], unit["reason"])
                           for unit in blocked) or "*none*"),
              "- **worktrees still on disk** — the goal worktree `%s`" % goal_relative,
              "- **pre-PR** — the rules verify did not run "
@@ -151,7 +148,7 @@ def closing_block(run, exit_reason):
              "- **next act** — open the PR from the goal branch `%s`%s"
              % (run.goal_branch,
                 "".join("; %s: %s" % (unit["id"],
-                                      unit.get("next_act") or
+                                      unit["next_act"] or
                                       "read %s and answer the findings above"
                                       % unit["integration_branch"])
                         for unit in stalled)),

@@ -33,14 +33,11 @@ def read_shells(run):
     if not os.path.isdir(root):
         raise Refusal("no agent shells at %s — there is nothing to spawn." % root)
     names = sorted(name for name in os.listdir(root) if name.endswith(".md"))
-    missing = [shell for shell in PERSONA_SHELLS.values() if shell not in names]
+    required = tuple(PERSONA_SHELLS.values()) + REQUIRED_OVERSEERS + (ARBITER_SHELL,)
+    missing = [shell for shell in required if shell not in names]
     if missing:
-        raise Refusal("the persona shells %s are missing from %s."
+        raise Refusal("%s missing from %s — this loop refuses to run without them."
                       % (", ".join(missing), root))
-    for shell in REQUIRED_OVERSEERS + (ARBITER_SHELL,):
-        if shell not in names:
-            raise Refusal("%s is missing from %s — this loop refuses to run without it."
-                          % (shell, root))
     for name in names:
         with open(os.path.join(root, name)) as stream:
             tools = parse_tools_line(stream.read())

@@ -757,22 +757,6 @@ oracle, read-only like an overseer and outside the roster — whose doctrine is
 [`inspire-code/references/roles/arbiter.md`](../../inspire-code/references/roles/arbiter.md);
 the orchestrator routes what it answers.
 
-**The derived contract is the referee.** Not the test, not the body:
-
-- the test contradicts the contract → the **tester phase** is at fault. Hand the
-  finding back at the tester handoff, inside its budget;
-- the test agrees with the contract → the **body** is wrong. The implementer keeps
-  its budget and reworks;
-- neither can be squared with the contract because the **specification** is wrong
-  or missing → the loop cannot fix it, because it never writes the knowledge base.
-  **Stall the unit** and route the finding, in the report, to the skill that owns
-  the artifact — `inspire-domain`, `inspire-screens` or `inspire-feature`. This is
-  the attended flow's hand-back rule under an unattended posture: attended asks,
-  unattended stalls and writes it down.
-
-Never bend the code around a specification you believe is wrong, and never
-"correct" the knowledge base to match the code.
-
 ## Stall, cascade and autopsy
 
 **A stalled unit does not end the run.** A stall is: an exhausted rework budget at

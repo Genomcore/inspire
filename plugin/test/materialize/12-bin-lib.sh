@@ -72,7 +72,7 @@ check "BIN-LIB: the orchestrator entry landed executable" \
   "[ -x '$proj/.inspire/bin/emanate-orchestrator.py' ]"
 
 # Run from / so a cwd-relative resolution of the package cannot pass by accident.
-( cd / && python3 "$proj/.inspire/bin/emanate-orchestrator.py" check-citations --help ) \
+( cd / && python3 "$proj/.inspire/bin/emanate-orchestrator.py" --help ) \
   >/dev/null 2>&1
 eq "BIN-LIB: the deployed entry imports its package" "$?" "0"
 

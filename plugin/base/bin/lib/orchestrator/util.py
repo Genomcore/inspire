@@ -9,7 +9,7 @@ import tempfile
 
 def slugify(text):
     """run.md's slug rule: runs of anything outside a-z0-9 collapse to one hyphen."""
-    return re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
 def write_json_atomic(path, data):
@@ -27,8 +27,7 @@ def read_json(path):
 
 
 def tail(text, limit=2000):
-    text = (text or "").strip()
-    return text[-limit:]
+    return text.strip()[-limit:]
 
 
 def sh(command, cwd, env=None, timeout=None):
@@ -37,16 +36,14 @@ def sh(command, cwd, env=None, timeout=None):
 
 
 def parse_version(text):
-    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text or "")
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     return tuple(int(part) for part in match.groups()) if match else None
 
 
 def parse_jsonl(text):
     rows = []
-    for line in (text or "").splitlines():
+    for line in text.splitlines():
         line = line.strip()
-        if not line.startswith("{"):
-            continue
         try:
             rows.append(json.loads(line))
         except ValueError:

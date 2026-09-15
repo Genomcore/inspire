@@ -12,7 +12,6 @@ It spawns agents through a runner seam, so the whole process runs without a mode
 
     emanate-orchestrator.py run    [--goal SEL] [--ceiling N] [--scope PATH]...
     emanate-orchestrator.py resume <run-id>
-    emanate-orchestrator.py check-citations --contract FILE [--tests-root DIR]...
 
 Exit codes: 0 the run ended and the report was written, whatever the outcome ·
 2 usage · 3 refused at t=0, nothing spawned · 4 internal, a tool answered outside
@@ -31,25 +30,10 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib"))
 
 import argparse
-import json
 
-from orchestrator.citations import classify_citations, scan_citations
-from orchestrator.constants import (CITATION_SCHEMA, EXIT_INTERNAL, EXIT_OK,
-                                    EXIT_REFUSED)
+from orchestrator.constants import EXIT_INTERNAL, EXIT_OK, EXIT_REFUSED
 from orchestrator.errors import Internal, Refusal
 from orchestrator.orchestrator import Orchestrator
-from orchestrator.util import read_json
-
-
-def check_citations_command(args):
-    contract = read_json(args.contract)
-    roots = args.tests_root or ["tests"]
-    findings = classify_citations(contract, scan_citations(roots, os.getcwd()))
-    json.dump({"schema": CITATION_SCHEMA,
-               "unit": (contract.get("unit") or {}).get("id"),
-               "findings": findings}, sys.stdout, indent=2)
-    sys.stdout.write("\n")
-    return 1 if findings else 0
 
 
 def parse_args(argv):
@@ -66,13 +50,9 @@ def parse_args(argv):
     run.add_argument("--rework", type=int, default=2)
     run.add_argument("--variant")
     run.add_argument("--reemanate", action="append", default=[])
-    run.add_argument("--config", default=os.path.join(".inspire", "emanate.json"))
     run.add_argument("--runner", default="claude")
     run.add_argument("--parallel", type=int, default=3)
-    run.add_argument("--max-turns", type=int, dest="max_turns")
-    run.add_argument("--spawn-budget-usd", type=float, dest="spawn_budget_usd")
     run.add_argument("--budget-usd", type=float, dest="budget_usd")
-    run.add_argument("--wall-clock", type=int, dest="wall_clock", default=3600)
     run.add_argument("--bin")
     run.add_argument("--profiles-root", dest="profiles_root")
     run.add_argument("--agents-root", dest="agents_root")
@@ -81,13 +61,6 @@ def parse_args(argv):
     resume.add_argument("run_id")
     resume.add_argument("--runner", default="claude")
     resume.add_argument("--bin")
-    resume.add_argument("--wall-clock", type=int, dest="wall_clock", default=3600)
-    resume.add_argument("--max-turns", type=int, dest="max_turns")
-    resume.add_argument("--spawn-budget-usd", type=float, dest="spawn_budget_usd")
-
-    citations = sub.add_parser("check-citations")
-    citations.add_argument("--contract", required=True)
-    citations.add_argument("--tests-root", action="append", default=[], dest="tests_root")
 
     return parser.parse_args(argv)
 
@@ -95,8 +68,6 @@ def parse_args(argv):
 def main(argv=None):
     args = parse_args(argv)
     try:
-        if args.command == "check-citations":
-            return check_citations_command(args)
         orchestrator = Orchestrator(args)
         if args.command == "run":
             orchestrator.start()

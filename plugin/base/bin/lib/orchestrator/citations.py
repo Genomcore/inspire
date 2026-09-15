@@ -19,17 +19,11 @@ def scan_citations(roots, cwd):
             dirnames[:] = [name for name in dirnames if name != ".git"]
             for name in sorted(filenames):
                 path = os.path.join(dirpath, name)
-                try:
-                    with open(path, encoding="utf-8", errors="replace") as stream:
-                        text = stream.read()
-                except OSError:
-                    continue
-                if "@claim" not in text:
-                    continue
-                for number, line in enumerate(text.splitlines(), 1):
-                    for match in CLAIM_TOKEN.finditer(line):
-                        found.append({"file": os.path.relpath(path, cwd), "line": number,
-                                      "id": match.group(1), "fingerprint": match.group(2)})
+                with open(path, encoding="utf-8", errors="replace") as stream:
+                    for number, line in enumerate(stream, 1):
+                        for match in CLAIM_TOKEN.finditer(line):
+                            found.append({"file": os.path.relpath(path, cwd), "line": number,
+                                          "id": match.group(1), "fingerprint": match.group(2)})
     return found
 
 

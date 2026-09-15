@@ -2,7 +2,6 @@
 
 CONFIG_SCHEMA = "inspire.emanate-config/1"
 STATE_SCHEMA = "inspire.emanate-state/1"
-CITATION_SCHEMA = "inspire.citation-check/1"
 
 ROLES = ("contracter", "tester", "implementer")
 PERSONA_SHELLS = dict((role, "inspire-%s.md" % role) for role in ROLES)
@@ -61,4 +60,5 @@ DRILL_SCHEMA = {
 
 WORKTREES_DIR = ".inspire/worktrees"
 RUNS_DIR = ".inspire/emanate-runs"
+CONFIG_PATH = ".inspire/emanate.json"
 LOG_PATH = ".inspire/last-emanation.log"
