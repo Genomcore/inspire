@@ -8,7 +8,7 @@
 #
 # The fake runner is what makes that possible: every spawn is a deterministic file
 # write, so a wave loop, a rework cycle, an arbitration round and a mid-phase kill
-# are all reproducible. What is asserted below is therefore the PROCESS — the
+# are all reproducible. The modules' own unit tests are `00-unit.sh`'s, not this file's. What is asserted below is therefore the PROCESS — the
 # order of the merges, who spent a rework, what the brief carried back — never the
 # judgement of a persona, which no test can have.
 set -uo pipefail
@@ -20,7 +20,6 @@ REPO="$(cd -P "$HERE/../.." && pwd -P)"
 BIN="$PLUGIN_ROOT/base/bin"
 ORCH="$BIN/emanate-orchestrator.py"
 FIXTURE="$BIN/test/fixtures/emanate-plan/clean-three-waves/spec"
-LIB="$BIN/lib"   # every module folder carries its own test_<module>.py
 
 # Commits must work on a machine with no git identity of its own, and the estate
 # runs unattended. These are the run's identity, not the operator's.
@@ -33,17 +32,6 @@ trap 'rm -rf "$TMP"' EXIT
 
 premise "the process ships and is executable" "[ -x '$ORCH' ]"
 premise "the three-wave plan fixture ships its spec tree" "[ -d '$FIXTURE/sdd' ]"
-
-# ---------------------------------------------------------------------------
-# The per-module suites run first and count as ONE assertion here: they have
-# their own summary, and restating their count in this file's would make the
-# estate's inventory move whenever a unittest case is added.
-# ---------------------------------------------------------------------------
-( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s . -t . -p 'test_*.py' ) \
-  >"$TMP/unittest.out" 2>&1
-ut=$?
-[ "$ut" -eq 0 ] || sed -n '1,40p' "$TMP/unittest.out"
-check "unit: the pure-logic suite passes" "[ $ut -eq 0 ]"
 
 # ---------------------------------------------------------------------------
 # The scratch repo. The fixture's spec/ is the KB; everything else here is the
