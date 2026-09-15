@@ -54,31 +54,12 @@ mkrepo() {
   mkdir -p "$p/tools" "$p/.inspire"
   cp -R "$FIXTURE" "$p/spec"
 
-  for r in contracter tester implementer; do
-    cat > "$p/spec/agents/inspire-$r.md" <<EOF
----
-name: inspire-$r
-description: "INSPIRE persona: the $r of the emanation loop."
-tools: Read, Grep, Glob, Bash, Write, Edit, Agent
-model: inherit
----
-
-You are the $r. Read first:
-\`.claude/skills/inspire-code/references/roles/$r.md\`.
-EOF
+  # The fixture's spec/agents/ ships the two overseers; the personas and the
+  # arbiter are the shells the plugin itself ships, copied rather than restated —
+  # a `tools:` line the orchestrator reads is one the operator would really get.
+  for r in contracter tester implementer arbiter; do
+    cp "$PLUGIN_ROOT/base/agents/inspire-$r.md" "$p/spec/agents/inspire-$r.md"
   done
-
-  cat > "$p/spec/agents/inspire-arbiter.md" <<'EOF'
----
-name: inspire-arbiter
-description: "INSPIRE oracle: read-only arbiter of a failing derived contract."
-tools: Read, Grep, Glob
-model: inherit
----
-
-You are the arbiter. Read first:
-`.claude/skills/inspire-code/references/roles/arbiter.md`.
-EOF
 
   cat > "$p/.inspire/emanate.json" <<'EOF'
 { "schema": "inspire.emanate-config/1",

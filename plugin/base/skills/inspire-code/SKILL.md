@@ -118,9 +118,9 @@ subcommand, read its reference file** — the table below is an index, not the f
 A **role** is where the judgment lives, and the subcommands above play the roles in
 sequence. `tdd` is the tester and then the implementer; `review` holds both overseer
 lenses at once, addressing the operator instead of an orchestrator; `debug` and
-`fix-build` write code, so the implementer's authoring rules bind them too. The five
-roles — contracter · tester · implementer · security overseer · quality overseer —
-carry one doctrine document each, in
+`fix-build` write code, so the implementer's authoring rules bind them too. The six
+roles — contracter · tester · implementer · security overseer · quality overseer ·
+arbiter — carry one doctrine document each, in
 [`references/roles/`](references/roles/README.md).
 
 The same docs are read by the **agent shells** INSPIRE ships to `.claude/agents/`, one
@@ -260,10 +260,11 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
 
 - [`references/roles/README.md`](references/roles/README.md) — the role model: the
   three personas, the two overseers, the permission envelope's two halves, and the
-  additive-only overseer roster. The five role docs sit beside it — `contracter.md`
+  additive-only overseer roster. The six role docs sit beside it — `contracter.md`
   (emission over the derived contract), `tester.md` (test structure and claim
   citation), `implementer.md` (the non-negotiable authoring rules),
-  `security-overseer.md`, `quality-overseer.md`.
+  `security-overseer.md`, `quality-overseer.md`, `arbiter.md` (who is at fault
+  when a citing test fails).
 - [`references/tdd.md`](references/tdd.md) — the attended test-first loop, its KB
   anchoring, the language-agnostic SOLID design principles and the mutation drill.
 - [`references/review-dimensions.md`](references/review-dimensions.md) — the review

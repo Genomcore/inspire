@@ -80,7 +80,7 @@ shipping the recipe for it would be prescribing.
 Two properties of the shipped roster are why the posture holds for what INSPIRE
 ships, and both are worth stating:
 
-- **No spawned role can stall a run by asking a question.** None of the five
+- **No spawned role can stall a run by asking a question.** None of the six
   shipped role shells lists `AskUserQuestion` in its `tools:`, so no persona and
   no overseer can put a question in front of nobody mid-wave. Only the session
   that started the run can — the one place an operator already knows to look.
@@ -92,10 +92,10 @@ ships, and both are worth stating:
   ([`inspire-code/references/roles/README.md`](../../inspire-code/references/roles/README.md)),
   and it can only narrow which tools a role may call. Mode is not covered by
   that: a subagent may declare its own `permissionMode:` in frontmatter, which
-  the harness honors except under auto mode. **None of the five shipped shells
+  the harness honors except under auto mode. **None of the six shipped shells
   declares one** — so the shipped roster runs under the session's own posture,
   and the overseers' read-only envelope holds by construction. That is a fact
-  about these five files, not a law about agent definitions: the overseer roster
+  about these six files, not a law about agent definitions: the overseer roster
   is additive-only, so an operator who adds their own owns its envelope, the
   frontmatter INSPIRE checks nothing about included.
 

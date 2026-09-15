@@ -27,7 +27,7 @@ promote), arbitration between a red test and a wrong body, and the run report.
 **Does NOT own** the judgment its spawned agents apply. That is one doctrine with
 two dispatch shapes, and it lives in
 [`inspire-code/references/roles/`](../inspire-code/references/roles/README.md) —
-the role model, the five roles, the two halves of the envelope and the overseer
+the role model, the six roles, the two halves of the envelope and the overseer
 contract. Read it from there; nothing here restates it, and this is the **one**
 pointer at it, so a relocation of that doctrine is a one-line change in this
 file.

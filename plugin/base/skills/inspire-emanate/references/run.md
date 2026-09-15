@@ -8,10 +8,11 @@ no human turn in between.
 /inspire-emanate run until <goal> [in N steps max] [--scope PATH]... [args]
 ```
 
-Everything this file describes happens in **this** session. The five personas and
-overseers are spawned from here with a brief; the substrate tools are called from
-here with arguments. **The orchestrator calls the tool; the tool never calls an
-agent**, and no tool anywhere learns about waves, budgets or personas.
+Everything this file describes happens in **this** session. The six role shells —
+the personas, the overseers and the arbiter — are spawned from here with a brief;
+the substrate tools are called from here with arguments. **The orchestrator calls
+the tool; the tool never calls an agent**, and no tool anywhere learns about
+waves, budgets or personas.
 
 ## t=0 — everything that can refuse, refuses here
 
@@ -751,7 +752,10 @@ faulted.
 
 The implementer may not touch the tests, so a suite that stays red is a question
 somebody has to answer, and it is answered **here**, never by the agent that lost
-the argument.
+the argument. The reading itself is delegated to a spawned `inspire-arbiter` — an
+oracle, read-only like an overseer and outside the roster — whose doctrine is
+[`inspire-code/references/roles/arbiter.md`](../../inspire-code/references/roles/arbiter.md);
+the orchestrator routes what it answers.
 
 **The derived contract is the referee.** Not the test, not the body:
 
