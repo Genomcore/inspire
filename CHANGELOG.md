@@ -9,6 +9,67 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.10 — 2026-09-16
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.9.10 keeps the 0.3 layout and the 0.9.0 payload classes, adds no file to a
+vault and changes no validator. It is judgment only — the rule the skills were
+already following when two layers answer one question differently, stated once
+instead of reinvented per skill.
+
+Four collision rules already shipped, each correct and each stated where it came
+up: a descriptor's `**Wire deviation:**` note beats the resolved wire convention,
+the project's `CLAUDE.md` beats the shipped git defaults, the prototype beats a
+stale screen spec on functional drift, a lesson changes how a skill behaves here.
+The **fifth** collision had no answer, so the skill that met one invented its own
+— and the expensive direction is obeying a contradiction nobody meant as an
+override.
+
+### Added
+
+- **`_references/authority.md` — the authority ladder.** Five rungs ordered by
+  reach (runtime → project → decision → module → artifact), blast radius as a
+  second axis, and four rules: the narrowest artifact that speaks to the question
+  is the authority (**A1**); an override is declared, never inferred (**A2**); an
+  override reaches exactly as far as the artifact declaring it (**A3**); a
+  repeated override is a decision at the wrong rung (**A4**). Where two scopes
+  narrow on different axes and neither contains the other, neither wins — the
+  skill says so instead of picking the one it read first.
+- **Drift is named.** A narrower artifact that contradicts a wider one *without
+  saying so* is drift rather than an override: it is indistinguishable from a
+  stale file, from a copy-paste, and from an author who never read the wider rule.
+  It is handed back to the owning skill instead of obeyed.
+- **`/inspire-workspace review` rule 8** carries that into the global review, and
+  routes the third artifact declaring one departure to the rung whose reach
+  matches it — `/inspire-adr` for the product, `/inspire-lesson` for the runtime.
+- **`docs/adr/adr-specification-authority.md`**, the decision behind the ladder,
+  with the alternatives it rejects: a general `overrides:` frontmatter field, and
+  enforcing the declaration rule in `review.sh`.
+
+### Changed
+
+- **The skills that already state a case now cite the shape** and keep their own
+  wording for their own question — `inspire-code` (SKILL, `tdd.md`,
+  `review-dimensions.md`), `inspire-screens`, `inspire-adr`, `inspire-lesson`,
+  `inspire-module`, `conventions/README.md` and `git-conventions.md`. No skill
+  restates the ladder.
+- **Contradicting a current ADR stays a finding, and now says why.** Nothing
+  below the decision rung has a place to declare an ADR departure — not a module
+  hub, a use case, a descriptor or a screen — and code sits on no rung at all. So
+  `/inspire-code review`, `/inspire-module review` and the global review are
+  right to flag one without first asking whether it was deliberate, and the
+  departure moves to a superseding or amended ADR.
+- **What sits off the ladder is a criterion, not a list:** a thing is outside it
+  when a validator or a parser reads it. That reaches the shapes an enumeration
+  had already missed — the `@claim` token, `emanate-derive.sh`'s refusal classes,
+  the `inspire.suite-results/1` manifest — and extends itself to the next one. It
+  is deliberately not "notation versus decision": a project that wants a fifth
+  lifecycle state is deciding something, and it is off the ladder all the same,
+  because the rules reading those four states would not read a fifth.
+- **Changing one of those is a release, not a local act.** A lesson teaches the
+  *skills*, and the validators are not an extension point, so the path is
+  lesson → observer → release.
+
 ## 0.9.9 — 2026-09-14
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
