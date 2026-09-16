@@ -227,11 +227,21 @@ def per_model(spawns):
     return models
 
 
+def span(started_at, ended_at):
+    """`hms` of a stamped span, or the marker a resume left on an interrupted one."""
+    return "interrupted" if ended_at == "interrupted" else \
+        hms(elapsed_seconds(started_at, ended_at))
+
+
 def phase_durations(unit):
-    """{phase: seconds} over a unit's timeline; a rework of a role adds to its row."""
+    """{phase: seconds} over a unit's timeline; a rework of a role adds to its row.
+    An interrupted entry adds nothing and is named on its own."""
     out = Counter()
     for entry in unit["timeline"]:
-        out[entry["phase"]] += elapsed_seconds(entry["started_at"], entry["ended_at"])
+        if entry["ended_at"] == "interrupted":
+            out["%s (interrupted)" % entry["phase"]] = 0
+        else:
+            out[entry["phase"]] += elapsed_seconds(entry["started_at"], entry["ended_at"])
     return out
 
 
@@ -277,7 +287,8 @@ def spend_section(run):
         row = units.get(unit_id) or blank_row()
         rework = ", ".join("%s %d" % (role, n) for role, n in unit["rework"].items() if n) \
             or "none"
-        phases = ", ".join("%s %s" % (phase, hms(seconds))
+        phases = ", ".join(phase if phase.endswith("(interrupted)") else
+                           "%s %s" % (phase, hms(seconds))
                            for phase, seconds in phase_durations(unit).items()) or "—"
         lines.append("| %s | %s | %d | %.4f | %s | %s | %s |"
                      % (unit_id, unit["status"], row["spawns"], row["cost_usd"], rework,
@@ -286,8 +297,7 @@ def spend_section(run):
     waves = run.state.data["wave_log"]
     if waves:
         lines += ["", "**by wave**", "", "| wave | wall |", "|---|---|"]
-        lines += ["| %d | %s |" % (wave["index"],
-                                   hms(elapsed_seconds(wave["started_at"], wave["ended_at"])))
+        lines += ["| %d | %s |" % (wave["index"], span(wave["started_at"], wave["ended_at"]))
                   for wave in waves]
     lines += ["", "- **ledger** — one line for this run appended to `%s`" % LEDGER_PATH]
     return lines

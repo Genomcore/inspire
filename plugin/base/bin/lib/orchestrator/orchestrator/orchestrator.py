@@ -19,7 +19,7 @@ from ..errors import Infrastructural, Refusal, Stall
 from ..findings import conflict_findings, conflict_role, gate_digest
 from ..shells import read_shells
 from ..state import State, close_timeline, set_phase
-from ..util import now_iso, read_json, write_json_atomic
+from ..util import ISO, now_iso, read_json, write_json_atomic
 
 
 class Orchestrator:
@@ -267,6 +267,8 @@ class Orchestrator:
                                          "rework": unit["rework"]})
                               for unit_id, unit in data["units"].items()),
                 "run_dir": os.path.relpath(self.run_dir, self.repo)}
+        # ponytail: a plain append; one write() of one line, so a kill mid-append
+        # can at worst truncate the last line — a reader skips a line that fails to parse.
         with open(os.path.join(self.repo, LEDGER_PATH), "a") as stream:
             stream.write(json.dumps(line, sort_keys=True) + "\n")
 
@@ -283,13 +285,19 @@ class Orchestrator:
             raise Refusal("no run %s under %s." % (self.args.run_id, RUNS_DIR))
         self.state = State(state_path, read_json(state_path))
         data = self.state.data
-        # The one place a run written before these keys existed grows them.
-        data.setdefault("started_at", data.get("stamp"))
+        # The one place a run written before these keys existed grows them. The
+        # run-id stamp is UTC in its own shape, so it converts to the ISO one.
+        data.setdefault("started_at", datetime.datetime.strptime(
+            data["stamp"], "%Y%m%d-%H%M%S").strftime(ISO))
         data.setdefault("ended_at", None)
         data.setdefault("wave_log", [])
         for unit in data["units"].values():
             for key, blank in (("started_at", None), ("ended_at", None), ("timeline", [])):
                 unit.setdefault(key, blank)
+        # Whatever the kill left open is closed now: the real end is unrecoverable,
+        # so the entry is marked interrupted rather than charged the downtime.
+        if data["wave_log"] and data["wave_log"][-1]["ended_at"] is None:
+            data["wave_log"][-1]["ended_at"] = "interrupted"
         if data["status"] == "ENDED":
             raise Refusal("run %s already ended: %s. Start a new run toward the same goal."
                           % (self.args.run_id, data["exit"]))
@@ -316,7 +324,9 @@ class Orchestrator:
                 phase = unit["phase"]
                 if phase in ROLES:
                     unit["infra_retries"][phase] += 1
-                unit["phase"] = None
+                if unit["timeline"] and unit["timeline"][-1]["ended_at"] is None:
+                    unit["timeline"][-1]["ended_at"] = "interrupted"
+                unit["phase"] = None  # set_phase would stamp a clock that did not run
                 unit["status"] = "pending"
         self.save()
 

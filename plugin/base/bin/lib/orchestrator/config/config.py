@@ -48,4 +48,6 @@ def load_config(path):
     config.setdefault("frozen_paths", [])
     config.setdefault("checks", [])
     config.setdefault("wall_clock", 3600)
+    if config.get("max_turns") is not None:
+        config["max_turns"] = int(config["max_turns"])  # the runner and the report both count on it
     return config

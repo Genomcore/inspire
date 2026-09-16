@@ -52,4 +52,5 @@ class Clock(unittest.TestCase):
     def test_elapsed_between_two_stamps_and_zero_when_one_is_missing(self):
         self.assertEqual(elapsed_seconds("2026-01-01T00:00:00Z", "2026-01-01T01:02:03Z"), 3723)
         self.assertEqual(elapsed_seconds(None, "2026-01-01T01:02:03Z"), 0)
+        self.assertEqual(elapsed_seconds("2026-01-01T00:00:00Z", "interrupted"), 0)
         self.assertRegex(now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")

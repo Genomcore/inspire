@@ -33,6 +33,7 @@ def gate_loop(run, ustate):
         else:
             role, findings = subject, gate_findings(verdict)
         spend_rework(run, ustate, role, findings, "the gate")
+        set_phase(run, ustate, role)  # the rework's time is the role's, not the gate's
         handoff(run, ustate, role, findings)
 
 

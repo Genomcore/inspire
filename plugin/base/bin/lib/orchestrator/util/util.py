@@ -16,8 +16,9 @@ def now_iso():
 
 
 def elapsed_seconds(started_iso, ended_iso):
-    """Whole seconds between two `now_iso()` stamps; 0 when either is missing."""
-    if not started_iso or not ended_iso:
+    """Whole seconds between two `now_iso()` stamps; 0 when either is missing or
+    the end is the resume's `interrupted` marker."""
+    if not started_iso or not ended_iso or ended_iso == "interrupted":
         return 0
     return int((datetime.datetime.strptime(ended_iso, ISO)
                 - datetime.datetime.strptime(started_iso, ISO)).total_seconds())
