@@ -14,3 +14,6 @@ node_modules/
 # `gen-manifest.sh` hashes everything under `plugin/base/bin`.
 __pycache__/
 *.pyc
+
+# Local ticket board for in-flight work on this machine; never ships.
+tiqueteria/
