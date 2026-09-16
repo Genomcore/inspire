@@ -22,6 +22,12 @@ from ...util import tail
 # hook passed through `--settings` (which applies whatever the operator's files
 # say); the harvest filter still decides what leaves the worktree.
 # `--strict-mcp-config` keeps the operator's MCP servers out.
+#
+# Never `--agent` either: through it the CLI (2.1.273) drops `--json-schema` and
+# `structured_output` comes back null — an overseer's verdict then reads as no
+# answer, and the unit reworks to a stall. The shell travels as
+# `--append-system-prompt <its body>` instead, with its `tools:` as the allowlist,
+# which is all `--agent` would have done with it.
 DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
               "Bash(git branch:*)", "Bash(git worktree:*)",
               "Bash(.inspire/bin/emanate-harvest.sh:*)"]
@@ -38,16 +44,19 @@ class ClaudeRunner:
     a persona that carried context from the last attempt would be reworking from
     memory rather than from the findings it was handed."""
 
-    def __init__(self, contracts_dir, wall_clock, max_turns=None, spawn_budget=None):
+    def __init__(self, contracts_dir, wall_clock, max_turns=None, spawn_budget=None,
+                 agents_root=None):
         self.contracts_dir = contracts_dir
         self.wall_clock = wall_clock
         self.max_turns = max_turns
         self.spawn_budget = spawn_budget
+        self.agents_root = agents_root or os.path.join(".claude", "agents")
         self.ratelimit_retries = 0
 
     def spawn(self, shell_name, shell_tools, cwd, brief, schema):
+        shell = shell_body(os.path.join(cwd, self.agents_root, shell_name + ".md"))
         command = ["claude", "-p", render_brief(brief),
-                   "--agent", shell_name,
+                   "--append-system-prompt", shell,
                    "--permission-mode", "dontAsk",
                    "--permission-prompts", "none",
                    "--strict-mcp-config", "--settings", FENCE_SETTINGS,
@@ -84,6 +93,16 @@ class ClaudeRunner:
                            usage=payload.get("usage"),
                            model_usage=payload.get("modelUsage"),
                            num_turns=payload.get("num_turns"))
+
+
+def shell_body(path):
+    """An agent shell's markdown after its frontmatter — what `--agent` would have
+    made the system prompt."""
+    with open(path) as stream:
+        text = stream.read()
+    if text.startswith("---\n"):
+        _, _, text = text[4:].partition("\n---\n")
+    return text.strip()
 
 
 def ending_of(payload):

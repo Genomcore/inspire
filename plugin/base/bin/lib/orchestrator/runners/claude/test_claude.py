@@ -24,17 +24,34 @@ class Endings(unittest.TestCase):
 
 class Command(unittest.TestCase):
 
-    def test_a_spawn_is_never_restricted_since_that_hides_the_shells_and_skills(self):
+    def command(self, schema=None):
+        import os
+        import tempfile
         from unittest import mock
         from orchestrator.runners.claude import ClaudeRunner
-        with mock.patch("subprocess.run") as run:
-            run.return_value = mock.Mock(stdout='{"result": "ok"}', stderr="")
-            ClaudeRunner("/contracts", 10).spawn("inspire-contracter", ["Read"], "/w", {}, None)
-        command = run.call_args[0][0]
+        with tempfile.TemporaryDirectory() as cwd:
+            os.makedirs(os.path.join(cwd, ".claude", "agents"))
+            with open(os.path.join(cwd, ".claude", "agents", "inspire-contracter.md"), "w") as f:
+                f.write("---\nname: inspire-contracter\ntools: Read\nmodel: inherit\n---\n\n"
+                        "You are the contracter.\n")
+            with mock.patch("subprocess.run") as run:
+                run.return_value = mock.Mock(stdout='{"result": "ok"}', stderr="")
+                ClaudeRunner("/contracts", 10).spawn("inspire-contracter", ["Read"], cwd,
+                                                     {}, schema)
+        return run.call_args[0][0]
+
+    def test_a_spawn_is_never_restricted_since_that_hides_the_shells_and_skills(self):
+        command = self.command()
         self.assertNotIn("--restricted", command)
         self.assertIn("--strict-mcp-config", command)
         self.assertIn("fence.py", command[command.index("--settings") + 1])
-        self.assertEqual(command[command.index("--agent") + 1], "inspire-contracter")
+
+    def test_the_shell_travels_as_the_system_prompt_since_agent_drops_the_schema(self):
+        command = self.command(schema={"type": "object"})
+        self.assertNotIn("--agent", command)
+        self.assertEqual(command[command.index("--append-system-prompt") + 1],
+                         "You are the contracter.")
+        self.assertIn("--json-schema", command)
 
 
 class Fence(unittest.TestCase):
