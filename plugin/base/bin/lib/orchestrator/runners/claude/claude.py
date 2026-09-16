@@ -14,6 +14,11 @@ from ...util import tail
 # past them. The robust form is a PreToolUse deny hook, which is planned and not
 # yet shipped; until it is, the harvest filter (only a phase's owned paths leave
 # its worktree) is what actually holds.
+#
+# Never `--restricted`: it ignores the project's settings, and with them the
+# `.claude/agents/` shells (`--agent` then finds nothing) and the `.claude/skills/`
+# a persona works with. Its file confinement goes with it; the harvest filter is
+# the fence either way. `--strict-mcp-config` keeps the operator's MCP servers out.
 DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
               "Bash(git branch:*)", "Bash(git worktree:*)",
               "Bash(.inspire/bin/emanate-harvest.sh:*)"]
@@ -36,7 +41,7 @@ class ClaudeRunner:
                    "--agent", shell_name,
                    "--permission-mode", "dontAsk",
                    "--permission-prompts", "none",
-                   "--restricted",
+                   "--strict-mcp-config",
                    "--output-format", "json",
                    "--session-id", str(uuid.uuid4()),
                    "--add-dir", self.contracts_dir]

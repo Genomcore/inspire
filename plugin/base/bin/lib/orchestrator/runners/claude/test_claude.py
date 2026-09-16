@@ -20,3 +20,17 @@ class Endings(unittest.TestCase):
     def test_the_deny_rules_cover_every_ref_moving_git_verb(self):
         for verb in ("push", "update-ref", "merge", "branch", "worktree"):
             self.assertIn("Bash(git %s:*)" % verb, DENY_RULES)
+
+
+class Command(unittest.TestCase):
+
+    def test_a_spawn_is_never_restricted_since_that_hides_the_shells_and_skills(self):
+        from unittest import mock
+        from orchestrator.runners.claude import ClaudeRunner
+        with mock.patch("subprocess.run") as run:
+            run.return_value = mock.Mock(stdout='{"result": "ok"}', stderr="")
+            ClaudeRunner("/contracts", 10).spawn("inspire-contracter", ["Read"], "/w", {}, None)
+        command = run.call_args[0][0]
+        self.assertNotIn("--restricted", command)
+        self.assertIn("--strict-mcp-config", command)
+        self.assertEqual(command[command.index("--agent") + 1], "inspire-contracter")
