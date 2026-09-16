@@ -86,6 +86,14 @@ artifact's to make** — it goes up a rung, to the layer whose format does. This
 deliberately a constraint on the author rather than a gap to close with a new
 marker: see *Alternatives considered*.
 
+It also settles the case the runtime already checks in three places. No format below
+the decision rung has anywhere to declare a departure from an ADR — not a module hub,
+not a use case, not a descriptor, not a screen — and a diff sits on no rung at all.
+So contradicting a current ADR within its maturity's reach is never an override under
+D3; it stays the finding that `/inspire-code review`, `/inspire-module review` and
+`/inspire-workspace review` already report, and the departure moves up to a
+superseding or amended ADR.
+
 ### D4 — An override reaches exactly as far as the artifact declaring it
 
 A screen's deviation binds that screen and is evidence about no other artifact. The
@@ -105,18 +113,39 @@ where the runtime should behave differently in this fork.
 The skill that notices **offers** the move and never performs it, on the standing
 rule that nothing machine-authors the knowledge base.
 
-### D6 — The KB's grammar is outside the ladder entirely
+### D6 — What something mechanical reads is outside the ladder entirely
 
-Frontmatter schemas, the keyed-entry grammar and its closed vocabularies, the
-four-state lifecycle, claim ids, trust stamps, the finding format and the validators
-that check them carry **no default for an artifact to specialize**. An artifact that
-departed from them would not be readable by the skills that act on it, so the
-override would not lose the argument — it would fail to be stated.
+**A thing is off the ladder when a validator or a parser reads it.** That is the
+rule. The shapes are its examples: frontmatter schemas, the keyed-entry grammar and
+its closed vocabularies, the four-state lifecycle, claim ids and the `@claim` token,
+trust stamps, the finding format, the artifact shapes `emanate-derive.sh` refuses
+rather than read as empty, and the `inspire.suite-results/1` manifest
+`emanate-gate.sh` reads and nothing else. None of them carries **a default for an
+artifact to specialize**. An artifact that departed would not be readable by whatever
+has to act on it, so the override would not lose the argument — it would fail to be
+stated.
 
-A project changes them by changing the runtime: capture a lesson, distilled upstream
-by the observer ([[adr-runtime-lifecycle-and-lessons]]). Without D6, an ADR reading
-"this project writes prose invariants rather than keyed ones" would outrank the
-grammar under D1 and defeat every mechanical check the methodology has.
+The criterion carries the rule because an enumeration cannot. The last three of those
+shapes arrived with the emanation loop, a release that was not thinking about
+authority at all, and the next such shape will arrive the same way — so a D6 that
+listed them would leave that one undecided, which is this ADR's own fifth-collision
+defect repeated inside the fix for it. A criterion extends itself; a list is short by
+one within a release of being written.
+
+**Mechanical readership, not "decisions versus notation".** That is the framing this
+decision is easy to reach for, and it fails on its own third item: the four-state
+lifecycle is a process policy written in a closed vocabulary, so a project that wants
+a fifth state is *deciding* something, not renotating it. It is off the ladder all
+the same, because `stable-blockers` and `touched-entity-lifecycle` read those four
+states and would not read a fifth. What settles it is the reader, never whether the
+thing feels like a decision.
+
+A project changes one of these by changing the **runtime**, and that is a release
+rather than a local act. A lesson teaches the *skills* how to behave in this fork,
+and the validators are not an extension point — so the path is lesson → observer →
+release ([[adr-runtime-lifecycle-and-lessons]]). Without D6, an ADR reading "this
+project writes prose invariants rather than keyed ones" would outrank the grammar
+under D1 and defeat every mechanical check the methodology has.
 
 ### D7 — This ships as doctrine, cited once and restated nowhere
 

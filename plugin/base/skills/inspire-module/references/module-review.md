@@ -70,7 +70,10 @@ files under `inspire_kb/03_features/{module}/`.
   `[[wikilink]]` (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts a **current** ADR — one present
   and not superseded or rejected — within its maturity's reach (see
-  `inspire_kb/01_adr/`).
+  `inspire_kb/01_adr/`). Flag it whatever the narrower artifact says: a module hub, a
+  use case and a descriptor have nowhere to declare an ADR departure, so the
+  contradiction is drift and the departure belongs in a superseding or amended ADR
+  ([`_references/authority.md`](../../_references/authority.md) § A2).
 
 ### 5. Spec-layer (SDD) checks
 

@@ -79,9 +79,12 @@ A lesson is how a project overrides the **runtime** rung — it is the declared 
 for "the skill should behave differently here"
 ([`_references/authority.md`](../_references/authority.md)). Where the departure binds
 the product rather than the skill, it is an ADR or an artifact, not a lesson; and where
-it is the KB's own grammar that the project wants changed — a frontmatter schema, the
-keyed-entry vocabulary, a lifecycle state — a lesson is the **only** channel, since no
-project artifact out-specifies the notation it is written in.
+what the project wants changed is something mechanical — a frontmatter schema, the
+keyed-entry vocabulary, a lifecycle state, anything a validator or a parser reads — no
+project artifact out-specifies it and a lesson is the **only** way in. It is the start
+of the path rather than the whole of it: a lesson teaches the *skills*, and the
+validators are not an extension point, so the change lands through the observer and a
+release.
 
 ## Invocation
 

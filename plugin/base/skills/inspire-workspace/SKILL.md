@@ -145,7 +145,10 @@ Drift items pending: {N}
    ([`_references/authority.md`](../_references/authority.md)). Report the same
    departure declared in a third artifact as a decision sitting at the wrong rung,
    and name the skill that would move it — `/inspire-adr` for the product,
-   `/inspire-lesson` for the runtime.
+   `/inspire-lesson` for the runtime. This does not soften rule 7: nothing below the
+   decision rung has a place to declare an ADR departure, so contradicting a current
+   ADR within its maturity's reach is never an override and escalates exactly as
+   rule 7 says.
 9. **Signals are measurements, not findings.** This is the single statement of how
    every signal is treated — the trust report's groups and the design-system
    variance count alike. They are reported every run, including when nothing is

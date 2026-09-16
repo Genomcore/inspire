@@ -67,6 +67,14 @@ wider rule. This is what makes a wider layer restrictive rather than decorative.
 that artifact's to make.** It goes up a rung, to the layer whose format does —
 usually an ADR.
 
+That is why **contradicting a current ADR is always a finding**, and why a review
+is right to flag one without first asking whether it might be a deliberate
+override. Nothing below the decision rung has a place to declare an ADR
+departure — not a module hub, not a use case, not a descriptor, not a screen —
+and code sits on no rung at all. Within that ADR's maturity's reach the
+contradiction is drift, and the departure moves up: a superseding ADR, or an
+amendment to the one it disagrees with.
+
 ### A3 — An override reaches exactly as far as the artifact declaring it
 
 A screen's deviation binds that screen. It changes nothing for the screen beside
@@ -93,20 +101,34 @@ A skill that notices the third one offers the move. It never performs it.
 One carve-out, and it is not a special case of A1 — it is a different kind of
 thing being compared.
 
-**The grammar the KB is written in is never out-specified.** Frontmatter schemas,
-the keyed-entry grammar and its closed head vocabularies
-([`keyed-heads.md`](keyed-heads.md)), the four-state lifecycle
-([`lifecycle-rules.md`](lifecycle-rules.md)), claim ids, trust stamps
-([`trust-stamps.md`](trust-stamps.md)), the finding format
-([`findings-format.md`](findings-format.md)) and the validators that check them
-carry no default for an artifact to specialize. They are the notation the rungs
-are written in, so an artifact that departed from them would not be readable by
-the skills that have to act on it — the override would not lose an argument, it
-would fail to be stated.
+**A thing is off the ladder when a validator or a parser reads it.** That is the
+whole test, and it is a criterion rather than a list on purpose: shapes something
+mechanical reads arrive with releases that are not thinking about authority, so a
+list is short by one within a release of being written.
 
-A project changes them by changing the runtime: capture a lesson, which is the
-declared channel from a fork back to the base
-([`lesson-capture.md`](lesson-capture.md)).
+What the criterion currently catches: frontmatter schemas, the keyed-entry
+grammar and its closed head vocabularies ([`keyed-heads.md`](keyed-heads.md)),
+the four-state lifecycle ([`lifecycle-rules.md`](lifecycle-rules.md)), claim ids
+and the `@claim` token a test carries, trust stamps
+([`trust-stamps.md`](trust-stamps.md)), the finding format
+([`findings-format.md`](findings-format.md)), the artifact shapes
+`.inspire/bin/emanate-derive.sh` refuses rather than read as empty, and the
+`inspire.suite-results/1` manifest `.inspire/bin/emanate-gate.sh` reads and
+nothing else. None of them carries a default for an artifact to specialize: an
+artifact that departed would not be readable by whatever has to act on it, so the
+override would not lose an argument — it would fail to be stated.
+
+Apply the criterion, and apply **that** criterion rather than "notation versus
+decision", which is the framing it is easy to reach for and which does not hold.
+The four lifecycle states are a process policy, so a project that wants a fifth
+is deciding something rather than renotating it — and it is off the ladder all
+the same, because the rules that read those four states would not read a fifth.
+The reader settles it, never whether the thing feels like a decision.
+
+Changing one of these means changing the **runtime**, which is a release and not
+a local act. A lesson ([`lesson-capture.md`](lesson-capture.md)) teaches the
+*skills* how to behave in this project; the validators are not an extension
+point, so the path from here is lesson → observer → release.
 
 ## Where this already holds
 
@@ -122,6 +144,7 @@ shape they share.
 | whether the tests or the criteria are right | — | the use-case file's acceptance criteria | none needed; a wrong criterion is an `/inspire-feature` hand-back |
 | what a screen does, where spec and prototype disagree | the screen spec | the prototype, on functional drift only | `/inspire-screens validate` writes the spec back |
 | visual and structural convention | the design system, patterns, components and current UX ADRs | nothing narrower — A3 | a screen never declares one; the token moves instead |
+| whether an artifact or a diff may depart from a current ADR | the ADR, within its maturity's reach | nothing narrower — no format below the decision rung has a place for it | it cannot be; the departure moves to a superseding or amended ADR |
 
 ## Who reads this
 
