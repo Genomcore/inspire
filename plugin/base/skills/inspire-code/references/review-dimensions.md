@@ -35,7 +35,10 @@ terms, judge it against what the KB says it must be:
   Flag behavior that exceeds or contradicts the descriptor.
 - **ADR** (`01_adr`) — does the diff contradict a current ADR (present, not
   superseded or rejected) within its maturity's reach? If it claims to move an ADR to
-  `implemented`, is the claim true?
+  `implemented`, is the claim true? Contradicting one is always reported: nothing
+  below the decision rung has a place to declare an ADR departure, so a contradiction
+  is never a declared override
+  ([`../../_references/authority.md`](../../_references/authority.md) § A2).
 
 A disagreement here is not automatically a code bug — it may be a spec gap. Classify
 it: **code wrong → fix in the diff; spec wrong/missing → hand back** to

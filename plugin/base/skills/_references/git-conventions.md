@@ -4,7 +4,9 @@ Sensible, stack-agnostic defaults for branches, commits, and PRs, plus the safet
 protocol every skill that touches git follows. **Project-specific specifics — the
 base-branch name, the ticket system, the trailer policy, protected branches — live
 in the project's `CLAUDE.md` and override these defaults.** When the two disagree,
-the project wins.
+the project wins — one case of the general rule in
+[`authority.md`](authority.md), which also says what a narrower artifact has to do
+to claim the override.
 
 ## Branches
 
