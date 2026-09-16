@@ -1,6 +1,7 @@
 """The real runner: one spawn is one fresh headless `claude` session."""
 
 import json
+import os
 import subprocess
 import time
 import uuid
@@ -17,11 +18,19 @@ from ...util import tail
 #
 # Never `--restricted`: it ignores the project's settings, and with them the
 # `.claude/agents/` shells (`--agent` then finds nothing) and the `.claude/skills/`
-# a persona works with. Its file confinement goes with it; the harvest filter is
-# the fence either way. `--strict-mcp-config` keeps the operator's MCP servers out.
+# a persona works with. Its file confinement is re-done by FENCE, a PreToolUse
+# hook passed through `--settings` (which applies whatever the operator's files
+# say); the harvest filter still decides what leaves the worktree.
+# `--strict-mcp-config` keeps the operator's MCP servers out.
 DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
               "Bash(git branch:*)", "Bash(git worktree:*)",
               "Bash(.inspire/bin/emanate-harvest.sh:*)"]
+
+
+FENCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fence.py")
+FENCE_SETTINGS = json.dumps({"hooks": {"PreToolUse": [
+    {"matcher": "Write|Edit|MultiEdit|NotebookEdit",
+     "hooks": [{"type": "command", "command": "python3 %s" % FENCE}]}]}})
 
 
 class ClaudeRunner:
@@ -41,7 +50,7 @@ class ClaudeRunner:
                    "--agent", shell_name,
                    "--permission-mode", "dontAsk",
                    "--permission-prompts", "none",
-                   "--strict-mcp-config",
+                   "--strict-mcp-config", "--settings", FENCE_SETTINGS,
                    "--output-format", "json",
                    "--session-id", str(uuid.uuid4()),
                    "--add-dir", self.contracts_dir]

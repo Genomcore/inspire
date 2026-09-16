@@ -33,4 +33,30 @@ class Command(unittest.TestCase):
         command = run.call_args[0][0]
         self.assertNotIn("--restricted", command)
         self.assertIn("--strict-mcp-config", command)
+        self.assertIn("fence.py", command[command.index("--settings") + 1])
         self.assertEqual(command[command.index("--agent") + 1], "inspire-contracter")
+
+
+class Fence(unittest.TestCase):
+    """The PreToolUse hook: a file tool may touch nothing outside the worktree."""
+
+    def verdict(self, tool_input, cwd):
+        import json
+        import os
+        import subprocess
+        from orchestrator.runners.claude import FENCE
+        payload = json.dumps({"cwd": cwd, "tool_name": "Write", "tool_input": tool_input})
+        return subprocess.run(["python3", FENCE], input=payload, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+
+    def test_inside_the_worktree_passes_and_outside_is_blocked(self):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as cwd:
+            cwd = os.path.realpath(cwd)
+            self.assertEqual(self.verdict({"file_path": os.path.join(cwd, "a/b.py")}, cwd), 0)
+            self.assertEqual(self.verdict({"file_path": "relative/c.py"}, cwd), 0)
+            self.assertEqual(self.verdict({"file_path": "/etc/hosts"}, cwd), 2)
+            self.assertEqual(self.verdict({"file_path": cwd + "/../x.py"}, cwd), 2)
+            self.assertEqual(self.verdict({"notebook_path": "/tmp/n.ipynb"}, cwd), 2)
+            self.assertEqual(self.verdict({}, cwd), 0)
