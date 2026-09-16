@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# The five agent shells: their envelopes on the source side, their arrival on the
-# destination side, and the role docs their bodies point at.
+# The six agent shells: their envelopes on the source side, their arrival on the
+# destination side, and the role docs their bodies point at. Three personas, two
+# overseers and the arbiter — which is an oracle like an overseer, read-only for
+# the same reason, and outside the overseer roster the loop reads.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
@@ -14,6 +16,9 @@ ROLES="$PLUGIN_ROOT/base/skills/inspire-code/references/roles"
 DEPLOYED_ROLES=".claude/skills/inspire-code/references/roles"
 PERSONAS="contracter tester implementer"
 OVERSEERS="security-overseer quality-overseer"
+# Every oracle writes nothing; only the two overseers are in the roster.
+ORACLES="$OVERSEERS arbiter"
+SHELLS="$PERSONAS $ORACLES"
 
 # fm <file> <key> — a frontmatter value, read from the FIRST block only. The body
 # quotes these same words, so a whole-file match would pass on prose alone.
@@ -34,7 +39,7 @@ fm() {
 premise "the plugin ships an agents payload class" "[ -d '$AGENTS' ]"
 premise "and the role doctrine the shells point at" "[ -d '$ROLES' ]"
 
-for r in $PERSONAS $OVERSEERS; do
+for r in $SHELLS; do
   f="$AGENTS/inspire-$r.md"
   check "shell: inspire-$r.md ships" "[ -f '$f' ]"
   [ -f "$f" ] || continue
@@ -56,23 +61,24 @@ for r in $PERSONAS; do
 done
 
 # The tool names below ARE the operational half of the overseer shape stated in
-# roles/README.md; the two must agree or the rule means one thing per reader.
-for r in $OVERSEERS; do
+# roles/README.md; the two must agree or the rule means one thing per reader. The
+# arbiter is held to it too — it rules on a boundary it may not touch.
+for r in $ORACLES; do
   tl="$(fm "$AGENTS/inspire-$r.md" tools)"
   for t in Bash Write Edit NotebookEdit Agent; do
-    hasnt "overseer: inspire-$r cannot $t" "$tl" "$t"
+    hasnt "oracle: inspire-$r cannot $t" "$tl" "$t"
   done
 done
 
 # The class rule, in this file's terms: Claude Code parses every *.md here as an
 # agent definition, so a stray one is a broken agent in every project.
-eq "the class ships exactly five agent definitions" \
-   "$(find "$AGENTS" -type f -name '*.md' | wc -l | tr -d ' ')" "5"
+eq "the class ships exactly six agent definitions" \
+   "$(find "$AGENTS" -type f -name '*.md' | wc -l | tr -d ' ')" "6"
 strays=""
 for f in "$AGENTS"/*.md; do
   case "$(basename "$f")" in
     inspire-contracter.md|inspire-tester.md|inspire-implementer.md) ;;
-    inspire-security-overseer.md|inspire-quality-overseer.md) ;;
+    inspire-security-overseer.md|inspire-quality-overseer.md|inspire-arbiter.md) ;;
     *) strays="$strays $(basename "$f")" ;;
   esac
 done
@@ -80,6 +86,8 @@ eq "no .md under base/agents is anything but a shipped shell" "$strays" ""
 
 # The roster rule is the filename convention and nothing else — no frontmatter
 # key, no roster file. T10 refuses to run when either shipped overseer is gone.
+# The arbiter ships beside them and is deliberately not matched: an oracle the
+# loop spawns by name is not a member of the roster it fans out over.
 eq "roster: the -overseer.md convention matches exactly the two shipped overseers" \
    "$(cd "$AGENTS" && ls -- *-overseer.md 2>/dev/null | tr '\n' ' ')" \
    "inspire-quality-overseer.md inspire-security-overseer.md "
@@ -92,7 +100,7 @@ done
 check "roster: README.txt defers to that one definition instead of restating it" \
   "grep -qF 'roles/README.md' '$AGENTS/README.txt'"
 
-for r in README $PERSONAS $OVERSEERS; do
+for r in README $SHELLS; do
   check "doctrine: roles/$r.md ships" "[ -f '$ROLES/$r.md' ]"
 done
 # T6's gate greps test sources for this token, so the doc must publish the exact
@@ -128,7 +136,7 @@ proj="$(mktemp -d)/proj"; mkdir -p "$proj"
 ( cd "$proj" && git init -q )
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
-for r in $PERSONAS $OVERSEERS; do
+for r in $SHELLS; do
   check "init: inspire-$r.md landed" "[ -f '$proj/.claude/agents/inspire-$r.md' ]"
   check "init: inspire-$r.md is byte-identical to what ships" \
     "cmp -s '$AGENTS/inspire-$r.md' '$proj/.claude/agents/inspire-$r.md'"
@@ -178,7 +186,7 @@ printf 'MY AGENT\n' > "$up/.claude/agents/mine.md"
 uprep="$(mktemp)"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$up" \
   >/dev/null 2>"$uprep"
-for r in $PERSONAS $OVERSEERS; do
+for r in $SHELLS; do
   check "update: the report calls inspire-$r.md a creation" \
     "grep -q 'create .*\.claude/agents/inspire-$r\.md' '$uprep'"
   check "update: inspire-$r.md arrived byte-identical" \

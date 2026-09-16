@@ -8,3 +8,9 @@ node_modules/
 .obsidian/
 .impeccable/
 .superpowers/
+
+# Python bytecode. The orchestrator sets `sys.dont_write_bytecode`, so nothing
+# it runs writes one — but an interpreter invoked by hand still can, and
+# `gen-manifest.sh` hashes everything under `plugin/base/bin`.
+__pycache__/
+*.pyc

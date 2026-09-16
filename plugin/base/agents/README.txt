@@ -18,7 +18,7 @@ it valid agent frontmatter.
 What INSPIRE ships here
 -----------------------
 
-Five shells, one per role of the code-emanation loop. A shell is an identity, a
+Six shells, one per role of the code-emanation loop. A shell is an identity, a
 permission envelope (its tools: list) and a pointer at its doctrine; the doctrine
 itself lives once, in
 .claude/skills/inspire-code/references/roles/, and roles/README.md is the one
@@ -29,10 +29,11 @@ page that explains the whole model.
   inspire-implementer.md       writes the bodies that turn that suite green
   inspire-security-overseer.md read-only security oracle at each handoff
   inspire-quality-overseer.md  read-only quality oracle at each handoff
+  inspire-arbiter.md           read-only referee when a frozen suite stays red
 
 The three personas carry a full working set including Bash and Agent. The two
 overseers carry Read, Grep and Glob and nothing else: an overseer writes nothing,
-and Bash can write.
+and Bash can write. The arbiter carries the same read-only set.
 
 The overseer roster is additive-only
 ------------------------------------

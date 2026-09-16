@@ -8,10 +8,11 @@ no human turn in between.
 /inspire-emanate run until <goal> [in N steps max] [--scope PATH]... [args]
 ```
 
-Everything this file describes happens in **this** session. The five personas and
-overseers are spawned from here with a brief; the substrate tools are called from
-here with arguments. **The orchestrator calls the tool; the tool never calls an
-agent**, and no tool anywhere learns about waves, budgets or personas.
+Everything this file describes happens in **this** session. The six role shells —
+the personas, the overseers and the arbiter — are spawned from here with a brief;
+the substrate tools are called from here with arguments. **The orchestrator calls
+the tool; the tool never calls an agent**, and no tool anywhere learns about
+waves, budgets or personas.
 
 ## t=0 — everything that can refuse, refuses here
 
@@ -751,23 +752,10 @@ faulted.
 
 The implementer may not touch the tests, so a suite that stays red is a question
 somebody has to answer, and it is answered **here**, never by the agent that lost
-the argument.
-
-**The derived contract is the referee.** Not the test, not the body:
-
-- the test contradicts the contract → the **tester phase** is at fault. Hand the
-  finding back at the tester handoff, inside its budget;
-- the test agrees with the contract → the **body** is wrong. The implementer keeps
-  its budget and reworks;
-- neither can be squared with the contract because the **specification** is wrong
-  or missing → the loop cannot fix it, because it never writes the knowledge base.
-  **Stall the unit** and route the finding, in the report, to the skill that owns
-  the artifact — `inspire-domain`, `inspire-screens` or `inspire-feature`. This is
-  the attended flow's hand-back rule under an unattended posture: attended asks,
-  unattended stalls and writes it down.
-
-Never bend the code around a specification you believe is wrong, and never
-"correct" the knowledge base to match the code.
+the argument. The reading itself is delegated to a spawned `inspire-arbiter` — an
+oracle, read-only like an overseer and outside the roster — whose doctrine is
+[`inspire-code/references/roles/arbiter.md`](../../inspire-code/references/roles/arbiter.md);
+the orchestrator routes what it answers.
 
 ## Stall, cascade and autopsy
 

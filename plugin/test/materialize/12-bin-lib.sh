@@ -44,6 +44,38 @@ eq "BIN-LIB: the units are executable (rwxr-xr-x)" "$modes" "rwxr-xr-x"
 
 check "BIN-LIB: the entry that sources them landed too" \
   "[ -x '$proj/.inspire/bin/emanate-derive.sh' ]"
+
+# The orchestrator ships the only NON-.sh payload under bin/, and the only one
+# two levels deep (lib/orchestrator/runners/). Every assertion above is globbed
+# to `*.sh`, so none of it sees a single module: a recursion that stopped one
+# level short, or an exclusion that grew a `.py` case, would leave
+# `.inspire/bin/emanate-orchestrator.py` dying on `ModuleNotFoundError:
+# orchestrator` in every project with the estate still green.
+premise "base/bin/lib/orchestrator/ ships modules in the plugin" \
+  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/orchestrator/orchestrator.py' ]"
+premise "one of them sits a third level down" \
+  "[ -f '$PLUGIN_ROOT/base/bin/lib/orchestrator/runners/fake/fake.py' ]"
+
+missing=""
+while IFS= read -r src; do
+  rel="${src#"$PLUGIN_ROOT"/base/bin/}"
+  [ -f "$proj/.inspire/bin/$rel" ] || missing="${missing:+$missing,}$rel"
+done < <(find "$PLUGIN_ROOT/base/bin/lib/orchestrator" -type f -name '*.py')
+eq "BIN-LIB: every orchestrator module landed" "$missing" ""
+
+# The exact inverse of the units above, and unasserted in both directions until
+# now: chmod_executables filters on `-name '*.sh'`, so a module must arrive 644.
+modes="$(find "$proj/.inspire/bin/lib/orchestrator" -type f -exec ls -l {} + \
+  | awk '{ print substr($1, 2, 9) }' | sort -u)"
+eq "BIN-LIB: the modules are NOT executable" "$modes" "rw-r--r--"
+check "BIN-LIB: the orchestrator entry landed executable" \
+  "[ -x '$proj/.inspire/bin/emanate-orchestrator.py' ]"
+
+# Run from / so a cwd-relative resolution of the package cannot pass by accident.
+( cd / && python3 "$proj/.inspire/bin/emanate-orchestrator.py" --help ) \
+  >/dev/null 2>&1
+eq "BIN-LIB: the deployed entry imports its package" "$?" "0"
+
 # base/bin/test/ never materializes, and lib/ must not have changed that.
 check "BIN-LIB: bin/test/ is still excluded" "[ ! -d '$proj/.inspire/bin/test' ]"
 

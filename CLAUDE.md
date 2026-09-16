@@ -142,13 +142,14 @@ repo is both its source and its own marketplace.
       header carries the full argument, and no `0.9.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
-      class's own README is a `.txt` for exactly that reason. It ships the **five
+      class's own README is a `.txt` for exactly that reason. It ships the **six
       role shells** of the emanation loop — `inspire-contracter` ·
       `inspire-tester` · `inspire-implementer` · `inspire-security-overseer` ·
-      `inspire-quality-overseer`. A shell is an identity, a permission envelope
-      (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
-      only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
-      Bash can write) and a pointer at its doctrine in
+      `inspire-quality-overseer` · `inspire-arbiter`. A shell is an identity, a
+      permission envelope (its `tools:` allowlist — personas keep `Bash` and
+      `Agent`; overseers and the arbiter carry only `Read, Grep, Glob`, because
+      D3 says an overseer writes nothing and Bash can write) and a pointer at
+      its doctrine in
       `inspire-code/references/roles/`. The **overseer roster is additive-only
       and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
       whose `tools:` line is present and names no writing tool; a project adds
