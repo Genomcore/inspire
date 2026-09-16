@@ -275,6 +275,10 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
   the lean defaults live beside it — framework profiles `react`, `nestjs`, `angular`,
   `ios` and `android`, each keeping its deep material under `profiles/{id}/references/`,
   and language profile `typescript`.
+- [`_references/authority.md`](../_references/authority.md) — which layer decides
+  when the descriptor, the convention, the profile and the acceptance criterion
+  disagree: the narrowest artifact that speaks to the question, and only where it
+  declares the departure in the open.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
 - [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer

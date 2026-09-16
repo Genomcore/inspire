@@ -14,7 +14,9 @@ different one next month. Both tests pass. Neither is the contract.
 
 So the runtime ships the conventions, the project **selects** which apply, and from
 that point they are **restrictive**: derived silently where they hold, and overridable
-only in the open.
+only in the open. That is [`authority.md`](../authority.md) **A2** applied to one
+question — the descriptor is the narrower artifact, and the deviation note is where it
+declares the departure.
 
 ## Resolution
 
@@ -89,7 +91,8 @@ transport: <rest | graphql | cli | …>
 
 An action that does not follow the resolved convention says so in its descriptor,
 under `## Errors`, as an explicit surface note per the convention's `## Deviation`
-section. Silence means the convention holds — which is what makes the convention
+section. This is the place the descriptor's format provides for a declared override
+([`authority.md`](../authority.md) § A2). Silence means the convention holds — which is what makes the convention
 restrictive rather than decorative, and what makes a missing status code a **finding**
 instead of an interpretation.
 

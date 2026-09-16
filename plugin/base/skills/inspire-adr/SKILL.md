@@ -15,6 +15,14 @@ lifecycle. It does **not** run the global review — [`/inspire-workspace review
 checks that an ADR's consequences have actually propagated; this skill authors and
 advances the decisions themselves.
 
+An ADR is the **decision rung** of the authority ladder
+([`_references/authority.md`](../_references/authority.md)). A rule binding one
+module belongs in that module's hub, and one binding a single use case, descriptor or
+screen belongs in that artifact — each of those outranks an ADR on the question it
+actually decides. The reverse is the usual reason to open an ADR: the same departure
+declared in a third artifact is a decision sitting at the wrong rung, and it belongs
+here.
+
 ## The maturity ladder
 
 ADR `Status` is a **maturity ladder**, not a binary — it declares how far the
