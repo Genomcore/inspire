@@ -62,3 +62,6 @@ WORKTREES_DIR = ".inspire/worktrees"
 RUNS_DIR = ".inspire/emanate-runs"
 CONFIG_PATH = ".inspire/emanate.json"
 LOG_PATH = ".inspire/last-emanation.log"
+# One line per ended run, append-only. Inside RUNS_DIR so the same .gitignore
+# line that keeps the run dirs out of the launch checkout keeps it out too.
+LEDGER_PATH = RUNS_DIR + "/ledger.jsonl"

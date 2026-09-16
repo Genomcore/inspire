@@ -4,7 +4,8 @@ import tempfile
 import unittest
 
 from orchestrator.constants import MIN_CLAUDE_VERSION
-from orchestrator.util import parse_jsonl, parse_version, slugify, tail, write_json_atomic
+from orchestrator.util import (elapsed_seconds, now_iso, parse_jsonl, parse_version,
+                               slugify, tail, write_json_atomic)
 
 
 class Slugs(unittest.TestCase):
@@ -44,3 +45,11 @@ class AtomicWrites(unittest.TestCase):
             self.assertEqual(os.listdir(root), ["state.json"])
             with open(path) as stream:
                 self.assertEqual(json.load(stream), {"a": 2})
+
+
+class Clock(unittest.TestCase):
+
+    def test_elapsed_between_two_stamps_and_zero_when_one_is_missing(self):
+        self.assertEqual(elapsed_seconds("2026-01-01T00:00:00Z", "2026-01-01T01:02:03Z"), 3723)
+        self.assertEqual(elapsed_seconds(None, "2026-01-01T01:02:03Z"), 0)
+        self.assertRegex(now_iso(), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")

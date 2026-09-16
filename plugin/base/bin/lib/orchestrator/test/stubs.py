@@ -33,7 +33,8 @@ def stub_run(**over):
 def stub_unit(unit_id="auth.user", **over):
     unit = {"id": unit_id, "kind": "entity", "path": "spec/sdd/auth/user/auth.user.md",
             "slug": unit_id.replace(".", "-"), "status": "pending", "phase": None,
-            "done": [], "integration_branch": "emanate/all-%s-x" % unit_id.replace(".", "-"),
+            "done": [], "started_at": None, "ended_at": None, "timeline": [],
+            "integration_branch": "emanate/all-%s-x" % unit_id.replace(".", "-"),
             "verify_worktree": None,
             "rework": dict((role, 0) for role in ROLES),
             "infra_retries": dict((role, 0) for role in ROLES),

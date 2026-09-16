@@ -1,9 +1,12 @@
 """The operator's account: the log file, and the three blocks written into it."""
 
+import glob
 import os
 import threading
+from collections import Counter
 
-from ..constants import ROLES, TRAILER_ORDER
+from ..constants import LEDGER_PATH, ROLES, TRAILER_ORDER
+from ..util import elapsed_seconds, read_json
 
 
 class Report:
@@ -114,8 +117,13 @@ def unit_rows(unit):
     return rows
 
 
+def hms(seconds):
+    return "%dh %02dm %02ds" % (seconds // 3600, seconds % 3600 // 60, seconds % 60)
+
+
 def closing_block(run, exit_reason):
-    units = run.state.data["units"]
+    data = run.state.data
+    units = data["units"]
     delivered = [unit for unit in units.values() if unit["status"] == "promoted"]
     stalled = [unit for unit in units.values() if unit["status"] == "stalled"]
     blocked = [unit for unit in units.values() if unit["status"] == "blocked"]
@@ -126,6 +134,10 @@ def closing_block(run, exit_reason):
                            run.plan.get("floor")),
              "- **spend** — %.4f USD, a client-side estimate: it is the sum of what each "
              "spawn reported, not a billing figure" % run.state.data["spend_usd"],
+             "- **elapsed** — %s, from %s to %s (a resumed run counts from its first "
+             "start, downtime included)"
+             % (hms(elapsed_seconds(data["started_at"], data["ended_at"])),
+                data["started_at"], data["ended_at"]),
              "- **delivered** — %s"
              % (", ".join("%s (merged)" % unit["id"] for unit in delivered) or "*none*"),
              "- **stalled** — %s"
@@ -153,4 +165,129 @@ def closing_block(run, exit_reason):
                                       % unit["integration_branch"])
                         for unit in stalled)),
              "- **run dir** — %s" % os.path.relpath(run.run_dir, run.repo)]
+    lines += [""] + spend_section(run)
     return "\n".join(lines)
+
+
+# ------------------------------------------------------------ the spend section
+#
+# Everything below is computed at write time from the raw records — the
+# `spawns/*.json` files and the `timeline` / `wave_log` stamps in state. Nothing
+# here is stored back: the JSON stays facts, the report is the only aggregate.
+
+# (label, key in the CLI's `usage`, key in its `modelUsage`)
+TOKEN_KEYS = (("in", "input_tokens", "inputTokens"),
+              ("out", "output_tokens", "outputTokens"),
+              ("cache read", "cache_read_input_tokens", "cacheReadInputTokens"),
+              ("cache write", "cache_creation_input_tokens", "cacheCreationInputTokens"))
+
+
+def tokens_of(usage):
+    """A usage object carries one spelling or the other, never both."""
+    return Counter(dict((label, int(usage.get(snake) or usage.get(camel) or 0))
+                        for label, snake, camel in TOKEN_KEYS))
+
+
+def tokens_text(tokens):
+    if not any(tokens.values()):
+        return "*none reported*"
+    return " · ".join("%d %s" % (tokens[label], label) for label, _, _ in TOKEN_KEYS)
+
+
+def spawn_wall(spawn):
+    return elapsed_seconds(spawn.get("started_at"), spawn.get("ended_at"))
+
+
+def blank_row():
+    return {"spawns": 0, "cost_usd": 0.0, "turns": 0, "wall": 0, "tokens": Counter()}
+
+
+def per_key(spawns, key_of):
+    """Rows grouped by `key_of(spawn)`: spawns, cost, turns, wall seconds, tokens."""
+    rows = {}
+    for spawn in spawns:
+        row = rows.setdefault(key_of(spawn) or "*run*", blank_row())
+        row["spawns"] += 1
+        row["cost_usd"] += float(spawn.get("cost_usd") or 0.0)
+        row["turns"] += int(spawn.get("num_turns") or 0)
+        row["wall"] += spawn_wall(spawn)
+        row["tokens"] += tokens_of(spawn.get("usage") or {})
+    return rows
+
+
+def per_model(spawns):
+    """{model: row} from each spawn's `modelUsage`, cost included per model."""
+    models = {}
+    for spawn in spawns:
+        for model, usage in (spawn.get("model_usage") or {}).items():
+            row = models.setdefault(model, blank_row())
+            row["spawns"] += 1
+            row["cost_usd"] += float(usage.get("costUSD") or 0.0)
+            row["tokens"] += tokens_of(usage)
+    return models
+
+
+def phase_durations(unit):
+    """{phase: seconds} over a unit's timeline; a rework of a role adds to its row."""
+    out = Counter()
+    for entry in unit["timeline"]:
+        out[entry["phase"]] += elapsed_seconds(entry["started_at"], entry["ended_at"])
+    return out
+
+
+def spend_section(run):
+    spawns = [read_json(path) for path in
+              sorted(glob.glob(os.path.join(run.run_dir, "spawns", "*.json")))]
+    roles = per_key(spawns, lambda spawn: spawn.get("shell"))
+    units = per_key(spawns, lambda spawn: (spawn.get("brief") or {}).get("unit_id"))
+    total = sum((row["tokens"] for row in roles.values()), Counter())
+    lines = ["### Spend — computed from the run dir, stored nowhere", "",
+             "- **tokens** — %s across %d spawns" % (tokens_text(total), len(spawns))]
+
+    models = per_model(spawns)
+    if models:
+        lines += ["", "**by model**", "", "| model | spawns | tokens | cost USD |",
+                  "|---|---|---|---|"]
+        lines += ["| %s | %d | %s | %.4f |"
+                  % (model, row["spawns"], tokens_text(row["tokens"]), row["cost_usd"])
+                  for model, row in sorted(models.items())]
+
+    if roles:
+        max_turns = (run.config or {}).get("max_turns")
+        lines += ["", "**by role**", "",
+                  "| role | spawns | cost USD | turns%s | wall |"
+                  % (" (max %d/spawn)" % max_turns if max_turns else ""),
+                  "|---|---|---|---|---|"]
+        lines += ["| %s | %d | %.4f | %d | %s |"
+                  % (role, row["spawns"], row["cost_usd"], row["turns"], hms(row["wall"]))
+                  for role, row in sorted(roles.items())]
+        if max_turns:
+            near = [spawn for spawn in spawns
+                    if int(spawn.get("num_turns") or 0) >= 0.9 * max_turns]
+            near_text = ", ".join("%s/%s (%d)" % ((spawn.get("brief") or {}).get("unit_id"),
+                                                  spawn.get("shell"), spawn.get("num_turns") or 0)
+                                  for spawn in near)
+            lines += ["", "- **spawns at or above 90%% of max_turns** — %d%s"
+                      % (len(near), ": " + near_text if near else "")]
+
+    lines += ["", "**by unit**", "",
+              "| unit | status | spawns | cost USD | rework | wall | phases |",
+              "|---|---|---|---|---|---|---|"]
+    for unit_id, unit in sorted(run.state.data["units"].items()):
+        row = units.get(unit_id) or blank_row()
+        rework = ", ".join("%s %d" % (role, n) for role, n in unit["rework"].items() if n) \
+            or "none"
+        phases = ", ".join("%s %s" % (phase, hms(seconds))
+                           for phase, seconds in phase_durations(unit).items()) or "—"
+        lines.append("| %s | %s | %d | %.4f | %s | %s | %s |"
+                     % (unit_id, unit["status"], row["spawns"], row["cost_usd"], rework,
+                        hms(elapsed_seconds(unit["started_at"], unit["ended_at"])), phases))
+
+    waves = run.state.data["wave_log"]
+    if waves:
+        lines += ["", "**by wave**", "", "| wave | wall |", "|---|---|"]
+        lines += ["| %d | %s |" % (wave["index"],
+                                   hms(elapsed_seconds(wave["started_at"], wave["ended_at"])))
+                  for wave in waves]
+    lines += ["", "- **ledger** — one line for this run appended to `%s`" % LEDGER_PATH]
+    return lines

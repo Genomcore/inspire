@@ -23,8 +23,13 @@ class StateWrites(unittest.TestCase):
 class SpawnRecords(unittest.TestCase):
 
     def test_a_record_carries_the_brief_and_truncates_the_text(self):
-        result = SpawnResult("exit", text="x" * 9000, structured={"a": 1}, cost_usd=0.5)
+        result = SpawnResult("exit", text="x" * 9000, structured={"a": 1}, cost_usd=0.5,
+                             usage={"input_tokens": 10}, model_usage={"m": {"costUSD": 0.5}},
+                             num_turns="7")
         record = result.record({"role": "tester"}, None)
+        self.assertEqual(record["usage"], {"input_tokens": 10})
+        self.assertEqual(record["model_usage"], {"m": {"costUSD": 0.5}})
+        self.assertEqual(record["num_turns"], 7)
         self.assertEqual(record["brief"], {"role": "tester"})
         self.assertEqual(record["structured"], {"a": 1})
         self.assertEqual(len(record["text"]), 8000)

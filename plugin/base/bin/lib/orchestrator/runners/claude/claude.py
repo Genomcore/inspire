@@ -66,7 +66,10 @@ class ClaudeRunner:
             time.sleep(min(60, 5 * self.ratelimit_retries))
         return SpawnResult(ending, text=text, structured=payload.get("structured_output"),
                            session_id=payload.get("session_id", ""),
-                           cost_usd=float(payload.get("total_cost_usd") or 0.0))
+                           cost_usd=float(payload.get("total_cost_usd") or 0.0),
+                           usage=payload.get("usage"),
+                           model_usage=payload.get("modelUsage"),
+                           num_turns=payload.get("num_turns"))
 
 
 def ending_of(payload):

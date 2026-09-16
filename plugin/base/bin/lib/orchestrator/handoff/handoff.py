@@ -11,7 +11,7 @@ from ..citations import classify_citations, scan_citations
 from ..constants import OVERSEER_SCHEMA, PERSONA_SHELLS
 from ..errors import Infrastructural, Stall
 from ..findings import finding, targets_unit
-from ..util import parse_jsonl, read_json, sh, tail, write_json_atomic
+from ..util import now_iso, parse_jsonl, read_json, sh, tail, write_json_atomic
 
 
 # ------------------------------------------------------------- the substrate
@@ -86,6 +86,7 @@ def run_recipe(run, worktree):
 # ------------------------------------------------------------------- spawning
 
 def spawn(run, shell, brief, schema, cwd):
+    started_at = now_iso()
     result = run.runner.spawn(shell[:-3], run.shells.get(shell), cwd, brief, schema)
     with run.spend_lock:
         run.state.data["spend_usd"] += result.cost_usd
@@ -93,7 +94,10 @@ def spawn(run, shell, brief, schema, cwd):
         run.state.data["spawn_count"] = index
     path = os.path.join(run.run_dir, "spawns", "%s-%s-%03d.json"
                         % (brief.get("unit_slug", "run"), shell[:-3], index))
-    write_json_atomic(path, result.record(brief, schema))
+    record = result.record(brief, schema)
+    # Raw facts only — who and when; the unit is in the brief. The report sums them.
+    record.update({"shell": shell[:-3], "started_at": started_at, "ended_at": now_iso()})
+    write_json_atomic(path, record)
     run.save()
     return result
 

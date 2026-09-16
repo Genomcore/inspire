@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import datetime
+import json
 import os
 import sys
 import threading
@@ -13,12 +14,12 @@ from .. import handoff as handoffmod
 from .. import report as reportmod
 from .. import start as startmod
 from ..config import load_config
-from ..constants import CONFIG_PATH, LOG_PATH, ROLES, RUNS_DIR
+from ..constants import CONFIG_PATH, LEDGER_PATH, LOG_PATH, ROLES, RUNS_DIR
 from ..errors import Infrastructural, Refusal, Stall
 from ..findings import conflict_findings, conflict_role, gate_digest
 from ..shells import read_shells
-from ..state import State
-from ..util import read_json, write_json_atomic
+from ..state import State, close_timeline, set_phase
+from ..util import now_iso, read_json, write_json_atomic
 
 
 class Orchestrator:
@@ -100,6 +101,9 @@ class Orchestrator:
         while self.state.data["wave_index"] < len(waves):
             index = self.state.data["wave_index"]
             wave = waves[index]
+            # `index` is kept: a resume re-enters a wave, and then two entries share it.
+            wave_entry = {"index": index + 1, "started_at": now_iso(), "ended_at": None}
+            self.state.data["wave_log"].append(wave_entry)
             runnable = []
             for unit_id in wave:
                 ustate = self.state.unit(unit_id)
@@ -123,6 +127,7 @@ class Orchestrator:
                     for future in [pool.submit(self.run_unit, unit_id) for unit_id in runnable]:
                         future.result()
             self.state.data["wave_index"] = index + 1
+            wave_entry["ended_at"] = now_iso()
             self.save()
             self.report.write_block(reportmod.wave_block(self, index + 1, wave),
                                     "wave %d" % (index + 1))
@@ -174,9 +179,16 @@ class Orchestrator:
             self.record_stall(ustate, stall)
         except Infrastructural as failure:
             self.record_stall(ustate, Stall("infrastructural", str(failure)))
+        finally:
+            # A stall leaves `phase` naming the role it stalled at, so only the
+            # timeline is closed here.
+            close_timeline(ustate)
+            ustate["ended_at"] = now_iso()
+            self.save()
 
     def open_unit(self, ustate):
         ustate["status"] = "in-phase"
+        ustate["started_at"] = ustate["started_at"] or now_iso()
         branch = ustate["integration_branch"] or gitmod.integration_branch(self,
                                                                           ustate["slug"])
         ustate["integration_branch"] = branch
@@ -195,15 +207,12 @@ class Orchestrator:
         for role in ROLES:
             if role in ustate["done"]:
                 continue
-            ustate["phase"] = role
-            self.save()
+            set_phase(self, ustate, role)
             handoffmod.handoff(self, ustate, role, [])
             ustate["done"].append(role)
-            ustate["phase"] = None
-            self.save()
+            set_phase(self, ustate, None)
         while True:
-            ustate["phase"] = "gate"
-            self.save()
+            set_phase(self, ustate, "gate")
             verdict = gatemod.gate_loop(self, ustate)
             ustate["gate_digest"] = gate_digest(verdict)
             self.save()
@@ -218,6 +227,7 @@ class Orchestrator:
             role = conflict_role(self.config["tests_roots"], conflicting)
             findings = conflict_findings(ustate, conflicting)
             handoffmod.spend_rework(self, ustate, role, findings, "promote")
+            set_phase(self, ustate, role)
             handoffmod.handoff(self, ustate, role, findings)
 
     def record_stall(self, ustate, stall):
@@ -236,10 +246,29 @@ class Orchestrator:
     def finish(self, exit_reason):
         self.state.data["status"] = "ENDED"
         self.state.data["exit"] = exit_reason
+        self.state.data["ended_at"] = now_iso()
         self.save()
+        self.append_ledger()
         self.report.rewrite_status(exit_reason)
         self.report.write_block(reportmod.closing_block(self, exit_reason), "closing")
         sys.stderr.write("emanation %s ended: %s\n" % (self.run_id, exit_reason))
+
+    def append_ledger(self):
+        """One line per ended run in `LEDGER_PATH`: the facts that let
+        twenty runs be compared without opening twenty state files. Raw facts,
+        no sums — the per-spawn records under the run dir carry the tokens."""
+        data = self.state.data
+        line = {"run_id": self.run_id, "goal_branch": self.goal_branch,
+                "launch_branch": self.launch_branch, "exit": data["exit"],
+                "started_at": data["started_at"], "ended_at": data["ended_at"],
+                "spend_usd": data["spend_usd"], "spawn_count": data["spawn_count"],
+                "waves": data["wave_index"],
+                "units": dict((unit_id, {"status": unit["status"],
+                                         "rework": unit["rework"]})
+                              for unit_id, unit in data["units"].items()),
+                "run_dir": os.path.relpath(self.run_dir, self.repo)}
+        with open(os.path.join(self.repo, LEDGER_PATH), "a") as stream:
+            stream.write(json.dumps(line, sort_keys=True) + "\n")
 
     # ------------------------------------------------------------- resuming
 
@@ -254,6 +283,13 @@ class Orchestrator:
             raise Refusal("no run %s under %s." % (self.args.run_id, RUNS_DIR))
         self.state = State(state_path, read_json(state_path))
         data = self.state.data
+        # The one place a run written before these keys existed grows them.
+        data.setdefault("started_at", data.get("stamp"))
+        data.setdefault("ended_at", None)
+        data.setdefault("wave_log", [])
+        for unit in data["units"].values():
+            for key, blank in (("started_at", None), ("ended_at", None), ("timeline", [])):
+                unit.setdefault(key, blank)
         if data["status"] == "ENDED":
             raise Refusal("run %s already ended: %s. Start a new run toward the same goal."
                           % (self.args.run_id, data["exit"]))
@@ -283,3 +319,4 @@ class Orchestrator:
                 unit["phase"] = None
                 unit["status"] = "pending"
         self.save()
+

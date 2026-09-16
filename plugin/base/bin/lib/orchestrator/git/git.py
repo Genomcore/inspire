@@ -8,6 +8,7 @@ import subprocess
 from ..constants import LOG_PATH, TRAILER_ORDER, WORKTREES_DIR
 from ..errors import Internal, Refusal, Stall
 from ..findings import gate_digest
+from ..state import set_phase
 from ..util import read_json, tail
 
 
@@ -112,8 +113,7 @@ def promote(run, ustate, verdict):
     ustate["verify_worktree"] = None
     ustate["trailers"] = trailers
     ustate["status"] = "promoted"
-    ustate["phase"] = None
-    run.save()
+    set_phase(run, ustate, None)
     return None
 
 

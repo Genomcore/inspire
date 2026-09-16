@@ -110,7 +110,7 @@ orun() {
   echo $?
 }
 
-rundir() { echo "$1"/.inspire/emanate-runs/*; }
+rundir() { echo "$1"/.inspire/emanate-runs/*/; }  # dirs only: the ledger lives beside them
 runid()  { basename "$(rundir "$1")"; }
 goalwt() { echo "$1/.inspire/worktrees/emanate-all"; }
 goallog(){ echo "$(goalwt "$1")/.inspire/last-emanation.log"; }
@@ -181,6 +181,14 @@ eq "A: one closing block, at the exit" "$(grep -c '^## Report — ' "$LOG")" "1"
 check "A: the closing block records the goal reached" "grep -q '^## Report — .*goal reached' '$LOG'"
 check "A: the drill slot is filled with its reason" "grep -q 'drill skipped' '$LOG'"
 eq "A: nothing was reworked" "$(st "$A" "sum(sum(u(i)['rework'].values()) for i in IDS)")" "0"
+check "A: the closing block carries the spend section" "grep -q '^### Spend — ' '$LOG'"
+check "A: the run is stamped start and end" "$(st "$A" "bool(s['started_at'] and s['ended_at'])")"
+check "A: every unit closed its timeline" \
+  "$(st "$A" "all(u(i)['ended_at'] and u(i)['timeline'] and u(i)['timeline'][-1]['ended_at'] for i in IDS)")"
+eq "A: every spawn record carries who, whom and when" \
+  "$(cd "$A" && python3 -c "import glob,json,sys; rs=[json.load(open(p)) for p in glob.glob('.inspire/emanate-runs/*/spawns/*.json')]; print(all(r['shell'] and r['brief']['unit_id'] and r['started_at'] and r['ended_at'] and 'usage' in r and 'model_usage' in r and 'num_turns' in r for r in rs) and len(rs)>0)")" "True"
+eq "A: one ledger line, naming this run's exit" \
+  "$(cd "$A" && python3 -c "import json; ls=[json.loads(l) for l in open('.inspire/emanate-runs/ledger.jsonl')]; print(len(ls), ls[-1]['exit'])")" "1 goal reached"
 
 plan="$( cd "$WT" && SDD_KB_ROOT=spec/kb SDD_SPEC_ROOT=spec/sdd \
   "$BIN/emanate-plan.sh" --profiles-root spec/profiles --agents-root spec/agents \
@@ -357,7 +365,7 @@ eq "F: the interrupted phase is read as an infrastructural ending" \
 eq "F: and it cost the tester no rework"       "$(st "$F" "rework('auth.user','tester')")" "0"
 eq "F: wave 1's block was not written twice"   "$(grep -c '^## Wave 1 — closed' "$FLOG")" "1"
 eq "F: exactly one closing block"              "$(grep -c '^## Report — ' "$FLOG")" "1"
-eq "F: the resume reused the run directory"    "$(ls "$F/.inspire/emanate-runs" | wc -l | tr -d ' ')" "1"
+eq "F: the resume reused the run directory"    "$(ls -d "$F"/.inspire/emanate-runs/*/ | wc -l | tr -d ' ')" "1"
 
 # ---------------------------------------------------------------------------
 # G. Arbitration. A red gate with GV-03 is a question about who is wrong, and

@@ -10,6 +10,7 @@ from ..errors import Infrastructural, Internal, Stall
 from ..findings import finding, gate_findings, route_gate_verdict
 from ..handoff import (handoff, next_verify_dir, run_recipe, spawn, spend_rework,
                       tests_root_args, unit_brief, verify_suite)
+from ..state import set_phase
 from ..util import tail, write_json_atomic
 
 
@@ -103,8 +104,7 @@ def drill(run, ustate):
         ustate["drill"] = "drill skipped — no narrowed-test command declared"
         run.save()
         return
-    ustate["phase"] = "drill"
-    run.save()
+    set_phase(run, ustate, "drill")
     worktree = None
     try:
         worktree = gitmod.fresh_worktree(run, ustate["slug"], "drill",
@@ -128,8 +128,7 @@ def drill(run, ustate):
     finally:
         if worktree:
             gitmod.discard(run, worktree)
-        ustate["phase"] = None
-        run.save()
+        set_phase(run, ustate, None)
 
 
 def drill_outcome(result):

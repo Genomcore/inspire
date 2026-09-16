@@ -13,7 +13,7 @@ from ..report import identity_block
 from ..runners.claude import ClaudeRunner
 from ..runners.fake import FakeRunner
 from ..state import State
-from ..util import parse_version, slugify, tail
+from ..util import now_iso, parse_version, slugify, tail
 
 
 def write_identity(run):
@@ -231,6 +231,7 @@ def blank_unit(entry):
     return {"id": entry["id"], "kind": entry["kind"], "path": entry["path"],
             "slug": slugify(entry["id"]),
             "status": "pending", "phase": None, "done": [],
+            "started_at": None, "ended_at": None, "timeline": [],
             "integration_branch": None, "verify_worktree": None,
             "rework": dict((role, 0) for role in ROLES),
             "infra_retries": dict((role, 0) for role in ROLES),
@@ -249,6 +250,7 @@ def new_state(run, waves, units):
         "args": dict((key, value) for key, value in vars(run.args).items()
                      if key not in ("command", "runner", "bin")),
         "waves": waves, "wave_index": 0, "spend_usd": 0.0, "spawn_count": 0,
+        "started_at": now_iso(), "ended_at": None, "wave_log": [],
         "truncated": run.truncated, "harness": run.harness,
         "shells": run.shells, "plan_units": run.plan_units,
         "status": "RUNNING", "exit": None, "units": units})

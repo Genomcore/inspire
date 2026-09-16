@@ -1,10 +1,26 @@
 """The small helpers: slugs, subprocesses, atomic JSON, the two parsers."""
 
+import datetime
 import json
 import os
 import re
 import subprocess
 import tempfile
+
+
+ISO = "%Y-%m-%dT%H:%M:%SZ"
+
+
+def now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).strftime(ISO)
+
+
+def elapsed_seconds(started_iso, ended_iso):
+    """Whole seconds between two `now_iso()` stamps; 0 when either is missing."""
+    if not started_iso or not ended_iso:
+        return 0
+    return int((datetime.datetime.strptime(ended_iso, ISO)
+                - datetime.datetime.strptime(started_iso, ISO)).total_seconds())
 
 
 def slugify(text):
