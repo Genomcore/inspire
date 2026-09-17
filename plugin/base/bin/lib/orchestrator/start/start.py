@@ -191,13 +191,21 @@ def select_waves(run):
 
 
 def derive_units(run, planned, waves):
-    """One derivation per unit this run will execute, once, in the goal worktree.
-    Plan already ran derive over the whole frontier, so a non-zero exit here is a
-    refusal rather than a finding: the substrate changed under us. A unit the
-    ceiling puts out of reach is recorded and never derived — nothing would read
-    its contract. The derivations are independent, so they run together; their
+    """The roster and its derivations, for the loop — the graph fans the same
+    derivations out itself. They are independent, so they run together; their
     answers are read in plan order, so the first refusal names the same unit
     however they were scheduled."""
+    units, pending = plan_roster(run, planned, waves)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=run.args.parallel) as pool:
+        for future in [pool.submit(derive_unit, run, entry) for entry in pending]:
+            future.result()
+    return units
+
+
+def plan_roster(run, planned, waves):
+    """The unit roster this run starts from, and the entries still to derive. A
+    unit the ceiling puts out of reach is recorded and never derived — nothing
+    would read its contract."""
     runnable = set(unit for wave in waves for unit in wave)
     planned_ids = set(unit for wave in planned for unit in wave)
     units = {}
@@ -214,13 +222,13 @@ def derive_units(run, planned, waves):
                               % run.args.ceiling)
             continue
         pending.append(entry)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=run.args.parallel) as pool:
-        for future in [pool.submit(derive_unit, run, entry) for entry in pending]:
-            future.result()
-    return units
+    return units, pending
 
 
 def derive_unit(run, entry):
+    """One unit's contract, in the goal worktree. Plan already ran derive over the
+    whole frontier, so a non-zero exit here is a refusal rather than a finding: the
+    substrate changed under us."""
     proc = subprocess.run([os.path.join(run.bin, "emanate-derive.sh"), entry["kind"],
                            "--file", entry["path"]],
                           cwd=run.goal_worktree, text=True,

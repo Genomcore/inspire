@@ -7,27 +7,28 @@ judgment, the subprocesses and the records are untouched.
 
 The `run` — an `Orchestrator`, the shared context every module reads — travels in
 the invocation's `configurable`, not in the state: it holds locks, an open report
-and a runner, none of which is a value. What the state carries is the run's own
-record, and `units` takes a reducer because a wave's units answer in parallel.
+and a runner, none of which is a value, and `state.json` is still where the run's
+own record lives. What the state carries is what the flow routes on, and `units`
+takes a reducer because a wave's units answer in parallel.
 """
 
+import os
 from typing import Annotated, TypedDict
 
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from .. import gate as gatemod
 from .. import git as gitmod
 from .. import handoff as handoffmod
-from .. import report as reportmod
 from .. import start as startmod
 from ..constants import OVERSEER_SCHEMA, PERSONA_SHELLS, ROLES
 from ..errors import Infrastructural, Stall
 from ..findings import (conflict_findings, conflict_role, gate_digest, gate_findings,
                         route_gate_verdict)
 from ..shells import read_shells
-from ..state import close_timeline, set_phase
-from ..util import now_iso
+from ..state import set_phase
 
 
 def merge_units(left, right):
@@ -47,18 +48,13 @@ def collect(left, right):
 
 
 class RunState(TypedDict, total=False):
-    """The run's record: what `state.json` holds, plus the pointers the run used
-    to carry as attributes."""
-    plan: dict
+    """What the flow itself needs to route on. The run's own record stays in
+    `run.state.data`, where every module already reads it."""
     waves: list
     wave_index: int
+    pending: list
     runnable: list
-    goal_branch: str
-    goal_worktree: str
-    run_dir: str
     units: Annotated[dict, merge_units]
-    spend_usd: float
-    spawn_count: int
     spend_exhausted: bool
     exit_reason: str
 
@@ -94,18 +90,22 @@ def _next_role(ustate):
 # ------------------------------------------------------------------ t = 0
 
 def preflight(state, config):
+    """Everything that can refuse, and the identity the run is recorded under.
+    `run_graph` runs it before the invocation — the checkpoint file and the thread
+    are named after that identity — so here it runs only for a graph invoked with
+    a run that has not been through it."""
     run = _run(config)
-    run.preflight()
-    return {"run_dir": run.run_dir, "goal_branch": run.goal_branch,
-            "goal_worktree": run.goal_worktree}
+    if not getattr(run, "run_dir", None):
+        run.preflight()
+    return {}
 
 
 def plan(state, config):
     run = _run(config)
     run.plan_step()
     if run.plan.get("realized_all") or not run.plan.get("waves"):
-        return {"plan": run.plan, "exit_reason": "goal reached — nothing left to build"}
-    return {"plan": run.plan}
+        return {"exit_reason": "goal reached — nothing left to build"}
+    return {}
 
 
 def route_plan(state):
@@ -126,9 +126,24 @@ def shells(state, config):
 
 
 def derive_units(state, config):
+    """The roster this run starts from. The contracts it still owes are derived by
+    the graph rather than by a pool of this node's own."""
     run = _run(config)
     planned, waves = startmod.select_waves(run)
-    return {"waves": waves, "units": startmod.derive_units(run, planned, waves)}
+    units, pending = startmod.plan_roster(run, planned, waves)
+    return {"waves": waves, "units": units, "pending": pending}
+
+
+def fan_derive(state):
+    """One `Send` per contract: the derivations are independent, so the graph
+    schedules them the way it schedules a wave's units."""
+    return ([Send("derive", {"entry": entry}) for entry in state["pending"]]
+            or "identity")
+
+
+def derive(payload, config):
+    startmod.derive_unit(_run(config), payload["entry"])
+    return {}
 
 
 def baseline(state, config):
@@ -149,26 +164,7 @@ def identity(state, config):
 
 def wave(state, config):
     run = _run(config)
-    index = state["wave_index"]
-    entry = {"index": index + 1, "started_at": now_iso(), "ended_at": None}
-    run.state.data["wave_log"].append(entry)
-    runnable = []
-    for unit_id in state["waves"][index]:
-        ustate = run.state.unit(unit_id)
-        if ustate["status"] in ("promoted", "stalled", "blocked"):
-            continue
-        blocker = run.blocked_by(unit_id)
-        if blocker:
-            run.mark_blocked(ustate, "downstream of %s, which is %s"
-                             % (blocker[0], blocker[1]))
-            continue
-        runnable.append(unit_id)
-    exhausted = bool(run.args.budget_usd and
-                     run.state.data["spend_usd"] >= run.args.budget_usd)
-    if exhausted:
-        for unit_id in runnable:
-            run.mark_blocked(run.state.unit(unit_id), "spend ceiling reached")
-        runnable = []
+    runnable, exhausted = run.open_wave(state["wave_index"])
     return {"runnable": runnable, "spend_exhausted": exhausted,
             "units": dict(run.state.data["units"])}
 
@@ -184,20 +180,8 @@ def fan_out(state):
 def wave_close(state, config):
     run = _run(config)
     index = state["wave_index"]
-    run.state.data["wave_index"] = index + 1
-    run.state.data["wave_log"][-1]["ended_at"] = now_iso()
-    run.save()
-    run.report.write_block(reportmod.wave_block(run, index + 1, state["waves"][index]),
-                           "wave %d" % (index + 1))
-    if state.get("spend_exhausted"):
-        for later in state["waves"][index + 1:]:
-            for unit_id in later:
-                ustate = run.state.unit(unit_id)
-                if ustate["status"] == "pending":
-                    run.mark_blocked(ustate, "spend ceiling reached")
-    return {"wave_index": index + 1, "units": dict(run.state.data["units"]),
-            "spend_usd": run.state.data["spend_usd"],
-            "spawn_count": run.state.data["spawn_count"]}
+    run.close_wave(index, state.get("spend_exhausted", False))
+    return {"wave_index": index + 1, "units": dict(run.state.data["units"])}
 
 
 def route_wave(state):
@@ -216,24 +200,14 @@ def report(state, config):
 # -------------------------------------------------------------- one unit
 
 def unit(payload, config):
-    """The subgraph, run for one unit. A stall or an infrastructural failure ends
-    this unit and no other, which is why it is caught here rather than routed."""
+    """The subgraph, run for one unit, under the same guard the loop ran it under:
+    a stall or an infrastructural failure ends this unit and no other."""
     run = _run(config)
     ustate = run.state.unit(payload["unit_id"])
-    try:
+    with run.unit_guard(ustate):
         UNIT.invoke({"unit_id": ustate["id"], "findings": []},
                     {"configurable": {"run": run},
                      "recursion_limit": unit_recursion_limit(run)})
-    except Stall as stall:
-        run.record_stall(ustate, stall)
-    except Infrastructural as failure:
-        run.record_stall(ustate, Stall("infrastructural", str(failure)))
-    finally:
-        # A stall leaves `phase` naming the role it stalled at, so only the
-        # timeline is closed here.
-        close_timeline(ustate)
-        ustate["ended_at"] = now_iso()
-        run.save()
     return {"units": {ustate["id"]: ustate}}
 
 
@@ -481,12 +455,13 @@ def build_unit():
     return builder.compile()
 
 
-def build():
+def build(checkpointer=None):
     builder = StateGraph(RunState)
     for name, node in (("preflight", preflight), ("plan", plan), ("ceiling", ceiling),
                        ("shells", shells), ("derive_units", derive_units),
-                       ("baseline", baseline), ("identity", identity), ("wave", wave),
-                       ("unit", unit), ("wave_close", wave_close), ("report", report)):
+                       ("derive", derive), ("baseline", baseline),
+                       ("identity", identity), ("wave", wave), ("unit", unit),
+                       ("wave_close", wave_close), ("report", report)):
         builder.add_node(name, node)
 
     builder.add_edge(START, "preflight")
@@ -494,27 +469,34 @@ def build():
     builder.add_conditional_edges("plan", route_plan,
                                   ["ceiling", "shells", "derive_units", "baseline",
                                    "identity"])
-    for name in ("ceiling", "shells", "derive_units", "baseline"):
-        builder.add_edge(name, "identity")
+    builder.add_conditional_edges("derive_units", fan_derive, ["derive", "identity"])
+    # One barrier rather than three edges and a fourth: the derivations are a
+    # superstep deeper than their siblings, and a node reached by an edge runs as
+    # soon as that edge fires — twice, if two branches answer in different rounds.
+    builder.add_edge(["ceiling", "shells", "baseline", "derive"], "identity")
     builder.add_conditional_edges("identity", route_wave, ["wave", "report"])
     builder.add_conditional_edges("wave", fan_out, ["unit", "wave_close"])
     builder.add_edge("unit", "wave_close")
     builder.add_conditional_edges("wave_close", route_wave, ["wave", "report"])
     builder.add_edge("report", END)
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
 UNIT = build_unit()
-RUN = build()
 
 
 def run_graph(run):
-    """One invocation is one run. `--parallel` is the graph's own concurrency.
+    """One invocation is one run: threaded on the run id, checkpointed under the
+    run dir, and `--parallel` wide. Naming either needs the identity `preflight`
+    computes, so that step runs here, before the graph it also opens.
 
-    ponytail: no checkpointer — `<run_dir>/checkpoint.sqlite` needs a run dir the
-    `preflight` node is what computes, and nothing resumes from a checkpoint while
-    `state.json` is still the record. Attach one when resume moves onto the graph.
-    """
-    return RUN.invoke({"wave_index": 0, "waves": [], "units": {}},
-                      {"configurable": {"run": run}, "recursion_limit": 128,
-                       "max_concurrency": max(1, run.args.parallel)})
+    Nothing reads the checkpoints yet — `state.json` is still the record a resume
+    is driven from, and the arbiter is an agent rather than a human, so no node
+    interrupts."""
+    run.preflight()
+    with SqliteSaver.from_conn_string(os.path.join(run.run_dir,
+                                                   "checkpoint.sqlite")) as saver:
+        return build(saver).invoke(
+            {"wave_index": 0, "waves": [], "units": {}},
+            {"configurable": {"run": run, "thread_id": run.run_id},
+             "recursion_limit": 128, "max_concurrency": max(1, run.args.parallel)})

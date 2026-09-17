@@ -60,7 +60,7 @@ class Topology(unittest.TestCase):
     def test_the_run_graph_compiles_with_every_stage_of_the_flow(self):
         nodes = set(graphmod.build().get_graph().nodes)
         self.assertLessEqual({"preflight", "plan", "ceiling", "shells", "derive_units",
-                              "baseline", "wave", "unit", "report"}, nodes)
+                              "derive", "baseline", "wave", "unit", "report"}, nodes)
 
     def test_the_unit_graph_compiles_with_the_whole_boundary(self):
         nodes = set(graphmod.build_unit().get_graph().nodes)
@@ -149,6 +149,8 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(sorted(unit for unit, record in data["units"].items()
                                 if record["status"] == "promoted"), sorted(UNITS))
         self.assertEqual(data["wave_index"], 3)
+        # The run's own thread, checkpointed where the run keeps everything else.
+        self.assertTrue(os.path.exists(os.path.join(run.run_dir, "checkpoint.sqlite")))
 
     def test_the_unit_cuts_at_stalled_once_rework_reaches_its_limit(self):
         reject = {"verdict": "REJECT", "findings": [

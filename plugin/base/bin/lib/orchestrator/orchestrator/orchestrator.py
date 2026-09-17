@@ -1,6 +1,7 @@
 """The run itself: the shared context every module reads, and the loop over it."""
 
 import concurrent.futures
+import contextlib
 import datetime
 import json
 import os
@@ -101,49 +102,62 @@ class Orchestrator:
     # ------------------------------------------------------------ the waves
 
     def wave_loop(self):
-        waves = self.state.data["waves"]
         spend_exhausted = False
-        while self.state.data["wave_index"] < len(waves):
+        while self.state.data["wave_index"] < len(self.state.data["waves"]):
             index = self.state.data["wave_index"]
-            wave = waves[index]
-            # `index` is kept: a resume re-enters a wave, and then two entries share it.
-            wave_entry = {"index": index + 1, "started_at": now_iso(), "ended_at": None}
-            self.state.data["wave_log"].append(wave_entry)
-            runnable = []
-            for unit_id in wave:
-                ustate = self.state.unit(unit_id)
-                if ustate["status"] in ("promoted", "stalled", "blocked"):
-                    continue
-                blocker = self.blocked_by(unit_id)
-                if blocker:
-                    self.mark_blocked(ustate, "downstream of %s, which is %s"
-                                      % (blocker[0], blocker[1]))
-                    continue
-                runnable.append(unit_id)
-            if self.args.budget_usd and \
-                    self.state.data["spend_usd"] >= self.args.budget_usd:
-                spend_exhausted = True
-                for unit_id in runnable:
-                    self.mark_blocked(self.state.unit(unit_id), "spend ceiling reached")
-                runnable = []
+            runnable, exhausted = self.open_wave(index)
+            spend_exhausted = spend_exhausted or exhausted
             if runnable:
                 workers = min(self.args.parallel, len(runnable))
                 with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
                     for future in [pool.submit(self.run_unit, unit_id) for unit_id in runnable]:
                         future.result()
-            self.state.data["wave_index"] = index + 1
-            wave_entry["ended_at"] = now_iso()
-            self.save()
-            self.report.write_block(reportmod.wave_block(self, index + 1, wave),
-                                    "wave %d" % (index + 1))
+            self.close_wave(index, spend_exhausted)
             if spend_exhausted:
-                for later in waves[index + 1:]:
-                    for unit_id in later:
-                        ustate = self.state.unit(unit_id)
-                        if ustate["status"] == "pending":
-                            self.mark_blocked(ustate, "spend ceiling reached")
                 break
         self.finish(self.exit_reason(spend_exhausted))
+
+    def open_wave(self, index):
+        """A wave's roster: what is left to run once a promoted, stalled or blocked
+        unit is skipped, a unit downstream of one is blocked, and the spend ceiling
+        has had its say. The one place that policy is written."""
+        # `index` is kept: a resume re-enters a wave, and then two entries share it.
+        self.state.data["wave_log"].append({"index": index + 1, "started_at": now_iso(),
+                                            "ended_at": None})
+        runnable = []
+        for unit_id in self.state.data["waves"][index]:
+            ustate = self.state.unit(unit_id)
+            if ustate["status"] in ("promoted", "stalled", "blocked"):
+                continue
+            blocker = self.blocked_by(unit_id)
+            if blocker:
+                self.mark_blocked(ustate, "downstream of %s, which is %s"
+                                  % (blocker[0], blocker[1]))
+                continue
+            runnable.append(unit_id)
+        exhausted = bool(self.args.budget_usd and
+                         self.state.data["spend_usd"] >= self.args.budget_usd)
+        if exhausted:
+            for unit_id in runnable:
+                self.mark_blocked(self.state.unit(unit_id), "spend ceiling reached")
+            runnable = []
+        return runnable, exhausted
+
+    def close_wave(self, index, spend_exhausted):
+        """The wave's account, and — once the ceiling is reached — every unit no
+        later wave will now reach."""
+        self.state.data["wave_index"] = index + 1
+        self.state.data["wave_log"][-1]["ended_at"] = now_iso()
+        self.save()
+        self.report.write_block(
+            reportmod.wave_block(self, index + 1, self.state.data["waves"][index]),
+            "wave %d" % (index + 1))
+        if spend_exhausted:
+            for later in self.state.data["waves"][index + 1:]:
+                for unit_id in later:
+                    ustate = self.state.unit(unit_id)
+                    if ustate["status"] == "pending":
+                        self.mark_blocked(ustate, "spend ceiling reached")
 
     def blocked_by(self, unit_id):
         for edge in self.plan_units[unit_id].get("requires") or []:
@@ -177,9 +191,16 @@ class Orchestrator:
 
     def run_unit(self, unit_id):
         ustate = self.state.unit(unit_id)
-        try:
+        with self.unit_guard(ustate):
             self.open_unit(ustate)
             self.drive_unit(ustate)
+
+    @contextlib.contextmanager
+    def unit_guard(self, ustate):
+        """A stall or an infrastructural failure ends this unit and no other, and
+        whichever way it ends the unit is closed and recorded."""
+        try:
+            yield
         except Stall as stall:
             self.record_stall(ustate, stall)
         except Infrastructural as failure:

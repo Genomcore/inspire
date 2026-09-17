@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["langgraph>=0.2,<1"]
+# dependencies = ["langgraph>=0.2,<1", "langgraph-checkpoint-sqlite>=2,<4"]
 # ///
 """emanate-orchestrator — the unattended emanation loop, as a process.
 
