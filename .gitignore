@@ -17,3 +17,6 @@ __pycache__/
 
 # Local ticket board for in-flight work on this machine; never ships.
 tiqueteria/
+
+# `langgraph dev`'s scratch server state, written beside langgraph.json.
+.langgraph_api/

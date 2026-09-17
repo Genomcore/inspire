@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "./plugin/base/bin/lib"
+  ],
+  "graphs": {
+    "emanate": "orchestrator.graph.graph:build",
+    "unidad": "orchestrator.graph.graph:build_unit"
+  }
+}
