@@ -20,10 +20,15 @@ def scan_citations(roots, cwd):
             for name in sorted(filenames):
                 path = os.path.join(dirpath, name)
                 with open(path, encoding="utf-8", errors="replace") as stream:
-                    for number, line in enumerate(stream, 1):
-                        for match in CLAIM_TOKEN.finditer(line):
-                            found.append({"file": os.path.relpath(path, cwd), "line": number,
-                                          "id": match.group(1), "fingerprint": match.group(2)})
+                    text = stream.read()
+                # The substring is the cheap sieve: a tests tree is overwhelmingly
+                # files with no token at all, and those never reach the regex.
+                if "@claim" not in text:
+                    continue
+                relative = os.path.relpath(path, cwd)
+                found.extend({"file": relative, "line": text.count("\n", 0, match.start()) + 1,
+                              "id": match.group(1), "fingerprint": match.group(2)}
+                             for match in CLAIM_TOKEN.finditer(text))
     return found
 
 
