@@ -84,6 +84,14 @@ class Topology(unittest.TestCase):
         self.assertEqual(graphmod.route_persona({"retry": False, "role": "tester"}),
                          "harvest")
 
+    def test_a_run_without_a_checkpoint_is_reconciled_and_left_to_its_caller(self):
+        # The old loop writes no thread, so there is nothing to pick up — and a
+        # resume of one of its runs still reconciles the state the kill left.
+        run = mock.Mock(run_dir=tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, run.run_dir, ignore_errors=True)
+        self.assertIsNone(graphmod.resume_graph(run))
+        run.resume.assert_called_once_with()
+
 
 def build_repo(root):
     """The fixture project an operator would really have: the plan fixture's spec

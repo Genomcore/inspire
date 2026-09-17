@@ -80,7 +80,12 @@ def main(argv=None):
         if args.command == "run":
             orchestrator.start()
         else:
-            orchestrator.resume()
+            # The graph picks its own thread up from the run's checkpoint; a run
+            # the loop started has none, and the loop below finishes it. Imported
+            # here so `--help` still answers under a bare interpreter, which has
+            # no langgraph — only `uv run` resolves the header above.
+            from orchestrator.graph import resume_graph
+            resume_graph(orchestrator)
         if orchestrator.state.data["status"] != "ENDED":
             orchestrator.wave_loop()
         return EXIT_OK

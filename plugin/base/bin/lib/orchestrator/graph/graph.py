@@ -500,6 +500,11 @@ def build(checkpointer=None):
 UNIT = build_unit()
 
 
+def checkpoint_path(run):
+    """The run's thread, kept where the run keeps everything else."""
+    return os.path.join(run.run_dir, "checkpoint.sqlite")
+
+
 def invoke(run, state):
     """One invocation is one run: threaded on the run id, checkpointed under the
     run dir, and `--parallel` wide. `state` is the run's opening record, or `None`
@@ -510,8 +515,7 @@ def invoke(run, state):
     record mutates the record's own objects — which is what the state carries —
     and `run.save()` writes the file, so the projection is the same one call the
     loop made. The arbiter is an agent rather than a human, so no node interrupts."""
-    with SqliteSaver.from_conn_string(os.path.join(run.run_dir,
-                                                   "checkpoint.sqlite")) as saver:
+    with SqliteSaver.from_conn_string(checkpoint_path(run)) as saver:
         return build(saver).invoke(
             state, {"configurable": {"run": run, "thread_id": run.run_id},
                     "recursion_limit": 128,
@@ -530,6 +534,10 @@ def resume_graph(run):
     not carry is the run — locks, an open report, a runner — so that is rebuilt
     from `state.json` first, and `reconcile` is what the kill left open: the
     interrupted timeline entry, the free infrastructural retry, and any key an
-    older schema never wrote."""
+    older schema never wrote.
+
+    A run the old loop started has no thread to pick up, so there is nothing to
+    invoke and the caller finishes it the way it was begun. That branch goes when
+    `run` stops reaching the loop."""
     run.resume()
-    return invoke(run, None)
+    return invoke(run, None) if os.path.exists(checkpoint_path(run)) else None
