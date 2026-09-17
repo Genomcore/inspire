@@ -1,5 +1,3 @@
-"""The real runner: one spawn is one fresh headless `claude` session."""
-
 import json
 import os
 import subprocess
@@ -22,9 +20,6 @@ FENCE_SETTINGS = json.dumps({"hooks": {"PreToolUse": [
 
 
 class ClaudeRunner:
-    """One spawn is one fresh headless session. Never `--resume`, never `--bare`:
-    a persona that carried context from the last attempt would be reworking from
-    memory rather than from the findings it was handed."""
 
     def __init__(self, contracts_dir, wall_clock, max_turns=None, spawn_budget=None,
                  agents_root=None):
@@ -78,8 +73,6 @@ class ClaudeRunner:
 
 
 def shell_body(path):
-    """An agent shell's markdown after its frontmatter — what `--agent` would have
-    made the system prompt."""
     with open(path) as stream:
         text = stream.read()
     if text.startswith("---\n"):
@@ -88,7 +81,6 @@ def shell_body(path):
 
 
 def ending_of(payload):
-    """How one headless session ended, read off its JSON envelope."""
     subtype = payload.get("subtype")
     if subtype == "max_turns":
         return "exhausted"

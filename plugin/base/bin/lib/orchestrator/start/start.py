@@ -1,5 +1,3 @@
-"""t = 0: everything that can refuse, and the state the run starts from."""
-
 import json
 import os
 import shutil
@@ -16,8 +14,6 @@ from ..util import now_iso, parse_version, slugify, tail
 
 
 def write_identity(run):
-    """Step 9, and the first thing this run writes: every step above it can
-    still refuse, and a refusal may not empty the last run's account."""
     run.report.truncate()
     run.report.write_block(identity_block(run), "identity")
 
@@ -165,10 +161,6 @@ def check_ceiling(run):
 
 
 def select_waves(run):
-    """What this run plans against, and what it may actually execute: the plan's
-    waves narrowed to the goal's closure, and that list truncated to the declared
-    ceiling. Both are kept — the waves beyond the ceiling are units this run knows
-    about and will not reach, which is a roster line rather than an omission."""
     planned = [list(wave) for wave in run.plan["waves"]]
     goal = run.plan.get("goal")
     if goal:
@@ -183,9 +175,6 @@ def select_waves(run):
 
 
 def plan_roster(run, planned, waves):
-    """The unit roster this run starts from, and the entries still to derive. A
-    unit the ceiling puts out of reach is recorded and never derived — nothing
-    would read its contract."""
     runnable = set(unit for wave in waves for unit in wave)
     planned_ids = set(unit for wave in planned for unit in wave)
     units = {}
@@ -206,9 +195,6 @@ def plan_roster(run, planned, waves):
 
 
 def derive_unit(run, entry):
-    """One unit's contract, in the goal worktree. Plan already ran derive over the
-    whole frontier, so a non-zero exit here is a refusal rather than a finding: the
-    substrate changed under us."""
     proc = subprocess.run([os.path.join(run.bin, "emanate-derive.sh"), entry["kind"],
                            "--file", entry["path"]],
                           cwd=run.goal_worktree, text=True,
@@ -234,9 +220,6 @@ def blank_unit(entry):
 
 
 def new_state(run, waves, units):
-    """`inspire.emanate-state/1` — the run's whole record, written atomically after
-    every transition. The graph resumes from its own checkpoint; this is the
-    account, and what a resume rebuilds the run from."""
     run.state_path = os.path.join(run.run_dir, "state.json")
     run.state = {
         "schema": STATE_SCHEMA, "run_id": run.run_id, "stamp": run.stamp,
@@ -254,8 +237,6 @@ def new_state(run, waves, units):
 
 
 def baseline(run):
-    """A red baseline in realized territory refuses: GV-05 cannot tell a
-    pre-existing failure from one this run caused."""
     roots = [root for root in run.config["tests_roots"]
              if any(files for _, _, files in
                     os.walk(os.path.join(run.goal_worktree, root)))]

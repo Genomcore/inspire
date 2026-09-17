@@ -1,6 +1,3 @@
-"""Git, serialized: every write to a ref, a worktree or a commit — and the paths
-this run derives from them."""
-
 import hashlib
 import os
 import subprocess
@@ -45,8 +42,6 @@ def contract_path(run, unit_id):
 
 
 def fresh_worktree(run, unit_slug, phase, ref):
-    """A phase worktree at `ref`, cut anew: a tree left behind by a killed run is
-    discarded rather than reused half-built."""
     worktree = os.path.join(run.repo, WORKTREES_DIR, "emanate-%s-%s-%s-%s"
                             % (run.goal_slug, unit_slug, run.stamp, phase))
     if os.path.exists(worktree):
@@ -112,10 +107,6 @@ def promote(run, ustate, verdict):
 
 
 def advance_onto_goal(run, ustate, conflicting):
-    """A sibling promoted first and both wrote `conflicting`. Merge the goal branch
-    into the integration branch, taking the goal's version of every conflicting
-    path; the unit's own version stays one commit back for the persona to read.
-    Done in the verify worktree, which already sits detached at the tip."""
     worktree = ustate["verify_worktree"]
     with run.git_lock:
         git(run, ["merge", "--no-commit", run.goal_branch], cwd=worktree, check=False)

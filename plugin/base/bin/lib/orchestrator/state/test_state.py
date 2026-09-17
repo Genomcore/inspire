@@ -4,7 +4,6 @@ from orchestrator.state import SpawnResult, reconcile
 
 
 class Reconcile(unittest.TestCase):
-    """What a resume does to the record beyond reading it back."""
 
     def killed(self, **over):
         unit = {"status": "in-phase", "phase": "tester", "timeline": [

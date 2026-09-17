@@ -1,5 +1,3 @@
-"""The small helpers: slugs, subprocesses, atomic JSON, the two parsers."""
-
 import datetime
 import json
 import os
@@ -16,8 +14,6 @@ def now_iso():
 
 
 def elapsed_seconds(started_iso, ended_iso):
-    """Whole seconds between two `now_iso()` stamps; 0 when either is missing or
-    the end is the resume's `interrupted` marker."""
     if not started_iso or not ended_iso or ended_iso == "interrupted":
         return 0
     return int((datetime.datetime.strptime(ended_iso, ISO)
@@ -25,8 +21,6 @@ def elapsed_seconds(started_iso, ended_iso):
 
 
 def slugify(text):
-    """The slug rule (README § The branch scheme): runs of anything outside a-z0-9
-    collapse to one hyphen."""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 

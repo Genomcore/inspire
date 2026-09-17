@@ -1,5 +1,3 @@
-"""What a resume does to the run's record, and the one shape a spawn answers in."""
-
 import datetime
 
 from ..constants import ROLES
@@ -27,9 +25,6 @@ class SpawnResult:
 
 
 def set_phase(run, ustate, phase):
-    """The only writer of `ustate["phase"]`. Closing the open `timeline` entry and
-    opening the next is what makes the timeline the record of where a unit's
-    time went; the report turns the entries into durations."""
     close_timeline(ustate)
     if phase is not None:
         ustate["timeline"].append({"phase": phase, "started_at": now_iso(), "ended_at": None})
@@ -38,13 +33,6 @@ def set_phase(run, ustate, phase):
 
 
 def reconcile(data):
-    """The three things a resume does to a record beyond reading it back, and the
-    one place they are written. A run written before a key existed grows it — the
-    run-id stamp is UTC in its own shape, so it converts to the ISO one. Whatever
-    the kill left open is closed now: the real end is unrecoverable, so the entry
-    is marked interrupted rather than charged the downtime. And the phase that was
-    in flight is nobody's judgment, so it counts as an infrastructural ending —
-    the unit re-enters at the first role it has not been through."""
     data.setdefault("started_at", datetime.datetime.strptime(
         data["stamp"], "%Y%m%d-%H%M%S").strftime(ISO))
     data.setdefault("ended_at", None)

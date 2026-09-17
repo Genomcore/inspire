@@ -1,18 +1,13 @@
-"""The four ways this process stops: a refusal, an internal defect, an
-infrastructural failure nobody judged, and a unit that cannot go on."""
-
-
 class Refusal(Exception):
-    """t=0 said no. Nothing was spawned, and nothing of the operator's moved."""
+    pass
 
 
 class Internal(Exception):
-    """A tool answered outside its documented exit codes."""
+    pass
 
 
 class Infrastructural(Exception):
-    """A phase failed without anyone judging it — a crash, an empty emission, a
-    recipe step that would not run. Nobody rejected the persona."""
+    pass
 
 
 class Stall(Exception):

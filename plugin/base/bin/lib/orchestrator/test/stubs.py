@@ -1,5 +1,3 @@
-"""A `run` and a unit the way the modules read them — attributes, no behaviour."""
-
 import threading
 from types import SimpleNamespace
 

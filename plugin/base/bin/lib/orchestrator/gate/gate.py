@@ -1,5 +1,3 @@
-"""The deterministic half: the gate, arbitration, and the mutation drill."""
-
 import json
 import os
 import subprocess
@@ -37,8 +35,6 @@ def run_gate(run, ustate):
 
 
 def arbitrate(run, ustate, verdict, results_path, verdict_path):
-    """A red test against a wrong body. The derived contract is the referee, and
-    the answer is never the losing agent's to give."""
     failing = sorted(set(
         citation["file"]
         for claim in verdict.get("claims") or []
@@ -74,8 +70,6 @@ def arbitrate(run, ustate, verdict, results_path, verdict_path):
 
 
 def drill(run, ustate):
-    """A measurement, never a gate: it runs only on a unit that already passed,
-    it reaches nothing, and it can never fail a run."""
     if not run.config.get("narrowed_test"):
         ustate["drill"] = "drill skipped — no narrowed-test command declared"
         run.save()

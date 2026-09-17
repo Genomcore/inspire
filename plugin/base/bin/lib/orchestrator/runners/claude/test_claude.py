@@ -55,7 +55,6 @@ class Command(unittest.TestCase):
 
 
 class Fence(unittest.TestCase):
-    """The PreToolUse hook: a file tool may touch nothing outside the worktree."""
 
     def verdict(self, tool_input, cwd):
         import json

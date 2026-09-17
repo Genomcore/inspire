@@ -1,5 +1,3 @@
-"""The agent shells: their `tools:` allowlists, and the roster t=0 demands."""
-
 import os
 import re
 
@@ -8,7 +6,6 @@ from ..errors import Refusal
 
 
 def parse_tools_line(text):
-    """An agent shell's `tools:` allowlist, or None when the frontmatter has none."""
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None
@@ -23,7 +20,6 @@ def parse_tools_line(text):
 
 
 def is_read_only(tools):
-    """D3: an overseer writes nothing, and Bash can write."""
     return tools is not None and not any(tool in WRITING_TOOLS for tool in tools)
 
 

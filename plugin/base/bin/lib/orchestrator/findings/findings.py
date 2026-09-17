@@ -1,11 +1,7 @@
-"""The one finding shape, how a brief renders it, and what a gate verdict means."""
-
 from ..constants import TESTER_GATE_CLASSES
 
 
 def finding(source, title, issue, follow_up, severity="error", cls=None):
-    """The one finding shape this process hands around, rendered by
-    `_references/findings-format.md`'s three slots."""
     record = {"source": source, "severity": severity, "title": title,
               "issue": issue, "follow_up": follow_up}
     if cls:
@@ -28,8 +24,6 @@ def render_findings(findings):
 
 
 def render_brief(brief):
-    """A brief is pointers and facts. Nothing here says what the role emits — the
-    role doc says that, and the derived contract says what this unit needs."""
     lines = ["# %s" % brief.get("heading", "Emanation handoff"), ""]
     for label, key in (("role", "role"), ("role doctrine", "role_doc"),
                        ("unit", "unit_id"), ("kind", "unit_kind"),
@@ -61,13 +55,6 @@ def render_brief(brief):
 
 
 def route_gate_verdict(verdict):
-    """What a gate verdict means for the loop: (action, subject).
-
-    `pass` · `stall` on a class no persona can answer · `arbitrate` on GV-03,
-    where only the contract can say who is at fault · `rework` for one role.
-    GV-01/02/04 are tester-shaped and reach the gate only when the tester's own
-    checks missed them, so they route back there rather than to the implementer.
-    """
     findings = verdict.get("findings") or []
     classes = [item.get("class") for item in findings]
     if verdict.get("verdict") == "pass":
@@ -83,8 +70,6 @@ def route_gate_verdict(verdict):
 
 
 def conflict_role(tests_roots, paths):
-    """Who reworks a promote conflict: the tester when every path is a test, the
-    implementer otherwise — the same split the owned pathspecs draw."""
     roots = tuple(root.rstrip("/") + "/" for root in tests_roots)
     return "tester" if all(path.startswith(roots) for path in paths) else "implementer"
 
@@ -99,7 +84,6 @@ def conflict_findings(ustate, paths):
 
 
 def gate_findings(verdict):
-    """The gate's own `{class, target, message, remedy}` rows, in this process's shape."""
     return [finding("emanate-gate", "%s — %s" % (row.get("class"), row.get("target")),
                     row.get("message", ""), row.get("remedy", ""), cls=row.get("class"))
             for row in verdict.get("findings") or []]
@@ -112,9 +96,6 @@ def gate_digest(verdict):
 
 
 def targets_unit(target, unit):
-    """A rule's finding is this unit's when it names this unit's path or id — the
-    display form with `::` included. Everything else in the scoped path is a
-    sibling, and grading it here would halt the wave on its own remaining work."""
     if not target:
         return False
     return target in (unit["path"], unit["id"]) or target.replace("::", ".") == unit["id"]

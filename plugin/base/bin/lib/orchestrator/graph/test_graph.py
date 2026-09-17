@@ -55,7 +55,6 @@ def verdict(*classes, **over):
 
 
 class Topology(unittest.TestCase):
-    """The flow, read off the compiled graph rather than the source."""
 
     def test_the_run_graph_compiles_with_every_stage_of_the_flow(self):
         nodes = set(graphmod.build().get_graph().nodes)
@@ -84,8 +83,6 @@ class Topology(unittest.TestCase):
 
 
 def build_repo(root):
-    """The fixture project an operator would really have: the plan fixture's spec
-    tree as the KB, a suite, the shells, and the two ignore lines t=0 demands."""
     os.makedirs(os.path.join(root, "tools"))
     os.makedirs(os.path.join(root, ".inspire"))
     shutil.copytree(FIXTURE, os.path.join(root, "spec"))
@@ -105,8 +102,6 @@ def build_repo(root):
 
 
 def run_args(root, script, **over):
-    """The `run` arguments an operator would pass, and the script the fake runner
-    answers from."""
     fake = os.path.join(root, "..", "fake")
     os.makedirs(fake, exist_ok=True)
     with open(os.path.join(fake, "script.json"), "w") as stream:
@@ -119,9 +114,6 @@ def run_args(root, script, **over):
 
 
 def drive(root, entry, args):
-    """One invocation over that project, from inside it. The process reports its
-    own ending on stderr; a `-v` line per case is what the suite reads, so the
-    account goes to the buffer here."""
     run = Orchestrator(SimpleNamespace(**args))
     here = os.getcwd()
     os.chdir(root)
@@ -133,8 +125,6 @@ def drive(root, entry, args):
 
 
 def emanate(root, script, **over):
-    """One `run_graph` over that project, the way `run` would reach it: the run
-    and the state the graph ended with."""
     return drive(root, graphmod.run_graph, run_args(root, script, **over))
 
 
@@ -160,8 +150,6 @@ def emanate_until_killed(root, script, **over):
 @unittest.skipUnless(shutil.which("uv") and shutil.which("git") and shutil.which("bash"),
                      "the process needs uv, git and bash to reach its first spawn")
 class EndToEnd(unittest.TestCase):
-    """The graph driven by the fake runner over `clean-three-waves`: the same
-    three waves, four units and one report the loop has always produced."""
 
     def setUp(self):
         self.root = os.path.join(tempfile.mkdtemp(), "repo")

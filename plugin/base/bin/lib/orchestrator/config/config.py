@@ -1,5 +1,3 @@
-"""The emanation config: what makes one usable, and how it is loaded."""
-
 import os
 
 from ..constants import CONFIG_SCHEMA
@@ -8,7 +6,6 @@ from ..util import read_json
 
 
 def validate_config(config):
-    """Every problem with a parsed emanation config. Empty means usable."""
     if not isinstance(config, dict):
         return ["the config is not a JSON object"]
     problems = []

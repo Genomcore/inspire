@@ -1,7 +1,3 @@
-"""One unit's handoff sequence: prepare → spawn → the A/B/C/D boundary, and the
-suite runs the boundary and the gate both read. The sequence itself is `graph/`;
-each step here is one of its nodes."""
-
 import json
 import os
 import subprocess
@@ -14,9 +10,6 @@ from ..util import now_iso, parse_jsonl, read_json, sh, tail, write_json_atomic
 
 
 def run_suite(run, cwd, out_dir):
-    """The whole suite, then `emanate-results.sh` over what it wrote. A suite
-    command is tolerated non-zero — a red suite is exactly the case the gate
-    needs — but one that leaves no report has not run at all."""
     os.makedirs(out_dir, exist_ok=True)
     reports = []
     dialect = "jest"
@@ -56,7 +49,6 @@ def verify_suite(run, ustate, cwd, out_dir):
 
 
 def tests_root_args(run, worktree):
-    """The tests roots that exist in this tree, as the tools take them."""
     return [a for r in run.config["tests_roots"]
             if os.path.isdir(os.path.join(worktree, r))
             for a in ("--tests-root", r)]
@@ -97,7 +89,6 @@ def spawn(run, shell, brief, schema, cwd):
 
 
 def unit_brief(run, ustate):
-    """The four pointers every brief carries, whoever reads it."""
     return {"unit_id": ustate["id"], "unit_path": ustate["path"],
             "unit_slug": ustate["slug"],
             "contract_path": gitmod.contract_path(run, ustate["id"])}
@@ -125,8 +116,6 @@ def environment_step(run):
 
 
 def after_infrastructural(run, ustate, role, reason, free_retry_used, findings):
-    """Nobody judged the persona, so the first one of a handoff is free; every
-    later one spends a rework attempt."""
     ustate["infra_retries"][role] += 1
     run.save()
     if free_retry_used:
@@ -189,7 +178,6 @@ def checks_a(run, ustate, role, worktree, tip_before):
     return []
 
 
-
 def harvest(run, ustate, role, worktree):
     with run.git_lock:
         proc = gitmod.run_harvest(run, ustate, role, worktree, ["--discard"])
@@ -236,9 +224,6 @@ def checks_c(run, ustate, role, changed):
 
 
 def tester_checks(run, ustate):
-    """The two repo-scoped rules, scoped to this unit and attributed: only an
-    error whose subject is this unit halts it, and the rest are reported. Then
-    the all-red invariant, which only holds while no body exists."""
     worktree = ustate["verify_worktree"]
     scope = os.path.dirname(ustate["path"]) or "."
     env = dict(os.environ)
@@ -288,8 +273,6 @@ def frozen_path_findings(run, changed):
 
 
 def overseer_brief(run, ustate, role, changed):
-    """What every overseer of this boundary reads. The shell's own heading is
-    stamped on at the spawn — the rest is one brief, read N times."""
     return {"heading": "overseer read — %s at the %s boundary" % (ustate["id"], role),
             "role": "overseer", "boundary": role, "unit_kind": ustate["kind"],
             "worktree": ustate["verify_worktree"], "changed_paths": changed,
@@ -302,7 +285,6 @@ def overseer_brief(run, ustate, role, changed):
 
 
 def overseer_answer(run, ustate, shell, result):
-    """One overseer's answer, as findings: empty when it approved."""
     structured = result.structured or {}
     approved = result.ending == "exit" and structured.get("verdict") == "APPROVE"
     rows = structured.get("findings") or []

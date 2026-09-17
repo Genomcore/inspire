@@ -1,5 +1,3 @@
-"""The operator's account: the log file, and the three blocks written into it."""
-
 import glob
 import os
 import threading
@@ -10,9 +8,6 @@ from ..util import elapsed_seconds, read_json
 
 
 class Report:
-    """`report-skeleton.md` filled, never composed: an identity block at t=0, one
-    block as each wave closes, one closing block at the exit. Each is committed on
-    the goal branch as it is written, so the account travels with the work."""
 
     def __init__(self, path, commit):
         self.path = path
@@ -31,8 +26,6 @@ class Report:
             pass
 
     def rewrite_status(self, status):
-        """`status` is the one line this file corrects in place — the worked example
-        of the skeleton's own "the last position wins"."""
         with self.lock:
             with open(self.path) as stream:
                 text = stream.read()
@@ -176,7 +169,6 @@ TOKEN_KEYS = (("in", "input_tokens", "inputTokens"),
 
 
 def tokens_of(usage):
-    """A usage object carries one spelling or the other, never both."""
     return Counter(dict((label, int(usage.get(snake) or usage.get(camel) or 0))
                         for label, snake, camel in TOKEN_KEYS))
 
@@ -196,7 +188,6 @@ def blank_row():
 
 
 def per_key(spawns, key_of):
-    """Rows grouped by `key_of(spawn)`: spawns, cost, turns, wall seconds, tokens."""
     rows = {}
     for spawn in spawns:
         row = rows.setdefault(key_of(spawn) or "*run*", blank_row())
@@ -209,7 +200,6 @@ def per_key(spawns, key_of):
 
 
 def per_model(spawns):
-    """{model: row} from each spawn's `modelUsage`, cost included per model."""
     models = {}
     for spawn in spawns:
         for model, usage in (spawn.get("model_usage") or {}).items():
@@ -221,14 +211,11 @@ def per_model(spawns):
 
 
 def span(started_at, ended_at):
-    """`hms` of a stamped span, or the marker a resume left on an interrupted one."""
     return "interrupted" if ended_at == "interrupted" else \
         hms(elapsed_seconds(started_at, ended_at))
 
 
 def phase_durations(unit):
-    """{phase: seconds} over a unit's timeline; a rework of a role adds to its row.
-    An interrupted entry adds nothing and is named on its own."""
     out = Counter()
     for entry in unit["timeline"]:
         if entry["ended_at"] == "interrupted":

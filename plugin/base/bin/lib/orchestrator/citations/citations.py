@@ -1,5 +1,3 @@
-"""The `@claim` scan over the tests roots, and its four classes against a contract."""
-
 import re
 import subprocess
 
@@ -27,7 +25,6 @@ MESSAGES = {
 
 
 def scan_citations(roots, cwd):
-    """Every `@claim` token under the tests roots, as {file, line, id, fingerprint}."""
     lines = subprocess.run(
         ["grep", "-rn", "--exclude-dir=.git", "@claim", *roots],
         cwd=cwd, capture_output=True, text=True).stdout.splitlines()
@@ -37,14 +34,6 @@ def scan_citations(roots, cwd):
 
 
 def classify_citations(contract, citations):
-    """The four classes of the citation check, over one unit's contract.
-
-    CI-01 a token naming no claim of this unit · CI-02 a citation with no
-    fingerprint · CI-03 a fingerprint that does not match the contract's ·
-    CI-04 a `test`-oracle claim nothing cites. Coverage reads the id and
-    realization reads the fingerprint, so an id-only citation passes the gate and
-    leaves the unit unrealized for good — which is why CI-02 is a finding here.
-    """
     claims = dict((claim["id"], claim) for claim in contract.get("claims", []))
     prefixes = set(claim_id.split("/", 1)[0] for claim_id in claims)
     unit_id = (contract.get("unit") or {}).get("id")

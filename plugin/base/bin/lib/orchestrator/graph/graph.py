@@ -1,21 +1,3 @@
-"""The flow, declared: the same modules, wired as a graph instead of a loop.
-
-Every node here calls a function that already exists — `start`, `handoff`, `gate`,
-`git`, `report`. What the graph carries is the control flow around them, and it is
-the only place any of it is written: the waves, the handoff's retries, and the
-gate's verdict machine. The judgment, the subprocesses and the records are the
-modules' own.
-
-The `run` — an `Orchestrator`, the shared context every module reads — travels in
-the invocation's `configurable` rather than in the state: it holds locks, an open
-report and a runner, none of which is a value. What the state carries is the run's
-record — the roster, the waves, the spend, and the pointers the run computed at
-t=0 — so the flow routes on the state rather than on the run. The record's own
-dicts travel, not copies: a node spends a rework where it is spent, and the state
-carries the same object the run saved. `units` takes a reducer because a wave's
-units answer in parallel.
-"""
-
 import operator
 import os
 
@@ -38,19 +20,12 @@ from ..state import set_phase
 
 
 def collect(left, right):
-    """The overseers' fan-in, with a reset: `None` empties it, so the next
-    boundary is read on its own answers."""
     if right is None:
         return []
     return (left or []) + right
 
 
 class RunState(TypedDict, total=False):
-    """The run's record, and what the flow routes on: what `run.state` holds
-    (`units`, `waves`, `spend_usd`, `spawn_count`) plus the pointers the run
-    computed at t=0 and has carried as attributes (`run_dir`, `goal_branch`,
-    `goal_worktree`, `plan`). The per-unit halves — `timeline`, `infra_retries`,
-    `rework` — are on `UnitState`, which is where the record keeps them."""
     run_dir: str
     goal_branch: str
     goal_worktree: str
@@ -67,10 +42,6 @@ class RunState(TypedDict, total=False):
 
 
 class UnitState(TypedDict, total=False):
-    """One unit's trip around the boundary, and the unit's own counters: `rework`
-    is what `stalled` cuts on, `infra_retries` what the free retry spends, and
-    `timeline` where its time went. They are the record's own objects, seeded at
-    `prepare` and spent in place, so the state and the record never disagree."""
     unit_id: str
     rework: dict
     infra_retries: dict
@@ -94,15 +65,10 @@ def _run(config):
 
 
 def _next_role(ustate):
-    """The first persona this unit has not been through. None when the sequence
-    is spent — a resumed unit re-enters at the gate."""
     return next((role for role in ROLES if role not in ustate["done"]), None)
 
 
 def preflight(state, config):
-    """The identity the run is recorded under, into the state. `run.preflight()`
-    itself runs in `run_graph`, before the invocation — the checkpoint file and the
-    thread are named after what it computes — so what is left here is its record."""
     run = _run(config)
     return {"run_dir": run.run_dir, "goal_branch": run.goal_branch,
             "goal_worktree": run.goal_worktree}
@@ -118,7 +84,6 @@ def plan(state, config):
 
 
 def route_plan(state):
-    """A goal already reached still gets its account; nothing else runs."""
     if state.get("exit_reason"):
         return ["identity"]
     return ["ceiling", "shells", "derive_units", "baseline"]
@@ -135,8 +100,6 @@ def shells(state, config):
 
 
 def derive_units(state, config):
-    """The roster this run starts from. The contracts it still owes are derived by
-    the graph rather than by a pool of this node's own."""
     run = _run(config)
     planned, waves = startmod.select_waves(run)
     units, pending = startmod.plan_roster(run, planned, waves)
@@ -144,8 +107,6 @@ def derive_units(state, config):
 
 
 def fan_derive(state):
-    """One `Send` per contract: the derivations are independent, so the graph
-    schedules them the way it schedules a wave's units."""
     return ([Send("derive", {"entry": entry}) for entry in state["pending"]]
             or "identity")
 
@@ -161,8 +122,6 @@ def baseline(state, config):
 
 
 def identity(state, config):
-    """Step 9, and the first thing a run writes: everything above it can still
-    refuse, and a refusal may not empty the last run's account."""
     run = _run(config)
     startmod.new_state(run, state.get("waves") or [], state.get("units") or {})
     startmod.write_identity(run)
@@ -176,8 +135,6 @@ def wave(state, config):
 
 
 def fan_out(state):
-    """`--parallel` is the invocation's `max_concurrency`: the graph schedules a
-    wave's units, so nothing here counts workers."""
     if not state["runnable"]:
         return "wave_close"
     return [Send("unit", {"unit_id": unit_id}) for unit_id in state["runnable"]]
@@ -205,8 +162,6 @@ def report(state, config):
 
 
 def unit(payload, config):
-    """The subgraph, run for one unit, under the same guard the loop ran it under:
-    a stall or an infrastructural failure ends this unit and no other."""
     run = _run(config)
     ustate = run.state["units"][payload["unit_id"]]
     with run.unit_guard(ustate):
@@ -217,8 +172,6 @@ def unit(payload, config):
 
 
 def unit_recursion_limit(run):
-    """Every rework is another trip around a boundary, eight or so supersteps.
-    The budget is the operator's, so the ceiling follows it."""
     return 64 + 8 * len(ROLES) * (run.args.rework + 1)
 
 
@@ -236,9 +189,6 @@ def route_prepare(state, config):
 
 
 def persona(role):
-    """prepare → spawn → A read-only checks. A rejection here spends a rework and
-    the edge comes straight back; an infrastructural ending is nobody's judgment,
-    so the first one of a boundary is free."""
     def node(state, config):
         run = _run(config)
         ustate = run.state["units"][state["unit_id"]]
@@ -273,7 +223,6 @@ def persona(role):
 
 
 def route_retry(state):
-    """The one shape every boundary node answers in: back to the persona, or on."""
     return state["role"] if state.get("retry") else None
 
 
@@ -304,7 +253,6 @@ def route_harvest(state):
 
 
 def verify(state, config):
-    """C: the tool checks, in the verify worktree at the new tip."""
     run = _run(config)
     ustate = run.state["units"][state["unit_id"]]
     rejection = handoffmod.checks_c(run, ustate, state["role"], state["changed"])
@@ -316,8 +264,6 @@ def verify(state, config):
 
 
 def route_verify(state, config):
-    """D: one `Send` per overseer. The roster is additive-only, so the fan-out is
-    as wide as the project declared it, never two."""
     return route_retry(state) or [Send("overseer", dict(state, shell=shell))
                                   for shell in _run(config).overseer_shells]
 
@@ -334,7 +280,6 @@ def overseer(state, config):
 
 
 def overseers(state, config):
-    """The join. One overseer's rejection is the boundary's."""
     run = _run(config)
     ustate = run.state["units"][state["unit_id"]]
     rejections = state.get("rejections") or []
@@ -367,15 +312,12 @@ def gate(state, config):
 
 
 def route_gate(state):
-    """The gate's four answers. `drill` is the pass — a measurement, never a
-    gate — and promotion is the node behind it."""
     action, _ = route_gate_verdict(state["verdict"])
     return {"pass": "drill", "stall": "stalled", "arbitrate": "arbitrate"}.get(
         action, "rework")
 
 
 def stalled(state, config):
-    """A class no persona can answer. The cut is the exception the unit node reads."""
     _, subject = route_gate_verdict(state["verdict"])
     findings = gate_findings(state["verdict"])
     raise Stall("gate", "the gate returned %s: %s"
@@ -411,8 +353,6 @@ def drill(state, config):
 
 
 def promote(state, config):
-    """A sibling that promoted first onto a path this unit also wrote is one more
-    edge back to the persona that owns it — and the whole boundary again."""
     run = _run(config)
     ustate = run.state["units"][state["unit_id"]]
     conflicting = gitmod.promote(run, ustate, state["verdict"])
@@ -487,20 +427,10 @@ UNIT = build_unit()
 
 
 def checkpoint_path(run):
-    """The run's thread, kept where the run keeps everything else."""
     return os.path.join(run.run_dir, "checkpoint.sqlite")
 
 
 def invoke(run, state):
-    """One invocation is one run: threaded on the run id, checkpointed under the
-    run dir, and `--parallel` wide. `state` is the run's opening record, or `None`
-    to pick the thread up where it was killed.
-
-    The final state is the run's record as the graph carried it, and is returned.
-    `state.json` is projected rather than returned: every node that mutates the
-    record mutates the record's own objects — which is what the state carries —
-    and `run.save()` writes the file, so the projection is the same one call the
-    loop made. The arbiter is an agent rather than a human, so no node interrupts."""
     with SqliteSaver.from_conn_string(checkpoint_path(run)) as saver:
         return build(saver).invoke(
             state, {"configurable": {"run": run, "thread_id": run.run_id},
@@ -509,17 +439,10 @@ def invoke(run, state):
 
 
 def run_graph(run):
-    """A new run. Naming the thread and the checkpoint file needs the identity
-    `preflight` computes, so that step runs here, before the graph it also opens."""
     run.preflight()
     return invoke(run, {"wave_index": 0, "waves": [], "units": {}})
 
 
 def resume_graph(run):
-    """A killed run, picked up from its own checkpoint. What the checkpointer does
-    not carry is the run — locks, an open report, a runner — so that is rebuilt
-    from `state.json` first, and `reconcile` is what the kill left open: the
-    interrupted timeline entry, the free infrastructural retry, and any key an
-    older schema never wrote."""
     run.resume()
     return invoke(run, None)

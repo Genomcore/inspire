@@ -44,8 +44,6 @@ class Names(unittest.TestCase):
 
 
 class AdvanceOntoGoal(unittest.TestCase):
-    """Real git: a goal branch that moved under a unit, and the unit's branch
-    brought onto it taking the goal's version of the one path both wrote."""
 
     def test_the_conflicting_path_takes_the_goal_s_version_and_keeps_the_unit_s_behind(self):
         with tempfile.TemporaryDirectory() as root:

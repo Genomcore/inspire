@@ -1,5 +1,3 @@
-"""The scripted runner: the whole process driven without a model."""
-
 import os
 import sys
 import threading
@@ -10,10 +8,6 @@ from ...util import read_json, write_json_atomic
 
 
 class FakeRunner:
-    """The process driven without a model. `DIR/script.json` says what each spawn
-    does and `DIR/.counters.json` persists the sequence positions — so a `kill`,
-    which takes the whole process down mid-phase, resumes against the same script
-    rather than replaying it from the top."""
 
     COST = 0.01
 

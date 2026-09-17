@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""PreToolUse fence for a spawned persona: a file tool may touch nothing outside
-the worktree it was spawned in. Reads the hook payload on stdin; exit 2 blocks
-the call and the stderr line is what the agent reads. Bash is not fenced here —
-the deny rules and the harvest filter cover it."""
 
 import json
 import os

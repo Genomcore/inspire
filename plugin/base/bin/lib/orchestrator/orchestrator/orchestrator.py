@@ -1,7 +1,3 @@
-"""The run itself: the shared context every module reads, and the record it keeps.
-
-The flow over it is `graph/` — every method here is called by a node of it."""
-
 import contextlib
 import datetime
 import json
@@ -42,20 +38,14 @@ class Orchestrator:
         return [name for name in sorted(self.shells) if name.endswith("-overseer.md")]
 
     def save(self):
-        """The record, written atomically after every transition — a wave's units
-        answer in parallel, so the dump is one at a time."""
         with self.state_lock:
             write_json_atomic(self.state_path, self.state)
 
     def open_report(self):
-        """The account, opened on the goal worktree — the same whether this run is
-        starting or resuming."""
         self.report = reportmod.Report(os.path.join(self.goal_worktree, LOG_PATH),
                                        lambda label: gitmod.commit_log(self, label))
 
     def preflight(self):
-        """Everything that can refuse before there is a plan to read. Each step
-        gates the next, and a refusal leaves nothing spawned."""
         self.repo = gitmod.repo_root()
         startmod.check_launch_checkout(self)
 
@@ -77,15 +67,11 @@ class Orchestrator:
         startmod.open_goal_branch(self)
 
     def plan_step(self):
-        """The plan, and the account opened on it."""
         self.plan = startmod.run_plan(self)
         write_json_atomic(os.path.join(self.run_dir, "plan.json"), self.plan)
         self.open_report()
 
     def open_wave(self, index):
-        """A wave's roster: what is left to run once a promoted, stalled or blocked
-        unit is skipped, a unit downstream of one is blocked, and the spend ceiling
-        has had its say. The one place that policy is written."""
         self.state["wave_log"].append({"index": index + 1, "started_at": now_iso(),
                                        "ended_at": None})
         runnable = []
@@ -108,8 +94,6 @@ class Orchestrator:
         return runnable, exhausted
 
     def close_wave(self, index, spend_exhausted):
-        """The wave's account, and — once the ceiling is reached — every unit no
-        later wave will now reach."""
         self.state["wave_index"] = index + 1
         self.state["wave_log"][-1]["ended_at"] = now_iso()
         self.save()
@@ -153,8 +137,6 @@ class Orchestrator:
 
     @contextlib.contextmanager
     def unit_guard(self, ustate):
-        """A stall or an infrastructural failure ends this unit and no other, and
-        whichever way it ends the unit is closed and recorded."""
         try:
             yield
         except Stall as stall:
@@ -203,9 +185,6 @@ class Orchestrator:
         sys.stderr.write("emanation %s ended: %s\n" % (self.run_id, exit_reason))
 
     def append_ledger(self):
-        """One line per ended run in `LEDGER_PATH`: the facts that let
-        twenty runs be compared without opening twenty state files. Raw facts,
-        no sums — the per-spawn records under the run dir carry the tokens."""
         data = self.state
         line = {"run_id": self.run_id, "goal_branch": self.goal_branch,
                 "launch_branch": self.launch_branch, "exit": data["exit"],
@@ -220,9 +199,6 @@ class Orchestrator:
             stream.write(json.dumps(line, sort_keys=True) + "\n")
 
     def resume(self):
-        """A killed run is resumed against its own state: the phase that was in
-        flight counts as an infrastructural ending — nobody judged it — and a unit
-        past its personas re-enters at verify and the gate."""
         self.repo = gitmod.repo_root()
         self.run_dir = os.path.join(self.repo, RUNS_DIR, self.args.run_id)
         state_path = os.path.join(self.run_dir, "state.json")

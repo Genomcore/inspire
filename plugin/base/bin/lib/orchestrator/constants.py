@@ -1,5 +1,3 @@
-"""The schemas, rosters and fixed paths the whole process reads."""
-
 CONFIG_SCHEMA = "inspire.emanate-config/1"
 STATE_SCHEMA = "inspire.emanate-state/1"
 
