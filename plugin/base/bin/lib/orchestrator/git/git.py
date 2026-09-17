@@ -36,13 +36,9 @@ def git_write(run, arguments, cwd=None, check=True):
 def commit_log(run, label):
     message = "emanate(log): %s — %s" % (run.run_id, label)
     with run.git_lock:
-        # -f: the process chose this path, so a project-wide `*.log` rule is
-        # not the operator declining it.
         git(run, ["add", "-f", LOG_PATH], cwd=run.goal_worktree)
         git(run, ["commit", "-m", message], cwd=run.goal_worktree)
 
-
-# ---- paths ----
 
 def contract_path(run, unit_id):
     return os.path.join(run.run_dir, "contracts", "%s.json" % unit_id)
@@ -86,8 +82,6 @@ def run_harvest(run, ustate, role, worktree, extra):
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-# ---- promote ----
-
 def promote(run, ustate, verdict):
     trailers = {"Emanate-Run": run.run_id, "Emanate-Unit": ustate["id"],
                 "Emanate-Template-Sha": template_sha(run),
@@ -125,8 +119,6 @@ def advance_onto_goal(run, ustate, conflicting):
     worktree = ustate["verify_worktree"]
     with run.git_lock:
         git(run, ["merge", "--no-commit", run.goal_branch], cwd=worktree, check=False)
-        # ponytail: add/add and modify/modify only — a path the goal side deleted has
-        # no "theirs" and fails here; widen when a run meets one.
         git(run, ["checkout", "--theirs", "--"] + conflicting, cwd=worktree)
         git(run, ["add", "--"] + conflicting, cwd=worktree)
         git(run, ["commit", "-m", "emanate: advance %s onto %s\n\nconflicting: %s\n"

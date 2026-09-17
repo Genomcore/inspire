@@ -16,9 +16,6 @@ EXIT_INTERNAL = 4
 
 TESTER_GATE_CLASSES = ("GV-01", "GV-02", "GV-04")
 
-# The promote message's trailer block, in the order an operator scans a log for:
-# the run and the unit first. The state file sorts its keys, so the order lives
-# here rather than in the dict the run builds.
 TRAILER_ORDER = ("Emanate-Run", "Emanate-Unit", "Emanate-Template-Sha",
                  "Emanate-Profiles", "Emanate-Gate", "Emanate-Harness")
 
@@ -62,6 +59,4 @@ WORKTREES_DIR = ".inspire/worktrees"
 RUNS_DIR = ".inspire/emanate-runs"
 CONFIG_PATH = ".inspire/emanate.json"
 LOG_PATH = ".inspire/last-emanation.log"
-# One line per ended run, append-only. Inside RUNS_DIR so the same .gitignore
-# line that keeps the run dirs out of the launch checkout keeps it out too.
 LEDGER_PATH = RUNS_DIR + "/ledger.jsonl"

@@ -9,7 +9,6 @@ import os
 import sys
 from pathlib import Path
 
-# ponytail: file tools only; a Bash-side fence is the OS sandbox, if ever needed.
 PATH_KEYS = ("file_path", "notebook_path", "path")
 
 

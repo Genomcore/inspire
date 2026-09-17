@@ -23,8 +23,6 @@ CONFIG = {"schema": "inspire.emanate-config/1", "tests_roots": ["tests"],
           "source_roots": ["source"],
           "suite": [{"command": "python3 tools/fake-jest.py {report}", "format": "jest"}]}
 
-# One assertion per `it(`, passing only when the body exists beside the spec —
-# the all-red-then-green shape the gate needs, with no marker to forge.
 FAKE_JEST = '''import glob, json, os, re, sys
 out = sys.argv[1]
 files = []
@@ -140,8 +138,6 @@ def emanate(root, script, **over):
     return drive(root, graphmod.run_graph, run_args(root, script, **over))
 
 
-# The fake runner's `kill` ending takes the whole process down, so the leg before
-# a resume is driven out of process — as it is in earnest.
 KILLABLE = """
 import json, os, sys
 sys.dont_write_bytecode = True
@@ -183,11 +179,8 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(sorted(unit for unit, record in data["units"].items()
                                 if record["status"] == "promoted"), sorted(UNITS))
         self.assertEqual(data["wave_index"], 3)
-        # The run's own thread, checkpointed where the run keeps everything else.
         self.assertTrue(os.path.exists(os.path.join(run.run_dir, "checkpoint.sqlite")))
 
-        # The state the graph ends with is that same record, carried rather than
-        # re-read from the run.
         self.assertEqual(final["run_dir"], run.run_dir)
         self.assertEqual(final["goal_branch"], run.goal_branch)
         self.assertEqual(final["goal_worktree"], run.goal_worktree)
@@ -195,11 +188,9 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(final["wave_index"], 3)
         self.assertEqual(final["exit_reason"], "goal reached")
         self.assertEqual(final["plan"]["units"], run.plan["units"])
-        # The fan-in: four units, each answering with its own record.
         self.assertEqual(sorted(final["units"]), sorted(UNITS))
         self.assertEqual(final["spawn_count"], data["spawn_count"])
         self.assertEqual(final["spend_usd"], data["spend_usd"])
-        # The unit's counters travel with it: the record's own dicts.
         self.assertEqual(final["units"]["auth.org"]["rework"],
                          data["units"]["auth.org"]["rework"])
 
@@ -219,13 +210,10 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(run.state["exit"], "goal reached")
         self.assertEqual(sorted(unit for unit, record in units.items()
                                 if record["status"] == "promoted"), sorted(UNITS))
-        # What `reconcile` did to the record the kill left open: the phase it died
-        # in is an infrastructural ending, and costs the tester no rework.
         self.assertEqual(units["auth.user"]["infra_retries"]["tester"], 1)
         self.assertEqual(units["auth.user"]["rework"]["tester"], 0)
         self.assertIn("interrupted", [entry["ended_at"]
                                       for entry in units["auth.user"]["timeline"]])
-        # The waves the kill had already closed are not re-opened.
         self.assertEqual([entry["index"] for entry in run.state["wave_log"]],
                          [1, 2, 3])
 

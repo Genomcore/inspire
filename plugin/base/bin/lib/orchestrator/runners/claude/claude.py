@@ -10,24 +10,6 @@ from ...findings import render_brief
 from ...state import SpawnResult
 from ...util import tail
 
-# Deny rules for every spawned agent. These match the COMMAND STRING and are a
-# speed bump, not a fence: an agent that spells the same call differently walks
-# past them. The robust form is a PreToolUse deny hook, which is planned and not
-# yet shipped; until it is, the harvest filter (only a phase's owned paths leave
-# its worktree) is what actually holds.
-#
-# Never `--restricted`: it ignores the project's settings, and with them the
-# `.claude/agents/` shells (`--agent` then finds nothing) and the `.claude/skills/`
-# a persona works with. Its file confinement is re-done by FENCE, a PreToolUse
-# hook passed through `--settings` (which applies whatever the operator's files
-# say); the harvest filter still decides what leaves the worktree.
-# `--strict-mcp-config` keeps the operator's MCP servers out.
-#
-# Never `--agent` either: through it the CLI (2.1.273) drops `--json-schema` and
-# `structured_output` comes back null — an overseer's verdict then reads as no
-# answer, and the unit reworks to a stall. The shell travels as
-# `--append-system-prompt <its body>` instead, with its `tools:` as the allowlist,
-# which is all `--agent` would have done with it.
 DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
               "Bash(git branch:*)", "Bash(git worktree:*)",
               "Bash(.inspire/bin/emanate-harvest.sh:*)"]

@@ -70,8 +70,6 @@ class FakeRunner:
                            cost_usd=self.COST)
 
     def _write_stub(self, cwd, brief, role, attempt, attempts):
-        # `skip_body` emits something harvestable that is NOT the body the fixture's
-        # runner looks for, so the suite stays red and the gate reaches GV-03.
         suffix = "%s-partial" % role if attempts.get("skip_body") else role
         path = os.path.join(cwd, self.config["source_roots"][0],
                             "%s.%s.ts" % (brief["unit_slug"], suffix))
@@ -79,8 +77,6 @@ class FakeRunner:
         with open(path, "w") as stream:
             stream.write("// fake %s, attempt %d\nexport const attempt = %d;\n"
                          % (role, attempt, attempt))
-        # `shared` writes one more file under a name every unit of the wave uses,
-        # with content only this unit would write: the promote conflict.
         if attempts.get("shared"):
             path = os.path.join(cwd, self.config["source_roots"][0], attempts["shared"])
             with open(path, "w") as stream:

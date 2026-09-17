@@ -53,8 +53,6 @@ class Orchestrator:
         self.report = reportmod.Report(os.path.join(self.goal_worktree, LOG_PATH),
                                        lambda label: gitmod.commit_log(self, label))
 
-    # ---------------------------------------------------------------- t = 0
-
     def preflight(self):
         """Everything that can refuse before there is a plan to read. Each step
         gates the next, and a refusal leaves nothing spawned."""
@@ -84,13 +82,10 @@ class Orchestrator:
         write_json_atomic(os.path.join(self.run_dir, "plan.json"), self.plan)
         self.open_report()
 
-    # ------------------------------------------------------------ the waves
-
     def open_wave(self, index):
         """A wave's roster: what is left to run once a promoted, stalled or blocked
         unit is skipped, a unit downstream of one is blocked, and the spend ceiling
         has had its say. The one place that policy is written."""
-        # `index` is kept: a resume re-enters a wave, and then two entries share it.
         self.state["wave_log"].append({"index": index + 1, "started_at": now_iso(),
                                        "ended_at": None})
         runnable = []
@@ -156,8 +151,6 @@ class Orchestrator:
             return "exhausted — ceiling %d reached" % self.args.ceiling
         return "goal reached"
 
-    # ------------------------------------------------------------- one unit
-
     @contextlib.contextmanager
     def unit_guard(self, ustate):
         """A stall or an infrastructural failure ends this unit and no other, and
@@ -169,8 +162,6 @@ class Orchestrator:
         except Infrastructural as failure:
             self.record_stall(ustate, Stall("infrastructural", str(failure)))
         finally:
-            # A stall leaves `phase` naming the role it stalled at, so only the
-            # timeline is closed here.
             close_timeline(ustate)
             ustate["ended_at"] = now_iso()
             self.save()
@@ -184,8 +175,6 @@ class Orchestrator:
         if gitmod.git(self, ["rev-parse", "--verify", "--quiet", "refs/heads/" + branch],
                       check=False).returncode != 0:
             gitmod.git_write(self, ["branch", branch, self.goal_branch])
-        # Recorded only once the recipe has run in it: a tree killed mid-provision
-        # is cut again on a resume rather than reused half-built.
         if not ustate["verify_worktree"]:
             worktree = gitmod.fresh_worktree(self, ustate["slug"], "verify", branch)
             handoffmod.run_recipe(self, worktree)
@@ -202,8 +191,6 @@ class Orchestrator:
             gitmod.discard(self, ustate["verify_worktree"])
             ustate["verify_worktree"] = None
         self.save()
-
-    # ------------------------------------------------------------ the report
 
     def finish(self, exit_reason):
         self.state["status"] = "ENDED"
@@ -229,12 +216,8 @@ class Orchestrator:
                                          "rework": unit["rework"]})
                               for unit_id, unit in data["units"].items()),
                 "run_dir": os.path.relpath(self.run_dir, self.repo)}
-        # ponytail: a plain append; one write() of one line, so a kill mid-append
-        # can at worst truncate the last line — a reader skips a line that fails to parse.
         with open(os.path.join(self.repo, LEDGER_PATH), "a") as stream:
             stream.write(json.dumps(line, sort_keys=True) + "\n")
-
-    # ------------------------------------------------------------- resuming
 
     def resume(self):
         """A killed run is resumed against its own state: the phase that was in

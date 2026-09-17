@@ -31,9 +31,6 @@ def check_launch_checkout(run):
     if head.returncode != 0:
         raise Refusal("HEAD is detached. Run from the branch this effort is launched from.")
     run.launch_branch = head.stdout.strip()
-    # The trailing slash is what asks the question about the DIRECTORY: neither
-    # path exists yet at t=0, and a bare name is tested as a file, which a
-    # `dir/` rule never matches.
     proc = gitmod.git(run, ["check-ignore", WORKTREES_DIR + "/", RUNS_DIR + "/"],
                       check=False)
     ignored = proc.stdout.split()
@@ -92,9 +89,6 @@ def build_runner(run):
 
 
 def open_goal_branch(run):
-    # A goal worktree removed by hand — `.inspire/worktrees/` is scratch this
-    # process itself tells the operator to ignore — stays registered, and git
-    # then refuses to re-attach it. Pruning first is a no-op when nothing is stale.
     gitmod.git_write(run, ["worktree", "prune"])
     run.goal_branch = "emanate/%s" % run.goal_slug
     run.goal_worktree = os.path.join(run.repo, WORKTREES_DIR, "emanate-%s" % run.goal_slug)

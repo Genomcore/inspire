@@ -9,14 +9,11 @@ from ..util import ISO, now_iso, tail
 class SpawnResult:
     def __init__(self, ending, text="", structured=None, session_id="", cost_usd=0.0,
                  usage=None, model_usage=None, num_turns=0):
-        self.ending = ending  # exit | exhausted | budget | timeout | crash | ratelimit
+        self.ending = ending
         self.text = text
         self.structured = structured
         self.session_id = session_id
         self.cost_usd = cost_usd
-        # `usage` and `model_usage` are the CLI's own `usage` / `modelUsage`
-        # objects, kept verbatim: the record is raw facts, and every aggregate
-        # (per role, per model, per unit) is computed by the report from these.
         self.usage = usage or {}
         self.model_usage = model_usage or {}
         self.num_turns = int(num_turns or 0)
@@ -64,7 +61,7 @@ def reconcile(data):
             unit["infra_retries"][unit["phase"]] += 1
         if unit["timeline"] and unit["timeline"][-1]["ended_at"] is None:
             unit["timeline"][-1]["ended_at"] = "interrupted"
-        unit["phase"] = None  # set_phase would stamp a clock that did not run
+        unit["phase"] = None
         unit["status"] = "pending"
 
 

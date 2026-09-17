@@ -73,8 +73,6 @@ def arbitrate(run, ustate, verdict, results_path, verdict_path):
     return role, findings + gate_findings(verdict)
 
 
-# ---- the drill ----
-
 def drill(run, ustate):
     """A measurement, never a gate: it runs only on a unit that already passed,
     it reaches nothing, and it can never fail a run."""

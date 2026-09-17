@@ -54,11 +54,9 @@ class AdvanceOntoGoal(unittest.TestCase):
             sh(root, "add", "-A"); sh(root, "commit", "-qm", "base")
             sh(root, "branch", "emanate/all")
             sh(root, "branch", "emanate/all-b-x")
-            # the goal moves: a sibling promoted registry.txt
             sh(root, "checkout", "-q", "emanate/all")
             write(root, "registry.txt", "by a\n")
             sh(root, "add", "-A"); sh(root, "commit", "-qm", "promote a")
-            # the unit wrote the same path, and its own body
             sh(root, "checkout", "-q", "emanate/all-b-x")
             write(root, "registry.txt", "by b\n"); write(root, "b.txt", "body b\n")
             sh(root, "add", "-A"); sh(root, "commit", "-qm", "harvest b")

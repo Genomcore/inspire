@@ -169,13 +169,6 @@ def closing_block(run, exit_reason):
     return "\n".join(lines)
 
 
-# ------------------------------------------------------------ the spend section
-#
-# Everything below is computed at write time from the raw records — the
-# `spawns/*.json` files and the `timeline` / `wave_log` stamps in state. Nothing
-# here is stored back: the JSON stays facts, the report is the only aggregate.
-
-# (label, key in the CLI's `usage`, key in its `modelUsage`)
 TOKEN_KEYS = (("in", "input_tokens", "inputTokens"),
               ("out", "output_tokens", "outputTokens"),
               ("cache read", "cache_read_input_tokens", "cacheReadInputTokens"),

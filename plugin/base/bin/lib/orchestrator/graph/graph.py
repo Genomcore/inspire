@@ -59,8 +59,6 @@ class RunState(TypedDict, total=False):
     wave_index: int
     pending: list
     runnable: list
-    # The one fan-in: each unit of a wave answers with its own record, never
-    # the roster, so the answers merge rather than the last one winning.
     units: Annotated[dict, operator.or_]
     spend_usd: float
     spawn_count: int
@@ -100,8 +98,6 @@ def _next_role(ustate):
     is spent — a resumed unit re-enters at the gate."""
     return next((role for role in ROLES if role not in ustate["done"]), None)
 
-
-# ------------------------------------------------------------------ t = 0
 
 def preflight(state, config):
     """The identity the run is recorded under, into the state. `run.preflight()`
@@ -173,8 +169,6 @@ def identity(state, config):
     return {}
 
 
-# ------------------------------------------------------------- the waves
-
 def wave(state, config):
     run = _run(config)
     runnable, exhausted = run.open_wave(state["wave_index"])
@@ -209,8 +203,6 @@ def report(state, config):
                or run.exit_reason(state.get("spend_exhausted", False)))
     return {"exit_reason": run.state["exit"]}
 
-
-# -------------------------------------------------------------- one unit
 
 def unit(payload, config):
     """The subgraph, run for one unit, under the same guard the loop ran it under:
@@ -361,8 +353,6 @@ def route_overseers(state, config):
             or _next_role(_run(config).state["units"][state["unit_id"]]) or "gate")
 
 
-# -------------------------------------------------------------- the gate
-
 def gate(state, config):
     run = _run(config)
     ustate = run.state["units"][state["unit_id"]]
@@ -440,8 +430,6 @@ def route_promote(state):
     return route_retry(state) or END
 
 
-# --------------------------------------------------------------- the graphs
-
 def build_unit():
     builder = StateGraph(UnitState)
     for name, node in (("prepare", prepare), ("harvest", harvest), ("verify", verify),
@@ -486,9 +474,6 @@ def build(checkpointer=None):
                                   ["ceiling", "shells", "derive_units", "baseline",
                                    "identity"])
     builder.add_conditional_edges("derive_units", fan_derive, ["derive", "identity"])
-    # One barrier rather than three edges and a fourth: the derivations are a
-    # superstep deeper than their siblings, and a node reached by an edge runs as
-    # soon as that edge fires — twice, if two branches answer in different rounds.
     builder.add_edge(["ceiling", "shells", "baseline", "derive"], "identity")
     builder.add_conditional_edges("identity", route_wave, ["wave", "report"])
     builder.add_conditional_edges("wave", fan_out, ["unit", "wave_close"])

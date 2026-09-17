@@ -1,1 +1,1 @@
-from .findings import *  # noqa: F401,F403 — the folder is the module; this re-exports it
+from .findings import *  # noqa: F401,F403

@@ -13,8 +13,6 @@ from ..findings import finding, targets_unit
 from ..util import now_iso, parse_jsonl, read_json, sh, tail, write_json_atomic
 
 
-# ------------------------------------------------------------- the substrate
-
 def run_suite(run, cwd, out_dir):
     """The whole suite, then `emanate-results.sh` over what it wrote. A suite
     command is tolerated non-zero — a red suite is exactly the case the gate
@@ -82,8 +80,6 @@ def run_recipe(run, worktree):
                                   % (step.get("step"), worktree, tail(proc.stderr, 600)))
 
 
-# ------------------------------------------------------------------- spawning
-
 def spawn(run, shell, brief, schema, cwd):
     started_at = now_iso()
     result = run.runner.spawn(shell[:-3], run.shells.get(shell), cwd, brief, schema)
@@ -94,7 +90,6 @@ def spawn(run, shell, brief, schema, cwd):
     path = os.path.join(run.run_dir, "spawns", "%s-%s-%03d.json"
                         % (brief.get("unit_slug", "run"), shell[:-3], index))
     record = result.record(brief, schema)
-    # Raw facts only — who and when; the unit is in the brief. The report sums them.
     record.update({"shell": shell[:-3], "started_at": started_at, "ended_at": now_iso()})
     write_json_atomic(path, record)
     run.save()
@@ -128,8 +123,6 @@ def environment_step(run):
     return next((step.get("command") for step in recipe_steps(run)
                  if step.get("step") == "environment"), None)
 
-
-# -------------------------------------------------------------- the sequence
 
 def after_infrastructural(run, ustate, role, reason, free_retry_used, findings):
     """Nobody judged the persona, so the first one of a handoff is free; every
@@ -167,12 +160,8 @@ def prepare(run, ustate, role, tip):
 
 def repoint_verify(run, ustate, tip):
     gitmod.git_write(run, ["checkout", "--detach", tip], cwd=ustate["verify_worktree"])
-    # The last results describe a tree that no longer exists. The verdict they
-    # produced stays: it is why this boundary is being read again.
     run.last_results.pop(ustate["id"], None)
 
-
-# ---- A: read-only, in the persona's own worktree, no tool spawn ----
 
 def checks_a(run, ustate, role, worktree, tip_before):
     tip = gitmod.tip(run, ustate)
@@ -201,8 +190,6 @@ def checks_a(run, ustate, role, worktree, tip_before):
 
 
 
-# ---- B: harvest ----
-
 def harvest(run, ustate, role, worktree):
     with run.git_lock:
         proc = gitmod.run_harvest(run, ustate, role, worktree, ["--discard"])
@@ -210,8 +197,6 @@ def harvest(run, ustate, role, worktree):
         return json.loads(proc.stdout)["commit"]
     if proc.returncode == 6:
         raise Infrastructural("nothing to harvest from the %s" % role)
-    # Every phase worktree is discarded at harvest or at stall: the emission is
-    # on the integration branch, which is the autopsy.
     gitmod.discard(run, worktree)
     if proc.returncode == 7:
         raise Stall("harvest conflict",
@@ -220,8 +205,6 @@ def harvest(run, ustate, role, worktree):
     raise Stall("tool error", "emanate-harvest.sh exited %d at the %s handoff: %s"
                 % (proc.returncode, role, tail(proc.stderr, 600)))
 
-
-# ---- C: the tool checks, in the verify worktree at the new tip ----
 
 def checks_c(run, ustate, role, changed):
     worktree = ustate["verify_worktree"]
@@ -304,8 +287,6 @@ def frozen_path_findings(run, changed):
                     "revert those paths — a frozen path is the operator's.")]
 
 
-# ---- D: the overseers ----
-
 def overseer_brief(run, ustate, role, changed):
     """What every overseer of this boundary reads. The shell's own heading is
     stamped on at the spawn — the rest is one brief, read N times."""
@@ -332,9 +313,6 @@ def overseer_answer(run, ustate, shell, result):
                                   row.get("title", "")))
         run.save()
         return []
-    # A REJECT is carried back as the overseer wrote it — the blocking rows
-    # if it marked any, all of them otherwise. Only a spawn that answered
-    # nothing is reported as one.
     rejection = [row for row in rows if row.get("blocking", True)] or rows
     if structured.get("verdict") != "REJECT" or not rejection:
         rejection = [{"title": "no answer from the overseer",
