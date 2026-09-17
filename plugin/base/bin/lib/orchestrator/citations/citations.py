@@ -5,9 +5,25 @@ import subprocess
 
 from ..findings import finding
 
-# The tester's own grammar (`roles/tester.md` § Citing a claim), shared with
-# `lib/gate-citations.sh`: an id, and an optional fingerprint after it.
 CLAIM_TOKEN = re.compile(r"@claim\s+(\S+)(?:\s+(sha256:[0-9a-f]+))?")
+
+SOURCE = "citation-check"
+
+MESSAGES = {
+    "CI-01": ("CI-01 dangling citation — %s",
+              "`@claim %s` names no claim in this unit's derived contract.",
+              "copy the id from the contract verbatim, or drop the token."),
+    "CI-02": ("CI-02 citation with no fingerprint — %s",
+              "`@claim %s` carries no fingerprint, so the claim is covered but the "
+              "unit is never realized.",
+              "write the second word exactly as the contract emits it: %s"),
+    "CI-03": ("CI-03 fingerprint mismatch — %s",
+              "`@claim %s` cites %s; the contract emits %s.",
+              "copy the contract's fingerprint verbatim."),
+    "CI-04": ("CI-04 uncited claim — %s",
+              "no test under the tests roots cites this `test`-oracle claim.",
+              "write a test for it and cite it with its fingerprint."),
+}
 
 
 def scan_citations(roots, cwd):
@@ -39,35 +55,26 @@ def classify_citations(contract, citations):
     for citation in citations:
         claim_id = citation["id"]
         where = "%s:%s" % (citation["file"], citation["line"])
-        if claim_id not in claims:
-            # Prefix-scoped exactly as GV-04 is: a shared tests tree holds every
-            # other unit's tokens, and those are not this unit's business.
+        claim = claims.get(claim_id)
+        if claim is None:
             if claim_id.split("/", 1)[0] in prefixes:
-                findings.append(finding(
-                    "citation-check", "CI-01 dangling citation — %s" % where,
-                    "`@claim %s` names no claim in this unit's derived contract." % claim_id,
-                    "copy the id from the contract verbatim, or drop the token.",
-                    cls="CI-01"))
+                title, issue, fix = MESSAGES["CI-01"]
+                findings.append(finding(SOURCE, title % where, issue % claim_id, fix,
+                                        cls="CI-01"))
             continue
         cited.add(claim_id)
-        expected = claims[claim_id].get("fingerprint")
+        expected = claim.get("fingerprint")
         if not citation["fingerprint"]:
-            findings.append(finding(
-                "citation-check", "CI-02 citation with no fingerprint — %s" % where,
-                "`@claim %s` carries no fingerprint, so the claim is covered but the "
-                "unit is never realized." % claim_id,
-                "write the second word exactly as the contract emits it: %s"
-                % (expected or "sha256:…"), cls="CI-02"))
+            title, issue, fix = MESSAGES["CI-02"]
+            findings.append(finding(SOURCE, title % where, issue % claim_id,
+                                    fix % (expected or "sha256:…"), cls="CI-02"))
         elif expected and citation["fingerprint"] != expected:
+            title, issue, fix = MESSAGES["CI-03"]
             findings.append(finding(
-                "citation-check", "CI-03 fingerprint mismatch — %s" % where,
-                "`@claim %s` cites %s; the contract emits %s."
-                % (claim_id, citation["fingerprint"], expected),
-                "copy the contract's fingerprint verbatim.", cls="CI-03"))
+                SOURCE, title % where,
+                issue % (claim_id, citation["fingerprint"], expected), fix, cls="CI-03"))
     for claim in contract.get("claims", []):
         if claim.get("oracle") == "test" and claim["id"] not in cited:
-            findings.append(finding(
-                "citation-check", "CI-04 uncited claim — %s" % claim["id"],
-                "no test under the tests roots cites this `test`-oracle claim.",
-                "write a test for it and cite it with its fingerprint.", cls="CI-04"))
+            title, issue, fix = MESSAGES["CI-04"]
+            findings.append(finding(SOURCE, title % claim["id"], issue, fix, cls="CI-04"))
     return findings
