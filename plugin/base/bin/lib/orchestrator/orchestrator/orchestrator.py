@@ -16,6 +16,32 @@ from ..errors import Infrastructural, Refusal, Stall
 from ..state import close_timeline, reconcile
 from ..util import now_iso, read_json, write_json_atomic
 
+BASELINE_SKIPPED_NOTHING_PLANNED = "baseline skipped — nothing planned"
+
+REFUSALS = {
+    "no-plan-script": "no emanate-plan.sh under %s — point --bin (or $INSPIRE_BIN) at "
+                      "this project's `.inspire/bin`.",
+    "no-run": "no run %s under %s.",
+    "run-ended": "run %s already ended: %s. Start a new run toward the same goal.",
+}
+
+BLOCKED_DOWNSTREAM_PREFIX = "downstream of"
+BLOCKED = {
+    "downstream": BLOCKED_DOWNSTREAM_PREFIX + " %s, which is %s",
+    "spend-ceiling": "spend ceiling reached",
+}
+
+EXIT_REASONS = {
+    "spend-exhausted": "exhausted — spend ceiling %s USD reached",
+    "stall-cascade": "stall cascade",
+    "stalled": "goal not reached — stalled units",
+    "ceiling-exhausted": "exhausted — ceiling %d reached",
+    "reached": "goal reached",
+}
+
+WAVE_LABEL = "wave %d"
+ENDED_LINE = "emanation %s ended: %s\n"
+
 
 class Orchestrator:
 
@@ -28,7 +54,7 @@ class Orchestrator:
         self.verify_rounds = {}
         self.last_results = {}
         self.last_verdict = {}
-        self.baseline_line = "baseline skipped — nothing planned"
+        self.baseline_line = BASELINE_SKIPPED_NOTHING_PLANNED
         self.truncated = False
         self.plan_units = {}
         self.shells = {}
@@ -53,8 +79,7 @@ class Orchestrator:
         self.bin = self.args.bin or os.environ.get("INSPIRE_BIN") or \
             os.path.join(self.repo, ".inspire", "bin")
         if not os.path.exists(os.path.join(self.bin, "emanate-plan.sh")):
-            raise Refusal("no emanate-plan.sh under %s — point --bin (or $INSPIRE_BIN) at "
-                          "this project's `.inspire/bin`." % self.bin)
+            raise Refusal(REFUSALS["no-plan-script"] % self.bin)
 
         self.goal_slug = startmod.compute_goal_slug(self)
         self.stamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
@@ -81,15 +106,14 @@ class Orchestrator:
                 continue
             blocker = self.blocked_by(unit_id)
             if blocker:
-                self.mark_blocked(ustate, "downstream of %s, which is %s"
-                                  % (blocker[0], blocker[1]))
+                self.mark_blocked(ustate, BLOCKED["downstream"] % (blocker[0], blocker[1]))
                 continue
             runnable.append(unit_id)
         exhausted = bool(self.args.budget_usd and
                          self.state["spend_usd"] >= self.args.budget_usd)
         if exhausted:
             for unit_id in runnable:
-                self.mark_blocked(self.state["units"][unit_id], "spend ceiling reached")
+                self.mark_blocked(self.state["units"][unit_id], BLOCKED["spend-ceiling"])
             runnable = []
         return runnable, exhausted
 
@@ -99,13 +123,13 @@ class Orchestrator:
         self.save()
         self.report.write_block(
             reportmod.wave_block(self, index + 1, self.state["waves"][index]),
-            "wave %d" % (index + 1))
+            WAVE_LABEL % (index + 1))
         if spend_exhausted:
             for later in self.state["waves"][index + 1:]:
                 for unit_id in later:
                     ustate = self.state["units"][unit_id]
                     if ustate["status"] == "pending":
-                        self.mark_blocked(ustate, "spend ceiling reached")
+                        self.mark_blocked(ustate, BLOCKED["spend-ceiling"])
 
     def blocked_by(self, unit_id):
         for edge in self.plan_units[unit_id].get("requires") or []:
@@ -124,16 +148,16 @@ class Orchestrator:
         stalled = [unit for unit in units if unit["status"] == "stalled"]
         blocked = [unit for unit in units if unit["status"] == "blocked"]
         if spend_exhausted:
-            return "exhausted — spend ceiling %s USD reached" % self.args.budget_usd
+            return EXIT_REASONS["spend-exhausted"] % self.args.budget_usd
         cascade = [unit for unit in blocked
-                   if (unit["reason"] or "").startswith("downstream of")]
+                   if (unit["reason"] or "").startswith(BLOCKED_DOWNSTREAM_PREFIX)]
         if stalled and cascade:
-            return "stall cascade"
+            return EXIT_REASONS["stall-cascade"]
         if stalled:
-            return "goal not reached — stalled units"
+            return EXIT_REASONS["stalled"]
         if self.truncated:
-            return "exhausted — ceiling %d reached" % self.args.ceiling
-        return "goal reached"
+            return EXIT_REASONS["ceiling-exhausted"] % self.args.ceiling
+        return EXIT_REASONS["reached"]
 
     @contextlib.contextmanager
     def unit_guard(self, ustate):
@@ -182,7 +206,7 @@ class Orchestrator:
         self.append_ledger()
         self.report.rewrite_status(exit_reason)
         self.report.write_block(reportmod.closing_block(self, exit_reason), "closing")
-        sys.stderr.write("emanation %s ended: %s\n" % (self.run_id, exit_reason))
+        sys.stderr.write(ENDED_LINE % (self.run_id, exit_reason))
 
     def append_ledger(self):
         data = self.state
@@ -203,14 +227,13 @@ class Orchestrator:
         self.run_dir = os.path.join(self.repo, RUNS_DIR, self.args.run_id)
         state_path = os.path.join(self.run_dir, "state.json")
         if not os.path.exists(state_path):
-            raise Refusal("no run %s under %s." % (self.args.run_id, RUNS_DIR))
+            raise Refusal(REFUSALS["no-run"] % (self.args.run_id, RUNS_DIR))
         self.state_path = state_path
         self.state = read_json(state_path)
         data = self.state
         reconcile(data)
         if data["status"] == "ENDED":
-            raise Refusal("run %s already ended: %s. Start a new run toward the same goal."
-                          % (self.args.run_id, data["exit"]))
+            raise Refusal(REFUSALS["run-ended"] % (self.args.run_id, data["exit"]))
         self.config = data["config"]
         self.bin = self.args.bin or data["bin"]
         self.run_id = data["run_id"]

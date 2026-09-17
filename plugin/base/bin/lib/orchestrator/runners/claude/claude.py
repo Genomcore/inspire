@@ -8,6 +8,8 @@ from ...findings import render_brief
 from ...state import SpawnResult
 from ...util import tail
 
+TIMEOUT_TEXT = "wall clock of %ss reached"
+
 DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
               "Bash(git branch:*)", "Bash(git worktree:*)",
               "Bash(.inspire/bin/emanate-harvest.sh:*)"]
@@ -54,7 +56,7 @@ class ClaudeRunner:
             proc = subprocess.run(command, cwd=cwd, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, text=True, timeout=self.wall_clock)
         except subprocess.TimeoutExpired:
-            return SpawnResult("timeout", text="wall clock of %ss reached" % self.wall_clock)
+            return SpawnResult("timeout", text=TIMEOUT_TEXT % self.wall_clock)
         try:
             payload = json.loads(proc.stdout)
         except ValueError:

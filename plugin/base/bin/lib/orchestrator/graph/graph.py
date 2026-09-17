@@ -18,6 +18,16 @@ from ..findings import (conflict_findings, conflict_role, gate_digest, gate_find
 from ..shells import read_shells
 from ..state import set_phase
 
+GOAL_REACHED = "goal reached — nothing left to build"
+SPAWN_ENDED = "the %s spawn ended in %s"
+OVERSEER_HEADING = "%s — %s"
+GATE_STALLED = "the gate returned %s: %s"
+
+REWORK_ORIGINS = {
+    "boundary": "the %s boundary",
+    "gate": "the gate",
+}
+
 
 def collect(left, right):
     if right is None:
@@ -79,7 +89,7 @@ def plan(state, config):
     run.plan_step()
     if run.plan.get("realized_all") or not run.plan.get("waves"):
         return {"plan": run.plan,
-                "exit_reason": "goal reached — nothing left to build"}
+                "exit_reason": GOAL_REACHED}
     return {"plan": run.plan}
 
 
@@ -204,7 +214,7 @@ def persona(role):
                 handoffmod.persona_brief(run, ustate, role, worktree, findings),
                 None, worktree)
             if result.ending != "exit":
-                raise Infrastructural("the %s spawn ended in %s" % (role, result.ending))
+                raise Infrastructural(SPAWN_ENDED % (role, result.ending))
             rejection = handoffmod.checks_a(run, ustate, role, worktree, tip_before)
         except Infrastructural as failure:
             if worktree:
@@ -215,7 +225,7 @@ def persona(role):
         if rejection:
             gitmod.discard(run, worktree)
             handoffmod.spend_rework(run, ustate, role, rejection,
-                                    "the %s boundary" % role)
+                                    REWORK_ORIGINS["boundary"] % role)
             return {"role": role, "retry": True, "findings": rejection}
         return {"role": role, "retry": False, "worktree": worktree,
                 "tip_before": tip_before}
@@ -258,7 +268,7 @@ def verify(state, config):
     rejection = handoffmod.checks_c(run, ustate, state["role"], state["changed"])
     if rejection:
         handoffmod.spend_rework(run, ustate, state["role"], rejection,
-                                "the %s boundary" % state["role"])
+                                REWORK_ORIGINS["boundary"] % state["role"])
         return {"retry": True, "findings": rejection}
     return {"retry": False, "rejections": None}
 
@@ -274,7 +284,7 @@ def overseer(state, config):
     shell = state["shell"]
     brief = handoffmod.overseer_brief(run, ustate, state["role"], state["changed"])
     result = handoffmod.spawn(
-        run, shell, dict(brief, heading="%s — %s" % (shell[:-3], brief["heading"])),
+        run, shell, dict(brief, heading=OVERSEER_HEADING % (shell[:-3], brief["heading"])),
         OVERSEER_SCHEMA, brief["worktree"])
     return {"rejections": handoffmod.overseer_answer(run, ustate, shell, result)}
 
@@ -285,7 +295,7 @@ def overseers(state, config):
     rejections = state.get("rejections") or []
     if rejections:
         handoffmod.spend_rework(run, ustate, state["role"], rejections,
-                                "the %s boundary" % state["role"])
+                                REWORK_ORIGINS["boundary"] % state["role"])
         return {"retry": True, "findings": rejections}
     if state["role"] not in ustate["done"]:
         ustate["done"].append(state["role"])
@@ -320,7 +330,7 @@ def route_gate(state):
 def stalled(state, config):
     _, subject = route_gate_verdict(state["verdict"])
     findings = gate_findings(state["verdict"])
-    raise Stall("gate", "the gate returned %s: %s"
+    raise Stall("gate", GATE_STALLED
                 % (subject, "; ".join(row["issue"] for row in findings)), findings)
 
 
@@ -329,7 +339,7 @@ def rework(state, config):
     _, role = route_gate_verdict(state["verdict"])
     findings = gate_findings(state["verdict"])
     handoffmod.spend_rework(run, run.state["units"][state["unit_id"]], role, findings,
-                            "the gate")
+                            REWORK_ORIGINS["gate"])
     return {"role": role, "findings": findings, "free_retry_used": False}
 
 
@@ -338,7 +348,7 @@ def arbitrate(state, config):
     ustate = run.state["units"][state["unit_id"]]
     role, findings = gatemod.arbitrate(run, ustate, state["verdict"],
                                        state["results_path"], state["verdict_path"])
-    handoffmod.spend_rework(run, ustate, role, findings, "the gate")
+    handoffmod.spend_rework(run, ustate, role, findings, REWORK_ORIGINS["gate"])
     return {"role": role, "findings": findings, "free_retry_used": False}
 
 

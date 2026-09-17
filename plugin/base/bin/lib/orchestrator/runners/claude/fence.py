@@ -7,6 +7,8 @@ from pathlib import Path
 
 PATH_KEYS = ("file_path", "notebook_path", "path")
 
+FENCED_TEXT = "fenced: %s is outside your worktree %s — a persona writes nowhere else.\n"
+
 
 def outside(path, root):
     return not Path(os.path.realpath(os.path.join(root, path))).is_relative_to(root)
@@ -18,8 +20,7 @@ def main():
     target = next((payload.get("tool_input", {}).get(key) for key in PATH_KEYS
                    if payload.get("tool_input", {}).get(key)), None)
     if target and outside(target, root):
-        sys.stderr.write("fenced: %s is outside your worktree %s — a persona writes "
-                         "nowhere else.\n" % (target, root))
+        sys.stderr.write(FENCED_TEXT % (target, root))
         sys.exit(2)
 
 

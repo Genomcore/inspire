@@ -12,6 +12,46 @@ from ..runners.claude import ClaudeRunner
 from ..runners.fake import FakeRunner
 from ..util import now_iso, parse_version, slugify, tail
 
+CHECKOUT_MESSAGES = {
+    "dirty": "the launch checkout is not clean:\n%s\nCommit those paths or set them aside, "
+             "then re-run.",
+    "detached": "HEAD is detached. Run from the branch this effort is launched from.",
+    "gitignore": "`.gitignore` does not cover %s. Add these lines to `.gitignore` and commit "
+                 "them:\n%s\nThis process never writes the launch checkout, `.gitignore` "
+                 "included.",
+    "merge_conflict": "merging %s into %s conflicts on: %s. Resolve it by hand in %s, then "
+                      "re-run — a conflict resolution is a judgment nobody is present to make.",
+}
+UNKNOWN_PATHS = "unknown paths"
+
+RUNNER_MESSAGES = {
+    "no_uv": "`uv` is not on PATH — this process resolves its own dependencies through it. "
+             "Install uv and re-run.",
+    "no_claude": "`claude` is not on PATH — this run has nothing to spawn with.",
+    "old_claude": "claude %s is below the %s this loop needs. Upgrade it and re-run.",
+    "no_fake_dir": "no fake-runner directory at %s.",
+    "unknown": "unknown runner %r — use `claude` or `fake:DIR`.",
+}
+
+PLAN_MESSAGES = {
+    "row": "  %s · %s · %s · %s",
+    "not_ready": "the plan is not ready:\n%s",
+    "refused": "plan refused:\n%s",
+    "exited": "emanate-plan.sh exited %d: %s",
+    "ceiling_below_floor": "--ceiling %d is below the floor %d to `%s`: this run provably "
+                           "cannot reach its goal. Raise the ceiling, or narrow the goal.",
+    "beyond_ceiling": "beyond the declared ceiling of %d wave(s)",
+    "derive_exited": "emanate-derive.sh exited %d on %s: %s",
+}
+
+BASELINE_MESSAGES = {
+    "skipped": "baseline skipped — no tests under the tests roots",
+    "infra": "the baseline could not be established: %s",
+    "red": "the baseline suite is red in realized territory: %s. Emanating onto a red suite "
+           "makes every later verdict unreadable.",
+    "green": "baseline green in a recipe-provisioned worktree",
+}
+
 
 def write_identity(run):
     run.report.truncate()
@@ -21,11 +61,10 @@ def write_identity(run):
 def check_launch_checkout(run):
     status = gitmod.git(run, ["status", "--porcelain"]).stdout.strip()
     if status:
-        raise Refusal("the launch checkout is not clean:\n%s\nCommit those paths or "
-                      "set them aside, then re-run." % status)
+        raise Refusal(CHECKOUT_MESSAGES["dirty"] % status)
     head = gitmod.git(run, ["symbolic-ref", "--short", "HEAD"], check=False)
     if head.returncode != 0:
-        raise Refusal("HEAD is detached. Run from the branch this effort is launched from.")
+        raise Refusal(CHECKOUT_MESSAGES["detached"])
     run.launch_branch = head.stdout.strip()
     proc = gitmod.git(run, ["check-ignore", WORKTREES_DIR + "/", RUNS_DIR + "/"],
                       check=False)
@@ -33,11 +72,9 @@ def check_launch_checkout(run):
     uncovered = [path for path in (WORKTREES_DIR, RUNS_DIR)
                  if path + "/" not in ignored]
     if uncovered:
-        raise Refusal(
-            "`.gitignore` does not cover %s. Add these lines to `.gitignore` and commit "
-            "them:\n%s\nThis process never writes the launch checkout, `.gitignore` "
-            "included." % (" and ".join(uncovered),
-                           "\n".join("%s/" % path for path in uncovered)))
+        raise Refusal(CHECKOUT_MESSAGES["gitignore"]
+                      % (" and ".join(uncovered),
+                         "\n".join("%s/" % path for path in uncovered)))
 
 
 def compute_goal_slug(run):
@@ -55,8 +92,7 @@ def compute_goal_slug(run):
 
 def build_runner(run):
     if shutil.which("uv") is None:
-        raise Refusal("`uv` is not on PATH — this process resolves its own dependencies "
-                      "through it. Install uv and re-run.")
+        raise Refusal(RUNNER_MESSAGES["no_uv"])
     contracts = os.path.join(run.run_dir, "contracts")
     spec = run.args.runner
     if spec == "claude":
@@ -64,10 +100,10 @@ def build_runner(run):
             proc = subprocess.run(["claude", "--version"], stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, text=True)
         except OSError:
-            raise Refusal("`claude` is not on PATH — this run has nothing to spawn with.")
+            raise Refusal(RUNNER_MESSAGES["no_claude"])
         version = parse_version(proc.stdout)
         if version is None or version < MIN_CLAUDE_VERSION:
-            raise Refusal("claude %s is below the %s this loop needs. Upgrade it and re-run."
+            raise Refusal(RUNNER_MESSAGES["old_claude"]
                           % (proc.stdout.strip() or "?",
                              ".".join(str(part) for part in MIN_CLAUDE_VERSION)))
         run.harness = "claude %s" % proc.stdout.strip()
@@ -78,10 +114,10 @@ def build_runner(run):
     if spec.startswith("fake:"):
         directory = spec[len("fake:"):]
         if not os.path.isdir(directory):
-            raise Refusal("no fake-runner directory at %s." % directory)
+            raise Refusal(RUNNER_MESSAGES["no_fake_dir"] % directory)
         run.harness = "fake:%s" % directory
         return FakeRunner(directory, run.config)
-    raise Refusal("unknown runner %r — use `claude` or `fake:DIR`." % spec)
+    raise Refusal(RUNNER_MESSAGES["unknown"] % spec)
 
 
 def open_goal_branch(run):
@@ -105,11 +141,9 @@ def open_goal_branch(run):
         conflicts = gitmod.git(run, ["diff", "--name-only", "--diff-filter=U"],
                                cwd=run.goal_worktree, check=False).stdout.split()
         gitmod.git_write(run, ["merge", "--abort"], cwd=run.goal_worktree, check=False)
-        raise Refusal("merging %s into %s conflicts on: %s. Resolve it by hand in %s, "
-                      "then re-run — a conflict resolution is a judgment nobody is "
-                      "present to make."
+        raise Refusal(CHECKOUT_MESSAGES["merge_conflict"]
                       % (run.launch_branch, run.goal_branch,
-                         ", ".join(conflicts) or "unknown paths", run.goal_worktree))
+                         ", ".join(conflicts) or UNKNOWN_PATHS, run.goal_worktree))
 
 
 def plan_command(run):
@@ -137,26 +171,24 @@ def run_plan(run):
         return json.loads(proc.stdout)
     if proc.returncode == 1:
         plan = json.loads(proc.stdout)
-        rows = ["  %s · %s · %s · %s" % (item.get("code"),
-                                         item.get("unit") or item.get("target") or "—",
-                                         item.get("message"), item.get("remedy"))
+        rows = [PLAN_MESSAGES["row"] % (item.get("code"),
+                                        item.get("unit") or item.get("target") or "—",
+                                        item.get("message"), item.get("remedy"))
                 for item in plan.get("findings", []) if item.get("severity") == "error"]
-        raise Refusal("the plan is not ready:\n%s" % "\n".join(rows))
+        raise Refusal(PLAN_MESSAGES["not_ready"] % "\n".join(rows))
     if proc.returncode == 4:
         refused = json.loads(proc.stdout).get("refused", [])
-        rows = ["  %s · %s · %s · %s" % (item.get("code"), item.get("target"),
-                                         item.get("message"), item.get("remedy"))
+        rows = [PLAN_MESSAGES["row"] % (item.get("code"), item.get("target"),
+                                        item.get("message"), item.get("remedy"))
                 for item in refused]
-        raise Refusal("plan refused:\n%s" % "\n".join(rows))
-    raise Refusal("emanate-plan.sh exited %d: %s"
-                  % (proc.returncode, tail(proc.stderr, 800)))
+        raise Refusal(PLAN_MESSAGES["refused"] % "\n".join(rows))
+    raise Refusal(PLAN_MESSAGES["exited"] % (proc.returncode, tail(proc.stderr, 800)))
 
 
 def check_ceiling(run):
     goal = run.plan.get("goal")
     if goal and run.args.ceiling and run.args.ceiling < goal.get("floor", 0):
-        raise Refusal("--ceiling %d is below the floor %d to `%s`: this run provably "
-                      "cannot reach its goal. Raise the ceiling, or narrow the goal."
+        raise Refusal(PLAN_MESSAGES["ceiling_below_floor"]
                       % (run.args.ceiling, goal["floor"], goal.get("selector")))
 
 
@@ -187,8 +219,7 @@ def plan_roster(run, planned, waves):
         units[entry["id"]] = unit
         if entry["id"] not in runnable:
             unit["status"] = "blocked"
-            unit["reason"] = ("beyond the declared ceiling of %d wave(s)"
-                              % run.args.ceiling)
+            unit["reason"] = PLAN_MESSAGES["beyond_ceiling"] % run.args.ceiling
             continue
         pending.append(entry)
     return units, pending
@@ -200,7 +231,7 @@ def derive_unit(run, entry):
                           cwd=run.goal_worktree, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        raise Refusal("emanate-derive.sh exited %d on %s: %s"
+        raise Refusal(PLAN_MESSAGES["derive_exited"]
                       % (proc.returncode, entry["id"], tail(proc.stderr, 600)))
     with open(gitmod.contract_path(run, entry["id"]), "w") as stream:
         stream.write(proc.stdout)
@@ -241,7 +272,7 @@ def baseline(run):
              if any(files for _, _, files in
                     os.walk(os.path.join(run.goal_worktree, root)))]
     if not roots:
-        run.baseline_line = "baseline skipped — no tests under the tests roots"
+        run.baseline_line = BASELINE_MESSAGES["skipped"]
         return
     worktree = gitmod.fresh_worktree(run, "baseline", "baseline", run.goal_branch)
     try:
@@ -249,14 +280,12 @@ def baseline(run):
             run_recipe(run, worktree)
             results, _ = run_suite(run, worktree, os.path.join(run.run_dir, "baseline"))
         except Infrastructural as failure:
-            raise Refusal("the baseline could not be established: %s" % failure)
+            raise Refusal(BASELINE_MESSAGES["infra"] % failure)
         failed = sorted(set(entry["file"] for entry in results["tests"]
                             if entry["status"] == "failed"))
         if failed:
-            raise Refusal("the baseline suite is red in realized territory: %s. Emanating "
-                          "onto a red suite makes every later verdict unreadable."
-                          % ", ".join(failed))
-        run.baseline_line = "baseline green in a recipe-provisioned worktree"
+            raise Refusal(BASELINE_MESSAGES["red"] % ", ".join(failed))
+        run.baseline_line = BASELINE_MESSAGES["green"]
     finally:
         gitmod.discard(run, worktree)
 

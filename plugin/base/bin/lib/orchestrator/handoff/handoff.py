@@ -8,6 +8,46 @@ from ..errors import Infrastructural, Stall
 from ..findings import finding, targets_unit
 from ..util import now_iso, parse_jsonl, read_json, sh, tail, write_json_atomic
 
+SUITE_NO_REPORT = "the suite command `%s` left no report at %s: %s"
+RESULTS_EXITED = "emanate-results.sh exited %d: %s"
+VERIFY_COULD_NOT_RUN = "verify could not run the suite: %s"
+RECIPE_STEP_FAILED = "the recipe's `%s` step failed in %s: %s"
+DECLARATION_ONLY_FAILED = "the declaration-only recipe failed: %s"
+PERSONA_HEADING = "%s — %s"
+REWORK_EXHAUSTED = "the %s exhausted its rework budget (%d attempts) at %s"
+EMITTED_NOTHING = "the %s emitted nothing"
+NOTHING_TO_HARVEST = "nothing to harvest from the %s"
+HARVEST_CONFLICT = "the %s's emission does not apply onto %s: %s"
+HARVEST_TOOL_ERROR = "emanate-harvest.sh exited %d at the %s handoff: %s"
+VERIFY_FINDING_ROW = "%s · %s — %s: %s"
+OVERSEER_HEADING = "overseer read — %s at the %s boundary"
+OVERSEER_NOTE = "answer in the structured shape: verdict APPROVE or REJECT, plus findings."
+OVERSEER_FINDING_ROW = "%s · %s — %s"
+NO_VERDICT = "no verdict"
+
+MESSAGES = {
+    "branch-moved": ("the persona moved the integration branch",
+                     "the integration branch is at %s; it was at %s when this phase began.",
+                     "work inside the worktree only — the branch is the orchestrator's to move."),
+    "outside-owned": ("paths outside the %s's owned set",
+                      "these paths would be dropped at harvest: %s",
+                      "emit inside %s and nowhere else."),
+    "check-failed": ("the declared check failed", "make `%s` pass."),
+    "escape-hatch": ("the escape-hatch count rose",
+                     "remove the suppression. The ceiling is raised by hand, in review — "
+                     "never by the loop."),
+    "rule-error": ("the rule's subject is this unit — answer it before the gate.",),
+    "all-red": ("vacuity: passes without bodies",
+                "these files cite this unit's claims and pass in a tree with no bodies: %s",
+                "a test that passes before the body exists asserts nothing."),
+    "frozen-paths": ("a frozen path was changed",
+                     "this phase changed %s, which the project froze.",
+                     "revert those paths — a frozen path is the operator's."),
+    "no-answer": ("no answer from the overseer",
+                  "the spawn ended in %s and returned %s.",
+                  "re-emit the boundary; the overseer reads it again."),
+}
+
 
 def run_suite(run, cwd, out_dir):
     os.makedirs(out_dir, exist_ok=True)
@@ -19,7 +59,7 @@ def run_suite(run, cwd, out_dir):
             os.remove(report)
         proc = sh(entry["command"].replace("{report}", report), cwd=cwd)
         if not os.path.exists(report):
-            raise Infrastructural("the suite command `%s` left no report at %s: %s"
+            raise Infrastructural(SUITE_NO_REPORT
                                   % (entry["command"], report, tail(proc.stderr, 800)))
         reports.append(report)
         if entry.get("format"):
@@ -31,8 +71,7 @@ def run_suite(run, cwd, out_dir):
     proc = subprocess.run(command, cwd=cwd, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        raise Infrastructural("emanate-results.sh exited %d: %s"
-                              % (proc.returncode, tail(proc.stderr, 800)))
+        raise Infrastructural(RESULTS_EXITED % (proc.returncode, tail(proc.stderr, 800)))
     results_path = os.path.join(out_dir, "results.json")
     with open(results_path, "w") as stream:
         stream.write(proc.stdout)
@@ -43,7 +82,7 @@ def verify_suite(run, ustate, cwd, out_dir):
     try:
         results, results_path = run_suite(run, cwd, out_dir)
     except Infrastructural as failure:
-        raise Stall("infrastructural", "verify could not run the suite: %s" % failure)
+        raise Stall("infrastructural", VERIFY_COULD_NOT_RUN % failure)
     run.last_results[ustate["id"]] = results_path
     return results, results_path
 
@@ -68,7 +107,7 @@ def run_recipe(run, worktree):
     for step in recipe_steps(run):
         proc = sh(step["command"], cwd=worktree)
         if proc.returncode != 0:
-            raise Infrastructural("the recipe's `%s` step failed in %s: %s"
+            raise Infrastructural(RECIPE_STEP_FAILED
                                   % (step.get("step"), worktree, tail(proc.stderr, 600)))
 
 
@@ -96,7 +135,7 @@ def unit_brief(run, ustate):
 
 def persona_brief(run, ustate, role, worktree, findings):
     entry = run.plan_units[ustate["id"]]
-    return {"heading": "%s — %s" % (role, ustate["id"]),
+    return {"heading": PERSONA_HEADING % (role, ustate["id"]),
             "role": role,
             "role_doc": ".claude/skills/inspire-code/references/roles/%s.md" % role,
             "unit_kind": ustate["kind"],
@@ -128,8 +167,7 @@ def spend_rework(run, ustate, role, findings, what):
     run.save()
     if ustate["rework"][role] > run.args.rework:
         raise Stall("rework exhausted",
-                    "the %s exhausted its rework budget (%d attempts) at %s"
-                    % (role, run.args.rework, what), findings)
+                    REWORK_EXHAUSTED % (role, run.args.rework, what), findings)
 
 
 def prepare(run, ustate, role, tip):
@@ -139,8 +177,7 @@ def prepare(run, ustate, role, tip):
         if role == "tester" and run.config.get("declaration_only"):
             proc = sh(run.config["declaration_only"], cwd=worktree)
             if proc.returncode != 0:
-                raise Infrastructural("the declaration-only recipe failed: %s"
-                                      % tail(proc.stderr, 600))
+                raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
     except Infrastructural:
         gitmod.discard(run, worktree)
         raise
@@ -155,22 +192,18 @@ def repoint_verify(run, ustate, tip):
 def checks_a(run, ustate, role, worktree, tip_before):
     tip = gitmod.tip(run, ustate)
     if tip != tip_before:
-        return [finding(role, "the persona moved the integration branch",
-                        "the integration branch is at %s; it was at %s when this phase "
-                        "began." % (tip[:12], tip_before[:12]),
-                        "work inside the worktree only — the branch is the "
-                        "orchestrator's to move.")]
+        title, issue, fix = MESSAGES["branch-moved"]
+        return [finding(role, title, issue % (tip[:12], tip_before[:12]), fix)]
     if not gitmod.git(run, ["status", "--porcelain"], cwd=worktree).stdout.strip():
-        raise Infrastructural("the %s emitted nothing" % role)
+        raise Infrastructural(EMITTED_NOTHING % role)
     proc = gitmod.run_harvest(run, ustate, role, worktree, ["--mode", "plan"])
     dropped = json.loads(proc.stdout).get("dropped") or []
     if dropped:
         ustate["dropped"] = sorted(set(ustate["dropped"]) | set(dropped))
         run.save()
-        return [finding(role, "paths outside the %s's owned set" % role,
-                        "these paths would be dropped at harvest: %s" % ", ".join(dropped),
-                        "emit inside %s and nowhere else."
-                        % ", ".join(gitmod.owned_pathspec(run, role)))]
+        title, issue, fix = MESSAGES["outside-owned"]
+        return [finding(role, title % role, issue % ", ".join(dropped),
+                        fix % ", ".join(gitmod.owned_pathspec(run, role)))]
     if role == "tester":
         contract = read_json(gitmod.contract_path(run, ustate["id"]))
         return classify_citations(
@@ -184,13 +217,12 @@ def harvest(run, ustate, role, worktree):
     if proc.returncode == 0:
         return json.loads(proc.stdout)["commit"]
     if proc.returncode == 6:
-        raise Infrastructural("nothing to harvest from the %s" % role)
+        raise Infrastructural(NOTHING_TO_HARVEST % role)
     gitmod.discard(run, worktree)
     if proc.returncode == 7:
-        raise Stall("harvest conflict",
-                    "the %s's emission does not apply onto %s: %s"
+        raise Stall("harvest conflict", HARVEST_CONFLICT
                     % (role, ustate["integration_branch"], tail(proc.stderr, 600)))
-    raise Stall("tool error", "emanate-harvest.sh exited %d at the %s handoff: %s"
+    raise Stall("tool error", HARVEST_TOOL_ERROR
                 % (proc.returncode, role, tail(proc.stderr, 600)))
 
 
@@ -203,19 +235,17 @@ def checks_c(run, ustate, role, changed):
             continue
         proc = sh(entry["command"], cwd=worktree)
         if proc.returncode != 0:
+            title, fix = MESSAGES["check-failed"]
             findings.append(finding(
-                "check:%s" % entry["command"], "the declared check failed",
+                "check:%s" % entry["command"], title,
                 tail(proc.stdout + "\n" + proc.stderr, 1200),
-                "make `%s` pass." % entry["command"]))
+                fix % entry["command"]))
     proc = subprocess.run([os.path.join(run.bin, "escape-hatch-ratchet.sh")],
                           cwd=worktree, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode == 1:
-        findings.append(finding(
-            "escape-hatch-ratchet", "the escape-hatch count rose",
-            tail(proc.stderr, 1200),
-            "remove the suppression. The ceiling is raised by hand, in review — "
-            "never by the loop."))
+        title, fix = MESSAGES["escape-hatch"]
+        findings.append(finding("escape-hatch-ratchet", title, tail(proc.stderr, 1200), fix))
     if role == "tester":
         findings += tester_checks(run, ustate)
     if role == "implementer":
@@ -236,12 +266,10 @@ def tester_checks(run, ustate):
         for row in parse_jsonl(proc.stderr):
             if row.get("severity") == "error" and targets_unit(row.get("target"), ustate):
                 findings.append(finding(row.get("rule", rule), row.get("target", ""),
-                                        row.get("message", ""),
-                                        "the rule's subject is this unit — answer it "
-                                        "before the gate."))
+                                        row.get("message", ""), MESSAGES["rule-error"][0]))
             else:
                 ustate["verify_findings"].append(
-                    "%s · %s — %s: %s" % (row.get("severity"), row.get("rule"),
+                    VERIFY_FINDING_ROW % (row.get("severity"), row.get("rule"),
                                           row.get("target"), row.get("message")))
     run.save()
     if "implementer" not in ustate["done"]:
@@ -254,11 +282,8 @@ def tester_checks(run, ustate):
         green = sorted(set(entry["file"] for entry in results["tests"]
                            if entry["status"] == "passed" and entry["file"] in citing))
         if green:
-            findings.append(finding(
-                "all-red", "vacuity: passes without bodies",
-                "these files cite this unit's claims and pass in a tree with no "
-                "bodies: %s" % ", ".join(green),
-                "a test that passes before the body exists asserts nothing."))
+            title, issue, fix = MESSAGES["all-red"]
+            findings.append(finding("all-red", title, issue % ", ".join(green), fix))
     return findings
 
 
@@ -266,21 +291,18 @@ def frozen_path_findings(run, changed):
     frozen = [path for path in changed if path in run.config["frozen_paths"]]
     if not frozen:
         return []
-    return [finding("frozen-paths", "a frozen path was changed",
-                    "this phase changed %s, which the project froze."
-                    % ", ".join(frozen),
-                    "revert those paths — a frozen path is the operator's.")]
+    title, issue, fix = MESSAGES["frozen-paths"]
+    return [finding("frozen-paths", title, issue % ", ".join(frozen), fix)]
 
 
 def overseer_brief(run, ustate, role, changed):
-    return {"heading": "overseer read — %s at the %s boundary" % (ustate["id"], role),
+    return {"heading": OVERSEER_HEADING % (ustate["id"], role),
             "role": "overseer", "boundary": role, "unit_kind": ustate["kind"],
             "worktree": ustate["verify_worktree"], "changed_paths": changed,
             "results_path": run.last_results.get(ustate["id"]),
             "verdict_path": run.last_verdict.get(ustate["id"]),
             "profiles": run.plan_units[ustate["id"]].get("profiles") or [],
-            "notes": ["answer in the structured shape: verdict APPROVE or REJECT, "
-                      "plus findings."],
+            "notes": [OVERSEER_NOTE],
             **unit_brief(run, ustate)}
 
 
@@ -291,18 +313,17 @@ def overseer_answer(run, ustate, shell, result):
     if approved:
         for row in rows:
             ustate["verify_findings"].append(
-                "%s · %s — %s" % (row.get("severity", "info"), shell[:-3],
-                                  row.get("title", "")))
+                OVERSEER_FINDING_ROW % (row.get("severity", "info"), shell[:-3],
+                                        row.get("title", "")))
         run.save()
         return []
     rejection = [row for row in rows if row.get("blocking", True)] or rows
     if structured.get("verdict") != "REJECT" or not rejection:
-        rejection = [{"title": "no answer from the overseer",
-                      "issue": "the spawn ended in %s and returned %s."
-                               % (result.ending,
-                                  structured.get("verdict") or "no verdict"),
-                      "follow_up": "re-emit the boundary; the overseer "
-                                   "reads it again."}]
+        title, issue, fix = MESSAGES["no-answer"]
+        rejection = [{"title": title,
+                      "issue": issue % (result.ending,
+                                        structured.get("verdict") or NO_VERDICT),
+                      "follow_up": fix}]
     run.save()
     return [finding(shell[:-3], row.get("title", ""), row.get("issue", ""),
                     row.get("follow_up", ""), row.get("severity", "error"))
