@@ -15,7 +15,9 @@ carries the same object the run saved. `units` takes a reducer because a wave's
 units answer in parallel.
 """
 
+import operator
 import os
+
 from typing import Annotated, TypedDict
 
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -32,14 +34,6 @@ from ..findings import (conflict_findings, conflict_role, gate_digest, gate_find
                         route_gate_verdict)
 from ..shells import read_shells
 from ..state import set_phase
-
-
-def merge_units(left, right):
-    """The one fan-in: each unit of a wave answers with its own record, never the
-    roster, so the answers merge rather than the last one winning."""
-    merged = dict(left or {})
-    merged.update(right or {})
-    return merged
 
 
 def collect(left, right):
@@ -64,7 +58,9 @@ class RunState(TypedDict, total=False):
     wave_index: int
     pending: list
     runnable: list
-    units: Annotated[dict, merge_units]
+    # The one fan-in: each unit of a wave answers with its own record, never
+    # the roster, so the answers merge rather than the last one winning.
+    units: Annotated[dict, operator.or_]
     spend_usd: float
     spawn_count: int
     spend_exhausted: bool
