@@ -105,7 +105,8 @@ def build_repo(root):
 
 
 def emanate(root, script, **over):
-    """One `run_graph` over that project, the way `run` would reach it."""
+    """One `run_graph` over that project, the way `run` would reach it: the run
+    and the state the graph ended with."""
     fake = os.path.join(root, "..", "fake")
     os.makedirs(fake, exist_ok=True)
     with open(os.path.join(fake, "script.json"), "w") as stream:
@@ -121,10 +122,10 @@ def emanate(root, script, **over):
         # The process reports its own ending on stderr; a `-v` line per case is
         # what the suite reads, so the account goes to the buffer here.
         with contextlib.redirect_stderr(io.StringIO()):
-            graphmod.run_graph(run)
+            final = graphmod.run_graph(run)
     finally:
         os.chdir(here)
-    return run
+    return run, final
 
 
 @unittest.skipUnless(shutil.which("uv") and shutil.which("git") and shutil.which("bash"),
@@ -143,7 +144,7 @@ class EndToEnd(unittest.TestCase):
         build_repo(self.root)
 
     def test_three_waves_invoke_to_the_end_and_every_unit_promotes(self):
-        run = emanate(self.root, {"personas": PERSONAS})
+        run, final = emanate(self.root, {"personas": PERSONAS})
         data = run.state.data
         self.assertEqual(data["exit"], "goal reached")
         self.assertEqual(sorted(unit for unit, record in data["units"].items()
@@ -152,11 +153,28 @@ class EndToEnd(unittest.TestCase):
         # The run's own thread, checkpointed where the run keeps everything else.
         self.assertTrue(os.path.exists(os.path.join(run.run_dir, "checkpoint.sqlite")))
 
+        # The state the graph ends with is that same record, carried rather than
+        # re-read from the run.
+        self.assertEqual(final["run_dir"], run.run_dir)
+        self.assertEqual(final["goal_branch"], run.goal_branch)
+        self.assertEqual(final["goal_worktree"], run.goal_worktree)
+        self.assertEqual(final["waves"], data["waves"])
+        self.assertEqual(final["wave_index"], 3)
+        self.assertEqual(final["exit_reason"], "goal reached")
+        self.assertEqual(final["plan"]["units"], run.plan["units"])
+        # The fan-in: four units, each answering with its own record.
+        self.assertEqual(sorted(final["units"]), sorted(UNITS))
+        self.assertEqual(final["spawn_count"], data["spawn_count"])
+        self.assertEqual(final["spend_usd"], data["spend_usd"])
+        # The unit's counters travel with it: the record's own dicts.
+        self.assertEqual(final["units"]["auth.org"]["rework"],
+                         data["units"]["auth.org"]["rework"])
+
     def test_the_unit_cuts_at_stalled_once_rework_reaches_its_limit(self):
         reject = {"verdict": "REJECT", "findings": [
             {"severity": "error", "blocking": True, "title": "the contract invents a field",
              "issue": "no such field in the KB", "follow_up": "re-read the contract"}]}
-        run = emanate(self.root, {
+        run, _ = emanate(self.root, {
             "personas": PERSONAS,
             "overseers": {"inspire-quality-overseer": {
                 "auth.org": {"contracter": [reject, reject, reject]}}}},

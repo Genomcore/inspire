@@ -6,10 +6,13 @@ wave loop, the handoff's `while True`, and `gate_loop`'s verdict machine. The
 judgment, the subprocesses and the records are untouched.
 
 The `run` — an `Orchestrator`, the shared context every module reads — travels in
-the invocation's `configurable`, not in the state: it holds locks, an open report
-and a runner, none of which is a value, and `state.json` is still where the run's
-own record lives. What the state carries is what the flow routes on, and `units`
-takes a reducer because a wave's units answer in parallel.
+the invocation's `configurable` rather than in the state: it holds locks, an open
+report and a runner, none of which is a value. What the state carries is the run's
+record — the roster, the waves, the spend, and the pointers the run computed at
+t=0 — so the flow routes on the state rather than on the run. The record's own
+dicts travel, not copies: a node spends a rework where it is spent, and the state
+carries the same object the run saved. `units` takes a reducer because a wave's
+units answer in parallel.
 """
 
 import os
@@ -48,21 +51,35 @@ def collect(left, right):
 
 
 class RunState(TypedDict, total=False):
-    """What the flow itself needs to route on. The run's own record stays in
-    `run.state.data`, where every module already reads it."""
+    """The run's record, and what the flow routes on: what `run.state.data` holds
+    (`units`, `waves`, `spend_usd`, `spawn_count`) plus the pointers the run
+    computed at t=0 and has carried as attributes (`run_dir`, `goal_branch`,
+    `goal_worktree`, `plan`). The per-unit halves — `timeline`, `infra_retries`,
+    `rework` — are on `UnitState`, which is where the record keeps them."""
+    run_dir: str
+    goal_branch: str
+    goal_worktree: str
+    plan: dict
     waves: list
     wave_index: int
     pending: list
     runnable: list
     units: Annotated[dict, merge_units]
+    spend_usd: float
+    spawn_count: int
     spend_exhausted: bool
     exit_reason: str
 
 
 class UnitState(TypedDict, total=False):
-    """One unit's trip around the boundary. `rework` and `infra_retries` are not
-    here: they are the unit's own record, counted where they are spent."""
+    """One unit's trip around the boundary, and the unit's own counters: `rework`
+    is what `stalled` cuts on, `infra_retries` what the free retry spends, and
+    `timeline` where its time went. They are the record's own objects, seeded at
+    `prepare` and spent in place, so the state and the record never disagree."""
     unit_id: str
+    rework: dict
+    infra_retries: dict
+    timeline: list
     role: str
     findings: list
     changed: list
@@ -90,22 +107,21 @@ def _next_role(ustate):
 # ------------------------------------------------------------------ t = 0
 
 def preflight(state, config):
-    """Everything that can refuse, and the identity the run is recorded under.
-    `run_graph` runs it before the invocation — the checkpoint file and the thread
-    are named after that identity — so here it runs only for a graph invoked with
-    a run that has not been through it."""
+    """The identity the run is recorded under, into the state. `run.preflight()`
+    itself runs in `run_graph`, before the invocation — the checkpoint file and the
+    thread are named after what it computes — so what is left here is its record."""
     run = _run(config)
-    if not getattr(run, "run_dir", None):
-        run.preflight()
-    return {}
+    return {"run_dir": run.run_dir, "goal_branch": run.goal_branch,
+            "goal_worktree": run.goal_worktree}
 
 
 def plan(state, config):
     run = _run(config)
     run.plan_step()
     if run.plan.get("realized_all") or not run.plan.get("waves"):
-        return {"exit_reason": "goal reached — nothing left to build"}
-    return {}
+        return {"plan": run.plan,
+                "exit_reason": "goal reached — nothing left to build"}
+    return {"plan": run.plan}
 
 
 def route_plan(state):
@@ -165,8 +181,7 @@ def identity(state, config):
 def wave(state, config):
     run = _run(config)
     runnable, exhausted = run.open_wave(state["wave_index"])
-    return {"runnable": runnable, "spend_exhausted": exhausted,
-            "units": dict(run.state.data["units"])}
+    return {"runnable": runnable, "spend_exhausted": exhausted}
 
 
 def fan_out(state):
@@ -181,7 +196,8 @@ def wave_close(state, config):
     run = _run(config)
     index = state["wave_index"]
     run.close_wave(index, state.get("spend_exhausted", False))
-    return {"wave_index": index + 1, "units": dict(run.state.data["units"])}
+    return {"wave_index": index + 1, "spend_usd": run.state.data["spend_usd"],
+            "spawn_count": run.state.data["spawn_count"]}
 
 
 def route_wave(state):
@@ -219,8 +235,11 @@ def unit_recursion_limit(run):
 
 def prepare(state, config):
     run = _run(config)
-    run.open_unit(run.state.unit(state["unit_id"]))
-    return {"free_retry_used": False, "findings": []}
+    ustate = run.state.unit(state["unit_id"])
+    run.open_unit(ustate)
+    return {"free_retry_used": False, "findings": [],
+            "rework": ustate["rework"], "infra_retries": ustate["infra_retries"],
+            "timeline": ustate["timeline"]}
 
 
 def route_prepare(state, config):
@@ -490,8 +509,9 @@ def run_graph(run):
     run dir, and `--parallel` wide. Naming either needs the identity `preflight`
     computes, so that step runs here, before the graph it also opens.
 
-    Nothing reads the checkpoints yet — `state.json` is still the record a resume
-    is driven from, and the arbiter is an agent rather than a human, so no node
+    The final state is the run's record as the graph carried it, and is returned:
+    nothing reads the checkpoints yet — `state.json` is still the file a resume is
+    driven from — and the arbiter is an agent rather than a human, so no node
     interrupts."""
     run.preflight()
     with SqliteSaver.from_conn_string(os.path.join(run.run_dir,
