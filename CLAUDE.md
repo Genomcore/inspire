@@ -241,7 +241,7 @@ repo is both its source and its own marketplace.
 - `.claude/hooks/template-*.sh` — template-maintenance only (e.g. guarding the
   release-identity bump); never shipped to a project.
 - `langgraph.json` — template-maintenance too: `langgraph dev`, run from this
-  root, serves the orchestrator's two graphs (`emanate`, `unidad`) to Studio.
+  root, serves the orchestrator's three graphs (`emanate`, `unidad`, `readiness`) to Studio.
   It names `plugin/base/bin/lib` as a dependency and the graphs as **modules**
   (`orchestrator.graph.graph:build`), because a graph loaded by file path is a
   top-level module whose relative imports fail. It sits at the root, not under

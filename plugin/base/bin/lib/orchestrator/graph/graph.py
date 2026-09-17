@@ -95,8 +95,8 @@ def plan(state, config):
 
 def route_plan(state):
     if state.get("exit_reason"):
-        return ["identity"]
-    return ["ceiling", "shells", "derive_units", "baseline"]
+        return "identity"
+    return "readiness"
 
 
 def ceiling(state, config):
@@ -117,8 +117,7 @@ def derive_units(state, config):
 
 
 def fan_derive(state):
-    return ([Send("derive", {"entry": entry}) for entry in state["pending"]]
-            or "identity")
+    return [Send("derive", {"entry": entry}) for entry in state["pending"]] or END
 
 
 def derive(payload, config):
@@ -409,22 +408,31 @@ def build_unit():
     return builder.compile()
 
 
+def build_readiness():
+    builder = StateGraph(RunState)
+    for name, node in (("ceiling", ceiling), ("shells", shells),
+                       ("derive_units", derive_units), ("derive", derive),
+                       ("baseline", baseline)):
+        builder.add_node(name, node)
+    for name in ("ceiling", "shells", "derive_units", "baseline"):
+        builder.add_edge(START, name)
+    builder.add_conditional_edges("derive_units", fan_derive, ["derive", END])
+    builder.add_edge(["ceiling", "shells", "baseline", "derive"], END)
+    return builder.compile()
+
+
 def build(checkpointer=None):
     builder = StateGraph(RunState)
-    for name, node in (("preflight", preflight), ("plan", plan), ("ceiling", ceiling),
-                       ("shells", shells), ("derive_units", derive_units),
-                       ("derive", derive), ("baseline", baseline),
-                       ("identity", identity), ("wave", wave), ("unit", unit),
-                       ("wave_close", wave_close), ("report", report)):
+    for name, node in (("preflight", preflight), ("plan", plan),
+                       ("readiness", READINESS), ("identity", identity),
+                       ("wave", wave), ("unit", unit), ("wave_close", wave_close),
+                       ("report", report)):
         builder.add_node(name, node)
 
     builder.add_edge(START, "preflight")
     builder.add_edge("preflight", "plan")
-    builder.add_conditional_edges("plan", route_plan,
-                                  ["ceiling", "shells", "derive_units", "baseline",
-                                   "identity"])
-    builder.add_conditional_edges("derive_units", fan_derive, ["derive", "identity"])
-    builder.add_edge(["ceiling", "shells", "baseline", "derive"], "identity")
+    builder.add_conditional_edges("plan", route_plan, ["readiness", "identity"])
+    builder.add_edge("readiness", "identity")
     builder.add_conditional_edges("identity", route_wave, ["wave", "report"])
     builder.add_conditional_edges("wave", fan_out, ["unit", "wave_close"])
     builder.add_edge("unit", "wave_close")
@@ -434,6 +442,7 @@ def build(checkpointer=None):
 
 
 UNIT = build_unit()
+READINESS = build_readiness()
 
 
 def checkpoint_path(run):
