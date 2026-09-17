@@ -7,14 +7,14 @@ the deny rules and the harvest filter cover it."""
 import json
 import os
 import sys
+from pathlib import Path
 
 # ponytail: file tools only; a Bash-side fence is the OS sandbox, if ever needed.
 PATH_KEYS = ("file_path", "notebook_path", "path")
 
 
 def outside(path, root):
-    real = os.path.realpath(os.path.join(root, path))
-    return os.path.commonpath([real, root]) != root
+    return not Path(os.path.realpath(os.path.join(root, path))).is_relative_to(root)
 
 
 def main():

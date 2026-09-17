@@ -52,24 +52,25 @@ def parse_args(argv):
     sub = parser.add_subparsers(dest="command")
     sub.required = True
 
-    run = sub.add_parser("run")
+    # `--runner`/`--bin` and the two roots mean the same thing to both subcommands.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--runner", default="claude")
+    common.add_argument("--bin")
+    common.add_argument("--profiles-root", dest="profiles_root")
+    common.add_argument("--agents-root", dest="agents_root")
+
+    run = sub.add_parser("run", parents=[common])
     run.add_argument("--goal")
     run.add_argument("--ceiling", type=int)
     run.add_argument("--scope", action="append", default=[])
     run.add_argument("--rework", type=int, default=2)
     run.add_argument("--variant")
     run.add_argument("--reemanate", action="append", default=[])
-    run.add_argument("--runner", default="claude")
     run.add_argument("--parallel", type=int, default=3)
     run.add_argument("--budget-usd", type=float, dest="budget_usd")
-    run.add_argument("--bin")
-    run.add_argument("--profiles-root", dest="profiles_root")
-    run.add_argument("--agents-root", dest="agents_root")
 
-    resume = sub.add_parser("resume")
+    resume = sub.add_parser("resume", parents=[common])
     resume.add_argument("run_id")
-    resume.add_argument("--runner", default="claude")
-    resume.add_argument("--bin")
 
     return parser.parse_args(argv)
 
