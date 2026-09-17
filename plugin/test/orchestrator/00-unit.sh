@@ -2,9 +2,13 @@
 # The orchestrator's per-module unit tests, one PASS/FAIL line each.
 #
 # Every folder under base/bin/lib/orchestrator/ carries its module and its own
-# test_<module>.py; `unittest discover` runs the lot. Rendering each case as one
-# assertion is what lets run.sh's inventory name them — so a case that vanishes
-# is a label that vanishes, the same way a bash assertion is.
+# test_<module>.py; pytest runs the lot. Rendering each case as one assertion is
+# what lets run.sh's inventory name them — so a case that vanishes is a label
+# that vanishes, the same way a bash assertion is.
+#
+# pytest is a development dependency of this repo alone: it is layered onto the
+# entry point's own environment with `uv run --with`, so nothing under base/
+# declares it and nothing ships it.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 . "$HERE/lib/assert.sh"
@@ -29,31 +33,35 @@ premise "uv resolved the script's environment" "[ -x '$PY' ]"
 check "unit: the header's dependency imports in that environment" \
   "'$PY' -c 'import langgraph'"
 
+# `python_functions` is narrowed to `test_*`: pytest's default `test*` also
+# collects a production helper like `tests_root_args` where a test module
+# imports one, and reads its arguments as fixtures it cannot supply.
 ( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 \
-    "$PY" -m unittest discover -s . -t . -p 'test_*.py' -v ) >"$TMP/out" 2>&1
+    uv run --no-project --python "$PY" --with pytest \
+      python -m pytest -v -p no:cacheprovider -o python_functions='test_*' . \
+) >"$TMP/out" 2>&1
 rc=$?
 
-# `-v` prints one line per case: `test_x (pkg.mod.Class) ... ok` on 3.9, and
-# `test_x (pkg.mod.Class.test_x) ... ok` from 3.11. Both read the same here.
+# `-v` prints one line per case: `pkg/mod/test_mod.py::Class::test_x PASSED`.
+# The node id reads as the dotted path the labels have always carried, which is
+# what keeps the inventory's names stable across the runner change.
 n=0
 while IFS= read -r line; do
-  case "$line" in
-    test_*" ... "*) ;;
-    *) continue ;;
-  esac
-  name="${line%% (*}"; rest="${line#*(}"; where="${rest%%)*}"; status="${line##* ... }"
-  case "$where" in *".$name") label="$where" ;; *) label="$where.$name" ;; esac
+  node="${line%% *}"; status="${line#* }"; status="${status%% *}"
+  case "$node" in *.py::*) ;; *) continue ;; esac
+  case "$status" in PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS) ;; *) continue ;; esac
+  label="${node/.py::/::}"; label="${label//\//.}"; label="${label//::/.}"
   label="unit: ${label#orchestrator.}"
   n=$((n + 1))
   case "$status" in
-    ok) ok "$label" ;;
-    skipped*) skip "$label" ;;
+    PASSED|XFAIL) ok "$label" ;;
+    SKIPPED) skip "$label" ;;
     *) bad "$label ($status)" ;;
   esac
 done < "$TMP/out"
 
 check "unit: discover ran at least one case" "[ $n -gt 0 ]"
 eq "unit: the suite exits clean" "$rc" "0"
-[ "$rc" -eq 0 ] || sed -n '/^=\{20,\}/,$p' "$TMP/out" | head -60
+[ "$rc" -eq 0 ] || tail -60 "$TMP/out"
 
 summary
