@@ -31,7 +31,10 @@ usage · `3` refused at t=0, nothing spawned · `4` internal.
 
 - **`.inspire/emanate.json`** — schema `inspire.emanate-config/1`, the project's
   own declaration: `tests_roots` and `source_roots` (both non-empty), at least one
-  `suite` command, and optionally `checks`, `frozen_paths`, `declaration_only`,
+  `suite` command, and optionally `checks`, `frozen_paths`, `scaffold_paths` (the
+  suite's own harness at the source root — `package.json`, the runner config, the
+  lockfile — which the tester owns besides its tests roots, because nobody else
+  writes it and a tree that starts empty has none), `declaration_only`,
   `narrowed_test`, `wall_clock`, `max_turns`. It is a **refusal** when it is
   missing or unusable, named problem by problem. The process reads no profile and
   scrapes no prose for these: a command it runs is a command the project wrote.
@@ -218,8 +221,8 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
   tester's boundary the `@claim` citations are read against the contract here,
   before anything is committed.
 - **harvest** — `emanate-harvest.sh`, the phase's owned pathspec only: source
-  minus tests for the contracter and the implementer, the declared tests roots for
-  the tester. Exit `6` is *nothing to harvest* — an infrastructural failure from a
+  minus tests for the contracter and the implementer, the declared tests roots plus
+  `scaffold_paths` for the tester. Exit `6` is *nothing to harvest* — an infrastructural failure from a
   persona phase, never a rejection — `7` is a conflict onto the integration
   branch, and anything else stalls the unit naming the tool.
 - **C, in the verify worktree at the new tip.** The project's declared `checks`,

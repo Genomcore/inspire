@@ -8,12 +8,22 @@ from ..findings import gate_digest
 from ..state import set_phase
 from ..util import read_json, tail
 
+NOT_A_REPO = "not a git repository — this loop's whole audit trail is git."
+GIT_FAILED = "git %s failed: %s"
+NO_MERGE = "%s does not merge into %s: %s"
+
+COMMITS = {
+    "log": "emanate(log): %s — %s",
+    "promote": "emanate: promote %s\n\n%s\n",
+    "advance": "emanate: advance %s onto %s\n\nconflicting: %s\n",
+}
+
 
 def repo_root():
     proc = subprocess.run(["git", "rev-parse", "--show-toplevel"], text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        raise Refusal("not a git repository — this loop's whole audit trail is git.")
+        raise Refusal(NOT_A_REPO)
     return proc.stdout.strip()
 
 
@@ -21,7 +31,7 @@ def git(run, arguments, cwd=None, check=True):
     proc = subprocess.run(["git"] + arguments, cwd=cwd or run.repo, text=True,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if check and proc.returncode != 0:
-        raise Internal("git %s failed: %s" % (" ".join(arguments), tail(proc.stderr, 600)))
+        raise Internal(GIT_FAILED % (" ".join(arguments), tail(proc.stderr, 600)))
     return proc
 
 
@@ -31,7 +41,7 @@ def git_write(run, arguments, cwd=None, check=True):
 
 
 def commit_log(run, label):
-    message = "emanate(log): %s — %s" % (run.run_id, label)
+    message = COMMITS["log"] % (run.run_id, label)
     with run.git_lock:
         git(run, ["add", "-f", LOG_PATH], cwd=run.goal_worktree)
         git(run, ["commit", "-m", message], cwd=run.goal_worktree)
@@ -56,7 +66,7 @@ def integration_branch(run, unit_slug):
 
 def owned_pathspec(run, role):
     if role == "tester":
-        return list(run.config["tests_roots"])
+        return list(run.config["tests_roots"]) + list(run.config["scaffold_paths"])
     return list(run.config["source_roots"]) + \
         [":(exclude)%s" % root for root in run.config["tests_roots"]]
 
@@ -83,7 +93,7 @@ def promote(run, ustate, verdict):
                 "Emanate-Profiles": profile_hashes(run, ustate),
                 "Emanate-Gate": gate_digest(verdict),
                 "Emanate-Harness": run.harness}
-    message = "emanate: promote %s\n\n%s\n" % (
+    message = COMMITS["promote"] % (
         ustate["id"], "\n".join("%s: %s" % (key, trailers[key]) for key in TRAILER_ORDER))
     with run.git_lock:
         merge = git(run, ["merge", "--no-ff", "-m", message, ustate["integration_branch"]],
@@ -93,7 +103,7 @@ def promote(run, ustate, verdict):
                               cwd=run.goal_worktree).stdout.split()
             git(run, ["merge", "--abort"], cwd=run.goal_worktree, check=False)
             if not conflicting:
-                raise Stall("promote", "%s does not merge into %s: %s"
+                raise Stall("promote", NO_MERGE
                             % (ustate["integration_branch"], run.goal_branch,
                                tail(merge.stdout + merge.stderr, 600)))
             return sorted(conflicting)
@@ -112,7 +122,7 @@ def advance_onto_goal(run, ustate, conflicting):
         git(run, ["merge", "--no-commit", run.goal_branch], cwd=worktree, check=False)
         git(run, ["checkout", "--theirs", "--"] + conflicting, cwd=worktree)
         git(run, ["add", "--"] + conflicting, cwd=worktree)
-        git(run, ["commit", "-m", "emanate: advance %s onto %s\n\nconflicting: %s\n"
+        git(run, ["commit", "-m", COMMITS["advance"]
                   % (ustate["id"], run.goal_branch, " ".join(conflicting))], cwd=worktree)
         git(run, ["update-ref", "refs/heads/" + ustate["integration_branch"], "HEAD"],
             cwd=worktree)

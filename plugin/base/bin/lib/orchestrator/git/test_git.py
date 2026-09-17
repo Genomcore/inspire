@@ -34,6 +34,12 @@ class Names(unittest.TestCase):
         self.assertEqual(owned_pathspec(run, "tester"), ["tests"])
         self.assertEqual(owned_pathspec(run, "implementer"), ["source", ":(exclude)tests"])
 
+    def test_the_tester_also_owns_the_declared_scaffold(self):
+        run = stub_run()
+        run.config["scaffold_paths"] = ["source/vitest.config.ts"]
+        self.assertEqual(owned_pathspec(run, "tester"), ["tests", "source/vitest.config.ts"])
+        self.assertEqual(owned_pathspec(run, "implementer"), ["source", ":(exclude)tests"])
+
     def test_template_sha_reads_the_lock_or_says_none(self):
         with tempfile.TemporaryDirectory() as root:
             run = stub_run(repo=root)

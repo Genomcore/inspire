@@ -15,7 +15,8 @@ def stub_args(**over):
 def stub_run(**over):
     run = SimpleNamespace(
         config={"tests_roots": ["tests"], "source_roots": ["source"],
-                "suite": [{"command": "true"}], "checks": [], "frozen_paths": []},
+                "suite": [{"command": "true"}], "checks": [], "frozen_paths": [],
+                "scaffold_paths": []},
         args=stub_args(), plan={}, plan_units={}, repo="/repo", run_dir="/repo/run",
         goal_branch="emanate/all", goal_worktree="/repo/goal", launch_branch="main",
         goal_slug="all", stamp="20260101-000000", run_id="20260101-000000-abcd",

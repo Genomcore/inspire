@@ -63,5 +63,6 @@ class ConfigValidation(unittest.TestCase):
                 json.dump(usable(), stream)
             config = load_config(path)
         self.assertEqual(config["frozen_paths"], [])
+        self.assertEqual(config["scaffold_paths"], [])
         self.assertEqual(config["checks"], [])
         self.assertEqual(config["wall_clock"], 3600)

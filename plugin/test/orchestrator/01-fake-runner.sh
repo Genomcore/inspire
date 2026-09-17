@@ -453,4 +453,32 @@ eq "H: every integration branch is deleted after promote" \
 left="$(ls "$H/.inspire/worktrees" 2>/dev/null | grep -cv '^emanate-all$')"
 eq "H: no phase worktree is left on disk" "$left" "0"
 
+# ---------------------------------------------------------------------------
+# I. The suite's own scaffold. Its config lives at the source root, not under the
+#    tests roots, and only the tester needs it — so `scaffold_paths` hands those
+#    paths to the tester, and a tree that starts without a harness can grow one.
+# ---------------------------------------------------------------------------
+I="$TMP/i"; IF="$TMP/i-fake"
+mkrepo "$I"
+python3 - "$I/.inspire/emanate.json" <<'PY'
+import json, sys
+path = sys.argv[1]; config = json.load(open(path))
+config["scaffold_paths"] = ["source/vitest.config.ts"]
+json.dump(config, open(path, "w"))
+PY
+git -C "$I" commit -qam "declare the scaffold" >/dev/null
+mkfake "$IF" <<'EOF'
+{ "personas": { "contracter":  { "mode": "stub-source" },
+                "tester":      { "mode": "tests-from-contract",
+                                 "attempts": { "1": { "scaffold": "vitest.config.ts" } } },
+                "implementer": { "mode": "stub-source" } } }
+EOF
+rc="$(orun "$I" "$IF")"
+[ "$rc" = 0 ] || sed -n '1,40p' "$I.err"
+eq "I: the run ends"                          "$rc" "0"
+eq "I: all four units are promoted"           "$(st "$I" "count('promoted')")" "4"
+eq "I: the tester spent nothing"              "$(st "$I" "[rework(i,'tester') for i in IDS]")" "[0, 0, 0, 0]"
+eq "I: nothing was dropped at harvest"        "$(st "$I" "sum(len(u(i)['dropped']) for i in IDS)")" "0"
+check "I: the scaffold is on the goal branch" "[ -f '$(goalwt "$I")/source/vitest.config.ts' ]"
+
 summary
