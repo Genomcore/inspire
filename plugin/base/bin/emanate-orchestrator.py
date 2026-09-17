@@ -75,19 +75,12 @@ def parse_args(argv):
 
 def main(argv=None):
     args = parse_args(argv)
+    # After the parse, so `--help` still answers under a bare interpreter, which
+    # has no langgraph — only `uv run` resolves the header above.
+    from orchestrator.graph import resume_graph, run_graph
     try:
-        orchestrator = Orchestrator(args)
-        if args.command == "run":
-            orchestrator.start()
-        else:
-            # The graph picks its own thread up from the run's checkpoint; a run
-            # the loop started has none, and the loop below finishes it. Imported
-            # here so `--help` still answers under a bare interpreter, which has
-            # no langgraph — only `uv run` resolves the header above.
-            from orchestrator.graph import resume_graph
-            resume_graph(orchestrator)
-        if orchestrator.state.data["status"] != "ENDED":
-            orchestrator.wave_loop()
+        # A new run opens its own thread; a resume picks that thread up.
+        (run_graph if args.command == "run" else resume_graph)(Orchestrator(args))
         return EXIT_OK
     except Refusal as refusal:
         sys.stderr.write("REFUSED — %s\n" % refusal)

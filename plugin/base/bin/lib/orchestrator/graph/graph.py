@@ -534,10 +534,6 @@ def resume_graph(run):
     not carry is the run — locks, an open report, a runner — so that is rebuilt
     from `state.json` first, and `reconcile` is what the kill left open: the
     interrupted timeline entry, the free infrastructural retry, and any key an
-    older schema never wrote.
-
-    A run the old loop started has no thread to pick up, so there is nothing to
-    invoke and the caller finishes it the way it was begun. That branch goes when
-    `run` stops reaching the loop."""
+    older schema never wrote."""
     run.resume()
-    return invoke(run, None) if os.path.exists(checkpoint_path(run)) else None
+    return invoke(run, None)
