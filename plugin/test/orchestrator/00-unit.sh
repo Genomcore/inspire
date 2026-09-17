@@ -36,9 +36,13 @@ check "unit: the header's dependency imports in that environment" \
 # `python_functions` is narrowed to `test_*`: pytest's default `test*` also
 # collects a production helper like `tests_root_args` where a test module
 # imports one, and reads its arguments as fixtures it cannot supply.
-( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 \
+#
+# The shared fixtures are loaded as a plugin from this folder rather than as a
+# conftest.py beside the tests: the rootdir is the package a project
+# materializes, and pytest is this repo's dependency alone.
+( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$HERE/orchestrator" \
     uv run --no-project --python "$PY" --with pytest \
-      python -m pytest -v -p no:cacheprovider -o python_functions='test_*' . \
+      python -m pytest -v -p no:cacheprovider -o python_functions='test_*' -p conftest . \
 ) >"$TMP/out" 2>&1
 rc=$?
 
