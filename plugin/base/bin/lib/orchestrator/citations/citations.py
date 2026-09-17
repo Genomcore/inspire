@@ -1,6 +1,5 @@
 """The `@claim` scan over the tests roots, and its four classes against a contract."""
 
-import os
 import re
 import subprocess
 
@@ -13,24 +12,12 @@ CLAIM_TOKEN = re.compile(r"@claim\s+(\S+)(?:\s+(sha256:[0-9a-f]+))?")
 
 def scan_citations(roots, cwd):
     """Every `@claim` token under the tests roots, as {file, line, id, fingerprint}."""
-    # One `find` per run lists the tree; Python only opens what it printed.
-    files = subprocess.run(
-        ["find", *(os.path.join(cwd, root) for root in roots),
-         "-name", ".git", "-prune", "-o", "-type", "f", "-print"],
-        capture_output=True, text=True, check=True).stdout.splitlines()
-    found = []
-    for path in sorted(files):
-        with open(path, encoding="utf-8", errors="replace") as stream:
-            text = stream.read()
-        # The substring is the sieve: a tests tree is overwhelmingly files with
-        # no token at all, and those never reach the regex.
-        if "@claim" not in text:
-            continue
-        relative = os.path.relpath(path, cwd)
-        found.extend({"file": relative, "line": text.count("\n", 0, match.start()) + 1,
-                      "id": match.group(1), "fingerprint": match.group(2)}
-                     for match in CLAIM_TOKEN.finditer(text))
-    return found
+    lines = subprocess.run(
+        ["grep", "-rn", "--exclude-dir=.git", "@claim", *roots],
+        cwd=cwd, capture_output=True, text=True).stdout.splitlines()
+    return [{"file": file, "line": int(number), "id": match.group(1), "fingerprint": match.group(2)}
+            for file, number, text in (line.split(":", 2) for line in sorted(lines))
+            for match in CLAIM_TOKEN.finditer(text)]
 
 
 def classify_citations(contract, citations):
