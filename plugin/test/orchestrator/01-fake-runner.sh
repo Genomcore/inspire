@@ -17,7 +17,8 @@ PLUGIN_ROOT="$HERE/.."
 REPO="$(cd -P "$HERE/../.." && pwd -P)"
 . "$HERE/lib/assert.sh"
 
-BIN="$PLUGIN_ROOT/base/bin"
+# Canonical on purpose: uv keys the script's environment on the path as spelled.
+BIN="$(cd -P "$PLUGIN_ROOT/base/bin" && pwd -P)"
 ORCH="$BIN/emanate-orchestrator.py"
 FIXTURE="$BIN/test/fixtures/emanate-plan/clean-three-waves/spec"
 
@@ -32,6 +33,16 @@ trap 'rm -rf "$TMP"' EXIT
 
 premise "the process ships and is executable" "[ -x '$ORCH' ]"
 premise "the three-wave plan fixture ships its spec tree" "[ -d '$FIXTURE/sdd' ]"
+premise "uv is on PATH — the process resolves its dependencies through it" \
+  "command -v uv >/dev/null"
+
+# The interpreter is the script's own: uv resolves its PEP 723 header into a
+# cached environment once (the only step that may touch the network), and every
+# run below reuses it. `find` alone falls back to a bare interpreter when that
+# environment does not exist yet, so sync first.
+uv sync --script "$ORCH" -q
+PY="$(uv python find --script "$ORCH")"
+premise "uv resolved the script's environment" "[ -x '$PY' ]"
 
 # ---------------------------------------------------------------------------
 # The scratch repo. The fixture's spec/ is the KB; everything else here is the
@@ -104,7 +115,7 @@ mkfake() { mkdir -p "$1"; cat > "$1/script.json"; }
 orun() {
   local p="$1" fake="$2"; shift 2
   ( cd "$p" && SDD_KB_ROOT=spec/kb SDD_SPEC_ROOT=spec/sdd \
-      python3 "$ORCH" run --runner "fake:$fake" --bin "$BIN" \
+      "$PY" "$ORCH" run --runner "fake:$fake" --bin "$BIN" \
         --profiles-root spec/profiles --agents-root spec/agents "$@" ) \
     >"$p.out" 2>"$p.err"
   echo $?
@@ -323,6 +334,15 @@ check "E/gitignore: the refusal names the run-dir line"    "grep -q '.inspire/em
 check "E/gitignore: the launch checkout's own file is untouched" \
   "! grep -q 'emanate-runs' '$E3/.gitignore'"
 
+# A PATH holding git and nothing else: the process reaches t=0's runner check
+# and refuses there, naming what it is missing.
+E5="$TMP/e-uv"; mkrepo "$E5"; mkdir -p "$TMP/thin"; ln -s "$(command -v git)" "$TMP/thin/git"
+( cd "$E5" && PATH="$TMP/thin" "$PY" "$ORCH" run --runner "fake:$TMP/e-fake" --bin "$BIN" ) \
+  >"$E5.out" 2>"$E5.err"
+eq "E/uv: without uv on PATH the process refuses at t=0" "$?" "3"
+check "E/uv: the refusal names uv" "grep -q 'uv' '$E5.err'"
+eq "E/uv: nothing was spawned" "$(ls "$E5"/.inspire/emanate-runs/*/spawns 2>/dev/null | wc -l | tr -d ' ')" "0"
+
 E4="$TMP/e-ceiling"; mkrepo "$E4"
 rc="$(orun "$E4" "$TMP/e-fake" --ceiling 1)"
 eq "E/ceiling: a short ceiling without a goal is a warning, not a refusal" "$rc" "0"
@@ -354,7 +374,7 @@ eq "F: wave 1 had already closed before the kill" "$(grep -c '^## Wave 1 — clo
 
 FID="$(runid "$F")"
 ( cd "$F" && SDD_KB_ROOT=spec/kb SDD_SPEC_ROOT=spec/sdd \
-    python3 "$ORCH" resume "$FID" --runner "fake:$FF" --bin "$BIN" ) \
+    "$PY" "$ORCH" resume "$FID" --runner "fake:$FF" --bin "$BIN" ) \
   >"$F.resume.out" 2>"$F.resume.err"
 rc=$?
 [ "$rc" = 0 ] || sed -n '1,40p' "$F.resume.err"

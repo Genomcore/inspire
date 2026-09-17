@@ -3,6 +3,7 @@
 import concurrent.futures
 import json
 import os
+import shutil
 import subprocess
 
 from .. import git as gitmod
@@ -62,6 +63,9 @@ def compute_goal_slug(run):
 
 
 def build_runner(run):
+    if shutil.which("uv") is None:
+        raise Refusal("`uv` is not on PATH — this process resolves its own dependencies "
+                      "through it. Install uv and re-run.")
     contracts = os.path.join(run.run_dir, "contracts")
     spec = run.args.runner
     if spec == "claude":

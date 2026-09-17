@@ -9,15 +9,28 @@ set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 . "$HERE/lib/assert.sh"
 LIB="$HERE/../base/bin/lib"
+# Canonical on purpose: uv keys the script's environment on the path as spelled.
+ORCH="$(cd -P "$HERE/../base/bin" && pwd -P)/emanate-orchestrator.py"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 premise "the orchestrator package ships its test folders" \
   "[ -n \"\$(find '$LIB/orchestrator' -name 'test_*.py' | head -1)\" ]"
+premise "uv is on PATH — the entry point's PEP 723 header names its dependencies" \
+  "command -v uv >/dev/null"
+
+# The interpreter is the script's own: uv resolves the header's dependencies into
+# a cached environment once, and hands back its python. `find` alone falls back
+# to a bare interpreter when that environment does not exist yet, so sync first.
+uv sync --script "$ORCH" -q
+PY="$(uv python find --script "$ORCH")"
+premise "uv resolved the script's environment" "[ -x '$PY' ]"
+check "unit: the header's dependency imports in that environment" \
+  "'$PY' -c 'import langgraph'"
 
 ( cd "$LIB" && PYTHONDONTWRITEBYTECODE=1 \
-    python3 -m unittest discover -s . -t . -p 'test_*.py' -v ) >"$TMP/out" 2>&1
+    "$PY" -m unittest discover -s . -t . -p 'test_*.py' -v ) >"$TMP/out" 2>&1
 rc=$?
 
 # `-v` prints one line per case: `test_x (pkg.mod.Class) ... ok` on 3.9, and

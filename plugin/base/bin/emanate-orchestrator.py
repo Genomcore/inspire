@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["langgraph>=0.2,<1"]
+# ///
 """emanate-orchestrator — the unattended emanation loop, as a process.
 
 The doctrine is `.claude/skills/inspire-emanate/references/run.md` (the schedule,
@@ -8,7 +12,11 @@ wave loop, the per-unit handoff sequence, arbitration, the drill, promotion, the
 report, and the state file a killed run resumes from.
 
 It spawns agents through a runner seam, so the whole process runs without a model:
-`--runner fake:DIR` replays a script. Standard library only.
+`--runner fake:DIR` replays a script.
+
+The dependencies above are PEP 723 inline metadata: `uv run` reads them and
+resolves them into a cached environment, so a project needs no `pyproject`, no
+venv to manage and nothing beyond `uv` on PATH.
 
     emanate-orchestrator.py run    [--goal SEL] [--ceiling N] [--scope PATH]...
     emanate-orchestrator.py resume <run-id>
