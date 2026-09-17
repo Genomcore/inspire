@@ -240,6 +240,13 @@ repo is both its source and its own marketplace.
   so `/plugin marketplace add Genomcore/inspire` resolves.
 - `.claude/hooks/template-*.sh` — template-maintenance only (e.g. guarding the
   release-identity bump); never shipped to a project.
+- `langgraph.json` — template-maintenance too: `langgraph dev`, run from this
+  root, serves the orchestrator's two graphs (`emanate`, `unidad`) to Studio.
+  It names `plugin/base/bin/lib` as a dependency and the graphs as **modules**
+  (`orchestrator.graph.graph:build`), because a graph loaded by file path is a
+  top-level module whose relative imports fail. It sits at the root, not under
+  `plugin/base/`, so it neither materializes into a project nor perturbs the
+  manifest.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
   published at inspire.openbims.dev; source here — open `.manual/index.html`).
 - `docs/adr/` — hand-authored, core-level ADRs about INSPIRE itself. It does not
