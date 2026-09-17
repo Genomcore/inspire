@@ -1,9 +1,11 @@
 import contextlib
+import glob
 import io
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -104,9 +106,9 @@ def build_repo(root):
                        stdout=subprocess.DEVNULL, env=dict(os.environ, **ENV))
 
 
-def emanate(root, script, **over):
-    """One `run_graph` over that project, the way `run` would reach it: the run
-    and the state the graph ended with."""
+def run_args(root, script, **over):
+    """The `run` arguments an operator would pass, and the script the fake runner
+    answers from."""
     fake = os.path.join(root, "..", "fake")
     os.makedirs(fake, exist_ok=True)
     with open(os.path.join(fake, "script.json"), "w") as stream:
@@ -115,17 +117,48 @@ def emanate(root, script, **over):
                 runner="fake:" + fake, parallel=2, budget_usd=None, bin=BIN,
                 profiles_root="spec/profiles", agents_root="spec/agents")
     args.update(over)
+    return args
+
+
+def drive(root, entry, args):
+    """One invocation over that project, from inside it. The process reports its
+    own ending on stderr; a `-v` line per case is what the suite reads, so the
+    account goes to the buffer here."""
     run = Orchestrator(SimpleNamespace(**args))
     here = os.getcwd()
     os.chdir(root)
     try:
-        # The process reports its own ending on stderr; a `-v` line per case is
-        # what the suite reads, so the account goes to the buffer here.
         with contextlib.redirect_stderr(io.StringIO()):
-            final = graphmod.run_graph(run)
+            return run, entry(run)
     finally:
         os.chdir(here)
-    return run, final
+
+
+def emanate(root, script, **over):
+    """One `run_graph` over that project, the way `run` would reach it: the run
+    and the state the graph ended with."""
+    return drive(root, graphmod.run_graph, run_args(root, script, **over))
+
+
+# The fake runner's `kill` ending takes the whole process down, so the leg before
+# a resume is driven out of process — as it is in earnest.
+KILLABLE = """
+import json, os, sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, sys.argv[1])
+from types import SimpleNamespace
+from orchestrator.graph import run_graph
+from orchestrator.orchestrator import Orchestrator
+os.chdir(sys.argv[2])
+run_graph(Orchestrator(SimpleNamespace(**json.loads(sys.argv[3]))))
+"""
+
+
+def emanate_until_killed(root, script, **over):
+    args = run_args(root, script, **over)
+    return subprocess.run([sys.executable, "-c", KILLABLE, os.path.join(BIN, "lib"),
+                           root, json.dumps(args)],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
 
 
 @unittest.skipUnless(shutil.which("uv") and shutil.which("git") and shutil.which("bash"),
@@ -169,6 +202,32 @@ class EndToEnd(unittest.TestCase):
         # The unit's counters travel with it: the record's own dicts.
         self.assertEqual(final["units"]["auth.org"]["rework"],
                          data["units"]["auth.org"]["rework"])
+
+    def test_a_killed_run_resumes_from_its_checkpoint_and_still_reaches_the_goal(self):
+        script = {"personas": PERSONAS, "endings": {"auth.user": {"tester": ["kill"]}}}
+        self.assertEqual(emanate_until_killed(self.root, script), 70)
+        with open(glob.glob(os.path.join(self.root, ".inspire", "emanate-runs", "*",
+                                         "state.json"))[0]) as stream:
+            killed = json.load(stream)
+        self.assertEqual(killed["units"]["auth.user"]["status"], "in-phase")
+        self.assertEqual(killed["units"]["auth.user"]["phase"], "tester")
+
+        run, _ = drive(self.root, graphmod.resume_graph,
+                       dict(run_id=killed["run_id"], bin=BIN,
+                            runner=run_args(self.root, script)["runner"]))
+        units = run.state.data["units"]
+        self.assertEqual(run.state.data["exit"], "goal reached")
+        self.assertEqual(sorted(unit for unit, record in units.items()
+                                if record["status"] == "promoted"), sorted(UNITS))
+        # What `reconcile` did to the record the kill left open: the phase it died
+        # in is an infrastructural ending, and costs the tester no rework.
+        self.assertEqual(units["auth.user"]["infra_retries"]["tester"], 1)
+        self.assertEqual(units["auth.user"]["rework"]["tester"], 0)
+        self.assertIn("interrupted", [entry["ended_at"]
+                                      for entry in units["auth.user"]["timeline"]])
+        # The waves the kill had already closed are not re-opened.
+        self.assertEqual([entry["index"] for entry in run.state.data["wave_log"]],
+                         [1, 2, 3])
 
     def test_the_unit_cuts_at_stalled_once_rework_reaches_its_limit(self):
         reject = {"verdict": "REJECT", "findings": [

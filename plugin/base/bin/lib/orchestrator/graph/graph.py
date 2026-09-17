@@ -500,19 +500,36 @@ def build(checkpointer=None):
 UNIT = build_unit()
 
 
-def run_graph(run):
+def invoke(run, state):
     """One invocation is one run: threaded on the run id, checkpointed under the
-    run dir, and `--parallel` wide. Naming either needs the identity `preflight`
-    computes, so that step runs here, before the graph it also opens.
+    run dir, and `--parallel` wide. `state` is the run's opening record, or `None`
+    to pick the thread up where it was killed.
 
-    The final state is the run's record as the graph carried it, and is returned:
-    nothing reads the checkpoints yet — `state.json` is still the file a resume is
-    driven from — and the arbiter is an agent rather than a human, so no node
-    interrupts."""
-    run.preflight()
+    The final state is the run's record as the graph carried it, and is returned.
+    `state.json` is projected rather than returned: every node that mutates the
+    record mutates the record's own objects — which is what the state carries —
+    and `run.save()` writes the file, so the projection is the same one call the
+    loop made. The arbiter is an agent rather than a human, so no node interrupts."""
     with SqliteSaver.from_conn_string(os.path.join(run.run_dir,
                                                    "checkpoint.sqlite")) as saver:
         return build(saver).invoke(
-            {"wave_index": 0, "waves": [], "units": {}},
-            {"configurable": {"run": run, "thread_id": run.run_id},
-             "recursion_limit": 128, "max_concurrency": max(1, run.args.parallel)})
+            state, {"configurable": {"run": run, "thread_id": run.run_id},
+                    "recursion_limit": 128,
+                    "max_concurrency": max(1, run.args.parallel)})
+
+
+def run_graph(run):
+    """A new run. Naming the thread and the checkpoint file needs the identity
+    `preflight` computes, so that step runs here, before the graph it also opens."""
+    run.preflight()
+    return invoke(run, {"wave_index": 0, "waves": [], "units": {}})
+
+
+def resume_graph(run):
+    """A killed run, picked up from its own checkpoint. What the checkpointer does
+    not carry is the run — locks, an open report, a runner — so that is rebuilt
+    from `state.json` first, and `reconcile` is what the kill left open: the
+    interrupted timeline entry, the free infrastructural retry, and any key an
+    older schema never wrote."""
+    run.resume()
+    return invoke(run, None)

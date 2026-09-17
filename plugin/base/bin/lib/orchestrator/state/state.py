@@ -1,8 +1,10 @@
 """The run's record on disk, and the one shape a spawn answers in."""
 
+import datetime
 import threading
 
-from ..util import now_iso, read_json, tail, write_json_atomic
+from ..constants import ROLES
+from ..util import ISO, now_iso, read_json, tail, write_json_atomic
 
 
 class State:
@@ -58,6 +60,34 @@ def set_phase(run, ustate, phase):
         ustate["timeline"].append({"phase": phase, "started_at": now_iso(), "ended_at": None})
     ustate["phase"] = phase
     run.save()
+
+
+def reconcile(data):
+    """The three things a resume does to a record beyond reading it back, and the
+    one place they are written. A run written before a key existed grows it — the
+    run-id stamp is UTC in its own shape, so it converts to the ISO one. Whatever
+    the kill left open is closed now: the real end is unrecoverable, so the entry
+    is marked interrupted rather than charged the downtime. And the phase that was
+    in flight is nobody's judgment, so it counts as an infrastructural ending —
+    the unit re-enters at the first role it has not been through."""
+    data.setdefault("started_at", datetime.datetime.strptime(
+        data["stamp"], "%Y%m%d-%H%M%S").strftime(ISO))
+    data.setdefault("ended_at", None)
+    data.setdefault("wave_log", [])
+    for unit in data["units"].values():
+        for key, blank in (("started_at", None), ("ended_at", None), ("timeline", [])):
+            unit.setdefault(key, blank)
+    if data["wave_log"] and data["wave_log"][-1]["ended_at"] is None:
+        data["wave_log"][-1]["ended_at"] = "interrupted"
+    for unit in data["units"].values():
+        if unit["status"] != "in-phase":
+            continue
+        if unit["phase"] in ROLES:
+            unit["infra_retries"][unit["phase"]] += 1
+        if unit["timeline"] and unit["timeline"][-1]["ended_at"] is None:
+            unit["timeline"][-1]["ended_at"] = "interrupted"
+        unit["phase"] = None  # set_phase would stamp a clock that did not run
+        unit["status"] = "pending"
 
 
 def close_timeline(ustate):
