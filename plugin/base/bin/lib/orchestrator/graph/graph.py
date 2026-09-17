@@ -1,9 +1,10 @@
 """The flow, declared: the same modules, wired as a graph instead of a loop.
 
 Every node here calls a function that already exists — `start`, `handoff`, `gate`,
-`git`, `report`. What the graph carries is only the control flow around them: the
-wave loop, the handoff's `while True`, and `gate_loop`'s verdict machine. The
-judgment, the subprocesses and the records are untouched.
+`git`, `report`. What the graph carries is the control flow around them, and it is
+the only place any of it is written: the waves, the handoff's retries, and the
+gate's verdict machine. The judgment, the subprocesses and the records are the
+modules' own.
 
 The `run` — an `Orchestrator`, the shared context every module reads — travels in
 the invocation's `configurable` rather than in the state: it holds locks, an open
@@ -45,7 +46,7 @@ def collect(left, right):
 
 
 class RunState(TypedDict, total=False):
-    """The run's record, and what the flow routes on: what `run.state.data` holds
+    """The run's record, and what the flow routes on: what `run.state` holds
     (`units`, `waves`, `spend_usd`, `spawn_count`) plus the pointers the run
     computed at t=0 and has carried as attributes (`run_dir`, `goal_branch`,
     `goal_worktree`, `plan`). The per-unit halves — `timeline`, `infra_retries`,
@@ -192,8 +193,8 @@ def wave_close(state, config):
     run = _run(config)
     index = state["wave_index"]
     run.close_wave(index, state.get("spend_exhausted", False))
-    return {"wave_index": index + 1, "spend_usd": run.state.data["spend_usd"],
-            "spawn_count": run.state.data["spawn_count"]}
+    return {"wave_index": index + 1, "spend_usd": run.state["spend_usd"],
+            "spawn_count": run.state["spawn_count"]}
 
 
 def route_wave(state):
@@ -206,7 +207,7 @@ def report(state, config):
     run = _run(config)
     run.finish(state.get("exit_reason")
                or run.exit_reason(state.get("spend_exhausted", False)))
-    return {"exit_reason": run.state.data["exit"]}
+    return {"exit_reason": run.state["exit"]}
 
 
 # -------------------------------------------------------------- one unit
@@ -215,7 +216,7 @@ def unit(payload, config):
     """The subgraph, run for one unit, under the same guard the loop ran it under:
     a stall or an infrastructural failure ends this unit and no other."""
     run = _run(config)
-    ustate = run.state.unit(payload["unit_id"])
+    ustate = run.state["units"][payload["unit_id"]]
     with run.unit_guard(ustate):
         UNIT.invoke({"unit_id": ustate["id"], "findings": []},
                     {"configurable": {"run": run},
@@ -231,7 +232,7 @@ def unit_recursion_limit(run):
 
 def prepare(state, config):
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     run.open_unit(ustate)
     return {"free_retry_used": False, "findings": [],
             "rework": ustate["rework"], "infra_retries": ustate["infra_retries"],
@@ -239,7 +240,7 @@ def prepare(state, config):
 
 
 def route_prepare(state, config):
-    return _next_role(_run(config).state.unit(state["unit_id"])) or "gate"
+    return _next_role(_run(config).state["units"][state["unit_id"]]) or "gate"
 
 
 def persona(role):
@@ -248,7 +249,7 @@ def persona(role):
     so the first one of a boundary is free."""
     def node(state, config):
         run = _run(config)
-        ustate = run.state.unit(state["unit_id"])
+        ustate = run.state["units"][state["unit_id"]]
         if ustate["phase"] != role:
             set_phase(run, ustate, role)
         findings = state.get("findings") or []
@@ -286,7 +287,7 @@ def route_retry(state):
 
 def harvest(state, config):
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     role = state["role"]
     try:
         tip = handoffmod.harvest(run, ustate, role, state["worktree"])
@@ -313,7 +314,7 @@ def route_harvest(state):
 def verify(state, config):
     """C: the tool checks, in the verify worktree at the new tip."""
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     rejection = handoffmod.checks_c(run, ustate, state["role"], state["changed"])
     if rejection:
         handoffmod.spend_rework(run, ustate, state["role"], rejection,
@@ -331,7 +332,7 @@ def route_verify(state, config):
 
 def overseer(state, config):
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     shell = state["shell"]
     brief = handoffmod.overseer_brief(run, ustate, state["role"], state["changed"])
     result = handoffmod.spawn(
@@ -343,7 +344,7 @@ def overseer(state, config):
 def overseers(state, config):
     """The join. One overseer's rejection is the boundary's."""
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     rejections = state.get("rejections") or []
     if rejections:
         handoffmod.spend_rework(run, ustate, state["role"], rejections,
@@ -357,14 +358,14 @@ def overseers(state, config):
 
 def route_overseers(state, config):
     return (route_retry(state)
-            or _next_role(_run(config).state.unit(state["unit_id"])) or "gate")
+            or _next_role(_run(config).state["units"][state["unit_id"]]) or "gate")
 
 
 # -------------------------------------------------------------- the gate
 
 def gate(state, config):
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     if ustate["phase"] != "gate":
         set_phase(run, ustate, "gate")
     verdict, results_path, verdict_path = gatemod.run_gate(run, ustate)
@@ -395,14 +396,14 @@ def rework(state, config):
     run = _run(config)
     _, role = route_gate_verdict(state["verdict"])
     findings = gate_findings(state["verdict"])
-    handoffmod.spend_rework(run, run.state.unit(state["unit_id"]), role, findings,
+    handoffmod.spend_rework(run, run.state["units"][state["unit_id"]], role, findings,
                             "the gate")
     return {"role": role, "findings": findings, "free_retry_used": False}
 
 
 def arbitrate(state, config):
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     role, findings = gatemod.arbitrate(run, ustate, state["verdict"],
                                        state["results_path"], state["verdict_path"])
     handoffmod.spend_rework(run, ustate, role, findings, "the gate")
@@ -415,7 +416,7 @@ def route_role(state):
 
 def drill(state, config):
     run = _run(config)
-    gatemod.drill(run, run.state.unit(state["unit_id"]))
+    gatemod.drill(run, run.state["units"][state["unit_id"]])
     return {}
 
 
@@ -423,7 +424,7 @@ def promote(state, config):
     """A sibling that promoted first onto a path this unit also wrote is one more
     edge back to the persona that owns it — and the whole boundary again."""
     run = _run(config)
-    ustate = run.state.unit(state["unit_id"])
+    ustate = run.state["units"][state["unit_id"]]
     conflicting = gitmod.promote(run, ustate, state["verdict"])
     if not conflicting:
         return {"retry": False}

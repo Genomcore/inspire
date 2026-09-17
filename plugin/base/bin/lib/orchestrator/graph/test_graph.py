@@ -178,7 +178,7 @@ class EndToEnd(unittest.TestCase):
 
     def test_three_waves_invoke_to_the_end_and_every_unit_promotes(self):
         run, final = emanate(self.root, {"personas": PERSONAS})
-        data = run.state.data
+        data = run.state
         self.assertEqual(data["exit"], "goal reached")
         self.assertEqual(sorted(unit for unit, record in data["units"].items()
                                 if record["status"] == "promoted"), sorted(UNITS))
@@ -215,8 +215,8 @@ class EndToEnd(unittest.TestCase):
         run, _ = drive(self.root, graphmod.resume_graph,
                        dict(run_id=killed["run_id"], bin=BIN,
                             runner=run_args(self.root, script)["runner"]))
-        units = run.state.data["units"]
-        self.assertEqual(run.state.data["exit"], "goal reached")
+        units = run.state["units"]
+        self.assertEqual(run.state["exit"], "goal reached")
         self.assertEqual(sorted(unit for unit, record in units.items()
                                 if record["status"] == "promoted"), sorted(UNITS))
         # What `reconcile` did to the record the kill left open: the phase it died
@@ -226,7 +226,7 @@ class EndToEnd(unittest.TestCase):
         self.assertIn("interrupted", [entry["ended_at"]
                                       for entry in units["auth.user"]["timeline"]])
         # The waves the kill had already closed are not re-opened.
-        self.assertEqual([entry["index"] for entry in run.state.data["wave_log"]],
+        self.assertEqual([entry["index"] for entry in run.state["wave_log"]],
                          [1, 2, 3])
 
     def test_the_unit_cuts_at_stalled_once_rework_reaches_its_limit(self):
@@ -238,7 +238,7 @@ class EndToEnd(unittest.TestCase):
             "overseers": {"inspire-quality-overseer": {
                 "auth.org": {"contracter": [reject, reject, reject]}}}},
             ceiling=1, rework=2)
-        units = run.state.data["units"]
+        units = run.state["units"]
         self.assertEqual(units["auth.org"]["status"], "stalled")
         self.assertEqual(units["auth.org"]["stall_class"], "rework exhausted")
         self.assertEqual(units["auth.org"]["rework"]["contracter"], 3)

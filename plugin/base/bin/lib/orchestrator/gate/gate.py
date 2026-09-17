@@ -1,4 +1,4 @@
-"""The deterministic half: the gate loop, arbitration, and the mutation drill."""
+"""The deterministic half: the gate, arbitration, and the mutation drill."""
 
 import json
 import os
@@ -7,34 +7,11 @@ import subprocess
 from .. import git as gitmod
 from ..constants import ARBITER_SCHEMA, ARBITER_SHELL, DRILL_SCHEMA, PERSONA_SHELLS
 from ..errors import Infrastructural, Internal, Stall
-from ..findings import finding, gate_findings, route_gate_verdict
-from ..handoff import (handoff, next_verify_dir, run_recipe, spawn, spend_rework,
-                      tests_root_args, unit_brief, verify_suite)
+from ..findings import finding, gate_findings
+from ..handoff import (next_verify_dir, run_recipe, spawn, tests_root_args, unit_brief,
+                       verify_suite)
 from ..state import set_phase
 from ..util import tail, write_json_atomic
-
-
-def gate_loop(run, ustate):
-    """The deterministic half. An overseer's approval never substitutes for it,
-    and a red suite here is a question the contract answers, never the loser of
-    the argument."""
-    while True:
-        verdict, results_path, verdict_path = run_gate(run, ustate)
-        action, subject = route_gate_verdict(verdict)
-        if action == "pass":
-            return verdict
-        if action == "stall":
-            findings = gate_findings(verdict)
-            raise Stall("gate", "the gate returned %s: %s"
-                        % (subject, "; ".join(row["issue"] for row in findings)),
-                        findings)
-        if action == "arbitrate":
-            role, findings = arbitrate(run, ustate, verdict, results_path, verdict_path)
-        else:
-            role, findings = subject, gate_findings(verdict)
-        spend_rework(run, ustate, role, findings, "the gate")
-        set_phase(run, ustate, role)  # the rework's time is the role's, not the gate's
-        handoff(run, ustate, role, findings)
 
 
 def run_gate(run, ustate):

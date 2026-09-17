@@ -1,31 +1,9 @@
-"""The run's record on disk, and the one shape a spawn answers in."""
+"""What a resume does to the run's record, and the one shape a spawn answers in."""
 
 import datetime
-import threading
 
 from ..constants import ROLES
-from ..util import ISO, now_iso, read_json, tail, write_json_atomic
-
-
-class State:
-    """`inspire.emanate-state/1` — the run's whole record, written atomically after
-    every transition, so a killed process can be resumed against it."""
-
-    def __init__(self, path, data):
-        self.path = path
-        self.data = data
-        self.lock = threading.Lock()
-
-    @classmethod
-    def load(cls, path):
-        return cls(path, read_json(path))
-
-    def save(self):
-        with self.lock:
-            write_json_atomic(self.path, self.data)
-
-    def unit(self, unit_id):
-        return self.data["units"][unit_id]
+from ..util import ISO, now_iso, tail
 
 
 class SpawnResult:

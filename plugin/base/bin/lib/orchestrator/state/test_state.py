@@ -1,23 +1,6 @@
-import os
-import tempfile
 import unittest
 
-from orchestrator.constants import STATE_SCHEMA
-from orchestrator.state import SpawnResult, State, reconcile
-
-
-class StateWrites(unittest.TestCase):
-
-    def test_the_state_round_trips(self):
-        with tempfile.TemporaryDirectory() as root:
-            path = os.path.join(root, "state.json")
-            state = State(path, {"schema": STATE_SCHEMA,
-                                 "units": {"auth.user": {"status": "pending"}}})
-            state.save()
-            state.unit("auth.user")["status"] = "promoted"
-            state.save()
-            reread = State.load(path)
-        self.assertEqual(reread.data["units"]["auth.user"]["status"], "promoted")
+from orchestrator.state import SpawnResult, reconcile
 
 
 class Reconcile(unittest.TestCase):

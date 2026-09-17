@@ -71,8 +71,8 @@ class SpendSection(unittest.TestCase):
                                        {"phase": "tester", "started_at": "2026-01-01T00:02:00Z",
                                         "ended_at": "2026-01-01T00:03:00Z"}])
             run = stub_run(run_dir=root, repo=root, config={"max_turns": 10})
-            run.state.data["units"] = {"auth.user": unit}
-            run.state.data["wave_log"] = [{"index": 1, "started_at": "2026-01-01T00:00:00Z",
+            run.state["units"] = {"auth.user": unit}
+            run.state["wave_log"] = [{"index": 1, "started_at": "2026-01-01T00:00:00Z",
                                            "ended_at": "2026-01-01T00:10:30Z"}]
             text = "\n".join(spend_section(run))
         self.assertIn("150 in · 10 out · 7 cache read · 0 cache write across 2 spawns", text)

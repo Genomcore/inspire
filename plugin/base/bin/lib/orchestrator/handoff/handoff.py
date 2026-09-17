@@ -1,14 +1,13 @@
 """One unit's handoff sequence: prepare → spawn → the A/B/C/D boundary, and the
-suite runs the boundary and the gate both read."""
+suite runs the boundary and the gate both read. The sequence itself is `graph/`;
+each step here is one of its nodes."""
 
-import concurrent.futures
 import json
 import os
 import subprocess
 
 from .. import git as gitmod
 from ..citations import classify_citations, scan_citations
-from ..constants import OVERSEER_SCHEMA, PERSONA_SHELLS
 from ..errors import Infrastructural, Stall
 from ..findings import finding, targets_unit
 from ..util import now_iso, parse_jsonl, read_json, sh, tail, write_json_atomic
@@ -89,9 +88,9 @@ def spawn(run, shell, brief, schema, cwd):
     started_at = now_iso()
     result = run.runner.spawn(shell[:-3], run.shells.get(shell), cwd, brief, schema)
     with run.spend_lock:
-        run.state.data["spend_usd"] += result.cost_usd
-        index = run.state.data["spawn_count"] + 1
-        run.state.data["spawn_count"] = index
+        run.state["spend_usd"] += result.cost_usd
+        index = run.state["spawn_count"] + 1
+        run.state["spawn_count"] = index
     path = os.path.join(run.run_dir, "spawns", "%s-%s-%03d.json"
                         % (brief.get("unit_slug", "run"), shell[:-3], index))
     record = result.record(brief, schema)
@@ -131,48 +130,6 @@ def environment_step(run):
 
 
 # -------------------------------------------------------------- the sequence
-
-def handoff(run, ustate, role, findings):
-    """prepare → spawn → A read-only checks → B harvest → C tool checks →
-    D overseers, looping on this role's own rejections until the boundary
-    clears. A rejection spends a rework attempt; an infrastructural ending
-    gets one free retry first, because nobody judged the persona."""
-    free_retry_used = False
-    while True:
-        tip_before = gitmod.tip(run, ustate)
-        worktree = None
-        try:
-            worktree = prepare(run, ustate, role, tip_before)
-            result = spawn(run, PERSONA_SHELLS[role],
-                           persona_brief(run, ustate, role, worktree, findings),
-                           None, worktree)
-            if result.ending != "exit":
-                raise Infrastructural("the %s spawn ended in %s" % (role, result.ending))
-            rejection = checks_a(run, ustate, role, worktree, tip_before)
-            if rejection:
-                gitmod.discard(run, worktree)
-                findings = rejection
-                spend_rework(run, ustate, role, findings, "the %s boundary" % role)
-                continue
-            tip = harvest(run, ustate, role, worktree)
-        except Infrastructural as failure:
-            if worktree:
-                gitmod.discard(run, worktree)
-            after_infrastructural(run, ustate, role, str(failure), free_retry_used, findings)
-            free_retry_used = True
-            continue
-        repoint_verify(run, ustate, tip)
-        changed = gitmod.git(run, ["diff", "--name-only",
-                                   "%s..%s" % (tip_before, tip)]).stdout.split()
-        rejection = checks_c(run, ustate, role, changed)
-        if not rejection:
-            rejection = overseer_gate(run, ustate, role, changed)
-        if rejection:
-            findings = rejection
-            spend_rework(run, ustate, role, findings, "the %s boundary" % role)
-            continue
-        return tip
-
 
 def after_infrastructural(run, ustate, role, reason, free_retry_used, findings):
     """Nobody judged the persona, so the first one of a handoff is free; every
@@ -390,17 +347,3 @@ def overseer_answer(run, ustate, shell, result):
     return [finding(shell[:-3], row.get("title", ""), row.get("issue", ""),
                     row.get("follow_up", ""), row.get("severity", "error"))
             for row in rejection]
-
-
-def overseer_gate(run, ustate, role, changed):
-    brief = overseer_brief(run, ustate, role, changed)
-    shells = run.overseer_shells
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(shells)) as pool:
-        answers = list(pool.map(
-            lambda shell: (shell, spawn(run, shell, dict(brief, heading="%s — %s"
-                                                         % (shell[:-3], brief["heading"])),
-                                        OVERSEER_SCHEMA, brief["worktree"])), shells))
-    findings = []
-    for shell, result in answers:
-        findings += overseer_answer(run, ustate, shell, result)
-    return findings

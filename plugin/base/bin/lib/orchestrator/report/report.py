@@ -61,7 +61,7 @@ def identity_block(run):
              "- **budget** — floor %s · effective floor %s · declared ceiling %s · "
              "waves permitted %s"
              % (plan.get("floor"), goal.get("floor", plan.get("floor")),
-                run.args.ceiling or "*unset*", len(run.state.data["waves"])),
+                run.args.ceiling or "*unset*", len(run.state["waves"])),
              "- **preflight** — components: %s, declared, not probed by this process; "
              "%s" % (components, run.baseline_line),
              "- **harness** — %s" % run.harness,
@@ -75,11 +75,11 @@ def identity_block(run):
 def wave_block(run, number, wave):
     lines = ["## Wave %d — closed" % number, ""]
     for unit_id in wave:
-        unit = run.state.unit(unit_id)
+        unit = run.state["units"][unit_id]
         lines += unit_rows(unit)
     lines += ["### Findings", "", "*none recorded by the process*", "",
               "- **frontier after this wave** — %d units"
-              % sum(1 for unit in run.state.data["units"].values()
+              % sum(1 for unit in run.state["units"].values()
                     if unit["status"] not in ("promoted", "stalled", "blocked"))]
     return "\n".join(lines)
 
@@ -122,7 +122,7 @@ def hms(seconds):
 
 
 def closing_block(run, exit_reason):
-    data = run.state.data
+    data = run.state
     units = data["units"]
     delivered = [unit for unit in units.values() if unit["status"] == "promoted"]
     stalled = [unit for unit in units.values() if unit["status"] == "stalled"]
@@ -130,10 +130,10 @@ def closing_block(run, exit_reason):
     goal_relative = os.path.relpath(run.goal_worktree, run.repo)
     lines = ["## Report — %s" % exit_reason, "",
              "- **budget answer** — waves actually executed %d, against ceiling %s and "
-             "floor %s" % (run.state.data["wave_index"], run.args.ceiling or "*unset*",
+             "floor %s" % (run.state["wave_index"], run.args.ceiling or "*unset*",
                            run.plan.get("floor")),
              "- **spend** — %.4f USD, a client-side estimate: it is the sum of what each "
-             "spawn reported, not a billing figure" % run.state.data["spend_usd"],
+             "spawn reported, not a billing figure" % run.state["spend_usd"],
              "- **elapsed** — %s, from %s to %s (a resumed run counts from its first "
              "start, downtime included)"
              % (hms(elapsed_seconds(data["started_at"], data["ended_at"])),
@@ -283,7 +283,7 @@ def spend_section(run):
     lines += ["", "**by unit**", "",
               "| unit | status | spawns | cost USD | rework | wall | phases |",
               "|---|---|---|---|---|---|---|"]
-    for unit_id, unit in sorted(run.state.data["units"].items()):
+    for unit_id, unit in sorted(run.state["units"].items()):
         row = units.get(unit_id) or blank_row()
         rework = ", ".join("%s %d" % (role, n) for role, n in unit["rework"].items() if n) \
             or "none"
@@ -294,7 +294,7 @@ def spend_section(run):
                      % (unit_id, unit["status"], row["spawns"], row["cost_usd"], rework,
                         hms(elapsed_seconds(unit["started_at"], unit["ended_at"])), phases))
 
-    waves = run.state.data["wave_log"]
+    waves = run.state["wave_log"]
     if waves:
         lines += ["", "**by wave**", "", "| wave | wall |", "|---|---|"]
         lines += ["| %d | %s |" % (wave["index"], span(wave["started_at"], wave["ended_at"]))

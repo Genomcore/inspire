@@ -23,7 +23,7 @@ def stub_run(**over):
         goal_slug="all", stamp="20260101-000000", run_id="20260101-000000-abcd",
         harness="fake", cut_here=True, truncated=False, baseline_line="baseline skipped",
         last_results={}, last_verdict={}, git_lock=threading.Lock(),
-        state=SimpleNamespace(data={"units": {}, "waves": []}, save=lambda: None))
+        state={"units": {}, "waves": []})
     run.save = lambda: None
     for key, value in over.items():
         setattr(run, key, value)

@@ -1,6 +1,5 @@
 """t = 0: everything that can refuse, and the state the run starts from."""
 
-import concurrent.futures
 import json
 import os
 import shutil
@@ -13,7 +12,6 @@ from ..handoff import run_recipe, run_suite, tests_root_args
 from ..report import identity_block
 from ..runners.claude import ClaudeRunner
 from ..runners.fake import FakeRunner
-from ..state import State
 from ..util import now_iso, parse_version, slugify, tail
 
 
@@ -190,18 +188,6 @@ def select_waves(run):
     return planned, waves
 
 
-def derive_units(run, planned, waves):
-    """The roster and its derivations, for the loop — the graph fans the same
-    derivations out itself. They are independent, so they run together; their
-    answers are read in plan order, so the first refusal names the same unit
-    however they were scheduled."""
-    units, pending = plan_roster(run, planned, waves)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=run.args.parallel) as pool:
-        for future in [pool.submit(derive_unit, run, entry) for entry in pending]:
-            future.result()
-    return units
-
-
 def plan_roster(run, planned, waves):
     """The unit roster this run starts from, and the entries still to derive. A
     unit the ceiling puts out of reach is recorded and never derived — nothing
@@ -254,8 +240,11 @@ def blank_unit(entry):
 
 
 def new_state(run, waves, units):
-    path = os.path.join(run.run_dir, "state.json")
-    run.state = State(path, {
+    """`inspire.emanate-state/1` — the run's whole record, written atomically after
+    every transition. The graph resumes from its own checkpoint; this is the
+    account, and what a resume rebuilds the run from."""
+    run.state_path = os.path.join(run.run_dir, "state.json")
+    run.state = {
         "schema": STATE_SCHEMA, "run_id": run.run_id, "stamp": run.stamp,
         "launch_branch": run.launch_branch, "goal_branch": run.goal_branch,
         "goal_worktree": run.goal_worktree, "cut_here": run.cut_here,
@@ -266,8 +255,8 @@ def new_state(run, waves, units):
         "started_at": now_iso(), "ended_at": None, "wave_log": [],
         "truncated": run.truncated, "harness": run.harness,
         "shells": run.shells, "plan_units": run.plan_units,
-        "status": "RUNNING", "exit": None, "units": units})
-    run.state.save()
+        "status": "RUNNING", "exit": None, "units": units}
+    run.save()
 
 
 def baseline(run):

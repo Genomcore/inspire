@@ -1,5 +1,4 @@
 import unittest
-from types import SimpleNamespace
 
 from orchestrator.orchestrator import Orchestrator
 from orchestrator.test.stubs import stub_args, stub_unit
@@ -7,8 +6,8 @@ from orchestrator.test.stubs import stub_args, stub_unit
 
 def orchestrator(units, plan_units=None, **args):
     run = Orchestrator(stub_args(**args))
-    run.state = SimpleNamespace(data={"units": units, "waves": []}, save=lambda: None,
-                                unit=lambda unit_id: units[unit_id])
+    run.state = {"units": units, "waves": []}
+    run.save = lambda: None
     run.plan_units = plan_units or {}
     return run
 

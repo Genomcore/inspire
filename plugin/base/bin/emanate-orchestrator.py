@@ -8,8 +8,9 @@
 The doctrine is `.claude/skills/inspire-emanate/references/run.md` (the schedule,
 the phase envelope, the report) and `inspire-code/references/roles/` (the judgment
 each spawned agent applies). This file is the mechanics only: t=0's refusals, the
-wave loop, the per-unit handoff sequence, arbitration, the drill, promotion, the
-report, and the state file a killed run resumes from.
+waves, the per-unit handoff sequence, arbitration, the drill, promotion, the
+report, and the checkpoint a killed run resumes from. The flow over them is
+declared once, as a graph, in `lib/orchestrator/graph/`.
 
 It spawns agents through a runner seam, so the whole process runs without a model:
 `--runner fake:DIR` replays a script.
