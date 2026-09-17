@@ -20,3 +20,4 @@ tiqueteria/
 
 # `langgraph dev`'s scratch server state, written beside langgraph.json.
 .langgraph_api/
+.venv/
