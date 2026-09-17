@@ -5,8 +5,8 @@
 # ///
 """emanate-orchestrator — the unattended emanation loop, as a process.
 
-The doctrine is `.claude/skills/inspire-emanate/references/run.md` (the schedule,
-the phase envelope, the report) and `inspire-code/references/roles/` (the judgment
+The specification is `lib/orchestrator/README.md` (the refusals, the schedule, the
+phase envelope, the report) and `inspire-code/references/roles/` (the judgment
 each spawned agent applies). This file is the mechanics only: t=0's refusals, the
 waves, the per-unit handoff sequence, arbitration, the drill, promotion, the
 report, and the checkpoint a killed run resumes from. The flow over them is

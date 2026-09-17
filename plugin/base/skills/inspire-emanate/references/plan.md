@@ -33,7 +33,7 @@ re-emanates the whole vault. Resolve it from the framework profile's
 suite actually lives in. Say in the report which roots were read.
 
 **Forward the operator's arguments; invent none.** Selector prose is resolved to a
-canonical id here ([`SKILL.md`](../SKILL.md) § Invocation); everything else is
+canonical id here ([`SKILL.md`](../SKILL.md) § run); everything else is
 passed through.
 
 ## Acting on the exit code
@@ -44,7 +44,7 @@ Every code has an answer, and none of them is "try again".
 |---|---|---|
 | `0` | **ready** — a plan, no error-severity finding | report it (§ Reporting a ready plan). Under `run`, proceed to the t=0 preflight |
 | `1` | **not ready** — a plan was computed and at least one finding is an error (the common case: `PR-01`…`PR-07`) | report every finding with its `owner` and its `remedy`, verbatim. **Refuse the run.** Nothing is built |
-| `2` | **usage** — an unknown flag, a bad `--ceiling`, a `--scope`/`--tests-root` path that is not there, or a selector that selects nothing | this skill built the command line, so a usage error is an **internal error**: report the exact argv and the tool's stderr, and **stall the run**. Never retry with different arguments — a selector that selects nothing is the operator's typo, and guessing at what they meant is exactly what the exit code exists to prevent |
+| `2` | **usage** — an unknown flag, a bad `--ceiling`, a `--scope`/`--tests-root` path that is not there, or a selector that selects nothing | the command line was built by the caller, so a usage error is an **internal error**: report the exact argv and the tool's stderr, and stop. Never retry with different arguments — a selector that selects nothing is the operator's typo, and guessing at what they meant is exactly what the exit code exists to prevent |
 | `4` | **refused** — `PR-10` (overseer roster) · `PR-11` (cycle) · `PR-12` (empty frontier) · `PR-13` (no stack) | refuse, naming the class and its remedy from the refusal object. There is no `waves`, `floor` or `units` key to read on this path, and no `preflight`, `wire_conventions`, `realized`, `realized_all`, `reemanate` or `goal` either |
 | `5` | **roots missing** — `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | refuse, naming the tool and the two roots. Run from the repo root |
 | `6` | **internal** — a `derive` run exited outside `{0,4}`, or produced no readable contract | refuse, naming the tool. Defensive: every input it could refuse over is checked first, so this is a bug report, not an operator remedy |
@@ -52,8 +52,8 @@ Every code has an answer, and none of them is "try again".
 
 **A refusal is a finished answer, not a failure to plan.** Report it and stop;
 under `run`, stop before the first unit is spawned. The goal branch and its
-worktree already exist by then and are left in place — [`run.md`](run.md) § t=0
-step 1 says why, and step 2 says this call is made from that worktree.
+worktree already exist by then and are left in place — `.inspire/bin/lib/orchestrator/README.md`
+§ t=0 says why, and says this call is made from that worktree.
 
 ## Reporting a ready plan
 
@@ -64,8 +64,7 @@ order:
    a run would execute.
 2. **The floor against the ceiling.** `floor` is the number of waves; with a goal,
    `goal.floor` is the effective one and `deliverable_waves` is what the declared
-   ceiling actually permits. Say both numbers, and say which floor you compared
-   against.
+   ceiling actually permits. Say both numbers, and say which floor the comparison used.
 3. **`realized` and `realized_all`.** Realized units are absent from `units[]` and
    `waves[]` for the same reason a `stable` artifact is — they are not in the
    frontier. **`realized_all: true` with `floor: 0` is the success answer**, not

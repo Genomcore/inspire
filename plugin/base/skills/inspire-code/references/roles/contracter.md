@@ -117,7 +117,7 @@ check violation and a not-null violation get confirmed against the real engine
 instead of asserted from a manual. What none of that touches is anything anyone else
 reads: the shared schema and the migration history are left exactly as found.
 Applying belongs to the run, in the disposable plane it gives you
-([`inspire-emanate`](../../../inspire-emanate/references/run.md) § prepare); a plane
+(`.inspire/bin/lib/orchestrator/README.md` § prepare); a plane
 you did not create is one you only read.
 
 ## Refusal — a rendering hole is a readiness defect

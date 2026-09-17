@@ -25,7 +25,8 @@ def elapsed_seconds(started_iso, ended_iso):
 
 
 def slugify(text):
-    """run.md's slug rule: runs of anything outside a-z0-9 collapse to one hyphen."""
+    """The slug rule (README § The branch scheme): runs of anything outside a-z0-9
+    collapse to one hyphen."""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 

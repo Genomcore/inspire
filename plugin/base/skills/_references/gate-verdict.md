@@ -277,5 +277,5 @@ decision — and **promote is git-side**: the unit's integration branch merges
 into the run's goal branch, carrying the verdict's digest in the merge
 commit's trailers. **No `lifecycle:` is walked and no KB file is written**,
 because a run never touches the knowledge base
-(`inspire-emanate/references/run.md` § promote). Gate itself calls nothing,
+(`.inspire/bin/lib/orchestrator/README.md` § promote). Gate itself calls nothing,
 edits no frontmatter, and never writes `lifecycle:` either.

@@ -1,13 +1,13 @@
 # The run report — the shape
 
-[`run.md`](run.md) § The run report says what `.inspire/last-emanation.log`
-carries, and § Liveness says when the chat hears about it. This file is the
-**form**: the three block kinds in order, each with a slot for the lines those
-sections name. An orchestrator fills a shape here. It never composes one.
+`.inspire/bin/lib/orchestrator/README.md` § The report says what
+`.inspire/last-emanation.log` carries and when each block is written. This file
+is the **form**: the three block kinds in order, each with a slot for the lines
+that section names. The process fills a shape here. It never composes one.
 
 **The shape is here; the meaning is there.** That division decides which file to
-edit. A new line in § The run report's list gets a slot below carrying its label
-and nothing else — a slot that explained itself would be a second answer to what
+edit. A new line in the process spec's § The report gets a slot below carrying
+its label and nothing else — a slot that explained itself would be a second answer to what
 the line means, and the two would drift.
 
 **A slot with no answer is filled with the reason, never dropped.** *drill
@@ -26,7 +26,7 @@ anything. It is the whole of what the file holds until the first wave closes.
 - **launch branch** — <the branch the run was launched from>
 - **goal branch** — <emanate/<goal-slug>>, <cut here | advanced from an
   earlier run>
-- **goal worktree** — <.claude/worktrees/emanate-<goal-slug>>
+- **goal worktree** — <.inspire/worktrees/emanate-<goal-slug>>
 - **scope** — <as typed>
 - **goal** — <as typed, or *none*>
 - **selectors** — <as typed, or *none*>
@@ -43,9 +43,8 @@ example of the rule below: at the exit it becomes the exit that was reached.
 
 ## One block per wave close
 
-Appended as a wave closes, and at no other moment. A turn between two wave
-closes writes nothing here (§ Liveness), so this block is the only place a
-unit's own measurements land — the closing block never repeats them.
+Appended as a wave closes, and at no other moment, so this block is the only
+place a unit's own measurements land — the closing block never repeats them.
 
 ```
 ## Wave <n> — closed
@@ -76,8 +75,7 @@ bounded to the wave it belongs to.>
 ## The closing block, at the exit
 
 Written once, at the run's end, when one of the three exits is reached — the goal
-is reached, the ceiling or a budget is exhausted, a stall cascades. Writing it
-**is** the act of ending the run (§ Liveness).
+is reached, the ceiling or a budget is exhausted, a stall cascades.
 
 ```
 ## Report — <the exit that was reached>
@@ -95,7 +93,7 @@ is reached, the ceiling or a budget is exhausted, a stall cascades. Writing it
   `adr-maturity-matches-features.sh`) and `criteria-have-tests.sh`'s 🟡
   limitation
 - **where the work is** — the goal branch `<emanate/<goal-slug>>`, its worktree
-  `.claude/worktrees/emanate-<goal-slug>`, the command that shows the effort
+  `.inspire/worktrees/emanate-<goal-slug>`, the command that shows the effort
   (`git -C <worktree> log --oneline <launch-branch>..`) and the diff-stat
   against the launch branch. The launch checkout was never moved and never
   written; say so, because the operator's next command is run from it
@@ -129,7 +127,7 @@ operator can find it.
 
 ## What binds every slot above
 
-Both rules are [`run.md`](run.md) § The run report's, and they apply to the
+Both rules are the process spec's § The report, and they apply to the
 `### Findings` prose exactly as they apply to a labelled slot:
 
 - **the last position wins** — a slot whose answer this run revises is corrected
