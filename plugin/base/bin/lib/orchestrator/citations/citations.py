@@ -2,6 +2,7 @@
 
 import os
 import re
+import subprocess
 
 from ..findings import finding
 
@@ -12,23 +13,23 @@ CLAIM_TOKEN = re.compile(r"@claim\s+(\S+)(?:\s+(sha256:[0-9a-f]+))?")
 
 def scan_citations(roots, cwd):
     """Every `@claim` token under the tests roots, as {file, line, id, fingerprint}."""
+    # One `find` per run lists the tree; Python only opens what it printed.
+    files = subprocess.run(
+        ["find", *(os.path.join(cwd, root) for root in roots),
+         "-name", ".git", "-prune", "-o", "-type", "f", "-print"],
+        capture_output=True, text=True, check=True).stdout.splitlines()
     found = []
-    for root in roots:
-        base = os.path.join(cwd, root)
-        for dirpath, dirnames, filenames in os.walk(base):
-            dirnames[:] = [name for name in dirnames if name != ".git"]
-            for name in sorted(filenames):
-                path = os.path.join(dirpath, name)
-                with open(path, encoding="utf-8", errors="replace") as stream:
-                    text = stream.read()
-                # The substring is the cheap sieve: a tests tree is overwhelmingly
-                # files with no token at all, and those never reach the regex.
-                if "@claim" not in text:
-                    continue
-                relative = os.path.relpath(path, cwd)
-                found.extend({"file": relative, "line": text.count("\n", 0, match.start()) + 1,
-                              "id": match.group(1), "fingerprint": match.group(2)}
-                             for match in CLAIM_TOKEN.finditer(text))
+    for path in sorted(files):
+        with open(path, encoding="utf-8", errors="replace") as stream:
+            text = stream.read()
+        # The substring is the sieve: a tests tree is overwhelmingly files with
+        # no token at all, and those never reach the regex.
+        if "@claim" not in text:
+            continue
+        relative = os.path.relpath(path, cwd)
+        found.extend({"file": relative, "line": text.count("\n", 0, match.start()) + 1,
+                      "id": match.group(1), "fingerprint": match.group(2)}
+                     for match in CLAIM_TOKEN.finditer(text))
     return found
 
 
