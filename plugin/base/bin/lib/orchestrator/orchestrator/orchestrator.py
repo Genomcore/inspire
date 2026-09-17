@@ -52,9 +52,9 @@ class Orchestrator:
 
     # ---------------------------------------------------------------- t = 0
 
-    def start(self):
-        """Everything that can refuse, refuses here. Each step gates the next, and
-        a refusal leaves nothing spawned."""
+    def preflight(self):
+        """Everything that can refuse before there is a plan to read. Each step
+        gates the next, and a refusal leaves nothing spawned."""
         self.repo = gitmod.repo_root()
         startmod.check_launch_checkout(self)
 
@@ -74,11 +74,16 @@ class Orchestrator:
 
         self.runner = startmod.build_runner(self)
         startmod.open_goal_branch(self)
+
+    def plan_step(self):
+        """The plan, and the account opened on it."""
         self.plan = startmod.run_plan(self)
         write_json_atomic(os.path.join(self.run_dir, "plan.json"), self.plan)
-
         self.open_report()
 
+    def start(self):
+        self.preflight()
+        self.plan_step()
         if self.plan.get("realized_all") or not self.plan.get("waves"):
             startmod.new_state(self, [], {})
             startmod.write_identity(self)

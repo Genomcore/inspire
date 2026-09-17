@@ -349,48 +349,58 @@ def frozen_path_findings(run, changed):
 
 # ---- D: the overseers ----
 
+def overseer_brief(run, ustate, role, changed):
+    """What every overseer of this boundary reads. The shell's own heading is
+    stamped on at the spawn — the rest is one brief, read N times."""
+    return {"heading": "overseer read — %s at the %s boundary" % (ustate["id"], role),
+            "role": "overseer", "boundary": role, "unit_kind": ustate["kind"],
+            "worktree": ustate["verify_worktree"], "changed_paths": changed,
+            "results_path": run.last_results.get(ustate["id"]),
+            "verdict_path": run.last_verdict.get(ustate["id"]),
+            "profiles": run.plan_units[ustate["id"]].get("profiles") or [],
+            "notes": ["answer in the structured shape: verdict APPROVE or REJECT, "
+                      "plus findings."],
+            **unit_brief(run, ustate)}
+
+
+def overseer_answer(run, ustate, shell, result):
+    """One overseer's answer, as findings: empty when it approved."""
+    structured = result.structured or {}
+    approved = result.ending == "exit" and structured.get("verdict") == "APPROVE"
+    rows = structured.get("findings") or []
+    if approved:
+        for row in rows:
+            ustate["verify_findings"].append(
+                "%s · %s — %s" % (row.get("severity", "info"), shell[:-3],
+                                  row.get("title", "")))
+        run.save()
+        return []
+    # A REJECT is carried back as the overseer wrote it — the blocking rows
+    # if it marked any, all of them otherwise. Only a spawn that answered
+    # nothing is reported as one.
+    rejection = [row for row in rows if row.get("blocking", True)] or rows
+    if structured.get("verdict") != "REJECT" or not rejection:
+        rejection = [{"title": "no answer from the overseer",
+                      "issue": "the spawn ended in %s and returned %s."
+                               % (result.ending,
+                                  structured.get("verdict") or "no verdict"),
+                      "follow_up": "re-emit the boundary; the overseer "
+                                   "reads it again."}]
+    run.save()
+    return [finding(shell[:-3], row.get("title", ""), row.get("issue", ""),
+                    row.get("follow_up", ""), row.get("severity", "error"))
+            for row in rejection]
+
+
 def overseer_gate(run, ustate, role, changed):
-    worktree = ustate["verify_worktree"]
-    brief = {"heading": "overseer read — %s at the %s boundary" % (ustate["id"], role),
-             "role": "overseer", "boundary": role, "unit_kind": ustate["kind"],
-             "worktree": worktree, "changed_paths": changed,
-             "results_path": run.last_results.get(ustate["id"]),
-             "verdict_path": run.last_verdict.get(ustate["id"]),
-             "profiles": run.plan_units[ustate["id"]].get("profiles") or [],
-             "notes": ["answer in the structured shape: verdict APPROVE or REJECT, "
-                       "plus findings."],
-             **unit_brief(run, ustate)}
+    brief = overseer_brief(run, ustate, role, changed)
     shells = run.overseer_shells
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(shells)) as pool:
         answers = list(pool.map(
             lambda shell: (shell, spawn(run, shell, dict(brief, heading="%s — %s"
                                                          % (shell[:-3], brief["heading"])),
-                                        OVERSEER_SCHEMA, worktree)), shells))
+                                        OVERSEER_SCHEMA, brief["worktree"])), shells))
     findings = []
     for shell, result in answers:
-        structured = result.structured or {}
-        approved = result.ending == "exit" and structured.get("verdict") == "APPROVE"
-        rows = structured.get("findings") or []
-        if approved:
-            for row in rows:
-                ustate["verify_findings"].append(
-                    "%s · %s — %s" % (row.get("severity", "info"), shell[:-3],
-                                      row.get("title", "")))
-            continue
-        # A REJECT is carried back as the overseer wrote it — the blocking rows
-        # if it marked any, all of them otherwise. Only a spawn that answered
-        # nothing is reported as one.
-        rejection = [row for row in rows if row.get("blocking", True)] or rows
-        if structured.get("verdict") != "REJECT" or not rejection:
-            rejection = [{"title": "no answer from the overseer",
-                          "issue": "the spawn ended in %s and returned %s."
-                                   % (result.ending,
-                                      structured.get("verdict") or "no verdict"),
-                          "follow_up": "re-emit the boundary; the overseer "
-                                       "reads it again."}]
-        for row in rejection:
-            findings.append(finding(shell[:-3], row.get("title", ""),
-                                    row.get("issue", ""), row.get("follow_up", ""),
-                                    row.get("severity", "error")))
-    run.save()
+        findings += overseer_answer(run, ustate, shell, result)
     return findings
