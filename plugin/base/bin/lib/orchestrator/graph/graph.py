@@ -421,7 +421,7 @@ def build_readiness():
     return builder.compile()
 
 
-def build(checkpointer=None):
+def build(config=None, *, checkpointer=None):
     builder = StateGraph(RunState)
     for name, node in (("preflight", preflight), ("plan", plan),
                        ("readiness", READINESS), ("identity", identity),
@@ -451,7 +451,7 @@ def checkpoint_path(run):
 
 def invoke(run, state):
     with SqliteSaver.from_conn_string(checkpoint_path(run)) as saver:
-        return build(saver).invoke(
+        return build(checkpointer=saver).invoke(
             state, {"configurable": {"run": run, "thread_id": run.run_id},
                     "recursion_limit": 128,
                     "max_concurrency": max(1, run.args.parallel)})
