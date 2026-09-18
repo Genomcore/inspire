@@ -443,6 +443,7 @@ def build(config=None, *, checkpointer=None):
 
 UNIT = build_unit()
 READINESS = build_readiness()
+EMANATE = build()
 
 
 def checkpoint_path(run):

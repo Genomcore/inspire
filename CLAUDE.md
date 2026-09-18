@@ -240,11 +240,15 @@ repo is both its source and its own marketplace.
   so `/plugin marketplace add Genomcore/inspire` resolves.
 - `.claude/hooks/template-*.sh` — template-maintenance only (e.g. guarding the
   release-identity bump); never shipped to a project.
-- `langgraph.json` — template-maintenance too: `langgraph dev`, run from this
-  root, serves the orchestrator's three graphs (`emanate`, `unidad`, `readiness`) to Studio.
-  It names `plugin/base/bin/lib` as a dependency and the graphs as **modules**
-  (`orchestrator.graph.graph:build`), because a graph loaded by file path is a
-  top-level module whose relative imports fail. It sits at the root, not under
+- `langgraph.json` + `studio.sh` — template-maintenance too: `bash studio.sh`
+  serves the orchestrator's three graphs (`emanate`, `unidad`, `readiness`) to
+  Studio, creating `.venv` on first run. It names `plugin/base/bin/lib` as a
+  dependency and the graphs as **module-level compiled objects**
+  (`orchestrator.graph.graph:EMANATE`), because a graph loaded by file path is a
+  top-level module whose relative imports fail, and the CLI refuses a factory
+  whose parameters are not typed `RunnableConfig`. The launcher passes
+  `--no-reload`: the server rewrites `.langgraph_api/` every 10 s and the file
+  watcher would restart it on each write. It sits at the root, not under
   `plugin/base/`, so it neither materializes into a project nor perturbs the
   manifest.
 - `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
