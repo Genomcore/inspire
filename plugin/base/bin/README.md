@@ -23,7 +23,9 @@ Two consumers wrap this library:
   (PEP 723) and runs through `uv run`, which resolves them into a cached
   environment. The process refuses at t=0 when `uv` is not on PATH, the way it
   refuses when `claude` is not.
-- `claude` (the Claude Code CLI) — the orchestrator's real runner; only the
+- the Claude Agent SDK (`claude-agent-sdk`, resolved by `uv` from the
+  orchestrator's inline dependencies) — the orchestrator's real runner. It
+  bundles its own Claude Code CLI, so nothing else has to be on PATH; only the
   emanation loop needs it.
 
 ## Scripts

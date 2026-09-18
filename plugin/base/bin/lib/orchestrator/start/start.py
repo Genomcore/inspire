@@ -8,7 +8,7 @@ from ..constants import MIN_CLAUDE_VERSION, ROLES, STATE_SCHEMA, WORKTREES_DIR, 
 from ..errors import Infrastructural, Refusal
 from ..handoff import run_recipe, run_suite, tests_root_args
 from ..report import identity_block
-from ..runners.claude import ClaudeRunner
+from ..runners.agente import AgentRunner, harness_version
 from ..runners.fake import FakeRunner
 from ..util import now_iso, parse_version, slugify, tail
 
@@ -27,7 +27,7 @@ UNKNOWN_PATHS = "unknown paths"
 RUNNER_MESSAGES = {
     "no_uv": "`uv` is not on PATH — this process resolves its own dependencies through it. "
              "Install uv and re-run.",
-    "no_claude": "`claude` is not on PATH — this run has nothing to spawn with.",
+    "no_claude": "the Claude Agent SDK and its bundled `claude` could not be loaded — this run has nothing to spawn with.",
     "old_claude": "claude %s is below the %s this loop needs. Upgrade it and re-run.",
     "no_fake_dir": "no fake-runner directory at %s.",
     "unknown": "unknown runner %r — use `claude` or `fake:DIR`.",
@@ -97,20 +97,18 @@ def build_runner(run):
     spec = run.args.runner
     if spec == "claude":
         try:
-            proc = subprocess.run(["claude", "--version"], stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE, text=True)
-        except OSError:
+            sdk, cli = harness_version()
+        except (ImportError, OSError):
             raise Refusal(RUNNER_MESSAGES["no_claude"])
-        version = parse_version(proc.stdout)
+        version = parse_version(cli)
         if version is None or version < MIN_CLAUDE_VERSION:
             raise Refusal(RUNNER_MESSAGES["old_claude"]
-                          % (proc.stdout.strip() or "?",
-                             ".".join(str(part) for part in MIN_CLAUDE_VERSION)))
-        run.harness = "claude %s" % proc.stdout.strip()
-        return ClaudeRunner(contracts, run.config["wall_clock"],
-                            run.config.get("max_turns"),
-                            run.config.get("spawn_budget_usd"),
-                            run.args.agents_root)
+                          % (cli or "?", ".".join(str(part) for part in MIN_CLAUDE_VERSION)))
+        run.harness = "claude %s (claude-agent-sdk %s)" % (cli, sdk)
+        return AgentRunner(contracts, run.config["wall_clock"],
+                           run.config.get("max_turns"),
+                           run.config.get("spawn_budget_usd"),
+                           run.args.agents_root)
     if spec.startswith("fake:"):
         directory = spec[len("fake:"):]
         if not os.path.isdir(directory):

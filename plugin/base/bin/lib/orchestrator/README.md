@@ -61,7 +61,9 @@ Each step gates the next, and a refusal leaves nothing spawned.
    The process never writes the launch checkout, and its own scratch is the first
    thing that would make it dirty and refuse the *next* run.
 3. **The config, the `bin` root, `uv` on PATH, and the runner.** The `claude`
-   runner refuses below the minimum CLI version it needs.
+   runner drives Claude Code through the Claude Agent SDK — the same harness the
+   CLI is, reached as a library rather than a command line, with the SDK's own
+   bundled CLI — and refuses below the minimum CLI version it needs.
 4. **The goal branch and its worktree** (§ The branch scheme). A conflict merging
    the launch branch into an existing goal branch refuses, naming the paths: the
    goal branch must never be behind its base, and a conflict resolution is a
@@ -208,8 +210,9 @@ persona's to argue with, which is exactly why it must reach it unedited.
 
 Each spawn is a fresh headless session — never resumed, so a persona reworks from
 the findings it was handed rather than from memory — carrying the shell's `tools:`
-as its allowlist, a fixed non-interactive permission posture, a write fence and a
-deny list. **No spawned role can stall a run by asking a question**: none of the
+as its allowlist, a fixed non-interactive permission posture, a write fence (an
+in-process `PreToolUse` hook that denies any write resolving outside the
+worktree) and a deny list. **No spawned role can stall a run by asking a question**: none of the
 shipped shells can prompt, and the process answers to nobody mid-wave.
 
 ### the boundary: A → harvest → C → the overseers
