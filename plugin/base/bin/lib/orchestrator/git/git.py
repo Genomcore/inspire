@@ -88,6 +88,11 @@ def prepared_paths(run, worktree, cut):
     return set(path for path in out.split("\0") if path)
 
 
+def restore_tree(run, worktree):
+    git_write(run, ["checkout", "--force", "--", "."], cwd=worktree)
+    git_write(run, ["clean", "-fdq"], cwd=worktree)
+
+
 def discard(run, worktree):
     git_write(run, ["worktree", "remove", "--force", worktree], check=False)
 

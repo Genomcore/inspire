@@ -170,14 +170,33 @@ def spend_rework(run, ustate, role, findings, what):
                     REWORK_EXHAUSTED % (role, run.args.rework, what), findings)
 
 
+def strip_bodies(run, worktree):
+    if not run.config.get("declaration_only"):
+        return False
+    proc = sh(run.config["declaration_only"], cwd=worktree)
+    if proc.returncode != 0:
+        raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
+    return True
+
+
+def declaration_only_suite(run, ustate, worktree):
+    try:
+        stripped = strip_bodies(run, worktree)
+    except Infrastructural as failure:
+        raise Stall("infrastructural", VERIFY_COULD_NOT_RUN % failure)
+    try:
+        return verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
+    finally:
+        if stripped:
+            gitmod.restore_tree(run, worktree)
+
+
 def prepare(run, ustate, role, tip):
     worktree = gitmod.fresh_worktree(run, ustate["slug"], role, tip)
     try:
         run_recipe(run, worktree)
-        if role == "tester" and run.config.get("declaration_only"):
-            proc = sh(run.config["declaration_only"], cwd=worktree)
-            if proc.returncode != 0:
-                raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
+        if role == "tester":
+            strip_bodies(run, worktree)
         gitmod.commit_prepared(run, worktree, role)
     except Infrastructural:
         gitmod.discard(run, worktree)
@@ -275,7 +294,7 @@ def tester_checks(run, ustate):
                                           row.get("target"), row.get("message")))
     run.save()
     if "implementer" not in ustate["done"]:
-        results, _ = verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
+        results, _ = declaration_only_suite(run, ustate, worktree)
         claims = set(claim["id"] for claim in
                      read_json(gitmod.contract_path(run, ustate["id"])).get("claims", []))
         citing = set(citation["file"] for citation in

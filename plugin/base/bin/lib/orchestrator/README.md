@@ -243,7 +243,14 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
   ratchet's breach is handed back with the operator's remedy verbatim — **the
   ceiling is raised by hand, in review**; a gate its subject can lower is not a
   gate. The tester's boundary also runs the suite and fails a **vacuity** check: a
-  test citing this unit's claims that passes in a tree with no bodies.
+  test citing this unit's claims that passes in a tree with no bodies. *The tree
+  is made that way here, not assumed to be*: the verify worktree carries the
+  harvested integration tip, which holds whatever the contracter emitted, so the
+  vacuity run applies the project's `declaration_only` recipe to it first and
+  restores the tree afterwards. Without that, the check reads a tree the recipe
+  never touched — the tester's own worktree is the only stripped one, and it is
+  not where the verdict is taken — and a unit whose contracter emitted anything
+  executable fails the check whatever the tester does.
 - **the overseers**, both of them (and every one the project added), at every
   boundary including the implementer's exit. They read the boundary and answer in
   a structured shape; **a rejection routes like a failed test** — back to the same

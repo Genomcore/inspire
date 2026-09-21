@@ -147,6 +147,16 @@ no bodies, so a test that passes in it is asserting nothing about the behaviour 
 names — it is the vacuity the quality overseer looks for at this boundary, caught by
 you first.
 
+**The verdict is not taken in your worktree.** It is taken after harvest, on a tree
+the orchestrator strips the same way, carrying only the paths harvest kept — your
+tests and the scaffolding beside them, never your copy of the source. So two things
+follow. Red in your worktree is necessary and not sufficient: a test that leans on a
+file outside your owned paths will be read against a tree that does not have it. And
+resolver shims, module mocks or config that make an unresolvable import load anyway
+are never the answer to an expected red — that red *is* the invariant reporting
+itself, and infrastructure that turns it green is the exact thing this check exists
+to catch.
+
 ## A flaky test is fixed, never re-run
 
 **A test that fails and passes on the next run is a defect, and the flakiness is the

@@ -1,10 +1,14 @@
 import os
+import shutil
+import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 from orchestrator.errors import Stall
-from orchestrator.handoff import (environment_step, frozen_path_findings, persona_brief,
-                                  recipe_steps, spend_rework, tests_root_args, unit_brief)
+from orchestrator.handoff import (declaration_only_suite, environment_step,
+                                  frozen_path_findings, persona_brief, recipe_steps,
+                                  spend_rework, tests_root_args, unit_brief)
 from orchestrator.test.stubs import stub_args, stub_run, stub_unit
 
 
@@ -74,3 +78,42 @@ class Checks(unittest.TestCase):
         [row] = frozen_path_findings(run, ["source/a.ts", "package.json"])
         self.assertEqual(row["source"], "frozen-paths")
         self.assertIn("package.json", row["issue"])
+
+
+class VacuityRun(unittest.TestCase):
+
+    def repo(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        os.makedirs(os.path.join(root, "source"))
+        with open(os.path.join(root, "source", "detail.tsx"), "w") as stream:
+            stream.write("export const Detail = () => <div/>\n")
+        for arguments in (["init", "-q"], ["add", "-A"],
+                          ["-c", "user.email=t@t", "-c", "user.name=t",
+                           "commit", "-qm", "seed"]):
+            subprocess.run(["git"] + arguments, cwd=root, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return root
+
+    def test_the_suite_runs_with_bodies_stripped_and_the_tree_comes_back(self):
+        root = self.repo()
+        run = stub_run(config=dict(
+            stub_run().config,
+            declaration_only="printf '' > source/detail.tsx; touch source/detail.d.ts"))
+        seen = {}
+        with mock.patch("orchestrator.handoff.handoff.verify_suite",
+                        lambda run, unit, cwd, out: seen.update(
+                            body=open(os.path.join(cwd, "source", "detail.tsx")).read())
+                        or ({}, "")):
+            declaration_only_suite(run, stub_unit(), root)
+        self.assertEqual(seen["body"], "")
+        self.assertIn("<div/>", open(os.path.join(root, "source", "detail.tsx")).read())
+        self.assertFalse(os.path.exists(os.path.join(root, "source", "detail.d.ts")))
+
+    def test_without_a_declaration_only_recipe_the_tree_is_left_alone(self):
+        root = self.repo()
+        with mock.patch("orchestrator.handoff.handoff.verify_suite",
+                        lambda run, unit, cwd, out: ({}, "")):
+            with mock.patch("orchestrator.git.restore_tree") as restore:
+                declaration_only_suite(stub_run(), stub_unit(), root)
+        self.assertFalse(restore.called)
