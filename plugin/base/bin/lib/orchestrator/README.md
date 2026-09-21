@@ -161,6 +161,7 @@ separately, because collapsing them would make a cascade read as a mass failure.
 | prepare | the process | a phase worktree |
 | persona | contracter · tester · implementer | inside its worktree only |
 | checks A · C | the process | nothing in a phase worktree — a suite's own reports land in the run dir |
+| vacuity | the process, in a throwaway worktree | nothing that survives |
 | overseer gate | security overseer · quality overseer | nothing |
 | harvest | the process | one commit on the integration branch |
 | gate | the process | the results manifest and the verdict, under the run dir |
@@ -182,7 +183,8 @@ in it **as written** — a step that fails is an infrastructural failure, not a
 puzzle to solve — and the tester's tree additionally gets the project's
 `declaration_only` recipe: signatures present, every body absent. That is what
 makes the all-red invariant cheap: a test that passes in a tree with no bodies is
-asserting nothing. Whatever the recipes wrote is then committed in the worktree
+asserting nothing. It is applied a second time at the vacuity check, because this
+one does not survive harvest. Whatever the recipes wrote is then committed in the worktree
 as `emanate: prepare <role>`, so the persona starts from a clean status and the
 harvest's dropped set never carries the process's own packaging — a deleted
 body and its declaration stub are prepare's doing, not the tester's.
@@ -243,14 +245,13 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
   ratchet's breach is handed back with the operator's remedy verbatim — **the
   ceiling is raised by hand, in review**; a gate its subject can lower is not a
   gate. The tester's boundary also runs the suite and fails a **vacuity** check: a
-  test citing this unit's claims that passes in a tree with no bodies. *The tree
-  is made that way here, not assumed to be*: the verify worktree carries the
-  harvested integration tip, which holds whatever the contracter emitted, so the
-  vacuity run applies the project's `declaration_only` recipe to it first and
-  restores the tree afterwards. Without that, the check reads a tree the recipe
-  never touched — the tester's own worktree is the only stripped one, and it is
-  not where the verdict is taken — and a unit whose contracter emitted anything
-  executable fails the check whatever the tester does.
+  test citing this unit's claims that passes in a tree with no bodies. **That tree
+  is made here, not assumed to exist**: the integration tip carries whatever the
+  contracter emitted, and the only stripped tree — the tester's own — is not where
+  the verdict is taken, so the vacuity run cuts its own throwaway worktree at the
+  tip, applies the project's `declaration_only` recipe there and discards it. A
+  check that read the tip as it stands would fail every unit whose contracter
+  emitted anything executable, whatever the tester did.
 - **the overseers**, both of them (and every one the project added), at every
   boundary including the implementer's exit. They read the boundary and answer in
   a structured shape; **a rejection routes like a failed test** — back to the same

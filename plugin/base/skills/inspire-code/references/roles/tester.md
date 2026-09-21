@@ -148,14 +148,12 @@ names — it is the vacuity the quality overseer looks for at this boundary, cau
 you first.
 
 **The verdict is not taken in your worktree.** It is taken after harvest, on a tree
-the orchestrator strips the same way, carrying only the paths harvest kept — your
-tests and the scaffolding beside them, never your copy of the source. So two things
-follow. Red in your worktree is necessary and not sufficient: a test that leans on a
-file outside your owned paths will be read against a tree that does not have it. And
-resolver shims, module mocks or config that make an unresolvable import load anyway
-are never the answer to an expected red — that red *is* the invariant reporting
-itself, and infrastructure that turns it green is the exact thing this check exists
-to catch.
+stripped the same way but built from the integration branch — your harvested tests,
+and the contracter's source rather than your copy of it. So red in your worktree is
+necessary and not sufficient: a test leaning on a file outside your owned paths is
+read against a tree that never received it. And a resolver shim, module mock or
+config entry that makes an unresolvable import load anyway is never the answer to an
+expected red — turning that red green is the thing this check hunts.
 
 ## A flaky test is fixed, never re-run
 

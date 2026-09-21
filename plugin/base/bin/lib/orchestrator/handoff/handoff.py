@@ -171,24 +171,25 @@ def spend_rework(run, ustate, role, findings, what):
 
 
 def strip_bodies(run, worktree):
-    if not run.config.get("declaration_only"):
-        return False
-    proc = sh(run.config["declaration_only"], cwd=worktree)
+    recipe = run.config.get("declaration_only")
+    if not recipe:
+        return
+    proc = sh(recipe, cwd=worktree)
     if proc.returncode != 0:
         raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
-    return True
 
 
-def declaration_only_suite(run, ustate, worktree):
+def declaration_only_suite(run, ustate):
+    worktree = gitmod.fresh_worktree(run, ustate["slug"], "vacuity",
+                                     gitmod.tip(run, ustate))
     try:
-        stripped = strip_bodies(run, worktree)
+        run_recipe(run, worktree)
+        strip_bodies(run, worktree)
+        return verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
     except Infrastructural as failure:
         raise Stall("infrastructural", VERIFY_COULD_NOT_RUN % failure)
-    try:
-        return verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
     finally:
-        if stripped:
-            gitmod.restore_tree(run, worktree)
+        gitmod.discard(run, worktree)
 
 
 def prepare(run, ustate, role, tip):
@@ -294,7 +295,7 @@ def tester_checks(run, ustate):
                                           row.get("target"), row.get("message")))
     run.save()
     if "implementer" not in ustate["done"]:
-        results, _ = declaration_only_suite(run, ustate, worktree)
+        results, _ = declaration_only_suite(run, ustate)
         claims = set(claim["id"] for claim in
                      read_json(gitmod.contract_path(run, ustate["id"])).get("claims", []))
         citing = set(citation["file"] for citation in

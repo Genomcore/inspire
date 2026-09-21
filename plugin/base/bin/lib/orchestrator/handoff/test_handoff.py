@@ -1,11 +1,10 @@
 import os
-import shutil
-import subprocess
 import tempfile
 import unittest
 from unittest import mock
 
 from orchestrator.errors import Stall
+from orchestrator.git.test_git import sh, write
 from orchestrator.handoff import (declaration_only_suite, environment_step,
                                   frozen_path_findings, persona_brief, recipe_steps,
                                   spend_rework, tests_root_args, unit_brief)
@@ -82,38 +81,41 @@ class Checks(unittest.TestCase):
 
 class VacuityRun(unittest.TestCase):
 
-    def repo(self):
-        root = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, root, True)
+    def repo(self, root, unit):
         os.makedirs(os.path.join(root, "source"))
-        with open(os.path.join(root, "source", "detail.tsx"), "w") as stream:
-            stream.write("export const Detail = () => <div/>\n")
-        for arguments in (["init", "-q"], ["add", "-A"],
-                          ["-c", "user.email=t@t", "-c", "user.name=t",
-                           "commit", "-qm", "seed"]):
-            subprocess.run(["git"] + arguments, cwd=root, check=True,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return root
+        write(root, "source/detail.tsx", "export const Detail = () => <div/>\n")
+        sh(root, "init", "-q", "-b", "main")
+        sh(root, "add", "-A")
+        sh(root, "commit", "-qm", "seed")
+        sh(root, "branch", unit["integration_branch"])
 
-    def test_the_suite_runs_with_bodies_stripped_and_the_tree_comes_back(self):
-        root = self.repo()
-        run = stub_run(config=dict(
-            stub_run().config,
-            declaration_only="printf '' > source/detail.tsx; touch source/detail.d.ts"))
+    def run_it(self, root, run, unit):
         seen = {}
-        with mock.patch("orchestrator.handoff.handoff.verify_suite",
-                        lambda run, unit, cwd, out: seen.update(
-                            body=open(os.path.join(cwd, "source", "detail.tsx")).read())
-                        or ({}, "")):
-            declaration_only_suite(run, stub_unit(), root)
-        self.assertEqual(seen["body"], "")
-        self.assertIn("<div/>", open(os.path.join(root, "source", "detail.tsx")).read())
-        self.assertFalse(os.path.exists(os.path.join(root, "source", "detail.d.ts")))
 
-    def test_without_a_declaration_only_recipe_the_tree_is_left_alone(self):
-        root = self.repo()
-        with mock.patch("orchestrator.handoff.handoff.verify_suite",
-                        lambda run, unit, cwd, out: ({}, "")):
-            with mock.patch("orchestrator.git.restore_tree") as restore:
-                declaration_only_suite(stub_run(), stub_unit(), root)
-        self.assertFalse(restore.called)
+        def fake_verify(run, ustate, cwd, out_dir):
+            seen["worktree"] = cwd
+            seen["body"] = open(os.path.join(cwd, "source", "detail.tsx")).read()
+            return {}, ""
+
+        with mock.patch("orchestrator.handoff.handoff.verify_suite", fake_verify):
+            declaration_only_suite(run, unit)
+        return seen
+
+    def test_the_suite_reads_a_stripped_tree_the_unit_never_sees(self):
+        with tempfile.TemporaryDirectory() as root:
+            unit = stub_unit()
+            self.repo(root, unit)
+            run = stub_run(repo=root)
+            run.config["declaration_only"] = "printf '' > source/detail.tsx"
+            seen = self.run_it(root, run, unit)
+            self.assertEqual(seen["body"], "")
+            self.assertIn("<div/>", open(os.path.join(root, "source/detail.tsx")).read())
+            self.assertFalse(os.path.exists(seen["worktree"]))
+
+    def test_without_a_recipe_the_suite_reads_the_tip_as_it_stands(self):
+        with tempfile.TemporaryDirectory() as root:
+            unit = stub_unit()
+            self.repo(root, unit)
+            seen = self.run_it(root, stub_run(repo=root), unit)
+            self.assertIn("<div/>", seen["body"])
+            self.assertFalse(os.path.exists(seen["worktree"]))
