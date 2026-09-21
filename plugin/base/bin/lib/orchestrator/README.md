@@ -222,9 +222,16 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
 
 ### the boundary: A → harvest → C → the overseers
 
+- **An empty worktree after a clean exit is not a failure.** A persona that
+  finds nothing left to do — the contracter already delivered the whole
+  component, a rework round that needs no change — is right to emit nothing, and
+  the process cannot tell that from laziness. So it does not try: the boundary
+  is skipped, the phase closes, the report carries one info line, and the
+  **gate judges** what already stands. A green suite promotes; a red one reworks
+  the role the gate names, spending its budget the ordinary way.
 - **A, read-only, in the persona's own worktree.** The integration branch must not
-  have moved (the branch is the process's to move), the worktree must not be
-  empty, and a harvest dry-run must drop nothing. A persona that wrote outside its
+  have moved (the branch is the process's to move), and a harvest dry-run must
+  drop nothing. A persona that wrote outside its
   owned paths is handed that back as a rejection and the drop is reported. At the
   tester's boundary the `@claim` citations are read against the contract here,
   before anything is committed.
@@ -324,7 +331,8 @@ what makes a second run toward one goal a smaller problem than the first.
   handoff stalls the unit. The per-unit budget is the sum of the handoff
   allowances; there is no separate knob.
 - **An infrastructural failure is not a rejection.** A spawn that crashes, times
-  out, exhausts its turns or harvests nothing has not been judged by anyone.
+  out, exhausts its turns or harvests nothing (exit `6`: it wrote, but only what
+  harvest excludes) has not been judged by anyone.
   **One free retry per handoff, outside the rework budget**; a second failure at
   the same handoff begins spending rework, because twice in a row is no longer an
   accident. The two counters are reported separately — one is the harness, the

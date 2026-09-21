@@ -214,7 +214,13 @@ def persona(role):
                 None, worktree)
             if result.ending != "exit":
                 raise Infrastructural(SPAWN_ENDED % (role, result.ending))
-            rejection = handoffmod.checks_a(run, ustate, role, worktree, tip_before)
+            rejection = handoffmod.branch_moved(run, ustate, role, tip_before)
+            if not rejection and handoffmod.emitted_nothing(run, ustate, role, worktree):
+                gitmod.discard(run, worktree)
+                return {"role": role, "retry": False, "worktree": None,
+                        "rejections": None}
+            if not rejection:
+                rejection = handoffmod.checks_a(run, ustate, role, worktree, tip_before)
         except Infrastructural as failure:
             if worktree:
                 gitmod.discard(run, worktree)
@@ -254,7 +260,7 @@ def harvest(state, config):
 
 
 def route_persona(state):
-    return route_retry(state) or "harvest"
+    return route_retry(state) or ("harvest" if state.get("worktree") else "overseers")
 
 
 def route_harvest(state):
@@ -392,7 +398,7 @@ def build_unit():
     builder.add_edge(START, "prepare")
     builder.add_conditional_edges("prepare", route_prepare, list(ROLES) + ["gate"])
     for role in ROLES:
-        builder.add_conditional_edges(role, route_persona, [role, "harvest"])
+        builder.add_conditional_edges(role, route_persona, [role, "harvest", "overseers"])
     builder.add_conditional_edges("rework", route_role, list(ROLES))
     builder.add_conditional_edges("harvest", route_harvest,
                                   list(ROLES) + ["verify"])
