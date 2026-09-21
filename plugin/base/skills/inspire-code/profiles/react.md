@@ -133,6 +133,50 @@ of one wire.
 - Components never call the client directly (see `## Forbidden patterns`) — the hook
   is its only caller.
 
+## Patterns
+
+> **Seed.** A default this template ships, not a rule INSPIRE enforces — edit it to
+> match the project's real component conventions. See [`README.md`](README.md) §
+> Seeds.
+
+How a pattern catalog entry's `## Regions` renders. A region is a hole, never a
+mirror of some component's props (`05_screens/README.md` § Three ownerships), so the
+pattern component only wires slots — it holds no data and no logic of its own,
+consistent with `## Layering`'s "presentation stays dumb".
+
+- One file per entry, `src/patterns/{kebab-id}/{PascalCaseId}.tsx`, default-exporting
+  the pattern component and named-exporting its `{PascalCaseId}Props`.
+- **One prop per region**, named the region key camelCased, typed `ReactNode` — a
+  region only ever holds rendered content, never a value a prop shape would
+  constrain. `Fill: required` renders as a required prop; `Fill: optional` renders
+  as `{key}?: ReactNode`.
+- The `Accepts` column decides nothing about the prop's type — `data` · `dispatch`
+  · `nav` · `static` all render the same `ReactNode` slot; it is what the *screen*
+  wires into that slot that differs, and the screen's own `## Bindings` is where
+  that wiring is declared.
+- The pattern's `## Structure` rows are its layout — where each region's prop
+  renders relative to the others; the pattern component's JSX has no branch a
+  region's presence doesn't cause.
+
+## Components
+
+> **Seed**, as above.
+
+How a component catalog entry's `## API / Slots` and `## States` render.
+
+- One file per entry, `src/components/{kebab-id}/{PascalCaseId}.tsx`, default-
+  exporting the component and named-exporting its `{PascalCaseId}Props`.
+- **One prop per `## API / Slots` row**, named the row's `Prop / slot` column
+  verbatim. A row whose "what it carries" names a project semantic type renders
+  through the language profile's § Rendering table, exactly like an entity field;
+  a row describing rendered content instead of a value renders `ReactNode`; anything
+  else renders `unknown`, narrowed by hand once the project's own convention
+  settles — never guessed into a specific shape the entry does not declare.
+- **A `## States` row** renders as one member of a closed `state` prop union
+  (`state: '{key}' | '{key}' | …`), and the component's own render branches on it —
+  never as a boolean flag per row, which stops being closed the moment two states
+  are true at once.
+
 ## Persistence
 
 **Not applicable.** A UI surface owns no store: every write leaves through a dispatch

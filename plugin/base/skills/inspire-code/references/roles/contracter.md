@@ -31,6 +31,8 @@ better.
 | the unit id, plus an `actor(...)` precondition head | the binding — route, command or tool name — and its guard | framework profile § Bindings |
 | a screen's `route` | the route entry for that surface | framework profile § Routes |
 | an entity's `fields` | the persistence model and one migration, **carrying every store-oracle constraint on those fields** — and no column the contract does not carry | framework profile § Persistence |
+| a pattern's `regions` | the pattern module, one slot per region | framework profile § Patterns |
+| a component's `props` and `states` | the component module, its prop types and its state-driven rendering | framework profile § Components |
 
 **Persistence is field-driven.** A profile's § Persistence fixes how a column is
 *rendered*, never which columns exist: the entity's declared fields decide that, stamps
