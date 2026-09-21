@@ -16,6 +16,7 @@ COMMITS = {
     "log": "emanate(log): %s — %s",
     "promote": "emanate: promote %s\n\n%s\n",
     "advance": "emanate: advance %s onto %s\n\nconflicting: %s\n",
+    "prepare": "emanate: prepare %s\n",
 }
 
 
@@ -73,6 +74,18 @@ def owned_pathspec(run, role):
 
 def tip(run, ustate):
     return git(run, ["rev-parse", ustate["integration_branch"]]).stdout.strip()
+
+
+def commit_prepared(run, worktree, role):
+    git(run, ["add", "-A"], cwd=worktree)
+    if git(run, ["diff", "--cached", "--quiet"], cwd=worktree, check=False).returncode:
+        git(run, ["commit", "-q", "-m", COMMITS["prepare"] % role], cwd=worktree)
+
+
+def prepared_paths(run, worktree, cut):
+    out = git(run, ["-c", "core.quotePath=false", "diff", "--no-renames", "--name-only",
+                    "-z", cut, "HEAD"], cwd=worktree).stdout
+    return set(path for path in out.split("\0") if path)
 
 
 def discard(run, worktree):

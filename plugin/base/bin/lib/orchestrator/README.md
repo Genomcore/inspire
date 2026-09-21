@@ -182,7 +182,10 @@ in it **as written** — a step that fails is an infrastructural failure, not a
 puzzle to solve — and the tester's tree additionally gets the project's
 `declaration_only` recipe: signatures present, every body absent. That is what
 makes the all-red invariant cheap: a test that passes in a tree with no bodies is
-asserting nothing.
+asserting nothing. Whatever the recipes wrote is then committed in the worktree
+as `emanate: prepare <role>`, so the persona starts from a clean status and the
+harvest's dropped set never carries the process's own packaging — a deleted
+body and its declaration stub are prepare's doing, not the tester's.
 
 **Nothing the loop runs shares a migration plane, and none of them is a plane the
 operator keeps.** The units of a wave run in parallel against whatever the recipe
