@@ -178,6 +178,7 @@ def prepare(run, ustate, role, tip):
             proc = sh(run.config["declaration_only"], cwd=worktree)
             if proc.returncode != 0:
                 raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
+        gitmod.commit_prepared(run, worktree, role)
     except Infrastructural:
         gitmod.discard(run, worktree)
         raise
@@ -197,7 +198,8 @@ def checks_a(run, ustate, role, worktree, tip_before):
     if not gitmod.git(run, ["status", "--porcelain"], cwd=worktree).stdout.strip():
         raise Infrastructural(EMITTED_NOTHING % role)
     proc = gitmod.run_harvest(run, ustate, role, worktree, ["--mode", "plan"])
-    dropped = json.loads(proc.stdout).get("dropped") or []
+    dropped = sorted(set(json.loads(proc.stdout).get("dropped") or [])
+                     - gitmod.prepared_paths(run, worktree, tip_before))
     if dropped:
         ustate["dropped"] = sorted(set(ustate["dropped"]) | set(dropped))
         run.save()

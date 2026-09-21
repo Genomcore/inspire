@@ -4,8 +4,8 @@ import subprocess
 import tempfile
 import unittest
 
-from orchestrator.git import (advance_onto_goal, integration_branch, owned_pathspec,
-                              template_sha)
+from orchestrator.git import (advance_onto_goal, commit_prepared, integration_branch,
+                              owned_pathspec, prepared_paths, template_sha)
 from orchestrator.test.stubs import stub_run, stub_unit
 
 ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@x", GIT_COMMITTER_NAME="t",
@@ -47,6 +47,26 @@ class Names(unittest.TestCase):
             with open(os.path.join(root, ".inspire.lock"), "w") as stream:
                 json.dump({"template_sha": "abc123"}, stream)
             self.assertEqual(template_sha(run), "abc123")
+
+
+class Prepared(unittest.TestCase):
+
+    def test_what_prepare_wrote_is_committed_and_named_so_the_persona_is_not_blamed(self):
+        with tempfile.TemporaryDirectory() as root:
+            sh(root, "init", "-q", "-b", "main")
+            write(root, "detail.tsx", "body\n")
+            sh(root, "add", "-A"); sh(root, "commit", "-qm", "base")
+            cut = sh(root, "rev-parse", "HEAD")
+            run = stub_run(repo=root)
+            commit_prepared(run, root, "tester")
+            self.assertEqual(sh(root, "rev-parse", "HEAD"), cut, "nothing to commit, no commit")
+            os.remove(os.path.join(root, "detail.tsx"))
+            write(root, "detail.d.ts", "export declare const x: number;\n")
+            commit_prepared(run, root, "tester")
+            self.assertEqual(sh(root, "status", "--porcelain"), "")
+            self.assertEqual(sh(root, "log", "-1", "--format=%s"), "emanate: prepare tester")
+            self.assertEqual(prepared_paths(run, root, cut), {"detail.tsx", "detail.d.ts"})
+            self.assertEqual(sh(root, "merge-base", "HEAD", cut), cut)
 
 
 class AdvanceOntoGoal(unittest.TestCase):
