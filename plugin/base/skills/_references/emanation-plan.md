@@ -61,7 +61,7 @@ generic catch-all would collapse two different answers into one.
 ## The plan
 
 ```json
-{ "schema": "inspire.emanation-plan/1",
+{ "schema": "inspire.emanation-plan/2",
   "scope": ["inspire_kb"],
   "ready": true,
   "floor": 3,
@@ -79,15 +79,17 @@ generic catch-all would collapse two different answers into one.
   "wire_conventions": { "ids": ["rest"],
                         "decisions": [ { "decision": "Existence leak",
                                          "answer": "404" } ] },
-  "units": [
-    { "kind": "entity", "id": "auth.user",
-      "path": "inspire_kb/04_domain/auth/user/auth.user.md",
-      "lifecycle": "accepted", "module": "auth", "surface": null,
-      "population": "internal",
-      "profiles": ["nestjs", "typescript"],
-      "requires": [ { "kind": "action", "id": "auth.password.hash" } ],
-      "wave": 1, "claims": 12 } ],
-  "waves": [ ["auth.org", "auth.user"], ["auth.user.create"], ["users.list"] ],
+  "waves": [
+    { "wave": 1,
+      "units": [
+        { "kind": "entity", "id": "auth.user",
+          "path": "inspire_kb/04_domain/auth/user/auth.user.md",
+          "module": "auth", "surface": null,
+          "population": "internal",
+          "profiles": ["nestjs", "typescript"],
+          "requires": [ { "kind": "action", "id": "auth.password.hash" } ],
+          "claims": 12 } ] },
+    { "wave": 2, "units": [ … ] } ],
   "findings": [
     { "code": "PR-03", "severity": "error", "unit": "auth.user.create",
       "target": "inspire_kb/04_domain/auth/password/auth.password.hash.md",
@@ -99,16 +101,25 @@ generic catch-all would collapse two different answers into one.
   order they were typed in never reaches stdout. With none given it names the
   roots the default sweep walks: `$SDD_KB_ROOT`, and `$SDD_SPEC_ROOT` as well
   when that is not inside it.
-- **`waves`** is an array of arrays of unit ids, each inner array `LC_ALL=C`
-  sorted, and `floor == (waves | length)`.
+- **`waves`** is the work itself: one object per wave, ascending, each carrying
+  its 1-based `wave` number and the `units` of that wave sorted by id. The
+  numbers are contiguous from 1, and `floor == (waves | length)`. A unit lives in
+  exactly one wave, so the nesting **is** the index — there is no separate
+  `units[]` list and no `units[].wave` back-pointer to keep in step with it. A
+  consumer wanting every unit flat writes `[.waves[].units[]]`, and one wanting
+  the record behind an id indexes that by `.id`.
 - **`deliverable_waves`** is `min(effective floor, ceiling)`, or the effective
   floor when `ceiling` is null. The **effective floor** is `goal.floor` when
   `--goal` was given and `floor` otherwise: a ceiling that covers the goal is not
   under-budgeted merely because some deeper unit is also in scope. The ceiling
   stops a run; it never chooses winners.
 - **`realized`** is the frontier-eligible units already realized on this branch,
-  sorted — the ones that are **absent from `units[]` and `waves`** for the same
-  reason a `stable` artifact is: they are not in the frontier. Empty whenever no
+  sorted — the ones that are **absent from `waves` entirely** for the same
+  reason a `stable` artifact is: they are not in the frontier. Bare ids rather
+  than records, because the plan is what this run will build and a realized unit
+  is not work. A consumer drawing the graph needs the dangling-target path
+  regardless: a `stable` dependency has no record here either, and never can,
+  since it left the frontier before the run was planned. Empty whenever no
   `--tests-root` was given, and a `--reemanate` selection is subtracted from it:
   the field is what this run treats as realized, which is why the reachability
   class reads realization on disk instead. **`realized_all`** is true when every
@@ -129,40 +140,50 @@ generic catch-all would collapse two different answers into one.
   the former; see § Preflight.
   **`wire_conventions`** is the transport decisions a spawned tester must assert
   rather than invent; see § Wire conventions.
-- **`units[].claims`** is the count from that unit's derived contract, `0` for a
+A **unit record**, wherever it sits in `waves`, carries:
+
+- **`claims`** is the count from that unit's derived contract, `0` for a
   refused one. It is the sizing signal the orchestrator budgets on.
-- **`units[].requires`** is derive's edge set verbatim — every declared
+- **`requires`** is derive's edge set verbatim — every declared
   dependency, ordering or not — and each entry's `ordering` flag says which it
   is. A `false` there is a **deferred reference**, and it is the reason a unit
   may legitimately share a wave with something it lists, or precede it.
   Ordering `true` is still not a promise of an earlier wave: the planner drops
   navigation and self edges as well; see § The ordering edge set.
-- **`units[].surface`** is the surface a split screens tree puts a screen under,
+  An edge's target may be **a unit no wave holds** — a `stable` artifact, a
+  realized one, or one outside the scope — since the set is derive's verbatim
+  and those are satisfied out of band.
+- **`surface`** is the surface a split screens tree puts a screen under,
   `null` for every other kind and for the flat suite-of-one shape.
-  **`units[].module`** is `null` for the two catalog kinds, which have none.
-  **`units[].population`** is the entity marker derive carries — `internal`,
+  **`module`** is `null` for the two catalog kinds, which have none.
+  **`population`** is the entity marker derive carries — `internal`,
   `external`, or `null` for every kind that is not an entity. Plan decides
   nothing with it: no wave, no readiness class and no refusal reads it. It is
   here so which entities have no write path is legible from this JSON alone,
   without opening five contracts to find out. A **persona** reads it from the
   derived contract, never from a plan the orchestrator paraphrases.
-- **`units[].profiles`** is the resolved set the unit is emanated under: its
+- **`profiles`** is the resolved set the unit is emanated under: its
   matching framework profile, that framework's language, and any declared
   `layer: language` profile. See § Profiles.
-- **`findings[].derive_class`** carries derive's own class id on a `PR-01` and is
-  `null` on every other code. `unit`, `target` and `owner` are `null` on a
-  finding that names none.
-- `units` is sorted by id, `findings` by `(code, unit, target)`.
+- There is **no `lifecycle`**. The frontier is defined as the units at
+  `lifecycle: accepted` — `plan-scan.sh` admits one on exact string equality, and
+  a catalog entry is normalized to the same vocabulary first — so the field could
+  only ever have read `accepted`, and a constant states nothing a reader did not
+  already know from the unit being in the plan at all.
+
+Finally, **`findings[].derive_class`** carries derive's own class id on a `PR-01`
+and is `null` on every other code. `unit`, `target` and `owner` are `null` on a
+finding that names none. `findings` is sorted by `(code, unit, target)`.
 
 ### Refused
 
 ```json
-{ "schema": "inspire.emanation-plan/1", "scope": ["inspire_kb"], "ready": false,
+{ "schema": "inspire.emanation-plan/2", "scope": ["inspire_kb"], "ready": false,
   "refused": [ { "code": "PR-10", "target": ".claude/agents/…",
                  "message": "…", "remedy": "…" } ] }
 ```
 
-There is **no `waves`, `floor` or `units` key at all** — nothing was planned, and
+There is **no `waves` or `floor` key at all** — nothing was planned, and
 an empty key would read as "planned, and it is empty". Refusals carry no `owner`:
 there is no unit for a skill to own. Every class found is reported, not the first.
 
@@ -197,7 +218,7 @@ out of band, and an entry stating neither leaves a screen declaring it unready
 implementation of the mapping, which derive reads too: two answers to "is this
 component delivered?" would be one too many.
 
-A catalog entry's `units[].module` is `null` and its `surface` always is: both
+A catalog entry's `module` is `null` and its `surface` always is: both
 catalogs are suite-wide and a shared entry belongs to every module that
 instantiates it.
 
@@ -504,7 +525,7 @@ profiles never block" holds for every attended subcommand, and emanation alone
 draws the line differently, because an unattended run with no rendering table
 emits a guess that compiles.
 
-`units[].profiles` is the result: the matching frameworks, their resolved
+A unit's `profiles` is the result: the matching frameworks, their resolved
 languages, and any declared `layer: language` profile.
 
 ## An access rule stated in prose

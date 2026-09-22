@@ -12,7 +12,7 @@
     { "expr": ".findings[0].unit", "equals": "users.list" },
     { "expr": ".findings[0].remedy", "equals": "add a `language:` line to spec/profiles/ios.md naming a `layer: language` profile, and author that profile" },
     { "expr": "[.findings[] | select(.remedy | test(\"stack.md\"))] | length", "equals": "0" },
-    { "expr": ".units[0].profiles | join(\",\")", "equals": "ios,typescript" },
+    { "expr": ".waves[0].units[0].profiles | join(\",\")", "equals": "ios,typescript" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-07"]
