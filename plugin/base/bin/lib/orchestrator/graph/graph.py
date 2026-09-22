@@ -125,6 +125,11 @@ def derive(payload, config):
     return {}
 
 
+def probe(state, config):
+    startmod.probe_infrastructure(_run(config))
+    return {}
+
+
 def baseline(state, config):
     startmod.baseline(_run(config))
     return {}
@@ -214,7 +219,13 @@ def persona(role):
                 None, worktree)
             if result.ending != "exit":
                 raise Infrastructural(SPAWN_ENDED % (role, result.ending))
-            rejection = handoffmod.checks_a(run, ustate, role, worktree, tip_before)
+            rejection = handoffmod.branch_moved(run, ustate, role, tip_before)
+            if not rejection and handoffmod.emitted_nothing(run, ustate, role, worktree):
+                gitmod.discard(run, worktree)
+                return {"role": role, "retry": False, "worktree": None,
+                        "rejections": None}
+            if not rejection:
+                rejection = handoffmod.checks_a(run, ustate, role, worktree, tip_before)
         except Infrastructural as failure:
             if worktree:
                 gitmod.discard(run, worktree)
@@ -254,7 +265,7 @@ def harvest(state, config):
 
 
 def route_persona(state):
-    return route_retry(state) or "harvest"
+    return route_retry(state) or ("harvest" if state.get("worktree") else "overseers")
 
 
 def route_harvest(state):
@@ -410,7 +421,7 @@ def build_unit():
     builder.add_edge(START, "prepare")
     builder.add_conditional_edges("prepare", route_prepare, list(ROLES) + ["gate"])
     for role in ROLES:
-        builder.add_conditional_edges(role, route_persona, [role, "harvest"])
+        builder.add_conditional_edges(role, route_persona, [role, "harvest", "overseers"])
     builder.add_conditional_edges("rework", route_role, list(ROLES))
     builder.add_conditional_edges("harvest", route_harvest,
                                   list(ROLES) + ["verify"])
@@ -430,10 +441,11 @@ def build_readiness():
     builder = StateGraph(RunState)
     for name, node in (("ceiling", ceiling), ("shells", shells),
                        ("derive_units", derive_units), ("derive", derive),
-                       ("baseline", baseline)):
+                       ("probe", probe), ("baseline", baseline)):
         builder.add_node(name, _traced(name, node, False))
-    for name in ("ceiling", "shells", "derive_units", "baseline"):
+    for name in ("ceiling", "shells", "derive_units", "probe"):
         builder.add_edge(START, name)
+    builder.add_edge("probe", "baseline")
     builder.add_conditional_edges("derive_units", fan_derive, ["derive", END])
     builder.add_edge(["ceiling", "shells", "baseline", "derive"], END)
     return builder.compile()

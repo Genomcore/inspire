@@ -61,10 +61,10 @@ class Topology(unittest.TestCase):
         self.assertLessEqual({"preflight", "plan", "readiness", "identity", "wave",
                               "unit", "wave_close", "report"}, nodes)
 
-    def test_the_readiness_graph_compiles_with_its_four_parallel_checks(self):
+    def test_the_readiness_graph_compiles_with_its_parallel_checks(self):
         nodes = set(graphmod.build_readiness().get_graph().nodes)
-        self.assertLessEqual({"ceiling", "shells", "derive_units", "derive", "baseline"},
-                             nodes)
+        self.assertLessEqual({"ceiling", "shells", "derive_units", "derive", "probe",
+                              "baseline"}, nodes)
 
     def test_the_unit_graph_compiles_with_the_whole_boundary(self):
         nodes = set(graphmod.build_unit().get_graph().nodes)
@@ -83,8 +83,10 @@ class Topology(unittest.TestCase):
         self.assertEqual(graphmod.route_role({"role": "tester"}), "tester")
         self.assertEqual(graphmod.route_promote({"retry": True, "role": "implementer"}),
                          "implementer")
-        self.assertEqual(graphmod.route_persona({"retry": False, "role": "tester"}),
-                         "harvest")
+        self.assertEqual(graphmod.route_persona({"retry": False, "role": "tester",
+                                                 "worktree": "/wt"}), "harvest")
+        self.assertEqual(graphmod.route_persona({"retry": False, "role": "tester",
+                                                 "worktree": None}), "overseers")
 
 
 def build_repo(root):
@@ -228,6 +230,16 @@ class EndToEnd(unittest.TestCase):
                                       for entry in units["auth.user"]["timeline"]])
         self.assertEqual([entry["index"] for entry in run.state["wave_log"]],
                          [1, 2, 3])
+
+    def test_a_persona_that_emits_nothing_is_judged_by_the_gate_not_stalled(self):
+        personas = dict(PERSONAS, implementer={"mode": "stub-source",
+                                               "attempts": {"1": {"nothing": True}}})
+        run, _ = emanate(self.root, {"personas": personas}, ceiling=1)
+        unit = run.state["units"]["audit.event"]
+        self.assertEqual(unit["status"], "promoted")
+        self.assertEqual(unit["infra_retries"]["implementer"], 0)
+        self.assertEqual(unit["rework"]["implementer"], 1)
+        self.assertTrue(any("emitted nothing" in row for row in unit["verify_findings"]))
 
     def test_the_unit_cuts_at_stalled_once_rework_reaches_its_limit(self):
         reject = {"verdict": "REJECT", "findings": [

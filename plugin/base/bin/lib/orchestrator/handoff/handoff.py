@@ -15,7 +15,7 @@ RECIPE_STEP_FAILED = "the recipe's `%s` step failed in %s: %s"
 DECLARATION_ONLY_FAILED = "the declaration-only recipe failed: %s"
 PERSONA_HEADING = "%s — %s"
 REWORK_EXHAUSTED = "the %s exhausted its rework budget (%d attempts) at %s"
-EMITTED_NOTHING = "the %s emitted nothing"
+EMITTED_NOTHING = "emitted nothing; the boundary is skipped and the gate judges"
 NOTHING_TO_HARVEST = "nothing to harvest from the %s"
 HARVEST_CONFLICT = "the %s's emission does not apply onto %s: %s"
 HARVEST_TOOL_ERROR = "emanate-harvest.sh exited %d at the %s handoff: %s"
@@ -170,14 +170,34 @@ def spend_rework(run, ustate, role, findings, what):
                     REWORK_EXHAUSTED % (role, run.args.rework, what), findings)
 
 
+def strip_bodies(run, worktree):
+    recipe = run.config.get("declaration_only")
+    if not recipe:
+        return
+    proc = sh(recipe, cwd=worktree)
+    if proc.returncode != 0:
+        raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
+
+
+def declaration_only_suite(run, ustate):
+    worktree = gitmod.fresh_worktree(run, ustate["slug"], "vacuity",
+                                     gitmod.tip(run, ustate))
+    try:
+        run_recipe(run, worktree)
+        strip_bodies(run, worktree)
+        return verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
+    except Infrastructural as failure:
+        raise Stall("infrastructural", VERIFY_COULD_NOT_RUN % failure)
+    finally:
+        gitmod.discard(run, worktree)
+
+
 def prepare(run, ustate, role, tip):
     worktree = gitmod.fresh_worktree(run, ustate["slug"], role, tip)
     try:
         run_recipe(run, worktree)
-        if role == "tester" and run.config.get("declaration_only"):
-            proc = sh(run.config["declaration_only"], cwd=worktree)
-            if proc.returncode != 0:
-                raise Infrastructural(DECLARATION_ONLY_FAILED % tail(proc.stderr, 600))
+        if role == "tester":
+            strip_bodies(run, worktree)
         gitmod.commit_prepared(run, worktree, role)
     except Infrastructural:
         gitmod.discard(run, worktree)
@@ -190,13 +210,23 @@ def repoint_verify(run, ustate, tip):
     run.last_results.pop(ustate["id"], None)
 
 
-def checks_a(run, ustate, role, worktree, tip_before):
+def emitted_nothing(run, ustate, role, worktree):
+    if gitmod.git(run, ["status", "--porcelain"], cwd=worktree).stdout.strip():
+        return False
+    ustate["verify_findings"].append(OVERSEER_FINDING_ROW % ("info", role, EMITTED_NOTHING))
+    run.save()
+    return True
+
+
+def branch_moved(run, ustate, role, tip_before):
     tip = gitmod.tip(run, ustate)
-    if tip != tip_before:
-        title, issue, fix = MESSAGES["branch-moved"]
-        return [finding(role, title, issue % (tip[:12], tip_before[:12]), fix)]
-    if not gitmod.git(run, ["status", "--porcelain"], cwd=worktree).stdout.strip():
-        raise Infrastructural(EMITTED_NOTHING % role)
+    if tip == tip_before:
+        return []
+    title, issue, fix = MESSAGES["branch-moved"]
+    return [finding(role, title, issue % (tip[:12], tip_before[:12]), fix)]
+
+
+def checks_a(run, ustate, role, worktree, tip_before):
     proc = gitmod.run_harvest(run, ustate, role, worktree, ["--mode", "plan"])
     dropped = sorted(set(json.loads(proc.stdout).get("dropped") or [])
                      - gitmod.prepared_paths(run, worktree, tip_before))
@@ -275,7 +305,7 @@ def tester_checks(run, ustate):
                                           row.get("target"), row.get("message")))
     run.save()
     if "implementer" not in ustate["done"]:
-        results, _ = verify_suite(run, ustate, worktree, next_verify_dir(run, ustate))
+        results, _ = declaration_only_suite(run, ustate)
         claims = set(claim["id"] for claim in
                      read_json(gitmod.contract_path(run, ustate["id"])).get("claims", []))
         citing = set(citation["file"] for citation in

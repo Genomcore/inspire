@@ -77,7 +77,9 @@ class FakeRunner:
                                cost_usd=self.COST)
         spec = (self.script.get("personas") or {}).get(role) or {}
         attempts = (spec.get("attempts") or {}).get(str(attempt)) or {}
-        if spec["mode"] == "tests-from-contract":
+        if attempts.get("nothing"):
+            pass
+        elif spec["mode"] == "tests-from-contract":
             self._write_tests(cwd, brief, attempt, attempts)
         else:
             self._write_stub(cwd, brief, role, attempt, attempts)

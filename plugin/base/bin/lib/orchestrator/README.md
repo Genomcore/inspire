@@ -80,7 +80,22 @@ Each step gates the next, and a refusal leaves nothing spawned.
    whole frontier, so a non-zero exit here means the substrate changed under the
    run: a refusal, not a finding. A unit the ceiling puts out of reach is rostered
    as `blocked` and never derived — nothing would read its contract.
-8. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
+8. **The test infrastructure, brought up.** When `stack.md` declares components
+   under `## Test infrastructure` *and* a suite-wide framework profile carries a
+   probe recipe (plan's `preflight.probe_profiles`), the process runs
+   `docker compose up -d --wait <components>` once, from the launch checkout.
+   `--wait` is the whole probe: it fails on a component with no service and on
+   one whose healthcheck never turns **healthy**, so `Up` alone is not enough. A
+   non-zero exit **refuses**, with compose's own output: the alternative is a
+   unit discovering at its gate, a wave and its spend later, that every e2e claim
+   failed on a connection error. The run is unattended — typically a sandbox
+   with nobody to bring anything up — so starting the components is the
+   process's job, not a question to ask. Compose runs in the launch checkout,
+   so a relative bind mount it creates lands there: the project's `.gitignore`
+   must cover such paths, or the next run refuses on a dirty checkout. With no
+   declared components, or no probe recipe (plan's `PR-22`), nothing runs and
+   the identity block says so.
+9. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
    in it, then the whole suite. **A red baseline in realized territory refuses**:
    emanating onto a red suite makes every later verdict unreadable — `GV-05`
    cannot tell a pre-existing failure from one this run caused, and the first unit
@@ -90,7 +105,7 @@ Each step gates the next, and a refusal leaves nothing spawned.
    does not produce a green suite refuses in the same breath — this is the one
    moment the recipe is proven, and proving it once is why the baseline is not cut
    in the goal worktree.
-9. **The identity block** — the first thing the run writes, because everything
+10. **The identity block** — the first thing the run writes, because everything
    above it can still refuse and a refusal may not empty the last run's account.
 
 ## The branch scheme
@@ -161,6 +176,7 @@ separately, because collapsing them would make a cascade read as a mass failure.
 | prepare | the process | a phase worktree |
 | persona | contracter · tester · implementer | inside its worktree only |
 | checks A · C | the process | nothing in a phase worktree — a suite's own reports land in the run dir |
+| vacuity | the process, in a throwaway worktree | nothing that survives |
 | overseer gate | security overseer · quality overseer | nothing |
 | harvest | the process | one commit on the integration branch |
 | gate | the process | the results manifest and the verdict, under the run dir |
@@ -182,7 +198,8 @@ in it **as written** — a step that fails is an infrastructural failure, not a
 puzzle to solve — and the tester's tree additionally gets the project's
 `declaration_only` recipe: signatures present, every body absent. That is what
 makes the all-red invariant cheap: a test that passes in a tree with no bodies is
-asserting nothing. Whatever the recipes wrote is then committed in the worktree
+asserting nothing. It is applied a second time at the vacuity check, because this
+one does not survive harvest. Whatever the recipes wrote is then committed in the worktree
 as `emanate: prepare <role>`, so the persona starts from a clean status and the
 harvest's dropped set never carries the process's own packaging — a deleted
 body and its declaration stub are prepare's doing, not the tester's.
@@ -220,9 +237,16 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
 
 ### the boundary: A → harvest → C → the overseers
 
+- **An empty worktree after a clean exit is not a failure.** A persona that
+  finds nothing left to do — the contracter already delivered the whole
+  component, a rework round that needs no change — is right to emit nothing, and
+  the process cannot tell that from laziness. So it does not try: the boundary
+  is skipped, the phase closes, the report carries one info line, and the
+  **gate judges** what already stands. A green suite promotes; a red one reworks
+  the role the gate names, spending its budget the ordinary way.
 - **A, read-only, in the persona's own worktree.** The integration branch must not
-  have moved (the branch is the process's to move), the worktree must not be
-  empty, and a harvest dry-run must drop nothing. A persona that wrote outside its
+  have moved (the branch is the process's to move), and a harvest dry-run must
+  drop nothing. A persona that wrote outside its
   owned paths is handed that back as a rejection and the drop is reported. At the
   tester's boundary the `@claim` citations are read against the contract here,
   before anything is committed.
@@ -243,7 +267,13 @@ shipped shells can prompt, and the process answers to nobody mid-wave.
   ratchet's breach is handed back with the operator's remedy verbatim — **the
   ceiling is raised by hand, in review**; a gate its subject can lower is not a
   gate. The tester's boundary also runs the suite and fails a **vacuity** check: a
-  test citing this unit's claims that passes in a tree with no bodies.
+  test citing this unit's claims that passes in a tree with no bodies. **That tree
+  is made here, not assumed to exist**: the integration tip carries whatever the
+  contracter emitted, and the only stripped tree — the tester's own — is not where
+  the verdict is taken, so the vacuity run cuts its own throwaway worktree at the
+  tip, applies the project's `declaration_only` recipe there and discards it. A
+  check that read the tip as it stands would fail every unit whose contracter
+  emitted anything executable, whatever the tester did.
 - **the overseers**, both of them (and every one the project added), at every
   boundary including the implementer's exit. They read the boundary and answer in
   a structured shape; **a rejection routes like a failed test** — back to the same
@@ -316,7 +346,8 @@ what makes a second run toward one goal a smaller problem than the first.
   handoff stalls the unit. The per-unit budget is the sum of the handoff
   allowances; there is no separate knob.
 - **An infrastructural failure is not a rejection.** A spawn that crashes, times
-  out, exhausts its turns or harvests nothing has not been judged by anyone.
+  out, exhausts its turns or harvests nothing (exit `6`: it wrote, but only what
+  harvest excludes) has not been judged by anyone.
   **One free retry per handoff, outside the rework budget**; a second failure at
   the same handoff begins spending rework, because twice in a row is no longer an
   accident. The two counters are reported separately — one is the harness, the
@@ -325,9 +356,9 @@ what makes a second run toward one goal a smaller problem than the first.
 - **`--ceiling`** bounds the waves; **`--budget-usd`** stops opening waves once
   the run's own spend estimate passes it, blocking what is left.
 - **The reach ceiling is hard**: a fully green run ends at the goal branch. The
-  process never merges into the launch branch, never opens a PR and never deploys,
-  and it **never starts a service** — the operator may have a component pointed at
-  something shared, and a loop racing them is worse than a refusal.
+  process never merges into the launch branch, never opens a PR and never deploys.
+  The one thing it starts is the declared test infrastructure, once, at t=0
+  (§ t = 0, step 8) — and nothing from inside a phase.
 
 ## Stall
 

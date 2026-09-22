@@ -44,6 +44,14 @@ PLAN_MESSAGES = {
     "derive_exited": "emanate-derive.sh exited %d on %s: %s",
 }
 
+PROBE_MESSAGES = {
+    "skipped": "components %s declared, not brought up — no resolved framework profile "
+               "declares test infrastructure",
+    "none": "no test-infrastructure components declared",
+    "up": "components up and healthy: %s",
+    "failed": "test infrastructure did not come up healthy — `%s` exited %d in %s:\n%s",
+}
+
 BASELINE_MESSAGES = {
     "skipped": "baseline skipped — no tests under the tests roots",
     "infra": "the baseline could not be established: %s",
@@ -263,6 +271,24 @@ def new_state(run, waves, units):
         "shells": run.shells, "plan_units": run.plan_units,
         "status": "RUNNING", "exit": None, "node": "identity", "units": units}
     run.save()
+
+
+def probe_infrastructure(run):
+    preflight = run.plan.get("preflight") or {}
+    names = [item["name"] for item in preflight.get("components") or []]
+    if not names:
+        run.probe_line = PROBE_MESSAGES["none"]
+        return
+    if not preflight.get("probe_profiles"):
+        run.probe_line = PROBE_MESSAGES["skipped"] % ", ".join(names)
+        return
+    command = ["docker", "compose", "up", "-d", "--wait"] + names
+    proc = subprocess.run(command, cwd=run.repo, text=True,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        raise Refusal(PROBE_MESSAGES["failed"]
+                      % (" ".join(command), proc.returncode, run.repo, tail(proc.stderr, 800)))
+    run.probe_line = PROBE_MESSAGES["up"] % ", ".join(names)
 
 
 def baseline(run):

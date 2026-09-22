@@ -1,8 +1,11 @@
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 
 from orchestrator.constants import ROLES
 from orchestrator.errors import Refusal
-from orchestrator.start import blank_unit, check_ceiling, compute_goal_slug, select_waves
+from orchestrator.start import (blank_unit, check_ceiling, compute_goal_slug,
+                                probe_infrastructure, select_waves)
 from orchestrator.test.stubs import stub_args, stub_run
 
 
@@ -60,3 +63,43 @@ class Units(unittest.TestCase):
         self.assertEqual(unit["slug"], "auth-user")
         self.assertEqual(unit["rework"], dict((role, 0) for role in ROLES))
         self.assertEqual(unit["infra_retries"], dict((role, 0) for role in ROLES))
+
+
+class Probe(unittest.TestCase):
+
+    def plan(self, probe_profiles=("nestjs",), components=("postgres", "redis")):
+        return {"preflight": {"components": [{"name": name} for name in components],
+                              "probe_profiles": list(probe_profiles)}}
+
+    def compose(self, returncode, stderr=""):
+        return mock.patch("orchestrator.start.start.subprocess.run",
+                          return_value=SimpleNamespace(returncode=returncode, stderr=stderr))
+
+    def test_the_components_are_brought_up_from_the_launch_checkout_and_reported(self):
+        run = stub_run(plan=self.plan())
+        with self.compose(0) as spawn:
+            probe_infrastructure(run)
+        self.assertEqual(spawn.call_args.args[0],
+                         ["docker", "compose", "up", "-d", "--wait", "postgres", "redis"])
+        self.assertEqual(spawn.call_args.kwargs["cwd"], "/repo")
+        self.assertEqual(run.probe_line, "components up and healthy: postgres, redis")
+
+    def test_a_component_that_does_not_come_up_healthy_refuses_with_compose_s_output(self):
+        run = stub_run(plan=self.plan())
+        with self.compose(1, "container postgres is unhealthy\n"), \
+                self.assertRaises(Refusal) as ctx:
+            probe_infrastructure(run)
+        self.assertIn("docker compose up -d --wait postgres redis", str(ctx.exception))
+        self.assertIn("container postgres is unhealthy", str(ctx.exception))
+
+    def test_without_a_probe_recipe_or_components_nothing_runs(self):
+        cases = [(self.plan(probe_profiles=()), "not brought up"),
+                 (self.plan(components=()), "no test-infrastructure components"),
+                 ({}, "no test-infrastructure components")]
+        with self.compose(0) as spawn:
+            for plan, expected in cases:
+                with self.subTest(plan=plan):
+                    run = stub_run(plan=plan)
+                    probe_infrastructure(run)
+                    self.assertIn(expected, run.probe_line)
+        spawn.assert_not_called()
