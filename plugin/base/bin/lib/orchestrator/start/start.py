@@ -44,6 +44,23 @@ PLAN_MESSAGES = {
     "derive_exited": "emanate-derive.sh exited %d on %s: %s",
 }
 
+PROBE_MESSAGES = {
+    "skipped": "components %s declared, not probed — no resolved framework profile carries "
+               "a `## Test infrastructure` probe recipe",
+    "none": "no test-infrastructure components declared",
+    "probed": "components probed: %s",
+    "state": "%s %s",
+    "absent": "absent",
+    "unhealthy": "test infrastructure is not healthy: %s. Bring it up from the launch "
+                 "checkout and re-run:\n  docker compose up -d --wait %s\nThis process never "
+                 "starts a component — the operator may have it up elsewhere.",
+    "no_service": "%s is declared in `## Test infrastructure` and has no compose service — "
+                  "`docker compose config --services` lists: %s.",
+    "compose_failed": "`docker compose %s` exited %d in %s: %s",
+}
+PROBE_HEALTHY = "healthy"
+NONE_LISTED = "none"
+
 BASELINE_MESSAGES = {
     "skipped": "baseline skipped — no tests under the tests roots",
     "infra": "the baseline could not be established: %s",
@@ -263,6 +280,52 @@ def new_state(run, waves, units):
         "shells": run.shells, "plan_units": run.plan_units,
         "status": "RUNNING", "exit": None, "units": units}
     run.save()
+
+
+def compose(run, *args):
+    proc = subprocess.run(["docker", "compose"] + list(args), cwd=run.repo, text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        raise Refusal(PROBE_MESSAGES["compose_failed"]
+                      % (" ".join(args), proc.returncode, run.repo, tail(proc.stderr, 600)))
+    return proc.stdout
+
+
+def compose_health(run):
+    text = compose(run, "ps", "--format", "json").strip()
+    rows = json.loads(text) if text.startswith("[") else \
+        [json.loads(line) for line in text.splitlines() if line.strip()]
+    health = {}
+    for row in rows:
+        state = row.get("Health") or row.get("State") or ""
+        health[row.get("Service")] = PROBE_HEALTHY if state == PROBE_HEALTHY or \
+            (not row.get("Health") and state == "running") else state
+    return health
+
+
+def probe_infrastructure(run):
+    preflight = run.plan.get("preflight") or {}
+    names = [item["name"] for item in preflight.get("components") or []]
+    if not names:
+        run.probe_line = PROBE_MESSAGES["none"]
+        return
+    if not preflight.get("probe_profiles"):
+        run.probe_line = PROBE_MESSAGES["skipped"] % ", ".join(names)
+        return
+    services = compose(run, "config", "--services").split()
+    missing = [name for name in names if name not in services]
+    if missing:
+        raise Refusal(PROBE_MESSAGES["no_service"]
+                      % (", ".join(missing), ", ".join(services) or NONE_LISTED))
+    health = compose_health(run)
+    states = [(name, health.get(name) or PROBE_MESSAGES["absent"]) for name in names]
+    unhealthy = [(name, state) for name, state in states if state != PROBE_HEALTHY]
+    if unhealthy:
+        raise Refusal(PROBE_MESSAGES["unhealthy"]
+                      % (", ".join(PROBE_MESSAGES["state"] % pair for pair in unhealthy),
+                         " ".join(name for name, _ in unhealthy)))
+    run.probe_line = PROBE_MESSAGES["probed"] % ", ".join(
+        PROBE_MESSAGES["state"] % pair for pair in states)
 
 
 def baseline(run):

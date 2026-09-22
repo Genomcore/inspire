@@ -125,6 +125,11 @@ def derive(payload, config):
     return {}
 
 
+def probe(state, config):
+    startmod.probe_infrastructure(_run(config))
+    return {}
+
+
 def baseline(state, config):
     startmod.baseline(_run(config))
     return {}
@@ -418,10 +423,11 @@ def build_readiness():
     builder = StateGraph(RunState)
     for name, node in (("ceiling", ceiling), ("shells", shells),
                        ("derive_units", derive_units), ("derive", derive),
-                       ("baseline", baseline)):
+                       ("probe", probe), ("baseline", baseline)):
         builder.add_node(name, node)
-    for name in ("ceiling", "shells", "derive_units", "baseline"):
+    for name in ("ceiling", "shells", "derive_units", "probe"):
         builder.add_edge(START, name)
+    builder.add_edge("probe", "baseline")
     builder.add_conditional_edges("derive_units", fan_derive, ["derive", END])
     builder.add_edge(["ceiling", "shells", "baseline", "derive"], END)
     return builder.compile()

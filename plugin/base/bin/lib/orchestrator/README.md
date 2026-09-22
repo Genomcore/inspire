@@ -80,7 +80,19 @@ Each step gates the next, and a refusal leaves nothing spawned.
    whole frontier, so a non-zero exit here means the substrate changed under the
    run: a refusal, not a finding. A unit the ceiling puts out of reach is rostered
    as `blocked` and never derived — nothing would read its contract.
-8. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
+8. **The test infrastructure, probed.** When `stack.md` declares components under
+   `## Test infrastructure` *and* a suite-wide framework profile carries a probe
+   recipe (plan's `preflight.probe_profiles`), the process runs the recipe once,
+   from the launch checkout — `docker compose config --services` to see every
+   component has a service, then `docker compose ps` demanding **healthy**, not
+   merely `Up` (a service with no healthcheck passes on `running`). A component
+   that is absent, starting or unhealthy **refuses**, naming each one and the
+   `docker compose up -d --wait …` line that brings them up: there is nobody to
+   ask, and the alternative is a unit discovering at its gate, a wave and its
+   spend later, that every e2e claim failed on a connection error. The process
+   never starts a component. With no declared components, or no probe recipe
+   (plan's `PR-22`), nothing runs and the identity block says so.
+9. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
    in it, then the whole suite. **A red baseline in realized territory refuses**:
    emanating onto a red suite makes every later verdict unreadable — `GV-05`
    cannot tell a pre-existing failure from one this run caused, and the first unit
@@ -90,7 +102,7 @@ Each step gates the next, and a refusal leaves nothing spawned.
    does not produce a green suite refuses in the same breath — this is the one
    moment the recipe is proven, and proving it once is why the baseline is not cut
    in the goal worktree.
-9. **The identity block** — the first thing the run writes, because everything
+10. **The identity block** — the first thing the run writes, because everything
    above it can still refuse and a refusal may not empty the last run's account.
 
 ## The branch scheme

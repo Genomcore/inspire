@@ -74,9 +74,12 @@ from an exit code — and before a cron line exists rather than after:
 - `.inspire/emanate.json` — tests roots, source roots, the suite command
   (`lib/orchestrator/README.md` § What it reads);
 - `plan`'s `preflight` block: the declared test-infrastructure components
-  **brought up by the operator** (the process never starts a service), and the
-  `worktree_recipe` without which every prepare improvises — plan's `PR-24`
-  blocks a *schedule* even though it never blocks a run.
+  **brought up by the operator** — the process never starts a service, but when
+  a resolved framework profile carries a probe recipe it runs that recipe once at
+  t=0 and refuses on any component that is not *healthy*, printing the
+  `docker compose up -d --wait …` line to run; and the `worktree_recipe` without
+  which every prepare improvises — plan's `PR-24` blocks a *schedule* even though
+  it never blocks a run.
 
 **Scheduling starts an invocation; it does not implement the loop.** A cron
 entry, a CI trigger or a terminal left open runs the command above and nothing

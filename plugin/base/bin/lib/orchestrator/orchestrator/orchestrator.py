@@ -55,6 +55,7 @@ class Orchestrator:
         self.last_results = {}
         self.last_verdict = {}
         self.baseline_line = BASELINE_SKIPPED_NOTHING_PLANNED
+        self.probe_line = startmod.PROBE_MESSAGES["none"]
         self.truncated = False
         self.plan_units = {}
         self.shells = {}
