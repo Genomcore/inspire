@@ -136,7 +136,10 @@ whole model, the envelope and the overseer roster included.
 
 - **ADRs (`01_adr`).** Does the diff contradict a current ADR — one present and not
   superseded or rejected — within its maturity's reach? An ADR at `implemented`
-  maturity is *claimed* to be realized by code — verify the claim.
+  maturity is *claimed* to be realized by code — verify the claim. A contradiction
+  here is always a finding, never a local override: code sits on no rung, and no
+  format below the decision rung has a place to declare an ADR departure
+  ([`_references/authority.md`](../_references/authority.md) § A2).
 - **Action descriptors (`04_domain/{module}/{entity}/`).** Does the code satisfy
   the behavioral contract (inputs, outputs, touched entities, invariants, error
   set)? Search for the descriptor whose `## Purpose` back-sources to the feature.
@@ -276,6 +279,10 @@ stack declares no language profile, per `profiles/README.md` § The one exceptio
   the lean defaults live beside it — framework profiles `react`, `nestjs`, `angular`,
   `ios` and `android`, each keeping its deep material under `profiles/{id}/references/`,
   and language profile `typescript`.
+- [`_references/authority.md`](../_references/authority.md) — which layer decides
+  when the descriptor, the convention, the profile and the acceptance criterion
+  disagree: the narrowest artifact that speaks to the question, and only where it
+  declares the departure in the open.
 - [`_references/findings-format.md`](../_references/findings-format.md) — shared
   finding rendering format, used when `review` surfaces SDD-layer findings.
 - [`_references/quality-gates.md`](../_references/quality-gates.md) — which layer

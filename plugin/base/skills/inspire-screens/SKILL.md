@@ -196,7 +196,15 @@ match a stale spec is riskier than updating the spec.
 
 **Why the skill wins on UI conventions:** patterns, components, design tokens and
 current UX ADRs are project-wide invariants. A prototype that violates them is a
-regression to fix in the prototype, not in the spec.
+regression to fix in the prototype, not in the spec. A screen cannot except itself
+from one either: a token is a suite-wide fact, so a local exception to it is still a
+suite-wide change and the token moves instead
+([`_references/authority.md`](../_references/authority.md) § A3).
+
+The matrix is this skill's three pairs, resolved. The general rule behind the
+`Authority` column — the narrowest artifact that speaks to the question wins, and an
+undeclared contradiction is drift rather than an override — lives in
+[`_references/authority.md`](../_references/authority.md).
 
 When uncertain which layer a finding belongs to, ask the user.
 

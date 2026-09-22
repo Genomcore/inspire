@@ -75,6 +75,17 @@ If the signal is **local, actionable work** ("someone here should fix this"), fi
 skill-feedback ticket with `inspire-task` instead. A confirmed ticket that should change
 how a skill behaves graduates into a lesson (see *Relationship to the tracker*).
 
+A lesson is how a project overrides the **runtime** rung — it is the declared channel
+for "the skill should behave differently here"
+([`_references/authority.md`](../_references/authority.md)). Where the departure binds
+the product rather than the skill, it is an ADR or an artifact, not a lesson; and where
+what the project wants changed is something mechanical — a frontmatter schema, the
+keyed-entry vocabulary, a lifecycle state, anything a validator or a parser reads — no
+project artifact out-specifies it and a lesson is the **only** way in. It is the start
+of the path rather than the whole of it: a lesson teaches the *skills*, and the
+validators are not an extension point, so the change lands through the observer and a
+release.
+
 ## Invocation
 
 - `/inspire-lesson note {title} [--skill X --category preference --supersedes id]`

@@ -180,6 +180,9 @@ code and then pin the guess with a test.
 
 Where the descriptor carries a `**Wire deviation:**` note, that note wins over the
 convention. Where it does not, the convention holds — that is what makes it restrictive.
+A descriptor that contradicts the convention **without** the note is not an override;
+it is drift, and it goes back to `/inspire-domain`
+([`_references/authority.md`](../../_references/authority.md) § A2).
 
 ## The test boundary
 
@@ -375,3 +378,7 @@ never re-run.
   touched entities, invariants, and declared error set. A behavior the code needs
   but the descriptor doesn't cover is a `/inspire-domain` hand-back, not an
   ad-lib.
+- Where two KB layers themselves disagree, the ladder in
+  [`_references/authority.md`](../../_references/authority.md) decides: the narrowest
+  artifact that speaks to the question, and only where it declares the departure.
+  Anchor to that one and hand the other back to its owning skill.

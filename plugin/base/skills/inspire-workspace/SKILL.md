@@ -138,16 +138,27 @@ Drift items pending: {N}
 7. **Pending drift is not failure.** Prototype drift and pending component adoption
    are `important`, not `critical`, unless they contradict an ADR within its
    maturity's reach.
-8. **Signals are measurements, not findings.** This is the single statement of how
+8. **An undeclared contradiction is drift, not an override.** Where two layers
+   answer one question differently, the narrower artifact wins only where it
+   declares the departure in the open; otherwise the wider rule holds and the
+   contradiction is a finding routed to the narrower artifact's owning skill
+   ([`_references/authority.md`](../_references/authority.md)). Report the same
+   departure declared in a third artifact as a decision sitting at the wrong rung,
+   and name the skill that would move it — `/inspire-adr` for the product,
+   `/inspire-lesson` for the runtime. This does not soften rule 7: nothing below the
+   decision rung has a place to declare an ADR departure, so contradicting a current
+   ADR within its maturity's reach is never an override and escalates exactly as
+   rule 7 says.
+9. **Signals are measurements, not findings.** This is the single statement of how
    every signal is treated — the trust report's groups and the design-system
    variance count alike. They are reported every run, including when nothing is
    wrong; they carry no severity of their own, and never above `important` where one
    is shown; no fix routing beyond the owning skill; never file a ticket from one;
    never block the pre-PR gate on one. They re-appear for as long as they stay true
    ([trust-stamps](../_references/trust-stamps.md#report)).
-9. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
+10. **Consult the task tracker.** Known items in `inspire_kb/99_tracker/tickets/`
    are flagged `(tracked: TASK-{id})`. Use `/inspire-task list`.
-10. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
+11. **Required follow-up skills.** When flagging drift, name the mandatory fix skill:
    - Prototype drift → `/inspire-prototype`
    - screen spec drift → `/inspire-screens`
    - Feature drift → `/inspire-module update` or `/inspire-feature update`
