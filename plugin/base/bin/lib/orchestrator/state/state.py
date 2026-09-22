@@ -32,13 +32,25 @@ def set_phase(run, ustate, phase):
     run.save()
 
 
+def set_node(run, holder, node):
+    """Record which node of the graph is executing, for an observer.
+
+    Purely observational: `phase` says whose work a unit is in and drives the
+    rework and resume accounting, so a boundary step must not move it. This
+    says which node is running, and nothing reads it back.
+    """
+    holder["node"] = node
+    run.save()
+
+
 def reconcile(data):
     data.setdefault("started_at", datetime.datetime.strptime(
         data["stamp"], "%Y%m%d-%H%M%S").strftime(ISO))
     data.setdefault("ended_at", None)
     data.setdefault("wave_log", [])
     for unit in data["units"].values():
-        for key, blank in (("started_at", None), ("ended_at", None), ("timeline", [])):
+        for key, blank in (("started_at", None), ("ended_at", None), ("timeline", []),
+                           ("node", None)):
             unit.setdefault(key, blank)
     if data["wave_log"] and data["wave_log"][-1]["ended_at"] is None:
         data["wave_log"][-1]["ended_at"] = "interrupted"
@@ -50,6 +62,7 @@ def reconcile(data):
         if unit["timeline"] and unit["timeline"][-1]["ended_at"] is None:
             unit["timeline"][-1]["ended_at"] = "interrupted"
         unit["phase"] = None
+        unit["node"] = None
         unit["status"] = "pending"
 
 

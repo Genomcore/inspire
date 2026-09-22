@@ -357,6 +357,13 @@ the per-round results and verdicts, and the graph's checkpoint. The report's
 `### Spend` section is computed from those at write time and stored nowhere.
 One line per ended run is appended to `.inspire/emanate-runs/ledger.jsonl`.
 
+`state.json` also carries a **`node`** — the graph node executing, run-level and
+one per unit — so a reader tailing the file can say where the run is without
+inferring it. It is written for that reader and **nothing reads it back**:
+`phase` is what the rework and resume accounting turn on, and a boundary step
+deliberately leaves `phase` on the persona whose work it is judging, so a single
+field cannot answer both questions.
+
 **`resume <run-id>`** picks a killed run up from its own checkpoint: the run
 itself — locks, an open report, a runner — is rebuilt from `state.json`, the
 phase that was in flight counts as an infrastructural ending because nobody

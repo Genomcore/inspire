@@ -16,7 +16,7 @@ from ..errors import Infrastructural, Stall
 from ..findings import (conflict_findings, conflict_role, gate_digest, gate_findings,
                         route_gate_verdict)
 from ..shells import read_shells
-from ..state import set_phase
+from ..state import set_node, set_phase
 
 GOAL_REACHED = "goal reached — nothing left to build"
 SPAWN_ENDED = "the %s spawn ended in %s"
@@ -379,15 +379,33 @@ def route_promote(state):
     return route_retry(state) or END
 
 
+def _traced(name, node, unit_scoped):
+    """Stamp the node about to run onto the record, then run it.
+
+    The graph is the only place that knows the name of what is executing, and
+    an observer reading `state.json` cannot recover it from `phase` alone —
+    a boundary step (harvest, verify, the overseers) deliberately leaves
+    `phase` on the persona whose work it is judging.
+    """
+    def wrapped(state, config):
+        run = _run(config)
+        record = getattr(run, "state", None)
+        if record is not None:
+            set_node(run, record["units"][state["unit_id"]] if unit_scoped else record,
+                     name)
+        return node(state, config)
+    return wrapped
+
+
 def build_unit():
     builder = StateGraph(UnitState)
     for name, node in (("prepare", prepare), ("harvest", harvest), ("verify", verify),
                        ("overseer", overseer), ("overseers", overseers), ("gate", gate),
                        ("rework", rework), ("arbitrate", arbitrate),
                        ("stalled", stalled), ("drill", drill), ("promote", promote)):
-        builder.add_node(name, node)
+        builder.add_node(name, _traced(name, node, True))
     for role in ROLES:
-        builder.add_node(role, persona(role))
+        builder.add_node(role, _traced(role, persona(role), True))
 
     builder.add_edge(START, "prepare")
     builder.add_conditional_edges("prepare", route_prepare, list(ROLES) + ["gate"])
@@ -413,7 +431,7 @@ def build_readiness():
     for name, node in (("ceiling", ceiling), ("shells", shells),
                        ("derive_units", derive_units), ("derive", derive),
                        ("baseline", baseline)):
-        builder.add_node(name, node)
+        builder.add_node(name, _traced(name, node, False))
     for name in ("ceiling", "shells", "derive_units", "baseline"):
         builder.add_edge(START, name)
     builder.add_conditional_edges("derive_units", fan_derive, ["derive", END])
@@ -427,7 +445,10 @@ def build(config=None, *, checkpointer=None):
                        ("readiness", READINESS), ("identity", identity),
                        ("wave", wave), ("unit", unit), ("wave_close", wave_close),
                        ("report", report)):
-        builder.add_node(name, node)
+        # `readiness` is a compiled subgraph and `unit` fans out per unit: both
+        # are stamped by the nodes inside them, not here.
+        builder.add_node(name, node if name in ("readiness", "unit")
+                         else _traced(name, node, False))
 
     builder.add_edge(START, "preflight")
     builder.add_edge("preflight", "plan")

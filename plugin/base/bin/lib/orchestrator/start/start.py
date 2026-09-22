@@ -238,7 +238,7 @@ def derive_unit(run, entry):
 def blank_unit(entry):
     return {"id": entry["id"], "kind": entry["kind"], "path": entry["path"],
             "slug": slugify(entry["id"]),
-            "status": "pending", "phase": None, "done": [],
+            "status": "pending", "phase": None, "node": None, "done": [],
             "started_at": None, "ended_at": None, "timeline": [],
             "integration_branch": None, "verify_worktree": None,
             "rework": dict((role, 0) for role in ROLES),
@@ -261,7 +261,7 @@ def new_state(run, waves, units):
         "started_at": now_iso(), "ended_at": None, "wave_log": [],
         "truncated": run.truncated, "harness": run.harness,
         "shells": run.shells, "plan_units": run.plan_units,
-        "status": "RUNNING", "exit": None, "units": units}
+        "status": "RUNNING", "exit": None, "node": "identity", "units": units}
     run.save()
 
 

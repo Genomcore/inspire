@@ -187,6 +187,25 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(final["units"]["auth.org"]["rework"],
                          data["units"]["auth.org"]["rework"])
 
+    def test_the_node_being_executed_is_recorded_for_an_observer(self):
+        run, _ = emanate(self.root, {"personas": PERSONAS})
+        self.assertEqual(run.state["node"], "report")
+        for unit in UNITS:
+            self.assertEqual(run.state["units"][unit]["node"], "promote")
+
+    def test_a_killed_run_clears_the_node_it_was_interrupted_in(self):
+        script = {"personas": PERSONAS, "endings": {"auth.user": {"tester": ["kill"]}}}
+        self.assertEqual(emanate_until_killed(self.root, script), 70)
+        with open(glob.glob(os.path.join(self.root, ".inspire", "emanate-runs", "*",
+                                         "state.json"))[0]) as stream:
+            killed = json.load(stream)
+        self.assertEqual(killed["units"]["auth.user"]["node"], "tester")
+
+        run, _ = drive(self.root, graphmod.resume_graph,
+                       dict(run_id=killed["run_id"], bin=BIN,
+                            runner=run_args(self.root, script)["runner"]))
+        self.assertEqual(run.state["units"]["auth.user"]["node"], "promote")
+
     def test_a_killed_run_resumes_from_its_checkpoint_and_still_reaches_the_goal(self):
         script = {"personas": PERSONAS, "endings": {"auth.user": {"tester": ["kill"]}}}
         self.assertEqual(emanate_until_killed(self.root, script), 70)
