@@ -80,18 +80,18 @@ Each step gates the next, and a refusal leaves nothing spawned.
    whole frontier, so a non-zero exit here means the substrate changed under the
    run: a refusal, not a finding. A unit the ceiling puts out of reach is rostered
    as `blocked` and never derived — nothing would read its contract.
-8. **The test infrastructure, probed.** When `stack.md` declares components under
-   `## Test infrastructure` *and* a suite-wide framework profile carries a probe
-   recipe (plan's `preflight.probe_profiles`), the process runs the recipe once,
-   from the launch checkout — `docker compose config --services` to see every
-   component has a service, then `docker compose ps` demanding **healthy**, not
-   merely `Up` (a service with no healthcheck passes on `running`). A component
-   that is absent, starting or unhealthy **refuses**, naming each one and the
-   `docker compose up -d --wait …` line that brings them up: there is nobody to
-   ask, and the alternative is a unit discovering at its gate, a wave and its
-   spend later, that every e2e claim failed on a connection error. The process
-   never starts a component. With no declared components, or no probe recipe
-   (plan's `PR-22`), nothing runs and the identity block says so.
+8. **The test infrastructure, brought up.** When `stack.md` declares components
+   under `## Test infrastructure` *and* a suite-wide framework profile carries a
+   probe recipe (plan's `preflight.probe_profiles`), the process runs
+   `docker compose up -d --wait <components>` once, from the launch checkout.
+   `--wait` is the whole probe: it fails on a component with no service and on
+   one whose healthcheck never turns **healthy**, so `Up` alone is not enough. A
+   non-zero exit **refuses**, with compose's own output: the alternative is a
+   unit discovering at its gate, a wave and its spend later, that every e2e claim
+   failed on a connection error. The run is unattended — typically a sandbox
+   with nobody to bring anything up — so starting the components is the
+   process's job, not a question to ask. With no declared components, or no
+   probe recipe (plan's `PR-22`), nothing runs and the identity block says so.
 9. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
    in it, then the whole suite. **A red baseline in realized territory refuses**:
    emanating onto a red suite makes every later verdict unreadable — `GV-05`
@@ -353,9 +353,9 @@ what makes a second run toward one goal a smaller problem than the first.
 - **`--ceiling`** bounds the waves; **`--budget-usd`** stops opening waves once
   the run's own spend estimate passes it, blocking what is left.
 - **The reach ceiling is hard**: a fully green run ends at the goal branch. The
-  process never merges into the launch branch, never opens a PR and never deploys,
-  and it **never starts a service** — the operator may have a component pointed at
-  something shared, and a loop racing them is worse than a refusal.
+  process never merges into the launch branch, never opens a PR and never deploys.
+  The one thing it starts is the declared test infrastructure, once, at t=0
+  (§ t = 0, step 8) — and nothing from inside a phase.
 
 ## Stall
 

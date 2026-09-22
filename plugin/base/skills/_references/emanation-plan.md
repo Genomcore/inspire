@@ -410,11 +410,11 @@ true still when every unit turns out to be realized. A profile is tested for the
 **section's presence**, never by scraping its prose.
 
 **Plan does not probe and does not start anything.** The probe is stack-specific
-(`docker compose config --services`, then a status check demanding *healthy*, not
-merely `Up`) and therefore profile-owned: the tool reports the declaration,
-`/inspire-emanate run` executes the recipe once at t=0 and refuses the run when a
-declared component is not healthy, and the operator is the only one who ever
-brings a component up.
+(`docker compose up -d --wait`, which fails unless every component turns
+*healthy*, not merely `Up`) and therefore profile-owned: the tool reports the
+declaration, and `/inspire-emanate run` brings the components up once at t=0 and
+refuses the run when one does not come up healthy — a run is unattended, so
+there is nobody else to do it.
 
 `preflight.worktree_recipe` is the table under `## Worktree recipe` — the steps
 that make a fresh phase worktree runnable, as `step` and `command`, **in the
