@@ -9,11 +9,11 @@
   "stdout_jq": [
     { "expr": ".floor", "equals": "2" },
     { "expr": ".waves | length", "equals": "2" },
-    { "expr": ".waves[0] | join(\",\")", "equals": "auth.org" },
-    { "expr": ".waves[1] | join(\",\")", "equals": "auth.user" },
+    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "auth.org" },
+    { "expr": ".waves[1].units | map(.id) | join(\",\")", "equals": "auth.user" },
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
-    { "expr": "[.units[] | select(.id == \"auth.org\") | .requires[] | \"\\(.id):\\(.ordering)\"] | join(\",\")", "equals": "auth.user:false" },
-    { "expr": "[.units[] | select(.id == \"auth.user\") | .requires[] | \"\\(.id):\\(.ordering)\"] | join(\",\")", "equals": "auth.org:true" },
+    { "expr": "[.waves[].units[] | select(.id == \"auth.org\") | .requires[] | \"\\(.id):\\(.ordering)\"] | join(\",\")", "equals": "auth.user:false" },
+    { "expr": "[.waves[].units[] | select(.id == \"auth.user\") | .requires[] | \"\\(.id):\\(.ordering)\"] | join(\",\")", "equals": "auth.org:true" },
     { "expr": ".ready", "equals": "true" }
   ],
   "forbidden": ["PR-11", "NOT READY"]

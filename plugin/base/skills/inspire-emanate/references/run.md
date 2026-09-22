@@ -385,7 +385,7 @@ Every brief is the same four things, and nothing in it is hard-coded here:
    the one doctrine both dispatch shapes read. This skill routes into
    `inspire-code` as a doctrine library; it never restates a role's judgment and
    never assumes where that library will live tomorrow;
-3. **the unit's resolved profiles** — `units[].profiles` from the plan JSON: its
+3. **the unit's resolved profiles** — `waves[].units[].profiles` from the plan JSON: its
    matching framework profiles and the language profile each of them names;
 4. **the project's wire conventions** — `wire_conventions.ids` **and** the
    decision rows, both from the plan JSON.
