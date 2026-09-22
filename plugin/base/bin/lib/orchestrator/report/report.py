@@ -10,7 +10,6 @@ STATUS_ROW = "- **status** — %s"
 STATUS_RUNNING = "RUNNING"
 
 NONE = "*none*"
-NONE_DECLARED = "*none declared*"
 NONE_REPORTED = "*none reported*"
 NOT_PROMOTED = "*none — not promoted*"
 NOT_REACHED = "*not reached*"
@@ -37,7 +36,7 @@ IDENTITY = {
     "selectors": "- **selectors** — %s",
     "budget": "- **budget** — floor %s · effective floor %s · declared ceiling %s · "
               "waves permitted %s",
-    "preflight": "- **preflight** — components: %s, declared, not probed by this process; %s",
+    "preflight": "- **preflight** — %s; %s",
     "harness": "- **harness** — %s",
     "warnings": "- **warnings** — %s",
 }
@@ -148,9 +147,6 @@ def identity_block(run):
     goal = plan.get("goal") or {}
     warnings = [row for row in plan.get("findings") or []
                 if row.get("severity") == "warning"]
-    preflight = plan.get("preflight") or {}
-    components = ", ".join(item.get("name", "") for item in
-                        preflight.get("components") or []) or NONE_DECLARED
     lines = [IDENTITY["title"] % run.run_id, "",
              IDENTITY["launch_branch"] % run.launch_branch,
              IDENTITY["goal_branch"] % (run.goal_branch,
@@ -163,7 +159,7 @@ def identity_block(run):
              IDENTITY["budget"]
              % (plan.get("floor"), goal.get("floor", plan.get("floor")),
                 run.args.ceiling or UNSET, len(run.state["waves"])),
-             IDENTITY["preflight"] % (components, run.baseline_line),
+             IDENTITY["preflight"] % (run.probe_line, run.baseline_line),
              IDENTITY["harness"] % run.harness,
              IDENTITY["warnings"]
              % ("; ".join("%s: %s" % (row.get("code"), row.get("message"))

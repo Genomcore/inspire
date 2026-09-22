@@ -101,9 +101,10 @@ review Phase 4.
 
 ## Test infrastructure       # optional — the probe recipe
 How to check that the components `stack.md` declares are up and **healthy** before
-the first red test, in both modes: attended asks the operator to start them,
-unattended refuses and names the command. Never starts one. `/inspire-emanate plan`
-tests for this section's presence (`PR-22`); `/inspire-emanate run` executes it at t=0.
+the first red test, in both modes: attended asks the operator to start them and never
+starts one itself; unattended (`/inspire-emanate run`) brings them up at t=0 with
+`docker compose up -d --wait` and refuses when one does not come up healthy.
+`/inspire-emanate plan` tests for this section's presence (`PR-22`).
 
 ## Forbidden patterns
 Stack-specific anti-patterns beyond the universal authoring rules. Feeds `review`
@@ -184,7 +185,7 @@ architecture, and architecture is the framework profile's.
 |---|---|---|
 | `## Layering` | framework | the quality overseer (architecture) · `tdd` implementation shape |
 | `## Test conventions` | framework | the tester — **including the test paths harvest accepts** · the quality overseer |
-| `## Test infrastructure` | framework | the probe recipe for the components `stack.md` declares: `tdd`'s precondition · `/inspire-emanate plan`'s `preflight` (which tests for the section's **presence**, never scraping its prose) · `/inspire-emanate run`'s t=0 refusal |
+| `## Test infrastructure` | framework | the probe recipe for the components `stack.md` declares: `tdd`'s precondition · `/inspire-emanate plan`'s `preflight` (which tests for the section's **presence**, never scraping its prose) · `/inspire-emanate run`'s t=0 bring-up |
 | `## Forbidden patterns` | framework | the implementer (authoring rules) · the quality overseer |
 | `## Review focus` | framework | `review` fan-out (extra dimensions) |
 | `## Quality gates` | framework | `/inspire-bootstrap stack` (installs them) · `review` (missing-gate findings) |

@@ -61,10 +61,10 @@ class Topology(unittest.TestCase):
         self.assertLessEqual({"preflight", "plan", "readiness", "identity", "wave",
                               "unit", "wave_close", "report"}, nodes)
 
-    def test_the_readiness_graph_compiles_with_its_four_parallel_checks(self):
+    def test_the_readiness_graph_compiles_with_its_parallel_checks(self):
         nodes = set(graphmod.build_readiness().get_graph().nodes)
-        self.assertLessEqual({"ceiling", "shells", "derive_units", "derive", "baseline"},
-                             nodes)
+        self.assertLessEqual({"ceiling", "shells", "derive_units", "derive", "probe",
+                              "baseline"}, nodes)
 
     def test_the_unit_graph_compiles_with_the_whole_boundary(self):
         nodes = set(graphmod.build_unit().get_graph().nodes)

@@ -80,7 +80,22 @@ Each step gates the next, and a refusal leaves nothing spawned.
    whole frontier, so a non-zero exit here means the substrate changed under the
    run: a refusal, not a finding. A unit the ceiling puts out of reach is rostered
    as `blocked` and never derived — nothing would read its contract.
-8. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
+8. **The test infrastructure, brought up.** When `stack.md` declares components
+   under `## Test infrastructure` *and* a suite-wide framework profile carries a
+   probe recipe (plan's `preflight.probe_profiles`), the process runs
+   `docker compose up -d --wait <components>` once, from the launch checkout.
+   `--wait` is the whole probe: it fails on a component with no service and on
+   one whose healthcheck never turns **healthy**, so `Up` alone is not enough. A
+   non-zero exit **refuses**, with compose's own output: the alternative is a
+   unit discovering at its gate, a wave and its spend later, that every e2e claim
+   failed on a connection error. The run is unattended — typically a sandbox
+   with nobody to bring anything up — so starting the components is the
+   process's job, not a question to ask. Compose runs in the launch checkout,
+   so a relative bind mount it creates lands there: the project's `.gitignore`
+   must cover such paths, or the next run refuses on a dirty checkout. With no
+   declared components, or no probe recipe (plan's `PR-22`), nothing runs and
+   the identity block says so.
+9. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
    in it, then the whole suite. **A red baseline in realized territory refuses**:
    emanating onto a red suite makes every later verdict unreadable — `GV-05`
    cannot tell a pre-existing failure from one this run caused, and the first unit
@@ -90,7 +105,7 @@ Each step gates the next, and a refusal leaves nothing spawned.
    does not produce a green suite refuses in the same breath — this is the one
    moment the recipe is proven, and proving it once is why the baseline is not cut
    in the goal worktree.
-9. **The identity block** — the first thing the run writes, because everything
+10. **The identity block** — the first thing the run writes, because everything
    above it can still refuse and a refusal may not empty the last run's account.
 
 ## The branch scheme
@@ -341,9 +356,9 @@ what makes a second run toward one goal a smaller problem than the first.
 - **`--ceiling`** bounds the waves; **`--budget-usd`** stops opening waves once
   the run's own spend estimate passes it, blocking what is left.
 - **The reach ceiling is hard**: a fully green run ends at the goal branch. The
-  process never merges into the launch branch, never opens a PR and never deploys,
-  and it **never starts a service** — the operator may have a component pointed at
-  something shared, and a loop racing them is worse than a refusal.
+  process never merges into the launch branch, never opens a PR and never deploys.
+  The one thing it starts is the declared test infrastructure, once, at t=0
+  (§ t = 0, step 8) — and nothing from inside a phase.
 
 ## Stall
 
