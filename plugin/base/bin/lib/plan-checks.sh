@@ -432,7 +432,7 @@ plan_promote_remedy() {
   esac
 }
 
-# plan_check_profiles — PR-06 and PR-07, plus the `profiles` spool a unit record
+# plan_check_profiles — PR-06 and PR-07, plus the `profiles` spool `units[]`
 # renders from. The two are reported independently: a suite naming two framework
 # profiles of which one has no rendering table has two defects, and suppressing
 # either would hide half the repair.

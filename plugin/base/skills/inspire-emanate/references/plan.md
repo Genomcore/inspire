@@ -66,8 +66,8 @@ order:
    `goal.floor` is the effective one and `deliverable_waves` is what the declared
    ceiling actually permits. Say both numbers, and say which floor you compared
    against.
-3. **`realized` and `realized_all`.** Realized units are absent from `waves[]`
-   for the same reason a `stable` artifact is — they are not in the
+3. **`realized` and `realized_all`.** Realized units are absent from `units[]` and
+   `waves[]` for the same reason a `stable` artifact is — they are not in the
    frontier. **`realized_all: true` with `floor: 0` is the success answer**, not
    an empty result: the goal is already met, and the honest report is "there is
    nothing left to build", never "nothing was planned".
@@ -106,13 +106,11 @@ translate one into the other in the report.
 `run` calls `plan` first, always, and this is where its questions die. What it
 carries forward from the JSON, and reads from nowhere else:
 
-- `waves[]` — the schedule, and the units themselves: each entry is
-  `{wave, units}`, so a wave's work is `waves[n].units` and every unit of the run
-  is `[.waves[].units[]]`;
-- `waves[].units[].profiles` — the resolved framework and language profiles per
-  unit, which the spawn brief carries;
-- `waves[].units[].claims` — the sizing signal budgets are set against; `0` for a
-  unit derive refused;
+- `waves[]` — the schedule;
+- `units[].profiles` — the resolved framework and language profiles per unit,
+  which the spawn brief carries;
+- `units[].claims` — the sizing signal budgets are set against; `0` for a unit
+  derive refused;
 - `wire_conventions` — the ids **and** the decision rows, both of which go into
   every persona brief;
 - `preflight` — the components the t=0 probe checks, and the

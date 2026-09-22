@@ -89,10 +89,10 @@
 #   exit 0 / 1   {schema, scope, ready, floor, ceiling, deliverable_waves,
 #                 realized, realized_all, reemanate, goal, preflight,
 #                 wire_conventions,
-#                 waves: [{wave, units: [...]}], findings}
-#   exit 4       {schema, scope, ready: false, refused: [...]} — and no `waves`
-#                or `floor` key at all, because nothing was planned and an empty
-#                key would read as "planned, and it is empty".
+#                 units, waves, findings}
+#   exit 4       {schema, scope, ready: false, refused: [...]} — and no `waves`,
+#                `floor` or `units` key at all, because nothing was planned and
+#                an empty key would read as "planned, and it is empty".
 # Stderr carries the grouped human report.
 #
 # WRITES NOTHING — no file, no log, no KB edit, no git state, and not
@@ -124,7 +124,7 @@ EXIT_NO_ROOTS=5
 EXIT_INTERNAL=6
 EXIT_MISSING_TOOL=127
 
-PLAN_SCHEMA="inspire.emanation-plan/2"
+PLAN_SCHEMA="inspire.emanation-plan/1"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLAN_BIN="$SCRIPT_DIR"

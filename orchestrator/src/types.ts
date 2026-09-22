@@ -1,11 +1,81 @@
-import type {
-  EmanationPlan,
-  Unit,
-  UnitKind,
-  Wave,
-} from '../../plugin/base/bin/schemas/emanation-plan'
+export type UnitKind =
+  | 'action'
+  | 'component'
+  | 'entity'
+  | 'pattern'
+  | 'screen'
 
-export type { EmanationPlan, Unit, UnitKind, Wave }
+export type Requirement = {
+  kind: UnitKind
+  id: string
+  ordering: boolean
+}
+
+export type Unit = {
+  kind: UnitKind
+  id: string
+  path: string
+  module: string | null
+  surface: string | null
+  population: 'internal' | 'external' | null
+  profiles: string[]
+  requires: Requirement[]
+  claims: number
+}
+
+export type Wave = {
+  wave: number
+  units: Unit[]
+}
+
+export type EmanationPlan = {
+  schema: 'inspire.emanation-plan/2'
+  scope: string[]
+  ready: boolean
+  floor: number
+  ceiling: number | null
+  deliverable_waves: number
+  realized: string[]
+  realized_all: boolean
+  reemanate: {
+    selectors: string[]
+    units: string[]
+  } | null
+  goal: {
+    selector: string
+    units: string[]
+    floor: number
+  } | null
+  preflight: {
+    components: Array<{
+      name: string
+      purpose: string | null
+    }>
+    probe_profiles: string[]
+    worktree_recipe: Array<{
+      step: string
+      command: string | null
+    }>
+  }
+  wire_conventions: {
+    ids: string[]
+    decisions: Array<{
+      decision: string
+      answer: string | null
+    }>
+  }
+  waves: Wave[]
+  findings: Array<{
+    code: string
+    severity: 'error' | 'warning'
+    unit: string | null
+    target: string | null
+    owner: string | null
+    message: string
+    remedy: string
+    derive_class: string | null
+  }>
+}
 
 export type Worktree = {
   branch: string

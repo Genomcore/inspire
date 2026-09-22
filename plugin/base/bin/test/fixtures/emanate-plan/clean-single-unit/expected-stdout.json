@@ -1,5 +1,5 @@
 {
-  "schema": "inspire.emanation-plan/2",
+  "schema": "inspire.emanation-plan/1",
   "scope": [
     "spec/kb",
     "spec/sdd"
@@ -21,27 +21,29 @@
     "ids": [],
     "decisions": []
   },
-  "waves": [
+  "units": [
     {
+      "kind": "entity",
+      "id": "auth.org",
+      "path": "spec/sdd/auth/org/auth.org.md",
+      "lifecycle": "accepted",
+      "module": "auth",
+      "surface": null,
+      "population": "internal",
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [],
       "wave": 1,
-      "units": [
-        {
-          "kind": "entity",
-          "id": "auth.org",
-          "path": "spec/sdd/auth/org/auth.org.md",
-          "module": "auth",
-          "surface": null,
-          "population": "internal",
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [],
-          "claims": 5
-        }
-      ]
+      "claims": 5
     }
+  ],
+  "waves": [
+    [
+      "auth.org"
+    ]
   ],
   "findings": []
 }

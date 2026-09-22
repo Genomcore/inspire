@@ -340,7 +340,7 @@ eq "while gate covers the claim off the id half, stale fingerprint and all" \
 # ─────────────────────────────────────────────────────────────────────────────
 
 both="$(plan_in clean-three-waves --scope spec/sdd/auth --scope spec/sdd/audit \
-        | jq -r '[.waves[].units[].id] | sort | join(",")')"
+        | jq -r '[.units[].id] | join(",")')"
 eq "two scopes name one vault, not two disjoint checks" \
   "$both" "audit.event,auth.org,auth.user,auth.user.list"
 

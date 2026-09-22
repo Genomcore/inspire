@@ -74,17 +74,17 @@ plan_json_plan() {
                           decisions: (recs($wirerows)
                                       | map({decision: cel(.;0),
                                              answer: nul(cel(.;1))}))},
-       waves: (recs($units)
+       units: (recs($units)
                | map({kind: cel(.;1), id: cel(.;0), path: cel(.;2),
-                      module: nul(cel(.;4)),
+                      lifecycle: cel(.;3), module: nul(cel(.;4)),
                       surface: nul(cel(.;5)), population: nul(cel(.;7)),
                       profiles: ($prof[cel(.;0)] // []),
                       requires: ($req[cel(.;0)] // []),
-                      claims: (cel(.;6) | tonumber),
-                      wave: ($wave[cel(.;0)] // null)})
-               | group_by(.wave) | sort_by(.[0].wave)
-               | map({wave: .[0].wave,
-                      units: (map(del(.wave)) | sort_by(.id))})),
+                      wave: ($wave[cel(.;0)] // null),
+                      claims: (cel(.;6) | tonumber)})
+               | sort_by(.id)),
+       waves: (recs($waves) | group_by(.[0] | tonumber)
+               | sort_by(.[0][0] | tonumber) | map(map(.[1]) | sort)),
        findings: (recs($findings)
                   | map({code: cel(.;0), severity: cel(.;1),
                          unit: nul(cel(.;2)), target: nul(cel(.;3)),
@@ -94,9 +94,9 @@ plan_json_plan() {
     '
 }
 
-# plan_json_refused — exit 4. No `waves` and no `floor`: nothing was planned,
-# and a key present with an empty value would read as "planned, and it is
-# empty".
+# plan_json_refused — exit 4. No `waves`, no `floor`, no `units`: nothing was
+# planned, and a key present with an empty value would read as "planned, and it
+# is empty".
 plan_json_refused() {
   jq -n --arg fs "$PLAN_FS" --arg schema "$PLAN_SCHEMA" \
     --rawfile scopes "$PLAN_TMP/scopes.out" \

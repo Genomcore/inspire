@@ -14,7 +14,7 @@
     { "expr": ".findings[0].unit", "equals": "users.list" },
     { "expr": ".findings[0].message | test(\"names no `layer: frontend` framework profile, so nothing states how this screen is built\")", "equals": "true" },
     { "expr": ".findings[0].remedy", "equals": "declare a `layer: frontend` framework profile in `spec/kb/00_bootstrap/stack.md`" },
-    { "expr": ".waves[0].units[0].profiles | length", "equals": "0" },
+    { "expr": ".units[0].profiles | length", "equals": "0" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-06"]

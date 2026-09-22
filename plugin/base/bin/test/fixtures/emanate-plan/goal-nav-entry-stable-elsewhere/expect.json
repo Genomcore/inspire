@@ -20,7 +20,7 @@
     { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/users/detail.md" },
     { "expr": ".findings[0].message | test(\"users.detail\")", "equals": "true" },
     { "expr": ".findings[0].message | test(\"no navigable entry\")", "equals": "true" },
-    { "expr": "[.waves[].units[].id] | index(\"users.audit\")", "equals": "null" }
+    { "expr": "[.units[].id] | index(\"users.audit\")", "equals": "null" }
   ],
   "forbidden": ["PR-11", "NOT READY"]
 }

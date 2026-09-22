@@ -14,9 +14,9 @@
     { "expr": ".realized_all", "equals": "false" },
     { "expr": ".floor", "equals": "2" },
     { "expr": ".waves | length", "equals": "2" },
-    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "audit.event,auth.user" },
-    { "expr": ".waves[1].units | map(.id) | join(\",\")", "equals": "auth.user.list" },
-    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "audit.event,auth.user,auth.user.list" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "audit.event,auth.user" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "auth.user.list" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "audit.event,auth.user,auth.user.list" },
     { "expr": ".deliverable_waves", "equals": "2" }
   ],
   "forbidden": ["PR-", "NOT READY"]

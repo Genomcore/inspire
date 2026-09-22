@@ -8,13 +8,13 @@
   ],
   "stdout_jq": [
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
-    { "expr": "[.waves[].units[] | .kind + \":\" + .id] | join(\",\")", "equals": "component:data-table,screen:users.list" },
+    { "expr": "[.units[] | .kind + \":\" + .id] | join(\",\")", "equals": "component:data-table,screen:users.list" },
     { "expr": ".floor", "equals": "2" },
-    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "data-table" },
-    { "expr": ".waves[1].units | map(.id) | join(\",\")", "equals": "users.list" },
-    { "expr": "[.waves[].units[] | has(\"lifecycle\")] | unique | join(\",\")", "equals": "false" },
-    { "expr": "[.waves[].units[] | select(.id == \"data-table\") | (.module == null) and (.surface == null)] | join(\"\")", "equals": "true" },
-    { "expr": "[.waves[].units[] | select(.id == \"data-table\") | .profiles | join(\",\")] | join(\"\")", "equals": "react,typescript" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "data-table" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "users.list" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | .lifecycle] | join(\"\")", "equals": "accepted" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | (.module == null) and (.surface == null)] | join(\"\")", "equals": "true" },
+    { "expr": "[.units[] | select(.id == \"data-table\") | .profiles | join(\",\")] | join(\"\")", "equals": "react,typescript" },
     { "expr": ".ready", "equals": "true" }
   ],
   "forbidden": ["PR-04", "NOT READY"]

@@ -11,8 +11,8 @@
   "stdout_jq": [
     { "expr": ".ready", "equals": "true" },
     { "expr": ".goal.units | join(\",\")", "equals": "users.detail,users.list" },
-    { "expr": "[.waves[].units[]] | length", "equals": "2" },
-    { "expr": "[.waves[].units[].id] | index(\"users.home\")", "equals": "null" },
+    { "expr": ".units | length", "equals": "2" },
+    { "expr": "[.units[].id] | index(\"users.home\")", "equals": "null" },
     { "expr": "[.findings[].code] | join(\",\")", "equals": "PR-23" },
     { "expr": "[.findings[].severity] | join(\",\")", "equals": "warning" },
     { "expr": ".findings[0].owner", "equals": "inspire-screens" },

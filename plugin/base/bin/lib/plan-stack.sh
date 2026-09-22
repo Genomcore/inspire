@@ -120,7 +120,7 @@ plan_unit_layer() {
 #   `<sel>.odd`  `id<TAB>layer` per declared profile on neither axis, so an
 #                empty `.fw` can say something was read and discarded rather
 #                than nothing declared
-#   `<sel>.set`  every profile id the unit is emanated under, a unit's `profiles`
+#   `<sel>.set`  every profile id the unit is emanated under, `units[].profiles`
 #   `<sel>.gap`  `why<TAB>framework-id<TAB>target` per framework with no
 #                rendering home — `PR-06`'s subject, one record per FRAMEWORK
 #                rather than one per set, because each framework a spawn could

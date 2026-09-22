@@ -13,8 +13,8 @@
     { "expr": ".realized | length", "equals": "0" },
     { "expr": ".realized_all", "equals": "false" },
     { "expr": ".floor", "equals": "1" },
-    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "auth.org" },
-    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "auth.org" }
+    { "expr": "[.units[].id] | join(\",\")", "equals": "auth.org" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "auth.org" }
   ],
   "forbidden": ["REALIZED", "PR-"]
 }

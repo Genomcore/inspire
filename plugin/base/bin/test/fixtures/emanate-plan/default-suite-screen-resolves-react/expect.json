@@ -8,7 +8,7 @@
   ],
   "stdout_jq": [
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
-    { "expr": ".waves[0].units[0].profiles | join(\",\")", "equals": "react,typescript" },
+    { "expr": ".units[0].profiles | join(\",\")", "equals": "react,typescript" },
     { "expr": ".ready", "equals": "true" }
   ],
   "forbidden": ["PR-06", "PR-07", "NOT READY"]

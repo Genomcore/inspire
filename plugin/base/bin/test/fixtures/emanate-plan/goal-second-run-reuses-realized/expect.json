@@ -20,8 +20,8 @@
     { "expr": ".goal.floor", "equals": "1" },
     { "expr": ".floor", "equals": "1" },
     { "expr": ".waves | length", "equals": "1" },
-    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
-    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "audit.event,auth.org,auth.user.list" },
     { "expr": ".deliverable_waves", "equals": "1" },
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
   ],
