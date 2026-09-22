@@ -1,20 +1,11 @@
-export type UnitType =
-  | 'action'
-  | 'component'
-  | 'entity'
-  | 'layout'
-  | 'screen'
+import type {
+  EmanationPlan,
+  Unit,
+  UnitKind,
+  Wave,
+} from '../../plugin/base/bin/schemas/emanation-plan'
 
-export type Unit = {
-  type: UnitType
-  name: string
-  path: string
-}
-
-export type Wave = {
-  wave_id: number
-  units: Unit[]
-}
+export type { EmanationPlan, Unit, UnitKind, Wave }
 
 export type Worktree = {
   branch: string

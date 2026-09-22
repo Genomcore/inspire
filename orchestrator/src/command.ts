@@ -1,3 +1,4 @@
+import { CommandError } from './errors'
 import type { CommandResult, CommandRunner } from './types'
 
 export const runCommand: CommandRunner = async (command, cwd) => {
@@ -16,16 +17,6 @@ export const runCommand: CommandRunner = async (command, cwd) => {
 
 const read = async (stream: ReadableStream<Uint8Array>): Promise<string> =>
   new Response(stream).text()
-
-export class CommandError extends Error {
-  constructor(
-    readonly command: readonly string[],
-    readonly result: CommandResult,
-  ) {
-    super(`${command.join(' ')} failed with exit code ${String(result.exitCode)}`)
-    this.name = 'CommandError'
-  }
-}
 
 export const requireSuccess = async (
   runner: CommandRunner,

@@ -28,8 +28,8 @@ export class GitWorktrees implements Git {
     const branch = [
       'ralph',
       waveId,
-      slug(unit.type),
-      slug(unit.name),
+      slug(unit.kind),
+      slug(unit.id),
       crypto.randomUUID().slice(0, 8),
     ].join('-')
     const path = join(this.repoRoot, '.claude', 'worktrees', branch)
@@ -53,7 +53,7 @@ export class GitWorktrees implements Git {
       '--no-ff',
       worktree.branch,
       '-m',
-      `merge(ralph): ${unit.type} ${unit.name}`,
+      `merge(ralph): ${unit.kind} ${unit.id}`,
     ])
   }
 

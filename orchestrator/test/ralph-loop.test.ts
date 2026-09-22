@@ -2,14 +2,15 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   RalphLoopError,
-  buildInitialPrompt,
-  runRalphLoop,
-} from '../src/ralph-loop'
+} from '../src/errors'
+import { buildInitialPrompt } from '../src/prompts'
+import { runRalphLoop } from '../src/ralph-loop'
 import type {
   Agent,
   AgentFactory,
   CommandResult,
   CommandRunner,
+  EmanationPlan,
   Git,
   Unit,
   Wave,
@@ -22,12 +23,12 @@ describe('runRalphLoop', () => {
     const git = new FakeGit(trace)
     const createAgent = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [green(), green(), green()])
-    const waves = [
-      wave(1, [unit('entity', 'Account'), unit('action', 'Create account')]),
-      wave(2, [unit('screen', 'Account detail')]),
-    ]
+    const input = plan([
+      wave(1, [unit('entity', 'auth.account'), unit('action', 'auth.account.create')]),
+      wave(2, [unit('screen', 'accounts.detail')]),
+    ])
 
-    await runRalphLoop(waves, { maxTries: 2 }, {
+    await runRalphLoop(input, { maxTries: 2 }, {
       createAgent,
       git,
       runCommand,
@@ -35,27 +36,27 @@ describe('runRalphLoop', () => {
 
     expect(trace).toEqual([
       'base',
-      'create:1:Account',
-      'agent:create:worktree-1-Account',
-      'prompt:Account:initial',
-      'test:worktree-1-Account',
-      'dispose:Account',
-      'merge:branch-1-Account:Account',
-      'remove:branch-1-Account',
-      'create:1:Create account',
-      'agent:create:worktree-1-Create account',
-      'prompt:Create account:initial',
-      'test:worktree-1-Create account',
-      'dispose:Create account',
-      'merge:branch-1-Create account:Create account',
-      'remove:branch-1-Create account',
-      'create:2:Account detail',
-      'agent:create:worktree-2-Account detail',
-      'prompt:Account detail:initial',
-      'test:worktree-2-Account detail',
-      'dispose:Account detail',
-      'merge:branch-2-Account detail:Account detail',
-      'remove:branch-2-Account detail',
+      'create:1:auth.account',
+      'agent:create:worktree-1-auth.account',
+      'prompt:auth.account:initial',
+      'test:worktree-1-auth.account',
+      'dispose:auth.account',
+      'merge:branch-1-auth.account:auth.account',
+      'remove:branch-1-auth.account',
+      'create:1:auth.account.create',
+      'agent:create:worktree-1-auth.account.create',
+      'prompt:auth.account.create:initial',
+      'test:worktree-1-auth.account.create',
+      'dispose:auth.account.create',
+      'merge:branch-1-auth.account.create:auth.account.create',
+      'remove:branch-1-auth.account.create',
+      'create:2:accounts.detail',
+      'agent:create:worktree-2-accounts.detail',
+      'prompt:accounts.detail:initial',
+      'test:worktree-2-accounts.detail',
+      'dispose:accounts.detail',
+      'merge:branch-2-accounts.detail:accounts.detail',
+      'remove:branch-2-accounts.detail',
     ])
   })
 
@@ -65,23 +66,23 @@ describe('runRalphLoop', () => {
     const createAgent = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('second'), green()])
 
-    await runRalphLoop([wave(1, [unit('component', 'Button')])], {
+    await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
       maxTries: 2,
     }, { createAgent, git, runCommand })
 
     expect(trace).toEqual([
       'base',
-      'create:1:Button',
-      'agent:create:worktree-1-Button',
-      'prompt:Button:initial',
-      'test:worktree-1-Button',
-      'prompt:Button:first',
-      'test:worktree-1-Button',
-      'prompt:Button:second',
-      'test:worktree-1-Button',
-      'dispose:Button',
-      'merge:branch-1-Button:Button',
-      'remove:branch-1-Button',
+      'create:1:button',
+      'agent:create:worktree-1-button',
+      'prompt:button:initial',
+      'test:worktree-1-button',
+      'prompt:button:first',
+      'test:worktree-1-button',
+      'prompt:button:second',
+      'test:worktree-1-button',
+      'dispose:button',
+      'merge:branch-1-button:button',
+      'remove:branch-1-button',
     ])
   })
 
@@ -91,39 +92,57 @@ describe('runRalphLoop', () => {
     const createAgent = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('last')])
 
-    const execution = runRalphLoop([wave(3, [unit('layout', 'Dashboard')])], {
+    const execution = runRalphLoop(plan([
+      wave(1, []),
+      wave(2, []),
+      wave(3, [unit('pattern', 'dashboard')]),
+    ]), {
       maxTries: 1,
     }, { createAgent, git, runCommand })
 
     expect(execution).rejects.toEqual(new RalphLoopError(
-      'Dashboard',
-      'branch-3-Dashboard',
-      'worktree-3-Dashboard',
+      'dashboard',
+      'branch-3-dashboard',
+      'worktree-3-dashboard',
       red('last'),
     ))
     await execution.catch(() => undefined)
     expect(trace).toEqual([
       'base',
-      'create:3:Dashboard',
-      'agent:create:worktree-3-Dashboard',
-      'prompt:Dashboard:initial',
-      'test:worktree-3-Dashboard',
-      'prompt:Dashboard:first',
-      'test:worktree-3-Dashboard',
-      'dispose:Dashboard',
+      'create:3:dashboard',
+      'agent:create:worktree-3-dashboard',
+      'prompt:dashboard:initial',
+      'test:worktree-3-dashboard',
+      'prompt:dashboard:first',
+      'test:worktree-3-dashboard',
+      'dispose:dashboard',
     ])
   })
 
   test('builds a prompt with the unit contract and commit cadence', () => {
-    const prompt = buildInitialPrompt(unit('action', 'Create account'))
+    const prompt = buildInitialPrompt(unit('action', 'auth.account.create'))
 
-    expect(prompt).toContain('inspire_kb/auth/account/create.md')
+    expect(prompt).toContain('spec/sdd/auth/account/auth.account.create.md')
     expect(prompt).toContain('Red:')
     expect(prompt).toContain('Green:')
     expect(prompt).toContain('Blue:')
     expect(prompt).toContain('Commit the completed cycle')
     expect(prompt).toContain('Do not modify inspire_kb')
     expect(prompt).toContain('Do not add comments')
+  })
+
+  test('does not start work from a plan that is not ready', async () => {
+    const trace: string[] = []
+    const input = plan([wave(1, [unit('entity', 'auth.account')])])
+    input.ready = false
+
+    const execution = runRalphLoop(input, { maxTries: 1 }, {
+      git: new FakeGit(trace),
+    })
+
+    expect(execution).rejects.toThrow('emanation plan is not ready')
+    await execution.catch(() => undefined)
+    expect(trace).toEqual([])
   })
 })
 
@@ -140,15 +159,15 @@ class FakeGit implements Git {
     waveId: number,
     target: Unit,
   ): Promise<Worktree> {
-    this.trace.push(`create:${String(waveId)}:${target.name}`)
+    this.trace.push(`create:${String(waveId)}:${target.id}`)
     return Promise.resolve({
-      branch: `branch-${String(waveId)}-${target.name}`,
-      path: `worktree-${String(waveId)}-${target.name}`,
+      branch: `branch-${String(waveId)}-${target.id}`,
+      path: `worktree-${String(waveId)}-${target.id}`,
     })
   }
 
   merge(worktree: Worktree, target: Unit): Promise<void> {
-    this.trace.push(`merge:${worktree.branch}:${target.name}`)
+    this.trace.push(`merge:${worktree.branch}:${target.id}`)
     return Promise.resolve()
   }
 
@@ -187,14 +206,46 @@ const createCommandRunner = (
 }
 
 const wave = (waveId: number, units: Unit[]): Wave => ({
-  wave_id: waveId,
+  wave: waveId,
   units,
 })
 
-const unit = (type: Unit['type'], name: string): Unit => ({
-  type,
-  name,
-  path: type === 'action' ? 'auth/account/create.md' : `${name}.md`,
+const plan = (waves: Wave[]): EmanationPlan => ({
+  schema: 'inspire.emanation-plan/2',
+  scope: ['spec/kb', 'spec/sdd'],
+  ready: true,
+  floor: waves.length,
+  ceiling: null,
+  deliverable_waves: waves.length,
+  realized: [],
+  realized_all: false,
+  reemanate: null,
+  goal: null,
+  preflight: {
+    components: [],
+    probe_profiles: [],
+    worktree_recipe: [],
+  },
+  wire_conventions: {
+    ids: [],
+    decisions: [],
+  },
+  waves,
+  findings: [],
+})
+
+const unit = (kind: Unit['kind'], id: string): Unit => ({
+  kind,
+  id,
+  path: kind === 'action'
+    ? 'spec/sdd/auth/account/auth.account.create.md'
+    : `spec/${id}.md`,
+  module: kind === 'component' || kind === 'pattern' ? null : 'auth',
+  surface: null,
+  population: kind === 'entity' ? 'internal' : null,
+  profiles: ['typescript'],
+  requires: [],
+  claims: 1,
 })
 
 const green = (): CommandResult => ({

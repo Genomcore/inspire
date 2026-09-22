@@ -81,9 +81,15 @@ const gitCommand = async (cwd: string, args: string[]) => {
 }
 
 const unit = (): Unit => ({
-  type: 'entity',
-  name: 'Account',
-  path: 'auth/account.md',
+  kind: 'entity',
+  id: 'auth.account',
+  path: 'spec/sdd/auth/account/auth.account.md',
+  module: 'auth',
+  surface: null,
+  population: 'internal',
+  profiles: ['typescript'],
+  requires: [],
+  claims: 1,
 })
 
 const fileExists = async (path: string): Promise<boolean> =>

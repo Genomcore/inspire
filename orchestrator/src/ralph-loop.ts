@@ -1,33 +1,25 @@
 import { resolve } from 'node:path'
 
 import { runCommand as defaultRunCommand } from './command'
+import { EmanationPlanNotReadyError, RalphLoopError } from './errors'
 import { GitWorktrees } from './git'
 import { createOmpAgent } from './omp'
+import { buildInitialPrompt, buildRetryPrompt } from './prompts'
 import type {
   CommandResult,
+  EmanationPlan,
   RalphLoopDependencies,
   RalphLoopOptions,
-  Unit,
-  Wave,
 } from './types'
 
-export class RalphLoopError extends Error {
-  constructor(
-    readonly unitName: string,
-    readonly branch: string,
-    readonly worktree: string,
-    readonly testResult: CommandResult,
-  ) {
-    super(`${unitName} remained red in ${worktree}`)
-    this.name = 'RalphLoopError'
-  }
-}
-
 export const runRalphLoop = async (
-  waves: Wave[],
+  plan: EmanationPlan,
   options: RalphLoopOptions,
   dependencies: RalphLoopDependencies = {},
 ): Promise<void> => {
+  if (!plan.ready) {
+    throw new EmanationPlanNotReadyError()
+  }
   const repoRoot = resolve(options.repoRoot ?? process.cwd())
   const runCommand = dependencies.runCommand ?? defaultRunCommand
   const git = dependencies.git ?? new GitWorktrees(repoRoot, runCommand)
@@ -35,9 +27,15 @@ export const runRalphLoop = async (
   const testCommand = options.testCommand ?? ['bun', 'test']
   const baseBranch = await git.currentBranch()
 
+  const goalUnits = plan.goal === null ? null : new Set(plan.goal.units)
+  const waves = plan.waves.slice(0, plan.deliverable_waves)
+
   for (const wave of waves) {
-    for (const unit of wave.units) {
-      const worktree = await git.createWorktree(baseBranch, wave.wave_id, unit)
+    const units = goalUnits === null
+      ? wave.units
+      : wave.units.filter((unit) => goalUnits.has(unit.id))
+    for (const unit of units) {
+      const worktree = await git.createWorktree(baseBranch, wave.wave, unit)
       const agent = await createAgent(worktree.path)
       let testResult: CommandResult
       try {
@@ -54,7 +52,7 @@ export const runRalphLoop = async (
       }
       if (testResult.exitCode !== 0) {
         throw new RalphLoopError(
-          unit.name,
+          unit.id,
           worktree.branch,
           worktree.path,
           testResult,
@@ -65,37 +63,3 @@ export const runRalphLoop = async (
     }
   }
 }
-
-export const buildInitialPrompt = (unit: Unit): string => `
-Implement the ${unit.type} "${unit.name}" specified at inspire_kb/${unit.path}.
-
-Work only inside this worktree.
-Use strict test-driven development.
-Repeat this cycle until the unit is complete:
-1. Red: write or adjust a test and confirm that it fails for the expected reason.
-2. Green: implement only the minimum code required to pass.
-3. Blue: refactor for clarity while keeping the suite green.
-4. Commit the completed cycle.
-
-Never skip the red execution.
-Never weaken or delete a test to obtain green.
-Keep the code minimal and readable.
-Do not add comments.
-Do not add speculative abstractions or unnecessary validation.
-Do not modify inspire_kb.
-`.trim()
-
-const buildRetryPrompt = (
-  result: CommandResult,
-  tryNumber: number,
-  maxTries: number,
-): string => `
-The test suite is still red after attempt ${String(tryNumber)} of ${String(maxTries)}.
-Continue the Red, Green, Blue, commit cycle and fix the failure.
-
-stdout:
-${result.stdout}
-
-stderr:
-${result.stderr}
-`.trim()
