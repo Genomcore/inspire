@@ -90,8 +90,11 @@ Each step gates the next, and a refusal leaves nothing spawned.
    unit discovering at its gate, a wave and its spend later, that every e2e claim
    failed on a connection error. The run is unattended — typically a sandbox
    with nobody to bring anything up — so starting the components is the
-   process's job, not a question to ask. With no declared components, or no
-   probe recipe (plan's `PR-22`), nothing runs and the identity block says so.
+   process's job, not a question to ask. Compose runs in the launch checkout,
+   so a relative bind mount it creates lands there: the project's `.gitignore`
+   must cover such paths, or the next run refuses on a dirty checkout. With no
+   declared components, or no probe recipe (plan's `PR-22`), nothing runs and
+   the identity block says so.
 9. **The baseline.** A throwaway worktree at the goal branch's tip, the recipe run
    in it, then the whole suite. **A red baseline in realized territory refuses**:
    emanating onto a red suite makes every later verdict unreadable — `GV-05`

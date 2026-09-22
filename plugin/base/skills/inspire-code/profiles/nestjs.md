@@ -163,10 +163,13 @@ owns the entity, never to the shared client's config.
 own `## Test infrastructure`; the compose file realizes them, and this section is what
 `/inspire-emanate plan` looks for when it reports whether the stack can be probed at all:
 
-- Inspect: `docker compose config --services` — every declared component has a service.
-- Status: `docker compose ps` — a service must be **healthy**, not merely `Up`. Compose
-  services carrying a healthcheck report both, and `Up` is where a flaky e2e suite comes
-  from: the container exists, the server is still opening its ports.
+- Inspect (attended): `docker compose config --services` — every declared component has
+  a service.
+- Status (attended): `docker compose ps` — a service must be **healthy**, not merely
+  `Up`. Compose services carrying a healthcheck report both, and `Up` is where a flaky
+  e2e suite comes from: the container exists, the server is still opening its ports.
+  `docker compose up -d --wait` performs both checks and blocks until they pass, which
+  is why the unattended run uses it as the whole probe.
 - Who acts on an unhealthy component depends on whether anyone is there to act:
   - **attended** (`tdd`, `debug`, `fix-build`) — never bring it up yourself: the
     operator may have it on other ports or pointed at a shared instance. Ask them to

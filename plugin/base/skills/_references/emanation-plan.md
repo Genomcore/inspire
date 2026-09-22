@@ -409,12 +409,12 @@ stack be probed at all" is one run-level fact, true before any unit is known and
 true still when every unit turns out to be realized. A profile is tested for the
 **section's presence**, never by scraping its prose.
 
-**Plan does not probe and does not start anything.** The probe is stack-specific
-(`docker compose up -d --wait`, which fails unless every component turns
-*healthy*, not merely `Up`) and therefore profile-owned: the tool reports the
-declaration, and `/inspire-emanate run` brings the components up once at t=0 and
-refuses the run when one does not come up healthy — a run is unattended, so
-there is nobody else to do it.
+**Plan does not probe and does not start anything.** The tool reports the
+declaration; `/inspire-emanate run` brings the components up once at t=0 with
+`docker compose up -d --wait <components>` — which fails unless every one turns
+*healthy*, not merely `Up` — and refuses the run when that exits non-zero. A run
+is unattended, so there is nobody else to do it. The profile's section says
+*whether* the stack can be probed; the command is the process's own.
 
 `preflight.worktree_recipe` is the table under `## Worktree recipe` — the steps
 that make a fresh phase worktree runnable, as `step` and `command`, **in the

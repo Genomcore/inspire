@@ -17,6 +17,7 @@ from ..state import close_timeline, reconcile
 from ..util import now_iso, read_json, write_json_atomic
 
 BASELINE_SKIPPED_NOTHING_PLANNED = "baseline skipped — nothing planned"
+PROBE_SKIPPED_NOTHING_PLANNED = "test infrastructure not brought up — nothing planned"
 
 REFUSALS = {
     "no-plan-script": "no emanate-plan.sh under %s — point --bin (or $INSPIRE_BIN) at "
@@ -55,7 +56,7 @@ class Orchestrator:
         self.last_results = {}
         self.last_verdict = {}
         self.baseline_line = BASELINE_SKIPPED_NOTHING_PLANNED
-        self.probe_line = startmod.PROBE_MESSAGES["none"]
+        self.probe_line = PROBE_SKIPPED_NOTHING_PLANNED
         self.truncated = False
         self.plan_units = {}
         self.shells = {}

@@ -46,7 +46,7 @@ PLAN_MESSAGES = {
 
 PROBE_MESSAGES = {
     "skipped": "components %s declared, not brought up — no resolved framework profile "
-               "carries a `## Test infrastructure` probe recipe",
+               "declares test infrastructure",
     "none": "no test-infrastructure components declared",
     "up": "components up and healthy: %s",
     "failed": "test infrastructure did not come up healthy — `%s` exited %d in %s:\n%s",
@@ -284,7 +284,7 @@ def probe_infrastructure(run):
         return
     command = ["docker", "compose", "up", "-d", "--wait"] + names
     proc = subprocess.run(command, cwd=run.repo, text=True,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                          stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise Refusal(PROBE_MESSAGES["failed"]
                       % (" ".join(command), proc.returncode, run.repo, tail(proc.stderr, 800)))
