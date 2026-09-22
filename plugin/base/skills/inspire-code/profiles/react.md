@@ -157,6 +157,14 @@ consistent with `## Layering`'s "presentation stays dumb".
 - The pattern's `## Structure` rows are its layout — where each region's prop
   renders relative to the others; the pattern component's JSX has no branch a
   region's presence doesn't cause.
+- **That JSX is the implementer's.** A pattern holds no logic, which reads like a
+  component the contract phase could finish on its own, and it is the one place
+  this profile's emission rules describe a body. They describe the finished
+  artifact: the contract phase emits the file, the props type and the language
+  profile's § Compile stub, and nothing else. § Declaration-only tree is the
+  check — JSX bodies do not survive into the tester's tree, so a body emitted
+  here is stripped before it is read, and a suite that passes without one is
+  asserting nothing.
 
 ## Components
 
