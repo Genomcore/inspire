@@ -1,4 +1,4 @@
-import type { Unit } from './unit'
+import type { Unit } from '@/interfaces/unit'
 
 export interface Wave {
   wave: number

@@ -1,5 +1,5 @@
-import type { Unit } from './unit'
-import type { Worktree } from './worktree'
+import type { Unit } from '@/interfaces/unit'
+import type { Worktree } from '@/interfaces/worktree'
 
 export interface Git {
   currentBranch: () => Promise<string>

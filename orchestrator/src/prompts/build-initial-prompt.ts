@@ -1,4 +1,4 @@
-import type { Unit } from '../interfaces/unit'
+import type { Unit } from '@/interfaces/unit'
 
 export const buildInitialPrompt = (unit: Unit): string => {
   return `

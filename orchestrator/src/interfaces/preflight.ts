@@ -1,5 +1,5 @@
-import type { Component } from './component'
-import type { RecipeStep } from './recipe-step'
+import type { Component } from '@/interfaces/component'
+import type { RecipeStep } from '@/interfaces/recipe-step'
 
 export interface Preflight {
   components: Component[]

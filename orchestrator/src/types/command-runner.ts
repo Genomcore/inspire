@@ -1,4 +1,4 @@
-import type { CommandResult } from '../interfaces/command-result'
+import type { CommandResult } from '@/interfaces/command-result'
 
 export type CommandRunner = (
   command: readonly string[],

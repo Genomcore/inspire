@@ -1,4 +1,4 @@
-import type { UnitKind } from '../types/unit-kind'
+import type { UnitKind } from '@/types/unit-kind'
 
 export interface Requirement {
   kind: UnitKind

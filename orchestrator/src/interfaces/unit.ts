@@ -1,6 +1,6 @@
-import type { Population } from '../types/population'
-import type { UnitKind } from '../types/unit-kind'
-import type { Requirement } from './requirement'
+import type { Requirement } from '@/interfaces/requirement'
+import type { Population } from '@/types/population'
+import type { UnitKind } from '@/types/unit-kind'
 
 export interface Unit {
   kind: UnitKind

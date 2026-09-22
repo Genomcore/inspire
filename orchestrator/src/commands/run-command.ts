@@ -1,6 +1,6 @@
-import { CommandError } from '../errors/command-error'
-import type { CommandResult } from '../interfaces/command-result'
-import type { CommandRunner } from '../types/command-runner'
+import { CommandError } from '@/errors/command-error'
+import type { CommandResult } from '@/interfaces/command-result'
+import type { CommandRunner } from '@/types/command-runner'
 
 export const runCommand: CommandRunner = async (command, cwd) => {
   const process = Bun.spawn([...command], {

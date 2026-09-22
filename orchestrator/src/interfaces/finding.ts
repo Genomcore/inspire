@@ -1,4 +1,4 @@
-import type { Severity } from '../types/severity'
+import type { Severity } from '@/types/severity'
 
 export interface Finding {
   code: string

@@ -1,9 +1,9 @@
-import type { Finding } from './finding'
-import type { Goal } from './goal'
-import type { Preflight } from './preflight'
-import type { Reemanate } from './reemanate'
-import type { Wave } from './wave'
-import type { WireConventions } from './wire-conventions'
+import type { Finding } from '@/interfaces/finding'
+import type { Goal } from '@/interfaces/goal'
+import type { Preflight } from '@/interfaces/preflight'
+import type { Reemanate } from '@/interfaces/reemanate'
+import type { Wave } from '@/interfaces/wave'
+import type { WireConventions } from '@/interfaces/wire-conventions'
 
 export interface EmanationPlan {
   schema: 'inspire.emanation-plan/2'

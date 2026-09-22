@@ -1,5 +1,0 @@
-export type { AgentFactory } from './agent-factory'
-export type { CommandRunner } from './command-runner'
-export type { Population } from './population'
-export type { Severity } from './severity'
-export type { UnitKind } from './unit-kind'

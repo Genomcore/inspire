@@ -1,16 +1,16 @@
 import { resolve } from 'node:path'
 
-import { createOmpAgent } from '../agents/create-omp-agent'
-import { runCommand as defaultRunCommand } from '../commands/run-command'
-import { EmanationPlanNotReadyError } from '../errors/emanation-plan-not-ready-error'
-import { RalphLoopError } from '../errors/ralph-loop-error'
-import { GitWorktrees } from '../git/git-worktrees'
-import type { CommandResult } from '../interfaces/command-result'
-import type { EmanationPlan } from '../interfaces/emanation-plan'
-import type { RalphLoopDependencies } from '../interfaces/ralph-loop-dependencies'
-import type { RalphLoopOptions } from '../interfaces/ralph-loop-options'
-import { buildInitialPrompt } from '../prompts/build-initial-prompt'
-import { buildRetryPrompt } from '../prompts/build-retry-prompt'
+import { createOmpAgent } from '@/agents/create-omp-agent'
+import { runCommand as defaultRunCommand } from '@/commands/run-command'
+import { EmanationPlanNotReadyError } from '@/errors/emanation-plan-not-ready-error'
+import { RalphLoopError } from '@/errors/ralph-loop-error'
+import { GitWorktrees } from '@/git/git-worktrees'
+import type { CommandResult } from '@/interfaces/command-result'
+import type { EmanationPlan } from '@/interfaces/emanation-plan'
+import type { RalphLoopDependencies } from '@/interfaces/ralph-loop-dependencies'
+import type { RalphLoopOptions } from '@/interfaces/ralph-loop-options'
+import { buildInitialPrompt } from '@/prompts/build-initial-prompt'
+import { buildRetryPrompt } from '@/prompts/build-retry-prompt'
 
 export const runRalphLoop = async (
   plan: EmanationPlan,

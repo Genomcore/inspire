@@ -1,18 +1,17 @@
 import { describe, expect, test } from 'bun:test'
 
-import { RalphLoopError } from '../src/errors'
-import { buildInitialPrompt } from '../src/prompts'
-import { runRalphLoop } from '../src/ralph-loop'
-import type {
-  Agent,
-  CommandResult,
-  EmanationPlan,
-  Git,
-  Unit,
-  Wave,
-  Worktree,
-} from '../src/interfaces'
-import type { AgentFactory, CommandRunner } from '../src/types'
+import { RalphLoopError } from '@/errors/ralph-loop-error'
+import type { Agent } from '@/interfaces/agent'
+import type { CommandResult } from '@/interfaces/command-result'
+import type { EmanationPlan } from '@/interfaces/emanation-plan'
+import type { Git } from '@/interfaces/git'
+import type { Unit } from '@/interfaces/unit'
+import type { Wave } from '@/interfaces/wave'
+import type { Worktree } from '@/interfaces/worktree'
+import { buildInitialPrompt } from '@/prompts/build-initial-prompt'
+import { runRalphLoop } from '@/ralph-loop/run-ralph-loop'
+import type { AgentFactory } from '@/types/agent-factory'
+import type { CommandRunner } from '@/types/command-runner'
 
 describe('runRalphLoop', () => {
   test('processes waves and units in order and promotes green worktrees', async () => {

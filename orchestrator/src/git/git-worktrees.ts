@@ -1,11 +1,11 @@
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import { requireSuccess } from '../commands/run-command'
-import type { Git } from '../interfaces/git'
-import type { Unit } from '../interfaces/unit'
-import type { Worktree } from '../interfaces/worktree'
-import type { CommandRunner } from '../types/command-runner'
+import { requireSuccess } from '@/commands/run-command'
+import type { Git } from '@/interfaces/git'
+import type { Unit } from '@/interfaces/unit'
+import type { Worktree } from '@/interfaces/worktree'
+import type { CommandRunner } from '@/types/command-runner'
 
 export class GitWorktrees implements Git {
   constructor(
