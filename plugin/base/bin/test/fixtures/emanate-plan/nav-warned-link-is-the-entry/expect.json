@@ -13,7 +13,7 @@
   "stdout_jq": [
     { "expr": ".ready", "equals": "true" },
     { "expr": ".realized | join(\",\")", "equals": "users.home" },
-    { "expr": "[.units[].id] | join(\",\")", "equals": "users.detail,users.list" },
+    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "users.detail,users.list" },
     { "expr": ".goal.units | join(\",\")", "equals": "users.detail,users.list" },
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" }
   ],

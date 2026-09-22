@@ -12,7 +12,7 @@
     { "expr": ".findings[0].owner", "equals": "inspire-screens" },
     { "expr": ".findings[0].unit", "equals": "users.list" },
     { "expr": ".findings[0].message | test(\"planned\")", "equals": "true" },
-    { "expr": "[.units[].id] | join(\",\")", "equals": "users.list" },
+    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "users.list" },
     { "expr": ".ready", "equals": "false" }
   ]
 }

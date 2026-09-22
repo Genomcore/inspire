@@ -15,7 +15,7 @@
     { "expr": ".findings[0].message | test(\"buildable\")", "equals": "true" },
     { "expr": ".findings[0].remedy", "equals": "/inspire-screens promote users.detail accepted" },
     { "expr": ".waves | length", "equals": "1" },
-    { "expr": ".waves[0] | join(\",\")", "equals": "users.list" },
+    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "users.list" },
     { "expr": ".ready", "equals": "true" }
   ],
   "forbidden": ["NOT READY"]
