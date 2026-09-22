@@ -1,21 +1,18 @@
 import { describe, expect, test } from 'bun:test'
 
-import {
-  RalphLoopError,
-} from '../src/errors'
+import { RalphLoopError } from '../src/errors'
 import { buildInitialPrompt } from '../src/prompts'
 import { runRalphLoop } from '../src/ralph-loop'
 import type {
   Agent,
-  AgentFactory,
   CommandResult,
-  CommandRunner,
   EmanationPlan,
   Git,
   Unit,
   Wave,
   Worktree,
-} from '../src/types'
+} from '../src/interfaces'
+import type { AgentFactory, CommandRunner } from '../src/types'
 
 describe('runRalphLoop', () => {
   test('processes waves and units in order and promotes green worktrees', async () => {

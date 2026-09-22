@@ -3,7 +3,7 @@ import {
   SessionManager,
 } from '@oh-my-pi/pi-coding-agent'
 
-import type { AgentFactory } from './types'
+import type { AgentFactory } from '../types/agent-factory'
 
 export const createOmpAgent: AgentFactory = async (cwd) => {
   const { session } = await createAgentSession({

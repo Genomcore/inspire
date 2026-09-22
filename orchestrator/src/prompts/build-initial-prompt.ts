@@ -1,4 +1,4 @@
-import type { CommandResult, Unit } from './types'
+import type { Unit } from '../interfaces/unit'
 
 export const buildInitialPrompt = (unit: Unit): string => {
   return `
@@ -18,22 +18,5 @@ Keep the code minimal and readable.
 Do not add comments.
 Do not add speculative abstractions or unnecessary validation.
 Do not modify inspire_kb.
-`.trim()
-}
-
-export const buildRetryPrompt = (
-  result: CommandResult,
-  tryNumber: number,
-  maxTries: number,
-): string => {
-  return `
-The test suite is still red after attempt ${String(tryNumber)} of ${String(maxTries)}.
-Continue the Red, Green, Blue, commit cycle and fix the failure.
-
-stdout:
-${result.stdout}
-
-stderr:
-${result.stderr}
 `.trim()
 }

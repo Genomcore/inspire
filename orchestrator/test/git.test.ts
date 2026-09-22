@@ -8,9 +8,9 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { runCommand } from '../src/command'
+import { runCommand } from '../src/commands'
 import { GitWorktrees } from '../src/git'
-import type { Unit } from '../src/types'
+import type { Unit } from '../src/interfaces'
 
 const roots: string[] = []
 

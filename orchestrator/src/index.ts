@@ -1,5 +1,5 @@
+export { createOmpAgent } from './agents'
 export { GitWorktrees } from './git'
-export { createOmpAgent } from './omp'
 export { runRalphLoop } from './ralph-loop'
 export {
   CommandError,
@@ -12,15 +12,28 @@ export {
 } from './prompts'
 export type {
   Agent,
-  AgentFactory,
   CommandResult,
-  CommandRunner,
+  Component,
   EmanationPlan,
+  Finding,
   Git,
+  Goal,
+  Preflight,
   RalphLoopDependencies,
   RalphLoopOptions,
+  RecipeStep,
+  Reemanate,
+  Requirement,
   Unit,
-  UnitKind,
   Wave,
+  WireConventions,
+  WireDecision,
   Worktree,
+} from './interfaces'
+export type {
+  AgentFactory,
+  CommandRunner,
+  Population,
+  Severity,
+  UnitKind,
 } from './types'
