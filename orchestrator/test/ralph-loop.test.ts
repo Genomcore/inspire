@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, mock, test } from 'bun:test'
 
 import { RalphLoopError } from '@/errors/ralph-loop-error'
 import type { Agent } from '@/interfaces/agent'
@@ -13,11 +13,18 @@ import { runRalphLoop } from '@/ralph-loop/run-ralph-loop'
 import type { AgentFactory } from '@/types/agent-factory'
 import type { CommandRunner } from '@/types/command-runner'
 
+let activeAgentFactory: AgentFactory = () =>
+  Promise.reject(new Error('agent factory not configured'))
+
+void mock.module('@/agents/create-omp-agent', () => ({
+  createOmpAgent: (cwd: string) => activeAgentFactory(cwd),
+}))
+
 describe('runRalphLoop', () => {
   test('processes waves and units in order and promotes green worktrees', async () => {
     const trace: string[] = []
     const git = new FakeGit(trace)
-    const createAgent = createAgentFactory(trace)
+    activeAgentFactory = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [green(), green(), green()])
     const input = plan([
       wave(1, [unit('entity', 'auth.account'), unit('action', 'auth.account.create')]),
@@ -25,7 +32,6 @@ describe('runRalphLoop', () => {
     ])
 
     await runRalphLoop(input, { maxTries: 2 }, {
-      createAgent,
       git,
       runCommand,
     })
@@ -59,12 +65,12 @@ describe('runRalphLoop', () => {
   test('sends each test failure back to the same agent session', async () => {
     const trace: string[] = []
     const git = new FakeGit(trace)
-    const createAgent = createAgentFactory(trace)
+    activeAgentFactory = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('second'), green()])
 
     await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
       maxTries: 2,
-    }, { createAgent, git, runCommand })
+    }, { git, runCommand })
 
     expect(trace).toEqual([
       'base',
@@ -85,7 +91,7 @@ describe('runRalphLoop', () => {
   test('keeps a red worktree after exhausting the retry budget', async () => {
     const trace: string[] = []
     const git = new FakeGit(trace)
-    const createAgent = createAgentFactory(trace)
+    activeAgentFactory = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('last')])
 
     const execution = runRalphLoop(plan([
@@ -94,7 +100,7 @@ describe('runRalphLoop', () => {
       wave(3, [unit('pattern', 'dashboard')]),
     ]), {
       maxTries: 1,
-    }, { createAgent, git, runCommand })
+    }, { git, runCommand })
 
     expect(execution).rejects.toEqual(new RalphLoopError(
       'dashboard',

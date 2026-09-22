@@ -23,7 +23,6 @@ export const runRalphLoop = async (
   const repoRoot = resolve(options.repoRoot ?? process.cwd())
   const runCommand = dependencies.runCommand ?? defaultRunCommand
   const git = dependencies.git ?? new GitWorktrees(repoRoot, runCommand)
-  const createAgent = dependencies.createAgent ?? createOmpAgent
   const testCommand = options.testCommand ?? ['bun', 'test']
   const baseBranch = await git.currentBranch()
 
@@ -36,7 +35,7 @@ export const runRalphLoop = async (
       : wave.units.filter((unit) => goalUnits.has(unit.id))
     for (const unit of units) {
       const worktree = await git.createWorktree(baseBranch, wave.wave, unit)
-      const agent = await createAgent(worktree.path)
+      const agent = await createOmpAgent(worktree.path)
       let testResult: CommandResult
       try {
         await agent.prompt(buildInitialPrompt(unit))
