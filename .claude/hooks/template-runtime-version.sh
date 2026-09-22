@@ -3,8 +3,9 @@
 #
 # .claude/hooks/template-runtime-version.sh
 #
-# Release-identity guard for the INSPIRE TEMPLATE REPO ITSELF. If a change
-# touches the runtime under plugin/, then plugin/.claude-plugin/plugin.json's
+# Release-identity guard for the INSPIRE TEMPLATE REPO ITSELF. On a PR ONTO THE
+# DEFAULT BRANCH, if a change touches the runtime under plugin/, then
+# plugin/.claude-plugin/plugin.json's
 # `version` must move FORWARD — strictly above the base version, and not a
 # value some earlier release already tagged — in the same branch. A merely
 # *different* string is not enough: 0.3.0 → 0.2.9, or reverting to an
@@ -287,6 +288,35 @@ case "$cmd" in
 esac
 
 cd "$HOME_ROOT" || exit 0
+
+# ONLY PRs ONTO THE DEFAULT BRANCH ARE GUARDED.
+#
+# The invariant is about what REACHES MAIN: one version string must never name
+# two released runtime states. A PR onto any other branch is not a release — a
+# release branch collects several PRs and lands as one version — so demanding a
+# bump per PR there would burn a version number on every intermediate state,
+# leave the branch carrying several of which only the last ever ships, and make
+# each PR after the first conflict with the one before it on the same three
+# files. The invariant survives untouched, because that branch's own PR onto
+# main passes through this guard with the whole accumulated diff.
+#
+# An absent `--base` means gh targets the default branch, and an unparseable or
+# unknown value is treated as that too: for a guard, the safe direction is to
+# run. So the skip needs a `--base` that names a branch origin actually has.
+DEFAULT_BRANCH="main"
+head_ref="$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null)" \
+  && DEFAULT_BRANCH="${head_ref#refs/remotes/origin/}"
+
+pr_base="$(printf '%s\n' "$cmd" \
+  | grep -oE '[[:space:]](--base[=[:space:]]|-B[[:space:]]*)[^[:space:]]+' \
+  | head -1 \
+  | sed -E 's/^[[:space:]]*(--base[=[:space:]]|-B[[:space:]]*)//')"
+
+if [ -n "$pr_base" ] \
+   && [ "$pr_base" != "$DEFAULT_BRANCH" ] \
+   && git show-ref --verify --quiet "refs/remotes/origin/$pr_base"; then
+  exit 0
+fi
 
 # Base is the merge-base with main — the PR's actual diff, not everything that
 # landed on main since the branch started.

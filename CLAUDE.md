@@ -391,7 +391,14 @@ asks the operator anything.
   convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
   blocks `gh pr create` if the two versions diverge, if the runtime changed without a
   bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
-  exempt from that check: it decides how every install behaves. The manifest is
+  exempt from that check: it decides how every install behaves.
+  It guards **PRs onto `main` only** — the invariant is about what reaches main,
+  and a release branch collects several PRs before landing as one version, so a
+  bump per PR there would burn a number on every intermediate state and make each
+  PR after the first conflict with the one before it on the same three files.
+  Nothing is lost: that branch's own PR onto main is guarded with the whole
+  accumulated diff. A PR whose `--base` is absent, unparseable, or names a branch
+  origin does not have is guarded, since for a guard the safe default is to run. The manifest is
   generated **last**, from the commit carrying the bump: it hashes
   `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
   classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
