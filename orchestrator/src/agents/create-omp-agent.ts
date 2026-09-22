@@ -3,11 +3,24 @@ import {
   SessionManager,
 } from '@oh-my-pi/pi-coding-agent'
 
-import type { AgentFactory } from '@/types/agent-factory'
+import type { Agent } from '@/interfaces/agent'
+import type { OmpAgentConfig } from '@/interfaces/omp-agent-config'
 
-export const createOmpAgent: AgentFactory = async (cwd) => {
+const defaultConfig: Required<OmpAgentConfig> = {
+  autoApprove: true,
+  disableExtensionDiscovery: true,
+  enableIrc: false,
+  enableMCP: false,
+  spawns: '',
+}
+
+export const createOmpAgent = async (
+  cwd: string,
+  config: OmpAgentConfig = {},
+): Promise<Agent> => {
   const { session } = await createAgentSession({
-    autoApprove: true,
+    ...defaultConfig,
+    ...config,
     cwd,
     sessionManager: SessionManager.inMemory(),
   })
