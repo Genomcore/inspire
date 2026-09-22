@@ -108,7 +108,7 @@ def build_runner(run):
         return AgentRunner(contracts, run.config["wall_clock"],
                            run.config.get("max_turns"),
                            run.config.get("spawn_budget_usd"),
-                           run.args.agents_root)
+                           run.args.agents_root, run.args.model)
     if spec.startswith("fake:"):
         directory = spec[len("fake:"):]
         if not os.path.isdir(directory):

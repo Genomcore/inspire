@@ -22,12 +22,15 @@ DENY_RULES = ["Bash(git push:*)", "Bash(git update-ref:*)", "Bash(git merge:*)",
 class AgentRunner:
 
     def __init__(self, contracts_dir, wall_clock, max_turns=None, spawn_budget=None,
-                 agents_root=None):
+                 agents_root=None, model=None):
         self.contracts_dir = contracts_dir
         self.wall_clock = wall_clock
         self.max_turns = max_turns
         self.spawn_budget = spawn_budget
         self.agents_root = agents_root or os.path.join(".claude", "agents")
+        # One model for every spawn of a run, or the harness default when unset.
+        # A run that mixed models would not be comparable with another.
+        self.model = model
         self.ratelimit_retries = 0
 
     def options(self, shell_name, shell_tools, cwd, schema):
@@ -38,6 +41,7 @@ class AgentRunner:
             permission_mode="dontAsk", strict_mcp_config=True,
             tools=list(shell_tools) if shell_tools else None,
             allowed_tools=list(shell_tools or []), disallowed_tools=list(DENY_RULES),
+            model=self.model or None,
             max_turns=self.max_turns or None, max_budget_usd=self.spawn_budget or None,
             output_format={"type": "json_schema", "schema": schema} if schema else None,
             add_dirs=[self.contracts_dir],

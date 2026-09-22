@@ -56,6 +56,7 @@ def parse_args(argv):
     # `--runner`/`--bin` and the two roots mean the same thing to both subcommands.
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--runner", default="claude")
+    common.add_argument("--model")
     common.add_argument("--bin")
     common.add_argument("--profiles-root", dest="profiles_root")
     common.add_argument("--agents-root", dest="agents_root")
