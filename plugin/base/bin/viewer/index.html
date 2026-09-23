@@ -107,8 +107,10 @@
 
     .app {
       display: grid;
-      grid-template-rows: auto 1fr;
-      min-height: 100dvh;
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
     .topbar {
       display: grid;
@@ -183,8 +185,18 @@
       display: grid;
       grid-template-columns: 244px minmax(0, 1fr) 320px;
       min-height: 0;
+      overflow: hidden;
     }
-    .rail, .inspector { background: var(--panel); overflow: auto; }
+    .rail, .inspector {
+      min-height: 0;
+      background: var(--panel);
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line-strong) transparent;
+    }
     .rail { border-right: 1px solid var(--line); padding: 22px 18px; }
     .inspector { border-left: 1px solid var(--line); }
     .section { padding: 0 0 24px; margin: 0 0 24px; border-bottom: 1px solid var(--line); }
