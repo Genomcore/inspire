@@ -35,8 +35,9 @@ export const runRalphLoop = async (
     }
     commands = config.suite.map((entry: unknown) => {
       if (entry === null || typeof entry !== 'object' ||
-          !('command' in entry) || typeof entry.command !== 'string' || !entry.command.trim()) {
-        throw new Error('each suite entry requires a nonempty command')
+          !('command' in entry) || typeof entry.command !== 'string' || !entry.command.trim() ||
+          !entry.command.includes('{report}') || !('format' in entry) || entry.format !== 'jest') {
+        throw new Error('each suite entry requires format jest and a command containing {report}')
       }
       return entry.command
     })
@@ -46,12 +47,27 @@ export const runRalphLoop = async (
     const reports = await mkdtemp(join(tmpdir(), 'inspire-suite-'))
     try {
       let result: CommandResult = { exitCode: 0, stdout: '', stderr: '' }
+      let passed = 0
       for (const [index, command] of commands.entries()) {
         const report = join(reports, `${String(index)}.json`)
         const quotedReport = `'${report.replaceAll("'", "'\\''")}'`
         result = await runCommand(['bash', '-c', command.replaceAll('{report}', quotedReport)], cwd)
         if (result.exitCode !== 0) return result
+        try {
+          const summary = JSON.parse(await readFile(report, 'utf8')) as unknown
+          if (summary === null || typeof summary !== 'object' ||
+              !('numPassedTests' in summary) || typeof summary.numPassedTests !== 'number' ||
+              !Number.isSafeInteger(summary.numPassedTests) || summary.numPassedTests < 0 ||
+              !('numFailedTests' in summary) || summary.numFailedTests !== 0 ||
+              !('success' in summary) || summary.success !== true) {
+            throw new Error('missing or unsuccessful Jest test counts')
+          }
+          passed += summary.numPassedTests
+        } catch (error) {
+          return { ...result, exitCode: 1, stderr: `${result.stderr}\nCannot verify Jest report ${report}: ${String(error)}` }
+        }
       }
+      if (passed === 0) return { ...result, exitCode: 1, stderr: `${result.stderr}\nSuite executed zero passing tests; empty or skipped-only suites cannot complete a unit.` }
       return result
     } finally {
       await rm(reports, { recursive: true, force: true })

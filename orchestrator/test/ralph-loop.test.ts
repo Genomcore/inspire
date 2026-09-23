@@ -162,8 +162,8 @@ describe('runRalphLoop', () => {
       await writeFile(join(root, '.inspire/emanate.json'), JSON.stringify({
         schema: 'inspire.emanate-config/1',
         suite: [
-          { command: 'if [ ! -f retried ]; then touch retried; exit 1; fi; printf first >> suite-order; printf "{}" > {report}', format: 'jest' },
-          { command: 'test "$(cat suite-order)" = first && printf second >> suite-order && printf "{}" > {report}', format: 'jest' },
+          { command: 'if [ ! -f retried ]; then touch retried; exit 1; fi; printf first >> suite-order; printf \'{"success":true,"numPassedTests":0,"numFailedTests":0}\' > {report}', format: 'jest' },
+          { command: 'test "$(cat suite-order)" = first && printf second >> suite-order && printf \'{"success":true,"numPassedTests":1,"numFailedTests":0}\' > {report}', format: 'jest' },
         ],
       }))
       const trace: string[] = []
@@ -189,6 +189,46 @@ describe('runRalphLoop', () => {
     } finally {
       await rm(root, { recursive: true, force: true })
     }
+  })
+
+  test('never merges empty, skipped-only, missing, malformed or failed Jest reports', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ralph-vacuity-'))
+    try {
+      await mkdir(join(root, '.inspire'))
+      for (const report of [
+        '{"success":true,"numPassedTests":0,"numFailedTests":0}',
+        '{"success":true,"numPassedTests":0,"numFailedTests":0,"numPendingTests":3}',
+        null, 'not json', '{}',
+        '{"success":false,"numPassedTests":1,"numFailedTests":1}',
+      ]) {
+        const trace: string[] = []
+        activeAgentFactory = createAgentFactory(trace)
+        await writeFile(join(root, '.inspire/emanate.json'), JSON.stringify({
+          schema: 'inspire.emanate-config/1',
+          suite: [{ format: 'jest', command: report === null ? 'true # {report}' : `printf '%s' '${report}' > {report}` }],
+        }))
+        const result = await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
+          maxTries: 0, repoRoot: root,
+        }, { git: new FakeGit(trace, root) })
+        expect(result.stalled).toHaveLength(1)
+        expect(trace.some((entry) => entry.startsWith('merge:'))).toBe(false)
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  test('aborts a provider error before running tests or merging and disposes the agent', async () => {
+    const trace: string[] = []
+    activeAgentFactory = () => Promise.resolve({
+      prompt: () => Promise.reject(new Error('400 invalid_request_error')),
+      dispose: () => { trace.push('disposed') },
+    })
+    const execution = runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
+      maxTries: 2, testCommand: ['test'],
+    }, { git: new FakeGit(trace), runCommand: createCommandRunner(trace, [green()]) })
+    await expect(execution).rejects.toThrow('400 invalid_request_error')
+    expect(trace).toEqual(['base', 'create:1:button', 'disposed'])
   })
 
   test('rejects an invalid suite before creating any worktree', async () => {
