@@ -43,6 +43,11 @@
       --state-stalled-bg: #fbe7e3;
       --state-blocked-bg: #eee9f4;
       --blocked: #765a96;
+      --kind-entity: #167a91;
+      --kind-action: #a7640d;
+      --kind-screen: #6555a6;
+      --kind-component: #ba4f68;
+      --kind-pattern: #347d4b;
       --mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       --sans: Geist, "Avenir Next", Avenir, "Segoe UI", sans-serif;
     }
@@ -76,6 +81,11 @@
       --state-stalled-bg: #402b2a;
       --state-blocked-bg: #342f40;
       --blocked: #bea6d6;
+      --kind-entity: #69bfd2;
+      --kind-action: #e2ad63;
+      --kind-screen: #ad9dec;
+      --kind-component: #e38ca4;
+      --kind-pattern: #89c994;
     }
 
     * { box-sizing: border-box; }
@@ -205,6 +215,23 @@
       background: var(--canvas); color: var(--ink);
     }
     .search::placeholder { color: var(--faint); }
+    [data-kind="entity"] { --kind-color: var(--kind-entity); }
+    [data-kind="action"] { --kind-color: var(--kind-action); }
+    [data-kind="screen"] { --kind-color: var(--kind-screen); }
+    [data-kind="component"] { --kind-color: var(--kind-component); }
+    [data-kind="pattern"] { --kind-color: var(--kind-pattern); }
+    .kind-filters { display: grid; gap: 5px; }
+    .kind-filter {
+      display: flex; align-items: center; gap: 9px; width: 100%; min-height: 30px;
+      padding: 5px 8px; border: 1px solid transparent; border-radius: 4px;
+      background: transparent; color: var(--muted); text-align: left; cursor: pointer;
+      font: 550 11px var(--mono);
+    }
+    .kind-filter:hover { background: var(--panel-2); color: var(--ink); }
+    .kind-filter[aria-pressed="true"] { border-color: var(--line); background: var(--panel-2); color: var(--ink); }
+    .kind-filter:disabled { opacity: .45; cursor: default; }
+    .kind-swatch { flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--kind-color, var(--line-strong)); }
+    .kind-count { margin-left: auto; color: var(--muted); font-weight: 500; }
     .toggles { display: grid; gap: 11px; }
     .toggle { display: flex; align-items: center; gap: 9px; color: var(--muted); cursor: pointer; }
     .toggle input { position: absolute; opacity: 0; pointer-events: none; }
@@ -260,7 +287,8 @@
     .edge.hovered, .edge.navigation.hovered { stroke: var(--accent); stroke-width: 2.5; opacity: 1; vector-effect: non-scaling-stroke; }
     .edge-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; vector-effect: non-scaling-stroke; cursor: crosshair; }
     .node { cursor: pointer; transition: opacity .2s ease; }
-    .node .node-bg { fill: var(--node-bg); stroke: var(--node-stroke); stroke-width: 1; rx: 5; }
+    .node .node-bg { fill: var(--node-bg); stroke: color-mix(in srgb, var(--kind-color, var(--node-stroke)) 45%, var(--node-stroke)); stroke-width: 1; rx: 5; }
+    .node-type-bar { fill: var(--kind-color); }
     .node.radial .node-bg { rx: 11; }
     .node.radial .node-id { font: 610 13px var(--sans); }
     .node.on-path .node-bg { stroke: var(--accent); }
@@ -274,8 +302,9 @@
     .node[data-status="delivered"] .state-dot { fill: var(--accent); }
     .node[data-status="stalled"] .state-dot { fill: var(--danger); }
     .node[data-status="blocked"] .state-dot { fill: var(--blocked); }
-    .node.external .node-bg { fill: var(--node-external); stroke-dasharray: 4 4; }
-    .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--accent); }
+    .node.external .node-bg { fill: var(--node-external); stroke: var(--node-stroke); stroke-dasharray: 4 4; }
+    .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--kind-color, var(--accent)); }
+    .node.external .node-type-bar { display: none; }
     .node.external .node-kind { fill: var(--muted); }
     .node-id { font: 610 13px var(--sans); fill: var(--ink); }
     .node-meta { font: 10px var(--mono); fill: var(--muted); }
@@ -285,7 +314,7 @@
 
     .inspector-empty { padding: 28px 22px; color: var(--muted); line-height: 1.6; }
     .detail { padding: 26px 22px; }
-    .detail-kind { color: var(--accent); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .detail-kind { color: var(--kind-color, var(--accent)); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
     .detail h2 { margin: 9px 0 7px; font-size: 22px; line-height: 1.16; letter-spacing: -.035em; overflow-wrap: anywhere; }
     .detail-path { margin: 0; color: var(--muted); font: 10px/1.55 var(--mono); overflow-wrap: anywhere; }
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; margin: 25px 0; padding: 20px 0; border-block: 1px solid var(--line); }
@@ -422,6 +451,17 @@
           </div>
         </section>
         <section class="section">
+          <h2 class="section-title">Unit types</h2>
+          <div class="kind-filters" role="group" aria-label="Focus unit type">
+            <button class="kind-filter" type="button" data-kind="all" aria-pressed="true"><span class="kind-swatch" aria-hidden="true"></span>All units<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="entity" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Entities<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="action" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Actions<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="screen" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Screens<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="component" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Components<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="pattern" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Patterns<span class="kind-count">0</span></button>
+          </div>
+        </section>
+        <section class="section">
           <h2 class="section-title">Edges</h2>
           <div class="toggles">
             <label class="toggle"><input id="show-ordering" type="checkbox" checked><span class="toggle-box"></span>Ordering</label>
@@ -475,7 +515,7 @@
       const SIDE = 54;
       const MIN_ZOOM = 0.02;
       const MAX_ZOOM = 4;
-      const state = { plan: null, raw: "", runState: null, rawRunState: "", runStateError: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
+      const state = { plan: null, raw: "", runState: null, rawRunState: "", runStateError: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", kindFocus: null, zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
@@ -828,10 +868,11 @@
           const group = svg("g", {
             class: `node${state.view === "graph" ? " radial" : ""}${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
             transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
-            "aria-label": `${node.kind} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key
+            "aria-label": `${node.kind} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key, "data-kind": node.kind
           });
           group.append(svg("title", {}, `${node.kind} ${node.id}`));
           group.append(svg("rect", { width: scene.nodeWidth, height: scene.nodeHeight, class: "node-bg" }));
+          if (!node.external) group.append(svg("rect", { x: 4, y: 4, width: 4, height: scene.nodeHeight - 8, rx: 2, class: "node-type-bar" }));
           if (state.view === "graph") {
             group.append(svg("text", { x: 12, y: 19, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : "OUTSIDE RUN") : node.kind));
             group.append(svg("text", { x: 12, y: 40, class: "node-id" }, short(node.id, 21)));
@@ -998,6 +1039,7 @@
         $("inspector-empty").classList.add("hidden");
         const detail = $("detail");
         detail.classList.remove("hidden");
+        detail.dataset.kind = node.kind;
         const requirements = (node.requires || []).map((requirement) => `
           <div class="requirement" data-target="${escapeHtml(requirement.id)}">
             <span class="requirement-id">${escapeHtml(requirement.kind)}:${escapeHtml(requirement.id)}</span>
@@ -1058,6 +1100,7 @@
       function applyFilters() {
         clearEdgeHover();
         const query = $("search").value.trim().toLowerCase();
+        const kindFocus = state.kindFocus;
         const showOrdering = $("show-ordering").checked;
         const showDeferred = $("show-deferred").checked;
         const showNavigation = $("show-navigation").checked;
@@ -1070,7 +1113,8 @@
           const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
           const onPath = path?.nodes.has(element.dataset.key);
           const externalExcluded = node.external && !showExternal && element.dataset.key !== state.selected;
-          const dim = (query && !searchable.includes(query)) || externalExcluded || (path && !onPath);
+          const kindMismatch = kindFocus && node.kind !== kindFocus && !onPath && element.dataset.key !== state.selected;
+          const dim = (query && !searchable.includes(query)) || externalExcluded || (path && !onPath) || kindMismatch;
           element.style.display = only && (!onPath || externalExcluded) ? "none" : "";
           element.classList.toggle("dim", Boolean(dim));
           element.classList.toggle("on-path", Boolean(onPath && !dim));
@@ -1081,9 +1125,10 @@
           const onPath = path?.edges.has(Number(element.dataset.index));
           const hidden = (type === "navigation" ? !showNavigation : type === "deferred" ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal) || (only && !onPath);
           const selected = path ? onPath : state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
+          const kindRelevant = !kindFocus || [element.dataset.source, element.dataset.target].some((key) => state.nodes.get(key)?.kind === kindFocus);
           element.style.display = hidden ? "none" : "";
           element.classList.toggle("hot", Boolean(selected && !hidden));
-          element.classList.toggle("dim", Boolean(state.selected && !selected));
+          element.classList.toggle("dim", Boolean(!selected && (state.selected || !kindRelevant)));
           const hit = hitByIndex.get(Number(element.dataset.index));
           if (hit) {
             hit.style.display = hidden ? "none" : "";
@@ -1113,6 +1158,14 @@
         const ready = $("metric-ready");
         ready.textContent = plan.ready ? "YES" : "NO";
         ready.classList.toggle("not-ready", !plan.ready);
+        if (state.kindFocus && !units.some((unit) => unit.kind === state.kindFocus)) state.kindFocus = null;
+        document.querySelectorAll(".kind-filter").forEach((button) => {
+          const kind = button.dataset.kind;
+          const count = kind === "all" ? units.length : units.filter((unit) => unit.kind === kind).length;
+          button.querySelector(".kind-count").textContent = count;
+          button.disabled = kind !== "all" && count === 0;
+          button.setAttribute("aria-pressed", String((state.kindFocus || "all") === kind));
+        });
       }
 
       function showError(message) {
@@ -1328,6 +1381,13 @@
       ["show-ordering", "show-deferred", "show-navigation", "show-external"].forEach((id) => $(id).addEventListener("change", () => {
         if (id === "show-external" && state.focus === "only") { render(); fitPath(); }
         else applyFilters();
+      }));
+      document.querySelectorAll(".kind-filter").forEach((button) => button.addEventListener("click", () => {
+        if (!state.plan || state.plan.refused || button.disabled) return;
+        const kind = button.dataset.kind;
+        state.kindFocus = kind === "all" || state.kindFocus === kind ? null : kind;
+        updateMetrics(state.plan);
+        applyFilters();
       }));
       $("view-waves").addEventListener("click", () => setView("waves"));
       $("view-graph").addEventListener("click", () => setView("graph"));
