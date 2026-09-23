@@ -197,6 +197,8 @@
     .edge.dim { opacity: .08; }
     .edge.hot { stroke: var(--accent); stroke-width: 1.8; opacity: 1; }
     .edge.navigation.hot { stroke: var(--navigation); stroke-width: 2.3; }
+    .edge.hovered, .edge.navigation.hovered { stroke: var(--accent); stroke-width: 2.5; opacity: 1; vector-effect: non-scaling-stroke; }
+    .edge-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; vector-effect: non-scaling-stroke; cursor: crosshair; }
     .node { cursor: pointer; transition: opacity .2s ease; }
     .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
     .node.radial .node-bg { rx: 11; }
@@ -204,6 +206,8 @@
     .node.on-path .node-bg { stroke: var(--accent); }
     .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
     .node.dim { opacity: .18; }
+    .node.edge-endpoint { opacity: 1; }
+    .node.edge-endpoint .node-bg { fill: #243833; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
     .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
     .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--accent); }
     .node.external .node-kind { fill: var(--muted); }
@@ -241,6 +245,14 @@
       opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .edge-tooltip {
+      position: absolute; z-index: 1; max-width: min(330px, calc(100% - 24px));
+      padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 4px;
+      background: var(--panel-2); color: var(--ink); pointer-events: none;
+      box-shadow: 0 8px 20px rgba(8, 12, 15, .3);
+    }
+    .edge-tooltip-type { display: block; margin-bottom: 4px; color: var(--accent); font: 650 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .edge-tooltip-units { font: 11px/1.45 var(--mono); overflow-wrap: anywhere; }
 
     @media (max-width: 980px) {
       .topbar { grid-template-columns: auto minmax(0, 1fr); }
@@ -333,7 +345,7 @@
             <div class="legend-row"><span class="legend-line navigation"></span>Screen navigation</div>
             <div class="legend-row"><span class="legend-node"></span>Outside this run</div>
           </div>
-          <p class="canvas-hint">Pinch to zoom around the pointer. Scroll to navigate; drag empty graph space to pan.</p>
+          <p class="canvas-hint">Pinch to zoom around the pointer. Scroll to navigate; drag empty graph space to pan. Hover an edge in Graph view to see its endpoints.</p>
         </section>
       </aside>
 
@@ -341,6 +353,7 @@
         <div class="graph-scroll" id="graph-scroll"><svg id="graph" role="img" aria-labelledby="graph-title"><title id="graph-title">Emanation dependency graph</title></svg></div>
         <div class="empty-state hidden" id="empty-state"><div class="state-copy"><p class="eyebrow">No work remains</p><h2>The plan has no deliverable units.</h2><p>All frontier units may already be realized. The viewer will update when the source document changes.</p></div></div>
         <div class="error-state hidden" id="error-state"><div class="state-copy"><p class="eyebrow">Source error</p><h2>The plan cannot be drawn.</h2><p id="error-message"></p></div></div>
+        <div class="edge-tooltip hidden" id="edge-tooltip"><span class="edge-tooltip-type"></span><span class="edge-tooltip-units"></span></div>
         <div class="toast" id="toast" role="status"></div>
       </section>
 
@@ -369,7 +382,7 @@
       const SIDE = 54;
       const MIN_ZOOM = 0.02;
       const MAX_ZOOM = 4;
-      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
+      const state = { plan: null, raw: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
@@ -595,6 +608,7 @@
       }
 
       function render() {
+        clearEdgeHover();
         graph.replaceChildren(svg("title", { id: "graph-title" }, "Emanation dependency graph"));
         state.scene = null;
         if (!state.plan || state.plan.refused) return;
@@ -665,6 +679,34 @@
             "marker-end": edge.type === "navigation" ? "url(#navigation-arrow)" : "url(#arrow)"
           });
           edgeLayer.append(path);
+          if (state.view === "graph") {
+            const source = state.nodes.get(edge.source);
+            const target = state.nodes.get(edge.target);
+            edgeLayer.append(svg("path", {
+              d: path.getAttribute("d"), class: "edge-hit", "data-index": edge.index,
+              tabindex: -1, role: "img",
+              "aria-label": `${edge.type} from ${source.kind} ${source.id} to ${target.kind} ${target.id}`
+            }));
+          }
+        });
+        edgeLayer.addEventListener("pointerover", (event) => {
+          const hit = event.target.closest(".edge-hit");
+          if (hit) showEdgeHover(hit, event.clientX, event.clientY);
+        });
+        edgeLayer.addEventListener("pointermove", (event) => {
+          if (event.target.closest(".edge-hit")) positionEdgeTooltip(event.clientX, event.clientY);
+        });
+        edgeLayer.addEventListener("pointerout", (event) => {
+          if (event.target.closest(".edge-hit")) clearEdgeHover();
+        });
+        edgeLayer.addEventListener("focusin", (event) => {
+          const hit = event.target.closest(".edge-hit");
+          if (!hit) return;
+          const bounds = hit.getBoundingClientRect();
+          showEdgeHover(hit, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+        });
+        edgeLayer.addEventListener("focusout", (event) => {
+          if (event.target.closest(".edge-hit")) clearEdgeHover();
         });
         graph.append(edgeLayer);
 
@@ -696,6 +738,45 @@
           graph.append(group);
         }
         applyFilters();
+      }
+
+      function clearEdgeHover() {
+        if (state.hoveredEdge === null) return;
+        state.hoveredEdge = null;
+        graph.querySelectorAll(".edge.hovered, .node.edge-endpoint").forEach((element) => {
+          element.classList.remove("hovered", "edge-endpoint");
+        });
+        $("edge-tooltip").classList.add("hidden");
+      }
+
+      function positionEdgeTooltip(clientX, clientY) {
+        const tooltip = $("edge-tooltip");
+        if (tooltip.classList.contains("hidden")) return;
+        const bounds = stage.getBoundingClientRect();
+        tooltip.style.left = `${Math.max(12, Math.min(clientX - bounds.left + 14, bounds.width - tooltip.offsetWidth - 12))}px`;
+        tooltip.style.top = `${Math.max(12, Math.min(clientY - bounds.top + 14, bounds.height - tooltip.offsetHeight - 12))}px`;
+      }
+
+      function showEdgeHover(hit, clientX, clientY) {
+        if (hit.style.display === "none") return;
+        const index = Number(hit.dataset.index);
+        const edge = state.edges[index];
+        if (!edge) return;
+        if (state.hoveredEdge !== index) {
+          clearEdgeHover();
+          state.hoveredEdge = index;
+          const source = state.nodes.get(edge.source);
+          const target = state.nodes.get(edge.target);
+          graph.querySelector(`.edge[data-index="${index}"]`)?.classList.add("hovered");
+          graph.querySelectorAll(".node").forEach((node) => {
+            node.classList.toggle("edge-endpoint", node.dataset.key === edge.source || node.dataset.key === edge.target);
+          });
+          const tooltip = $("edge-tooltip");
+          tooltip.querySelector(".edge-tooltip-type").textContent = edge.type === "navigation" ? "Screen navigation" : edge.type === "deferred" ? "Deferred reference" : "Ordering dependency";
+          tooltip.querySelector(".edge-tooltip-units").textContent = `${source.kind}:${source.id} → ${target.kind}:${target.id}`;
+          tooltip.classList.remove("hidden");
+        }
+        positionEdgeTooltip(clientX, clientY);
       }
 
       function buildPath(key) {
@@ -811,6 +892,7 @@
       }
 
       function applyFilters() {
+        clearEdgeHover();
         const query = $("search").value.trim().toLowerCase();
         const showOrdering = $("show-ordering").checked;
         const showDeferred = $("show-deferred").checked;
@@ -818,6 +900,7 @@
         const showExternal = $("show-external").checked;
         const path = state.selected && state.focus !== "direct" ? buildPath(state.selected) : null;
         const only = Boolean(path && state.focus === "only");
+        const hitByIndex = new Map([...graph.querySelectorAll(".edge-hit")].map((element) => [Number(element.dataset.index), element]));
         graph.querySelectorAll(".node").forEach((element) => {
           const node = state.nodes.get(element.dataset.key);
           const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
@@ -837,6 +920,11 @@
           element.style.display = hidden ? "none" : "";
           element.classList.toggle("hot", Boolean(selected && !hidden));
           element.classList.toggle("dim", Boolean(state.selected && !selected));
+          const hit = hitByIndex.get(Number(element.dataset.index));
+          if (hit) {
+            hit.style.display = hidden ? "none" : "";
+            hit.setAttribute("tabindex", !hidden && state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected) ? "0" : "-1");
+          }
         });
         graph.querySelectorAll(".wave-heading").forEach((heading) => {
           const column = state.scene.columns[Number(heading.dataset.column)];
@@ -992,8 +1080,9 @@
 
       $("search").addEventListener("input", applyFilters);
       graph.addEventListener("click", (event) => {
-        if (!event.target.closest(".node")) clearSelection();
+        if (!event.target.closest(".node, .edge-hit")) clearSelection();
       });
+      scroll.addEventListener("scroll", clearEdgeHover, { passive: true });
       let pan = null;
       scroll.addEventListener("pointerdown", (event) => {
         if (state.view !== "graph" || event.pointerType !== "mouse" || event.button !== 0 || event.target.closest(".node")) return;
