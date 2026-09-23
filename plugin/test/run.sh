@@ -153,6 +153,7 @@ for s in "lib-tests.sh${TAB}_lib.sh/readers" \
          "test-derive-lib.sh${TAB}emanate-derive.sh/library" \
          "test-plan-lib.sh${TAB}emanate-plan.sh/library" \
          "test-plan-schema.sh${TAB}emanate-plan.sh/schemas" \
+         "test-plan-viewer.sh${TAB}emanate-plan.sh/viewer" \
          "test-gate-lib.sh${TAB}emanate-gate.sh/library" \
          "test-results.sh${TAB}emanate-results.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"

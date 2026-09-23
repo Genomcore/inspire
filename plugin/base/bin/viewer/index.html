@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INSPIRE — Emanation plan</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #e8edf2;
+      --muted: #8d99a6;
+      --faint: #586572;
+      --canvas: #11171c;
+      --panel: #171e24;
+      --panel-2: #1c252c;
+      --line: #2d3942;
+      --line-strong: #46545f;
+      --accent: #68b69c;
+      --accent-dim: #284d42;
+      --danger: #d58478;
+      --warning: #d3ad68;
+      --mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Geist, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100dvh;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+      align-items: center;
+      gap: 24px;
+      min-height: 68px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(17, 23, 28, .96);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      color: var(--accent);
+      font: 700 15px/1 var(--mono);
+      letter-spacing: -.06em;
+    }
+    .brand-copy { min-width: 0; }
+    .eyebrow {
+      margin: 0 0 3px;
+      color: var(--muted);
+      font: 600 10px/1.2 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: 15px; font-weight: 620; letter-spacing: -.015em; }
+    .source-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .live-state { display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--muted); }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(104, 182, 156, .1);
+      animation: breathe 2.4s ease-in-out infinite;
+    }
+    .live-dot.error { background: var(--danger); box-shadow: 0 0 0 4px rgba(213, 132, 120, .1); animation: none; }
+    @keyframes breathe { 50% { transform: scale(.72); opacity: .7; } }
+    @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+    .updated { font: 11px/1.2 var(--mono); }
+    .top-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .control {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel);
+      cursor: pointer;
+      transition: border-color .22s ease, background .22s ease, transform .12s ease;
+    }
+    .control:hover { border-color: var(--line-strong); background: var(--panel-2); }
+    .control:active { transform: translateY(1px); }
+    .control svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 244px minmax(0, 1fr) 320px;
+      min-height: 0;
+    }
+    .rail, .inspector { background: var(--panel); overflow: auto; }
+    .rail { border-right: 1px solid var(--line); padding: 22px 18px; }
+    .inspector { border-left: 1px solid var(--line); }
+    .section { padding: 0 0 24px; margin: 0 0 24px; border-bottom: 1px solid var(--line); }
+    .section:last-child { border: 0; }
+    .section-title {
+      margin: 0 0 13px;
+      color: var(--muted);
+      font: 650 10px/1.2 var(--mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+    .metric-value { display: block; font: 550 21px/1 var(--mono); letter-spacing: -.05em; }
+    .metric-label { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .readiness { color: var(--accent); }
+    .readiness.not-ready { color: var(--danger); }
+    .search-wrap { position: relative; }
+    .search-wrap svg {
+      position: absolute; left: 10px; top: 10px; width: 14px; height: 14px;
+      fill: none; stroke: var(--muted); stroke-width: 1.8;
+    }
+    .search {
+      width: 100%; height: 34px; padding: 0 10px 0 32px;
+      border: 1px solid var(--line); border-radius: 4px;
+      background: var(--canvas); color: var(--ink);
+    }
+    .search::placeholder { color: var(--faint); }
+    .toggles { display: grid; gap: 11px; }
+    .toggle { display: flex; align-items: center; gap: 9px; color: var(--muted); cursor: pointer; }
+    .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .toggle-box {
+      display: grid; place-items: center; width: 16px; height: 16px;
+      border: 1px solid var(--line-strong); border-radius: 3px;
+      background: var(--canvas);
+    }
+    .toggle input:checked + .toggle-box { border-color: var(--accent); background: var(--accent-dim); }
+    .toggle input:checked + .toggle-box::after { content: ""; width: 6px; height: 3px; border: solid var(--accent); border-width: 0 0 2px 2px; transform: rotate(-45deg) translateY(-1px); }
+    .legend { display: grid; gap: 10px; color: var(--muted); font-size: 12px; }
+    .legend-row { display: flex; align-items: center; gap: 9px; }
+    .legend-line { width: 28px; border-top: 1.5px solid var(--line-strong); }
+    .legend-line.deferred { border-top-style: dashed; }
+    .legend-node { width: 14px; height: 10px; border: 1px dashed var(--line-strong); }
+
+    .stage { position: relative; min-width: 0; overflow: hidden; background-color: var(--canvas); }
+    .stage::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .32;
+      background-image: radial-gradient(circle, #4b5861 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .graph-scroll { position: absolute; inset: 0; overflow: auto; }
+    #graph { display: block; min-width: 100%; min-height: 100%; user-select: none; }
+    .empty-state, .error-state {
+      position: absolute; inset: 0; display: grid; place-items: center; padding: 32px;
+    }
+    .state-copy { max-width: 460px; padding: 28px 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); }
+    .state-copy h2 { margin: 0 0 10px; font-size: 21px; letter-spacing: -.03em; }
+    .state-copy p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .error-state h2 { color: var(--danger); }
+    .hidden { display: none !important; }
+
+    .wave-label { fill: var(--muted); font: 650 10px var(--mono); letter-spacing: .14em; }
+    .wave-count { fill: var(--faint); font: 11px var(--mono); }
+    .wave-rule { stroke: var(--line); stroke-width: 1; }
+    .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.35; opacity: .78; }
+    .edge.deferred { stroke-dasharray: 5 5; opacity: .62; }
+    .edge.dim { opacity: .08; }
+    .edge.hot { stroke: var(--accent); stroke-width: 1.8; opacity: 1; }
+    .node { cursor: pointer; transition: opacity .2s ease; }
+    .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
+    .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
+    .node.dim { opacity: .18; }
+    .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
+    .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--accent); }
+    .node.external .node-kind { fill: var(--muted); }
+    .node-id { font: 610 13px var(--sans); fill: var(--ink); }
+    .node-meta { font: 10px var(--mono); fill: var(--muted); }
+    .node-claims { font: 600 10px var(--mono); fill: var(--ink); }
+    .node-port { fill: var(--canvas); stroke: var(--line-strong); stroke-width: 1; }
+    .node.selected .node-port { stroke: var(--accent); }
+
+    .inspector-empty { padding: 28px 22px; color: var(--muted); line-height: 1.6; }
+    .detail { padding: 26px 22px; }
+    .detail-kind { color: var(--accent); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .detail h2 { margin: 9px 0 7px; font-size: 22px; line-height: 1.16; letter-spacing: -.035em; overflow-wrap: anywhere; }
+    .detail-path { margin: 0; color: var(--muted); font: 10px/1.55 var(--mono); overflow-wrap: anywhere; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; margin: 25px 0; padding: 20px 0; border-block: 1px solid var(--line); }
+    .detail-grid dt { color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+    .detail-grid dd { margin: 0; font: 550 12px/1.4 var(--mono); }
+    .detail h3 { margin: 22px 0 10px; color: var(--muted); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill { padding: 5px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font: 10px var(--mono); }
+    .requires { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .requirement { padding: 10px; background: var(--panel); cursor: pointer; }
+    .requirement:hover { background: var(--panel-2); }
+    .requirement-id { display: block; font: 550 11px/1.4 var(--mono); overflow-wrap: anywhere; }
+    .requirement-meta { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+
+    .toast {
+      position: absolute; left: 50%; bottom: 18px; transform: translate(-50%, 10px);
+      padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: 4px;
+      background: var(--panel-2); color: var(--ink); font: 11px var(--mono);
+      opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: 210px minmax(0, 1fr); }
+      .inspector { position: absolute; z-index: 2; right: 0; top: 68px; bottom: 0; width: min(340px, 90vw); box-shadow: -20px 0 36px rgba(8, 12, 15, .35); }
+      .inspector:has(.inspector-empty:not(.hidden)) { display: none; }
+    }
+    @media (max-width: 700px) {
+      .topbar { grid-template-columns: 1fr auto; gap: 12px; padding: 10px 12px; }
+      .live-state { display: none; }
+      .workspace { grid-template-columns: 1fr; }
+      .rail { display: none; }
+      .top-actions .label { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">IN</div>
+        <div class="brand-copy">
+          <p class="eyebrow">Emanation plan / Graph</p>
+          <h1 class="source-name" id="source-name">plan.json</h1>
+        </div>
+      </div>
+      <div class="live-state" aria-live="polite">
+        <span class="live-dot" id="live-dot"></span>
+        <span class="updated" id="updated">Connecting</span>
+      </div>
+      <div class="top-actions">
+        <button class="control" id="fit" type="button" title="Fit graph">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+          <span class="label">Fit graph</span>
+        </button>
+        <button class="control" id="refresh" type="button" title="Refresh now">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 8.2A7 7 0 0 1 18.8 7M17.9 15.8A7 7 0 0 1 5.2 17"/></svg>
+          <span class="label">Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="rail" aria-label="Graph controls">
+        <section class="section">
+          <h2 class="section-title">Run</h2>
+          <div class="metrics">
+            <div><span class="metric-value" id="metric-waves">—</span><span class="metric-label">waves</span></div>
+            <div><span class="metric-value" id="metric-units">—</span><span class="metric-label">units</span></div>
+            <div><span class="metric-value" id="metric-claims">—</span><span class="metric-label">claims</span></div>
+            <div><span class="metric-value readiness" id="metric-ready">—</span><span class="metric-label">readiness</span></div>
+          </div>
+        </section>
+        <section class="section">
+          <h2 class="section-title">Find a unit</h2>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+            <input class="search" id="search" type="search" placeholder="ID, kind, module" autocomplete="off">
+          </div>
+        </section>
+        <section class="section">
+          <h2 class="section-title">Edges</h2>
+          <div class="toggles">
+            <label class="toggle"><input id="show-ordering" type="checkbox" checked><span class="toggle-box"></span>Ordering</label>
+            <label class="toggle"><input id="show-deferred" type="checkbox" checked><span class="toggle-box"></span>Deferred</label>
+            <label class="toggle"><input id="show-external" type="checkbox" checked><span class="toggle-box"></span>External targets</label>
+          </div>
+        </section>
+        <section class="section">
+          <h2 class="section-title">Reading the graph</h2>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-line"></span>Ordering dependency</div>
+            <div class="legend-row"><span class="legend-line deferred"></span>Deferred reference</div>
+            <div class="legend-row"><span class="legend-node"></span>Outside this run</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="stage" aria-label="Dependency graph">
+        <div class="graph-scroll" id="graph-scroll"><svg id="graph" role="img" aria-labelledby="graph-title"><title id="graph-title">Emanation dependency graph</title></svg></div>
+        <div class="empty-state hidden" id="empty-state"><div class="state-copy"><p class="eyebrow">No work remains</p><h2>The plan has no deliverable units.</h2><p>All frontier units may already be realized. The viewer will update when the source document changes.</p></div></div>
+        <div class="error-state hidden" id="error-state"><div class="state-copy"><p class="eyebrow">Source error</p><h2>The plan cannot be drawn.</h2><p id="error-message"></p></div></div>
+        <div class="toast" id="toast" role="status"></div>
+      </section>
+
+      <aside class="inspector" aria-label="Unit details">
+        <div class="inspector-empty" id="inspector-empty">Select a unit to inspect its path, profiles, claim count, and dependency edges.</div>
+        <div class="detail hidden" id="detail"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SVG = "http://www.w3.org/2000/svg";
+      const POLL_MS = 900;
+      const NODE_W = 220;
+      const NODE_H = 82;
+      const COL_GAP = 86;
+      const ROW_GAP = 26;
+      const TOP = 78;
+      const SIDE = 54;
+      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false };
+
+      const $ = (id) => document.getElementById(id);
+      const graph = $("graph");
+      const scroll = $("graph-scroll");
+
+      function svg(tag, attributes = {}, text = null) {
+        const element = document.createElementNS(SVG, tag);
+        for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, String(value));
+        if (text !== null) element.textContent = text;
+        return element;
+      }
+
+      function assertPlan(plan) {
+        if (!plan || typeof plan !== "object") throw new Error("The source is not a JSON object.");
+        if (plan.schema !== "inspire.emanation-plan/2") throw new Error(`Expected inspire.emanation-plan/2; received ${plan.schema ?? "no schema"}.`);
+        if (Array.isArray(plan.refused)) return;
+        if (!Array.isArray(plan.waves)) throw new Error("The document has no waves array.");
+        plan.waves.forEach((wave, index) => {
+          if (wave.wave !== index + 1 || !Array.isArray(wave.units)) throw new Error(`Wave ${index + 1} does not match the v2 contract.`);
+        });
+      }
+
+      function short(value, length = 27) {
+        if (!value) return "—";
+        return value.length > length ? `${value.slice(0, length - 1)}…` : value;
+      }
+
+      function model(plan) {
+        const nodes = new Map();
+        const byWave = [];
+        const realized = new Set(plan.realized || []);
+        for (const wave of plan.waves || []) {
+          const column = [];
+          for (const unit of wave.units) {
+            const node = { ...unit, key: `unit:${unit.id}`, wave: wave.wave, external: false };
+            nodes.set(node.key, node);
+            column.push(node);
+          }
+          byWave.push(column);
+        }
+        const unitById = new Map([...nodes.values()].map((node) => [node.id, node]));
+        const external = new Map();
+        const edges = [];
+        for (const target of nodes.values()) {
+          for (const requirement of target.requires || []) {
+            let source = unitById.get(requirement.id);
+            if (!source) {
+              const key = `external:${requirement.kind}:${requirement.id}`;
+              source = external.get(key);
+              if (!source) {
+                source = {
+                  key, id: requirement.id, kind: requirement.kind, external: true,
+                  realized: realized.has(requirement.id), wave: 0, requires: [], profiles: [], claims: 0
+                };
+                external.set(key, source);
+                nodes.set(key, source);
+              }
+            }
+            edges.push({ source: source.key, target: target.key, ordering: requirement.ordering });
+          }
+        }
+        return { nodes, byWave, external: [...external.values()], edges };
+      }
+
+      function layout(data) {
+        const columns = data.external.length ? [data.external, ...data.byWave] : data.byWave;
+        const maxRows = Math.max(1, ...columns.map((column) => column.length));
+        const width = SIDE * 2 + columns.length * NODE_W + Math.max(0, columns.length - 1) * COL_GAP;
+        const height = TOP + maxRows * NODE_H + Math.max(0, maxRows - 1) * ROW_GAP + 64;
+        const positions = new Map();
+        columns.forEach((column, columnIndex) => {
+          const columnHeight = column.length * NODE_H + Math.max(0, column.length - 1) * ROW_GAP;
+          const offset = Math.max(0, (maxRows * NODE_H + (maxRows - 1) * ROW_GAP - columnHeight) / 2);
+          column.forEach((node, row) => {
+            positions.set(node.key, { x: SIDE + columnIndex * (NODE_W + COL_GAP), y: TOP + offset + row * (NODE_H + ROW_GAP) });
+          });
+        });
+        return { columns, positions, width: Math.max(width, scroll.clientWidth), height: Math.max(height, scroll.clientHeight) };
+      }
+
+      function edgePath(a, b) {
+        const x1 = a.x + NODE_W;
+        const y1 = a.y + NODE_H / 2;
+        const x2 = b.x;
+        const y2 = b.y + NODE_H / 2;
+        if (x2 >= x1) {
+          const bend = Math.max(34, (x2 - x1) * .45);
+          return `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`;
+        }
+        const lane = Math.min(a.y, b.y) - 18;
+        return `M ${x1} ${y1} C ${x1 + 28} ${y1}, ${x1 + 28} ${lane}, ${x1} ${lane} L ${x2 - 28} ${lane} C ${x2 - 8} ${lane}, ${x2 - 8} ${y2}, ${x2} ${y2}`;
+      }
+
+      function render() {
+        graph.replaceChildren(svg("title", { id: "graph-title" }, "Emanation dependency graph"));
+        if (!state.plan || state.plan.refused) return;
+        const data = model(state.plan);
+        state.nodes = data.nodes;
+        state.edges = data.edges;
+        if (!data.byWave.some((wave) => wave.length)) {
+          $("empty-state").classList.remove("hidden");
+          return;
+        }
+        $("empty-state").classList.add("hidden");
+        const scene = layout(data);
+        graph.setAttribute("viewBox", `0 0 ${scene.width} ${scene.height}`);
+        graph.setAttribute("width", scene.width);
+        graph.setAttribute("height", scene.height);
+
+        const defs = svg("defs");
+        const marker = svg("marker", { id: "arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
+        marker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", fill: "#46545f" }));
+        defs.append(marker);
+        graph.append(defs);
+
+        const hasExternal = data.external.length > 0;
+        scene.columns.forEach((column, index) => {
+          if (!column.length) return;
+          const position = scene.positions.get(column[0].key);
+          const waveNumber = hasExternal ? index : index + 1;
+          const external = hasExternal && index === 0;
+          graph.append(svg("text", { x: position.x, y: 34, class: "wave-label" }, external ? "OUTSIDE RUN" : `WAVE ${waveNumber}`));
+          graph.append(svg("text", { x: position.x, y: 53, class: "wave-count" }, `${column.length} ${column.length === 1 ? "unit" : "units"}`));
+          graph.append(svg("line", { x1: position.x, y1: 64, x2: position.x + NODE_W, y2: 64, class: "wave-rule" }));
+        });
+
+        const edgeLayer = svg("g", { class: "edges" });
+        data.edges.forEach((edge) => {
+          const a = scene.positions.get(edge.source);
+          const b = scene.positions.get(edge.target);
+          if (!a || !b) return;
+          const path = svg("path", {
+            d: edgePath(a, b),
+            class: `edge ${edge.ordering ? "ordering" : "deferred"}`,
+            "data-source": edge.source, "data-target": edge.target,
+            "marker-end": "url(#arrow)"
+          });
+          edgeLayer.append(path);
+        });
+        graph.append(edgeLayer);
+
+        for (const node of data.nodes.values()) {
+          const p = scene.positions.get(node.key);
+          if (!p) continue;
+          const group = svg("g", {
+            class: `node${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
+            transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
+            "aria-label": `${node.kind} ${node.id}`, "data-key": node.key
+          });
+          group.append(svg("rect", { width: NODE_W, height: NODE_H, class: "node-bg" }));
+          group.append(svg("circle", { cx: 0, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
+          group.append(svg("circle", { cx: NODE_W, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
+          group.append(svg("text", { x: 13, y: 20, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : `EXTERNAL · ${node.kind}`) : node.kind));
+          group.append(svg("text", { x: 13, y: 43, class: "node-id" }, short(node.id)));
+          const meta = node.external ? "satisfied outside this plan" : [node.module, node.surface].filter(Boolean).join(" / ") || "suite-wide";
+          group.append(svg("text", { x: 13, y: 65, class: "node-meta" }, short(meta, 31)));
+          if (!node.external) group.append(svg("text", { x: NODE_W - 13, y: 20, class: "node-claims", "text-anchor": "end" }, `${node.claims}c`));
+          group.addEventListener("click", () => select(node.key));
+          group.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(node.key); } });
+          graph.append(group);
+        }
+        applyFilters();
+      }
+
+      function select(key) {
+        state.selected = key;
+        graph.querySelectorAll(".node").forEach((element) => element.classList.toggle("selected", element.dataset.key === key));
+        const node = state.nodes.get(key);
+        if (!node) return;
+        $("inspector-empty").classList.add("hidden");
+        const detail = $("detail");
+        detail.classList.remove("hidden");
+        const requirements = (node.requires || []).map((requirement) => `
+          <div class="requirement" data-target="${escapeHtml(requirement.id)}">
+            <span class="requirement-id">${escapeHtml(requirement.kind)}:${escapeHtml(requirement.id)}</span>
+            <span class="requirement-meta">${requirement.ordering ? "ordering dependency" : "deferred reference"}</span>
+          </div>`).join("");
+        detail.innerHTML = `
+          <div class="detail-kind">${node.external ? (node.realized ? "realized" : "outside run") : escapeHtml(node.kind)}</div>
+          <h2>${escapeHtml(node.id)}</h2>
+          <p class="detail-path">${escapeHtml(node.path || "No artifact record in this plan")}</p>
+          <dl class="detail-grid">
+            <div><dt>Wave</dt><dd>${node.external ? "—" : node.wave}</dd></div>
+            <div><dt>Claims</dt><dd>${node.external ? "—" : node.claims}</dd></div>
+            <div><dt>Module</dt><dd>${escapeHtml(node.module || "—")}</dd></div>
+            <div><dt>Population</dt><dd>${escapeHtml(node.population || "—")}</dd></div>
+          </dl>
+          ${node.profiles?.length ? `<h3>Profiles</h3><div class="pills">${node.profiles.map((profile) => `<span class="pill">${escapeHtml(profile)}</span>`).join("")}</div>` : ""}
+          <h3>Requires</h3>
+          ${requirements ? `<div class="requires">${requirements}</div>` : `<p class="detail-path">No declared dependencies.</p>`}`;
+        detail.querySelectorAll(".requirement").forEach((element) => element.addEventListener("click", () => selectById(element.dataset.target)));
+        applyFilters();
+      }
+
+      function selectById(id) {
+        const node = [...state.nodes.values()].find((candidate) => candidate.id === id);
+        if (node) select(node.key);
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[character]));
+      }
+
+      function applyFilters() {
+        const query = $("search").value.trim().toLowerCase();
+        const showOrdering = $("show-ordering").checked;
+        const showDeferred = $("show-deferred").checked;
+        const showExternal = $("show-external").checked;
+        graph.querySelectorAll(".node").forEach((element) => {
+          const node = state.nodes.get(element.dataset.key);
+          const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
+          const dim = (query && !searchable.includes(query)) || (node.external && !showExternal);
+          element.classList.toggle("dim", Boolean(dim));
+        });
+        graph.querySelectorAll(".edge").forEach((element) => {
+          const isDeferred = element.classList.contains("deferred");
+          const touchesExternal = state.nodes.get(element.dataset.source)?.external;
+          const hidden = (isDeferred ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal);
+          const selected = state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
+          element.style.display = hidden ? "none" : "";
+          element.classList.toggle("hot", Boolean(selected && !hidden));
+          element.classList.toggle("dim", Boolean(state.selected && !selected));
+        });
+      }
+
+      function updateMetrics(plan) {
+        const units = (plan.waves || []).flatMap((wave) => wave.units || []);
+        $("metric-waves").textContent = plan.floor ?? "—";
+        $("metric-units").textContent = units.length;
+        $("metric-claims").textContent = units.reduce((sum, unit) => sum + (unit.claims || 0), 0);
+        const ready = $("metric-ready");
+        ready.textContent = plan.ready ? "YES" : "NO";
+        ready.classList.toggle("not-ready", !plan.ready);
+      }
+
+      function showError(message) {
+        $("error-message").textContent = message;
+        $("error-state").classList.remove("hidden");
+        $("live-dot").classList.add("error");
+        $("updated").textContent = "Source error";
+      }
+
+      function showToast(message) {
+        const toast = $("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
+      }
+
+      async function load(manual = false) {
+        if (state.polling) return;
+        state.polling = true;
+        try {
+          const response = await fetch(`/plan.json?t=${Date.now()}`, { cache: "no-store" });
+          if (!response.ok) {
+            let message = `The plan endpoint returned HTTP ${response.status}.`;
+            try { message = (await response.json()).error || message; } catch (_) { /* response was not JSON */ }
+            throw new Error(message);
+          }
+          const raw = await response.text();
+          let plan = state.plan;
+          if (raw !== state.raw) {
+            plan = JSON.parse(raw);
+            assertPlan(plan);
+            state.raw = raw;
+            state.plan = plan;
+            if (state.selected && !model(plan).nodes.has(state.selected)) state.selected = null;
+            $("source-name").textContent = decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
+            updateMetrics(plan);
+            render();
+            if (manual) showToast("Plan refreshed");
+          } else if (manual) {
+            showToast("Plan is unchanged");
+          }
+          if (plan?.refused) {
+            showError(`Planning was refused: ${plan.refused.map((item) => `${item.code} — ${item.message}`).join(" ")}`);
+          } else {
+            // A valid document may be byte-for-byte identical to the last good
+            // one after an editor's partial write. Recovery must still clear
+            // the transient error without requiring a second edit.
+            $("error-state").classList.add("hidden");
+            $("live-dot").classList.remove("error");
+          }
+          if (!$("error-state").classList.contains("hidden")) return;
+          $("updated").textContent = `Live · ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+        } catch (error) {
+          showError(error instanceof Error ? error.message : String(error));
+        } finally {
+          state.polling = false;
+        }
+      }
+
+      $("search").addEventListener("input", applyFilters);
+      ["show-ordering", "show-deferred", "show-external"].forEach((id) => $(id).addEventListener("change", applyFilters));
+      $("refresh").addEventListener("click", () => load(true));
+      $("fit").addEventListener("click", () => { scroll.scrollTo({ top: 0, left: 0, behavior: "smooth" }); showToast("Graph fitted"); });
+      window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) render(); });
+
+      load();
+      setInterval(load, POLL_MS);
+    })();
+  </script>
+</body>
+</html>

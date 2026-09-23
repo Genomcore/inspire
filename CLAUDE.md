@@ -163,7 +163,7 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **five `emanate-*` scripts are the same class of thing** — the
+      The **five emanation mechanics scripts are the same class of thing** — the
       emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
       `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
       the **strict** parser that refuses an old shape rather than read it as an
@@ -176,7 +176,7 @@ repo is both its source and its own marketplace.
       needs — the declared test infrastructure and the project's wire-convention
       decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
       stdout and nothing written anywhere — see
-      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
+      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md)),
       and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
       result → one pass/fail verdict on stdout, the deterministic evidence an
       overseer's approval can never stand in for — see
@@ -187,6 +187,9 @@ repo is both its source and its own marketplace.
       implementation** — neither sources a `derive-*` unit — and the one unit
       they do share is `gate-citations.sh`, because the `@claim` token has one
       scanner and two readings: coverage for gate, realization for plan.
+      `emanate-plan-viewer.sh` serves one plan JSON document as a local HTML/SVG
+      dependency graph and polls the source, so a rewritten plan redraws without
+      a page reload; its dependency-free assets live under `base/bin/viewer/`.
       `emanate-results.sh` (a test runner's own report → the
       `inspire.suite-results/1` manifest on stdout) exists because gate reads
       that one shape and nothing else, and leaving its production to the
