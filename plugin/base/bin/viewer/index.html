@@ -17,6 +17,7 @@
       --line-strong: #46545f;
       --accent: #68b69c;
       --accent-dim: #284d42;
+      --navigation: #9baae8;
       --danger: #d58478;
       --warning: #d3ad68;
       --mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -154,6 +155,7 @@
     .legend-row { display: flex; align-items: center; gap: 9px; }
     .legend-line { width: 28px; border-top: 1.5px solid var(--line-strong); }
     .legend-line.deferred { border-top-style: dashed; }
+    .legend-line.navigation { border-top: 2px dotted var(--navigation); }
     .legend-node { width: 14px; height: 10px; border: 1px dashed var(--line-strong); }
 
     .stage { position: relative; min-width: 0; overflow: hidden; background-color: var(--canvas); }
@@ -178,8 +180,10 @@
     .wave-rule { stroke: var(--line); stroke-width: 1; }
     .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.35; opacity: .78; }
     .edge.deferred { stroke-dasharray: 5 5; opacity: .62; }
+    .edge.navigation { stroke: var(--navigation); stroke-dasharray: 2 5; stroke-width: 1.7; opacity: .9; }
     .edge.dim { opacity: .08; }
     .edge.hot { stroke: var(--accent); stroke-width: 1.8; opacity: 1; }
+    .edge.navigation.hot { stroke: var(--navigation); stroke-width: 2.3; }
     .node { cursor: pointer; transition: opacity .2s ease; }
     .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
     .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
@@ -281,6 +285,7 @@
           <div class="toggles">
             <label class="toggle"><input id="show-ordering" type="checkbox" checked><span class="toggle-box"></span>Ordering</label>
             <label class="toggle"><input id="show-deferred" type="checkbox" checked><span class="toggle-box"></span>Deferred</label>
+            <label class="toggle"><input id="show-navigation" type="checkbox" checked><span class="toggle-box"></span>Navigation</label>
             <label class="toggle"><input id="show-external" type="checkbox" checked><span class="toggle-box"></span>External targets</label>
           </div>
         </section>
@@ -289,6 +294,7 @@
           <div class="legend">
             <div class="legend-row"><span class="legend-line"></span>Ordering dependency</div>
             <div class="legend-row"><span class="legend-line deferred"></span>Deferred reference</div>
+            <div class="legend-row"><span class="legend-line navigation"></span>Screen navigation</div>
             <div class="legend-row"><span class="legend-node"></span>Outside this run</div>
           </div>
         </section>
@@ -302,7 +308,7 @@
       </section>
 
       <aside class="inspector" aria-label="Unit details">
-        <div class="inspector-empty" id="inspector-empty">Select a unit to inspect its path, profiles, claim count, and dependency edges.</div>
+        <div class="inspector-empty" id="inspector-empty">Select a unit to inspect its path, profiles, claim count, and dependency edges. Click it again, click empty graph space, or press Escape to clear the selection.</div>
         <div class="detail hidden" id="detail"></div>
       </aside>
     </main>
@@ -379,7 +385,11 @@
                 nodes.set(key, source);
               }
             }
-            edges.push({ source: source.key, target: target.key, ordering: requirement.ordering });
+            if (target.kind === "screen" && requirement.kind === "screen") {
+              edges.push({ source: target.key, target: source.key, type: "navigation" });
+            } else {
+              edges.push({ source: source.key, target: target.key, type: requirement.ordering ? "ordering" : "deferred" });
+            }
           }
         }
         return { nodes, byWave, external: [...external.values()], edges };
@@ -401,7 +411,17 @@
         return { columns, positions, width: Math.max(width, scroll.clientWidth), height: Math.max(height, scroll.clientHeight) };
       }
 
-      function edgePath(a, b) {
+      function edgePath(a, b, type) {
+        if (type === "navigation" && a.x === b.x) {
+          const startY = a.y + NODE_H / 2;
+          const endY = b.y + NODE_H / 2;
+          if (startY <= endY) {
+            const x = a.x + NODE_W;
+            return `M ${x} ${startY} C ${x + 40} ${startY}, ${x + 40} ${endY}, ${x} ${endY}`;
+          }
+          const x = a.x;
+          return `M ${x} ${startY} C ${x - 40} ${startY}, ${x - 40} ${endY}, ${x} ${endY}`;
+        }
         const x1 = a.x + NODE_W;
         const y1 = a.y + NODE_H / 2;
         const x2 = b.x;
@@ -434,6 +454,9 @@
         const marker = svg("marker", { id: "arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
         marker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", fill: "#46545f" }));
         defs.append(marker);
+        const navigationMarker = svg("marker", { id: "navigation-arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
+        navigationMarker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", fill: "#9baae8" }));
+        defs.append(navigationMarker);
         graph.append(defs);
 
         const hasExternal = data.external.length > 0;
@@ -453,10 +476,10 @@
           const b = scene.positions.get(edge.target);
           if (!a || !b) return;
           const path = svg("path", {
-            d: edgePath(a, b),
-            class: `edge ${edge.ordering ? "ordering" : "deferred"}`,
+            d: edgePath(a, b, edge.type),
+            class: `edge ${edge.type}`,
             "data-source": edge.source, "data-target": edge.target,
-            "marker-end": "url(#arrow)"
+            "marker-end": edge.type === "navigation" ? "url(#navigation-arrow)" : "url(#arrow)"
           });
           edgeLayer.append(path);
         });
@@ -468,7 +491,7 @@
           const group = svg("g", {
             class: `node${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
             transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
-            "aria-label": `${node.kind} ${node.id}`, "data-key": node.key
+            "aria-label": `${node.kind} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key
           });
           group.append(svg("rect", { width: NODE_W, height: NODE_H, class: "node-bg" }));
           group.append(svg("circle", { cx: 0, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
@@ -486,8 +509,16 @@
       }
 
       function select(key) {
+        if (state.selected === key) {
+          clearSelection();
+          return;
+        }
         state.selected = key;
-        graph.querySelectorAll(".node").forEach((element) => element.classList.toggle("selected", element.dataset.key === key));
+        graph.querySelectorAll(".node").forEach((element) => {
+          const selected = element.dataset.key === key;
+          element.classList.toggle("selected", selected);
+          element.setAttribute("aria-pressed", String(selected));
+        });
         const node = state.nodes.get(key);
         if (!node) return;
         $("inspector-empty").classList.add("hidden");
@@ -496,7 +527,7 @@
         const requirements = (node.requires || []).map((requirement) => `
           <div class="requirement" data-target="${escapeHtml(requirement.id)}">
             <span class="requirement-id">${escapeHtml(requirement.kind)}:${escapeHtml(requirement.id)}</span>
-            <span class="requirement-meta">${requirement.ordering ? "ordering dependency" : "deferred reference"}</span>
+            <span class="requirement-meta">${node.kind === "screen" && requirement.kind === "screen" ? "navigation link" : requirement.ordering ? "ordering dependency" : "deferred reference"}</span>
           </div>`).join("");
         detail.innerHTML = `
           <div class="detail-kind">${node.external ? (node.realized ? "realized" : "outside run") : escapeHtml(node.kind)}</div>
@@ -509,9 +540,21 @@
             <div><dt>Population</dt><dd>${escapeHtml(node.population || "—")}</dd></div>
           </dl>
           ${node.profiles?.length ? `<h3>Profiles</h3><div class="pills">${node.profiles.map((profile) => `<span class="pill">${escapeHtml(profile)}</span>`).join("")}</div>` : ""}
-          <h3>Requires</h3>
-          ${requirements ? `<div class="requires">${requirements}</div>` : `<p class="detail-path">No declared dependencies.</p>`}`;
+          <h3>Connections</h3>
+          ${requirements ? `<div class="requires">${requirements}</div>` : `<p class="detail-path">No declared connections.</p>`}`;
         detail.querySelectorAll(".requirement").forEach((element) => element.addEventListener("click", () => selectById(element.dataset.target)));
+        applyFilters();
+      }
+
+      function clearSelection() {
+        state.selected = null;
+        graph.querySelectorAll(".node.selected").forEach((element) => {
+          element.classList.remove("selected");
+          element.setAttribute("aria-pressed", "false");
+        });
+        $("detail").classList.add("hidden");
+        $("detail").replaceChildren();
+        $("inspector-empty").classList.remove("hidden");
         applyFilters();
       }
 
@@ -528,6 +571,7 @@
         const query = $("search").value.trim().toLowerCase();
         const showOrdering = $("show-ordering").checked;
         const showDeferred = $("show-deferred").checked;
+        const showNavigation = $("show-navigation").checked;
         const showExternal = $("show-external").checked;
         graph.querySelectorAll(".node").forEach((element) => {
           const node = state.nodes.get(element.dataset.key);
@@ -536,9 +580,9 @@
           element.classList.toggle("dim", Boolean(dim));
         });
         graph.querySelectorAll(".edge").forEach((element) => {
-          const isDeferred = element.classList.contains("deferred");
-          const touchesExternal = state.nodes.get(element.dataset.source)?.external;
-          const hidden = (isDeferred ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal);
+          const type = element.classList.contains("navigation") ? "navigation" : element.classList.contains("deferred") ? "deferred" : "ordering";
+          const touchesExternal = state.nodes.get(element.dataset.source)?.external || state.nodes.get(element.dataset.target)?.external;
+          const hidden = (type === "navigation" ? !showNavigation : type === "deferred" ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal);
           const selected = state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
           element.style.display = hidden ? "none" : "";
           element.classList.toggle("hot", Boolean(selected && !hidden));
@@ -588,7 +632,7 @@
             assertPlan(plan);
             state.raw = raw;
             state.plan = plan;
-            if (state.selected && !model(plan).nodes.has(state.selected)) state.selected = null;
+            if (state.selected && !model(plan).nodes.has(state.selected)) clearSelection();
             $("source-name").textContent = decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
             updateMetrics(plan);
             render();
@@ -615,7 +659,13 @@
       }
 
       $("search").addEventListener("input", applyFilters);
-      ["show-ordering", "show-deferred", "show-external"].forEach((id) => $(id).addEventListener("change", applyFilters));
+      graph.addEventListener("click", (event) => {
+        if (!event.target.closest(".node")) clearSelection();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && state.selected) clearSelection();
+      });
+      ["show-ordering", "show-deferred", "show-navigation", "show-external"].forEach((id) => $(id).addEventListener("change", applyFilters));
       $("refresh").addEventListener("click", () => load(true));
       $("fit").addEventListener("click", () => { scroll.scrollTo({ top: 0, left: 0, behavior: "smooth" }); showToast("Graph fitted"); });
       window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) render(); });
