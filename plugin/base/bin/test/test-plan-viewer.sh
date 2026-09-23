@@ -90,6 +90,12 @@ if ! command -v node >/dev/null 2>&1; then
   echo "SKIP the embedded viewer JavaScript parses (node is not installed)"
 elif node --check "$TMP/viewer.js" > "$TMP/node.out" 2>&1; then
   ok "the embedded viewer JavaScript parses"
+  if node "$HERE/test-plan-viewer-filters.js" "$BIN/viewer/index.html" > "$TMP/filters.out" 2>&1; then
+    ok "unit type focus composes with both path modes"
+  else
+    bad "unit type focus composes with both path modes"
+    cat "$TMP/filters.out"
+  fi
 else
   bad "the embedded viewer JavaScript parses"
   cat "$TMP/node.out"

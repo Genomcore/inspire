@@ -1125,7 +1125,7 @@
           const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
           const onPath = path?.nodes.has(element.dataset.key);
           const externalExcluded = node.external && !showExternal && element.dataset.key !== state.selected;
-          const kindMismatch = kindFocus && node.kind !== kindFocus && !onPath && element.dataset.key !== state.selected;
+          const kindMismatch = kindFocus && node.kind !== kindFocus && element.dataset.key !== state.selected;
           const dim = (query && !searchable.includes(query)) || externalExcluded || (path && !onPath) || kindMismatch;
           element.style.display = only && (!onPath || externalExcluded) ? "none" : "";
           element.classList.toggle("dim", Boolean(dim));
@@ -1136,11 +1136,11 @@
           const touchesExternal = state.nodes.get(element.dataset.source)?.external || state.nodes.get(element.dataset.target)?.external;
           const onPath = path?.edges.has(Number(element.dataset.index));
           const hidden = (type === "navigation" ? !showNavigation : type === "deferred" ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal) || (only && !onPath);
-          const selected = path ? onPath : state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
           const kindRelevant = !kindFocus || [element.dataset.source, element.dataset.target].some((key) => state.nodes.get(key)?.kind === kindFocus);
+          const selected = kindRelevant && (path ? onPath : state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected));
           element.style.display = hidden ? "none" : "";
           element.classList.toggle("hot", Boolean(selected && !hidden));
-          element.classList.toggle("dim", Boolean(!selected && (state.selected || !kindRelevant)));
+          element.classList.toggle("dim", Boolean(!selected && (state.selected || path || !kindRelevant)));
           const hit = hitByIndex.get(Number(element.dataset.index));
           if (hit) {
             hit.style.display = hidden ? "none" : "";
