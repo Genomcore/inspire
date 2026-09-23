@@ -17,7 +17,7 @@ export const runRalphLoop = async (
   plan: EmanationPlan,
   options: RalphLoopOptions,
   dependencies: RalphLoopDependencies = {},
-): Promise<{ stalled: RalphLoopError[]; blocked: string[] }> => {
+): Promise<void> => {
   if (!plan.ready) {
     throw new EmanationPlanNotReadyError()
   }
@@ -25,9 +25,6 @@ export const runRalphLoop = async (
   const runCommand = dependencies.runCommand ?? defaultRunCommand
   const git = dependencies.git ?? new GitWorktrees(repoRoot, runCommand)
   const runTests = await createTestRunner(repoRoot, options.testCommand, runCommand)
-  const stalled: RalphLoopError[] = []
-  const blocked: string[] = []
-  const unavailable = new Set<string>()
   const baseBranch = await git.currentBranch()
 
   const goalUnits = plan.goal === null ? null : new Set(plan.goal.units)
@@ -38,12 +35,6 @@ export const runRalphLoop = async (
       ? wave.units
       : wave.units.filter((unit) => goalUnits.has(unit.id))
     for (const unit of units) {
-      if (unit.requires.some((dependency) => dependency.ordering &&
-          unavailable.has(`${dependency.kind}:${dependency.id}`))) {
-        blocked.push(unit.id)
-        unavailable.add(`${unit.kind}:${unit.id}`)
-        continue
-      }
       const worktree = await git.createWorktree(baseBranch, wave.wave, unit)
       const agent = await createOmpAgent(worktree.path)
       let testResult: CommandResult
@@ -60,18 +51,15 @@ export const runRalphLoop = async (
         await agent.dispose()
       }
       if (testResult.exitCode !== 0) {
-        stalled.push(new RalphLoopError(
+        throw new RalphLoopError(
           unit.id,
           worktree.branch,
           worktree.path,
           testResult,
-        ))
-        unavailable.add(`${unit.kind}:${unit.id}`)
-        continue
+        )
       }
       await git.merge(worktree, unit)
       await git.remove(worktree)
     }
   }
-  return { stalled, blocked }
 }
