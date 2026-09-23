@@ -271,11 +271,6 @@ implementation, so the two packages evolve independently.
 
 ## Consumers
 
-`/inspire-emanate run`'s gate step is the entry point; nothing else runs it.
-The orchestrator reads the verdict as the deterministic half of its promote
-decision — and **promote is git-side**: the unit's integration branch merges
-into the run's goal branch, carrying the verdict's digest in the merge
-commit's trailers. **No `lifecycle:` is walked and no KB file is written**,
-because a run never touches the knowledge base
-(`inspire-emanate/references/run.md` § promote). Gate itself calls nothing,
-edits no frontmatter, and never writes `lifecycle:` either.
+`emanate-gate.sh` is available to a run that needs a deterministic claim
+verdict. The current OMP Ralph loop does not call it. Gate itself calls nothing,
+edits no frontmatter, and never writes `lifecycle:`.
