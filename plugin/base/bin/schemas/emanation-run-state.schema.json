@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspire.openbims.dev/schemas/emanation-run-state.schema.json",
+  "title": "inspire.emanation-run-state/1",
+  "description": "Mutable execution state for one immutable inspire.emanation-plan/2 snapshot. Unit keys join to waves[].units[].id; this document never replaces the plan or proves current realization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "plan_sha256", "run_id", "goal_branch", "status", "updated_at", "units"],
+  "properties": {
+    "schema": { "const": "inspire.emanation-run-state/1" },
+    "plan_sha256": {
+      "description": "SHA-256 of the exact plan snapshot bytes. A writer must start a new state document for a different plan.",
+      "type": "string", "pattern": "^[a-f0-9]{64}$"
+    },
+    "run_id": {
+      "description": "The run id used by the orchestrator and its report; null before the run starts.",
+      "type": ["string", "null"]
+    },
+    "goal_branch": {
+      "description": "The goal branch where promotion merges and the report live; null before the run starts.",
+      "type": ["string", "null"]
+    },
+    "status": { "$ref": "#/$defs/runStatus" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "units": {
+      "description": "One entry for every planned unit, keyed by its id. A replan may carry forward delivered outcomes only after checking current realization evidence.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/unitState" }
+    }
+  },
+  "$defs": {
+    "runStatus": { "enum": ["planned", "running", "completed", "interrupted"] },
+    "unitStatus": { "enum": ["pending", "running", "delivered", "stalled", "blocked"] },
+    "phase": { "enum": ["prepare", "persona", "overseer_gate", "harvest", "verify", "gate", "drill", "promote"] },
+    "persona": { "enum": ["contracter", "tester", "implementer"] },
+    "unitState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "attempt", "updated_at"],
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "pending" } } },
+          "then": { "properties": { "attempt": { "const": 0 } } } },
+        { "if": { "properties": { "status": { "enum": ["running", "delivered", "stalled"] } } },
+          "then": { "properties": { "attempt": { "minimum": 1 } } } },
+        { "if": { "properties": { "status": { "const": "blocked" } } },
+          "then": { "required": ["reason", "blocked_by"],
+                    "properties": { "attempt": { "const": 0 }, "reason": { "minLength": 1 }, "blocked_by": { "minItems": 1 } } } },
+        { "if": { "properties": { "status": { "const": "stalled" } } },
+          "then": { "required": ["reason"], "properties": { "reason": { "minLength": 1 } } } }
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/unitStatus" },
+        "attempt": {
+          "description": "1-based attempt number once started; 0 while pending. A new attempt does not erase the prior run's git or log evidence.",
+          "type": "integer", "minimum": 0
+        },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "phase": { "$ref": "#/$defs/phase" },
+        "persona": { "$ref": "#/$defs/persona" },
+        "reason": {
+          "description": "Human-readable stall or block reason. Required by the writer for stalled and blocked units.",
+          "type": "string"
+        },
+        "blocked_by": {
+          "description": "Ordering prerequisite ids that stalled; used only for blocked units.",
+          "type": "array", "uniqueItems": true, "items": { "type": "string" }
+        },
+        "integration_branch": { "type": "string" },
+        "worktree": { "type": "string" },
+        "rework_cycles": { "type": "integer", "minimum": 0 },
+        "infrastructure_retries": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -813,6 +813,37 @@ checkout, once they have read them.
 
 ## The run report
 
+### The run-state sidecar
+
+At t=0, save the exact ready plan JSON for this invocation under
+`.inspire/runs/<run-id>/plan.json` in the goal worktree and initialize
+`.inspire/runs/<run-id>/state.json` with
+`.inspire/bin/emanate-run-state.py init PLAN STATE`. Never edit the saved plan.
+The run-state contract and its replan rule are
+[`emanation-run-state.md`](../../_references/emanation-run-state.md). This file
+is the live, machine-readable account of the *same* run that
+`.inspire/last-emanation.log` reports in prose. The sidecar is an execution
+record, never realization evidence or a replacement for the gate.
+
+Update the root to `running` with the run id and goal branch before wave 1.
+Update a unit to `running` before starting an attempt, then update `phase` and
+`persona` at each handoff. Record infrastructure retries and rework cycles in
+their separate counters. After the promotion merge lands, mark the unit
+`delivered`; at a stall, record `stalled` with the failing phase and reason;
+mark skipped dependents `blocked` with `blocked_by` and a reason. At exit,
+mark the root `completed` or `interrupted`. The updater validates the saved
+plan digest and rewrites the state atomically, so the viewer never reads a
+partial transition. One orchestrator owns the file, including when sibling
+units run in parallel. A stale `running` entry after a crash is a clue for
+autopsy, not a command to resume: inspect the agent, branch and kept worktree
+before starting another attempt.
+
+Commit the saved plan and state with the identity report block, and commit the
+latest state with each wave-close and closing report block. Mid-wave state
+updates stay in the goal worktree so the viewer can poll them; a killed run
+still leaves the last atomic file on disk. A later invocation gets its own
+`<run-id>` directory, preserving the old plan and state for a replan or review.
+
 **One file, one run: truncated at t=0 of an act-mode run, then appended to as
 each wave closes.** `run` never holds the whole report in memory waiting for an
 exit that might be hours away — every iteration's outcome lands in
