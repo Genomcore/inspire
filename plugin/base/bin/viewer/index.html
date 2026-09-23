@@ -111,6 +111,8 @@
     .control:hover { border-color: var(--line-strong); background: var(--panel-2); }
     .control:active { transform: translateY(1px); }
     .control svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+    .control:disabled { opacity: .4; cursor: default; }
+    .zoom-level { min-width: 46px; align-self: center; color: var(--muted); font: 11px var(--mono); text-align: center; }
 
     .workspace {
       display: grid;
@@ -156,6 +158,7 @@
     .toggle input:checked + .toggle-box { border-color: var(--accent); background: var(--accent-dim); }
     .toggle input:checked + .toggle-box::after { content: ""; width: 6px; height: 3px; border: solid var(--accent); border-width: 0 0 2px 2px; transform: rotate(-45deg) translateY(-1px); }
     .legend { display: grid; gap: 10px; color: var(--muted); font-size: 12px; }
+    .graph-hint { margin: 14px 0 0; color: var(--faint); font: 11px/1.5 var(--mono); }
     .legend-row { display: flex; align-items: center; gap: 9px; }
     .legend-line { width: 28px; border-top: 1.5px solid var(--line-strong); }
     .legend-line.deferred { border-top-style: dashed; }
@@ -168,10 +171,10 @@
       background-image: radial-gradient(circle, #4b5861 1px, transparent 1px);
       background-size: 24px 24px;
     }
-    .graph-scroll { position: absolute; inset: 0; overflow: auto; }
+    .graph-scroll { position: absolute; inset: 0; display: flex; overflow: auto; }
     .stage.graph-view .graph-scroll { cursor: grab; }
     .stage.graph-view .graph-scroll.dragging { cursor: grabbing; }
-    #graph { display: block; min-width: 100%; min-height: 100%; user-select: none; }
+    #graph { display: block; flex: none; margin: auto; user-select: none; }
     .empty-state, .error-state {
       position: absolute; inset: 0; display: grid; place-items: center; padding: 32px;
     }
@@ -272,6 +275,7 @@
           <button class="view-option" id="view-graph" type="button" aria-pressed="false">Graph</button>
         </div>
         <button class="control graph-only hidden" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+        <output class="zoom-level graph-only hidden" id="zoom-level" aria-label="Graph zoom level">100%</output>
         <button class="control graph-only hidden" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
         <button class="control" id="fit" type="button" title="Fit graph">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
@@ -319,6 +323,7 @@
             <div class="legend-row"><span class="legend-line navigation"></span>Screen navigation</div>
             <div class="legend-row"><span class="legend-node"></span>Outside this run</div>
           </div>
+          <p class="graph-hint graph-only hidden">Graph view: scroll to zoom around the pointer; drag empty space to pan.</p>
         </section>
       </aside>
 
@@ -352,6 +357,8 @@
       const ROW_GAP = 26;
       const TOP = 78;
       const SIDE = 54;
+      const MIN_ZOOM = 0.02;
+      const MAX_ZOOM = 4;
       const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false, view: "waves", zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
@@ -774,23 +781,29 @@
         showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
       }
 
-      function setZoom(next) {
+      function setZoom(next, anchorX = scroll.clientWidth / 2, anchorY = scroll.clientHeight / 2) {
         if (!state.scene) return;
-        const centerX = (scroll.scrollLeft + scroll.clientWidth / 2) / state.zoom;
-        const centerY = (scroll.scrollTop + scroll.clientHeight / 2) / state.zoom;
-        state.zoom = Math.max(0.15, Math.min(2, next));
+        const before = graph.getBoundingClientRect();
+        const viewport = scroll.getBoundingClientRect();
+        const x = (viewport.left + anchorX - before.left) / state.zoom;
+        const y = (viewport.top + anchorY - before.top) / state.zoom;
+        state.zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
         graph.setAttribute("width", Math.round(state.scene.width * state.zoom));
         graph.setAttribute("height", Math.round(state.scene.height * state.zoom));
-        scroll.scrollLeft = centerX * state.zoom - scroll.clientWidth / 2;
-        scroll.scrollTop = centerY * state.zoom - scroll.clientHeight / 2;
+        const after = graph.getBoundingClientRect();
+        scroll.scrollLeft += after.left + x * state.zoom - (viewport.left + anchorX);
+        scroll.scrollTop += after.top + y * state.zoom - (viewport.top + anchorY);
+        $("zoom-level").textContent = `${Math.round(state.zoom * 100)}%`;
+        $("zoom-out").disabled = state.zoom <= MIN_ZOOM;
+        $("zoom-in").disabled = state.zoom >= MAX_ZOOM;
       }
 
       function fitGraph() {
         if (!state.scene) return;
         const zoom = Math.min(1, (scroll.clientWidth - 24) / state.scene.width, (scroll.clientHeight - 24) / state.scene.height);
         setZoom(zoom);
-        scroll.scrollLeft = Math.max(0, (state.scene.width * state.zoom - scroll.clientWidth) / 2);
-        scroll.scrollTop = Math.max(0, (state.scene.height * state.zoom - scroll.clientHeight) / 2);
+        scroll.scrollLeft = Math.max(0, (graph.clientWidth - scroll.clientWidth) / 2);
+        scroll.scrollTop = Math.max(0, (graph.clientHeight - scroll.clientHeight) / 2);
       }
 
       function setView(view) {
@@ -866,6 +879,13 @@
         scroll.scrollLeft = pan.left - (event.clientX - pan.x);
         scroll.scrollTop = pan.top - (event.clientY - pan.y);
       });
+      scroll.addEventListener("wheel", (event) => {
+        if (state.view !== "graph" || event.ctrlKey || !state.scene) return;
+        event.preventDefault();
+        const bounds = scroll.getBoundingClientRect();
+        const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroll.clientHeight : 1);
+        setZoom(state.zoom * Math.exp(-delta * 0.0015), event.clientX - bounds.left, event.clientY - bounds.top);
+      }, { passive: false });
       ["pointerup", "pointercancel"].forEach((name) => scroll.addEventListener(name, () => {
         pan = null;
         scroll.classList.remove("dragging");
