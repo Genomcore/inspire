@@ -458,7 +458,7 @@
             <button class="kind-filter" type="button" data-kind="action" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Actions<span class="kind-count">0</span></button>
             <button class="kind-filter" type="button" data-kind="screen" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Screens<span class="kind-count">0</span></button>
             <button class="kind-filter" type="button" data-kind="component" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Components<span class="kind-count">0</span></button>
-            <button class="kind-filter" type="button" data-kind="pattern" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Layouts<span class="kind-count">0</span></button>
+            <button class="kind-filter" type="button" data-kind="pattern" aria-pressed="false"><span class="kind-swatch" aria-hidden="true"></span>Patterns<span class="kind-count">0</span></button>
           </div>
         </section>
         <section class="section">
@@ -564,10 +564,6 @@
       function short(value, length = 27) {
         if (!value) return "—";
         return value.length > length ? `${value.slice(0, length - 1)}…` : value;
-      }
-
-      function displayKind(kind) {
-        return kind === "pattern" ? "layout" : kind;
       }
 
       function model(plan) {
@@ -872,19 +868,19 @@
           const group = svg("g", {
             class: `node${state.view === "graph" ? " radial" : ""}${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
             transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
-            "aria-label": `${displayKind(node.kind)} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key, "data-kind": node.kind
+            "aria-label": `${node.kind} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key, "data-kind": node.kind
           });
-          group.append(svg("title", {}, `${displayKind(node.kind)} ${node.id}`));
+          group.append(svg("title", {}, `${node.kind} ${node.id}`));
           group.append(svg("rect", { width: scene.nodeWidth, height: scene.nodeHeight, class: "node-bg" }));
           if (!node.external) group.append(svg("rect", { x: 4, y: 4, width: 4, height: scene.nodeHeight - 8, rx: 2, class: "node-type-bar" }));
           if (state.view === "graph") {
-            group.append(svg("text", { x: 12, y: 19, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : "OUTSIDE RUN") : displayKind(node.kind)));
+            group.append(svg("text", { x: 12, y: 19, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : "OUTSIDE RUN") : node.kind));
             group.append(svg("text", { x: 12, y: 40, class: "node-id" }, short(node.id, 21)));
             if (!node.external) group.append(svg("text", { x: RADIAL_W - 11, y: 19, class: "node-claims", "text-anchor": "end" }, `${node.claims}c`));
           } else {
             group.append(svg("circle", { cx: 0, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
             group.append(svg("circle", { cx: NODE_W, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
-            group.append(svg("text", { x: 13, y: 20, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : `EXTERNAL · ${displayKind(node.kind)}`) : displayKind(node.kind)));
+            group.append(svg("text", { x: 13, y: 20, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : `EXTERNAL · ${node.kind}`) : node.kind));
             group.append(svg("text", { x: 13, y: 43, class: "node-id" }, short(node.id)));
             const meta = node.external ? "satisfied outside this plan" : [node.module, node.surface].filter(Boolean).join(" / ") || "suite-wide";
             group.append(svg("text", { x: 13, y: 65, class: "node-meta" }, short(meta, 31)));
@@ -957,7 +953,7 @@
       function describeEdge(edge) {
         const source = state.nodes.get(edge.source);
         const target = state.nodes.get(edge.target);
-        const unit = (node) => `${displayKind(node.kind)} ${node.id}`;
+        const unit = (node) => `${node.kind} ${node.id}`;
         if (edge.type === "navigation") return { type: "Screen navigation", first: unit(source), verb: "navigates to", second: unit(target) };
         if (edge.type === "deferred") return { type: "Deferred reference", first: unit(target), verb: "references", second: unit(source) };
         return { type: "Ordering dependency", first: unit(target), verb: "depends on", second: unit(source) };
@@ -1046,11 +1042,11 @@
         detail.dataset.kind = node.kind;
         const requirements = (node.requires || []).map((requirement) => `
           <div class="requirement" data-target="${escapeHtml(requirement.id)}">
-            <span class="requirement-id">${escapeHtml(displayKind(requirement.kind))}:${escapeHtml(requirement.id)}</span>
+            <span class="requirement-id">${escapeHtml(requirement.kind)}:${escapeHtml(requirement.id)}</span>
             <span class="requirement-meta">${node.kind === "screen" && requirement.kind === "screen" ? "navigation link" : requirement.ordering ? "ordering dependency" : "deferred reference"}</span>
           </div>`).join("");
         detail.innerHTML = `
-          <div class="detail-kind">${node.external ? (node.realized ? "realized" : "outside run") : escapeHtml(displayKind(node.kind))}</div>
+          <div class="detail-kind">${node.external ? (node.realized ? "realized" : "outside run") : escapeHtml(node.kind)}</div>
           <h2>${escapeHtml(node.id)}</h2>
           <p class="detail-path">${escapeHtml(node.path || "No artifact record in this plan")}</p>
           <dl class="detail-grid">
@@ -1114,7 +1110,7 @@
         const hitByIndex = new Map([...graph.querySelectorAll(".edge-hit")].map((element) => [Number(element.dataset.index), element]));
         graph.querySelectorAll(".node").forEach((element) => {
           const node = state.nodes.get(element.dataset.key);
-          const searchable = `${node.id} ${node.kind} ${displayKind(node.kind)} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
+          const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
           const onPath = path?.nodes.has(element.dataset.key);
           const externalExcluded = node.external && !showExternal && element.dataset.key !== state.selected;
           const kindMismatch = kindFocus && node.kind !== kindFocus && !onPath && element.dataset.key !== state.selected;
