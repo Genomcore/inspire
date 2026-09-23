@@ -763,7 +763,8 @@
         else if (state.runState) {
           const units = Object.values(state.runState.units);
           const count = (status) => units.filter((unit) => unit.status === status).length;
-          progress.textContent = `${state.runState.status.toUpperCase()} · ${count("delivered")}/${units.length} delivered · ${count("running")} running · ${count("stalled")} stalled · ${count("blocked")} blocked`;
+          const runLabel = state.runState.run_id ? `${state.runState.run_id} · ` : "";
+          progress.textContent = `${runLabel}${state.runState.status.toUpperCase()} · ${count("delivered")}/${units.length} delivered · ${count("running")} running · ${count("stalled")} stalled · ${count("blocked")} blocked`;
         }
         graph.querySelectorAll(".node").forEach((element) => {
           const unit = state.nodes.get(element.dataset.key);

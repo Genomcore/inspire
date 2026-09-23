@@ -6,6 +6,7 @@ HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 BIN="$HERE/.."
 SERVER="$BIN/viewer/serve.py"
 RUN_STATE="$BIN/emanate-run-state.py"
+DEMO="$BIN/viewer/demo.py"
 SOURCE="$HERE/fixtures/emanate-plan/clean-three-waves/expected-stdout.json"
 
 pass=0; fail=0
@@ -64,6 +65,10 @@ python3 "$RUN_STATE" update "$TMP/plan.json" "$TMP/run-state.json" --unit "$unit
 curl -fsS "${url}run-state.json" > "$TMP/next-state.json"
 eq "a unit update reaches the live endpoint" "$(jq -r --arg id "$unit_id" '.units[$id].status' "$TMP/next-state.json")" "running"
 eq "starting a unit opens its first attempt" "$(jq -r --arg id "$unit_id" '.units[$id].attempt' "$TMP/next-state.json")" "1"
+python3 "$DEMO" "$TMP/demo-state.json" --once --step-seconds 0 --hold-seconds 0 > "$TMP/demo.out"
+python3 "$SERVER" --check "$SOURCE" --run-state "$TMP/demo-state.json" > /dev/null
+eq "the sample replay produces a valid completed run" "$(jq -r '.status' "$TMP/demo-state.json")" "completed"
+eq "the sample retry increments the attempt" "$(jq -r '.units["auth.user"].attempt' "$TMP/demo-state.json")" "2"
 jq '.floor = 7' "$TMP/plan.json" > "$TMP/next.json"
 mv "$TMP/next.json" "$TMP/plan.json"
 curl -fsS "${url}plan.json" > "$TMP/second.json"
