@@ -1,6 +1,8 @@
 .DS_Store
 *.log
 node_modules/
+/plugin/base/bin/orchestrator/node_modules
+.claude/worktrees/
 
 # Editor and agent-tooling state. This repo is cloned wholesale to instantiate
 # a project, so local scratch must never ride along. These were previously in

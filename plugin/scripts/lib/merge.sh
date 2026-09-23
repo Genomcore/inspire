@@ -50,6 +50,11 @@ _base_excluded() {
   local name="$1" rel="$2" top="${2%%/*}"
   # bin/test/ is never materialized — neither fixtures nor harness.
   [ "$name" = "bin" ] && [ "$top" = "test" ] && return 0
+  if [ "$name" = "bin" ]; then
+    case "$rel" in
+      orchestrator/node_modules/*|orchestrator/test/*|orchestrator/test_orchestrate.py) return 0 ;;
+    esac
+  fi
   # A template-maintenance script never leaks into a project.
   case "$top" in template-*.sh) return 0 ;; esac
   return 1

@@ -46,6 +46,12 @@ check "BIN-LIB: the entry that sources them landed too" \
   "[ -x '$proj/.inspire/bin/emanate-derive.sh' ]"
 # base/bin/test/ never materializes, and lib/ must not have changed that.
 check "BIN-LIB: bin/test/ is still excluded" "[ ! -d '$proj/.inspire/bin/test' ]"
+check "BIN-LIB: emanation orchestrator materializes" \
+  "[ -f '$proj/.inspire/bin/orchestrator/orchestrate.py' ] && [ -f '$proj/.inspire/bin/orchestrator/src/cli.ts' ] && [ -f '$proj/.inspire/bin/orchestrator/bun.lock' ]"
+check "BIN-LIB: orchestrator development files stay out" \
+  "[ ! -e '$proj/.inspire/bin/orchestrator/test' ] && [ ! -e '$proj/.inspire/bin/orchestrator/test_orchestrate.py' ] && [ ! -e '$proj/.inspire/bin/orchestrator/node_modules' ]"
+check "BIN-LIB: installed run refuses missing verification before planning" \
+  "( cd '$proj' && python3 .inspire/bin/orchestrator/orchestrate.py run >/dev/null 2>&1 ); [ \$? -eq 2 ]"
 
 rm -rf "$(dirname "$proj")"
 summary

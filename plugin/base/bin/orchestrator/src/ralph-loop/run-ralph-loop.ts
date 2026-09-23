@@ -23,7 +23,7 @@ export const runRalphLoop = async (
   const repoRoot = resolve(options.repoRoot ?? process.cwd())
   const runCommand = dependencies.runCommand ?? defaultRunCommand
   const git = dependencies.git ?? new GitWorktrees(repoRoot, runCommand)
-  const testCommand = options.testCommand ?? ['bun', 'test']
+  const testCommand = options.testCommand
   const baseBranch = await git.currentBranch()
 
   const goalUnits = plan.goal === null ? null : new Set(plan.goal.units)
@@ -57,6 +57,7 @@ export const runRalphLoop = async (
           testResult,
         )
       }
+      await options.verifyUnit(worktree, unit)
       await git.merge(worktree, unit)
       await git.remove(worktree)
     }
