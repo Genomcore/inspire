@@ -18,6 +18,8 @@ from urllib.parse import urlsplit
 SCHEMA = "inspire.emanation-plan/2"
 HERE = Path(__file__).resolve().parent
 INDEX = HERE / "index.html"
+sys.path.insert(0, str(HERE.parent / "schemas"))
+from emanation_run_state import validate_run_state  # noqa: E402 - sibling payload module
 
 
 def plan_path(value: str) -> Path:
@@ -44,13 +46,14 @@ def parser() -> argparse.ArgumentParser:
         description="Serve an inspire.emanation-plan/2 document as a live graph."
     )
     result.add_argument("plan", type=plan_path, help="path to the plan JSON")
+    result.add_argument("--run-state", type=lambda value: Path(value).expanduser().resolve(), help="optional mutable run-state JSON")
     result.add_argument("--port", default=4319, type=int, help="port; 0 chooses a free port")
     result.add_argument("--open", action="store_true", help="open the viewer in the default browser")
     result.add_argument("--check", action="store_true", help="validate the source and exit")
     return result
 
 
-def handler_for(source: Path):
+def handler_for(source: Path, run_state: Optional[Path] = None):
     class ViewerHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
             route = urlsplit(self.path).path
@@ -61,6 +64,20 @@ def handler_for(source: Path):
                 try:
                     payload = read_plan(source)
                 except (OSError, ValueError) as error:
+                    self.send_json_error(HTTPStatus.UNPROCESSABLE_ENTITY, str(error))
+                    return
+                self.send_bytes(payload, "application/json; charset=utf-8")
+                return
+            if route == "/run-state.json":
+                if run_state is None or not run_state.is_file():
+                    self.send_error(HTTPStatus.NOT_FOUND)
+                    return
+                try:
+                    plan_bytes = read_plan(source)
+                    payload = run_state.read_bytes()
+                    document = json.loads(payload)
+                    validate_run_state(document, json.loads(plan_bytes), plan_bytes)
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
                     self.send_json_error(HTTPStatus.UNPROCESSABLE_ENTITY, str(error))
                     return
                 self.send_bytes(payload, "application/json; charset=utf-8")
@@ -110,6 +127,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"emanate-plan-viewer: {error}", file=sys.stderr)
         return 2
     if args.check:
+        if args.run_state:
+            try:
+                payload = args.run_state.read_bytes()
+                plan_bytes = read_plan(args.plan)
+                validate_run_state(json.loads(payload), json.loads(plan_bytes), plan_bytes)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+                print(f"emanate-plan-viewer: {error}", file=sys.stderr)
+                return 2
         print(f"valid {SCHEMA}: {args.plan}")
         return 0
     if not 0 <= args.port <= 65535:
@@ -117,7 +142,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
 
     try:
-        server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(args.plan))
+        server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(args.plan, args.run_state))
     except OSError as error:
         print(f"emanate-plan-viewer: cannot listen on 127.0.0.1:{args.port}: {error}", file=sys.stderr)
         return 3
@@ -125,6 +150,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     url = f"http://{host}:{port}/"
     print(f"Emanation plan viewer: {url}", flush=True)
     print(f"Watching: {args.plan}", flush=True)
+    if args.run_state:
+        print(f"Run state: {args.run_state}", flush=True)
     if args.open:
         webbrowser.open(url)
     try:

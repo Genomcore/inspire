@@ -134,6 +134,9 @@
     .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
     .metric-value { display: block; font: 550 21px/1 var(--mono); letter-spacing: -.05em; }
     .metric-label { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .run-progress { margin: 0; color: var(--muted); font: 11px/1.5 var(--mono); }
+    .run-progress strong { color: var(--ink); font-weight: 600; }
+    .run-progress.error { color: var(--danger); }
     .readiness { color: var(--accent); }
     .readiness.not-ready { color: var(--danger); }
     .search-wrap { position: relative; }
@@ -208,6 +211,12 @@
     .node.dim { opacity: .18; }
     .node.edge-endpoint { opacity: 1; }
     .node.edge-endpoint .node-bg { fill: #243833; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .state-dot { stroke: var(--canvas); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+    .node[data-status="pending"] .state-dot { fill: var(--faint); }
+    .node[data-status="running"] .state-dot { fill: var(--warning); }
+    .node[data-status="delivered"] .state-dot { fill: var(--accent); }
+    .node[data-status="stalled"] .state-dot { fill: var(--danger); }
+    .node[data-status="blocked"] .state-dot { fill: var(--muted); }
     .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
     .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--accent); }
     .node.external .node-kind { fill: var(--muted); }
@@ -226,6 +235,7 @@
     .detail-grid dt { color: var(--muted); font-size: 10px; margin-bottom: 5px; }
     .detail-grid dd { margin: 0; font: 550 12px/1.4 var(--mono); }
     .detail h3 { margin: 22px 0 10px; color: var(--muted); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .unit-run-status { margin: 0; color: var(--ink); font: 11px/1.5 var(--mono); overflow-wrap: anywhere; }
     .focus-options { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; padding: 2px; background: var(--canvas); }
     .focus-option { border: 0; border-radius: 2px; padding: 7px 10px; background: transparent; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; }
     .focus-option[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); }
@@ -323,6 +333,10 @@
             <div><span class="metric-value readiness" id="metric-ready">—</span><span class="metric-label">readiness</span></div>
           </div>
         </section>
+        <section class="section hidden" id="run-progress-section" aria-live="polite">
+          <h2 class="section-title">Build loop</h2>
+          <p class="run-progress" id="run-progress"></p>
+        </section>
         <section class="section">
           <h2 class="section-title">Find a unit</h2>
           <div class="search-wrap">
@@ -384,7 +398,7 @@
       const SIDE = 54;
       const MIN_ZOOM = 0.02;
       const MAX_ZOOM = 4;
-      const state = { plan: null, raw: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
+      const state = { plan: null, raw: "", runState: null, rawRunState: "", runStateError: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
@@ -737,6 +751,37 @@
           graph.append(group);
         }
         applyFilters();
+        renderRunState();
+      }
+
+      function renderRunState() {
+        const section = $("run-progress-section");
+        section.classList.toggle("hidden", !state.runState && !state.runStateError);
+        const progress = $("run-progress");
+        progress.classList.toggle("error", Boolean(state.runStateError));
+        if (state.runStateError) progress.textContent = `Run state: ${state.runStateError}`;
+        else if (state.runState) {
+          const units = Object.values(state.runState.units);
+          const count = (status) => units.filter((unit) => unit.status === status).length;
+          progress.textContent = `${state.runState.status.toUpperCase()} · ${count("delivered")}/${units.length} delivered · ${count("running")} running · ${count("stalled")} stalled · ${count("blocked")} blocked`;
+        }
+        graph.querySelectorAll(".node").forEach((element) => {
+          const unit = state.nodes.get(element.dataset.key);
+          const status = state.runState?.units[unit.id]?.status;
+          const dot = element.querySelector(".state-dot");
+          if (!status) { element.removeAttribute("data-status"); dot?.remove(); return; }
+          element.dataset.status = status;
+          if (!dot) element.append(svg("circle", { cx: state.scene.nodeWidth - 11, cy: state.scene.nodeHeight - 11, r: 4, class: "state-dot" }));
+        });
+        const unitSection = $("unit-run-section");
+        if (!unitSection) return;
+        const selected = state.nodes.get(state.selected);
+        const unitState = selected && state.runState?.units[selected.id];
+        unitSection.classList.toggle("hidden", !unitState);
+        if (unitState) $("unit-run-status").textContent = [
+          unitState.status.toUpperCase(), unitState.phase, unitState.persona,
+          unitState.attempt ? `attempt ${unitState.attempt}` : null, unitState.reason
+        ].filter(Boolean).join(" · ");
       }
 
       function clearEdgeHover() {
@@ -860,6 +905,7 @@
             <div><dt>Module</dt><dd>${escapeHtml(node.module || "—")}</dd></div>
             <div><dt>Population</dt><dd>${escapeHtml(node.population || "—")}</dd></div>
           </dl>
+          <section id="unit-run-section" class="hidden"><h3>Build loop</h3><p class="unit-run-status" id="unit-run-status"></p></section>
           <h3>Dependency focus</h3>
           <div class="focus-options" role="group" aria-label="Dependency focus">
             <button class="focus-option" type="button" data-focus="direct" aria-pressed="${state.focus === "direct"}">Direct links</button>
@@ -875,6 +921,7 @@
         updateFocusSummary();
         if (state.focus === "only") render();
         else applyFilters();
+        renderRunState();
         if (state.focus === "only") fitPath();
       }
 
@@ -1041,6 +1088,40 @@
         else scroll.scrollTo({ left: 0, top: 0 });
       }
 
+      async function loadRunState() {
+        try {
+          const response = await fetch(`/run-state.json?t=${Date.now()}`, { cache: "no-store" });
+          if (response.status === 404) {
+            if (state.runState || state.runStateError) {
+              state.runState = null;
+              state.rawRunState = "";
+              state.runStateError = "";
+              renderRunState();
+            }
+            return;
+          }
+          if (!response.ok) {
+            let message = `HTTP ${response.status}`;
+            try { message = (await response.json()).error || message; } catch (_) { /* response was not JSON */ }
+            throw new Error(message);
+          }
+          const raw = await response.text();
+          if (raw !== state.rawRunState || state.runStateError) {
+            const document = JSON.parse(raw);
+            if (document.schema !== "inspire.emanation-run-state/1") throw new Error("Unexpected run-state schema");
+            state.runState = document;
+            state.rawRunState = raw;
+            state.runStateError = "";
+            renderRunState();
+          }
+        } catch (error) {
+          state.runState = null;
+          state.rawRunState = "";
+          state.runStateError = error instanceof Error ? error.message : String(error);
+          renderRunState();
+        }
+      }
+
       async function load(manual = false) {
         if (state.polling) return;
         state.polling = true;
@@ -1056,6 +1137,9 @@
           if (raw !== state.raw) {
             plan = JSON.parse(raw);
             assertPlan(plan);
+            state.runState = null;
+            state.rawRunState = "";
+            state.runStateError = "";
             state.raw = raw;
             state.plan = plan;
             if (state.selected && !model(plan).nodes.has(state.selected)) clearSelection();
@@ -1079,6 +1163,7 @@
             $("live-dot").classList.remove("error");
           }
           if (!$("error-state").classList.contains("hidden")) return;
+          await loadRunState();
           $("updated").textContent = `Live · ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
         } catch (error) {
           showError(error instanceof Error ? error.message : String(error));
