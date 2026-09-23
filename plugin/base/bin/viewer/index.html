@@ -1295,7 +1295,7 @@
           const title = document.createElement("strong");
           title.textContent = example.label;
           const detail = document.createElement("small");
-          detail.textContent = `${example.units} units · ${example.waves} waves · ${example.ready ? "ready" : `${example.findings} findings`}`;
+          detail.textContent = `${example.units} units · ${example.waves} waves · ${example.run_state ? "simulated mid run" : example.ready ? "ready" : `${example.findings} findings`}`;
           const mark = document.createElement("span");
           mark.className = "demo-choice-mark";
           mark.textContent = state.example?.name === example.name ? "✓" : "→";
@@ -1339,9 +1339,11 @@
       }
 
       async function loadRunState() {
-        if (state.example) return;
+        if (state.example && !state.example.run_state) return;
         try {
-          const response = await fetch(`/run-state.json?t=${Date.now()}`, { cache: "no-store" });
+          const path = state.example ? `/examples/${encodeURIComponent(state.example.name)}/run-state.json` : "/run-state.json";
+          const response = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+          if (path !== (state.example ? `/examples/${encodeURIComponent(state.example.name)}/run-state.json` : "/run-state.json")) return;
           if (response.status === 404) {
             if (state.runState || state.runStateError) {
               state.runState = null;
@@ -1357,6 +1359,7 @@
             throw new Error(message);
           }
           const raw = await response.text();
+          if (path !== (state.example ? `/examples/${encodeURIComponent(state.example.name)}/run-state.json` : "/run-state.json")) return;
           if (raw !== state.rawRunState || state.runStateError) {
             const document = JSON.parse(raw);
             if (document.schema !== "inspire.emanation-run-state/1") throw new Error("Unexpected run-state schema");

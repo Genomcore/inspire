@@ -1,0 +1,560 @@
+{
+  "schema": "inspire.emanation-plan/2",
+  "scope": [
+    "inspire_kb"
+  ],
+  "ready": true,
+  "floor": 5,
+  "ceiling": null,
+  "deliverable_waves": 5,
+  "realized": [],
+  "realized_all": false,
+  "reemanate": null,
+  "goal": null,
+  "preflight": {
+    "components": [
+      {
+        "name": "clickhouse",
+        "purpose": "analytical plane, read-only, loaded with the synthetic fixture"
+      },
+      {
+        "name": "postgres",
+        "purpose": "transactional plane: schema, migrations, seed"
+      }
+    ],
+    "probe_profiles": [
+      "nestjs"
+    ],
+    "worktree_recipe": [
+      {
+        "step": "environment",
+        "command": "cp -n source/.env.example source/.env"
+      },
+      {
+        "step": "dependencies",
+        "command": "if [ -f source/package-lock.json ]; then npm ci --prefix source; fi"
+      },
+      {
+        "step": "generated artifacts",
+        "command": "if [ -f source/package.json ]; then npm run --prefix source --if-present generate; fi"
+      }
+    ]
+  },
+  "wire_conventions": {
+    "ids": [
+      "rest"
+    ],
+    "decisions": [
+      {
+        "decision": "Existence leak: resource exists, caller may not see it",
+        "answer": "404"
+      },
+      {
+        "decision": "Validation failure status",
+        "answer": "400"
+      },
+      {
+        "decision": "Expired credential",
+        "answer": "401 with a distinct code in the body"
+      },
+      {
+        "decision": "Error body shape",
+        "answer": "application/problem+json (RFC 7807)"
+      },
+      {
+        "decision": "Create with an existing natural key",
+        "answer": "409"
+      },
+      {
+        "decision": "Pagination contract",
+        "answer": "cursor"
+      }
+    ]
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "units": [
+        {
+          "kind": "pattern",
+          "id": "detail",
+          "path": "inspire_kb/05_screens/patterns/detail.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 6
+        },
+        {
+          "kind": "component",
+          "id": "filter-panel",
+          "path": "inspire_kb/05_screens/components/filter-panel.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 8
+        },
+        {
+          "kind": "pattern",
+          "id": "form",
+          "path": "inspire_kb/05_screens/patterns/form.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 6
+        },
+        {
+          "kind": "entity",
+          "id": "individuals.individual",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.md",
+          "module": "individuals",
+          "surface": null,
+          "population": "internal",
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 13
+        },
+        {
+          "kind": "pattern",
+          "id": "list",
+          "path": "inspire_kb/05_screens/patterns/list.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 8
+        },
+        {
+          "kind": "pattern",
+          "id": "overlay",
+          "path": "inspire_kb/05_screens/patterns/overlay.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 7
+        },
+        {
+          "kind": "pattern",
+          "id": "wizard",
+          "path": "inspire_kb/05_screens/patterns/wizard.md",
+          "module": null,
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [],
+          "claims": 5
+        }
+      ]
+    },
+    {
+      "wave": 2,
+      "units": [
+        {
+          "kind": "entity",
+          "id": "individuals.diagnosis",
+          "path": "inspire_kb/04_domain/individuals/diagnosis/individuals.diagnosis.md",
+          "module": "individuals",
+          "surface": null,
+          "population": "internal",
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            }
+          ],
+          "claims": 11
+        },
+        {
+          "kind": "entity",
+          "id": "individuals.phenotypic_feature",
+          "path": "inspire_kb/04_domain/individuals/phenotypic_feature/individuals.phenotypic_feature.md",
+          "module": "individuals",
+          "surface": null,
+          "population": "internal",
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            }
+          ],
+          "claims": 12
+        },
+        {
+          "kind": "entity",
+          "id": "individuals.study_membership",
+          "path": "inspire_kb/04_domain/individuals/study_membership/individuals.study_membership.md",
+          "module": "individuals",
+          "surface": null,
+          "population": "internal",
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            }
+          ],
+          "claims": 10
+        }
+      ]
+    },
+    {
+      "wave": 3,
+      "units": [
+        {
+          "kind": "action",
+          "id": "individuals.individual.create",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.create.md",
+          "module": "individuals",
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.diagnosis",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.phenotypic_feature",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.study_membership",
+              "ordering": true
+            }
+          ],
+          "claims": 16
+        },
+        {
+          "kind": "action",
+          "id": "individuals.individual.edit",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.edit.md",
+          "module": "individuals",
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.diagnosis",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.phenotypic_feature",
+              "ordering": true
+            }
+          ],
+          "claims": 19
+        },
+        {
+          "kind": "action",
+          "id": "individuals.individual.get",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.get.md",
+          "module": "individuals",
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.diagnosis",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.phenotypic_feature",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.study_membership",
+              "ordering": true
+            }
+          ],
+          "claims": 17
+        },
+        {
+          "kind": "action",
+          "id": "individuals.individual.list",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.list.md",
+          "module": "individuals",
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "entity",
+              "id": "individuals.diagnosis",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.study_membership",
+              "ordering": true
+            }
+          ],
+          "claims": 11
+        }
+      ]
+    },
+    {
+      "wave": 4,
+      "units": [
+        {
+          "kind": "action",
+          "id": "individuals.individual.export",
+          "path": "inspire_kb/04_domain/individuals/individual/individuals.individual.export.md",
+          "module": "individuals",
+          "surface": null,
+          "population": null,
+          "profiles": [
+            "nestjs",
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "action",
+              "id": "individuals.individual.get",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.diagnosis",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.individual",
+              "ordering": true
+            },
+            {
+              "kind": "entity",
+              "id": "individuals.phenotypic_feature",
+              "ordering": true
+            }
+          ],
+          "claims": 14
+        },
+        {
+          "kind": "screen",
+          "id": "individuals.list",
+          "path": "inspire_kb/05_screens/studio/individuals/individuals-list.md",
+          "module": "individuals",
+          "surface": "studio",
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "action",
+              "id": "individuals.individual.list",
+              "ordering": true
+            },
+            {
+              "kind": "pattern",
+              "id": "list",
+              "ordering": true
+            },
+            {
+              "kind": "screen",
+              "id": "individuals.detail",
+              "ordering": true
+            },
+            {
+              "kind": "screen",
+              "id": "individuals.register",
+              "ordering": true
+            }
+          ],
+          "claims": 6
+        },
+        {
+          "kind": "screen",
+          "id": "individuals.register",
+          "path": "inspire_kb/05_screens/studio/individuals/individual-register.md",
+          "module": "individuals",
+          "surface": "studio",
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "action",
+              "id": "individuals.individual.create",
+              "ordering": true
+            },
+            {
+              "kind": "pattern",
+              "id": "form",
+              "ordering": true
+            },
+            {
+              "kind": "screen",
+              "id": "individuals.detail",
+              "ordering": true
+            },
+            {
+              "kind": "screen",
+              "id": "individuals.list",
+              "ordering": true
+            }
+          ],
+          "claims": 3
+        }
+      ]
+    },
+    {
+      "wave": 5,
+      "units": [
+        {
+          "kind": "screen",
+          "id": "individuals.detail",
+          "path": "inspire_kb/05_screens/studio/individuals/individual-detail.md",
+          "module": "individuals",
+          "surface": "studio",
+          "population": null,
+          "profiles": [
+            "react",
+            "typescript"
+          ],
+          "requires": [
+            {
+              "kind": "action",
+              "id": "individuals.individual.export",
+              "ordering": true
+            },
+            {
+              "kind": "action",
+              "id": "individuals.individual.get",
+              "ordering": true
+            },
+            {
+              "kind": "pattern",
+              "id": "detail",
+              "ordering": true
+            },
+            {
+              "kind": "screen",
+              "id": "individuals.list",
+              "ordering": true
+            }
+          ],
+          "claims": 5
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "code": "PR-26",
+      "severity": "warning",
+      "unit": "individuals.diagnosis",
+      "target": "inspire_kb/04_domain/individuals/diagnosis/individuals.diagnosis.md",
+      "owner": "inspire-domain",
+      "message": "a prose-only invariant may be about another entity at `I1` (foreign: `entry`), `I5` (foreign: `value`) — no head, so no rule reads its subject, and the only claim derived is a test-oracle one about the prose itself, which on this entity can only be asserted as an absence",
+      "remedy": "file each rule on the entity it constrains, or on the referrer where the reference is; behaviour belongs on the action as a precondition, postcondition or error, never here — through `/inspire-domain update`",
+      "derive_class": null
+    },
+    {
+      "code": "PR-26",
+      "severity": "warning",
+      "unit": "individuals.phenotypic_feature",
+      "target": "inspire_kb/04_domain/individuals/phenotypic_feature/individuals.phenotypic_feature.md",
+      "owner": "inspire-domain",
+      "message": "a prose-only invariant may be about another entity at `I1` (foreign: `entry`), `I2` (foreign: `entry`), `I4` (foreign: `value`) — no head, so no rule reads its subject, and the only claim derived is a test-oracle one about the prose itself, which on this entity can only be asserted as an absence",
+      "remedy": "file each rule on the entity it constrains, or on the referrer where the reference is; behaviour belongs on the action as a precondition, postcondition or error, never here — through `/inspire-domain update`",
+      "derive_class": null
+    }
+  ]
+}

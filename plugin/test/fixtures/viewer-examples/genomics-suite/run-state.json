@@ -1,0 +1,116 @@
+{
+  "schema": "inspire.emanation-run-state/1",
+  "plan_sha256": "12963d00c146e8307432ecd974c8f5aac7121a540cc37ddc1816bf5720f8f9e3",
+  "run_id": "DEMO: Genomics Suite",
+  "goal_branch": null,
+  "status": "running",
+  "updated_at": "2026-09-23T07:01:07.816960Z",
+  "units": {
+    "detail": {
+      "status": "running",
+      "attempt": 1,
+      "phase": "persona",
+      "persona": "implementer",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "filter-panel": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "form": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.individual": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "list": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "overlay": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "wizard": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.diagnosis": {
+      "status": "stalled",
+      "attempt": 1,
+      "phase": "verify",
+      "reason": "Simulated stall for the viewer demo",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.phenotypic_feature": {
+      "status": "delivered",
+      "attempt": 1,
+      "phase": "promote",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.study_membership": {
+      "status": "running",
+      "attempt": 1,
+      "phase": "verify",
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.individual.create": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.individual.edit": {
+      "status": "blocked",
+      "attempt": 0,
+      "reason": "Waiting for individuals.diagnosis (demo)",
+      "blocked_by": [
+        "individuals.diagnosis"
+      ],
+      "updated_at": "2026-09-23T07:01:07.816960Z"
+    },
+    "individuals.individual.get": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.individual.list": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.individual.export": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.list": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.register": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    },
+    "individuals.detail": {
+      "status": "pending",
+      "attempt": 0,
+      "updated_at": "2026-09-23T07:01:07.816773Z"
+    }
+  }
+}

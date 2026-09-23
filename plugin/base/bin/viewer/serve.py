@@ -66,7 +66,10 @@ def read_examples(directory: Path) -> list[dict]:
         if not name or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in name) or name in names:
             raise ValueError(f"invalid or duplicate example name: {name!r}")
         names.add(name)
-        read_plan(directory / name / "plan.json")
+        plan_bytes = read_plan(directory / name / "plan.json")
+        if item.get("run_state"):
+            state_bytes = (directory / name / "run-state.json").read_bytes()
+            validate_run_state(json.loads(state_bytes), json.loads(plan_bytes), plan_bytes)
     return manifest
 
 
@@ -74,6 +77,7 @@ def handler_for(source: Path, run_state: Optional[Path] = None,
                 examples_dir: Optional[Path] = None):
     examples = read_examples(examples_dir) if examples_dir is not None else []
     example_names = {item["name"] for item in examples}
+    examples_with_state = {item["name"] for item in examples if item.get("run_state")}
 
     class ViewerHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
@@ -99,6 +103,18 @@ def handler_for(source: Path, run_state: Optional[Path] = None,
                     try:
                         payload = read_plan(examples_dir / name / "plan.json")
                     except (OSError, ValueError) as error:
+                        self.send_json_error(HTTPStatus.UNPROCESSABLE_ENTITY, str(error))
+                        return
+                    self.send_bytes(payload, "application/json; charset=utf-8")
+                    return
+            if examples_dir is not None and route.startswith("/examples/") and route.endswith("/run-state.json"):
+                name = route[len("/examples/"):-len("/run-state.json")]
+                if name in examples_with_state:
+                    try:
+                        plan_bytes = read_plan(examples_dir / name / "plan.json")
+                        payload = (examples_dir / name / "run-state.json").read_bytes()
+                        validate_run_state(json.loads(payload), json.loads(plan_bytes), plan_bytes)
+                    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
                         self.send_json_error(HTTPStatus.UNPROCESSABLE_ENTITY, str(error))
                         return
                     self.send_bytes(payload, "application/json; charset=utf-8")
