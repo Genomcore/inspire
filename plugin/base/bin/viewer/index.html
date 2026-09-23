@@ -91,6 +91,10 @@
     @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
     .updated { font: 11px/1.2 var(--mono); }
     .top-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; padding: 2px; background: var(--panel); }
+    .view-option { border: 0; border-radius: 2px; padding: 0 11px; background: transparent; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; }
+    .view-option[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); }
+    .view-option:hover { color: var(--ink); }
     .control {
       display: inline-flex;
       align-items: center;
@@ -165,6 +169,8 @@
       background-size: 24px 24px;
     }
     .graph-scroll { position: absolute; inset: 0; overflow: auto; }
+    .stage.graph-view .graph-scroll { cursor: grab; }
+    .stage.graph-view .graph-scroll.dragging { cursor: grabbing; }
     #graph { display: block; min-width: 100%; min-height: 100%; user-select: none; }
     .empty-state, .error-state {
       position: absolute; inset: 0; display: grid; place-items: center; padding: 32px;
@@ -178,6 +184,10 @@
     .wave-label { fill: var(--muted); font: 650 10px var(--mono); letter-spacing: .14em; }
     .wave-count { fill: var(--faint); font: 11px var(--mono); }
     .wave-rule { stroke: var(--line); stroke-width: 1; }
+    .frontier-ring { fill: none; stroke: #34414a; stroke-width: 1; stroke-dasharray: 3 6; }
+    .frontier-ring.external { stroke: var(--faint); stroke-dasharray: 7 7; }
+    .frontier-label { fill: var(--muted); font: 650 10px var(--mono); letter-spacing: .12em; }
+    .frontier-center { fill: var(--faint); font: 650 10px var(--mono); letter-spacing: .14em; }
     .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.35; opacity: .78; }
     .edge.deferred { stroke-dasharray: 5 5; opacity: .62; }
     .edge.navigation { stroke: var(--navigation); stroke-dasharray: 2 5; stroke-width: 1.7; opacity: .9; }
@@ -186,6 +196,8 @@
     .edge.navigation.hot { stroke: var(--navigation); stroke-width: 2.3; }
     .node { cursor: pointer; transition: opacity .2s ease; }
     .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
+    .node.radial .node-bg { rx: 11; }
+    .node.radial .node-id { font: 610 13px var(--sans); }
     .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
     .node.dim { opacity: .18; }
     .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
@@ -228,7 +240,11 @@
       .inspector:has(.inspector-empty:not(.hidden)) { display: none; }
     }
     @media (max-width: 700px) {
-      .topbar { grid-template-columns: 1fr auto; gap: 12px; padding: 10px 12px; }
+      .topbar { grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 10px 12px; }
+      .brand-copy { display: none; }
+      .top-actions { gap: 4px; }
+      .view-option { padding: 0 7px; }
+      .control { padding: 0 8px; }
       .live-state { display: none; }
       .workspace { grid-template-columns: 1fr; }
       .rail { display: none; }
@@ -251,6 +267,12 @@
         <span class="updated" id="updated">Connecting</span>
       </div>
       <div class="top-actions">
+        <div class="view-switch" role="group" aria-label="Plan layout">
+          <button class="view-option" id="view-waves" type="button" aria-pressed="true">Waves</button>
+          <button class="view-option" id="view-graph" type="button" aria-pressed="false">Graph</button>
+        </div>
+        <button class="control graph-only hidden" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+        <button class="control graph-only hidden" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
         <button class="control" id="fit" type="button" title="Fit graph">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
           <span class="label">Fit graph</span>
@@ -322,15 +344,20 @@
       const POLL_MS = 900;
       const NODE_W = 220;
       const NODE_H = 82;
+      const RADIAL_W = 154;
+      const RADIAL_H = 58;
+      const RING_START = 128;
+      const RING_STEP = 145;
       const COL_GAP = 86;
       const ROW_GAP = 26;
       const TOP = 78;
       const SIDE = 54;
-      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false };
+      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false, view: "waves", zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
       const scroll = $("graph-scroll");
+      const stage = document.querySelector(".stage");
 
       function svg(tag, attributes = {}, text = null) {
         const element = document.createElementNS(SVG, tag);
@@ -395,7 +422,7 @@
         return { nodes, byWave, external: [...external.values()], edges };
       }
 
-      function layout(data) {
+      function waveLayout(data) {
         const columns = data.external.length ? [data.external, ...data.byWave] : data.byWave;
         const maxRows = Math.max(1, ...columns.map((column) => column.length));
         const width = SIDE * 2 + columns.length * NODE_W + Math.max(0, columns.length - 1) * COL_GAP;
@@ -408,7 +435,31 @@
             positions.set(node.key, { x: SIDE + columnIndex * (NODE_W + COL_GAP), y: TOP + offset + row * (NODE_H + ROW_GAP) });
           });
         });
-        return { columns, positions, width: Math.max(width, scroll.clientWidth), height: Math.max(height, scroll.clientHeight) };
+        return { columns, positions, width: Math.max(width, scroll.clientWidth), height: Math.max(height, scroll.clientHeight), nodeWidth: NODE_W, nodeHeight: NODE_H };
+      }
+
+      function radialLayout(data) {
+        const groups = [...data.byWave];
+        if (data.external.length) groups.push(data.external);
+        const outer = RING_START + Math.max(0, groups.length - 1) * RING_STEP + 70;
+        const size = Math.max(2 * (outer + 38), scroll.clientWidth, scroll.clientHeight);
+        const center = size / 2;
+        const positions = new Map();
+        const rings = [];
+        groups.forEach((group, index) => {
+          const radius = RING_START + index * RING_STEP;
+          const boundary = radius + 70;
+          const external = index === data.byWave.length;
+          rings.push({ radius: boundary, label: external ? "OUTSIDE RUN" : `WAVE ${index + 1}`, external });
+          group.forEach((node, position) => {
+            const angle = -Math.PI / 2 + (2 * Math.PI * position) / group.length + (index % 2 ? Math.PI / group.length : 0);
+            positions.set(node.key, {
+              x: center + radius * Math.cos(angle) - RADIAL_W / 2,
+              y: center + radius * Math.sin(angle) - RADIAL_H / 2
+            });
+          });
+        });
+        return { positions, rings, center, width: size, height: size, nodeWidth: RADIAL_W, nodeHeight: RADIAL_H };
       }
 
       function edgePath(a, b, type) {
@@ -434,8 +485,34 @@
         return `M ${x1} ${y1} C ${x1 + 28} ${y1}, ${x1 + 28} ${lane}, ${x1} ${lane} L ${x2 - 28} ${lane} C ${x2 - 8} ${lane}, ${x2 - 8} ${y2}, ${x2} ${y2}`;
       }
 
+      function radialEdgePath(a, b, type) {
+        if (a.x === b.x && a.y === b.y) {
+          const left = a.x + 22;
+          const right = a.x + RADIAL_W - 22;
+          const top = a.y + 8;
+          return `M ${right} ${top} C ${right + 42} ${top - 62}, ${left - 42} ${top - 62}, ${left} ${top}`;
+        }
+        const from = { x: a.x + RADIAL_W / 2, y: a.y + RADIAL_H / 2 };
+        const to = { x: b.x + RADIAL_W / 2, y: b.y + RADIAL_H / 2 };
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const offset = (point, direction) => {
+          const scale = Math.min(RADIAL_W / 2 / Math.max(Math.abs(dx / length), 0.01), RADIAL_H / 2 / Math.max(Math.abs(dy / length), 0.01));
+          return { x: point.x + direction * dx / length * scale, y: point.y + direction * dy / length * scale };
+        };
+        const start = offset(from, 1);
+        const end = offset(to, -1);
+        if (type !== "navigation") return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+        const bend = Math.min(45, length * 0.2);
+        const cx = (start.x + end.x) / 2 - dy / length * bend;
+        const cy = (start.y + end.y) / 2 + dx / length * bend;
+        return `M ${start.x} ${start.y} Q ${cx} ${cy}, ${end.x} ${end.y}`;
+      }
+
       function render() {
         graph.replaceChildren(svg("title", { id: "graph-title" }, "Emanation dependency graph"));
+        state.scene = null;
         if (!state.plan || state.plan.refused) return;
         const data = model(state.plan);
         state.nodes = data.nodes;
@@ -445,10 +522,11 @@
           return;
         }
         $("empty-state").classList.add("hidden");
-        const scene = layout(data);
+        const scene = state.view === "graph" ? radialLayout(data) : waveLayout(data);
+        state.scene = scene;
         graph.setAttribute("viewBox", `0 0 ${scene.width} ${scene.height}`);
-        graph.setAttribute("width", scene.width);
-        graph.setAttribute("height", scene.height);
+        graph.setAttribute("width", Math.round(scene.width * state.zoom));
+        graph.setAttribute("height", Math.round(scene.height * state.zoom));
 
         const defs = svg("defs");
         const marker = svg("marker", { id: "arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
@@ -459,16 +537,24 @@
         defs.append(navigationMarker);
         graph.append(defs);
 
-        const hasExternal = data.external.length > 0;
-        scene.columns.forEach((column, index) => {
-          if (!column.length) return;
-          const position = scene.positions.get(column[0].key);
-          const waveNumber = hasExternal ? index : index + 1;
-          const external = hasExternal && index === 0;
-          graph.append(svg("text", { x: position.x, y: 34, class: "wave-label" }, external ? "OUTSIDE RUN" : `WAVE ${waveNumber}`));
-          graph.append(svg("text", { x: position.x, y: 53, class: "wave-count" }, `${column.length} ${column.length === 1 ? "unit" : "units"}`));
-          graph.append(svg("line", { x1: position.x, y1: 64, x2: position.x + NODE_W, y2: 64, class: "wave-rule" }));
-        });
+        if (state.view === "graph") {
+          for (const ring of [...scene.rings].reverse()) {
+            graph.append(svg("circle", { cx: scene.center, cy: scene.center, r: ring.radius, class: `frontier-ring${ring.external ? " external" : ""}` }));
+            graph.append(svg("text", { x: scene.center + 14, y: scene.center - ring.radius + 18, class: "frontier-label" }, ring.label));
+          }
+          graph.append(svg("text", { x: scene.center, y: scene.center + 4, class: "frontier-center", "text-anchor": "middle" }, "FRONTIER"));
+        } else {
+          const hasExternal = data.external.length > 0;
+          scene.columns.forEach((column, index) => {
+            if (!column.length) return;
+            const position = scene.positions.get(column[0].key);
+            const waveNumber = hasExternal ? index : index + 1;
+            const external = hasExternal && index === 0;
+            graph.append(svg("text", { x: position.x, y: 34, class: "wave-label" }, external ? "OUTSIDE RUN" : `WAVE ${waveNumber}`));
+            graph.append(svg("text", { x: position.x, y: 53, class: "wave-count" }, `${column.length} ${column.length === 1 ? "unit" : "units"}`));
+            graph.append(svg("line", { x1: position.x, y1: 64, x2: position.x + NODE_W, y2: 64, class: "wave-rule" }));
+          });
+        }
 
         const edgeLayer = svg("g", { class: "edges" });
         data.edges.forEach((edge) => {
@@ -476,7 +562,7 @@
           const b = scene.positions.get(edge.target);
           if (!a || !b) return;
           const path = svg("path", {
-            d: edgePath(a, b, edge.type),
+            d: state.view === "graph" ? radialEdgePath(a, b, edge.type) : edgePath(a, b, edge.type),
             class: `edge ${edge.type}`,
             "data-source": edge.source, "data-target": edge.target,
             "marker-end": edge.type === "navigation" ? "url(#navigation-arrow)" : "url(#arrow)"
@@ -489,18 +575,25 @@
           const p = scene.positions.get(node.key);
           if (!p) continue;
           const group = svg("g", {
-            class: `node${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
+            class: `node${state.view === "graph" ? " radial" : ""}${node.external ? " external" : ""}${state.selected === node.key ? " selected" : ""}`,
             transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
             "aria-label": `${node.kind} ${node.id}`, "aria-pressed": state.selected === node.key, "data-key": node.key
           });
-          group.append(svg("rect", { width: NODE_W, height: NODE_H, class: "node-bg" }));
-          group.append(svg("circle", { cx: 0, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
-          group.append(svg("circle", { cx: NODE_W, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
-          group.append(svg("text", { x: 13, y: 20, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : `EXTERNAL · ${node.kind}`) : node.kind));
-          group.append(svg("text", { x: 13, y: 43, class: "node-id" }, short(node.id)));
-          const meta = node.external ? "satisfied outside this plan" : [node.module, node.surface].filter(Boolean).join(" / ") || "suite-wide";
-          group.append(svg("text", { x: 13, y: 65, class: "node-meta" }, short(meta, 31)));
-          if (!node.external) group.append(svg("text", { x: NODE_W - 13, y: 20, class: "node-claims", "text-anchor": "end" }, `${node.claims}c`));
+          group.append(svg("title", {}, `${node.kind} ${node.id}`));
+          group.append(svg("rect", { width: scene.nodeWidth, height: scene.nodeHeight, class: "node-bg" }));
+          if (state.view === "graph") {
+            group.append(svg("text", { x: 12, y: 19, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : "OUTSIDE RUN") : node.kind));
+            group.append(svg("text", { x: 12, y: 40, class: "node-id" }, short(node.id, 21)));
+            if (!node.external) group.append(svg("text", { x: RADIAL_W - 11, y: 19, class: "node-claims", "text-anchor": "end" }, `${node.claims}c`));
+          } else {
+            group.append(svg("circle", { cx: 0, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
+            group.append(svg("circle", { cx: NODE_W, cy: NODE_H / 2, r: 3.5, class: "node-port" }));
+            group.append(svg("text", { x: 13, y: 20, class: "node-kind" }, node.external ? (node.realized ? "REALIZED" : `EXTERNAL · ${node.kind}`) : node.kind));
+            group.append(svg("text", { x: 13, y: 43, class: "node-id" }, short(node.id)));
+            const meta = node.external ? "satisfied outside this plan" : [node.module, node.surface].filter(Boolean).join(" / ") || "suite-wide";
+            group.append(svg("text", { x: 13, y: 65, class: "node-meta" }, short(meta, 31)));
+            if (!node.external) group.append(svg("text", { x: NODE_W - 13, y: 20, class: "node-claims", "text-anchor": "end" }, `${node.claims}c`));
+          }
           group.addEventListener("click", () => select(node.key));
           group.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(node.key); } });
           graph.append(group);
@@ -615,6 +708,38 @@
         showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
       }
 
+      function setZoom(next) {
+        if (!state.scene) return;
+        const centerX = (scroll.scrollLeft + scroll.clientWidth / 2) / state.zoom;
+        const centerY = (scroll.scrollTop + scroll.clientHeight / 2) / state.zoom;
+        state.zoom = Math.max(0.15, Math.min(2, next));
+        graph.setAttribute("width", Math.round(state.scene.width * state.zoom));
+        graph.setAttribute("height", Math.round(state.scene.height * state.zoom));
+        scroll.scrollLeft = centerX * state.zoom - scroll.clientWidth / 2;
+        scroll.scrollTop = centerY * state.zoom - scroll.clientHeight / 2;
+      }
+
+      function fitGraph() {
+        if (!state.scene) return;
+        const zoom = Math.min(1, (scroll.clientWidth - 24) / state.scene.width, (scroll.clientHeight - 24) / state.scene.height);
+        setZoom(zoom);
+        scroll.scrollLeft = Math.max(0, (state.scene.width * state.zoom - scroll.clientWidth) / 2);
+        scroll.scrollTop = Math.max(0, (state.scene.height * state.zoom - scroll.clientHeight) / 2);
+      }
+
+      function setView(view) {
+        if (state.view === view) return;
+        state.view = view;
+        state.zoom = 1;
+        $("view-waves").setAttribute("aria-pressed", String(view === "waves"));
+        $("view-graph").setAttribute("aria-pressed", String(view === "graph"));
+        stage.classList.toggle("graph-view", view === "graph");
+        document.querySelectorAll(".graph-only").forEach((control) => control.classList.toggle("hidden", view !== "graph"));
+        render();
+        if (view === "graph") fitGraph();
+        else scroll.scrollTo({ left: 0, top: 0 });
+      }
+
       async function load(manual = false) {
         if (state.polling) return;
         state.polling = true;
@@ -636,6 +761,7 @@
             $("source-name").textContent = decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
             updateMetrics(plan);
             render();
+            if (state.view === "graph") fitGraph();
             if (manual) showToast("Plan refreshed");
           } else if (manual) {
             showToast("Plan is unchanged");
@@ -662,13 +788,33 @@
       graph.addEventListener("click", (event) => {
         if (!event.target.closest(".node")) clearSelection();
       });
+      let pan = null;
+      scroll.addEventListener("pointerdown", (event) => {
+        if (state.view !== "graph" || event.pointerType !== "mouse" || event.button !== 0 || event.target.closest(".node")) return;
+        pan = { x: event.clientX, y: event.clientY, left: scroll.scrollLeft, top: scroll.scrollTop };
+        scroll.setPointerCapture(event.pointerId);
+        scroll.classList.add("dragging");
+      });
+      scroll.addEventListener("pointermove", (event) => {
+        if (!pan) return;
+        scroll.scrollLeft = pan.left - (event.clientX - pan.x);
+        scroll.scrollTop = pan.top - (event.clientY - pan.y);
+      });
+      ["pointerup", "pointercancel"].forEach((name) => scroll.addEventListener(name, () => {
+        pan = null;
+        scroll.classList.remove("dragging");
+      }));
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && state.selected) clearSelection();
       });
       ["show-ordering", "show-deferred", "show-navigation", "show-external"].forEach((id) => $(id).addEventListener("change", applyFilters));
+      $("view-waves").addEventListener("click", () => setView("waves"));
+      $("view-graph").addEventListener("click", () => setView("graph"));
+      $("zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.25));
+      $("zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.25));
       $("refresh").addEventListener("click", () => load(true));
-      $("fit").addEventListener("click", () => { scroll.scrollTo({ top: 0, left: 0, behavior: "smooth" }); showToast("Graph fitted"); });
-      window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) render(); });
+      $("fit").addEventListener("click", () => { fitGraph(); showToast("Graph fitted"); });
+      window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) { render(); if (state.view === "graph") fitGraph(); } });
 
       load();
       setInterval(load, POLL_MS);
