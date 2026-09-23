@@ -47,13 +47,34 @@ def parser() -> argparse.ArgumentParser:
     )
     result.add_argument("plan", type=plan_path, help="path to the plan JSON")
     result.add_argument("--run-state", type=lambda value: Path(value).expanduser().resolve(), help="optional mutable run-state JSON")
+    result.add_argument("--examples-dir", type=lambda value: Path(value).expanduser().resolve(), help="prepared local demo examples")
     result.add_argument("--port", default=4319, type=int, help="port; 0 chooses a free port")
     result.add_argument("--open", action="store_true", help="open the viewer in the default browser")
     result.add_argument("--check", action="store_true", help="validate the source and exit")
     return result
 
 
-def handler_for(source: Path, run_state: Optional[Path] = None):
+def read_examples(directory: Path) -> list[dict]:
+    manifest = json.loads((directory / "examples.json").read_text())
+    if not isinstance(manifest, list) or not manifest:
+        raise ValueError("examples.json must contain a nonempty list")
+    names = set()
+    for item in manifest:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            raise ValueError("each example needs a name")
+        name = item["name"]
+        if not name or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in name) or name in names:
+            raise ValueError(f"invalid or duplicate example name: {name!r}")
+        names.add(name)
+        read_plan(directory / name / "plan.json")
+    return manifest
+
+
+def handler_for(source: Path, run_state: Optional[Path] = None,
+                examples_dir: Optional[Path] = None):
+    examples = read_examples(examples_dir) if examples_dir is not None else []
+    example_names = {item["name"] for item in examples}
+
     class ViewerHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
             route = urlsplit(self.path).path
@@ -68,6 +89,20 @@ def handler_for(source: Path, run_state: Optional[Path] = None):
                     return
                 self.send_bytes(payload, "application/json; charset=utf-8")
                 return
+            if examples_dir is not None and route == "/examples.json":
+                payload = json.dumps(examples).encode("utf-8")
+                self.send_bytes(payload, "application/json; charset=utf-8")
+                return
+            if examples_dir is not None and route.startswith("/examples/") and route.endswith("/plan.json"):
+                name = route[len("/examples/"):-len("/plan.json")]
+                if name in example_names:
+                    try:
+                        payload = read_plan(examples_dir / name / "plan.json")
+                    except (OSError, ValueError) as error:
+                        self.send_json_error(HTTPStatus.UNPROCESSABLE_ENTITY, str(error))
+                        return
+                    self.send_bytes(payload, "application/json; charset=utf-8")
+                    return
             if route == "/run-state.json":
                 if run_state is None or not run_state.is_file():
                     self.send_error(HTTPStatus.NOT_FOUND)
@@ -123,6 +158,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser().parse_args(argv)
     try:
         read_plan(args.plan)
+        if args.examples_dir:
+            read_examples(args.examples_dir)
     except (OSError, ValueError) as error:
         print(f"emanate-plan-viewer: {error}", file=sys.stderr)
         return 2
@@ -142,7 +179,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
 
     try:
-        server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(args.plan, args.run_state))
+        server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(args.plan, args.run_state, args.examples_dir))
     except OSError as error:
         print(f"emanate-plan-viewer: cannot listen on 127.0.0.1:{args.port}: {error}", file=sys.stderr)
         return 3

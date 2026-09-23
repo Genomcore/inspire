@@ -381,6 +381,21 @@
     .edge-tooltip-units { font: 12px/1.55 var(--sans); overflow-wrap: anywhere; }
     .edge-tooltip-unit { font: 600 12px/1.55 var(--mono); }
     .edge-tooltip-verb { color: var(--muted); }
+    .demo-dialog {
+      width: min(540px, calc(100vw - 32px)); max-height: min(680px, calc(100dvh - 32px));
+      padding: 0; border: 1px solid var(--line-strong); border-radius: 8px;
+      background: var(--panel); color: var(--ink); box-shadow: 0 24px 70px var(--overlay-shadow);
+    }
+    .demo-dialog::backdrop { background: rgba(8, 17, 22, .58); }
+    .demo-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding: 24px 24px 18px; border-bottom: 1px solid var(--line); }
+    .demo-head h2 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
+    .demo-head p { margin: 7px 0 0; color: var(--muted); line-height: 1.45; }
+    .demo-list { display: grid; gap: 8px; padding: 16px 24px 24px; max-height: 55dvh; overflow: auto; }
+    .demo-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); text-align: left; cursor: pointer; }
+    .demo-choice:hover, .demo-choice[aria-current="true"] { border-color: var(--accent); background: var(--accent-dim); }
+    .demo-choice strong { display: block; margin-bottom: 5px; font-size: 14px; }
+    .demo-choice small { color: var(--muted); font: 11px/1.5 var(--mono); }
+    .demo-choice-mark { color: var(--accent); font: 700 17px var(--mono); }
 
     @media (max-width: 980px) {
       .topbar { grid-template-columns: auto minmax(0, 1fr); }
@@ -421,6 +436,7 @@
         <span class="updated" id="updated">Connecting</span>
       </div>
       <div class="top-actions">
+        <button class="control hidden" id="demo-open" type="button" aria-haspopup="dialog">Samples</button>
         <div class="view-switch" role="group" aria-label="Plan layout">
           <button class="view-option" id="view-waves" type="button" aria-pressed="true">Waves</button>
           <button class="view-option" id="view-graph" type="button" aria-pressed="false">Graph</button>
@@ -509,6 +525,11 @@
     </main>
   </div>
 
+  <dialog class="demo-dialog" id="demo-dialog" aria-labelledby="demo-title">
+    <div class="demo-head"><div><p class="eyebrow">Demo mode</p><h2 id="demo-title">Choose a sample KB</h2><p>Explore a plan generated from a pinned reference case.</p></div><button class="control" id="demo-close" type="button" aria-label="Close samples">×</button></div>
+    <div class="demo-list" id="demo-list"></div>
+  </dialog>
+
   <script>
     (() => {
       "use strict";
@@ -527,7 +548,7 @@
       const SIDE = 54;
       const MIN_ZOOM = 0.02;
       const MAX_ZOOM = 4;
-      const state = { plan: null, raw: "", runState: null, rawRunState: "", runStateError: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", kindFocus: null, zoom: 1, scene: null };
+      const state = { plan: null, raw: "", runState: null, rawRunState: "", runStateError: "", selected: null, hoveredEdge: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", kindFocus: null, zoom: 1, scene: null, examples: [], example: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
@@ -1261,7 +1282,64 @@
         else scroll.scrollTo({ left: 0, top: 0 });
       }
 
+      function renderExamples() {
+        const list = $("demo-list");
+        list.replaceChildren();
+        for (const example of state.examples) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "demo-choice";
+          button.dataset.example = example.name;
+          button.setAttribute("aria-current", String(state.example?.name === example.name));
+          const copy = document.createElement("span");
+          const title = document.createElement("strong");
+          title.textContent = example.label;
+          const detail = document.createElement("small");
+          detail.textContent = `${example.units} units · ${example.waves} waves · ${example.ready ? "ready" : `${example.findings} findings`}`;
+          const mark = document.createElement("span");
+          mark.className = "demo-choice-mark";
+          mark.textContent = state.example?.name === example.name ? "✓" : "→";
+          copy.append(title, detail);
+          button.append(copy, mark);
+          button.addEventListener("click", () => selectExample(example));
+          list.append(button);
+        }
+      }
+
+      function selectExample(example) {
+        if (state.example?.name === example.name) { $("demo-dialog").close(); return; }
+        state.example = example;
+        state.raw = "";
+        state.runState = null;
+        state.rawRunState = "";
+        state.selected = null;
+        state.focus = "direct";
+        state.kindFocus = null;
+        $("search").value = "";
+        const url = new URL(location.href);
+        url.searchParams.set("example", example.name);
+        history.replaceState(null, "", url);
+        renderExamples();
+        $("demo-dialog").close();
+        load();
+      }
+
+      async function initExamples() {
+        try {
+          const response = await fetch("/examples.json", { cache: "no-store" });
+          if (!response.ok) return;
+          const examples = await response.json();
+          if (!Array.isArray(examples) || !examples.length) return;
+          state.examples = examples;
+          const requested = new URL(location.href).searchParams.get("example");
+          state.example = examples.find((item) => item.name === requested) || examples[0];
+          $("demo-open").classList.remove("hidden");
+          renderExamples();
+        } catch (_) { /* regular viewer has no demo endpoint */ }
+      }
+
       async function loadRunState() {
+        if (state.example) return;
         try {
           const response = await fetch(`/run-state.json?t=${Date.now()}`, { cache: "no-store" });
           if (response.status === 404) {
@@ -1299,13 +1377,16 @@
         if (state.polling) return;
         state.polling = true;
         try {
-          const response = await fetch(`/plan.json?t=${Date.now()}`, { cache: "no-store" });
+          const path = state.example ? `/examples/${encodeURIComponent(state.example.name)}/plan.json` : "/plan.json";
+          const response = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+          if (path !== (state.example ? `/examples/${encodeURIComponent(state.example.name)}/plan.json` : "/plan.json")) return;
           if (!response.ok) {
             let message = `The plan endpoint returned HTTP ${response.status}.`;
             try { message = (await response.json()).error || message; } catch (_) { /* response was not JSON */ }
             throw new Error(message);
           }
           const raw = await response.text();
+          if (path !== (state.example ? `/examples/${encodeURIComponent(state.example.name)}/plan.json` : "/plan.json")) return;
           let plan = state.plan;
           if (raw !== state.raw) {
             plan = JSON.parse(raw);
@@ -1316,7 +1397,7 @@
             state.raw = raw;
             state.plan = plan;
             if (state.selected && !model(plan).nodes.has(state.selected)) clearSelection();
-            $("source-name").textContent = decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
+            $("source-name").textContent = state.example?.label || decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
             updateMetrics(plan);
             render();
             updateFocusSummary();
@@ -1403,6 +1484,11 @@
       }));
       $("view-waves").addEventListener("click", () => setView("waves"));
       $("view-graph").addEventListener("click", () => setView("graph"));
+      $("demo-open").addEventListener("click", () => $("demo-dialog").showModal());
+      $("demo-close").addEventListener("click", () => $("demo-dialog").close());
+      $("demo-dialog").addEventListener("click", (event) => {
+        if (event.target === $("demo-dialog")) $("demo-dialog").close();
+      });
       $("theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true));
       $("zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.25));
       $("zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.25));
@@ -1418,8 +1504,10 @@
         else if (state.view === "graph") fitGraph();
       });
 
-      load();
-      setInterval(load, POLL_MS);
+      initExamples().finally(() => {
+        load();
+        setInterval(load, POLL_MS);
+      });
     })();
   </script>
 </body>
