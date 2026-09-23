@@ -104,10 +104,9 @@ repo is both its source and its own marketplace.
         keep their own flow and point there for the doctrine, so a rule has one
         home.
         · `inspire-emanate`: a thin skill that calls
-        `.inspire/bin/orchestrator/orchestrate.py` after materialization.
-        `plan` runs `emanate-plan.sh`; `run` requires a project test command
-        and results manifest, then executes ready waves in a separate goal
-        worktree. The loop gates each unit before merging it there.
+        `orchestrator/orchestrate.py`. `plan` runs `emanate-plan.sh`; `run` passes
+        a ready plan to the OMP Ralph loop. The Python process owns the handoff,
+        and the TypeScript loop executes its waves in worktrees.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`

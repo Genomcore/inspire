@@ -31,7 +31,7 @@ describe('runRalphLoop', () => {
       wave(2, [unit('screen', 'accounts.detail')]),
     ])
 
-    await runRalphLoop(input, options(2), {
+    await runRalphLoop(input, { maxTries: 2 }, {
       git,
       runCommand,
     })
@@ -68,7 +68,9 @@ describe('runRalphLoop', () => {
     activeAgentFactory = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('second'), green()])
 
-    await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), options(2), { git, runCommand })
+    await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
+      maxTries: 2,
+    }, { git, runCommand })
 
     expect(trace).toEqual([
       'base',
@@ -96,7 +98,9 @@ describe('runRalphLoop', () => {
       wave(1, []),
       wave(2, []),
       wave(3, [unit('pattern', 'dashboard')]),
-    ]), options(1), { git, runCommand })
+    ]), {
+      maxTries: 1,
+    }, { git, runCommand })
 
     expect(execution).rejects.toEqual(new RalphLoopError(
       'dashboard',
@@ -134,7 +138,7 @@ describe('runRalphLoop', () => {
     const input = plan([wave(1, [unit('entity', 'auth.account')])])
     input.ready = false
 
-    const execution = runRalphLoop(input, options(1), {
+    const execution = runRalphLoop(input, { maxTries: 1 }, {
       git: new FakeGit(trace),
     })
 
@@ -142,28 +146,6 @@ describe('runRalphLoop', () => {
     await execution.catch(() => undefined)
     expect(trace).toEqual([])
   })
-
-  test('does not merge a green unit when claim verification fails', async () => {
-    const trace: string[] = []
-    activeAgentFactory = createAgentFactory(trace)
-    const failure = new Error('claim coverage failed')
-    const execution = runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
-      ...options(1),
-      verifyUnit: () => Promise.reject(failure),
-    }, {
-      git: new FakeGit(trace),
-      runCommand: createCommandRunner(trace, [green()]),
-    })
-    expect(execution).rejects.toBe(failure)
-    await execution.catch(() => undefined)
-    expect(trace).not.toContain('merge:branch-1-button:button')
-  })
-})
-
-const options = (maxTries: number) => ({
-  maxTries,
-  testCommand: ['test'],
-  verifyUnit: () => Promise.resolve(),
 })
 
 class FakeGit implements Git {

@@ -33,7 +33,6 @@ export class GitWorktrees implements Git {
     const path = join(this.repoRoot, '.claude', 'worktrees', branch)
     await mkdir(join(this.repoRoot, '.claude', 'worktrees'), { recursive: true })
     await this.git(['worktree', 'add', '-b', branch, path, baseBranch])
-    await mkdir(join(path, '.claude', 'worktrees'), { recursive: true })
     return { branch, path }
   }
 

@@ -14,5 +14,5 @@
     "skipLibCheck": true,
     "types": ["bun"]
   },
-  "include": ["src", "test", "schemas", "eslint.config.mjs"]
+  "include": ["src", "test", "eslint.config.mjs"]
 }

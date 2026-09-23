@@ -407,7 +407,7 @@ seed_claude_md() {
 # the operator's and are never touched.
 GITIGNORE_MARK_BEGIN="# --- INSPIRE (materialize.sh) ---"
 GITIGNORE_MARK_END="# --- end INSPIRE ---"
-GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/" ".inspire/bin/orchestrator/node_modules/")
+GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/")
 
 seed_gitignore() {
   local gi="$PROJECT_ROOT/.gitignore"
