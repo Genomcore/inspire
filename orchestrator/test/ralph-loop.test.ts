@@ -1,5 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
+import { runCommand as executeCommand } from '@/commands/run-command'
 import { RalphLoopError } from '@/errors/ralph-loop-error'
 import type { Agent } from '@/interfaces/agent'
 import type { CommandResult } from '@/interfaces/command-result'
@@ -31,7 +35,7 @@ describe('runRalphLoop', () => {
       wave(2, [unit('screen', 'accounts.detail')]),
     ])
 
-    await runRalphLoop(input, { maxTries: 2 }, {
+    await runRalphLoop(input, { maxTries: 2, testCommand: ['test'] }, {
       git,
       runCommand,
     })
@@ -70,6 +74,7 @@ describe('runRalphLoop', () => {
 
     await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
       maxTries: 2,
+      testCommand: ['test'],
     }, { git, runCommand })
 
     expect(trace).toEqual([
@@ -94,21 +99,21 @@ describe('runRalphLoop', () => {
     activeAgentFactory = createAgentFactory(trace)
     const runCommand = createCommandRunner(trace, [red('first'), red('last')])
 
-    const execution = runRalphLoop(plan([
+    const result = await runRalphLoop(plan([
       wave(1, []),
       wave(2, []),
       wave(3, [unit('pattern', 'dashboard')]),
     ]), {
       maxTries: 1,
+      testCommand: ['test'],
     }, { git, runCommand })
 
-    expect(execution).rejects.toEqual(new RalphLoopError(
+    expect(result.stalled).toEqual([new RalphLoopError(
       'dashboard',
       'branch-3-dashboard',
       'worktree-3-dashboard',
       red('last'),
-    ))
-    await execution.catch(() => undefined)
+    )])
     expect(trace).toEqual([
       'base',
       'create:3:dashboard',
@@ -119,6 +124,92 @@ describe('runRalphLoop', () => {
       'test:worktree-3-dashboard',
       'dispose:dashboard',
     ])
+  })
+
+  test('continues independent units and blocks only ordering dependents of stalled units', async () => {
+    const trace: string[] = []
+    activeAgentFactory = createAgentFactory(trace)
+    const dependent = unit('action', 'dependent')
+    dependent.requires = [{ kind: 'entity', id: 'failed', ordering: true }]
+    const transitive = unit('screen', 'transitive')
+    transitive.requires = [{ kind: 'action', id: 'dependent', ordering: true }]
+    const deferred = unit('screen', 'deferred')
+    deferred.requires = [{ kind: 'entity', id: 'failed', ordering: false }]
+    const result = await runRalphLoop(plan([
+      wave(1, [unit('entity', 'failed'), unit('action', 'list')]),
+      wave(2, [dependent, unit('entity', 'samples.sample'), deferred]),
+      wave(3, [transitive]),
+    ]), { maxTries: 0, testCommand: ['test'] }, {
+      git: new FakeGit(trace),
+      runCommand: createCommandRunner(trace, [red('failure'), green(), green(), green()]),
+    })
+    expect(result.stalled.map((failure) => failure.unitId)).toEqual(['failed'])
+    expect(result.blocked).toEqual(['dependent', 'transitive'])
+    expect(trace.filter((entry) => entry.startsWith('merge:'))).toEqual([
+      'merge:branch-1-list:list',
+      'merge:branch-2-samples.sample:samples.sample',
+      'merge:branch-2-deferred:deferred',
+    ])
+    expect(trace).not.toContain('remove:branch-1-failed')
+    expect(trace).not.toContain('create:2:dependent')
+    expect(trace).not.toContain('create:3:transitive')
+  })
+
+  test('retries the configured shell suite in order in the unit worktree with report paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ralph-suite-'))
+    try {
+      await mkdir(join(root, '.inspire'))
+      await writeFile(join(root, '.inspire/emanate.json'), JSON.stringify({
+        schema: 'inspire.emanate-config/1',
+        suite: [
+          { command: 'if [ ! -f retried ]; then touch retried; exit 1; fi; printf first >> suite-order; printf "{}" > {report}', format: 'jest' },
+          { command: 'test "$(cat suite-order)" = first && printf second >> suite-order && printf "{}" > {report}', format: 'jest' },
+        ],
+      }))
+      const trace: string[] = []
+      const commands: (readonly string[])[] = []
+      activeAgentFactory = createAgentFactory(trace)
+      const result = await runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
+        maxTries: 2, repoRoot: root,
+      }, {
+        git: new FakeGit(trace, root),
+        runCommand: (command, cwd) => {
+          expect(cwd).toBe(root)
+          commands.push(command)
+          return executeCommand(command, cwd)
+        },
+      })
+      expect(result).toEqual({ stalled: [], blocked: [] })
+      expect(await readFile(join(root, 'suite-order'), 'utf8')).toBe('firstsecond')
+      expect(commands).toHaveLength(3)
+      for (const command of commands) {
+        expect(command.slice(0, 2)).toEqual(['bash', '-c'])
+        expect(command[2]).not.toContain('{report}')
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  test('rejects an invalid suite before creating any worktree', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ralph-invalid-suite-'))
+    try {
+      await mkdir(join(root, '.inspire'))
+      for (const suite of [[], [{ command: '' }]]) {
+        await writeFile(join(root, '.inspire/emanate.json'), JSON.stringify({
+          schema: 'inspire.emanate-config/1', suite,
+        }))
+        const trace: string[] = []
+        const execution = runRalphLoop(plan([wave(1, [unit('component', 'button')])]), {
+          maxTries: 2, repoRoot: root,
+        }, { git: new FakeGit(trace) })
+        expect(execution).rejects.toThrow()
+        await execution.catch(() => undefined)
+        expect(trace).toEqual([])
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 
   test('builds a prompt with the unit contract and commit cadence', () => {
@@ -149,7 +240,7 @@ describe('runRalphLoop', () => {
 })
 
 class FakeGit implements Git {
-  constructor(private readonly trace: string[]) {}
+  constructor(private readonly trace: string[], private readonly worktreePath?: string) {}
 
   currentBranch(): Promise<string> {
     this.trace.push('base')
@@ -164,7 +255,7 @@ class FakeGit implements Git {
     this.trace.push(`create:${String(waveId)}:${target.id}`)
     return Promise.resolve({
       branch: `branch-${String(waveId)}-${target.id}`,
-      path: `worktree-${String(waveId)}-${target.id}`,
+      path: this.worktreePath ?? `worktree-${String(waveId)}-${target.id}`,
     })
   }
 
