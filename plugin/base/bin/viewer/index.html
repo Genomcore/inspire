@@ -201,6 +201,7 @@
     .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
     .node.radial .node-bg { rx: 11; }
     .node.radial .node-id { font: 610 13px var(--sans); }
+    .node.on-path .node-bg { stroke: var(--accent); }
     .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
     .node.dim { opacity: .18; }
     .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
@@ -221,6 +222,10 @@
     .detail-grid dt { color: var(--muted); font-size: 10px; margin-bottom: 5px; }
     .detail-grid dd { margin: 0; font: 550 12px/1.4 var(--mono); }
     .detail h3 { margin: 22px 0 10px; color: var(--muted); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .focus-options { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; padding: 2px; background: var(--canvas); }
+    .focus-option { border: 0; border-radius: 2px; padding: 7px 10px; background: transparent; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; }
+    .focus-option[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); }
+    .focus-summary { margin: 10px 0 0; color: var(--muted); font: 11px/1.5 var(--mono); }
     .pills { display: flex; flex-wrap: wrap; gap: 6px; }
     .pill { padding: 5px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font: 10px var(--mono); }
     .requires { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
@@ -340,7 +345,7 @@
       </section>
 
       <aside class="inspector" aria-label="Unit details">
-        <div class="inspector-empty" id="inspector-empty">Select a unit to inspect its path, profiles, claim count, and dependency edges. Click it again, click empty graph space, or press Escape to clear the selection.</div>
+        <div class="inspector-empty" id="inspector-empty">Select a unit to inspect its path, profiles, claim count, and dependency edges. Use Build path to trace every ordering prerequisite. Click the unit again, click empty graph space, or press Escape to clear the selection.</div>
         <div class="detail hidden" id="detail"></div>
       </aside>
     </main>
@@ -364,7 +369,7 @@
       const SIDE = 54;
       const MIN_ZOOM = 0.02;
       const MAX_ZOOM = 4;
-      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false, view: "waves", zoom: 1, scene: null };
+      const state = { plan: null, raw: "", selected: null, nodes: new Map(), edges: [], polling: false, view: "waves", focus: "direct", zoom: 1, scene: null };
 
       const $ = (id) => document.getElementById(id);
       const graph = $("graph");
@@ -431,11 +436,12 @@
             }
           }
         }
+        edges.forEach((edge, index) => { edge.index = index; });
         return { nodes, byWave, external: [...external.values()], edges };
       }
 
       function waveLayout(data) {
-        const columns = data.external.length ? [data.external, ...data.byWave] : data.byWave;
+        const columns = (data.external.length ? [data.external, ...data.byWave] : data.byWave).filter((column) => column.length);
         const maxRows = Math.max(1, ...columns.map((column) => column.length));
         const width = SIDE * 2 + columns.length * NODE_W + Math.max(0, columns.length - 1) * COL_GAP;
         const height = TOP + maxRows * NODE_H + Math.max(0, maxRows - 1) * ROW_GAP + 64;
@@ -451,7 +457,7 @@
       }
 
       function radialLayout(data) {
-        const groups = [...data.byWave];
+        const groups = data.byWave.filter((group) => group.length);
         if (data.external.length) groups.push(data.external);
         const fullTurn = Math.PI * 2;
         const radii = [];
@@ -467,9 +473,9 @@
         groups.forEach((group, index) => {
           const radius = radii[index];
           const boundary = radius + 70;
-          const external = index === data.byWave.length;
-          rings.push({ radius: boundary, label: external ? "OUTSIDE RUN" : `WAVE ${index + 1}`, external });
-          if (!group.length) return;
+          const external = group[0].external;
+          const wave = external ? 0 : group[0].wave;
+          rings.push({ radius: boundary, label: external ? "OUTSIDE RUN" : `WAVE ${wave}`, external, wave });
 
           const parent = new Map(group.map((node) => [node.key, node.key]));
           const find = (key) => {
@@ -592,14 +598,23 @@
         graph.replaceChildren(svg("title", { id: "graph-title" }, "Emanation dependency graph"));
         state.scene = null;
         if (!state.plan || state.plan.refused) return;
-        const data = model(state.plan);
-        state.nodes = data.nodes;
-        state.edges = data.edges;
-        if (!data.byWave.some((wave) => wave.length)) {
+        const full = model(state.plan);
+        state.nodes = full.nodes;
+        state.edges = full.edges;
+        if (!full.byWave.some((wave) => wave.length)) {
           $("empty-state").classList.remove("hidden");
           return;
         }
         $("empty-state").classList.add("hidden");
+        const path = state.selected && state.focus === "only" ? buildPath(state.selected) : null;
+        const showExternal = $("show-external").checked;
+        const visibleKeys = path && new Set([...path.nodes].filter((key) => !full.nodes.get(key)?.external || showExternal || key === state.selected));
+        const data = path ? {
+          nodes: new Map([...full.nodes].filter(([key]) => visibleKeys.has(key))),
+          byWave: full.byWave.map((wave) => wave.filter((node) => visibleKeys.has(node.key))),
+          external: full.external.filter((node) => visibleKeys.has(node.key)),
+          edges: full.edges.filter((edge) => path.edges.has(edge.index) && visibleKeys.has(edge.source) && visibleKeys.has(edge.target))
+        } : full;
         const scene = state.view === "graph" ? radialLayout(data) : waveLayout(data);
         state.scene = scene;
         graph.setAttribute("viewBox", `0 0 ${scene.width} ${scene.height}`);
@@ -616,21 +631,25 @@
         graph.append(defs);
 
         if (state.view === "graph") {
-          for (const ring of [...scene.rings].reverse()) {
-            graph.append(svg("circle", { cx: scene.center, cy: scene.center, r: ring.radius, class: `frontier-ring${ring.external ? " external" : ""}` }));
-            graph.append(svg("text", { x: scene.center + 14, y: scene.center - ring.radius + 18, class: "frontier-label" }, ring.label));
+          for (let index = scene.rings.length - 1; index >= 0; index--) {
+            const ring = scene.rings[index];
+            const frontier = svg("g", { class: "frontier", "data-wave": ring.wave });
+            frontier.append(svg("circle", { cx: scene.center, cy: scene.center, r: ring.radius, class: `frontier-ring${ring.external ? " external" : ""}` }));
+            frontier.append(svg("text", { x: scene.center + 14, y: scene.center - ring.radius + 18, class: "frontier-label" }, ring.label));
+            graph.append(frontier);
           }
           graph.append(svg("text", { x: scene.center, y: scene.center + 4, class: "frontier-center", "text-anchor": "middle" }, "FRONTIER"));
         } else {
-          const hasExternal = data.external.length > 0;
           scene.columns.forEach((column, index) => {
             if (!column.length) return;
             const position = scene.positions.get(column[0].key);
-            const waveNumber = hasExternal ? index : index + 1;
-            const external = hasExternal && index === 0;
-            graph.append(svg("text", { x: position.x, y: 34, class: "wave-label" }, external ? "OUTSIDE RUN" : `WAVE ${waveNumber}`));
-            graph.append(svg("text", { x: position.x, y: 53, class: "wave-count" }, `${column.length} ${column.length === 1 ? "unit" : "units"}`));
-            graph.append(svg("line", { x1: position.x, y1: 64, x2: position.x + NODE_W, y2: 64, class: "wave-rule" }));
+            const waveNumber = column[0].wave;
+            const external = column[0].external;
+            const heading = svg("g", { class: "wave-heading", "data-column": index });
+            heading.append(svg("text", { x: position.x, y: 34, class: "wave-label" }, external ? "OUTSIDE RUN" : `WAVE ${waveNumber}`));
+            heading.append(svg("text", { x: position.x, y: 53, class: "wave-count" }, `${column.length} ${column.length === 1 ? "unit" : "units"}`));
+            heading.append(svg("line", { x1: position.x, y1: 64, x2: position.x + NODE_W, y2: 64, class: "wave-rule" }));
+            graph.append(heading);
           });
         }
 
@@ -642,7 +661,7 @@
           const path = svg("path", {
             d: state.view === "graph" ? radialEdgePath(a, b, edge.type) : edgePath(a, b, edge.type),
             class: `edge ${edge.type}`,
-            "data-source": edge.source, "data-target": edge.target,
+            "data-source": edge.source, "data-target": edge.target, "data-index": edge.index,
             "marker-end": edge.type === "navigation" ? "url(#navigation-arrow)" : "url(#arrow)"
           });
           edgeLayer.append(path);
@@ -679,6 +698,47 @@
         applyFilters();
       }
 
+      function buildPath(key) {
+        const incoming = new Map();
+        state.edges.forEach((edge, index) => {
+          if (edge.type !== "ordering") return;
+          if (!incoming.has(edge.target)) incoming.set(edge.target, []);
+          incoming.get(edge.target).push({ source: edge.source, index });
+        });
+        const nodes = new Set([key]);
+        const edges = new Set();
+        const pending = [key];
+        while (pending.length) {
+          for (const edge of incoming.get(pending.pop()) || []) {
+            edges.add(edge.index);
+            if (nodes.has(edge.source)) continue;
+            nodes.add(edge.source);
+            pending.push(edge.source);
+          }
+        }
+        return { nodes, edges };
+      }
+
+      function updateFocusSummary() {
+        const summary = $("focus-summary");
+        if (!summary || !state.selected) return;
+        const path = buildPath(state.selected);
+        const outside = [...path.nodes].filter((key) => key !== state.selected && state.nodes.get(key)?.external).length;
+        summary.textContent = `${path.nodes.size - 1} ordering prerequisites · ${path.edges.size} links${outside ? ` · ${outside} outside this run` : ""}`;
+      }
+
+      function setFocus(focus) {
+        const reflow = state.focus === "only" || focus === "only";
+        state.focus = focus;
+        document.querySelectorAll(".focus-option").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.focus === focus));
+        });
+        if (reflow) render();
+        else applyFilters();
+        if (focus === "only") fitPath();
+        else if (reflow) centerSelected();
+      }
+
       function select(key) {
         if (state.selected === key) {
           clearSelection();
@@ -710,11 +770,22 @@
             <div><dt>Module</dt><dd>${escapeHtml(node.module || "—")}</dd></div>
             <div><dt>Population</dt><dd>${escapeHtml(node.population || "—")}</dd></div>
           </dl>
+          <h3>Dependency focus</h3>
+          <div class="focus-options" role="group" aria-label="Dependency focus">
+            <button class="focus-option" type="button" data-focus="direct" aria-pressed="${state.focus === "direct"}">Direct links</button>
+            <button class="focus-option" type="button" data-focus="path" aria-pressed="${state.focus === "path"}">Build path</button>
+            <button class="focus-option" type="button" data-focus="only" aria-pressed="${state.focus === "only"}">Only path</button>
+          </div>
+          <p class="focus-summary" id="focus-summary"></p>
           ${node.profiles?.length ? `<h3>Profiles</h3><div class="pills">${node.profiles.map((profile) => `<span class="pill">${escapeHtml(profile)}</span>`).join("")}</div>` : ""}
           <h3>Connections</h3>
           ${requirements ? `<div class="requires">${requirements}</div>` : `<p class="detail-path">No declared connections.</p>`}`;
         detail.querySelectorAll(".requirement").forEach((element) => element.addEventListener("click", () => selectById(element.dataset.target)));
-        applyFilters();
+        detail.querySelectorAll(".focus-option").forEach((button) => button.addEventListener("click", () => setFocus(button.dataset.focus)));
+        updateFocusSummary();
+        if (state.focus === "only") render();
+        else applyFilters();
+        if (state.focus === "only") fitPath();
       }
 
       function clearSelection() {
@@ -726,7 +797,8 @@
         $("detail").classList.add("hidden");
         $("detail").replaceChildren();
         $("inspector-empty").classList.remove("hidden");
-        applyFilters();
+        if (state.focus === "only") render();
+        else applyFilters();
       }
 
       function selectById(id) {
@@ -744,21 +816,41 @@
         const showDeferred = $("show-deferred").checked;
         const showNavigation = $("show-navigation").checked;
         const showExternal = $("show-external").checked;
+        const path = state.selected && state.focus !== "direct" ? buildPath(state.selected) : null;
+        const only = Boolean(path && state.focus === "only");
         graph.querySelectorAll(".node").forEach((element) => {
           const node = state.nodes.get(element.dataset.key);
           const searchable = `${node.id} ${node.kind} ${node.module || ""} ${node.surface || ""}`.toLowerCase();
-          const dim = (query && !searchable.includes(query)) || (node.external && !showExternal);
+          const onPath = path?.nodes.has(element.dataset.key);
+          const externalExcluded = node.external && !showExternal && element.dataset.key !== state.selected;
+          const dim = (query && !searchable.includes(query)) || externalExcluded || (path && !onPath);
+          element.style.display = only && (!onPath || externalExcluded) ? "none" : "";
           element.classList.toggle("dim", Boolean(dim));
+          element.classList.toggle("on-path", Boolean(onPath && !dim));
         });
         graph.querySelectorAll(".edge").forEach((element) => {
           const type = element.classList.contains("navigation") ? "navigation" : element.classList.contains("deferred") ? "deferred" : "ordering";
           const touchesExternal = state.nodes.get(element.dataset.source)?.external || state.nodes.get(element.dataset.target)?.external;
-          const hidden = (type === "navigation" ? !showNavigation : type === "deferred" ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal);
-          const selected = state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
+          const onPath = path?.edges.has(Number(element.dataset.index));
+          const hidden = (type === "navigation" ? !showNavigation : type === "deferred" ? !showDeferred : !showOrdering) || (touchesExternal && !showExternal) || (only && !onPath);
+          const selected = path ? onPath : state.selected && (element.dataset.source === state.selected || element.dataset.target === state.selected);
           element.style.display = hidden ? "none" : "";
           element.classList.toggle("hot", Boolean(selected && !hidden));
           element.classList.toggle("dim", Boolean(state.selected && !selected));
         });
+        graph.querySelectorAll(".wave-heading").forEach((heading) => {
+          const column = state.scene.columns[Number(heading.dataset.column)];
+          const count = only ? column.filter((node) => path.nodes.has(node.key) && (!node.external || showExternal || node.key === state.selected)).length : column.length;
+          heading.style.display = only && !count ? "none" : "";
+          heading.querySelector(".wave-count").textContent = `${count} ${count === 1 ? "unit" : "units"}`;
+        });
+        graph.querySelectorAll(".frontier").forEach((frontier) => {
+          const wave = Number(frontier.dataset.wave);
+          const count = only ? [...path.nodes].filter((key) => state.nodes.get(key)?.wave === wave && (wave || showExternal || key === state.selected)).length : 1;
+          frontier.style.display = only && !count ? "none" : "";
+        });
+        const center = graph.querySelector(".frontier-center");
+        if (center) center.style.display = only ? "none" : "";
       }
 
       function updateMetrics(plan) {
@@ -811,6 +903,33 @@
         scroll.scrollTop = Math.max(0, (graph.clientHeight - scroll.clientHeight) / 2);
       }
 
+      function fitPath() {
+        if (!state.scene || !state.selected) return;
+        const showExternal = $("show-external").checked;
+        const points = [...buildPath(state.selected).nodes]
+          .filter((key) => !state.nodes.get(key)?.external || showExternal || key === state.selected)
+          .map((key) => state.scene.positions.get(key))
+          .filter(Boolean);
+        if (!points.length) return;
+        const left = Math.min(...points.map((point) => point.x));
+        const top = Math.min(...points.map((point) => point.y));
+        const right = Math.max(...points.map((point) => point.x + state.scene.nodeWidth));
+        const bottom = Math.max(...points.map((point) => point.y + state.scene.nodeHeight));
+        const zoom = Math.min(1.5, (scroll.clientWidth - 72) / (right - left), (scroll.clientHeight - 72) / (bottom - top));
+        setZoom(zoom);
+        scroll.scrollLeft = (left + right) / 2 * state.zoom - scroll.clientWidth / 2;
+        scroll.scrollTop = (top + bottom) / 2 * state.zoom - scroll.clientHeight / 2;
+      }
+
+      function centerSelected() {
+        if (!state.scene || !state.selected) return;
+        const point = state.scene.positions.get(state.selected);
+        if (!point) return;
+        setZoom(1);
+        scroll.scrollLeft = point.x + state.scene.nodeWidth / 2 - scroll.clientWidth / 2;
+        scroll.scrollTop = point.y + state.scene.nodeHeight / 2 - scroll.clientHeight / 2;
+      }
+
       function setView(view) {
         if (state.view === view) return;
         state.view = view;
@@ -820,7 +939,8 @@
         stage.classList.toggle("graph-view", view === "graph");
         render();
         setZoom(1);
-        if (view === "graph") fitGraph();
+        if (state.focus === "only" && state.selected) fitPath();
+        else if (view === "graph") fitGraph();
         else scroll.scrollTo({ left: 0, top: 0 });
       }
 
@@ -845,7 +965,9 @@
             $("source-name").textContent = decodeURIComponent(location.pathname.split("/").pop() || "plan.json") || "plan.json";
             updateMetrics(plan);
             render();
-            if (state.view === "graph") fitGraph();
+            updateFocusSummary();
+            if (state.focus === "only" && state.selected) fitPath();
+            else if (state.view === "graph") fitGraph();
             if (manual) showToast("Plan refreshed");
           } else if (manual) {
             showToast("Plan is unchanged");
@@ -912,14 +1034,25 @@
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && state.selected) clearSelection();
       });
-      ["show-ordering", "show-deferred", "show-navigation", "show-external"].forEach((id) => $(id).addEventListener("change", applyFilters));
+      ["show-ordering", "show-deferred", "show-navigation", "show-external"].forEach((id) => $(id).addEventListener("change", () => {
+        if (id === "show-external" && state.focus === "only") { render(); fitPath(); }
+        else applyFilters();
+      }));
       $("view-waves").addEventListener("click", () => setView("waves"));
       $("view-graph").addEventListener("click", () => setView("graph"));
       $("zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.25));
       $("zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.25));
       $("refresh").addEventListener("click", () => load(true));
-      $("fit").addEventListener("click", () => { fitGraph(); showToast("View fitted"); });
-      window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) { render(); if (state.view === "graph") fitGraph(); } });
+      $("fit").addEventListener("click", () => {
+        if (state.focus === "only" && state.selected) { fitPath(); showToast("Path fitted"); }
+        else { fitGraph(); showToast("View fitted"); }
+      });
+      window.addEventListener("resize", () => {
+        if (!state.plan || state.plan.refused) return;
+        render();
+        if (state.focus === "only" && state.selected) fitPath();
+        else if (state.view === "graph") fitGraph();
+      });
 
       load();
       setInterval(load, POLL_MS);
