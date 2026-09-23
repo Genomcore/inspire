@@ -77,8 +77,15 @@ eq "a changed plan invalidates old run state" "$(curl -s -o "$TMP/stale.json" -w
 curl -fsS -D "$TMP/headers" -o /dev/null "${url}plan.json"
 eq "the live endpoint disables browser caching" "$(tr -d '\r' < "$TMP/headers" | grep -ci '^cache-control: no-store')" "1"
 
-sed -n '/^  <script>$/,/^  <\/script>$/p' "$BIN/viewer/index.html" \
-  | sed '1d;$d' > "$TMP/viewer.js"
+python3 - "$BIN/viewer/index.html" "$TMP/viewer.js" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+html = Path(sys.argv[1]).read_text()
+scripts = re.findall(r"<script>(.*?)</script>", html, re.DOTALL)
+Path(sys.argv[2]).write_text("\n".join(scripts))
+PY
 if ! command -v node >/dev/null 2>&1; then
   echo "SKIP the embedded viewer JavaScript parses (node is not installed)"
 elif node --check "$TMP/viewer.js" > "$TMP/node.out" 2>&1; then

@@ -4,12 +4,53 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>INSPIRE — Emanation plan</title>
+  <script>
+    (() => {
+      let saved;
+      try { saved = localStorage.getItem("inspire-plan-viewer-theme"); } catch (_) { /* storage may be disabled */ }
+      document.documentElement.dataset.theme = saved === "light" || saved === "dark"
+        ? saved : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    })();
+  </script>
   <style>
     :root {
+      color-scheme: light;
+      --ink: #23313a;
+      --muted: #53636d;
+      --faint: #7e8e98;
+      --canvas: #f3f6f7;
+      --panel: #ffffff;
+      --panel-2: #eaf0f2;
+      --line: #d6e0e4;
+      --line-strong: #aab9c1;
+      --accent: #207b60;
+      --accent-dim: #d9eee5;
+      --navigation: #586dbd;
+      --danger: #b94640;
+      --warning: #996513;
+      --topbar: rgba(255, 255, 255, .96);
+      --grid-dot: #c4d0d5;
+      --frontier: #bdcbd1;
+      --node-bg: #ffffff;
+      --node-stroke: #b5c5cc;
+      --node-hover: #eaf5f0;
+      --node-edge: #dceee5;
+      --node-external: #f1f5f6;
+      --overlay-shadow: rgba(44, 68, 78, .18);
+      --state-pending-bg: #edf1f3;
+      --state-running-bg: #fff2d9;
+      --state-delivered-bg: #e0f3e9;
+      --state-stalled-bg: #fbe7e3;
+      --state-blocked-bg: #eee9f4;
+      --blocked: #765a96;
+      --mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Geist, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+    :root[data-theme="dark"] {
       color-scheme: dark;
       --ink: #e8edf2;
-      --muted: #8d99a6;
-      --faint: #586572;
+      --muted: #a6b2bd;
+      --faint: #8998a5;
       --canvas: #11171c;
       --panel: #171e24;
       --panel-2: #1c252c;
@@ -18,10 +59,23 @@
       --accent: #68b69c;
       --accent-dim: #284d42;
       --navigation: #9baae8;
-      --danger: #d58478;
-      --warning: #d3ad68;
-      --mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      --sans: Geist, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      --danger: #e59488;
+      --warning: #e3bd79;
+      --topbar: rgba(17, 23, 28, .96);
+      --grid-dot: #4b5861;
+      --frontier: #34414a;
+      --node-bg: #192128;
+      --node-stroke: #3a4751;
+      --node-hover: #1d292d;
+      --node-edge: #243833;
+      --node-external: #141b20;
+      --overlay-shadow: rgba(8, 12, 15, .35);
+      --state-pending-bg: #242e35;
+      --state-running-bg: #3c3121;
+      --state-delivered-bg: #213a31;
+      --state-stalled-bg: #402b2a;
+      --state-blocked-bg: #342f40;
+      --blocked: #bea6d6;
     }
 
     * { box-sizing: border-box; }
@@ -54,7 +108,7 @@
       min-height: 68px;
       padding: 12px 20px;
       border-bottom: 1px solid var(--line);
-      background: rgba(17, 23, 28, .96);
+      background: var(--topbar);
     }
     .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .brand-mark {
@@ -83,10 +137,10 @@
       height: 7px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(104, 182, 156, .1);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 13%, transparent);
       animation: breathe 2.4s ease-in-out infinite;
     }
-    .live-dot.error { background: var(--danger); box-shadow: 0 0 0 4px rgba(213, 132, 120, .1); animation: none; }
+    .live-dot.error { background: var(--danger); box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 13%, transparent); animation: none; }
     @keyframes breathe { 50% { transform: scale(.72); opacity: .7; } }
     @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
     .updated { font: 11px/1.2 var(--mono); }
@@ -113,6 +167,7 @@
     .control svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
     .control:disabled { opacity: .4; cursor: default; }
     .zoom-level { min-width: 46px; align-self: center; color: var(--muted); font: 11px var(--mono); text-align: center; }
+    .theme-toggle { min-width: 68px; font: 600 11px var(--mono); }
 
     .workspace {
       display: grid;
@@ -171,7 +226,7 @@
     .stage { position: relative; min-width: 0; overflow: hidden; background-color: var(--canvas); }
     .stage::before {
       content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .32;
-      background-image: radial-gradient(circle, #4b5861 1px, transparent 1px);
+      background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1px);
       background-size: 24px 24px;
     }
     .graph-scroll { position: absolute; inset: 0; display: flex; overflow: auto; }
@@ -190,10 +245,12 @@
     .wave-label { fill: var(--muted); font: 650 10px var(--mono); letter-spacing: .14em; }
     .wave-count { fill: var(--faint); font: 11px var(--mono); }
     .wave-rule { stroke: var(--line); stroke-width: 1; }
-    .frontier-ring { fill: none; stroke: #34414a; stroke-width: 1; stroke-dasharray: 3 6; }
+    .frontier-ring { fill: none; stroke: var(--frontier); stroke-width: 1; stroke-dasharray: 3 6; }
     .frontier-ring.external { stroke: var(--faint); stroke-dasharray: 7 7; }
     .frontier-label { fill: var(--muted); font: 650 10px var(--mono); letter-spacing: .12em; }
     .frontier-center { fill: var(--faint); font: 650 10px var(--mono); letter-spacing: .14em; }
+    .arrowhead { fill: var(--line-strong); }
+    .arrowhead.navigation { fill: var(--navigation); }
     .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.35; opacity: .78; }
     .edge.deferred { stroke-dasharray: 5 5; opacity: .62; }
     .edge.navigation { stroke: var(--navigation); stroke-dasharray: 2 5; stroke-width: 1.7; opacity: .9; }
@@ -203,21 +260,21 @@
     .edge.hovered, .edge.navigation.hovered { stroke: var(--accent); stroke-width: 2.5; opacity: 1; vector-effect: non-scaling-stroke; }
     .edge-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; vector-effect: non-scaling-stroke; cursor: crosshair; }
     .node { cursor: pointer; transition: opacity .2s ease; }
-    .node .node-bg { fill: #192128; stroke: #3a4751; stroke-width: 1; rx: 5; }
+    .node .node-bg { fill: var(--node-bg); stroke: var(--node-stroke); stroke-width: 1; rx: 5; }
     .node.radial .node-bg { rx: 11; }
     .node.radial .node-id { font: 610 13px var(--sans); }
     .node.on-path .node-bg { stroke: var(--accent); }
-    .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: #1d292d; }
+    .node:hover .node-bg, .node.selected .node-bg { stroke: var(--accent); fill: var(--node-hover); }
     .node.dim { opacity: .18; }
     .node.edge-endpoint { opacity: 1; }
-    .node.edge-endpoint .node-bg { fill: #243833; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .node.edge-endpoint .node-bg { fill: var(--node-edge); stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
     .state-dot { stroke: var(--canvas); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
     .node[data-status="pending"] .state-dot { fill: var(--faint); }
     .node[data-status="running"] .state-dot { fill: var(--warning); }
     .node[data-status="delivered"] .state-dot { fill: var(--accent); }
     .node[data-status="stalled"] .state-dot { fill: var(--danger); }
-    .node[data-status="blocked"] .state-dot { fill: var(--muted); }
-    .node.external .node-bg { fill: #141b20; stroke-dasharray: 4 4; }
+    .node[data-status="blocked"] .state-dot { fill: var(--blocked); }
+    .node.external .node-bg { fill: var(--node-external); stroke-dasharray: 4 4; }
     .node-kind { font: 650 9px var(--mono); letter-spacing: .11em; text-transform: uppercase; fill: var(--accent); }
     .node.external .node-kind { fill: var(--muted); }
     .node-id { font: 610 13px var(--sans); fill: var(--ink); }
@@ -235,7 +292,25 @@
     .detail-grid dt { color: var(--muted); font-size: 10px; margin-bottom: 5px; }
     .detail-grid dd { margin: 0; font: 550 12px/1.4 var(--mono); }
     .detail h3 { margin: 22px 0 10px; color: var(--muted); font: 650 10px/1.2 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
-    .unit-run-status { margin: 0; color: var(--ink); font: 11px/1.5 var(--mono); overflow-wrap: anywhere; }
+    .unit-run-card {
+      --state-color: var(--muted);
+      --state-bg: var(--state-pending-bg);
+      padding: 12px 13px;
+      border: 1px solid color-mix(in srgb, var(--state-color) 32%, var(--line));
+      border-left: 3px solid var(--state-color);
+      border-radius: 4px;
+      background: var(--state-bg);
+      font: 11px/1.5 var(--mono);
+      overflow-wrap: anywhere;
+    }
+    .unit-run-card[data-status="running"] { --state-color: var(--warning); --state-bg: var(--state-running-bg); }
+    .unit-run-card[data-status="delivered"] { --state-color: var(--accent); --state-bg: var(--state-delivered-bg); }
+    .unit-run-card[data-status="stalled"] { --state-color: var(--danger); --state-bg: var(--state-stalled-bg); }
+    .unit-run-card[data-status="blocked"] { --state-color: var(--blocked); --state-bg: var(--state-blocked-bg); }
+    .unit-run-state { color: var(--state-color); font-weight: 700; letter-spacing: .06em; }
+    .unit-run-state::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+    .unit-run-meta { margin-left: 8px; color: var(--muted); }
+    .unit-run-reason { display: block; margin-top: 5px; color: var(--ink); }
     .focus-options { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; padding: 2px; background: var(--canvas); }
     .focus-option { border: 0; border-radius: 2px; padding: 7px 10px; background: transparent; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; }
     .focus-option[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); }
@@ -259,7 +334,7 @@
       position: absolute; z-index: 1; max-width: min(380px, calc(100% - 24px));
       padding: 11px 13px; border: 1px solid var(--line-strong); border-radius: 4px;
       background: var(--panel-2); color: var(--ink); pointer-events: none;
-      box-shadow: 0 8px 20px rgba(8, 12, 15, .3);
+      box-shadow: 0 8px 20px var(--overlay-shadow);
     }
     .edge-tooltip-type { display: block; margin-bottom: 6px; color: var(--accent); font: 650 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
     .edge-tooltip-units { font: 12px/1.55 var(--sans); overflow-wrap: anywhere; }
@@ -270,7 +345,7 @@
       .topbar { grid-template-columns: auto minmax(0, 1fr); }
       .live-state { display: none; }
       .workspace { grid-template-columns: 210px minmax(0, 1fr); }
-      .inspector { position: absolute; z-index: 2; right: 0; top: 68px; bottom: 0; width: min(340px, 90vw); box-shadow: -20px 0 36px rgba(8, 12, 15, .35); }
+      .inspector { position: absolute; z-index: 2; right: 0; top: 68px; bottom: 0; width: min(340px, 90vw); box-shadow: -20px 0 36px var(--overlay-shadow); }
       .inspector:has(.inspector-empty:not(.hidden)) { display: none; }
     }
     @media (max-width: 700px) {
@@ -279,6 +354,7 @@
       .top-actions { gap: 4px; }
       .view-option { padding: 0 7px; }
       .control { padding: 0 8px; }
+      .theme-toggle { min-width: 34px; }
       .workspace { grid-template-columns: 1fr; }
       .rail { display: none; }
       .top-actions .label { display: none; }
@@ -308,6 +384,7 @@
           <button class="view-option" id="view-waves" type="button" aria-pressed="true">Waves</button>
           <button class="view-option" id="view-graph" type="button" aria-pressed="false">Graph</button>
         </div>
+        <button class="control theme-toggle" id="theme-toggle" type="button"><span id="theme-icon" aria-hidden="true"></span><span class="label" id="theme-label"></span></button>
         <button class="control" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
         <output class="zoom-level" id="zoom-level" aria-label="Canvas zoom level">100%</output>
         <button class="control" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
@@ -404,6 +481,28 @@
       const graph = $("graph");
       const scroll = $("graph-scroll");
       const stage = document.querySelector(".stage");
+      const systemDark = matchMedia("(prefers-color-scheme: dark)");
+      let themeOverride;
+      try { themeOverride = localStorage.getItem("inspire-plan-viewer-theme"); } catch (_) { /* storage may be disabled */ }
+      if (themeOverride !== "light" && themeOverride !== "dark") themeOverride = null;
+
+      function setTheme(theme, persist = false) {
+        document.documentElement.dataset.theme = theme;
+        const next = theme === "dark" ? "Light" : "Dark";
+        $("theme-icon").textContent = theme === "dark" ? "☀" : "☾";
+        $("theme-label").textContent = next;
+        $("theme-toggle").setAttribute("aria-label", `Switch to ${next.toLowerCase()} mode`);
+        $("theme-toggle").title = `Switch to ${next.toLowerCase()} mode`;
+        if (persist) {
+          themeOverride = theme;
+          try { localStorage.setItem("inspire-plan-viewer-theme", theme); } catch (_) { /* storage may be disabled */ }
+        }
+      }
+
+      setTheme(themeOverride || (systemDark.matches ? "dark" : "light"));
+      systemDark.addEventListener("change", (event) => {
+        if (!themeOverride) setTheme(event.matches ? "dark" : "light");
+      });
 
       function svg(tag, attributes = {}, text = null) {
         const element = document.createElementNS(SVG, tag);
@@ -653,10 +752,10 @@
 
         const defs = svg("defs");
         const marker = svg("marker", { id: "arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
-        marker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", fill: "#46545f" }));
+        marker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", class: "arrowhead" }));
         defs.append(marker);
         const navigationMarker = svg("marker", { id: "navigation-arrow", markerWidth: 7, markerHeight: 7, refX: 6, refY: 3.5, orient: "auto", markerUnits: "strokeWidth" });
-        navigationMarker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", fill: "#9baae8" }));
+        navigationMarker.append(svg("path", { d: "M 0 0 L 7 3.5 L 0 7 z", class: "arrowhead navigation" }));
         defs.append(navigationMarker);
         graph.append(defs);
 
@@ -779,10 +878,18 @@
         const selected = state.nodes.get(state.selected);
         const unitState = selected && state.runState?.units[selected.id];
         unitSection.classList.toggle("hidden", !unitState);
-        if (unitState) $("unit-run-status").textContent = [
-          unitState.status.toUpperCase(), unitState.phase, unitState.persona,
-          unitState.attempt ? `attempt ${unitState.attempt}` : null, unitState.reason
-        ].filter(Boolean).join(" · ");
+        if (unitState) {
+          const card = $("unit-run-card");
+          card.dataset.status = unitState.status;
+          $("unit-run-state").textContent = unitState.status.toUpperCase();
+          $("unit-run-meta").textContent = [
+            unitState.phase, unitState.persona,
+            unitState.attempt ? `attempt ${unitState.attempt}` : null
+          ].filter(Boolean).join(" · ");
+          const reason = $("unit-run-reason");
+          reason.textContent = unitState.reason || "";
+          reason.classList.toggle("hidden", !unitState.reason);
+        }
       }
 
       function clearEdgeHover() {
@@ -906,7 +1013,7 @@
             <div><dt>Module</dt><dd>${escapeHtml(node.module || "—")}</dd></div>
             <div><dt>Population</dt><dd>${escapeHtml(node.population || "—")}</dd></div>
           </dl>
-          <section id="unit-run-section" class="hidden"><h3>Build loop</h3><p class="unit-run-status" id="unit-run-status"></p></section>
+          <section id="unit-run-section" class="hidden"><h3>Build loop</h3><div class="unit-run-card" id="unit-run-card"><span class="unit-run-state" id="unit-run-state"></span><span class="unit-run-meta" id="unit-run-meta"></span><span class="unit-run-reason hidden" id="unit-run-reason"></span></div></section>
           <h3>Dependency focus</h3>
           <div class="focus-options" role="group" aria-label="Dependency focus">
             <button class="focus-option" type="button" data-focus="direct" aria-pressed="${state.focus === "direct"}">Direct links</button>
@@ -1224,6 +1331,7 @@
       }));
       $("view-waves").addEventListener("click", () => setView("waves"));
       $("view-graph").addEventListener("click", () => setView("graph"));
+      $("theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true));
       $("zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.25));
       $("zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.25));
       $("refresh").addEventListener("click", () => load(true));
