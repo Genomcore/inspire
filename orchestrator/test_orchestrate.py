@@ -21,7 +21,7 @@ class OrchestrateTests(unittest.TestCase):
             "waves": [], "deliverable_waves": 0,
         })
         self.repo = Path("/tmp/emanate-test-repo")
-        self.planner = self.repo / "planner.sh"
+        self.planner = self.repo / "plugin/base/bin/emanate-plan.sh"
 
     def test_ready_plan_is_passed_unchanged_to_loop(self):
         calls = []
@@ -33,15 +33,13 @@ class OrchestrateTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0)
 
         with patch.object(ORCHESTRATE.subprocess, "run", side_effect=fake_run):
-            code = ORCHESTRATE.orchestrate(
-                self.repo, ["--goal", "auth.user"], run=True,
-                planner=self.planner,
-            )
+            code = ORCHESTRATE.orchestrate("run", self.repo)
 
         self.assertEqual(code, 0)
-        self.assertEqual(calls[0][0], [str(self.planner), "--goal", "auth.user"])
+        self.assertEqual(calls[0][0], [str(self.planner)])
         self.assertEqual(calls[1][1]["input"], self.plan)
         self.assertIn("src/cli.ts", calls[1][0][2])
+        self.assertEqual(len(calls[1][0]), 3)
 
     def test_rejected_plan_never_starts_loop(self):
         rejected = json.dumps({"schema": "inspire.emanation-plan/2", "ready": False})
@@ -49,7 +47,7 @@ class OrchestrateTests(unittest.TestCase):
             ORCHESTRATE.subprocess, "run",
             return_value=subprocess.CompletedProcess([], 1, rejected, "not ready\n"),
         ) as run, contextlib.redirect_stdout(io.StringIO()):
-            code = ORCHESTRATE.orchestrate(self.repo, [], run=True, planner=self.planner)
+            code = ORCHESTRATE.orchestrate("run", self.repo)
         self.assertEqual(code, 1)
         run.assert_called_once()
 
@@ -59,7 +57,7 @@ class OrchestrateTests(unittest.TestCase):
             ORCHESTRATE.subprocess, "run",
             return_value=subprocess.CompletedProcess([], 4, refusal, ""),
         ) as run, contextlib.redirect_stdout(io.StringIO()):
-            code = ORCHESTRATE.orchestrate(self.repo, [], run=True, planner=self.planner)
+            code = ORCHESTRATE.orchestrate("run", self.repo)
         self.assertEqual(code, 4)
         run.assert_called_once()
 
