@@ -1,5 +1,4 @@
 import contextlib
-import importlib.util
 import io
 import json
 import subprocess
@@ -9,11 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-MODULE_PATH = Path(__file__).with_name("orchestrate.py")
-sys.path.insert(0, str(MODULE_PATH.parent))
-SPEC = importlib.util.spec_from_file_location("orchestrate", MODULE_PATH)
-ORCHESTRATE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(ORCHESTRATE)
+sys.path.insert(0, str(Path(__file__).parent))
+import orchestrate as ORCHESTRATE
 
 
 class OrchestrateTests(unittest.TestCase):
