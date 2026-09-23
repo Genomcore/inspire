@@ -158,7 +158,7 @@
     .toggle input:checked + .toggle-box { border-color: var(--accent); background: var(--accent-dim); }
     .toggle input:checked + .toggle-box::after { content: ""; width: 6px; height: 3px; border: solid var(--accent); border-width: 0 0 2px 2px; transform: rotate(-45deg) translateY(-1px); }
     .legend { display: grid; gap: 10px; color: var(--muted); font-size: 12px; }
-    .graph-hint { margin: 14px 0 0; color: var(--faint); font: 11px/1.5 var(--mono); }
+    .canvas-hint { margin: 14px 0 0; color: var(--faint); font: 11px/1.5 var(--mono); }
     .legend-row { display: flex; align-items: center; gap: 9px; }
     .legend-line { width: 28px; border-top: 1.5px solid var(--line-strong); }
     .legend-line.deferred { border-top-style: dashed; }
@@ -238,6 +238,8 @@
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
     @media (max-width: 980px) {
+      .topbar { grid-template-columns: auto minmax(0, 1fr); }
+      .live-state { display: none; }
       .workspace { grid-template-columns: 210px minmax(0, 1fr); }
       .inspector { position: absolute; z-index: 2; right: 0; top: 68px; bottom: 0; width: min(340px, 90vw); box-shadow: -20px 0 36px rgba(8, 12, 15, .35); }
       .inspector:has(.inspector-empty:not(.hidden)) { display: none; }
@@ -248,10 +250,13 @@
       .top-actions { gap: 4px; }
       .view-option { padding: 0 7px; }
       .control { padding: 0 8px; }
-      .live-state { display: none; }
       .workspace { grid-template-columns: 1fr; }
       .rail { display: none; }
       .top-actions .label { display: none; }
+    }
+    @media (max-width: 420px) {
+      #refresh { display: none; }
+      .zoom-level { min-width: 36px; }
     }
   </style>
 </head>
@@ -274,12 +279,12 @@
           <button class="view-option" id="view-waves" type="button" aria-pressed="true">Waves</button>
           <button class="view-option" id="view-graph" type="button" aria-pressed="false">Graph</button>
         </div>
-        <button class="control graph-only hidden" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
-        <output class="zoom-level graph-only hidden" id="zoom-level" aria-label="Graph zoom level">100%</output>
-        <button class="control graph-only hidden" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
-        <button class="control" id="fit" type="button" title="Fit graph">
+        <button class="control" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+        <output class="zoom-level" id="zoom-level" aria-label="Canvas zoom level">100%</output>
+        <button class="control" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+        <button class="control" id="fit" type="button" title="Fit view">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
-          <span class="label">Fit graph</span>
+          <span class="label">Fit view</span>
         </button>
         <button class="control" id="refresh" type="button" title="Refresh now">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 8.2A7 7 0 0 1 18.8 7M17.9 15.8A7 7 0 0 1 5.2 17"/></svg>
@@ -323,7 +328,7 @@
             <div class="legend-row"><span class="legend-line navigation"></span>Screen navigation</div>
             <div class="legend-row"><span class="legend-node"></span>Outside this run</div>
           </div>
-          <p class="graph-hint graph-only hidden">Graph view: scroll to zoom around the pointer; drag empty space to pan.</p>
+          <p class="canvas-hint">Pinch to zoom around the pointer. Scroll to navigate; drag empty graph space to pan.</p>
         </section>
       </aside>
 
@@ -813,8 +818,8 @@
         $("view-waves").setAttribute("aria-pressed", String(view === "waves"));
         $("view-graph").setAttribute("aria-pressed", String(view === "graph"));
         stage.classList.toggle("graph-view", view === "graph");
-        document.querySelectorAll(".graph-only").forEach((control) => control.classList.toggle("hidden", view !== "graph"));
         render();
+        setZoom(1);
         if (view === "graph") fitGraph();
         else scroll.scrollTo({ left: 0, top: 0 });
       }
@@ -879,13 +884,27 @@
         scroll.scrollLeft = pan.left - (event.clientX - pan.x);
         scroll.scrollTop = pan.top - (event.clientY - pan.y);
       });
+      let gesture = null;
       scroll.addEventListener("wheel", (event) => {
-        if (state.view !== "graph" || event.ctrlKey || !state.scene) return;
+        if (gesture) { event.preventDefault(); return; }
+        if (!event.ctrlKey || !state.scene) return;
         event.preventDefault();
         const bounds = scroll.getBoundingClientRect();
         const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroll.clientHeight : 1);
-        setZoom(state.zoom * Math.exp(-delta * 0.0015), event.clientX - bounds.left, event.clientY - bounds.top);
+        setZoom(state.zoom * Math.exp(-delta * 0.01), event.clientX - bounds.left, event.clientY - bounds.top);
       }, { passive: false });
+      scroll.addEventListener("gesturestart", (event) => {
+        if (!state.scene) return;
+        event.preventDefault();
+        const bounds = scroll.getBoundingClientRect();
+        gesture = { zoom: state.zoom, x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+      }, { passive: false });
+      scroll.addEventListener("gesturechange", (event) => {
+        if (!gesture) return;
+        event.preventDefault();
+        setZoom(gesture.zoom * event.scale, gesture.x, gesture.y);
+      }, { passive: false });
+      scroll.addEventListener("gestureend", (event) => { event.preventDefault(); gesture = null; }, { passive: false });
       ["pointerup", "pointercancel"].forEach((name) => scroll.addEventListener(name, () => {
         pan = null;
         scroll.classList.remove("dragging");
@@ -899,7 +918,7 @@
       $("zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.25));
       $("zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.25));
       $("refresh").addEventListener("click", () => load(true));
-      $("fit").addEventListener("click", () => { fitGraph(); showToast("Graph fitted"); });
+      $("fit").addEventListener("click", () => { fitGraph(); showToast("View fitted"); });
       window.addEventListener("resize", () => { if (state.plan && !state.plan.refused) { render(); if (state.view === "graph") fitGraph(); } });
 
       load();
