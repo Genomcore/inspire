@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@oh-my-pi/pi-coding-agent": "18.1.9"
+    "@oh-my-pi/pi-coding-agent": "18.2.11"
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",

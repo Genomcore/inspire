@@ -11,6 +11,7 @@ import type { RalphLoopDependencies } from '@/interfaces/ralph-loop-dependencies
 import type { RalphLoopOptions } from '@/interfaces/ralph-loop-options'
 import { buildInitialPrompt } from '@/prompts/build-initial-prompt'
 import { buildRetryPrompt } from '@/prompts/build-retry-prompt'
+import { createTestRunner } from '@/ralph-loop/create-test-runner'
 
 export const runRalphLoop = async (
   plan: EmanationPlan,
@@ -23,7 +24,7 @@ export const runRalphLoop = async (
   const repoRoot = resolve(options.repoRoot ?? process.cwd())
   const runCommand = dependencies.runCommand ?? defaultRunCommand
   const git = dependencies.git ?? new GitWorktrees(repoRoot, runCommand)
-  const testCommand = options.testCommand ?? ['bun', 'test']
+  const runTests = await createTestRunner(repoRoot, options.testCommand, runCommand)
   const baseBranch = await git.currentBranch()
 
   const goalUnits = plan.goal === null ? null : new Set(plan.goal.units)
@@ -39,12 +40,12 @@ export const runRalphLoop = async (
       let testResult: CommandResult
       try {
         await agent.prompt(buildInitialPrompt(unit))
-        testResult = await runCommand(testCommand, worktree.path)
+        testResult = await runTests(worktree.path)
         let tries = 0
         while (testResult.exitCode !== 0 && tries < options.maxTries) {
           tries += 1
           await agent.prompt(buildRetryPrompt(testResult, tries, options.maxTries))
-          testResult = await runCommand(testCommand, worktree.path)
+          testResult = await runTests(worktree.path)
         }
       } finally {
         await agent.dispose()

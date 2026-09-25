@@ -103,18 +103,10 @@ repo is both its source and its own marketplace.
         shares the security overseer's standing rules. The subcommand references
         keep their own flow and point there for the doctrine, so a rule has one
         home.
-        · `inspire-emanate`: the **unattended emanation loop**, its own skill
-        rather than an `inspire-code` subcommand — the session that loads it *is*
-        the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
-        condition with zero human turns between t=0 and the report: `plan` reads
-        `emanate-plan.sh` and refuses rather than start a run that provably cannot
-        reach its goal; `run` walks each wave, spawning each of a unit's three
-        personas into its own phase worktree (the two overseers get none: an
-        overseer writes nothing), gating on the overseers and on
-        `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
-        a merge with trailers, never a KB write, lifecycle included. It consumes
-        `inspire-code` as the doctrine router (the roles README) and never
-        authors role judgment of its own.
+        · `inspire-emanate`: a thin skill that calls
+        `orchestrator/orchestrate.py`. `plan` runs `emanate-plan.sh`; `run` passes
+        a ready plan to the OMP Ralph loop. The Python process owns the handoff,
+        and the TypeScript loop executes its waves in worktrees.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
