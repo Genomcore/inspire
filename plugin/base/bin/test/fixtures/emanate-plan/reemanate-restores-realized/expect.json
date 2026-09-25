@@ -17,7 +17,7 @@
     { "expr": ".realized | length", "equals": "0" },
     { "expr": ".realized_all", "equals": "false" },
     { "expr": ".floor", "equals": "1" },
-    { "expr": "[.units[].id] | join(\",\")", "equals": "auth.org" }
+    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "auth.org" }
   ],
   "forbidden": ["PR-", "NOT READY"]
 }

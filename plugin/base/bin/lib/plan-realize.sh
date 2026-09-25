@@ -253,7 +253,7 @@ plan_apply_reemanate() {
 
 # plan_narrow — the frontier, minus what is realized. `nodes` is what the waves
 # and every downstream check see; `units.spool` and `requires.spool` are filtered
-# to match, so a realized unit is absent from `units[]` for the same reason a
+# to match, so a realized unit is absent from `waves[]` for the same reason a
 # `stable` artifact is: it is not in the frontier.
 #
 # No finding needs filtering. A unit `derive` refused makes no claims and so can
