@@ -14,7 +14,7 @@
     { "expr": ".realized | join(\",\")", "equals": "auth.org" },
     { "expr": ".floor", "equals": "0" },
     { "expr": ".deliverable_waves", "equals": "0" },
-    { "expr": ".units | length", "equals": "0" },
+    { "expr": "[.waves[].units[]] | length", "equals": "0" },
     { "expr": ".waves | length", "equals": "0" },
     { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
     { "expr": ".reemanate", "equals": "null" }
