@@ -13,7 +13,7 @@
     { "expr": ".findings[0].unit", "equals": "auth.org" },
     { "expr": ".findings[0].message | test(\"`mobile-kit` \\\\(`layer: mobile`\\\\) was read and discarded\")", "equals": "true" },
     { "expr": ".findings[0].remedy", "equals": "correct that profile's `layer:`, or declare a framework profile in `spec/kb/00_bootstrap/stack.md`" },
-    { "expr": ".units[0].profiles | length", "equals": "0" },
+    { "expr": ".waves[0].units[0].profiles | length", "equals": "0" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-06", "PR-13"]

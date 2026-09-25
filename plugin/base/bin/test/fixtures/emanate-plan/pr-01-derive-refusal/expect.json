@@ -11,7 +11,7 @@
     { "expr": "[.findings[].derive_class] | unique | join(\",\")", "equals": "OS-E3" },
     { "expr": ".findings[0].owner", "equals": "inspire-domain" },
     { "expr": ".findings[0].remedy", "equals": "/inspire-domain update auth.user" },
-    { "expr": ".units[0].claims", "equals": "0" },
+    { "expr": ".waves[0].units[0].claims", "equals": "0" },
     { "expr": ".ready", "equals": "false" }
   ]
 }

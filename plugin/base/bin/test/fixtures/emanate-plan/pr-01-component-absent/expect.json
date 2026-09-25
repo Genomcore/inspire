@@ -10,8 +10,8 @@
     { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-01" },
     { "expr": ".findings[0].derive_class", "equals": "DR-R4" },
     { "expr": ".findings[0].unit", "equals": "users.list" },
-    { "expr": "[.units[] | select(.id == \"users.list\") | .requires | length] | join(\"\")", "equals": "0" },
-    { "expr": "[.units[] | select(.id == \"users.list\") | .claims] | join(\"\")", "equals": "0" },
+    { "expr": "[.waves[].units[] | select(.id == \"users.list\") | .requires | length] | join(\"\")", "equals": "0" },
+    { "expr": "[.waves[].units[] | select(.id == \"users.list\") | .claims] | join(\"\")", "equals": "0" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-02", "PR-04"]

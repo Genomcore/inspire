@@ -12,7 +12,7 @@
     { "expr": ".findings[0].target", "equals": "spec/profiles/ios.md" },
     { "expr": ".findings[0].message | test(\"`ios`\")", "equals": "true" },
     { "expr": ".findings[1].code", "equals": "PR-07" },
-    { "expr": ".units[0].profiles | join(\",\")", "equals": "ios,react,typescript" },
+    { "expr": ".waves[0].units[0].profiles | join(\",\")", "equals": "ios,react,typescript" },
     { "expr": ".ready", "equals": "false" }
   ]
 }

@@ -9,7 +9,7 @@
     "spec/sdd/auth"
   ],
   "stdout_jq": [
-    { "expr": "[.units[].id] | join(\",\")", "equals": "auth.org,auth.user,auth.user.list" },
+    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "auth.org,auth.user,auth.user.list" },
     { "expr": ".scope | join(\",\")", "equals": "spec/sdd/auth" },
     { "expr": ".floor", "equals": "3" },
     { "expr": ".ready", "equals": "true" }

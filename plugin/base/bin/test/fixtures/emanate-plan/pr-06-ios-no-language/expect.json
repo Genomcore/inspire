@@ -13,7 +13,7 @@
     { "expr": ".findings[0].unit", "equals": "users.list" },
     { "expr": ".findings[0].message | test(\"declares no .language:. at all\")", "equals": "true" },
     { "expr": ".findings[0].remedy", "equals": "add a `language:` line to spec/profiles/ios.md naming a `layer: language` profile, and author that profile" },
-    { "expr": ".units[0].profiles | join(\",\")", "equals": "ios" },
+    { "expr": ".waves[0].units[0].profiles | join(\",\")", "equals": "ios" },
     { "expr": ".ready", "equals": "false" }
   ],
   "forbidden": ["PR-07", "is not there"]
