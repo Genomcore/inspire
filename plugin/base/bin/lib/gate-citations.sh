@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/gate-citations.sh
 #
-# Library — the `@claim` scanner, SHARED by `emanate-gate.sh` (coverage) and
-# `emanate-plan.sh` (realization). It walks the tests root(s), greps the token
+# Library — the `@claim` scanner of `emanate-gate.sh` (coverage). The INSPIRE
+# factory's planner ports the same grammar for realization, so a change to the
+# token is a change there too. It walks the tests root(s), greps the token
 # (tester.md's grammar, normative) and reports every citation it finds; the
 # split into this unit's own claims and GV-04's dangling ones stays gate's.
 #

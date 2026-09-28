@@ -105,8 +105,9 @@ repo is both its source and its own marketplace.
         home.
         · `inspire-emanate`: a thin skill that runs the orchestrator of the
         **INSPIRE factory** (`Genomcore/inspire-factory`), cloned on first use
-        into `~/.cache/inspire-factory` or taken from `INSPIRE_FACTORY`. `plan`
-        runs `emanate-plan.sh`; `run` passes a ready plan to the OMP Ralph loop.
+        into `~/.cache/inspire-factory` or taken from `INSPIRE_FACTORY`. The
+        factory owns the planner too: `plan` runs its `src/plan.ts`, `run` its
+        `src/orchestrate.ts`, which plans and passes a ready plan to the solver.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
@@ -155,30 +156,27 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **five `emanate-*` scripts are the same class of thing** — the
+      The **four `emanate-*` scripts are the same class of thing** — the
       emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
       `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
       the **strict** parser that refuses an old shape rather than read it as an
       empty section, and the one place the 0.9 grace on the presence classes is
       paid for — see
       [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
-      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
-      already realized** → dependency waves → the floor versus the declared
-      ceiling → every readiness check, plus the run-level facts a spawn brief
-      needs — the declared test infrastructure and the project's wire-convention
-      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
-      stdout and nothing written anywhere — see
-      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
-      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
+      `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
       result → one pass/fail verdict on stdout, the deterministic evidence an
       overseer's approval can never stand in for — see
       [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
-      are the three big enough to decompose, each into its own family of sourced
-      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
-      `gate-*`). Plan and gate **compose on derive's output, never its
-      implementation** — neither sources a `derive-*` unit — and the one unit
-      they do share is `gate-citations.sh`, because the `@claim` token has one
-      scanner and two readings: coverage for gate, realization for plan.
+      are the two big enough to decompose, each into its own family of sourced
+      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `gate-*`).
+      Gate **composes on derive's output, never its implementation** — it
+      sources no `derive-*` unit. The emanation **planner** lives in the INSPIRE
+      factory (`orchestrator/src/planner/`, emitting
+      `inspire.emanation-plan/3`; its meaning is
+      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md)).
+      It composes on derive's stdout the same way, and ports the KB readers it
+      needs and `gate-citations.sh`'s `@claim` grammar, so a change to either
+      is a change in both repositories.
       `emanate-results.sh` (a test runner's own report → the
       `inspire.suite-results/1` manifest on stdout) exists because gate reads
       that one shape and nothing else, and leaving its production to the
@@ -193,7 +191,7 @@ repo is both its source and its own marketplace.
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its eight hand-wired siblings, and uses the third form
+      rule at a time plus its six hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
@@ -330,7 +328,7 @@ asks the operator anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its eight hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 87-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 87 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its six hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 87-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-derive` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 87 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -348,11 +346,10 @@ asks the operator anything.
   time, `fork` and `exec` rather than computation. So raising `-j` past the core
   count buys nothing, and the lever that works is "spawn fewer processes" rather
   than "schedule better". Cost follows the process count almost exactly — the
-  `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
-  matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 87 and 76 fixtures, because each
-  fixture spawns a rule and the validators under it; `run.sh` **shards** both
-  (see below). Next come a handful of `upgrade/` and `materialize/` files that
+  `emanate-derive` fixtures run thousands of them per sweep, and measured system time
+  matches that at the few milliseconds a `fork`+`exec` costs. The heavy job is
+  `emanate-derive`, at 87 fixtures, because each fixture spawns a rule and the
+  validators under it; `run.sh` **shards** it (see below). Next come a handful of `upgrade/` and `materialize/` files that
   build several period-correct fixtures each.
 
   Every job is **parallel-safe**: every scratch tree is a private `mktemp` one

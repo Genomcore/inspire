@@ -54,8 +54,8 @@ keep() {
 : > "$TMP/files"
 # EVERY job is weighted into ONE largest-first order, golden ones included.
 # They used to be appended after the sorted files, unsorted — so the estate's
-# two heaviest jobs by far, golden/emanate-plan and golden/emanate-derive,
-# launched last and ran out the tail nearly alone. The wall is the heaviest job
+# heaviest job by far, golden/emanate-derive, launched last and ran out the
+# tail nearly alone. The wall is the heaviest job
 # plus whatever is launched after it, which is exactly what that ordering
 # maximised.
 #
@@ -151,8 +151,6 @@ for s in "lib-tests.sh${TAB}_lib.sh/readers" \
          "test-trust.sh${TAB}trust.sh/behaviour" \
          "test-harvest.sh${TAB}emanate-harvest.sh/behaviour" \
          "test-derive-lib.sh${TAB}emanate-derive.sh/library" \
-         "test-plan-lib.sh${TAB}emanate-plan.sh/library" \
-         "test-plan-schema.sh${TAB}emanate-plan.sh/schemas" \
          "test-gate-lib.sh${TAB}emanate-gate.sh/library" \
          "test-results.sh${TAB}emanate-results.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"

@@ -1,10 +1,15 @@
 # The emanation plan
 
-What `.inspire/bin/emanate-plan.sh` prints on stdout: the **frontier snapshot**
-for one scope, its dependency **waves**, the **floor** those waves imply, and
-every **readiness** answer the orchestrator needs before the first worktree
-exists. This file owns its JSON shape, its exit codes, the `PR-*` catalogue, the
-frontier rule, the edge rule and the wave algorithm.
+What the INSPIRE factory's planner prints on stdout: the **frontier snapshot**
+for one scope, as a flat list of units with their dependency edges, and every
+**readiness** answer the orchestrator needs before the first worktree exists.
+This file owns the meaning of its JSON, its exit codes, the `PR-*` catalogue, the
+frontier rule and the edge rule.
+
+The planner lives in the factory (`Genomcore/inspire-factory`,
+`orchestrator/src/planner/`), not in `.inspire/bin/`: the orchestrator that
+consumes the plan owns the code that computes it. Its wire contract,
+`inspire.emanation-plan/3`, is the factory's `schemas/emanation-plan.schema.json`.
 
 Plan **composes on derive**: one [`emanate-derive.sh`](derived-contract.md) run
 per frontier unit, read from stdout and nothing else. Derive's own refusal
@@ -14,12 +19,13 @@ derive's `class`, `target`, `message` and `remedy` verbatim.
 It **writes nothing**: no file, no log, no KB edit, no git state, and not
 `.inspire/last-emanation.log` either. Stdout is the JSON, stderr is the grouped
 human report, and a scratch directory removed by an `EXIT` trap is the only
-thing that ever touches a disk.
+thing that ever touches a disk. It still runs this project's
+`.inspire/bin/emanate-derive.sh` and, on a cycle, `.inspire/bin/acyclic-deps.sh`.
 
 ## CLI
 
 ```
-emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
+bun run "$FACTORY/orchestrator/src/plan.ts" [--scope PATH]... [--tests-root DIR]...
                 [--reemanate SEL]... [--goal SEL]
                 [--profiles-root DIR] [--agents-root DIR]
 ```
@@ -27,10 +33,9 @@ emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
 | flag | meaning |
 |---|---|
 | `--scope PATH` | repeatable. A KB path — a directory or a single file — intersected with each layer through the scope contract every rule obeys. Omitted: the whole knowledge base |
-| `--ceiling N` | the maximum number of waves this run may execute. Unset by default; budgets are invocation arguments, never a KB artifact. A ceiling below the floor is a warning, never a blocker |
 | `--tests-root DIR` | repeatable. The tree(s) walked for `@claim` tokens, to work out which units are already **realized**. **No default**: given none, no tests tree is read and no unit is realized. See § Realization |
 | `--reemanate SEL` | repeatable. Treat the units `SEL` names as unrealized for this run. See § Selectors |
-| `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure — its dependencies, plus the screens that navigate to it — and the floor to it, and the ceiling is then measured against **that** floor. May be given once |
+| `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure — its dependencies, plus the screens that navigate to it. May be given once |
 | `--profiles-root DIR` | where the stack profiles live. Default `.claude/skills/inspire-code/profiles`, env override `INSPIRE_PROFILES_ROOT` |
 | `--agents-root DIR` | where the agent shells live. Default `.claude/agents`, env override `INSPIRE_AGENTS_ROOT` |
 
@@ -48,11 +53,10 @@ the two layers, as everywhere in `.inspire/bin/`.
 |---|---|---|
 | `0` | **ready** — a plan, and no error-severity finding | the plan, `"ready": true` |
 | `1` | **not ready** — a plan was computed and at least one finding is an error | the plan, `"ready": false` |
-| `2` | usage — unknown flag, a bad `--ceiling`, a `--scope` or `--tests-root` path that is not there, a `--tests-root` holding a path this tool cannot address (a `:` or a newline in its name), a `--reemanate`/`--goal` selector that selects nothing, `-h`/`--help` | empty |
+| `2` | usage — unknown flag, a `--scope` or `--tests-root` path that is not there, a `--tests-root` holding a path this tool cannot address (a `:` or a newline in its name), a `--reemanate`/`--goal` selector that selects nothing, `-h`/`--help` | empty |
 | `4` | **refused** — a precondition of planning failed; nothing is planned | the refusal object |
 | `5` | roots missing: `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | empty |
 | `6` | internal — a `derive` run exited outside `{0,4}`, or produced no readable contract. Defensive; every input it could refuse over is checked first | empty |
-| `127` | a required tool is missing (`jq`, `yq`, `tsort`, or a sha256 digest) | empty |
 
 `1` means not-ready rather than internal failure, matching `review.sh`'s verdict
 vocabulary; `4` means refused because derive already means refused by 4, and a
@@ -61,17 +65,14 @@ generic catch-all would collapse two different answers into one.
 ## The plan
 
 ```json
-{ "schema": "inspire.emanation-plan/2",
+{ "schema": "inspire.emanation-plan/3",
   "scope": ["inspire_kb"],
   "ready": true,
-  "floor": 3,
-  "ceiling": null,
-  "deliverable_waves": 3,
   "realized": ["users.list"],
   "realized_all": false,
   "reemanate": null,
   "goal": { "selector": "users.detail", "units": ["auth.user", "auth.user.get",
-                                                  "users.detail"], "floor": 3 },
+                                                  "users.detail"] },
   "preflight": { "components": [ { "name": "postgres", "purpose": "the e2e database" } ],
                  "probe_profiles": ["nestjs"],
                  "worktree_recipe": [ { "step": "environment",
@@ -79,17 +80,15 @@ generic catch-all would collapse two different answers into one.
   "wire_conventions": { "ids": ["rest"],
                         "decisions": [ { "decision": "Existence leak",
                                          "answer": "404" } ] },
-  "waves": [
-    { "wave": 1,
-      "units": [
-        { "kind": "entity", "id": "auth.user",
-          "path": "inspire_kb/04_domain/auth/user/auth.user.md",
-          "module": "auth", "surface": null,
-          "population": "internal",
-          "profiles": ["nestjs", "typescript"],
-          "requires": [ { "kind": "action", "id": "auth.password.hash" } ],
-          "claims": 12 } ] },
-    { "wave": 2, "units": [ … ] } ],
+  "units": [
+    { "kind": "entity", "id": "auth.user",
+      "path": "inspire_kb/04_domain/auth/user/auth.user.md",
+      "module": "auth", "surface": null,
+      "population": "internal",
+      "profiles": ["nestjs", "typescript"],
+      "requires": [ { "kind": "action", "id": "auth.password.hash", "ordering": true } ],
+      "claims": 12 },
+    … ],
   "findings": [
     { "code": "PR-03", "severity": "error", "unit": "auth.user.create",
       "target": "inspire_kb/04_domain/auth/password/auth.password.hash.md",
@@ -101,20 +100,12 @@ generic catch-all would collapse two different answers into one.
   order they were typed in never reaches stdout. With none given it names the
   roots the default sweep walks: `$SDD_KB_ROOT`, and `$SDD_SPEC_ROOT` as well
   when that is not inside it.
-- **`waves`** is the work itself: one object per wave, ascending, each carrying
-  its 1-based `wave` number and the `units` of that wave sorted by id. The
-  numbers are contiguous from 1, and `floor == (waves | length)`. A unit lives in
-  exactly one wave, so the nesting **is** the index — there is no separate
-  `units[]` list and no `units[].wave` back-pointer to keep in step with it. A
-  consumer wanting every unit flat writes `[.waves[].units[]]`, and one wanting
-  the record behind an id indexes that by `.id`.
-- **`deliverable_waves`** is `min(effective floor, ceiling)`, or the effective
-  floor when `ceiling` is null. The **effective floor** is `goal.floor` when
-  `--goal` was given and `floor` otherwise: a ceiling that covers the goal is not
-  under-budgeted merely because some deeper unit is also in scope. The ceiling
-  stops a run; it never chooses winners.
+- **`units`** is the work itself, flat and sorted by id. There are no waves:
+  the orchestrator schedules each unit as soon as its ordering dependencies have
+  merged, so a precomputed layering would only restate `requires[]` less
+  precisely.
 - **`realized`** is the frontier-eligible units already realized on this branch,
-  sorted — the ones that are **absent from `waves` entirely** for the same
+  sorted — the ones that are **absent from `units` entirely** for the same
   reason a `stable` artifact is: they are not in the frontier. Bare ids rather
   than records, because the plan is what this run will build and a realized unit
   is not work. A consumer drawing the graph needs the dangling-target path
@@ -131,26 +122,24 @@ generic catch-all would collapse two different answers into one.
   deserves the answer before the run rather than after it.
 - **`goal`** is `null` unless `--goal` was given. `units` is the goal's remaining
   closure — its dependencies plus the screens that navigate to it, which is what
-  this run has to execute; see § Selectors — and `floor` is the deepest wave in
-  it, which is the minimum number of orchestrator iterations to reach the goal.
-  Note the two are not `waves`-shaped: `waves` still layers the **whole** scope,
-  and `goal.units` names the subset a goal-directed run executes.
+  this run has to execute; see § Selectors. `units` still lists the **whole**
+  scope, and `goal.units` names the subset a goal-directed run executes.
 - **`preflight`** is what `00_bootstrap/stack.md`'s `## Test infrastructure` and
   `## Worktree recipe` declare, plus which resolved framework profiles can probe
   the former; see § Preflight.
   **`wire_conventions`** is the transport decisions a spawned tester must assert
   rather than invent; see § Wire conventions.
-A **unit record**, wherever it sits in `waves`, carries:
+A **unit record** carries:
 
 - **`claims`** is the count from that unit's derived contract, `0` for a
   refused one. It is the sizing signal the orchestrator budgets on.
 - **`requires`** is derive's edge set verbatim — every declared
   dependency, ordering or not — and each entry's `ordering` flag says which it
   is. A `false` there is a **deferred reference**, and it is the reason a unit
-  may legitimately share a wave with something it lists, or precede it.
-  Ordering `true` is still not a promise of an earlier wave: the planner drops
+  may legitimately be built alongside something it lists, or before it.
+  Ordering `true` is still not a promise of an earlier build: the planner drops
   navigation and self edges as well; see § The ordering edge set.
-  An edge's target may be **a unit no wave holds** — a `stable` artifact, a
+  An edge's target may be **a unit the plan does not list** — a `stable` artifact, a
   realized one, or one outside the scope — since the set is derive's verbatim
   and those are satisfied out of band.
 - **`surface`** is the surface a split screens tree puts a screen under,
@@ -158,7 +147,7 @@ A **unit record**, wherever it sits in `waves`, carries:
   **`module`** is `null` for the two catalog kinds, which have none.
   **`population`** is the entity marker derive carries — `internal`,
   `external`, or `null` for every kind that is not an entity. Plan decides
-  nothing with it: no wave, no readiness class and no refusal reads it. It is
+  nothing with it: no ordering, no readiness class and no refusal reads it. It is
   here so which entities have no write path is legible from this JSON alone,
   without opening five contracts to find out. A **persona** reads it from the
   derived contract, never from a plan the orchestrator paraphrases.
@@ -166,7 +155,7 @@ A **unit record**, wherever it sits in `waves`, carries:
   matching framework profile, that framework's language, and any declared
   `layer: language` profile. See § Profiles.
 - There is **no `lifecycle`**. The frontier is defined as the units at
-  `lifecycle: accepted` — `plan-scan.sh` admits one on exact string equality, and
+  `lifecycle: accepted` — the planner admits one on exact string equality, and
   a catalog entry is normalized to the same vocabulary first — so the field could
   only ever have read `accepted`, and a constant states nothing a reader did not
   already know from the unit being in the plan at all.
@@ -178,12 +167,12 @@ finding that names none. `findings` is sorted by `(code, unit, target)`.
 ### Refused
 
 ```json
-{ "schema": "inspire.emanation-plan/2", "scope": ["inspire_kb"], "ready": false,
+{ "schema": "inspire.emanation-plan/3", "scope": ["inspire_kb"], "ready": false,
   "refused": [ { "code": "PR-10", "target": ".claude/agents/…",
                  "message": "…", "remedy": "…" } ] }
 ```
 
-There is **no `waves` or `floor` key at all** — nothing was planned, and
+There is **no `units` key at all** — nothing was planned, and
 an empty key would read as "planned, and it is empty". Refusals carry no `owner`:
 there is no unit for a skill to own. Every class found is reported, not the first.
 
@@ -206,7 +195,7 @@ had not been hand-built first.
 is design closed and the contract being implemented, which is exactly what
 emanates. `draft` is still in design, `stable` is already delivered, `superseded`
 is history. An empty frontier refuses (`PR-12`) rather than emitting a green
-zero-wave plan, so a run cannot build worktrees for nothing.
+empty plan, so a run cannot build worktrees for nothing.
 
 **A catalog entry says the same thing on its `**State:**` line**, since it
 carries no `lifecycle:` field. What that line means is
@@ -234,11 +223,11 @@ ordering.
 The ordering edge set is derive's `requires[]`, minus three kinds of edge that
 are not build-time dependencies:
 
-- **Navigation never orders a wave.** A `screen`-kinded edge out of a screen unit
+- **Navigation never orders a build.** A `screen`-kinded edge out of a screen unit
   is a route reference — a route derives from `module` + `screen` without the
   target existing as code — and list and detail screens navigate to each other in
   every real vault, so ordering on navigation would make the common case a cycle.
-  Navigation skips the wave ordering, and it also **never refuses**: a navigation
+  Navigation skips the ordering, and it also **never refuses**: a navigation
   target that resolves to nothing is `PR-02` and one at `draft` or `superseded`
   is `PR-03`, both as **warnings**. A screen that navigates somewhere unfinished
   carries a broken affordance, which is worth saying and worth building anyway;
@@ -246,7 +235,7 @@ are not build-time dependencies:
   link to a roster that is still `draft` emanates `home` today, rather than
   promoting the roster to `accepted` — which would have got it built too.
 
-- **A self edge never orders a wave.** No unit precedes itself. A `supersedes_id`
+- **A self edge never orders a build.** No unit precedes itself. A `supersedes_id`
   chain and a comment's `parent_id` are ordinary fields, and ordering on one
   would make every vault that has one a cycle. The exemption is unconditional —
   it does not consult `ordering`, because a `nonnull` self reference is
@@ -254,7 +243,7 @@ are not build-time dependencies:
   modelling verdict in the planner. A self `requires:` on an action is an
   authoring error with its own owner: `acyclic-deps.sh` reports it as a
   self-loop, at error severity, long before a run is planned.
-- **A deferred reference never orders a wave** — an edge whose
+- **A deferred reference never orders a build** — an edge whose
   `requires[].ordering` is `false`, which is a `references(…)` on an entity field
   that does not carry `nonnull`. The column is populated once both sides exist,
   so build order is free. Without this, the mutual pair present in every real
@@ -269,11 +258,11 @@ a vault cannot reach an entity it never plans to build by making the reference
 nullable.
 
 **Pattern and component edges order like every other kind** since ED10 made both
-units: a screen waits for its layout's and its components' wave. A17's sibling
+units: a screen waits for its layout and its components to be built. A17's sibling
 rule survives — a pattern and a component order only by a *declared* edge
 between them (a pattern's own `**Components:**` line), never by an assumed tier.
 
-**An edge orders a wave only when its target is itself in the frontier.** An edge
+**An edge orders a build only when its target is itself in the frontier.** An edge
 to a `stable` artifact — or an `implemented` catalog entry — is satisfied out of
 band; an edge to an `accepted` unit outside the scope is another run's business;
 an edge to anything else — `draft`, `superseded`, or a lifecycle nothing states
@@ -291,15 +280,11 @@ any other kind records takes the error arm by construction. It stands for the
 day a screen records an unresolvable screen-kinded edge that derive does not
 refuse first.
 
-## Waves and the floor
+## Cycles
 
-Kahn over the ordering edges: `wave(u) = 1` when `u` has no in-frontier ordering
-edge, otherwise `1 + max(wave(d))` over the ones it has. Waves are 1-based.
-
-**The floor is the number of waves** — the critical dependency path's depth,
-known at t=0. Plan reports it against the declared ceiling so an under-budgeted
-scope is known before anything runs. A node the layering cannot consume is a
-cycle (`PR-11`).
+Kahn over the ordering edges: a unit becomes buildable once every in-frontier
+ordering target is. A node that never becomes buildable sits on or behind a
+cycle, and the plan refuses (`PR-11`).
 
 ## Realization
 
@@ -307,8 +292,7 @@ cycle (`PR-11`).
 under a `--tests-root` by a token carrying a matching fingerprint.** The record is
 the tests themselves — never a KB lifecycle flip, never a registry, never a stamp
 manifest. A realized unit **leaves the frontier and satisfies an edge the way a
-`stable` artifact does**, so a later invocation sees only what remains and the
-floor is relative to what exists.
+`stable` artifact does**, so a later invocation sees only what remains.
 
 The citation grammar is
 [`gate-verdict.md`](gate-verdict.md) § Citations: `@claim <id> <fingerprint>`,
@@ -330,8 +314,8 @@ fingerprint), rather than a hash of a file:
   unit `derive` refused out of the frontier and take its `PR-01` with it.
 
 **A frontier that is empty because everything in it is realized is the success
-case**, not `PR-12`: exit 0, `floor: 0`, `realized_all: true`, `units: []`,
-`waves: []` — "the goal is already met". The emptiness question therefore splits
+case**, not `PR-12`: exit 0, `realized_all: true`, `units: []` — "the goal is
+already met". The emptiness question therefore splits
 across the two tiers, and it has to: nothing being `accepted` is knowable before
 a derivation and refuses; everything being realized is knowable only after one
 and succeeds. The two answers are opposite on purpose — one says there is nothing
@@ -350,7 +334,7 @@ frontier-eligible node set:
 | `auth.user..users.list` | the **segment**: every node on an ordering path from the first up to the second, inclusive. On a DAG that is the dependents of the left intersected with the dependencies of the right |
 
 **A selector's own closures walk ordering edges only — a navigation edge never
-extends one.** It is the same exemption the waves have and it is there for the
+extends one.** It is the same exemption the ordering has and it is there for the
 same reason: list and detail screens navigate to each other in every real vault,
 so a nav-walking `..` would pull a whole screen cluster into every selection.
 
@@ -364,16 +348,14 @@ walk are deliberate:
   unbuilt is a dead affordance rather than an unreachable page, and pulling
   successors transitively would drag in the whole app.
 - **A nav cycle is harmless**, because the walk terminates on a visited set.
-  This is reachability, not ordering: navigation still never orders a wave, so
-  `users.list` and `users.detail` still co-emanate in one wave.
+  This is reachability, not ordering: navigation still never orders a build, so
+  `users.list` and `users.detail` can still be built side by side.
 - **`--goal` only — `--reemanate` stays ordering-only**, its segment and
   dependents closures unchanged. Re-emanating a screen does not change its
   reachability, since whatever navigates to it already exists. A goal says
   "deliver this, usefully"; a re-emanation says "rebuild this".
 
-`goal.floor` is the deepest wave over that **enlarged** closure, so a goal whose
-nav predecessor sits deeper than the goal itself deepens with it. And a slice
-with no navigable entry at all is `PR-23`, a warning.
+A slice with no navigable entry at all is `PR-23`, a warning.
 
 **Reachability is decided from the frontier and from the disk, and from nothing
 else** (0.9). Exactly two things are a way in: a slice screen already
@@ -398,12 +380,11 @@ this", never "this was never built", so a re-emanated entry keeps the class
 silent — the same reason a `--reemanate` closure takes no nav walk.
 
 **A selector that selects nothing is a usage error (exit 2), not a reported
-no-match.** A selector is something the operator typed, like `--scope` and
-`--ceiling`; a typo that quietly selected nothing would answer "rebuild these"
+no-match.** A selector is something the operator typed, like `--scope`; a typo that quietly selected nothing would answer "rebuild these"
 with a green run that rebuilt nothing. Naming a unit that is already realized is
 *not* that case — selectors match over every frontier-**eligible** node, so
-`--goal` on a realized unit answers "nothing left" (exit 0, `goal.units: []`,
-`goal.floor: 0`) rather than "no such unit".
+`--goal` on a realized unit answers "nothing left" (exit 0, `goal.units: []`)
+rather than "no such unit".
 
 **Stderr distinguishes the two ways a selector can select nothing**, because
 they call for different corrections. An endpoint no frontier unit answers to
@@ -605,11 +586,10 @@ or names no column at all.
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
-| `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
 | `PR-23` | the `--goal`'s closure holds screens and **every one of them is navigated to only from inside the slice** — a rootless cycle. Since a goal's closure pulls in every frontier screen that navigates to it, this can never be an artifact of too narrow a goal: it is a modelling gap in the vault, and the missing link is authored in the screens layer. **A warning**: the pages are buildable, just not yet reachable. Its `target` is the slice's first screen by **id**, since no single screen is at fault — what is missing is a link from outside. Two things are a way in and neither may warn: a **nav root** — a slice screen nothing frontier-*eligible* navigates to, which is the app's own entry; eligible rather than in the frontier, because a realized screen has left the frontier and its outbound links are still real — and an **already-realized** slice screen, which exists, realization being read on disk so that a `--reemanate` of it changes nothing. An inbound **`draft`** link is neither, and is not consulted at all: a draft is not emanated, so the screen it points at still reads as a nav root | warning | `inspire-screens` |
 | `PR-24` | `stack.md` declares test-infrastructure components and its `## Worktree recipe` declares **no step**, so nothing states how a fresh phase worktree reaches them. **A warning**, for `PR-22`'s reason and keyed on the same declaration: the run can improvise one, and the first field run did — fourteen minutes of it, before the first spawn, arriving at values a second run would have inferred differently. A heading with no rows reads as absent, since that is the state a seeded project starts in. Silent when no component is declared: the environment half of a recipe has nothing to point at, and installing dependencies is the framework profile's `## Build & verify`, not the project's | warning | `inspire-bootstrap` |
-| `PR-25` | a precondition or error entry carries **no head** and its prose names an authorization concept — the framework profile's `## Bindings` renders a guard from `actor({role})` and a **public route** from its absence, so the rule the prose states is enforced by nothing, while the entry itself derives a test-oracle claim about that prose and the suite goes green. **A warning, and a heuristic**, exactly `W-1`'s posture: recognising an access rule in prose means matching words that have legitimate prose uses, and a heuristic does not get to block anything. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`, beside `W-1`'s list and read by the same matcher. Reported over the **whole frontier**, before realization narrows it: an already-realized unit's route is public today. One finding per unit, naming every key, since the remedy is one touch of the descriptor | warning | the unit's layer |
+| `PR-25` | a precondition or error entry carries **no head** and its prose names an authorization concept — the framework profile's `## Bindings` renders a guard from `actor({role})` and a **public route** from its absence, so the rule the prose states is enforced by nothing, while the entry itself derives a test-oracle claim about that prose and the suite goes green. **A warning, and a heuristic**, exactly `W-1`'s posture: recognising an access rule in prose means matching words that have legitimate prose uses, and a heuristic does not get to block anything. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`, beside `W-1`'s list, which the factory planner carries a copy of and reads with a port of the same matcher. Reported over the **whole frontier**, before realization narrows it: an already-realized unit's route is public today. One finding per unit, naming every key, since the remedy is one touch of the descriptor | warning | the unit's layer |
 | `PR-26` | a **prose-only** `## Invariants` entry whose subject may not be this entity — its prose names another entity document of the vault (its dotted id, its name, or one of its fields), or it names no `## Fields` row of this entity at all. A headed invariant is already read by `keyed-heads.md` § Coherence; a prose-only one is read by nothing, and the claim it derives can only be asserted here as an absence, which is green before anything is built and stays green through every violation. **A warning, and a heuristic**, `PR-25`'s posture: a subject is not something prose states outright. The vocabulary is the vault's own identifiers rather than a word list, so a suite that declares no such entity never warns on the word. One finding per unit, naming every key and the arm it fired on, since the remedy is one touch of the entity document | warning | `inspire-domain` |
 
 ### Refusals — nothing is planned, the run exits 4

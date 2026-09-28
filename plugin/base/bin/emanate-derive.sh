@@ -2,8 +2,8 @@
 # .inspire/bin/emanate-derive.sh
 #
 # derive — a unit's KB artifacts -> the DERIVED CONTRACT, on stdout, as JSON
-# (D5/D7/D8). One of the emanation loop's five independent bin scripts (derive,
-# plan, gate, results, harvest); the shared bulk lives in `lib/derive-{json,
+# (D5/D7/D8). One of the emanation loop's four independent bin scripts (derive,
+# gate, results, harvest); the shared bulk lives in `lib/derive-{json,
 # types,refusals,domain,screen,catalog}.sh`, each sourceable on its own. `plan`
 # and `gate` compose on this script's OUTPUT and source none of those units, so
 # the packages evolve independently.
