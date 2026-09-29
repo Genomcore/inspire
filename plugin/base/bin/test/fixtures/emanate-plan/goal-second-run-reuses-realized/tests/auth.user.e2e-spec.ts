@@ -5,9 +5,9 @@
 // The second run toward the same goal reads realization from the tests in the
 // GOAL WORKTREE (run.md § t=0 step 2, § The branch scheme), so it finds this
 // file and drops auth.user from the frontier. The same graph with this file
-// absent answers goal.floor 3 over three waves; with it present the answer is
-// 1 over one. That is what makes a second run toward one goal a smaller problem
-// than the first rather than a repeat of it.
+// absent still has auth.user to build; with it present auth.user is realized
+// and leaves the plan. That is what makes a second run toward one goal a
+// smaller problem than the first rather than a repeat of it.
 describe('auth.user', () => {
   // @claim auth.user/field/id/nonnull sha256:1832c9ebcb6dd8369ff511b30ceb7c02a7a0560f5ddce41e7ca19e1a86b2e109
   // @claim auth.user/field/id/unique sha256:c2720445a45267813688ff73fa188aa060c1b661aefaf1650d42f690697b5ab3

@@ -10,6 +10,6 @@
     { "expr": "[.refused[].code] | unique | join(\",\")", "equals": "PR-10" },
     { "expr": ".refused | length", "equals": "1" },
     { "expr": ".refused[0].target", "equals": "spec/agents/compliance-overseer.md" },
-    { "expr": "has(\"waves\")", "equals": "false" }
+    { "expr": "has(\"units\")", "equals": "false" }
   ]
 }

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # .inspire/bin/emanate-plan.sh
 #
-# plan — the frontier snapshot, its dependency waves, the floor and every
-# readiness check, for one scope (D5/D8/D10/D11). One of the emanation loop's
-# five independent bin scripts (derive, plan, gate, results, harvest); the
-# shared bulk lives in `lib/plan-{lib,scan,stack,waves,realize,checks,
-# report}.sh`, plus `lib/gate-citations.sh` — the `@claim` token has one
-# scanner and two readings, coverage for gate and realization here.
+# plan — the frontier snapshot and every readiness check, for one scope
+# (D5/D8/D10). Ordering the units is not done here: the INSPIRE factory's
+# planner (Genomcore/inspire-factory) does it, on derive's output too. One of
+# the emanation loop's five independent bin scripts (derive, plan, gate,
+# results, harvest); the shared bulk lives in `lib/plan-{lib,scan,stack,
+# realize,checks,report}.sh`, plus `lib/gate-citations.sh` — the `@claim` token
+# has one scanner and two readings, coverage for gate and realization here.
 #
 # It COMPOSES ON DERIVE: one `emanate-derive.sh` run per frontier unit, read
 # from stdout and nothing else. `derived-contract.md` draws that line:
@@ -20,22 +21,17 @@
 # catalog entry says the same thing on its `**State:**` line, `to-extract`
 # standing in for `accepted` and `implemented` for `stable`.
 #
-# The stdout JSON shape, the `PR-*` catalogue, the frontier rule, the edge rule
-# and the wave algorithm: `.claude/skills/_references/emanation-plan.md`.
+# The stdout JSON shape, the `PR-*` catalogue, the frontier rule and the edge
+# rule: `.claude/skills/_references/emanation-plan.md`.
 #
 # Usage:
-#   emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
+#   emanate-plan.sh [--scope PATH]... [--tests-root DIR]...
 #                   [--reemanate SEL]... [--goal SEL]
 #                   [--profiles-root DIR] [--agents-root DIR]
 #
 #   --scope PATH   repeatable. A KB path — a directory or a single file —
 #                  intersected with each layer through the same scope contract
 #                  every rule obeys. Omitted: the whole knowledge base.
-#   --ceiling N    the maximum number of waves this run may execute (D11:
-#                  budgets are invocation arguments, never a KB artifact).
-#                  Unset by default. A ceiling below the floor is a WARNING and
-#                  never a blocker — a lower ceiling yields partial-but-reported
-#                  delivery in graph order.
 #   --tests-root DIR
 #                  repeatable. The tree(s) walked for `@claim` tokens, to work
 #                  out which units are already REALIZED (D9). Realized units
@@ -50,9 +46,7 @@
 #                  path from X to Y, inclusive). Closures walk ORDERING edges
 #                  only — a navigation edge never extends one.
 #   --goal SEL     the run's target, same selector grammar. The plan then also
-#                  names the goal's remaining dependency closure and the floor
-#                  to it, and the ceiling is measured against THAT floor rather
-#                  than the whole scope's.
+#                  names the goal's remaining dependency closure.
 #   --profiles-root DIR  where the stack profiles live. Default
 #                  `.claude/skills/inspire-code/profiles`, env override
 #                  $INSPIRE_PROFILES_ROOT.
@@ -71,7 +65,7 @@
 #   0    READY. A plan, and no error-severity finding. Stdout carries it.
 #   1    NOT READY. A plan was computed and at least one finding is an error.
 #        The verdict vocabulary is `review.sh`'s, not an internal-failure code.
-#   2    usage — unknown flag, a bad --ceiling, a --scope or --tests-root path
+#   2    usage — unknown flag, a --scope or --tests-root path
 #        that is not there, a --tests-root holding a path this tool cannot
 #        address, a --reemanate/--goal selector that selects nothing (no unit in
 #        the frontier answers to an endpoint, or a segment's endpoints both
@@ -82,17 +76,15 @@
 #   5    roots missing — $SDD_KB_ROOT or $SDD_SPEC_ROOT is not a directory.
 #   6    internal — a `derive` run exited outside {0,4}, or produced no readable
 #        contract. Defensive: every input it could refuse over is checked first.
-#   127  a required tool is missing (jq, yq, tsort, or a sha256 digest).
+#   127  a required tool is missing (jq, yq, or a sha256 digest).
 #
 # Stdout is JSON on exactly the exits that produce a verdict, and EMPTY on every
 # other one:
-#   exit 0 / 1   {schema, scope, ready, floor, ceiling, deliverable_waves,
-#                 realized, realized_all, reemanate, goal, preflight,
-#                 wire_conventions,
-#                 waves: [{wave, units: [...]}], findings}
-#   exit 4       {schema, scope, ready: false, refused: [...]} — and no `waves`
-#                or `floor` key at all, because nothing was planned and an empty
-#                key would read as "planned, and it is empty".
+#   exit 0 / 1   {schema, scope, ready, realized, realized_all, reemanate, goal,
+#                 preflight, wire_conventions, units: [...], findings}
+#   exit 4       {schema, scope, ready: false, refused: [...]} — and no `units`
+#                key at all, because nothing was planned and an empty key would
+#                read as "planned, and it is empty".
 # Stderr carries the grouped human report.
 #
 # WRITES NOTHING — no file, no log, no KB edit, no git state, and not
@@ -100,16 +92,14 @@
 # included"). A scratch directory under $TMPDIR is all, and the EXIT trap
 # removes it.
 #
-# Internals: refusals are evaluated in two tiers. Tier 1 — the stack, the
-# overseer roster, an empty frontier — needs no derivation and reports every
-# class it finds. Tier 2 — a cycle in the ordering edges — needs the whole
-# frontier derived, so it can only be asked once tier 1 has held. Deriving a
-# vault to discover that the overseer roster is broken would be work whose
-# answer nothing could use.
+# Internals: every refusal — the stack, the overseer roster, an empty frontier
+# — needs no derivation, and each class found is reported. Deriving a vault to
+# discover that the overseer roster is broken would be work whose answer nothing
+# could use. A cycle in the ordering edges is the factory planner's refusal.
 #
-# EMPTINESS SPLITS ACROSS THOSE TIERS, and it has to: nothing being `accepted`
-# is knowable before a derivation and REFUSES (`PR-12`), while everything being
-# realized is knowable only after one and SUCCEEDS — exit 0, `floor: 0`,
+# EMPTINESS SPLITS ACROSS THE DERIVATION, and it has to: nothing being
+# `accepted` is knowable before one and REFUSES (`PR-12`), while everything
+# being realized is knowable only after one and SUCCEEDS — exit 0, `units: []`,
 # `realized_all: true` ("the goal is already met"). The two answers are opposite
 # on purpose: one says there is nothing to build, the other that there is
 # nothing LEFT to build.
@@ -124,7 +114,7 @@ EXIT_NO_ROOTS=5
 EXIT_INTERNAL=6
 EXIT_MISSING_TOOL=127
 
-PLAN_SCHEMA="inspire.emanation-plan/2"
+PLAN_SCHEMA="inspire.emanation-plan/3"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLAN_BIN="$SCRIPT_DIR"
@@ -133,7 +123,6 @@ source "$SCRIPT_DIR/_keyed-heads.sh"
 source "$SCRIPT_DIR/lib/plan-lib.sh"
 source "$SCRIPT_DIR/lib/plan-scan.sh"
 source "$SCRIPT_DIR/lib/plan-stack.sh"
-source "$SCRIPT_DIR/lib/plan-waves.sh"
 # The `@claim` scanner is gate's and is SHARED rather than reimplemented: one
 # grammar, two readers (coverage there, realization here).
 source "$SCRIPT_DIR/lib/gate-citations.sh"
@@ -154,15 +143,10 @@ die_usage() {
   exit "$EXIT_USAGE"
 }
 
-PLAN_CEILING=""
 PLAN_BROKE=""
 PLAN_BAD_SELECTOR=""
 PLAN_SEL_REASON=""
-PLAN_FLOOR=0
 PLAN_GOAL=""
-PLAN_GOAL_FLOOR=0
-PLAN_EFFECTIVE_FLOOR=0
-PLAN_DELIVERABLE=0
 PLAN_REALIZED_ALL=false
 PLAN_READY=true
 PLAN_PROFILES_ROOT="${INSPIRE_PROFILES_ROOT:-.claude/skills/inspire-code/profiles}"
@@ -180,12 +164,6 @@ add_scope() {
 add_tests_root() {
   [ -d "$1" ] || die_usage "--tests-root is not a directory: $1"
   PLAN_TESTS_ROOTS+=("$1")
-}
-
-set_ceiling() {
-  case "$1" in ''|*[!0-9]*) die_usage "--ceiling must be a positive integer: '$1'" ;; esac
-  [ "$1" -ge 1 ] || die_usage "--ceiling must be at least 1: '$1'"
-  PLAN_CEILING="$1"
 }
 
 # A selector's SHAPE is checked here; whether it names anything is a question
@@ -214,8 +192,6 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --scope)         [ $# -ge 2 ] || die_usage "--scope needs a path"; add_scope "$2"; shift 2 ;;
     --scope=*)       add_scope "${1#--scope=}"; shift ;;
-    --ceiling)       [ $# -ge 2 ] || die_usage "--ceiling needs a number"; set_ceiling "$2"; shift 2 ;;
-    --ceiling=*)     set_ceiling "${1#--ceiling=}"; shift ;;
     --tests-root)    [ $# -ge 2 ] || die_usage "--tests-root needs a directory"
                      add_tests_root "$2"; shift 2 ;;
     --tests-root=*)  add_tests_root "${1#--tests-root=}"; shift ;;
@@ -237,9 +213,6 @@ while [ $# -gt 0 ]; do
 done
 
 sdd_require_tools || exit "$EXIT_MISSING_TOOL"
-command -v tsort >/dev/null 2>&1 || {
-  echo "emanate-plan.sh: missing required tool: tsort (expected as part of base unix utilities)" >&2
-  exit "$EXIT_MISSING_TOOL"; }
 # Checked here rather than left to derive: a tool missing under a fan-out would
 # surface as a dozen unreadable contracts instead of one legible refusal.
 if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
@@ -260,7 +233,7 @@ export SDD_KB_ROOT SDD_SPEC_ROOT
 
 plan_scratch >/dev/null || exit "$EXIT_MISSING_TOOL"
 trap 'rm -rf "$PLAN_TMP"' EXIT
-plan_init_spools units requires profiles waves findings refused \
+plan_init_spools units requires profiles findings refused \
                  components probes recipe wireids wirerows
 # Every list the renderers read has to EXIST before the run can take a path that
 # skips filling it: `--rawfile` fails on a missing file, and "there were none"
@@ -288,7 +261,7 @@ fi
 PLAN_SCOPE_LABEL="$(plan_norm "$(tr '\n' ' ' < "$PLAN_TMP/scopes.out")")"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tier 1 — the preconditions no derivation is needed to answer
+# Refusals — the preconditions no derivation is needed to answer
 # ─────────────────────────────────────────────────────────────────────────────
 
 plan_scan
@@ -303,7 +276,7 @@ if [ "$refused" = 1 ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tier 2 — one derivation per frontier unit, realization, then the ordering edges
+# One derivation per frontier unit, realization, then the edges
 # ─────────────────────────────────────────────────────────────────────────────
 
 plan_derive_all
@@ -314,13 +287,6 @@ plan_apply_reemanate || {
   exit "$EXIT_USAGE"; }
 plan_narrow
 plan_resolve_edges
-
-if ! plan_waves; then
-  plan_cycle_refusals
-  plan_json_refused
-  plan_report_refused
-  exit "$EXIT_REFUSED"
-fi
 
 if [ -n "$PLAN_GOAL" ]; then
   plan_goal "$PLAN_GOAL" || {
@@ -335,19 +301,10 @@ fi
 plan_check_profiles
 plan_check_preflight
 plan_check_reachable
-awk -F'\t' -v fs="$PLAN_FS" '{ print $1 fs $2 }' "$PLAN_TMP/waves.tsv" > "$PLAN_TMP/waves.spool"
 
 # The frontier is empty because everything in it is already realized: the
-# success case, not `PR-12`'s refusal. `PR-12` fired in tier 1 or not at all.
+# success case, not `PR-12`'s refusal. `PR-12` fired before derive or not at all.
 [ -s "$PLAN_TMP/nodes" ] || PLAN_REALIZED_ALL=true
-
-PLAN_EFFECTIVE_FLOOR="$PLAN_FLOOR"
-[ -z "$PLAN_GOAL" ] || PLAN_EFFECTIVE_FLOOR="$PLAN_GOAL_FLOOR"
-PLAN_DELIVERABLE="$PLAN_EFFECTIVE_FLOOR"
-if [ -n "$PLAN_CEILING" ] && [ "$PLAN_CEILING" -lt "$PLAN_EFFECTIVE_FLOOR" ]; then
-  PLAN_DELIVERABLE="$PLAN_CEILING"
-fi
-plan_check_ceiling
 
 if awk -F"$PLAN_FS" '$2 == "error" { f = 1; exit } END { exit !f }' "$PLAN_TMP/findings.spool"; then
   PLAN_READY=false

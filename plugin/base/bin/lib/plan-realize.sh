@@ -19,10 +19,10 @@
 #   everything unselected keeps its realization.
 #
 #   THE GOAL (`--goal`). Its remaining dependency closure is what the run has to
-#   execute, and the deepest wave in that closure is the floor to the goal.
+#   execute.
 #
 # A CLOSURE WALKS ORDERING EDGES — a navigation edge never extends one, the same
-# exemption the waves have and for the same reason: list and detail screens
+# exemption the ordering has and for the same reason: list and detail screens
 # navigate to each other in every real vault, so a nav-walking ordering closure
 # would pull a whole screen cluster into every selection.
 #
@@ -85,8 +85,8 @@ plan_realize() {
 # `from<TAB>to`. Four exemptions, and they are the whole rule: an edge whose
 # target is not itself a node is satisfied out of band (a `stable` artifact, a
 # realized unit, an `accepted` unit in another run's scope); a screen->screen
-# edge is navigation, which never orders a wave; a SELF edge cannot order one
-# either, since no unit precedes itself; and a DEFERRED reference is populated
+# edge is navigation, which never orders; a SELF edge cannot order either,
+# since no unit precedes itself; and a DEFERRED reference is populated
 # once both sides exist, so build order is free. The last two are the self-FK and
 # mutual-FK shapes every real data model carries — a comment threading under its
 # parent, a case pointing at its current report — and ordering on them made the
@@ -251,9 +251,9 @@ plan_apply_reemanate() {
   mv "$PLAN_TMP/realized.kept" "$PLAN_TMP/realized"
 }
 
-# plan_narrow — the frontier, minus what is realized. `nodes` is what the waves
-# and every downstream check see; `units.spool` and `requires.spool` are filtered
-# to match, so a realized unit is absent from `waves[]` for the same reason a
+# plan_narrow — the frontier, minus what is realized. `nodes` is what every
+# downstream check sees; `units.spool` and `requires.spool` are filtered to
+# match, so a realized unit is absent from `units[]` for the same reason a
 # `stable` artifact is: it is not in the frontier.
 #
 # No finding needs filtering. A unit `derive` refused makes no claims and so can
@@ -275,8 +275,7 @@ plan_narrow() {
   done
 }
 
-# plan_goal <sel> — the goal's remaining closure into `goal.units` and its floor
-# into $PLAN_GOAL_FLOOR. The closure is matched over every frontier-ELIGIBLE
+# plan_goal <sel> — the goal's remaining closure into `goal.units`. The closure is matched over every frontier-ELIGIBLE
 # node and then intersected with what this run still has to build, so naming an
 # already-realized goal answers "nothing left" rather than "no such unit".
 #
@@ -285,7 +284,6 @@ plan_narrow() {
 plan_goal() {
   local sel="$1"
   : > "$PLAN_TMP/goal.units"
-  PLAN_GOAL_FLOOR=0
   plan_goal_edges
   if ! plan_selector_set "$sel" "$PLAN_TMP/nodes.all" "$PLAN_TMP/edges.all" \
          "$PLAN_TMP/goal.match"; then
@@ -294,9 +292,4 @@ plan_goal() {
   fi
   plan_reach "$PLAN_TMP/edges.goal" "$PLAN_TMP/goal.match" down > "$PLAN_TMP/goal.closure"
   LC_ALL=C comm -12 "$PLAN_TMP/goal.closure" "$PLAN_TMP/nodes" > "$PLAN_TMP/goal.units"
-  PLAN_GOAL_FLOOR="$(awk -F'\t' -v goalf="$PLAN_TMP/goal.units" '
-    FILENAME == goalf { want[$1] = 1; next }
-    ($2 in want) && $1 > m { m = $1 }
-    END { print m + 0 }
-  ' "$PLAN_TMP/goal.units" "$PLAN_TMP/waves.tsv")"
 }

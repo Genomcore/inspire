@@ -21,7 +21,6 @@ plan_json_plan() {
     --rawfile units "$PLAN_TMP/units.spool" \
     --rawfile requires "$PLAN_TMP/requires.spool" \
     --rawfile profiles "$PLAN_TMP/profiles.spool" \
-    --rawfile waves "$PLAN_TMP/waves.spool" \
     --rawfile findings "$PLAN_TMP/findings.spool" \
     --rawfile realized "$PLAN_TMP/realized" \
     --rawfile reemsel "$PLAN_TMP/reemanate-args" \
@@ -33,10 +32,6 @@ plan_json_plan() {
     --rawfile wireids "$PLAN_TMP/wireids.spool" \
     --rawfile wirerows "$PLAN_TMP/wirerows.spool" \
     --arg goalsel "$PLAN_GOAL" \
-    --argjson goalfloor "$PLAN_GOAL_FLOOR" \
-    --argjson floor "$PLAN_FLOOR" \
-    --argjson ceiling "${PLAN_CEILING:-null}" \
-    --argjson deliverable "$PLAN_DELIVERABLE" \
     --argjson realizedall "$PLAN_REALIZED_ALL" \
     --argjson ready "$PLAN_READY" \
     "$PLAN_JQ_PRELUDE"'
@@ -47,21 +42,16 @@ plan_json_plan() {
        | from_entries) as $req
     | (recs($profiles) | group_by(.[0])
        | map({key: .[0][0], value: map(.[1])}) | from_entries) as $prof
-    | (recs($waves) | map({key: .[1], value: (.[0] | tonumber)}) | from_entries) as $wave
     | {schema: $schema,
        scope: ($scopes | split("\n") | map(select(length > 0))),
        ready: $ready,
-       floor: $floor,
-       ceiling: $ceiling,
-       deliverable_waves: $deliverable,
        realized: (ids($realized) | sort),
        realized_all: $realizedall,
        reemanate: (if (ids($reemsel) | length) == 0 then null
                    else {selectors: ids($reemsel),
                          units: (ids($reemunits) | sort)} end),
        goal: (if $goalsel == "" then null
-              else {selector: $goalsel, units: (ids($goalunits) | sort),
-                    floor: $goalfloor} end),
+              else {selector: $goalsel, units: (ids($goalunits) | sort)} end),
        preflight: {components: (recs($components)
                                 | map({name: cel(.;0), purpose: nul(cel(.;1))})
                                 | sort_by(.name)),
@@ -74,17 +64,14 @@ plan_json_plan() {
                           decisions: (recs($wirerows)
                                       | map({decision: cel(.;0),
                                              answer: nul(cel(.;1))}))},
-       waves: (recs($units)
+       units: (recs($units)
                | map({kind: cel(.;1), id: cel(.;0), path: cel(.;2),
                       module: nul(cel(.;4)),
                       surface: nul(cel(.;5)), population: nul(cel(.;7)),
                       profiles: ($prof[cel(.;0)] // []),
                       requires: ($req[cel(.;0)] // []),
-                      claims: (cel(.;6) | tonumber),
-                      wave: ($wave[cel(.;0)] // null)})
-               | group_by(.wave) | sort_by(.[0].wave)
-               | map({wave: .[0].wave,
-                      units: (map(del(.wave)) | sort_by(.id))})),
+                      claims: (cel(.;6) | tonumber)})
+               | sort_by(.id)),
        findings: (recs($findings)
                   | map({code: cel(.;0), severity: cel(.;1),
                          unit: nul(cel(.;2)), target: nul(cel(.;3)),
@@ -94,9 +81,8 @@ plan_json_plan() {
     '
 }
 
-# plan_json_refused — exit 4. No `waves` and no `floor`: nothing was planned,
-# and a key present with an empty value would read as "planned, and it is
-# empty".
+# plan_json_refused — exit 4. No `units`: nothing was planned, and a key
+# present with an empty value would read as "planned, and it is empty".
 plan_json_refused() {
   jq -n --arg fs "$PLAN_FS" --arg schema "$PLAN_SCHEMA" \
     --rawfile scopes "$PLAN_TMP/scopes.out" \
@@ -118,8 +104,7 @@ plan_banner() {
 }
 
 # plan_report_findings — grouped by class, then owning skill, then target. A
-# class with no target (the ceiling warning is the only one) prints its message
-# under the class heading alone.
+# finding with no target prints its message under the class heading alone.
 plan_report_findings() {
   local n code sev unit target owner msg remedy klass last=""
   n="$(LC_ALL=C grep -c . "$PLAN_TMP/findings.spool")"
@@ -142,8 +127,8 @@ plan_report_findings() {
   } >&2
 }
 
-# plan_report_plan — the frontier, its waves, what was already realized, the
-# floor-versus-ceiling line and the findings.
+# plan_report_plan — the frontier, what was already realized, the goal and the
+# findings.
 plan_report_plan() {
   local units realized
   units="$(LC_ALL=C grep -c . "$PLAN_TMP/units.spool")"
@@ -151,11 +136,8 @@ plan_report_plan() {
   plan_banner "$([ "$PLAN_READY" = true ] && echo READY || echo "NOT READY")"
   {
     printf '\nFRONTIER (%s unit%s)\n' "$units" "$([ "$units" = 1 ] || echo s)"
-    awk -F'\t' '
-      { if ($1 != w) { if (w != "") printf "\n"; printf "  wave %-3s ", $1; w = $1; sep = "" }
-        printf "%s%s", sep, $2; sep = " · " }
-      END { if (w != "") printf "\n" }
-    ' "$PLAN_TMP/waves.tsv"
+    cut -d"$PLAN_FS" -f1 "$PLAN_TMP/units.spool" | LC_ALL=C sort \
+      | awk '{ printf "%s%s", (NR == 1 ? "  " : " · "), $0 } END { if (NR) printf "\n" }'
     # Silent when nothing is realized, so a run with no --tests-root prints what
     # it always printed.
     if [ "$realized" -gt 0 ]; then
@@ -167,10 +149,10 @@ plan_report_plan() {
         "$(LC_ALL=C grep -c . "$PLAN_TMP/reemanate")"
       awk '{ printf "%s%s", sep, $0; sep = " · " } END { printf "\n" }' "$PLAN_TMP/reemanate"
     fi
-    [ -n "$PLAN_GOAL" ] && printf '\nGOAL %s · %s piece(s) · FLOOR TO GOAL %s\n' \
-      "$PLAN_GOAL" "$(LC_ALL=C grep -c . "$PLAN_TMP/goal.units")" "$PLAN_GOAL_FLOOR"
-    printf '\nFLOOR %s · CEILING %s · DELIVERABLE %s of %s waves\n' \
-      "$PLAN_FLOOR" "${PLAN_CEILING:-—}" "$PLAN_DELIVERABLE" "$PLAN_EFFECTIVE_FLOOR"
+    if [ -n "$PLAN_GOAL" ]; then
+      printf '\nGOAL %s · %s piece(s)\n' \
+        "$PLAN_GOAL" "$(LC_ALL=C grep -c . "$PLAN_TMP/goal.units")"
+    fi
   } >&2
   plan_report_findings
 }

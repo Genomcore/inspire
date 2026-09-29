@@ -106,7 +106,7 @@ plan_derive_all() {
 # its count is 0 and its `X` records say why.
 #
 # The U record's `population` is carried, never read: it decides nothing about
-# waves or readiness, and it is here so a spawn brief can be built from the plan
+# ordering or readiness, and it is here so a spawn brief can be built from the plan
 # JSON alone. It is empty for every kind but `entity`, which is the only one that
 # declares the marker.
 #
@@ -126,7 +126,8 @@ plan_derive_all() {
 #
 # An R record carries `deferred` only where the contract states `ordering:
 # false`. A key that is absent — an older contract — reads as ordering, which is
-# the safe direction: a wave too many, never a dependency built too late.
+# the safe direction: an edge that orders needlessly, never a dependency built
+# too late.
 #
 # A screen's `pattern` and `components` keys are NOT read here. They restate
 # edges the `requires[]` set already carries, and since ED10 made both catalog

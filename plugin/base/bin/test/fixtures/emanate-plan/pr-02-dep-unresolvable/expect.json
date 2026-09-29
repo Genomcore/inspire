@@ -11,7 +11,6 @@
     { "expr": ".findings[0].target", "equals": "auth.password.hash" },
     { "expr": ".findings[0].unit", "equals": "auth.user.create" },
     { "expr": ".findings[0].owner", "equals": "inspire-domain" },
-    { "expr": ".floor", "equals": "1" },
     { "expr": ".ready", "equals": "false" }
   ]
 }

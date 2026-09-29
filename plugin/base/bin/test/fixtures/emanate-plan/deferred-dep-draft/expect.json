@@ -11,7 +11,6 @@
     { "expr": "[.findings[].severity] | unique | join(\",\")", "equals": "error" },
     { "expr": ".findings[0].unit", "equals": "auth.org" },
     { "expr": ".findings[0].target", "equals": "spec/sdd/auth/user/auth.user.md" },
-    { "expr": ".floor", "equals": "1" },
     { "expr": ".ready", "equals": "false" }
   ]
 }

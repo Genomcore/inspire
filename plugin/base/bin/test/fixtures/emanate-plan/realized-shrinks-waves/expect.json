@@ -12,12 +12,7 @@
     { "expr": ".ready", "equals": "true" },
     { "expr": ".realized | join(\",\")", "equals": "auth.org" },
     { "expr": ".realized_all", "equals": "false" },
-    { "expr": ".floor", "equals": "2" },
-    { "expr": ".waves | length", "equals": "2" },
-    { "expr": ".waves[0].units | map(.id) | join(\",\")", "equals": "audit.event,auth.user" },
-    { "expr": ".waves[1].units | map(.id) | join(\",\")", "equals": "auth.user.list" },
-    { "expr": "[.waves[].units[].id] | join(\",\")", "equals": "audit.event,auth.user,auth.user.list" },
-    { "expr": ".deliverable_waves", "equals": "2" }
+    { "expr": "[.units[].id] | join(\",\")", "equals": "audit.event,auth.user,auth.user.list" }
   ],
   "forbidden": ["PR-", "NOT READY"]
 }

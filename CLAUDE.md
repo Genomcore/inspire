@@ -163,11 +163,11 @@ repo is both its source and its own marketplace.
       paid for — see
       [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
       `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
-      already realized** → dependency waves → the floor versus the declared
-      ceiling → every readiness check, plus the run-level facts a spawn brief
+      already realized** → every readiness check, plus the run-level facts a spawn brief
       needs — the declared test infrastructure and the project's wire-convention
       decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
-      stdout and nothing written anywhere — see
+      stdout and nothing written anywhere; ordering the units is the INSPIRE
+      factory's planner — see
       [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
       and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
       result → one pass/fail verdict on stdout, the deterministic evidence an
@@ -350,7 +350,7 @@ asks the operator anything.
   than "schedule better". Cost follows the process count almost exactly — the
   `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
   matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 87 and 76 fixtures, because each
+  `emanate-derive` and `emanate-plan`, at 87 and 73 fixtures, because each
   fixture spawns a rule and the validators under it; `run.sh` **shards** both
   (see below). Next come a handful of `upgrade/` and `materialize/` files that
   build several period-correct fixtures each.

@@ -105,12 +105,12 @@ eq "and touches no file's mtime either" \
   "$(find "$FX/clean-three-waves" -type f -newer "$marker" | LC_ALL=C grep -c .)" "0"
 
 # A refusal writes nothing either — it takes a different path out of the script.
-before="$(tree_state "$FX/pr-11-cycle")"
+before="$(tree_state "$FX/pr-12-empty-frontier")"
 : > "$marker"
-plan_in pr-11-cycle >/dev/null
-eq "a refused run leaves the tree alone too" "$before" "$(tree_state "$FX/pr-11-cycle")"
+plan_in pr-12-empty-frontier >/dev/null
+eq "a refused run leaves the tree alone too" "$before" "$(tree_state "$FX/pr-12-empty-frontier")"
 eq "and touches no mtime on that path either" \
-  "$(find "$FX/pr-11-cycle" -type f -newer "$marker" | LC_ALL=C grep -c .)" "0"
+  "$(find "$FX/pr-12-empty-frontier" -type f -newer "$marker" | LC_ALL=C grep -c .)" "0"
 
 # The tests roots are a new tree a run reads, and reading is all it may do: a
 # `--tests-root` is somebody's source directory, not a scratch space.
@@ -340,7 +340,7 @@ eq "while gate covers the claim off the id half, stale fingerprint and all" \
 # ─────────────────────────────────────────────────────────────────────────────
 
 both="$(plan_in clean-three-waves --scope spec/sdd/auth --scope spec/sdd/audit \
-        | jq -r '[.waves[].units[].id] | sort | join(",")')"
+        | jq -r '[.units[].id] | sort | join(",")')"
 eq "two scopes name one vault, not two disjoint checks" \
   "$both" "audit.event,auth.org,auth.user,auth.user.list"
 

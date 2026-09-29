@@ -13,8 +13,7 @@
     { "expr": ".reemanate.selectors | join(\",\")", "equals": "auth.user*" },
     { "expr": ".reemanate.units | join(\",\")", "equals": "auth.user,auth.user.list" },
     { "expr": ".reemanate.units | index(\"auth.org\")", "equals": "null" },
-    { "expr": ".reemanate.units | index(\"audit.event\")", "equals": "null" },
-    { "expr": ".floor", "equals": "3" }
+    { "expr": ".reemanate.units | index(\"audit.event\")", "equals": "null" }
   ],
   "forbidden": ["PR-", "NOT READY"]
 }

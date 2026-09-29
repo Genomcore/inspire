@@ -1,13 +1,10 @@
 {
-  "schema": "inspire.emanation-plan/2",
+  "schema": "inspire.emanation-plan/3",
   "scope": [
     "spec/kb",
     "spec/sdd"
   ],
   "ready": true,
-  "floor": 3,
-  "ceiling": null,
-  "deliverable_waves": 3,
   "realized": [],
   "realized_all": false,
   "reemanate": null,
@@ -21,93 +18,78 @@
     "ids": [],
     "decisions": []
   },
-  "waves": [
+  "units": [
     {
-      "wave": 1,
-      "units": [
-        {
-          "kind": "entity",
-          "id": "audit.event",
-          "path": "spec/sdd/audit/event/audit.event.md",
-          "module": "audit",
-          "surface": null,
-          "population": "internal",
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [],
-          "claims": 9
-        },
+      "kind": "entity",
+      "id": "audit.event",
+      "path": "spec/sdd/audit/event/audit.event.md",
+      "module": "audit",
+      "surface": null,
+      "population": "internal",
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [],
+      "claims": 9
+    },
+    {
+      "kind": "entity",
+      "id": "auth.org",
+      "path": "spec/sdd/auth/org/auth.org.md",
+      "module": "auth",
+      "surface": null,
+      "population": "internal",
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [],
+      "claims": 5
+    },
+    {
+      "kind": "entity",
+      "id": "auth.user",
+      "path": "spec/sdd/auth/user/auth.user.md",
+      "module": "auth",
+      "surface": null,
+      "population": "internal",
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [
         {
           "kind": "entity",
           "id": "auth.org",
-          "path": "spec/sdd/auth/org/auth.org.md",
-          "module": "auth",
-          "surface": null,
-          "population": "internal",
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [],
-          "claims": 5
+          "ordering": true
         }
-      ]
+      ],
+      "claims": 15
     },
     {
-      "wave": 2,
-      "units": [
+      "kind": "action",
+      "id": "auth.user.list",
+      "path": "spec/sdd/auth/user/auth.user.list.md",
+      "module": "auth",
+      "surface": null,
+      "population": null,
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [
         {
           "kind": "entity",
           "id": "auth.user",
-          "path": "spec/sdd/auth/user/auth.user.md",
-          "module": "auth",
-          "surface": null,
-          "population": "internal",
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [
-            {
-              "kind": "entity",
-              "id": "auth.org",
-              "ordering": true
-            }
-          ],
-          "claims": 15
+          "ordering": true
         }
-      ]
-    },
-    {
-      "wave": 3,
-      "units": [
-        {
-          "kind": "action",
-          "id": "auth.user.list",
-          "path": "spec/sdd/auth/user/auth.user.list.md",
-          "module": "auth",
-          "surface": null,
-          "population": null,
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [
-            {
-              "kind": "entity",
-              "id": "auth.user",
-              "ordering": true
-            }
-          ],
-          "claims": 4
-        }
-      ]
+      ],
+      "claims": 4
     }
   ],
   "findings": []

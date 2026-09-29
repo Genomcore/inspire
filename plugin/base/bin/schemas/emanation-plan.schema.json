@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://inspire.openbims.dev/schemas/emanation-plan.schema.json",
-  "title": "inspire.emanation-plan/2",
+  "title": "inspire.emanation-plan/3",
   "description": "What emanate-plan.sh prints on stdout: a plan on exits 0 and 1, a refusal on exit 4. Stdout is empty on every other exit.",
   "oneOf": [
     { "$ref": "#/$defs/plan" },
@@ -9,7 +9,7 @@
   ],
 
   "$defs": {
-    "schemaId": { "const": "inspire.emanation-plan/2" },
+    "schemaId": { "const": "inspire.emanation-plan/3" },
 
     "unitKind": {
       "description": "Derive's five unit kinds — the complete set.",
@@ -26,20 +26,19 @@
     "findingCode": {
       "description": "Codes reported when a plan WAS computed. Disjoint from refusalCode.",
       "enum": ["PR-01", "PR-02", "PR-03", "PR-04", "PR-05", "PR-06", "PR-07",
-               "PR-20", "PR-22", "PR-23", "PR-24", "PR-25", "PR-26"]
+               "PR-22", "PR-23", "PR-24", "PR-25", "PR-26"]
     },
 
     "refusalCode": {
       "description": "Codes reported when nothing was planned. Disjoint from findingCode.",
-      "enum": ["PR-10", "PR-11", "PR-12", "PR-13"]
+      "enum": ["PR-10", "PR-12", "PR-13"]
     },
 
     "plan": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "scope", "ready", "floor", "ceiling",
-                   "deliverable_waves", "realized", "realized_all", "reemanate",
-                   "goal", "preflight", "wire_conventions", "waves", "findings"],
+      "required": ["schema", "scope", "ready", "realized", "realized_all", "reemanate",
+                   "goal", "preflight", "wire_conventions", "units", "findings"],
       "properties": {
         "schema": { "$ref": "#/$defs/schemaId" },
         "scope": {
@@ -50,24 +49,12 @@
           "description": "false when at least one finding is severity error (exit 1).",
           "type": "boolean"
         },
-        "floor": {
-          "description": "The critical path's depth; equals waves.length.",
-          "type": "integer", "minimum": 0
-        },
-        "ceiling": {
-          "description": "--ceiling as given; null when unset.",
-          "type": ["integer", "null"], "minimum": 0
-        },
-        "deliverable_waves": {
-          "description": "min(effective floor, ceiling); the effective floor is goal.floor when a goal was named.",
-          "type": "integer", "minimum": 0
-        },
         "realized": {
-          "description": "Frontier-eligible units already realized on this branch. Bare ids: these are not work items and appear in no wave.",
+          "description": "Frontier-eligible units already realized on this branch. Bare ids: these are not work items and do not appear in units[].",
           "type": "array", "items": { "type": "string" }
         },
         "realized_all": {
-          "description": "Every frontier-eligible unit is realized: floor 0, waves []. 'Nothing left to build', distinct from PR-12's 'nothing to build'.",
+          "description": "Every frontier-eligible unit is realized: units []. 'Nothing left to build', distinct from PR-12's 'nothing to build'.",
           "type": "boolean"
         },
         "reemanate": {
@@ -90,46 +77,28 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["selector", "units", "floor"],
+              "required": ["selector", "units"],
               "properties": {
                 "selector": { "type": "string" },
                 "units": {
-                  "description": "The goal's remaining closure: its dependencies plus the screens that navigate to it. Not waves-shaped.",
+                  "description": "The goal's remaining closure: its dependencies plus the screens that navigate to it.",
                   "type": "array", "items": { "type": "string" }
-                },
-                "floor": { "type": "integer", "minimum": 0 }
+                }
               }
             }
           ]
         },
         "preflight": { "$ref": "#/$defs/preflight" },
         "wire_conventions": { "$ref": "#/$defs/wireConventions" },
-        "waves": {
-          "description": "Ascending by wave. Holds only what this run will build.",
+        "units": {
+          "description": "What this run will build, sorted by id. Ordering them is the INSPIRE factory planner's job.",
           "type": "array",
-          "items": { "$ref": "#/$defs/wave" }
+          "items": { "$ref": "#/$defs/unit" }
         },
         "findings": {
           "description": "Sorted by (code, unit, target).",
           "type": "array",
           "items": { "$ref": "#/$defs/finding" }
-        }
-      }
-    },
-
-    "wave": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["wave", "units"],
-      "properties": {
-        "wave": {
-          "description": "1-based and contiguous. Every unit here has all its in-frontier ordering dependencies in a strictly lower wave, so one wave's units may be built in parallel.",
-          "type": "integer", "minimum": 1
-        },
-        "units": {
-          "description": "Sorted by id.",
-          "type": "array", "minItems": 1,
-          "items": { "$ref": "#/$defs/unit" }
         }
       }
     },
@@ -181,7 +150,7 @@
         "kind": { "$ref": "#/$defs/unitKind" },
         "id": { "type": "string" },
         "ordering": {
-          "description": "false is a deferred reference, which gates readiness but never orders a wave. true is not a promise of an earlier wave either: navigation and self edges are dropped from the ordering too.",
+          "description": "false is a deferred reference, which gates readiness but never orders. Navigation and self edges are dropped from the ordering too.",
           "type": "boolean"
         }
       }
@@ -278,7 +247,7 @@
     },
 
     "refusal": {
-      "description": "Exit 4. A precondition of planning failed, so there is no waves or floor key at all — an empty key would read as 'planned, and it is empty'. Every class found is reported, not the first.",
+      "description": "Exit 4. A precondition of planning failed, so there is no units key at all — an empty key would read as 'planned, and it is empty'. Every class found is reported, not the first.",
       "type": "object",
       "additionalProperties": false,
       "required": ["schema", "scope", "ready", "refused"],

@@ -1,13 +1,10 @@
 {
-  "schema": "inspire.emanation-plan/2",
+  "schema": "inspire.emanation-plan/3",
   "scope": [
     "spec/kb",
     "spec/sdd"
   ],
   "ready": true,
-  "floor": 1,
-  "ceiling": null,
-  "deliverable_waves": 1,
   "realized": [],
   "realized_all": false,
   "reemanate": null,
@@ -21,26 +18,21 @@
     "ids": [],
     "decisions": []
   },
-  "waves": [
+  "units": [
     {
-      "wave": 1,
-      "units": [
-        {
-          "kind": "entity",
-          "id": "auth.org",
-          "path": "spec/sdd/auth/org/auth.org.md",
-          "module": "auth",
-          "surface": null,
-          "population": "internal",
-          "profiles": [
-            "nestjs",
-            "react",
-            "typescript"
-          ],
-          "requires": [],
-          "claims": 5
-        }
-      ]
+      "kind": "entity",
+      "id": "auth.org",
+      "path": "spec/sdd/auth/org/auth.org.md",
+      "module": "auth",
+      "surface": null,
+      "population": "internal",
+      "profiles": [
+        "nestjs",
+        "react",
+        "typescript"
+      ],
+      "requires": [],
+      "claims": 5
     }
   ],
   "findings": []

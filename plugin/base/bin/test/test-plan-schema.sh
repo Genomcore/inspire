@@ -68,25 +68,19 @@ same_keys() {
 
 plan_in canonical-example > "$TMP/plan.json"
 eq "the canonical fixture still plans" "$(jq -r '.schema' "$TMP/plan.json")" \
-  "inspire.emanation-plan/2"
+  "inspire.emanation-plan/3"
 
 same_keys "plan"     plan            "$TMP/plan.json" '.'
-same_keys "wave"     wave            "$TMP/plan.json" '.waves[]'
-same_keys "unit"     unit            "$TMP/plan.json" '.waves[].units[]'
-same_keys "require"  requirement     "$TMP/plan.json" '.waves[].units[].requires[]'
+same_keys "unit"     unit            "$TMP/plan.json" '.units[]'
+same_keys "require"  requirement     "$TMP/plan.json" '.units[].requires[]'
 same_keys "preflight" preflight      "$TMP/plan.json" '.preflight'
 same_keys "wire"     wireConventions "$TMP/plan.json" '.wire_conventions'
 
-# The nesting itself, since a consumer reads the plan through it.
-eq "waves carry a 1-based contiguous numbering" \
-  "$(jq -r '[.waves[].wave] | join(",")' "$TMP/plan.json")" "1,2,3"
-eq "floor is the number of waves" \
-  "$(jq -r '.floor == (.waves | length)' "$TMP/plan.json")" "true"
-eq "a unit carries no wave back-pointer: the nesting is the index" \
-  "$(jq -r '[.waves[].units[] | has("wave")] | unique | join(",")' "$TMP/plan.json")" \
-  "false"
-eq "and no lifecycle, which could only ever have read 'accepted'" \
-  "$(jq -r '[.waves[].units[] | has("lifecycle")] | unique | join(",")' "$TMP/plan.json")" \
+# The list itself, since a consumer reads the plan through it.
+eq "units are listed by id" \
+  "$(jq -r '[.units[].id] == ([.units[].id] | sort)' "$TMP/plan.json")" "true"
+eq "and carry no lifecycle, which could only ever have read 'accepted'" \
+  "$(jq -r '[.units[] | has("lifecycle")] | unique | join(",")' "$TMP/plan.json")" \
   "false"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -98,9 +92,8 @@ same_keys "finding" finding "$TMP/findings.json" '.findings[]'
 
 plan_in pr-12-empty-frontier > "$TMP/refused.json"
 same_keys "refusal" refusal "$TMP/refused.json" '.'
-eq "a refusal names no wave and no floor" \
-  "$(jq -r '[has("waves"), has("floor")] | join(",")' "$TMP/refused.json")" \
-  "false,false"
+eq "a refusal names no units" \
+  "$(jq -r 'has("units")' "$TMP/refused.json")" "false"
 eq "and its refused[] matches the schema" \
   "$(jq -r '.refused[0] | keys_unsorted | sort | join(",")' "$TMP/refused.json")" \
   "$(jq -r '.["$defs"].refusal.properties.refused.items.properties | keys_unsorted | sort | join(",")' "$JSON_SCHEMA")"

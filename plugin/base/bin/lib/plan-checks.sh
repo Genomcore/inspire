@@ -2,17 +2,17 @@
 # .inspire/bin/lib/plan-checks.sh
 #
 # Library — the readiness catalogue. Every `PR-*` class lives here: the twelve
-# findings that leave a plan standing (the ceiling, preflight, reachability and
+# findings that leave a plan standing (the preflight, reachability and
 # authorization classes are warnings, `PR-02` and `PR-03` are a warning on a
 # navigation edge and an error on an ordering one, and the rest are errors), and
-# the four refusals that mean nothing is planned at all. The catalogue itself —
+# the three refusals that mean nothing is planned at all. The catalogue itself —
 # what each id means, its severity and its owner — is
 # `.claude/skills/_references/emanation-plan.md`, and the ids are never
 # duplicated into a second table.
 #
 # Two rules of shape are load-bearing and stated once, here:
 #
-#   NAVIGATION NEVER ORDERS A WAVE, AND NEVER REFUSES. A `screen`-kinded edge
+#   NAVIGATION NEVER ORDERS, AND NEVER REFUSES. A `screen`-kinded edge
 #   out of a screen unit is a route reference — a route derives from `module` +
 #   `screen` without the target existing as code — and list/detail screens
 #   navigate to each other in every real vault. Ordering on it would make the
@@ -20,11 +20,11 @@
 #   `PR-03`, but as a WARNING: an unfinished link out is a broken affordance on
 #   a page that is otherwise buildable, not a page nothing can build.
 #
-#   AN EDGE ORDERS A WAVE ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
+#   AN EDGE ORDERS ONLY WHEN ITS TARGET IS IN THE FRONTIER. An edge to a
 #   `stable` artifact is satisfied out of band and an edge to an `accepted` unit
 #   outside the scope is someone else's run. A pattern and a component are units
 #   like the rest since ED10, so their edges order like the rest: a screen waits
-#   for its layout's and its components' wave rather than refusing over them.
+#   for its layout and its components rather than refusing over them.
 #
 # Sourced after `_lib.sh`, `plan-lib.sh`, `plan-scan.sh` and `plan-stack.sh`.
 
@@ -44,10 +44,9 @@ plan_refuse() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Refusals — evaluated in two tiers. Every class a tier finds is reported, never
-# the first; but a later tier's answer depends on an earlier one holding, so a
-# tier that refuses stops the run. Deriving six units to discover the overseer
-# roster is broken would be work whose answer nothing could use.
+# Refusals — evaluated before any derivation. Every class found is reported,
+# never the first. Deriving six units to discover the overseer roster is broken
+# would be work whose answer nothing could use.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # plan_check_stack — PR-13. Also leaves the suite-wide declared profile ids in
@@ -124,7 +123,7 @@ plan_check_overseers() {
 }
 
 # plan_check_frontier — PR-12. An empty frontier refuses rather than emitting a
-# green zero-wave plan, so `/inspire-emanate run` cannot build worktrees for
+# green empty plan, so `/inspire-emanate run` cannot build worktrees for
 # nothing.
 plan_check_frontier() {
   [ -s "$PLAN_TMP/frontier.tsv" ] && return 0
@@ -132,43 +131,6 @@ plan_check_frontier() {
     "no unit in scope is at \`lifecycle: accepted\` — the frontier is empty and there is nothing to emanate" \
     "promote a unit to accepted, or widen --scope"
   return 1
-}
-
-# plan_acyclic_findings — the cycle rule's own findings, as `target<TAB>message`.
-# PR-11 reuses `acyclic-deps.sh` rather than re-deriving the cycle: the class has
-# one implementation, the way derive runs the rules that own its `OS-*` classes.
-plan_acyclic_findings() {
-  local s
-  {
-    if [ -s "$PLAN_TMP/scopes" ]; then
-      while IFS= read -r s; do
-        [ -n "$s" ] || continue
-        bash "$PLAN_BIN/acyclic-deps.sh" "$s" 2>&1 >/dev/null
-      done < "$PLAN_TMP/scopes"
-    else
-      bash "$PLAN_BIN/acyclic-deps.sh" "$SDD_SPEC_ROOT" 2>&1 >/dev/null
-    fi
-  } | jq -r 'select(.rule? == "acyclic-deps") | [.target, .message] | @tsv' 2>/dev/null \
-    | LC_ALL=C sort -u
-}
-
-# plan_cycle_refusals — PR-11. The named rule covers action->action `requires:`;
-# a cycle the wider edge set forms is reported off the layering, which already
-# knows exactly which nodes it could not consume.
-plan_cycle_refusals() {
-  local target msg id found=0
-  while IFS=$'\t' read -r target msg; do
-    [ -n "$msg" ] || continue
-    found=1
-    plan_refuse "PR-11" "$(plan_path_norm "$target")" "$msg" "fix the \`requires:\` chain"
-  done < <(plan_acyclic_findings)
-  [ "$found" = 0 ] || return 0
-  while IFS= read -r id; do
-    [ -n "$id" ] || continue
-    plan_refuse "PR-11" "$(plan_index_lookup "$PLAN_TMP/idpath.tsv" "$id")" \
-      "the ordering edges among the frontier form a cycle: \`$id\` can never reach a wave" \
-      "break the cycle: drop \`nonnull\` from the \`references(...)\` that is really a back-pointer, or re-point the \`requires:\` chain"
-  done < "$PLAN_TMP/unconsumed"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -323,21 +285,17 @@ plan_check_invariant_subject() {
 # target must be stable or in the frontier — asked at two severities: an
 # ordering edge refuses, a navigation edge warns. Every exemption
 # `plan_ordering_edges` makes — navigation, self, deferred — is dropped from the
-# ORDERING alone, after both checks have run, which is why the in-frontier arm
-# leaves the layering to `plan_ordering_edges`.
+# ORDERING alone, after both checks have run; ordering itself is the factory
+# planner's.
 #
 # ED10 is what makes that one rule reach the catalog kinds. They used to be
 # skipped here and answered by two bespoke readiness errors, which meant a
 # screen could not emanate until its UI kit had been hand-built first. Now a
 # to-extract component is a unit like any other and the screen simply WAITS for
-# its wave; the error form survives only where it always belonged — a target
-# that is neither delivered nor emanatable.
-#
-# The edge set itself is `plan_ordering_edges`', over the post-realization node
-# set: which edges ORDER is one question, and the selector closures ask it too.
+# it; the error form survives only where it always belonged — a target that is
+# neither delivered nor emanatable.
 plan_resolve_edges() {
   local uid upath ukind dkind did dord dpath lc state sev nav
-  plan_ordering_edges "$PLAN_TMP/nodes" > "$PLAN_TMP/edges.tsv"
   # `dord` is read and never used: it is the 6th `deps.tsv` column, and naming it
   # is what keeps every field before it in its own variable.
   while IFS=$'\t' read -r uid upath ukind dkind did dord; do
@@ -361,8 +319,8 @@ plan_resolve_edges() {
         "$(plan_define_remedy "$dkind" "$did")"
       continue
     fi
-    # In the frontier: the ordering was already decided above, and neither
-    # lifecycle arm below applies to a unit this run is building.
+    # In the frontier: neither lifecycle arm below applies to a unit this run is
+    # building.
     LC_ALL=C grep -qxF "$did" "$PLAN_TMP/nodes" && continue
     lc="$(plan_lifecycle_of "$dpath" "$dkind")"
     if [ "$lc" = "stable" ] && [ "$dkind" = "pattern" ]; then
@@ -598,20 +556,6 @@ plan_check_preflight() {
       "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and \`## Worktree recipe\` declares no step, so nothing states how a fresh phase worktree reaches them and the run improvises an environment before its first spawn" \
       "declare the steps that make a checkout runnable — the non-\`.env\` environment source, then dependencies and generated artifacts — in \`## Worktree recipe\` of \`$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")\`"
   fi
-}
-
-# plan_check_ceiling — PR-20. A warning, never a blocker: D11 gives a low
-# ceiling partial-but-reported delivery in graph order, so it never flips
-# `ready` and a run whose only finding is this one exits 0.
-# The ceiling is measured against the floor the run actually has to reach, which
-# a `--goal` shortens: a ceiling that covers the goal is not under-budgeted just
-# because some deeper unit is also in scope.
-plan_check_ceiling() {
-  [ -n "$PLAN_CEILING" ] || return 0
-  [ "$PLAN_CEILING" -lt "$PLAN_EFFECTIVE_FLOOR" ] || return 0
-  plan_find "PR-20" "warning" "" "" "" \
-    "the declared ceiling of $PLAN_CEILING wave(s) is below the floor of $PLAN_EFFECTIVE_FLOOR — delivery will be partial, in graph order" \
-    "raise --ceiling to $PLAN_EFFECTIVE_FLOOR, or accept partial-but-reported delivery"
 }
 
 # plan_closure_screens — the goal closure's screen ids, sorted. The kind comes
