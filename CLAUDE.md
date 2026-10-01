@@ -237,8 +237,11 @@ repo is both its source and its own marketplace.
   so `/plugin marketplace add Genomcore/inspire` resolves.
 - `.claude/hooks/template-*.sh` — template-maintenance only (e.g. guarding the
   release-identity bump); never shipped to a project.
-- `.manual/` — the INSPIRE **microsite / manual** (canonical explanation;
-  published at inspire.openbims.dev; source here — open `.manual/index.html`).
+- The INSPIRE **microsite / manual** (canonical explanation, published at
+  inspire.openbims.dev) does **not** live here: its source is its own repo,
+  [Genomcore/inspire-docs](https://github.com/Genomcore/inspire-docs), split out
+  with its history. A change to the methodology that the manual describes needs
+  a matching PR there.
 - `docs/adr/` — hand-authored, core-level ADRs about INSPIRE itself. It does not
   materialize, so **nothing under `plugin/base/` ever links into it** — not by
   relative path, which resolves to nothing in a project, and not by absolute URL,
@@ -395,7 +398,7 @@ asks the operator anything.
   generated **last**, from the commit carrying the bump: it hashes
   `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
   classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
-  `.manual/`, `docs/`, `base/kb/` and `base/templates/` do not perturb it.
+  `docs/`, `base/kb/` and `base/templates/` do not perturb it.
 - **Merging is not releasing.** Two steps follow the merge, in this order:
   1. **Cut a lightweight tag `v<version>` on the merge commit** —
      `git tag v<version> <merge-sha> && git push origin v<version>`. Every
