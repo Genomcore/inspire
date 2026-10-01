@@ -39,7 +39,7 @@ platform by [Genomcore](https://genomcore.com). This repository is both its
 **template** for bootstrapping your own specification-driven projects.
 
 > 📖 **The full story lives in the manual:** **[inspire.openbims.dev](https://inspire.openbims.dev)**
-> (source in [`.manual/`](.manual/) — open [`.manual/index.html`](.manual/index.html) locally).
+> (source in its own repo, [Genomcore/inspire-docs](https://github.com/Genomcore/inspire-docs)).
 
 ---
 
@@ -69,7 +69,6 @@ product you build on top.
 |---|---|
 | [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update}/` are the only **live** skills — `/inspire:init` and `/inspire:update`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Makes this repo its own plugin marketplace, so `/plugin marketplace add Genomcore/inspire` resolves. |
-| [`.manual/`](.manual/) | The INSPIRE **microsite / manual** — the canonical explanation of the methodology. Live at **[inspire.openbims.dev](https://inspire.openbims.dev)**; source here. |
 | [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_adr/`. |
 
 > `inspire_kb/`, `prototype/` and `source/` don't exist in this template repo —
