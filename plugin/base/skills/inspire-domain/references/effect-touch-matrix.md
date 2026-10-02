@@ -38,7 +38,7 @@ The orchestrator example in [`examples/orchestrator.md`](../examples/orchestrato
 
 The matrix is **descriptive, not prescriptive**: there's no rule that fails an action for declaring a non-canonical shape. But two `entity-coherence` rules constrain combinations downstream:
 
-- A field declared `Touch=read` on entity R but never declared `Touch=written` on R (across all actions) → `field-unsourced` error. The canonical `read` shape relies on some `create` or `update` action having declared the writer.
+- A field declared `Touch=read` on entity R but never declared `Touch=written` on R (across all actions) → `field-unsourced`: a warning while the entity and every action reading the field are draft, an error once any of them is accepted or stable. The canonical `read` shape relies on some `create` or `update` action having declared the writer.
 - A field declared `Touch=written` on R but never declared `Touch=read` on R → `field-orphan-write` warning. "Writing for no-one." If the field is intentional (e.g. a write-only audit trail), suppress by declaring at least one `read` action on it — usually the same module has a reporting action that needs it.
 - A `read-whole` effect on an entity desugars to per-field `read` touches across every field declared in the entity document, at rule-check time (via `sdd_expand_whole_reads`). An entity marked `population: external` (see `format-entity.md`) suppresses both the resulting `field-unsourced` errors and the entity's `field-uncovered` findings.
 

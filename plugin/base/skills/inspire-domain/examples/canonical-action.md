@@ -10,7 +10,7 @@ id: auth::user::create
 module: auth
 entity: user
 action: create
-lifecycle: accepted             # ← gated rules: field-conflict and unsourced apply from draft+.
+lifecycle: accepted             # ← gated rules: field-conflict errors from draft+; unsourced warns at draft, errors from accepted.
 requires:                       # ← action→action edges; checked by acyclic-deps + stable-blockers.
   - "[[auth.password.hash|auth::password::hash]]"
 superseded_by: null             # ← required iff lifecycle == superseded.

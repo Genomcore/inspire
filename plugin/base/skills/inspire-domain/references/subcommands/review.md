@@ -31,7 +31,7 @@ The gate composes rule families across three severity tiers, plus the style chec
 | `sections-present` | Missing or empty mandatory body sections. Actions: the pre-0.9 core six (`## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Behavior` · `## Errors`); entities: four. Section ORDER is checked against the full canonical eight, so a misplaced `## Preconditions` or `## Postconditions` is caught here while their *presence* is `keys-present`'s, where in 0.9 it is a warning at every lifecycle rather than an error from `accepted` |
 | `no-todos` | `TODO` / `FIXME` / `XXX` / `HACK` markers in body (D19: files state present truth only) |
 | `action-fields-in-entity` | Action touches a field the entity doc's `## Fields` table does not declare |
-| `entity-coherence` | field-conflict (error), field-unsourced (error), field-orphan-write (warning) across actions sharing an entity |
+| `entity-coherence` | field-conflict (error), field-unsourced (warning while the entity and every action reading the field are draft; error once any is accepted or stable), field-orphan-write (warning), write-on-external (error) across actions sharing an entity |
 | `stable-blockers` | `stable` actions whose `requires:` targets are not yet stable |
 | `touched-entity-lifecycle` | `stable` action touching an entity below `accepted` |
 

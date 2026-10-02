@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "entity-coherence", "severity": "error", "message_substring": "field-unsourced: auth::user.last_seen" }
+  ]
+}
