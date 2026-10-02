@@ -4,7 +4,7 @@
 # Per-field rule (not per-entity) with three findings:
 #   - field-conflict     (error)   — same Field on same Entity declared
 #                                    with different Types across actions
-#   - field-unsourced    (error)   — Field is read by someone but no action
+#   - field-unsourced    (ramps)   — Field is read by someone but no action
 #                                    declares it with Touch=written on the
 #                                    same entity
 #   - field-orphan-write (warning) — Field is written by someone but no
@@ -13,6 +13,16 @@
 #
 # Source: each action's `## Entities` section, parsed by
 # `sdd_entities_touched` in _lib.sh.
+#
+# Severity. field-conflict and write-on-external are errors at every lifecycle:
+# each is a contradiction, so one of its declarations is already wrong.
+# field-unsourced is a gap — the writer may simply not be specified yet — so it
+# ramps like the Tier 3 rules, keyed on everyone party to the claim: the entity
+# and every action that reads the field. It is an error once any of them is
+# accepted or stable (someone endorsed a read of a value nothing produces), and
+# a warning while all of them are draft or superseded. promote still gates it,
+# because promotion reviews at the target lifecycle. field-orphan-write stays a
+# flat warning.
 
 set -uo pipefail
 
@@ -57,15 +67,35 @@ while IFS=$'\t' read -r rid field; do
   fi
 done < <(cut -f1,2 "$decls" | sort -u)
 
-# Check 2 — field-unsourced (error): read but never written
+# The severity of a field-unsourced finding: error when the entity or any
+# action reading the field is at a lifecycle sdd_progressive_severity maps to
+# error, warning otherwise. An entity with no document contributes nothing.
+unsourced_severity() {
+  local rid="$1" field="$2" file reader
+  if file="$(sdd_resolve_entity_id "$rid")"; then
+    if [ "$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")" = "error" ]; then
+      printf 'error\n'; return 0
+    fi
+  fi
+  while IFS= read -r reader; do
+    if [ "$(sdd_progressive_severity "$(sdd_fm_value "$reader" '.lifecycle')")" = "error" ]; then
+      printf 'error\n'; return 0
+    fi
+  done < <(awk -F'\t' -v r="$rid" -v f="$field" \
+             '$1==r && $2==f && $3=="read" { print $5 }' "$decls" | sort -u)
+  printf 'warning\n'
+}
+
+# Check 2 — field-unsourced (lifecycle-progressive): read but never written
 # Check 3 — field-orphan-write (warning): written but never read
 while IFS=$'\t' read -r rid field; do
   if field_has "$rid" "$field" "read" && ! field_has "$rid" "$field" "written"; then
     population="$(sdd_entity_population "$rid")"
     if [ "$population" != "external" ]; then
-      sdd_finding "error" "entity-coherence" "$rid" \
+      severity="$(unsourced_severity "$rid" "$field")"
+      sdd_finding "$severity" "entity-coherence" "$rid" \
         "field-unsourced: $rid.$field is read but no action declares Touch=written"
-      sdd_count_error
+      sdd_count_by_severity "$severity"
     fi
   fi
   if field_has "$rid" "$field" "written" && ! field_has "$rid" "$field" "read"; then

@@ -9,6 +9,35 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.11 — 2026-10-02
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.9.11 keeps the 0.3 layout and the 0.9.0 payload classes and adds no file to a
+vault. One validator changes, and only in the less strict direction, so no vault
+that passed 0.9.10 fails 0.9.11.
+
+`entity-coherence`'s `field-unsourced` — a field that some action reads and no
+action writes — was an error at every lifecycle. A draft entity whose writer was
+not yet specified therefore could not reach a PR unless its author invented a
+writer or deleted a read they believed in. Both are worse than a warning.
+
+### Changed
+
+- **`field-unsourced` is lifecycle-progressive.** It is a warning while everyone
+  party to the read is `draft` or `superseded`, and an error once any of them is
+  `accepted` or `stable`. "Everyone party to the read" is the entity and every
+  action that reads the field. Keying on the entity alone would let an accepted
+  action endorse a read of a value nothing produces.
+- **A gap ramps; a contradiction does not.** `field-conflict` (one field, two
+  types) and `write-on-external` stay errors at every lifecycle: one of their
+  declarations is already wrong. `field-orphan-write` stays a flat warning.
+- **Promotion still stops it.** `/inspire-domain promote` reviews at the target
+  lifecycle, so an unsourced field still blocks the move to `accepted`, which is
+  where someone endorses the model.
+- The severity tables in `bin/README.md` and `_references/lifecycle-rules.md`,
+  and the descriptions in `inspire-domain`'s `review.md`, `effect-touch-matrix.md`
+  and both canonical examples, say so.
+
 ## 0.9.10 — 2026-09-16
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

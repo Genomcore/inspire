@@ -52,7 +52,9 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | `sections-present` (canonical section ORDER, `04_domain` only) | warning | error | error | warning |
 | `no-todos` (no TODO/FIXME markers — D19) | error | error | error | error |
 | `action-fields-in-entity` (action touch declarations match entity Fields table) | error | error | error | error |
-| `entity-coherence` (field-conflict, unsourced — error; orphan-write — warning) | enforced | enforced | enforced | enforced |
+| `entity-coherence` (field-conflict, write-on-external) | error | error | error | error |
+| `entity-coherence` (field-unsourced — the column is the highest lifecycle among the entity and every action reading the field) | warning | error | error | warning |
+| `entity-coherence` (field-orphan-write) | warning | warning | warning | warning |
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 
@@ -64,6 +66,15 @@ The table above is the `04_domain` half. Its second row is the exception within 
 exception: the order check *does* ramp, because what a draft may still be reshaping
 an accepted or stable object has fixed. The `05_screens` half is the § Screens
 table below.
+
+`entity-coherence` splits by **kind of finding**. A field-conflict or a write on a
+`population: external` entity is a contradiction — one of its declarations is
+already wrong — so it is an error from draft on. A field-unsourced is a gap: the
+action that writes the field may not be specified yet, which is what a draft is
+for. So it ramps, and the lifecycle it reads is the highest of everyone party to
+the read: the entity and each action that reads the field. Once any of them is
+accepted or stable, someone has endorsed a read of a value nothing produces.
+`superseded` counts as history, as it does for every ramped rule.
 
 Some shapes are deliberately presence-only rather than non-empty: an entity's
 `## Touched by` (consolidation owns its body, and a zero-toucher entity

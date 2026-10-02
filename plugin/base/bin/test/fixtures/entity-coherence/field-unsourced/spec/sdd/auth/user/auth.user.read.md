@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Reads `last_seen` but no action writes it — should fail.
+Reads `last_seen` but no action writes it — a warning while everything party to the read is draft.
 
 ## Inputs
 
