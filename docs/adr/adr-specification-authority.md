@@ -118,7 +118,7 @@ rule that nothing machine-authors the knowledge base.
 **A thing is off the ladder when a validator or a parser reads it.** That is the
 rule. The shapes are its examples: frontmatter schemas, the keyed-entry grammar and
 its closed vocabularies, the four-state lifecycle, claim ids and the `@claim` token,
-trust stamps, the finding format, the artifact shapes `emanate-derive.sh` refuses
+trust stamps, the finding format, the artifact shapes factory's `orchestrator/src/derive.ts` refuses
 rather than read as empty, and the `inspire.suite-results/1` manifest
 `emanate-gate.sh` reads and nothing else. None of them carries **a default for an
 artifact to specialize**. An artifact that departed would not be readable by whatever

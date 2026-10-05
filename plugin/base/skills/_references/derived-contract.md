@@ -1,7 +1,7 @@
 # The derived contract
 
 The structured, language-neutral projection of one **unit** — what
-`.inspire/bin/emanate-derive.sh` prints on stdout, and the single input both the
+factory's `orchestrator/src/derive.ts` prints on stdout, and the single input both the
 readiness gate and the contracter agent read. This file owns its JSON shape, the
 fingerprint rule, the exit codes and the refusal classes derive names itself.
 
@@ -47,16 +47,19 @@ emanates from a use case directly.
 ## CLI
 
 ```
-emanate-derive.sh <entity|action|screen|component|pattern> <id>
-emanate-derive.sh <entity|action|screen|component|pattern> --file <path>
+bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" <entity|action|screen|component|pattern> <id>
+bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" <entity|action|screen|component|pattern> --file <path>
 ```
 
-The current working directory is the repo root; `SDD_SPEC_ROOT` (default
+Set `INSPIRE_FACTORY_ROOT` explicitly to a factory checkout that includes the
+native deriver. Bun must be installed. INSPIRE carries no derivation engine.
+The current working directory is the **target project's root**, never factory's.
+`SDD_SPEC_ROOT` (default
 `inspire_kb/04_domain`) and `SDD_KB_ROOT` (default `inspire_kb`) name the two
 layers, as everywhere in `.inspire/bin/`.
 
 **It writes nothing** — no file, no log, no KB edit. Stdout is JSON, stderr is
-the grouped human report.
+the human refusal or error report.
 
 | exit | meaning |
 |---|---|
@@ -65,7 +68,11 @@ the grouped human report.
 | `3` | unit not found. A screen deeper than `05_screens/{surface}/{module}/{screen}.md` lands here: the screen finders do not reach past that depth, so nothing in the vault can see it |
 | `4` | **refused** — see below |
 | `5` | roots missing: `$SDD_KB_ROOT`, or `$SDD_SPEC_ROOT` for a domain kind, is not a directory |
-| `127` | a required tool is missing (`jq`, `yq`, or a sha256 digest) |
+| `1` | unexpected internal failure |
+
+Bun must be available to launch the CLI (a missing command exits `127`). The
+INSPIRE planner also reports a missing factory checkout or entry point as `127`.
+Derivation itself needs no `jq`, `yq` or external digest command.
 
 ## The contract
 
@@ -279,10 +286,10 @@ D7). On exit `4` stdout carries every class found, not the first, and no
   "refused": [ { "class", "target", "message", "remedy" } … ] }
 ```
 
-`remedy` names the owning skill's touch command — `/inspire-domain update {id}`,
-`/inspire-screens update {id}`, or `/inspire-screens extract {kind} {id}` for a
-catalog entry. Nothing machine-edits the knowledge base: naming an invariant is
-judgment, and judgment happens inside the touch interview.
+`remedy` names the specification defect and the file to correct. Consumers
+preserve it verbatim. INSPIRE users can address it through `/inspire-domain
+update {id}`, `/inspire-screens update {id}`, or `/inspire-screens extract {kind}
+{id}` for a catalog entry. Derivation never edits the knowledge base.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the
 severity review reported it at.** The 0.9 grace that keeps the five presence
@@ -294,28 +301,17 @@ block anything.
 
 ### How the classes are checked
 
-Each `OS-*` class has exactly one implementation: the review rule that owns it.
-Derive **runs those rules** over the unit's own directory and reads their JSON
-findings back, filtered to the artifacts this derivation must read. There is no
-second copy of a check to drift. The rules consulted, and nothing else:
+Factory validates the artifact directly in its native derivation engine. It
+preserves the `OS-*` and `DR-*` classes without launching INSPIRE's review
+scripts. The authoring-time rules remain in INSPIRE: `keys-present`,
+`constraints-mechanics`, `head-referents`, `sections-present` and
+`screen-coherence`, with their own severity and scope contracts. They still
+share `_lib.sh` and `_keyed-heads.sh`.
 
-| kind | rules |
-|---|---|
-| `entity` · `action` | `keys-present` · `constraints-mechanics` · `head-referents` · `sections-present` |
-| `screen` | `screen-coherence` · `sections-present` |
-| `component` · `pattern` | none |
-
-Nothing a consulted rule reports against the unit is ignored. A message carrying
-an `OS-*` prefix is filed under that class; the rest map to the `DR-*` ids below;
-anything neither is filed under `DR-U1` rather than dropped.
-
-**The catalog kinds consult none, and that is a fact about the rules rather than
-a relaxation.** No review rule owns a catalog entry's own shape:
-`screen-coherence` reaches a pattern only through an adopting screen, so a
-pattern-scoped run finds no screen to reach it from and a consulted rule would
-report nothing at all — silence that would read as a clean entry. The `DR-C*`
-classes below are therefore the whole of the strictness for these two kinds,
-not half of it.
+A warning during review can still be a strict derivation refusal. Catalog
+entries retain their `DR-C*` validation even though no review rule owns their
+standalone shape. The migrated derivation fixtures live with factory; INSPIRE
+retains review fixtures and integration tests for its consumers.
 
 ### `DR-*` — the classes derive names itself
 
@@ -356,27 +352,20 @@ this table name the same thing.
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
 
-`DR-U1` is the catch-all, and it refuses like every other class. A finding derive
-cannot name is still a finding: a strict parser that dropped what it did not
-recognise would be exactly the silent-green trap the strictness exists to close.
+`DR-U1` remains the legacy catch-all for contracts produced by the retired
+rule-sweep adapter. Consumers must still treat it as a refusal. Factory's native
+deriver validates directly and reports unexpected internal failures as a
+nonzero exit, never as an empty successful contract.
 
 ## Consumers
 
-[`/inspire-emanate plan`](emanation-plan.md) aggregates the stdout objects — it
-must never parse stderr — and turns refusals into readiness findings grouped by
-owning skill. [`/inspire-emanate run`'s gate step](gate-verdict.md) reads
-`claims` and matches them against citing tests. The contracter agent reads
-everything else. All three read this file for what a field means.
+[`/inspire-emanate plan`](emanation-plan.md) runs factory's CLI once per frontier
+unit, aggregates stdout only and turns exit-4 refusals into `PR-01` readiness
+findings. Other derivation errors remain errors; they never become empty
+contracts. [`emanate-gate.sh`](gate-verdict.md) reads the resulting `claims` and
+matches them against citing tests. Attended contracters can read the same JSON.
 
-**Sourcing the units instead of running the entry** is the other way in, and the
-line between the two is worth stating. The reuse surface is
-`.inspire/bin/lib/derive-*.sh` after `_lib.sh` and `_keyed-heads.sh`:
-`derive_scratch` (which must run first — every other unit reads `$DERIVE_TMP`,
-and the caller owns the EXIT trap that removes it), the readers, the fingerprint
-helpers, and the sweep (`derive_sweep_require` · `derive_sweep_start` ·
-`derive_sweep_collect`, which need `$DERIVE_BIN` — it defaults to the directory
-holding the rules, so only a caller relocating them has to set it). What belongs
-to the entry and not to the surface: the `U_*` globals it fills from the
-artifact's identity, and the `derive_*_json` renderers that read them. A
-consumer that wants a contract runs `emanate-derive.sh`; a consumer that wants a
-reader sources the unit.
+The engine and its CLI live exclusively in factory. Consumers call the CLI
+from the target project root; INSPIRE does not expose derivation libraries to
+source. This document remains the normative reference for contract shape,
+claim identities and fingerprints.

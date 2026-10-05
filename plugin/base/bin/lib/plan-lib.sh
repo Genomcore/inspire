@@ -5,12 +5,8 @@
 # share: the scratch directory, the record spools every list is accumulated in,
 # the lexical path normalizer, the owning-skill map and the jq prelude.
 #
-# The spool encoding is `derive`'s, deliberately — one separator-delimited
-# record per line, rendered by a single `jq -n --rawfile` program per list,
-# because a `jq` process per object costs ~8 ms and a plan holds hundreds. The
-# CODE is not derive's: plan composes on `emanate-derive.sh`'s STDOUT and on
-# nothing else, so `lib/derive-*.sh` is never sourced here and derive's
-# internals can move without moving plan.
+# One separator-delimited record per line, rendered by jq. Plan consumes the
+# factory CLI's JSON stdout; it does not import the derivation implementation.
 #
 #   PLAN_FS  U+001F  between the fields of one record
 #   PLAN_LS  U+001E  between the items of a list inside one field

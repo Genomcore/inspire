@@ -6,7 +6,7 @@ and the overseer contract are in [`README.md`](README.md); this file is your jud
 
 ## Input — the derived contract, and nothing else
 
-`.inspire/bin/emanate-derive.sh` produces it and the orchestrator hands it to you. Its
+factory's `orchestrator/src/derive.ts` produces it and the orchestrator hands it to you. Its
 JSON shape, its claim ids and its refusal classes are specified in
 [`_references/derived-contract.md`](../../../_references/derived-contract.md): the top
 level is `schema` · `unit` · `purpose` · `requires` · the kind-specific sections ·
@@ -116,9 +116,8 @@ schema of your own, exercising it and dropping it — that is how a unique viola
 check violation and a not-null violation get confirmed against the real engine
 instead of asserted from a manual. What none of that touches is anything anyone else
 reads: the shared schema and the migration history are left exactly as found.
-Applying belongs to the run, in the disposable plane it gives you
-([`inspire-emanate`](../../../inspire-emanate/references/run.md) § prepare); a plane
-you did not create is one you only read.
+Applying belongs to the caller in its explicitly provisioned disposable plane;
+a plane you did not create is one you only read.
 
 ## Refusal — a rendering hole is a readiness defect
 

@@ -179,3 +179,33 @@ renew itself.
 Born in [OpenBIMS](https://openbims.dev) · by [Genomcore](https://genomcore.com)
 
 </div>
+
+## Factory integration
+
+Contract derivation and unattended execution live in `inspire-factory`.
+Configure its checkout explicitly and run commands from the target project root:
+
+```sh
+export INSPIRE_FACTORY_ROOT=/path/to/inspire-factory
+bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" entity auth.user
+```
+
+Bun and a factory version containing `orchestrator/src/derive.ts` are required.
+`SDD_KB_ROOT` and `SDD_SPEC_ROOT` still select the project's KB and domain roots.
+`emanate-plan.sh` retains INSPIRE's readiness checks and `/1` JSON; it calls
+factory only for derivation. Factory's `/3` execution plans are a separate
+contract. `/inspire-emanate run` launches factory; it owns no agent loop.
+
+The methodology skills, shared review rules, gate, results and harvest remain
+part of INSPIRE. Updates remove untouched retired derivation files through the
+existing manifest merge and preserve locally edited copies, reporting them.
+
+For the full test suite, including the real factory connection, use an absolute
+factory path: the test runners change into each target fixture.
+
+```sh
+INSPIRE_FACTORY_ROOT=/path/to/inspire-factory bash plugin/test/run.sh
+```
+
+This removal is pending release: publish INSPIRE only after a factory version
+with the native deriver is available. Historical manifests remain unchanged.

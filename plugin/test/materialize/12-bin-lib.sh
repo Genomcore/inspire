@@ -4,7 +4,7 @@
 # under base/<name>/ generically and chmod_executables walks base/bin/
 # recursively. Both are inferences about someone else's code, so they are
 # asserted rather than assumed — a subdirectory that silently stopped
-# materializing would leave `emanate-derive.sh` sourcing files that are not
+# materializing would leave `emanate-plan.sh` sourcing files that are not
 # there, in every project, with nothing else going red.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
@@ -16,8 +16,8 @@ SCRIPT="$PLUGIN_ROOT/scripts/materialize.sh"
 # ran, and a `.inspire/bin/lib/` left by an earlier run would prove nothing.
 premise "base/bin/lib/ ships units in the plugin" \
   "[ -n \"\$(ls '$PLUGIN_ROOT'/base/bin/lib/*.sh 2>/dev/null)\" ]"
-premise "one of them is the entry's own JSON unit" \
-  "[ -f '$PLUGIN_ROOT/base/bin/lib/derive-json.sh' ]"
+premise "one of them is the planner's shared library" \
+  "[ -f '$PLUGIN_ROOT/base/bin/lib/plan-lib.sh' ]"
 
 proj="$(mktemp -d)/binlib"; mkdir -p "$proj"; ( cd "$proj" && git init -q )
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
@@ -38,12 +38,21 @@ eq "BIN-LIB: every shipped lib unit landed" "$missing" ""
 # preserves a mode, so an executable source would let the assertion pass whether
 # or not the chmod ran.
 premise "the shipped units are NOT already executable" \
-  "[ ! -x '$PLUGIN_ROOT/base/bin/lib/derive-json.sh' ]"
+  "[ ! -x '$PLUGIN_ROOT/base/bin/lib/plan-lib.sh' ]"
 modes="$(ls -l "$proj"/.inspire/bin/lib/*.sh | awk '{ print substr($1, 2, 9) }' | sort -u)"
 eq "BIN-LIB: the units are executable (rwxr-xr-x)" "$modes" "rwxr-xr-x"
 
 check "BIN-LIB: the entry that sources them landed too" \
-  "[ -x '$proj/.inspire/bin/emanate-derive.sh' ]"
+  "[ -x '$proj/.inspire/bin/emanate-plan.sh' ]"
+for retired in emanate-derive.sh lib/derive-{json,types,refusals,domain,screen,catalog}.sh; do
+  check "BIN-LIB: retired $retired is absent from source and install" \
+    "[ ! -e '$PLUGIN_ROOT/base/bin/$retired' ] && [ ! -e '$proj/.inspire/bin/$retired' ]"
+done
+for retained in _lib.sh _keyed-heads.sh keys-present.sh constraints-mechanics.sh \
+                head-referents.sh sections-present.sh screen-coherence.sh \
+                emanate-gate.sh emanate-results.sh emanate-harvest.sh; do
+  check "BIN-LIB: retained $retained is installed" "[ -x '$proj/.inspire/bin/$retained' ]"
+done
 # base/bin/test/ never materializes, and lib/ must not have changed that.
 check "BIN-LIB: bin/test/ is still excluded" "[ ! -d '$proj/.inspire/bin/test' ]"
 

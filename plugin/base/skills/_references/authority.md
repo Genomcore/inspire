@@ -112,7 +112,7 @@ the four-state lifecycle ([`lifecycle-rules.md`](lifecycle-rules.md)), claim ids
 and the `@claim` token a test carries, trust stamps
 ([`trust-stamps.md`](trust-stamps.md)), the finding format
 ([`findings-format.md`](findings-format.md)), the artifact shapes
-`.inspire/bin/emanate-derive.sh` refuses rather than read as empty, and the
+factory's `orchestrator/src/derive.ts` refuses rather than read as empty, and the
 `inspire.suite-results/1` manifest `.inspire/bin/emanate-gate.sh` reads and
 nothing else. None of them carries a default for an artifact to specialize: an
 artifact that departed would not be readable by whatever has to act on it, so the

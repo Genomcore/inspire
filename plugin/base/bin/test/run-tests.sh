@@ -367,29 +367,11 @@ if [ -z "$filter" ]; then
   rm -f "$harvest_out"
 fi
 
-# emanate-derive.sh has fixtures — its product is stdout, which the loop above
-# now compares — but three of its claims are about a RELATIONSHIP no single
-# fixture holds: two derivations of near-identical trees, the library data
-# against the document that specifies it, and a class id no rule emits a message
-# for. Those live in their own script, hand-wired like the three above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  derive_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-derive-lib.sh" >"$derive_out" 2>&1; then
-    echo "PASS emanate-derive.sh/library"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-derive.sh/library" >&2
-    cat "$derive_out" >&2
-  fi
-  rm -f "$derive_out"
-fi
-
 # emanate-plan.sh has fixtures too, and four of its claims sit outside any one of
 # them: that two runs over one tree are byte-identical, that a run leaves every
 # byte and every mtime of that tree alone, that the PR-* ids the code emits are
 # exactly the ids emanation-plan.md catalogues, and the shapes only a broken bin
-# tree can reach. Same hand-wiring as the four above.
+# tree can reach. Same hand-wiring as the tools above.
 if [ -z "$filter" ]; then
   total=$((total + 1))
   plan_out="$(mktemp)"
@@ -407,7 +389,7 @@ fi
 # leaves the fixture tree byte- and mtime-identical, `--contract -` and a doubled
 # `--tests-root` read the verdict a plain file does, the GV-* ids the code names
 # still equal the catalogue documenting them, and stdout is EMPTY on every exit
-# that carries no verdict. Same hand-wiring as the five above.
+# that carries no verdict. Same hand-wiring as the tools above.
 if [ -z "$filter" ]; then
   total=$((total + 1))
   gate_out="$(mktemp)"
@@ -426,7 +408,7 @@ fi
 # fixture pins its stdout against a golden written by the same hand, which two
 # tools that had drifted apart would pass just as happily. The cross-tool run,
 # the absolute-path stripping no portable golden can carry, and the byte-level
-# emptiness of a refusal's stdout live there. Same hand-wiring as the six above.
+# emptiness of a refusal's stdout live there. Same hand-wiring as the tools above.
 if [ -z "$filter" ]; then
   total=$((total + 1))
   results_out="$(mktemp)"

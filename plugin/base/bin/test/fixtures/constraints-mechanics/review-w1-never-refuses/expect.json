@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "constraints-mechanics",
+      "severity": "warning",
+      "message_substring": "W-1:"
+    }
+  ]
+}

@@ -2,8 +2,8 @@
 # .inspire/bin/emanate-harvest.sh
 #
 # harvest — worktree diff -> integration-branch commit. Pure git; writes git
-# only (D8). One of the emanation loop's five independent bin scripts
-# (derive, plan, gate, results, harvest); this one has no lib/ dependency —
+# only (D8). One of the emanation tools' four independent bin scripts
+# (plan, gate, results, harvest); this one has no lib/ dependency —
 # see "In-package decision: lib/" below.
 #
 # The envelope (D4): prepare shapes a phase worktree, work happens inside it

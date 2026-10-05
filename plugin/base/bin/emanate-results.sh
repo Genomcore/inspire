@@ -4,7 +4,7 @@
 # results — a test runner's own report -> the `inspire.suite-results/1`
 # manifest on stdout (D8). A tool, not a review rule: it emits no findings and
 # is deliberately absent from review.sh's DEFAULT_RULES, exactly like
-# emanate-{derive,plan,gate,harvest}.sh and trust.sh.
+# emanate-{plan,gate,harvest}.sh and trust.sh.
 #
 # WHY THIS EXISTS. `emanate-gate.sh --results` reads one shape and one only —
 # `inspire.suite-results/1`, because JUnit's file<->test binding is too

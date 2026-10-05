@@ -9,6 +9,38 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.9.12 — 2026-10-05
+
+**Prepared, not published.** Release only after the factory version containing
+`orchestrator/src/derive.ts` is available.
+
+### Breaking for existing vaults
+
+- Install that factory version and Bun, then set `INSPIRE_FACTORY_ROOT` to its
+  checkout before deriving contracts or running INSPIRE readiness. Commands run
+  from the target project root and preserve `SDD_KB_ROOT` and `SDD_SPEC_ROOT`.
+- `emanate-derive.sh` and its six `lib/derive-*.sh` units are retired. Use
+  `bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" <kind> <id>` or
+  `<kind> --file <path>`. `/inspire:update` removes untouched retired files via
+  the existing manifest merge; locally edited copies are kept and reported.
+- `/inspire-emanate run` launches factory once. Execution arguments follow
+  factory's CLI; the former goal, wave-budget and role-loop arguments are not
+  silently translated or dropped. Use factory's build selection for scoped
+  execution. Local runs default to `--base-branch null`; publication must be
+  requested explicitly.
+
+### Changed
+
+- INSPIRE's `emanate-plan.sh` keeps its `/1` JSON, readiness rules, selectors,
+  realization and waves, delegating only derivation to factory. Factory's `/3`
+  execution plan is a different contract and is not substituted for readiness.
+- Gate diagnostics point to the factory CLI. The contract, claim and fingerprint
+  specifications remain authoritative. Shared review rules, methodology skills,
+  gate, results, harvest and their libraries remain installed.
+- The 87 standalone derivation fixtures and Bash library tests move out with
+  the engine. Six review-rule assertions remain as review fixtures; tests cover
+  the factory boundary, fresh installation and retirement during upgrades.
+
 ## 0.9.11 — 2026-10-02
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

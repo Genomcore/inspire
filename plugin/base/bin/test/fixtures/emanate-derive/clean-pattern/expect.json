@@ -1,8 +1,0 @@
-{
-  "exit": 0,
-  "args": [
-    "pattern",
-    "filtered-list"
-  ],
-  "stdout": "expected-stdout.json"
-}

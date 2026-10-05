@@ -2,7 +2,7 @@
 # .inspire/bin/lib/plan-scan.sh
 #
 # Library — the snapshot half of `plan`: what the scope reaches, which of it is
-# the frontier, one `emanate-derive.sh` run per frontier unit, and the record
+# the frontier, one factory CLI derivation per frontier unit, and the record
 # stream each contract is read back as.
 #
 # Derive is INVOKED, never sourced. `derived-contract.md` draws that line:
@@ -15,10 +15,26 @@
 #
 # Sourced after `_lib.sh`, `_keyed-heads.sh` and `plan-lib.sh`.
 
-# Derive fans out to four validators of its own, so the process count is the
-# product, not the sum. Four at a time keeps a whole-vault plan off the
-# scheduler's floor without making a six-unit fixture serial.
+# Bound the number of factory CLI processes over a whole vault.
 PLAN_DERIVE_BATCH=4
+
+# Resolve the external deriver without changing the target project's CWD.
+# A relative factory root is relative to that project, just like the KB roots.
+plan_require_deriver() {
+  if [ -z "${INSPIRE_FACTORY_ROOT:-}" ]; then
+    echo "emanate-plan.sh: set INSPIRE_FACTORY_ROOT to the factory checkout containing orchestrator/src/derive.ts" >&2
+    return 127
+  fi
+  PLAN_DERIVE_CLI="$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts"
+  if [ ! -f "$PLAN_DERIVE_CLI" ]; then
+    echo "emanate-plan.sh: missing factory deriver: $PLAN_DERIVE_CLI — install a factory version with the native contract deriver" >&2
+    return 127
+  fi
+  command -v bun >/dev/null 2>&1 || {
+    echo "emanate-plan.sh: missing required tool: bun" >&2
+    return 127
+  }
+}
 
 # plan_enumerate <scope> — every unit the scope reaches, as `path<TAB>kind`.
 # A FILE scope names one artifact: the finders only walk directories, so the
@@ -41,9 +57,8 @@ plan_enumerate() {
 
 # plan_lifecycle_of <path> <kind> — the lifecycle a unit declares, per kind. A
 # catalog entry carries no `lifecycle:` field and states the same three things
-# on its `**State:**` line; `sdd_catalog_lifecycle` owns that mapping and derive
-# reads it through the same function, so the frontier and the contract cannot
-# disagree about whether a component is already delivered.
+# on its `**State:**` line; both `sdd_catalog_lifecycle` and factory follow
+# the mapping in the derived-contract specification.
 plan_lifecycle_of() {
   case "$2" in
     component|pattern) sdd_catalog_lifecycle "$1" ;;
@@ -82,7 +97,7 @@ plan_scan() {
 # spooled under the unit's index. Stderr is discarded rather than read: it is
 # the human report, and plan aggregates stdout only.
 plan_derive_one() {
-  "$PLAN_BIN/emanate-derive.sh" "$2" --file "$3" >"$PLAN_TMP/c/$1.json" 2>/dev/null
+  bun run "$PLAN_DERIVE_CLI" "$2" --file "$3" >"$PLAN_TMP/c/$1.json" 2>/dev/null
   printf '%s' "$?" > "$PLAN_TMP/c/$1.code"
 }
 

@@ -189,7 +189,7 @@ plan_ingest() {
     code="$(cat "$PLAN_TMP/c/$n.code" 2>/dev/null)"
     case "$code" in
       0|4) ;;
-      *) PLAN_BROKE="emanate-derive.sh exited ${code:-?} on $kind $path"; return 1 ;;
+      *) PLAN_BROKE="factory derive.ts exited ${code:-?} on $kind $path"; return 1 ;;
     esac
     plan_ingest_one "$n" "$kind" "$path" || return 1
   done < "$PLAN_TMP/frontier.tsv"
@@ -205,7 +205,7 @@ plan_ingest_one() {
   plan_contract_records "$PLAN_TMP/c/$n.json" > "$recf"
   IFS="$PLAN_FS" read -r t id lifecycle module claims population < <(head -1 "$recf")
   if [ "${t:-}" != "U" ] || [ -z "${id:-}" ]; then
-    PLAN_BROKE="emanate-derive.sh produced no readable contract for $kind $path"
+    PLAN_BROKE="factory derive.ts produced no readable contract for $kind $path"
     return 1
   fi
   surface=""

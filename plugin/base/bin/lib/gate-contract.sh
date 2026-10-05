@@ -32,7 +32,7 @@ gate_contract_load() {
     GATE_CONTRACT_STATUS="unusable"
     printf '%s%s%s\n' \
       "the --contract file is not valid JSON" "$GATE_FS" \
-      "re-run emanate-derive.sh for this unit and pass its stdout to --contract" \
+      'from the project root, re-run bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" <kind> <id> and pass its stdout to --contract' \
       > "$GATE_TMP/refused.spool"
     printf '{}' > "$GATE_TMP/unit.json"
     GATE_UNIT_ID=""
@@ -78,7 +78,7 @@ gate_contract_refusal_rows() {
   fi
   printf '%s%s%s\n' \
     "contract schema is '${schema:-<absent>}', expected 'inspire.derived-contract/1'" \
-    "$GATE_FS" "re-run emanate-derive.sh for this unit and pass its stdout to --contract"
+    "$GATE_FS" 'from the project root, re-run bun run "$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts" <kind> <id> and pass its stdout to --contract'
 }
 
 # gate_contract_load_previous <file> — the delta join only needs id +
