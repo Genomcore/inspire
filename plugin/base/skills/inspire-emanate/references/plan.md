@@ -2,13 +2,19 @@
 
 Answer what a scope would deliver, and answer it **read-only**. `plan` is the
 cheap goal check: it is what an operator runs before committing an afternoon to a
-run, and it is what `run` executes internally at t=0 before it builds anything.
+run. The launcher checks readiness before handing execution to factory.
 
 ```
 /inspire-emanate plan [until <goal>] [--scope PATH]... [--ceiling N] [--reemanate SEL]...
 ```
 
 ## The one call
+
+Set `INSPIRE_FACTORY_ROOT` to the factory checkout containing
+`orchestrator/src/derive.ts`, with Bun on `PATH`. Execute from the target
+project root; preserve `SDD_KB_ROOT` and `SDD_SPEC_ROOT`. Only derivation is
+external: INSPIRE still computes all readiness findings and its `/1` plan.
+Factory's `/3` planner is not a replacement for this check.
 
 Everything below is a reading of one invocation of the substrate tool:
 
@@ -33,7 +39,7 @@ re-emanates the whole vault. Resolve it from the framework profile's
 suite actually lives in. Say in the report which roots were read.
 
 **Forward the operator's arguments; invent none.** Selector prose is resolved to a
-canonical id here ([`SKILL.md`](../SKILL.md) § Invocation); everything else is
+canonical id here ([`SKILL.md`](../SKILL.md) § Subcommands); everything else is
 passed through.
 
 ## Acting on the exit code
@@ -48,12 +54,11 @@ Every code has an answer, and none of them is "try again".
 | `4` | **refused** — `PR-10` (overseer roster) · `PR-11` (cycle) · `PR-12` (empty frontier) · `PR-13` (no stack) | refuse, naming the class and its remedy from the refusal object. There is no `waves`, `floor` or `units` key to read on this path, and no `preflight`, `wire_conventions`, `realized`, `realized_all`, `reemanate` or `goal` either |
 | `5` | **roots missing** — `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | refuse, naming the tool and the two roots. Run from the repo root |
 | `6` | **internal** — a `derive` run exited outside `{0,4}`, or produced no readable contract | refuse, naming the tool. Defensive: every input it could refuse over is checked first, so this is a bug report, not an operator remedy |
-| `127` | a required tool is missing (`jq`, `yq`, `tsort`, or a sha256 digest) | refuse, naming the tool the message names. Nothing here installs anything |
+| `127` | a required tool is missing (`jq`, `yq`, `tsort`, a sha256 digest, Bun, or the configured factory deriver) | refuse, naming the tool the message names. Nothing here installs anything |
 
 **A refusal is a finished answer, not a failure to plan.** Report it and stop;
-under `run`, stop before the first unit is spawned. The goal branch and its
-worktree already exist by then and are left in place — [`run.md`](run.md) § t=0
-step 1 says why, and step 2 says this call is made from that worktree.
+under `run`, stop before launching factory. Readiness creates no branch or
+worktree.
 
 ## Reporting a ready plan
 
@@ -103,20 +108,8 @@ translate one into the other in the report.
 
 ## Under `run`
 
-`run` calls `plan` first, always, and this is where its questions die. What it
-carries forward from the JSON, and reads from nowhere else:
-
-- `waves[]` — the schedule;
-- `units[].profiles` — the resolved framework and language profiles per unit,
-  which the spawn brief carries;
-- `units[].claims` — the sizing signal budgets are set against; `0` for a unit
-  derive refused;
-- `wire_conventions` — the ids **and** the decision rows, both of which go into
-  every persona brief;
-- `preflight` — the components the t=0 probe checks, and the
-  `worktree_recipe` steps every prepare runs;
-- `goal.units` and `goal.floor` — the subset a goal-directed run executes, and
-  the floor the ceiling is measured against.
-
-`stack.md` is never read by this skill: the plan JSON emits these fields
-precisely so there is one reader of the bootstrap layer, and it is the tool.
+The launcher uses this verdict to decide whether execution can start. It does
+not schedule `waves[]`, spawn roles from `units[].profiles`, or pass this `/1`
+JSON as factory's `--plan`. See [run](run.md) for factory's supported execution
+contracts. A ready scoped plan is a readiness answer, not permission to execute
+a broader scope.

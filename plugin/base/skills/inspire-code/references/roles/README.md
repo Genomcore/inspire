@@ -1,5 +1,9 @@
 # Roles — the five positions the loop dispatches
 
+These are INSPIRE's methodology roles, retained for attended coding and callers
+that explicitly use these shells. Factory agents load factory's own skills;
+`/inspire-emanate run` launches factory and does not dispatch this role loop.
+
 Every other file under `references/` describes a **subcommand**. These describe a
 **role**: what one agent may do at one handoff, and the judgment it applies while it
 does it. The role set is closed. A project extends the stack axis and the overseer

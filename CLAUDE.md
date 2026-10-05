@@ -97,24 +97,17 @@ repo is both its source and its own marketplace.
         `references/roles/` holds one doc per position of the loop — contracter ·
         tester · implementer · security overseer · quality overseer — beside a
         README carrying the role model, the envelope's two halves and the
-        additive-only roster rule. `tdd` (attended, here) and `/inspire-emanate`
-        (unattended, its own skill) read the same docs;
+        additive-only roster rule. Attended `tdd` reads those docs; factory
+        uses its own skills;
         `review` holds the two overseer lenses; `fix-vulns`
         shares the security overseer's standing rules. The subcommand references
         keep their own flow and point there for the doctrine, so a rule has one
         home.
-        · `inspire-emanate`: the **unattended emanation loop**, its own skill
-        rather than an `inspire-code` subcommand — the session that loads it *is*
-        the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
-        condition with zero human turns between t=0 and the report: `plan` reads
-        `emanate-plan.sh` and refuses rather than start a run that provably cannot
-        reach its goal; `run` walks each wave, spawning each of a unit's three
-        personas into its own phase worktree (the two overseers get none: an
-        overseer writes nothing), gating on the overseers and on
-        `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
-        a merge with trailers, never a KB write, lifecycle included. It consumes
-        `inspire-code` as the doctrine router (the roles README) and never
-        authors role judgment of its own.
+        · `inspire-emanate`: the factory launcher. `plan` retains INSPIRE's
+        `emanate-plan.sh` readiness checks; `run` launches factory once and
+        reports its result. Factory owns scheduling, agents, retries and merges
+        and loads only its own skills. INSPIRE's role doctrine stays available
+        for attended coding; it is not injected into factory agents.
       - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `surface` (the suite's surface roster and its lifecycle — `add`
@@ -163,30 +156,21 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **five `emanate-*` scripts are the same class of thing** — the
-      emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
-      `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
-      the **strict** parser that refuses an old shape rather than read it as an
-      empty section, and the one place the 0.9 grace on the presence classes is
-      paid for — see
-      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
-      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
-      already realized** → dependency waves → the floor versus the declared
-      ceiling → every readiness check, plus the run-level facts a spawn brief
-      needs — the declared test infrastructure and the project's wire-convention
-      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
-      stdout and nothing written anywhere — see
-      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
-      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
-      result → one pass/fail verdict on stdout, the deterministic evidence an
-      overseer's approval can never stand in for — see
-      [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
-      are the three big enough to decompose, each into its own family of sourced
-      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
-      `gate-*`). Plan and gate **compose on derive's output, never its
-      implementation** — neither sources a `derive-*` unit — and the one unit
-      they do share is `gate-citations.sh`, because the `@claim` token has one
-      scanner and two readings: coverage for gate, realization for plan.
+      The **four `emanate-*` scripts** are tools outside `review.sh`'s rule
+      list. `emanate-plan.sh` retains INSPIRE's readiness checks, dependency
+      waves, selectors and `inspire.emanation-plan/1` output. It invokes
+      factory's `orchestrator/src/derive.ts` for each frontier unit, from the
+      target project root with both SDD roots preserved. Set
+      `INSPIRE_FACTORY_ROOT` to that factory checkout and install Bun; there
+      is no default location or local derivation fallback. Factory's `/3`
+      plan and execution CLI have different behavior and are not replacements
+      for INSPIRE readiness. Contract shape, claim ids and fingerprints remain
+      normative in
+      [derived-contract.md](plugin/base/skills/_references/derived-contract.md).
+      `emanate-gate.sh` still produces INSPIRE's deterministic gate verdict
+      from contract JSON and test results. Plan and gate have sourced `plan-*`
+      and `gate-*` units in `base/bin/lib/`; they share `gate-citations.sh`
+      so coverage and realization read the same `@claim` grammar.
       `emanate-results.sh` (a test runner's own report → the
       `inspire.suite-results/1` manifest on stdout) exists because gate reads
       that one shape and nothing else, and leaving its production to the
@@ -201,7 +185,7 @@ repo is both its source and its own marketplace.
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its seven hand-wired siblings, and uses the third form
+      rule at a time plus its six hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
@@ -341,10 +325,10 @@ asks the operator anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 87-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 87 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | validators and INSPIRE readiness via `run-tests.sh <rule>`, plus six hand-wired siblings. Large fixture sets are sharded across jobs. `golden/emanate-plan` exercises the real factory CLI using `INSPIRE_FACTORY_ROOT`; the 87 standalone derivation cases now live in factory. Shared review rules retain their fixtures. Each hand-wired sibling counts as one run-level assertion; its own summary reports its internal checks. |
 
   **Every file also runs on its own**, from any directory and with no
-  environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
+  fixture cache: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
   prints its own summary; the cache is an accelerator, never a dependency. The
   shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
   holds no tests and the runner never runs it.
@@ -355,16 +339,15 @@ asks the operator anything.
   differ from each other, so a number here measures load rather than the estate.
   Measure it yourself when you need to know.
 
-  The shape is stable. The run is **spawn-bound**: roughly four-fifths kernel
-  time, `fork` and `exec` rather than computation. So raising `-j` past the core
-  count buys nothing, and the lever that works is "spawn fewer processes" rather
-  than "schedule better". Cost follows the process count almost exactly — the
-  `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
-  matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 87 and 76 fixtures, because each
-  fixture spawns a rule and the validators under it; `run.sh` **shards** both
-  (see below). Next come a handful of `upgrade/` and `materialize/` files that
-  build several period-correct fixtures each.
+  Full-suite and planner tests require Bun and a factory checkout with the
+  native deriver. Configure it explicitly (no personal path is assumed):
+
+  ```sh
+  INSPIRE_FACTORY_ROOT=/path/to/inspire-factory bash plugin/test/run.sh
+  ```
+
+  The bridge tests also exercise missing dependencies, roots, arguments and
+  status codes. Shared validators and installation tests do not need factory.
 
   Every job is **parallel-safe**: every scratch tree is a private `mktemp` one
   and the repo is only ever read, so any number of copies — several worktrees at

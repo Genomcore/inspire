@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # plugin/base/bin/test/test-gate-lib.sh — the claims about `gate` no
-# fixture/expect.json can hold, modelled on test-derive-lib.sh:
+# fixture/expect.json can hold, modelled on test-plan-lib.sh:
 #
 #   WRITES NOTHING — a `run-tests.sh` fixture only ever inspects stdout/exit;
 #   it has no vocabulary for "and the fixture directory itself is untouched
@@ -14,7 +14,7 @@
 #   ACROSS A DOCUMENT AND THE CODE — that the `GV-*` ids the source can name
 #   still equal the catalogue in `_references/gate-verdict.md`. The doc stays
 #   the authority an operator reads; this is what keeps the two from drifting
-#   silently, exactly as test-derive-lib.sh pins the semantic vocabulary.
+#   silently, exactly as test-plan-lib.sh pins the readiness catalogue.
 #
 #   STDOUT IS EMPTY on 2/3/5/127 — `expect.json` pins an exit code but has no
 #   way to add "and nothing was printed", which is the other half of the

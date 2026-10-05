@@ -6,7 +6,7 @@ every **readiness** answer the orchestrator needs before the first worktree
 exists. This file owns its JSON shape, its exit codes, the `PR-*` catalogue, the
 frontier rule, the edge rule and the wave algorithm.
 
-Plan **composes on derive**: one [`emanate-derive.sh`](derived-contract.md) run
+Plan **composes on derive**: one run of [factory's `derive.ts` CLI](derived-contract.md)
 per frontier unit, read from stdout and nothing else. Derive's own refusal
 classes are never re-detected here — they arrive as `PR-01` findings carrying
 derive's `class`, `target`, `message` and `remedy` verbatim.
@@ -17,6 +17,19 @@ human report, and a scratch directory removed by an `EXIT` trap is the only
 thing that ever touches a disk.
 
 ## CLI
+
+Set `INSPIRE_FACTORY_ROOT` to the factory checkout containing
+`orchestrator/src/derive.ts`; Bun must be on `PATH`. Both relative and absolute
+factory paths are resolved from the target project root, and derivation inherits
+that CWD and both SDD roots. Factory is checked before the derivation fan-out;
+tier-1 readiness refusals still need no derivation.
+
+This planner keeps `inspire.emanation-plan/1` and all `PR-*` checks. Factory's
+planner emits `/3`, orders units without waves, reads test roots from its own
+configuration, and does not perform INSPIRE's profile, overseer and bootstrap
+readiness checks. Its CLI does not implement these scope/goal/ceiling flags.
+The two outputs are not interchangeable; `/1` must not be passed to factory's
+executor as `--plan`.
 
 ```
 emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
@@ -52,7 +65,7 @@ the two layers, as everywhere in `.inspire/bin/`.
 | `4` | **refused** — a precondition of planning failed; nothing is planned | the refusal object |
 | `5` | roots missing: `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory | empty |
 | `6` | internal — a `derive` run exited outside `{0,4}`, or produced no readable contract. Defensive; every input it could refuse over is checked first | empty |
-| `127` | a required tool is missing (`jq`, `yq`, `tsort`, or a sha256 digest) | empty |
+| `127` | a required tool is missing (`jq`, `yq`, `tsort`, a sha256 digest, Bun, or the configured factory deriver) | empty |
 
 `1` means not-ready rather than internal failure, matching `review.sh`'s verdict
 vocabulary; `4` means refused because derive already means refused by 4, and a

@@ -10,6 +10,6 @@
     { "expr": ".findings | length", "equals": "1" },
     { "expr": ".findings[0].target", "equals": "unknown" },
     { "expr": ".findings[0].message", "equals": "the --contract file is not valid JSON" },
-    { "expr": ".findings[0].remedy", "equals": "re-run emanate-derive.sh for this unit and pass its stdout to --contract" }
+    { "expr": ".findings[0].remedy", "equals": "from the project root, re-run bun run \"$INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts\" <kind> <id> and pass its stdout to --contract" }
   ]
 }

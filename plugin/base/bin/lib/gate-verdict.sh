@@ -168,7 +168,7 @@ gate_check_no_match_diagnostic() {
 }
 
 # gate_report_stderr <verdict-json-file> — the grouped human report
-# (`emanate-derive.sh`'s report_refusals/report_derived pattern): a head
+# (separate from the machine-readable stdout): a head
 # line, findings by class in id order, a counts tail.
 gate_report_stderr() {
   local out="$1" verdict kind id test_oracles store_oracles

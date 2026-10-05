@@ -5,7 +5,7 @@
 # `run-tests.sh` runs one fixture at a time and compares one run's stdout with
 # one golden file or one `jq` probe, which covers every per-scope claim the
 # goldens state. Seven kinds of assertion do not fit that shape and live here
-# instead, wired in by hand exactly as `test-derive-lib.sh` is:
+# instead, wired in by hand exactly as `test-gate-lib.sh` is:
 #
 #   ACROSS TWO RUNS — that two plans over one tree are byte-identical. A golden
 #   pins one run against a file; determinism is a claim about the RELATIONSHIP
@@ -216,14 +216,12 @@ eq "and a read-only project overseer is simply added to the roster" \
 # that misbehaves, which the real one does not.
 # ─────────────────────────────────────────────────────────────────────────────
 
-STUB="$TMP/bin"
-mkdir -p "$STUB/lib"
-cp "$BIN"/*.sh "$STUB/" && cp "$BIN"/lib/*.sh "$STUB/lib/"
-printf '#!/usr/bin/env bash\nexit 3\n' > "$STUB/emanate-derive.sh"
-chmod +x "$STUB/emanate-derive.sh"
+STUB="$TMP/factory stub"
+mkdir -p "$STUB/orchestrator/src"
+printf 'process.exit(3)\n' > "$STUB/orchestrator/src/derive.ts"
 stub_out="$( cd "$FX/clean-single-unit" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
-             bash "$STUB/emanate-plan.sh" --profiles-root spec/profiles \
-               --agents-root spec/agents 2>/dev/null )"
+             INSPIRE_FACTORY_ROOT="$STUB" bash "$BIN/emanate-plan.sh" \
+               --profiles-root spec/profiles --agents-root spec/agents 2>/dev/null )"
 eq "a derive exiting outside {0,4} is exit 6" "$?" "6"
 eq "and exit 6 prints nothing on stdout" "$stub_out" ""
 

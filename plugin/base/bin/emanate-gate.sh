@@ -2,10 +2,9 @@
 # .inspire/bin/emanate-gate.sh
 #
 # gate — claim coverage x citing tests x suite result -> stdout VERDICT (D8).
-# One of the emanation loop's five independent bin scripts (derive, plan,
-# gate, results, harvest); composes on derive's OUTPUT only — it never calls
-# emanate-derive.sh and never sources its lib/derive-*.sh, so the two
-# packages can evolve independently. The shared bulk lives in
+# One of INSPIRE's four independent emanation tools (plan, gate, results,
+# harvest). Reads the factory's derived contract as JSON, without invoking or
+# importing its implementation. The shared bulk lives in
 # `lib/gate-{contract,citations,results,verdict}.sh`.
 #
 # THE ORCHESTRATOR PROMOTES. GATE PRODUCES THE EVIDENCE (design's inherited
@@ -19,7 +18,7 @@
 #   emanate-gate.sh --contract FILE|-  --results FILE
 #                   [--tests-root DIR]...  [--previous FILE]
 #
-#   --contract   the derived contract (emanate-derive.sh's stdout), one JSON
+#   --contract   the derived contract (factory derive.ts stdout), one JSON
 #                object; `-` reads stdin. Required.
 #   --results    the suite results, `inspire.suite-results/1` (a JSON
 #                manifest the orchestrator produces — R1, JUnit's file<->test
@@ -60,8 +59,7 @@
 #
 # Stdout is valid JSON on every exit that produces a verdict (0, 1, 4) and
 # EMPTY on 2, 3, 5, 127. Stderr carries the grouped human report
-# (`GATE pass|fail <kind> <id>`, findings by class, a counts tail) mirroring
-# emanate-derive.sh's report_refusals/report_derived.
+# (`GATE pass|fail <kind> <id>`, findings by class, a counts tail).
 #
 # The GV-* catalogue, the verdict schema, the suite-results schema and every
 # exit code: `.claude/skills/_references/gate-verdict.md`.

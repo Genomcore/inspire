@@ -3,13 +3,13 @@
 #
 # plan — the frontier snapshot, its dependency waves, the floor and every
 # readiness check, for one scope (D5/D8/D10/D11). One of the emanation loop's
-# five independent bin scripts (derive, plan, gate, results, harvest); the
+# four independent bin scripts (plan, gate, results, harvest); the
 # shared bulk lives in `lib/plan-{lib,scan,stack,waves,realize,checks,
 # report}.sh`, plus `lib/gate-citations.sh` — the `@claim` token has one
 # scanner and two readings, coverage for gate and realization here.
 #
-# It COMPOSES ON DERIVE: one `emanate-derive.sh` run per frontier unit, read
-# from stdout and nothing else. `derived-contract.md` draws that line:
+# It COMPOSES ON DERIVE: one factory `orchestrator/src/derive.ts` run per
+# frontier unit, read from stdout and nothing else. `derived-contract.md` draws that line:
 # "`/inspire-emanate plan` aggregates the stdout objects — it must never parse
 # stderr". So an old shape is derive's refusal, restated here as a readiness
 # finding rather than re-detected.
@@ -66,6 +66,8 @@
 # root; $SDD_SPEC_ROOT (default inspire_kb/04_domain) is the domain tree and
 # $SDD_KB_ROOT (default inspire_kb) is the KB as a whole. Both are required:
 # actions and entities live in one, screens and the stack in the other.
+# $INSPIRE_FACTORY_ROOT explicitly names the factory checkout. Both absolute
+# and project-relative paths work; its CLI runs without changing this CWD.
 #
 # Exit codes — distinct and documented, never a generic catch-all:
 #   0    READY. A plan, and no error-severity finding. Stdout carries it.
@@ -82,7 +84,8 @@
 #   5    roots missing — $SDD_KB_ROOT or $SDD_SPEC_ROOT is not a directory.
 #   6    internal — a `derive` run exited outside {0,4}, or produced no readable
 #        contract. Defensive: every input it could refuse over is checked first.
-#   127  a required tool is missing (jq, yq, tsort, or a sha256 digest).
+#   127  a required tool is missing (jq, yq, tsort, bun, a sha256 digest, or
+#        the factory deriver at $INSPIRE_FACTORY_ROOT/orchestrator/src/derive.ts).
 #
 # Stdout is JSON on exactly the exits that produce a verdict, and EMPTY on every
 # other one:
@@ -306,6 +309,7 @@ fi
 # Tier 2 — one derivation per frontier unit, realization, then the ordering edges
 # ─────────────────────────────────────────────────────────────────────────────
 
+plan_require_deriver || exit "$EXIT_MISSING_TOOL"
 plan_derive_all
 plan_ingest || { echo "emanate-plan.sh: $PLAN_BROKE" >&2; exit "$EXIT_INTERNAL"; }
 plan_realize || { echo "emanate-plan.sh: $PLAN_BROKE" >&2; exit "$EXIT_USAGE"; }

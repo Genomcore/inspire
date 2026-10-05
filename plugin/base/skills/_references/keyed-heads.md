@@ -336,7 +336,7 @@ findings.
 
 The class ids are stable; they are what a reader's own goldens are keyed on.
 
-The strict reader is `.inspire/bin/emanate-derive.sh`, and it refuses on every
+The strict reader is factory's `orchestrator/src/derive.ts`, and it refuses on every
 entity, action and cross-artifact class below **whatever severity review
 reported it at** — the grace in the next section is review's alone. Use-case
 files are not one of its kinds, so `OS-F*` stays review's entirely.

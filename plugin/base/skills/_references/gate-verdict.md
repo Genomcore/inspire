@@ -28,7 +28,7 @@ The current working directory is the repo root, as everywhere in
 `.inspire/bin/`. Gate reads **no KB** and needs neither `SDD_KB_ROOT` nor
 `SDD_SPEC_ROOT` — everything it needs arrives as an argument.
 
-- `--contract FILE` — the derived contract (`emanate-derive.sh`'s stdout),
+- `--contract FILE` — the derived contract (factory's `derive.ts` stdout),
   one JSON object; `-` reads stdin. Required.
 - `--results FILE` — the suite results (`emanate-results.sh`'s stdout),
   § below. Required.
@@ -172,8 +172,7 @@ Valid JSON on every exit that produces a verdict (0, 1, 4). Empty on 2, 3,
   when it was.
 - **The one rule**: `verdict = (findings == 0) ? "pass" : "fail"`.
 
-Stderr carries a grouped human report mirroring `emanate-derive.sh`'s
-`report_refusals`/`report_derived`: a `GATE pass|fail <kind> <id>` head
+Stderr carries a grouped human report: a `GATE pass|fail <kind> <id>` head
 line, findings grouped by class, and a counts tail.
 
 ## Fingerprints and `--previous`
@@ -265,17 +264,16 @@ that failed to derive would be a comparison with nothing.
 | `127` | a required tool is missing (`jq`). |
 
 Gate needs **`jq` only** — no `yq`, no `python3`, no `perl`. It does not
-source `_lib.sh`/`_keyed-heads.sh`, and it does not source
-`derive-*.sh` either: it composes on derive's *output*, never its
-implementation, so the two packages evolve independently.
+source `_lib.sh`, `_keyed-heads.sh` or factory code: it composes on derive's
+*output*, never its implementation, so the two packages evolve independently.
 
 ## Consumers
 
-`/inspire-emanate run`'s gate step is the entry point; nothing else runs it.
-The orchestrator reads the verdict as the deterministic half of its promote
-decision — and **promote is git-side**: the unit's integration branch merges
-into the run's goal branch, carrying the verdict's digest in the merge
-commit's trailers. **No `lifecycle:` is walked and no KB file is written**,
-because a run never touches the knowledge base
-(`inspire-emanate/references/run.md` § promote). Gate itself calls nothing,
-edits no frontmatter, and never writes `lifecycle:` either.
+`emanate-gate.sh` remains an independent INSPIRE tool. Pass factory's derived
+contract JSON, test roots and an `inspire.suite-results/1` manifest to obtain the
+deterministic coverage verdict. Gate calls no agent or suite, edits no
+frontmatter and never writes `lifecycle:` or merges code.
+
+Factory owns its execution checks and merge flow; launching it through
+`/inspire-emanate run` does not imply that it invokes this shell gate. Consumers
+that use gate decide how to record and act on its verdict.
