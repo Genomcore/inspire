@@ -118,7 +118,8 @@ the grouped human report.
   states what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order then the invariants; for an action the
-  input constraints, preconditions, behavior steps, postconditions and errors;
+  input constraints, preconditions, behavior steps, postconditions, errors and
+  then its three binding claims;
   for a screen the data, dispatch, navigation and state bindings; for a
   component its props then its states; for a pattern its regions.
 
@@ -224,6 +225,8 @@ declared key, the way every other kind's are:
 {action}/input/{param}/{op}              {action}/pre/P{n}
 {action}/step/B{n}                       {action}/post/Q{n}
 {action}/error/{code}
+{action}/binding/route                   {action}/binding/dispatch
+{action}/binding/guard
 {screen-id}/data/{key}                   {screen-id}/dispatch/{key}
 {screen-id}/nav/{key}                    {screen-id}/state/{key}
 {component-id}/prop/{name}               {component-id}/state/{key}
@@ -249,6 +252,9 @@ whitespace-collapsed and trimmed:
 | entity field constraint · action input constraint | the canonical constraint token |
 | invariant · precondition · postcondition · error | the canonical head text (empty when there is none) · the prose |
 | behavior step | the canonical head text (always empty) · the prose |
+| binding route | `route` · the input names, sorted and comma-joined · the bindings text |
+| binding dispatch | `dispatch` · the bindings text |
+| binding guard | `guard` · the roles, sorted and comma-joined, or `public` · the bindings text |
 | screen data | action id · notes |
 | screen dispatch | action id · trigger · canonical `on_success` · canonical `on_error` |
 | screen navigation | target screen id · trigger |
@@ -266,6 +272,41 @@ Two consequences worth stating. Two files differing only in whitespace or in
 markdown ordinals produce byte-identical claim lists. And two claims with
 identical content — `nonnull` on two different fields — carry the same
 fingerprint; they are told apart by their ids, which is what ids are for.
+
+### Binding claims
+
+An action is reachable only through the surface its backend profile renders, so
+the profile's `## Bindings` section (`inspire-code/profiles/README.md`) derives
+three claims per action with no authoring: **the route exists** · **it
+dispatches to this action's service method** · **its guard matches the
+`actor(…)` preconditions**. Without them a unit can be satisfied by tests that
+build its service by hand, and the running application never exposes it.
+
+The claims are identities only: the contract carries no binding section, and an
+implementer reads the profile and the action's preconditions itself. They are
+derived by the TypeScript producer that replaces `emanate-derive.sh`;
+the Bash deriver does not emit them and retires with that move.
+
+- **The profile set** is the suite-wide one: `stack.md`'s frontmatter
+  `profiles:` list, or the inference fallback from its `## Layer: Name`
+  headings — the resolution `/inspire-emanate plan` uses (`plan-stack.sh`).
+  Each id reads `$SDD_PROFILES_ROOT/{id}.md`; an id with no file is skipped.
+  A surface's own `**Profiles:**` list is not consulted.
+- **The binding profile** is the one profile in that set whose frontmatter says
+  `layer: backend` and whose `## Bindings` section is not blank. None: the action
+  carries no binding claims. More than one: `DR-B1`.
+- **The bindings text** is that section's lines, HTML comments stripped, joined
+  by newlines — the same section reader every other claim uses. Any edit to the
+  section moves every action's binding fingerprints, which is the correct
+  reading: the rule that renders every route changed.
+- **The roles** are the first argument of every `## Preconditions` entry whose
+  head word is `actor`, deduplicated and sorted bytewise.
+- **The input names** feed the route: whether the action takes the entity's
+  identifier decides its path.
+
+The claims are `test` claims. One is satisfied only by a test that sends a
+request to the application assembled the way production assembles it — never by
+a controller or service the test constructs by hand.
 
 ## Refusal
 
@@ -319,7 +360,7 @@ not half of it.
 
 ### `DR-*` — the classes derive names itself
 
-`DR-T*`, `DR-R*` and `DR-C*` are derive-only: no rule owns them, because they
+`DR-T*`, `DR-R*`, `DR-B*` and `DR-C*` are derive-only: no rule owns them, because they
 are questions only a reader that has to *render* the unit needs answered — and
 for `DR-C*`, because no rule owns a catalog entry's shape at all. `DR-S*`
 and `DR-D1` are shapes the screen and section rules already report and no
@@ -331,6 +372,7 @@ this table name the same thing.
 | `DR-T1` | a `Type` cell names a semantic type in neither the universal vocabulary nor `00_bootstrap/semantic-types.md` | touch the artifact |
 | `DR-T2` | a `Type` cell that must declare a type declares none | touch the artifact |
 | `DR-T3` | a project semantic type declares no universal base type | declare a `Base type` in `00_bootstrap/semantic-types.md` |
+| `DR-B1` | more than one profile in the stack is `layer: backend` and declares `## Bindings`, so no single rule renders the action's route | declare one backend profile with `## Bindings` in `00_bootstrap/stack.md` |
 | `DR-R1` | an action's `## Entities` names an entity with no document on disk | touch the artifact |
 | `DR-R2` | a screen binding names an action id that resolves to no descriptor | touch the screen |
 | `DR-R3` | a transition target — a `### Navigation` row, or a `→ [[…]]` dispatch outcome — resolves to no screen id | touch the screen |
