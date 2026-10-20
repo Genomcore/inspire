@@ -55,6 +55,13 @@ them under the tests covering its claims. To modify it:
   3. /inspire-screens promote users.list stable
 ```
 
+**The presentation half passes the lock.** `**Layout:**`, `## Render` and the
+`## Current prototype` drift list mint no claim, so editing them on a `stable`
+screen shifts nothing under its tests. A turn that touches only those parts runs
+at `stable`, says so in one line before the diff, and leaves `lifecycle:` alone;
+the moment it touches anything else — a binding, `## Purpose`, the components a
+binding feeds — the refusal above applies.
+
 Screens carry no `demote` verb — `promote` walks both directions
 ([`screen-lifecycle.md`](screen-lifecycle.md) § How `promote` walks) — and the
 regression is the point: it makes the loosening of a locked contract an explicit,
@@ -80,7 +87,8 @@ before converting it.
 ## Flow
 
 1. **Read the file, show it, and gate on `lifecycle:`.**
-   - `stable` → refuse with the message above and stop the turn.
+   - `stable` → refuse with the message above and stop the turn, unless the change
+     touches only the presentation half (§ Stable screens block).
    - `superseded` → say it, in one line: *"`users.list` is superseded — this turn
      can set `superseded_by:` and repair the shape, but not its bindings; new
      behaviour belongs on the screen that replaced it."* The turn continues on

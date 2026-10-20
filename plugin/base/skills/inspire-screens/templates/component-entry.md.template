@@ -15,7 +15,8 @@
 2. {Structural element 2}
 
 Tokens (spacing, type, colors, density) come from the design system
-([`../design-system.md`](../design-system.md)) — do not restate them here.
+([`../design-system.md`](../design-system.md)): cite each by its token path in braces,
+never by value. Name every glyph by its library and name (`lucide-chevron-right`).
 
 ## API / Slots
 
@@ -34,6 +35,9 @@ Tokens (spacing, type, colors, density) come from the design system
 | Key | When | Presentation |
 |---|---|---|
 | `{key}` | {the condition} | {what the component shows} |
+
+<!-- A state reached by hover — a tooltip, a lift, a name revealed — names its
+     touch equivalent in the same row: the tap or long-press that reaches it. -->
 
 ## Variants
 

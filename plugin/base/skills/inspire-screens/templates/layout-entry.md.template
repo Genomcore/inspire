@@ -1,0 +1,81 @@
+---
+# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+---
+
+<!-- A layout is a page FRAME: where a pattern's regions sit, at what size, in what
+     order, at every supported width. It owns measurements and nothing else. Which
+     holes exist belongs to the pattern; what fills one belongs to the component;
+     which data reaches it belongs to the screen. The surface shell is a layout
+     too — `shell`, with `**Pattern:** —`, framing every route. -->
+# Layout: {layout-name}
+
+**Purpose:** {one-line description of the frame — first body line, greppable}
+**State:** implemented | to-extract
+**Pattern:** [[../patterns/{pattern-name}]]
+
+{One-paragraph description of the frame and what decides its shape.}
+
+## Frame
+
+1. {Element 1, top to bottom}
+2. {Element 2}
+
+## Geometry
+
+<!-- Every row carries a Source, and the vocabulary is closed:
+       `design-system.md §…`  the design system fixes the value — cite it, never
+                              restate a different number
+       `design-tokens.json`   the Value cites a token by path in braces
+       `reference`            measured from the reference design-system.md
+                              § Reference names; not yet a decision
+       `generated`            proposed by common sense, no reference held it;
+                              nobody has confirmed it
+       `undecided`            two adopters disagree, or the reference breaks here
+       `as {layout}`          this row's geometry is another entry's, wholesale
+     A `generated` or `undecided` row is a question for the design system. A run
+     never promotes one into a decision on its own: it reports the row and asks.
+     Measure a value from the rendered page (its computed box), never from a
+     class name. -->
+
+| Element | Property | Value | Source |
+|---|---|---|---|
+| `{element}` | {width · height · padding · gap · order · overflow} | {the value, or a token path in braces} | {design-system.md §… \| design-tokens.json \| reference \| generated \| undecided} |
+
+## Breakpoints
+
+<!-- Per width range from design-system.md § Supported viewports: which region
+     changes and how — width, columns, stacking, visibility, scroll. A row that
+     holds at every range reads `every supported width`. Locate each boundary by
+     sweeping the viewport width and recording where the computed layout
+     changes, never by reading `md:` / `lg:` off a class. Same Source vocabulary
+     as § Geometry. -->
+
+| Range | Region | Change | Source |
+|---|---|---|---|
+| every supported width | {region} | {what holds} | {source} |
+| {range} | {region} | {what changes, and to what} | {source} |
+
+## Composition
+
+<!-- The rules that hold between elements and survive a resize: what sits in which
+     cluster, what aligns with what, what a state replaces. Not a restatement of the
+     tables above. -->
+- {rule}
+
+## Variants
+
+- **{Variant name}** — {what differs, and its own geometry rows}.
+
+## Adopters
+
+<!-- Every screen sitting in this frame, by id. While **State** is `to-extract`,
+     these are the screens still holding their own copy. -->
+- {screen id}
+
+## Notes
+
+<!-- Commentary a run never reads. A requirement written here reaches no persona.
+     Requirements go in Frame, Geometry, Breakpoints, Composition or Variants.
+     Record here, as a gap, any clipping, overflow or overlap the reference shows
+     at a width, naming the width and the elements. -->
+- {gap at {width}: {what breaks}}

@@ -15,8 +15,8 @@ pattern.
 4. **Body** — the records, as a table or a simple row list.
 5. **Status bar** (optional) — count / selection / footer meta.
 
-Tokens (spacing, type, colors, density, table-row height) come from the design
-system ([`../design-system.md`](../design-system.md)) — do not restate them here.
+A pattern carries no measurement: where these regions sit, at what size and at
+which width belongs to the [`layouts/`](../layouts) entry that frames it.
 
 ## Regions
 

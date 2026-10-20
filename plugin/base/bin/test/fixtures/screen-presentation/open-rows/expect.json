@@ -1,0 +1,7 @@
+{ "exit": 0, "findings": [
+  { "rule": "screen-presentation", "severity": "warning", "message_substring": "layout Geometry: 2 row(s) decided by nobody yet — 'Content region' (generated) 'Toolbar' (undecided)" },
+  { "rule": "screen-presentation", "severity": "warning", "message_substring": "row 'Table' has Source 'the designer said so', outside the closed vocabulary" },
+  { "rule": "screen-presentation", "severity": "warning", "message_substring": "row 'Card' carries no Source" },
+  { "rule": "screen-presentation", "severity": "warning", "message_substring": "layout entry declares no '## Breakpoints' table" },
+  { "rule": "screen-presentation", "severity": "warning", "message_substring": "layout entry is implemented with 2 generated or undecided row(s)" }
+], "finding_count": 5, "forbidden": ["'Sidebar'"] }

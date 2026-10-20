@@ -37,8 +37,8 @@
   and `README.md`.
 
 **screen spec tree:**
-- `inspire_kb/05_screens/design-system.md` exists.
-- `inspire_kb/05_screens/patterns/` and `components/` exist with entry files,
+- `inspire_kb/05_screens/design-system.md` and `design-tokens.json` exist.
+- `inspire_kb/05_screens/patterns/`, `layouts/` and `components/` exist with entry files,
   at top level — beside any surface trees, never inside one.
 - **The tree is in the shape the roster implies.** Both shapes are legitimate: flat
   `{module}/` with no roster or a single `kind: ui` surface, surface-first

@@ -107,6 +107,7 @@ Screen files carry `lifecycle:`, so the columns above are readable there too:
 | `screen-coherence` (duplicate `id`; two screens deriving one route in one shell) | error | error | error | error |
 | `screen-coherence` (a `stable` screen declaring a `**State:** to-extract` component) | exempt | exempt | error | exempt |
 | `wikilinks-resolve` (every `[[wikilink]]` in a screen resolves) | warning | error | error | warning |
+| `screen-presentation` (layout, `## Render`, breakpoints, touch) and `design-system-coherence` (sections, citations) | warning | warning | warning | warning |
 
 A screen file with **no frontmatter at all** — every screen written before the
 identity block existed — reads as `draft` and emits warnings only. That is the

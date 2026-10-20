@@ -58,12 +58,18 @@ describe the screen:
 
 1. **Screen spec** — `inspire_kb/05_screens/{module}/{screen}.md` — the source of
    truth for what to build (features covered, pattern, data, slots, components).
-2. **Pattern** — `inspire_kb/05_screens/patterns/{pattern}.md` — layout, slots, behavior.
-3. **Components** — `inspire_kb/05_screens/components/{component}.md` — the shared
+2. **Pattern** — `inspire_kb/05_screens/patterns/{pattern}.md` — regions, behavior.
+3. **Layout** — `inspire_kb/05_screens/layouts/{layout}.md` — the frame: geometry and
+   what changes at each supported width; `layouts/shell.md` for the chrome.
+4. **Render** — the screen's `## Render` table: the component, treatment, glyph and
+   narrow-width behaviour of every value it shows.
+5. **Components** — `inspire_kb/05_screens/components/{component}.md` — the shared
    catalog. Adopt these; don't reinvent.
-4. **Design system** — `inspire_kb/05_screens/design-system.md` — tokens, type,
-   density. Never redefine these per screen.
-5. **Intent & contract** — the feature in `inspire_kb/03_features/{module}/…`
+6. **Design system** — `inspire_kb/05_screens/design-system.md` and
+   `design-tokens.json` — tokens, type, density, icons, supported viewports. Emit the
+   tokens as CSS custom properties (`{color.primary}` → `--color-primary`) and never
+   redefine one per screen.
+7. **Intent & contract** — the feature in `inspire_kb/03_features/{module}/…`
    and, where relevant, the specs in `inspire_kb/04_domain/…`.
 
 > **Stack-agnostic.** This skill assumes no framework. The project's own stack,

@@ -503,7 +503,7 @@ sdd_find_screens() {
         NF > 1 {
           n = split($NF, seg, "/")
           if (n < 2 || n > 3) next
-          if (seg[1] == "patterns" || seg[1] == "components") next
+          if (seg[1] == "patterns" || seg[1] == "components" || seg[1] == "layouts") next
           if (seg[n] == "_index.md" || seg[n] == "README.md") next
           print
         }

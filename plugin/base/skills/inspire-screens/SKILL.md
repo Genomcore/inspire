@@ -23,43 +23,59 @@ Three tiers under `inspire_kb/05_screens/`, with a **sibling middle**:
 
 | Tier | Path | Source of truth for | Catalog |
 |------|------|---------------------|---------|
-| 1 | `design-system.md` | tokens, colors, typography, global layout | one file |
-| 2a | `patterns/` | reusable layouts — their **regions** and geometry | entry files (`patterns/[!_]*.md`) |
+| 1 | `design-system.md` · `design-tokens.json` | what each token means · its value; supported viewports, icons, the reference | two files |
+| 2a | `patterns/` | reusable screen structures — their **regions** | entry files (`patterns/[!_]*.md`) |
 | 2b | `components/` | shared components — their **props** | entry files (`components/[!_]*.md`) |
-| 3 | `{module}/` | module-specific screens — the **wiring** | `_index.md` per module directory |
+| 2c | `layouts/` | the page frames those structures sit in — their **geometry**, per width | entry files (`layouts/[!_]*.md`) |
+| 3 | `{module}/` | module-specific screens — the **wiring**, and how each value is drawn | `_index.md` per module directory |
 
-Patterns and components are **siblings**: neither depends on the other by
-construction. A layout's regions accept injected content, so it never imports leaf
-components, and a leaf component never references a layout. Where a pattern does
+Patterns, components and layouts are **siblings**: none depends on another by
+construction. A pattern's regions accept injected content, so it never imports leaf
+components, and a leaf component never references a pattern. Where a pattern does
 reference a shared component, it declares it on a `**Components:**` line like any
 other dependency — an actual declared edge, never an assumed tier.
 
-Three ownerships, and they never bleed: a **component** owns its props, a
-**pattern** owns its regions, and a **screen** owns the wiring — data into
-components, components into regions. A pattern region is a hole, never a mirror of
-some component's props.
+Four ownerships, and they never bleed: a **component** owns its props, a
+**pattern** owns its regions, a **layout** owns the geometry those regions sit at,
+and a **screen** owns the wiring — data into components, components into regions —
+and its `## Render` table. A pattern region is a hole, never a mirror of some
+component's props, and never a measurement.
 
-`design-system.md` is **seeded at install** from the default template
-`00_bootstrap/theme.md`, and owned by
-[`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md) — screens
-**read** its tokens (they are the source of truth for colors, typography, layout)
-but never edit them.
+A **layout** names the pattern it frames and answers where each region sits, at what
+size, in what order, and what changes at each supported width. The surface **shell**
+— sidebar, bars, every persistent control — is a layout entry of its own, `shell`,
+framing every route though no screen names it. Every row of a layout's
+`## Geometry` and `## Breakpoints` tables carries a `Source` from a closed
+vocabulary (`design-system.md §…` · `design-tokens.json` · `reference` · `generated`
+· `undecided` · `as {layout}`), defined in
+[`layout-entry.md.template`](templates/layout-entry.md.template). A `generated` or
+`undecided` row is a question for the design system, and a run never silently
+promotes one into a decision.
+
+`design-system.md` and its token file `design-tokens.json` are **seeded at
+install** from the defaults `00_bootstrap/theme.md` and `theme.tokens.json`, and
+owned by [`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md) —
+screens **read** the tokens, citing each by its path in braces, and never edit
+them. What every measurement is taken from — the prototype by default — and how it
+is read is [`_references/ui-reference.md`](../_references/ui-reference.md).
 
 Tier 3 carries a second dimension: **surface**. Once the suite declares two or
 more UI surfaces, module screens split positionally into
 `05_screens/{surface}/{module}/`, with a reserved `shared/{module}/` for screens
-more than one UI surface uses. Tiers 1, 2a and 2b do not split —
-`design-system.md`, `patterns/` and `components/` stay suite-wide, beside the
-surface trees at top level, never inside one. Which shape applies, what `shared/` means and how a
+more than one UI surface uses. Tiers 1, 2a, 2b and 2c do not split —
+`design-system.md`, `design-tokens.json`, `patterns/`, `components/` and `layouts/`
+stay suite-wide, beside the surface trees at top level, never inside one. A surface
+whose chrome differs takes its own `shell` layout entry scoped by `surfaces:`, never
+a copy of the catalog. Which shape applies, what `shared/` means and how a
 surface id resolves are defined in
 [`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md);
 read it before writing anywhere under `05_screens/`. This skill works with the
 shape the roster implies — the one-time reshaping from flat to split is
 [`/inspire-surface`](../inspire-surface/SKILL.md)'s sweep, not this skill's.
 
-**Screens are lightweight** — they declare their own bindings and describe only
-what deviates from the layout they name. They do NOT redefine colors, typography,
-layout, or re-describe components.
+**Screens are lightweight** — they declare their own bindings, say how each value
+they show is drawn, and describe only what deviates from the pattern and layout they
+name. They do NOT redefine colors, typography, geometry, or re-describe components.
 
 ## Screen file structure
 
@@ -70,8 +86,8 @@ writing a screen. Template:
 [`templates/screen.md.template`](templates/screen.md.template) — the template is
 the single source of which parts are required (the frontmatter identity block,
 H1, `**Features:**`, `## Purpose`, `## Bindings`) versus optional/presence-free
-(`**Pattern:**`, `**Components:**`, `## Module-specific deviations`,
-`## Current prototype`, `## Notes`).
+(`**Pattern:**`, `**Layout:**`, `**Components:**`, `## Render`,
+`## Module-specific deviations`, `## Current prototype`, `## Notes`).
 
 Four facts about that shape carry the rest of this skill:
 
@@ -91,6 +107,10 @@ Four facts about that shape carry the rest of this skill:
   transitions no dispatch on this screen causes.
 - **Routes derive** from `module:` + `screen:`, so no screen file authors one.
   `routes` renders the map.
+- **The screen says how it is drawn.** `## Render` binds every column, field and
+  meta value it shows to a field type, a catalogued component, a treatment and an
+  alignment, and every table column to what it does at narrow widths. It mints no
+  claim, so a Render edit never shifts a contract.
 
 The **Current prototype** section names the prototype route(s) realizing the screen
 and tracks **drift** — misalignments between the prototype and this spec, grouped by
@@ -167,7 +187,8 @@ index, not the flow.
 | Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
 | Promote through the lifecycle | [`references/screen-lifecycle.md`](references/screen-lifecycle.md) | `promote {id} {state}` |
 | Render the derived route map | [`references/screen-routes.md`](references/screen-routes.md) | `routes` |
-| Extract a pattern/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|component} {name}` |
+| Extract a pattern/layout/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|layout\|component} {name}` |
+| Backfill the presentation half | [`references/screen-backfill.md`](references/screen-backfill.md) **and** [`_references/ui-reference.md`](../_references/ui-reference.md) | `backfill [{reference}]` |
 | Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) — it owns which edits trigger the ask | a duty, not an invocation |
 
 ## When validating an existing screen
@@ -187,7 +208,7 @@ Three sources of truth, three pairwise checks. Resolution rules differ per pair:
 | **Features ↔ Prototype** | Feature in the prototype, no feature file | **Open** | **WARN. Ask the user.** Backfill via `/inspire-feature create`, or remove it from the prototype. Don't silently accept undocumented features. |
 | **screen spec ↔ Prototype** | screen spec describes UI not rendered | Prototype | Spec stale. Update via `/inspire-screens validate`. Do NOT change the prototype — risks losing iterations. |
 | **screen spec ↔ Prototype** | Prototype renders UI not in the screen spec | Prototype | Spec stale (reverse drift). Update the spec. |
-| **Patterns / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + components + `design-system.md` + current UX ADRs are authoritative for visual/structural conventions. |
+| **Patterns / layouts / components / design-system / UX ADRs** | Prototype or screen spec contradicts a canonical convention | **Skill** | Enforce. Patterns + layouts + components + `design-system.md` + current UX ADRs are authoritative for visual/structural conventions. A layout row sourced `reference`, `generated` or `undecided` is not yet a convention: drift against it is a question for the design system. |
 
 **Why the prototype wins on functional drift:** prototypes evolve through user
 iterations. The screen spec captures intent at write-time; the prototype captures it at
@@ -232,14 +253,14 @@ When uncertain which layer a finding belongs to, ask the user.
 1. **Features are the source of truth for what exists.** Every screen traces to one
    or more features in `03_features`.
 2. **Each tier owns its truth** — the *Source of truth for* column of the
-   § Architecture table above: `design-system.md` for tokens (colors, typography,
-   density, layout), `patterns/` for layout regions and geometry, `components/`
-   for component props. Screens declare and reference; they never redefine a token,
+   § Architecture table above: `design-system.md` and `design-tokens.json` for
+   tokens, `patterns/` for regions, `layouts/` for geometry and breakpoints,
+   `components/` for component props. Screens declare and reference; they never redefine a token,
    nor redescribe a layout or a component's props. Project-specific screen
    conventions live in those artifacts, not in this skill.
 3. **Screens are lightweight** (aim <300 lines). Extract sub-patterns/components if
    a screen grows.
-4. **No ASCII layout diagrams in screen, pattern or component files, unless the
+4. **No ASCII layout diagrams in screen, pattern, layout or component files, unless the
    screen is bespoke and its layout cannot be expressed textually.** This is the
    single statement of the rule for this layer; the create flow and the validate
    checks reference it, and
@@ -275,6 +296,17 @@ When uncertain which layer a finding belongs to, ask the user.
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
+12. **Name what is drawn.** A component a screen names gets its `components/` entry
+   in the same turn, at `**State:** to-extract`. Every icon a screen, a region or a
+   state implies is named by library and glyph (`lucide-folder`), never "an icon".
+   Every hover-only affordance names its touch equivalent. Every table column says
+   what it does at narrow widths.
+13. **Measure from the reference, at several widths.** Before a screen or layout
+   says anything responsive, `design-system.md` § Supported viewports names the
+   floor. Values come from the reference
+   [`_references/ui-reference.md`](../_references/ui-reference.md) resolves — the
+   prototype by default — captured at several widths, swept for breakpoints and
+   measured from computed boxes. What breaks at a width is a gap, never the rule.
 
 ## Skill invocations
 
@@ -283,5 +315,6 @@ When uncertain which layer a finding belongs to, ask the user.
 - `/inspire-screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
 - `/inspire-screens promote {id} {state}` — walk a screen through the 4-state lifecycle
 - `/inspire-screens routes` — render the derived route map and the transition graph; writes nothing
-- `/inspire-screens extract {pattern|component} {name}` — promote a recurring UI block to a shared artifact
+- `/inspire-screens extract {pattern|layout|component} {name}` — promote a recurring UI block or frame to a shared artifact
+- `/inspire-screens backfill [{reference}]` — bring every screen, layout and component up to the presentation half of the current shape, measured from the prototype or the named reference
 - `/inspire-screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities

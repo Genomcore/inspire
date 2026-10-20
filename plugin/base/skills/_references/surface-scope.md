@@ -95,8 +95,8 @@ count of `kind: ui` entries, never from history:
 
 `shared/` is a reserved pseudo-surface holding screens used by more than one UI
 surface: `05_screens/shared/{module}/{screen}.md`, meaning all UI surfaces unless a
-`surfaces:` list narrows it. Suite-wide catalogs — `design-system.md`, `patterns/`,
-`components/` — sit beside the surface trees at top level, never inside one.
+`surfaces:` list narrows it. Suite-wide catalogs — `design-system.md`, `design-tokens.json`, `patterns/`,
+`layouts/`, `components/` — sit beside the surface trees at top level, never inside one.
 
 **A route is derived, never positional.** It comes from the screen's declared
 `module:` and `screen:` frontmatter fields — `/{module}/{screen}` — prefixed by

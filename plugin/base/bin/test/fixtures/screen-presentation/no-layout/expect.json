@@ -1,0 +1,1 @@
+{ "exit": 0, "findings": [ { "rule": "screen-presentation", "severity": "warning", "message_substring": "screen names pattern list and no" } ], "finding_count": 1 }

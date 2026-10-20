@@ -22,7 +22,7 @@ Two consumers wrap this library:
 
 ## Scripts
 
-The library implements the **quality gate** (per D24 in the SDD V3 reframe addendum): the 16 rule scripts `review.sh` runs, in three severity tiers plus the style checks below them.
+The library implements the **quality gate** (per D24 in the SDD V3 reframe addendum): the 18 rule scripts `review.sh` runs, in three severity tiers plus the presentation and style checks below them.
 
 ### Tier 1 — Mechanical blockers (always error, any lifecycle)
 
@@ -57,6 +57,19 @@ The library implements the **quality gate** (per D24 in the SDD V3 reframe adden
 `superseded` de-escalates rather than staying at the tier it retired from: the
 object is history, kept for the pointer to what replaced it, and no longer worth
 blocking a commit over (`sdd_progressive_severity` in `_lib.sh`).
+
+### Presentation — flat warnings, never a derivation refusal
+
+These two read the parts of the screen layer that mint no claim: the design system, its
+token file, the `layouts/` tier and a screen's `## Render` table. Every finding is a
+**warning at every lifecycle**, and derive never consults either rule, so a vault upgraded
+without them is reported, never blocked. `/inspire-bootstrap design-system backfill` and
+`/inspire-screens backfill` close what they report.
+
+| Script | Checks |
+|---|---|
+| `design-system-coherence.sh` | `05_screens/design-system.md` carries `## Supported viewports`, `## Icons` and `## Reference`; `05_screens/design-tokens.json` sits beside it and holds [W3C Design Tokens](https://www.designtokens.org/tr/drafts/format/): a `$type` from the closed list on every token or a parent group, no `.`, `{` or `}` in a name, a value of its type's shape, aliases that resolve without a loop. Tokens marked `$extensions.inspire.source: generated` are counted, named, and left for the operator to confirm. Every `` `{token.path}` `` a `05_screens` file cites names a token or a group. A malformed token file is an **error**: it is machine input, and nothing downstream can read it. |
+| `screen-presentation.sh` | A screen naming a `**Pattern:**` names the `**Layout:**` that frames it, and that layout frames the same pattern. A screen declaring `### Data` carries a `## Render` table; a Render table under an H3 naming a table or its columns carries a `Narrow` column, whose values are `always` · `sticky` · `scroll` · `hidden below {width}` · `—`; a component a Render row draws with has a `components/` entry. Each `layouts/` entry carries `## Geometry` and `## Breakpoints`, every row sourced from the closed vocabulary (`design-system.md §…` · `design-tokens.json` · `reference` · `generated` · `undecided` · `as {layout}`, with `prototype` read as `reference`), and its `generated` and `undecided` rows are counted; an `implemented` layout holds none. A component or screen naming a hover affordance names its touch equivalent. |
 
 ### Style — the mechanical subset of the writing contract
 
