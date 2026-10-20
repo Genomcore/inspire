@@ -64,7 +64,9 @@ build: `<cmd>` · lint: `<cmd>` · types: `<cmd>`
 <!-- SEED — project-owned, freely edited. How `{module}::{entity}::{verb}` becomes an
      invocable surface, derived from the id alone: no per-action authoring. Say what
      the five CRUD verbs map to and what any other verb maps to, plus how the
-     `actor({role})` precondition becomes a guard. A surface exposing nothing says so. -->
+     `actor({role})` precondition becomes a guard. A surface exposing nothing says so.
+     On a `layer: backend` profile this section derives three claims per action
+     (`{action}/binding/route|dispatch|guard`), see derived-contract.md. -->
 `{module}::{entity}::{verb}` → <shape>. Other verbs → <shape>.
 Guard: `actor({role})` → <guard>; no actor precondition → <public>.
 

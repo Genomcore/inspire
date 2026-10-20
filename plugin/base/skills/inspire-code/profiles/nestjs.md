@@ -93,6 +93,16 @@ owns the entity, never to the shared client's config.
   crossed it — the outbound HTTP request that was made (intercept and assert URL, method
   and body), and the full payload plus topic/key of every event published. E2E never
   overrides providers.
+- **E2E means the assembled application.** A suite starts the app the way `main.ts`
+  builds it — one exported app factory both share — and sends HTTP requests to it. A
+  spec that constructs a service or controller by hand, with fakes for its ports, is a
+  unit spec whatever its file is called, and never cites a `binding/*` claim.
+- **Access goes through the real guard.** A test citing an `actor(…)` precondition or
+  a `binding/guard` claim sends requests through the real authentication and role
+  guard: the allowed actor, an actor without the role, and — when the precondition
+  scopes access (a study, an organisation) — an actor holding the role in **another**
+  scope. A test that grants the role in an unrelated scope and expects success asserts
+  the hole, not the rule.
 - **What a controller's e2e suite covers — and what it deliberately does not.** The
   derived contract list (criteria ∪ declared errors ∪ wire-convention cases ∪ ADR
   invariants), the happy path, and the corner cases that **change the caller-observable
@@ -383,8 +393,11 @@ an access rule — see
 stated in prose.
 
 Three claims derive from this section per action, with no authoring: the route
-exists · it dispatches to that action's service method · its guard matches the
-actor constraint.
+exists (`{action}/binding/route`) · it dispatches to that action's service method
+(`{action}/binding/dispatch`) · its guard matches the actor constraint
+(`{action}/binding/guard`). Their payloads are
+[`derived-contract.md`](../../_references/derived-contract.md) § Binding claims;
+editing this section moves every action's binding fingerprints.
 
 ## Persistence
 

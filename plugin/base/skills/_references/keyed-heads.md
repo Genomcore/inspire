@@ -118,6 +118,11 @@ parenthesis directly onto a bare lowercase identifier.
 must hold, what happens, what holds afterwards. `I` is the invariant, which by
 definition holds on both sides of every `B`.
 
+An action also carries three claims no section keys: `{action}/binding/route`,
+`{action}/binding/dispatch` and `{action}/binding/guard`, derived from the backend
+profile's `## Bindings` and its `actor(…)` preconditions — see
+[`derived-contract.md`](derived-contract.md) § Binding claims.
+
 Claim ids use the **dotted** id form (`auth.user`, `auth.user.create`), matching
 the on-disk filename, never the colon display form. `{op}` in a field claim is
 the constraint word itself (`auth.user/field/email/unique`). Changing a

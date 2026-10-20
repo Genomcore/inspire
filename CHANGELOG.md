@@ -9,6 +9,31 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## Unreleased
+
+An action whose stack has a backend profile with `## Bindings` now carries three
+more claims, so every test suite that already realizes it has three uncited
+claims until a test drives its route. Cite them, or let the next emanation build
+the route. Nothing moves on disk.
+
+### Added
+
+- **Binding claims.** `{action}/binding/route`, `{action}/binding/dispatch` and
+  `{action}/binding/guard` derive from the backend profile's `## Bindings` and
+  the action's `actor(…)` preconditions, as the NestJS profile already
+  promised. Two backend profiles declaring `## Bindings` are `DR-B1`. Payloads
+  and resolution: `_references/derived-contract.md` § Binding claims. The
+  TypeScript producer that replaces `emanate-derive.sh` derives them; the Bash
+  deriver does not. Before this, a unit could complete with tests that built
+  its service by hand while the running application exposed no route.
+
+### Changed
+
+- **NestJS test conventions.** E2E means the application assembled as `main.ts`
+  assembles it; a spec that builds a service with fakes is a unit spec and never
+  cites a binding claim. Access tests go through the real guard and include a
+  denial for the same role in another scope.
+
 ## 0.9.11 — 2026-10-02
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
