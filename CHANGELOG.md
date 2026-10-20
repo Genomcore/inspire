@@ -9,9 +9,10 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## Unreleased
+## 0.11.0 — 2026-10-20
 
-Upgrade with `/inspire:update`. Nothing moves on disk, and no claim changes: every
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.11.0 keeps the 0.3 layout and the 0.9.0 payload classes. No claim changes: every
 check below is a warning at every lifecycle, and derivation reads none of it. A vault
 whose screens predate the layouts tier gets them backfilled at the end of the update,
 measured from its prototype by default, from a reference the operator names, or
