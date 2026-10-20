@@ -1,0 +1,11 @@
+{
+  "color": {
+    "$type": "color",
+    "primary": { "$value": "#0d9488", "$extensions": { "inspire": { "source": "reference" } } },
+    "accent": { "$value": "#8b5cf6", "$extensions": { "inspire": { "source": "generated" } } }
+  },
+  "spacing": {
+    "$type": "dimension",
+    "4": { "$value": "16px", "$extensions": { "inspire": { "source": "generated" } } }
+  }
+}

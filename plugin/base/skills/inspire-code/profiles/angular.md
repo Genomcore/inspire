@@ -67,7 +67,8 @@ project's selector and SCSS class prefixes are declared once (per
 - **No derived data stored in state** — compute it in selectors / `computed`.
 
 ## Review focus
-- **styling**: uses the design tokens and BEM naming with the project's class
+- **styling**: uses the design tokens (`05_screens/design-tokens.json`, a token
+  `{color.primary}` being `--color-primary`) and BEM naming with the project's class
   prefix (`05_screens/design-system.md`); no ad-hoc values, no unscoped
   `::ng-deep`.
 - **accessibility**: correct roles, labels, and aria attributes; keyboard

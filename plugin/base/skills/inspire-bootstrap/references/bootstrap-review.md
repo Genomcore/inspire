@@ -27,6 +27,11 @@
 - `05_screens/design-system.md` exists (it should have been seeded from `theme.md`
   at install); flag if missing. It is expected to **diverge** from the default
   `theme.md` as the project evolves — divergence is not drift.
+- `05_screens/design-tokens.json` exists beside it, and `design-system.md` carries
+  `## Supported viewports`, `## Icons` and `## Reference` — run
+  `.inspire/bin/design-system-coherence.sh`; anything it reports missing is closed
+  by the `design-system backfill` flow. Report its count of `generated` tokens as
+  values still awaiting a decision.
 - **No `design-system.*.md` sibling exists**, anywhere under `05_screens/`. One is
   an override attempt by another name; flag it and offer to fold what it holds back
   into the one file as a named variant section (see the `design-system` flow in

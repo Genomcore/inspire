@@ -348,7 +348,9 @@ chmod_executables() {
 # it is free to diverge without ever being reported as drift.
 seed_design_system() {
   local theme_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.md"
+  local tokens_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.tokens.json"
   local design_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-system.md"
+  local tokens_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-tokens.json"
   [ -f "$theme_src" ] || return 0
 
   if [ -f "$design_dest" ]; then
@@ -356,7 +358,11 @@ seed_design_system() {
     return 0
   fi
 
+  local seed_tokens=0
+  [ -f "$tokens_src" ] && [ ! -f "$tokens_dest" ] && seed_tokens=1
+
   CREATED+=("inspire_kb/05_screens/design-system.md")
+  [ "$seed_tokens" = 1 ] && CREATED+=("inspire_kb/05_screens/design-tokens.json")
   if [ "$DRY_RUN" = 1 ]; then
     log "  · [dry-run] would seed inspire_kb/05_screens/design-system.md"
     return 0
@@ -364,6 +370,10 @@ seed_design_system() {
   mkdir -p "$(dirname "$design_dest")"
   cp "$theme_src" "$design_dest"
   log "  · seeded inspire_kb/05_screens/design-system.md from theme.md"
+  if [ "$seed_tokens" = 1 ]; then
+    cp "$tokens_src" "$tokens_dest"
+    log "  · seeded inspire_kb/05_screens/design-tokens.json from theme.tokens.json"
+  fi
 }
 
 # Seed the project's root CLAUDE.md from the stub template, once. Never

@@ -1,6 +1,6 @@
 ---
 name: inspire-bootstrap
-description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md template in inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
+description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md + theme.tokens.json template in inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md + design-tokens.json — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
 ---
 
 # /inspire-bootstrap — Foundation (language + stack + theme)
@@ -17,18 +17,20 @@ This skill owns the **bootstrap layer** —
   **product roots** (`source_root` / `prototype_root` — where the code and the
   prototype live; see
   [`_references/product-roots.md`](../_references/product-roots.md)).
-- `theme.md` — the **design-system default** (fonts, color palette + status map,
-  density, layout tokens) — the reusable template.
+- `theme.md` + `theme.tokens.json` — the **design-system default** (fonts, color
+  palette + status map, density, layout, icons, supported viewports) — the
+  reusable template, its meaning in markdown and its values as W3C Design Tokens.
 - `semantic-types.md` — the project's **own semantic types**, each with a mandatory
   universal base type. It ships empty and no interview here fills it: a type is
   declared the moment domain work meets a field the universal vocabulary
   ([`type-mapping.md`](../inspire-domain/references/type-mapping.md)) has no type for.
   What this skill owes it is the **language profile** that renders those types — see
   the `stack` flow.
-- `05_screens/design-system.md` (the one artifact this skill owns **outside**
-  `00_bootstrap`) — the project's **live design system**, seeded from `theme.md` at
-  install and edited here via the `design-system` subcommand. `theme.md` is the
-  default; this is the working copy.
+- `05_screens/design-system.md` + `05_screens/design-tokens.json` (the one artifact
+  pair this skill owns **outside** `00_bootstrap`) — the project's **live design
+  system**, seeded from `theme.md` + `theme.tokens.json` at install and edited here
+  via the `design-system` subcommand. The defaults are the template; these are the
+  working copy.
 
 These are the foundation every other layer reads: specs ([`04_domain`](../../../inspire_kb/04_domain)),
 screen specs ([`05_screens`](../../../inspire_kb/05_screens)), the prototype ([`/prototype`](../../../prototype))
@@ -53,7 +55,8 @@ stub with the project name, purpose and stack marked as placeholders; this skill
 - `/inspire-bootstrap language` — set the output language artifacts are written in
 - `/inspire-bootstrap stack` — define / update the tech stack
 - `/inspire-bootstrap theme` — define / update the design-system default (`theme.md`)
-- `/inspire-bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md`)
+- `/inspire-bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md` + `design-tokens.json`)
+- `/inspire-bootstrap design-system backfill [{reference}]` — give a design system written before the token file its tokens, supported viewports, icons and reference
 - `/inspire-bootstrap readme` — create / update the project's root `README.md`
 - `/inspire-bootstrap review` — check the artifacts exist and stay coherent
 
@@ -105,20 +108,32 @@ index, not the flow.
 | [`theme`](references/bootstrap-theme-interview.md) | Define / update `theme.md`, the design-system default (incl. abstracting one from a mockup's CSS) |
 | [`readme`](references/bootstrap-identity.md) | Create / update the project's root `README.md` — plus `init` step 4's long form |
 | [`review`](references/bootstrap-review.md) | Read-only coherence checklist over the bootstrap artifacts |
+| [`design-system backfill`](references/bootstrap-design-system-backfill.md) | Bring an older design system up to the token file, supported viewports, icons and reference — measured from the prototype or a named reference, generated otherwise |
 
 ## Subcommand: design-system
 
-Own `05_screens/design-system.md` — the project's **live design system** (tokens,
-typography, color + status map, density, global layout), seeded at install from the
-default `theme.md`. Distinct from the `theme` flow
+Own `05_screens/design-system.md` and `05_screens/design-tokens.json` — the
+project's **live design system** (typography, color + status map, density, global
+layout, icons, supported viewports, the reference), seeded at install from the
+default `theme.md` and `theme.tokens.json`. The markdown says what each token means
+and cites it by its path in braces; the JSON, in the
+[W3C Design Tokens format](https://www.designtokens.org/tr/drafts/format/), holds
+every value once. A value written in both is a value that will drift. Distinct from the `theme` flow
 ([`references/bootstrap-theme-interview.md`](references/bootstrap-theme-interview.md)):
 `theme.md` is the reusable default, `design-system.md` is the project's working
 copy — they may diverge.
 
-1. Read the current `design-system.md`. If it's missing, seed it from `theme.md`
-   (this is what install does) and say so.
+1. Read the current `design-system.md` and `design-tokens.json`. If the markdown is
+   missing, seed both from the defaults (this is what install does) and say so. If
+   only the token file is missing, or `## Supported viewports`, `## Icons` or
+   `## Reference` is, run the `backfill` flow first
+   ([`references/bootstrap-design-system-backfill.md`](references/bootstrap-design-system-backfill.md)).
 2. Establish/confirm the change (a token value, the type scale, density, a new
-   status key, a layout rule). Present a diff; apply on approval.
+   status key, a layout rule, the supported floor, a `generated` token or layout
+   row being confirmed). A value changes in the token file; a meaning changes in the
+   markdown. Present a diff; apply on approval. Confirming a token drops its
+   `$extensions.inspire` marker, and a layout row carrying that value as
+   `reference`, `generated` or `undecided` cites the token instead.
 3. **Propagate.** A token change ripples to every screen and to the prototype —
    surface it (offer `/inspire-prototype`); screens must not hard-code values that
    belong here.
@@ -205,7 +220,8 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    `.inspire/bin/trust.sh endorse <file>`
    ([trust-stamps](../_references/trust-stamps.md#scope)).
 6. **`design-system.md` is stamped.** After the `design-system` subcommand
-   writes it, run `.inspire/bin/trust.sh stamp <file> --skill bootstrap`
+   writes it, run `.inspire/bin/trust.sh stamp <file> --skill bootstrap` (the token
+   file carries no frontmatter and is not stamped)
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
