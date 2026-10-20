@@ -9,12 +9,15 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## Unreleased
+## 0.10.0 — 2026-10-20
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.10.0 keeps the 0.3 layout and the 0.9.0 payload classes.
 
 An action whose stack has a backend profile with `## Bindings` now carries three
 more claims, so every test suite that already realizes it has three uncited
 claims until a test drives its route. Cite them, or let the next emanation build
-the route. Nothing moves on disk.
+the route.
 
 ### Added
 
