@@ -2,7 +2,7 @@
 id: F04-mech
 title: "F4 MECH — move mechanical work from prose to scripts"
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-10-20
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -37,9 +37,13 @@ Pre-work: split the oversized scripts — a list 0.7.0 made longer, not shorter.
 - [ ] Workspace Phases 5–6 numbers come from a script; report skeletons consume them.
 - [ ] No shipped script exceeds ~500 LOC — five offenders as of 0.7.0, not the three
       this ticket was written against.
-- [ ] **Four `prose-style.sh` items cleared while that script is open.** R3's stopword
+- [ ] **Five `prose-style.sh` items cleared while that script is open.** R3's stopword
       list is missing `cannot`, so "the auth subsystem cannot delegate" reads as a noun
-      run — one word. R4 names the glossary's spelling in the finding rather than the
+      run — one word. R3 also flags `None beyond Fields constraints.`, the one-line
+      `## Invariants` body that `format-entity.md` and `entity.md.template` prescribe for
+      an entity with no invariants, so every such entity carries a warning its author
+      cannot clear without departing from the format — exempt the line or reword it in
+      both homes. R4 names the glossary's spelling in the finding rather than the
       artifact's, pointing the author at the wrong token. R4 synonyms containing `.` or
       `::` can never match, because the id-stripper eats them before comparison
       (commented in-script) — fix the stripper or state the restriction in the contract.
