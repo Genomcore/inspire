@@ -208,7 +208,52 @@ coming from 0.7 or earlier — say plainly that a directory which appears mid-se
 not be discovered until the next one, so the role shells can need a fresh session before
 `/agents` lists them. Then remind the operator to review the git diff and commit.
 
-## Step 5 — Nudge
+## Step 5 — Backfill the UI specification
+
+A release can add parts of the screen layer an older vault never wrote — the token
+file, the supported viewports, the `layouts/` tier, a screen's `## Render` table.
+Materializing ships the rules and the validators for them; it never writes product
+content. This step closes the gap through the skills that own those files, so the
+operator ends the update with a specification the new release can read, not a list
+of warnings.
+
+1. **Detect.** Run, from the project root:
+
+   ```bash
+   .inspire/bin/design-system-coherence.sh inspire_kb/05_screens
+   .inspire/bin/screen-presentation.sh inspire_kb/05_screens
+   ```
+
+   No finding from either, or no `inspire_kb/05_screens/design-system.md` at all (a
+   project with no screen layer yet): skip to Step 6. Findings that only count
+   `generated` or `undecided` values are not gaps — they are decisions still open,
+   and this step leaves them to the operator.
+2. **Ask once**, in one `AskUserQuestion` with two questions:
+   - **The reference** the gaps are measured from, per
+     `.claude/skills/_references/ui-reference.md` § Which reference. Options: **the
+     prototype** (recommended, offered first, when `prototype_root` in
+     `inspire_kb/00_bootstrap/stack.md` is not `none` and holds a project), **another
+     reference** (the operator types a URL, a path or a description in "Other"),
+     **no reference — generate by common sense**, and **skip for now**.
+   - **The narrowest supported width**, only when `design-system.md` carries no
+     `## Supported viewports`: laptop (1024px) and up, tablet (768px) and up, phone
+     (390px) and up. A product decision, never inferred.
+3. **Run the two backfills in order**, passing the answers: first
+   `/inspire-bootstrap design-system backfill` (the token file and the three
+   sections — every later row cites them), then `/inspire-screens backfill` (the
+   layouts, the `**Layout:**` lines, the `## Render` tables, the component entries).
+   Each follows its own reference file; this skill writes none of it.
+4. **Relay both reports.** When either generated a value, say so plainly and
+   first: how many values, in which files, that nobody has decided them, and that
+   `/inspire-bootstrap design-system` confirms them one by one. A generated value
+   is a proposal, and the operator must know which ones they are before they
+   commit.
+
+**Skip for now** leaves the vault exactly as Step 3 left it, and says so: the two
+validators keep reporting every gap as a warning at every lifecycle, never a block,
+and running the two backfills later closes them the same way.
+
+## Step 6 — Nudge
 
 For each kept **skill** edit (an `ask` resolved to `mine`, or a plain `keep` verdict —
 never a kept `inspire_kb/` retirement ask: that is the operator declining to retire a seed
@@ -221,7 +266,7 @@ for the lesson-reconciliation half (D6) that does not exist yet.
 For each kept **validator** edit: there is no capture mechanism for it — a lesson has no
 category for bash. Say it belongs upstream: open an issue or a PR against INSPIRE.
 
-## Step 6 — Trust report
+## Step 7 — Trust report
 
 If `.inspire/bin/trust.sh` exists, offer — never run unprompted — `.inspire/bin/trust.sh
 report`. What its groups mean is explained at
@@ -256,8 +301,9 @@ skill waits on it: everything above is what the current release actually does.
 
 ## Rules
 
-1. **All file operations go through `materialize.sh`.** No copying, hashing or settings
-   editing in prose. Content classification is `--mode plan` (`--mode drift-check` is
+1. **All runtime file operations go through `materialize.sh`.** No copying, hashing
+   or settings editing in prose. The one KB write this flow causes is Step 5's, and
+   it goes through the skills that own those files, never through this one. Content classification is `--mode plan` (`--mode drift-check` is
    accepted as a deprecated alias).
 2. **Never silently overwrite an operator's file.** An `ask` row left unresolved defaults
    to keeping the operator's version — doing nothing is how work survives. Only
