@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"constraints-mechanics","severity":"error","message_substring":"OS-E9: `### email` names no row of ## Fields"}],
+  "forbidden": ["OS-E9: `### id`", "OS-E9: `### org_id`"] }
