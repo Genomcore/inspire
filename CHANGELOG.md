@@ -9,6 +9,33 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.11.1 — 2026-10-21
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.11.1 keeps the 0.3 layout and the 0.9.0 payload classes and adds no file to a
+vault. One validator gains a check, in the stricter direction, so a vault that
+passed 0.11.0 can fail 0.11.1 on one shape only.
+
+### Breaking for existing vaults
+
+- An `accepted` or `stable` entity with a `### {field}` sub-section whose field is
+  no row of `## Fields` fails review (`OS-E9`), and derive refuses it. Add the row,
+  or remove the sub-section. A `draft` entity reports it as a warning.
+
+### Fixed
+
+- **A field sub-section names a field.** `constraints-mechanics` checked each
+  `### {field}` under `## Fields` for its shape and never for naming a field the
+  table declares. A sub-section left behind after its row was deleted, or written
+  for a field that never existed, carried constraints that bound nothing, and
+  review reported nothing unless an action still touched the field. `OS-E9` is a
+  content class beside `OS-E4`–`OS-E8`: lifecycle-progressive in review and a
+  refusal in derive. `_references/keyed-heads.md`, `lifecycle-rules.md`,
+  `findings-format.md`, `format-entity.md`, `inspire-domain`'s `review.md` and
+  `bin/README.md` say so. Tracker: `0100-orphan-field-section`.
+- INSPIRE Factory implements the `OS-E*` classes in its own deriver;
+  `OS-E9` reaches it in a change of its own.
+
 ## 0.11.0 — 2026-10-20
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
