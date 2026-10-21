@@ -8,12 +8,13 @@ Reached by clicking a row in a [`list`](list.md).
 
 ## Structure
 
-1. **Header** — resource icon + title + key meta (left); actions + back link (right).
+1. **Header** — the resource glyph + title + key meta (left); actions + back link (right).
 2. **Tabs / sections** — the record's facets (Overview first, Settings last is the
    usual ordering).
 3. **Body** — the fields and related collections for the active tab.
 
-Tokens come from the design system ([`../design-system.md`](../design-system.md)).
+A pattern carries no measurement: where these regions sit, at what size and at
+which width belongs to the [`layouts/`](../layouts) entry that frames it.
 
 ## Regions
 

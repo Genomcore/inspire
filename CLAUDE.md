@@ -290,7 +290,8 @@ project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
 `.claude/inspire/hooks/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
-`05_screens/design-system.md` from `00_bootstrap/theme.md`, and writes
+`05_screens/design-system.md` from `00_bootstrap/theme.md` (and
+`05_screens/design-tokens.json` from `theme.tokens.json` beside it), and writes
 `.inspire.lock`. It never deletes or rewrites unrelated content, and it is safe to
 run only once per project — `.inspire.lock`'s presence is the guard; from then on,
 `/inspire:update` upgrades the project to the installed plugin's version, from

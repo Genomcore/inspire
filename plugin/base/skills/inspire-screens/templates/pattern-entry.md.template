@@ -18,8 +18,8 @@
 1. {Structural element 1}
 2. {Structural element 2}
 
-Tokens (spacing, type, colors, density) come from the design system
-([`../design-system.md`](../design-system.md)) — do not restate them here.
+A pattern carries no measurement: where its regions sit, at what size and at
+which width belongs to the [`layouts/`](../layouts) entry that frames it.
 
 ## Regions
 

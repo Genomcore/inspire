@@ -113,7 +113,7 @@ needs it installed; teammates and CI need nothing.
 It asks two questions (product roots; whether to declare the marketplace for
 teammates), then materializes the skills, validators, hooks and KB skeleton,
 marker-merges the `session-start` + `dispatch` hooks into `.claude/settings.json`,
-seeds the design system from your bootstrap theme, seeds a provisional root
+seeds the design system and its token file from your bootstrap theme, seeds a provisional root
 `CLAUDE.md` and a `.gitignore` block (both left untouched if already present), and
 writes `.inspire.lock` recording which release was materialized plus a hash of
 every file it wrote (used later for drift detection). It never touches your git

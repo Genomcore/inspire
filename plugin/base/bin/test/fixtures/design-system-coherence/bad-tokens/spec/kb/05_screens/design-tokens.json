@@ -1,0 +1,35 @@
+{
+  "color": {
+    "$type": "color",
+    "primary": {
+      "$value": "teal"
+    },
+    "ghost": {
+      "$value": "{color.nowhere}"
+    },
+    "a": {
+      "$value": "{color.b}"
+    },
+    "b": {
+      "$value": "{color.a}"
+    },
+    "brand.main": {
+      "$value": "#0d9488"
+    }
+  },
+  "spacing": {
+    "4": {
+      "$value": "16"
+    },
+    "gap": {
+      "$type": "dimension",
+      "$value": "16px"
+    }
+  },
+  "motion": {
+    "$type": "wobble",
+    "fast": {
+      "$value": "100ms"
+    }
+  }
+}

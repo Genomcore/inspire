@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -128,6 +128,30 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 |---|---|---|
 | `duplicate screen id` | screen-coherence | Two screen files declare the same `id`. Ids are unique KB-wide; the newcomer mints `{surface}.{module}.{screen}` instead. |
 | `route collision` | screen-coherence | Two screens derive the same route in the same shell — same `module:` + `screen:` in one surface tree, or one of them under `shared/`. |
+
+### Presentation and design system (warning at every state)
+
+Neither rule mints or reads a claim, and derive consults neither, so every type below is
+a flat warning — except a malformed token file, which is an error because it is machine
+input.
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `design system carries no '## …' section` | design-system-coherence | `## Supported viewports`, `## Icons` or `## Reference` is absent from `design-system.md`. |
+| `no design-tokens.json beside the design system` | design-system-coherence | The design system cites values with no token file to hold them. |
+| `token … has no $type` / `outside the closed list` / `is not a … value` / `aliases …` / `token name … carries` | design-system-coherence | **Error.** The token file breaks the W3C Design Tokens shape: a type missing or unknown, a value not of its type, an alias naming nothing or looping, a name holding `.`, `{` or `}`. |
+| `N token(s) generated and decided by nobody yet` | design-system-coherence | Tokens whose `$extensions.inspire.source` is `generated`: a backfill proposed them with no reference to measure. Confirming one drops the marker. |
+| `cites token {…}, which design-tokens.json does not define` | design-system-coherence | A backticked `` `{token.path}` `` in a `05_screens` file names neither a token nor a group. |
+| `screen names pattern … and no '**Layout:**'` | screen-presentation | The structure is named and its frame is not, so its geometry is recorded nowhere. |
+| `layout … frames … and this screen names pattern …` | screen-presentation | The layout the screen sits in frames another pattern. |
+| `screen declares data and no '## Render' table` | screen-presentation | No row binds a shown value to its field type, component, treatment and alignment. |
+| `render table … carries no Narrow column` / `render row … has Narrow …` | screen-presentation | A table's columns say nothing, or something outside the vocabulary, about what happens below the widest range. |
+| `render row … draws with component …, which has no components/ entry` | screen-presentation | A component is named and uncatalogued. |
+| `layout entry declares no '## Geometry' / '## Breakpoints' table` | screen-presentation | The frame has no measurements, or measurements that hold at one width only. |
+| `layout …: row … carries no Source` / `outside the closed vocabulary` | screen-presentation | A geometry or breakpoint row does not say where its value comes from. |
+| `layout …: N row(s) decided by nobody yet` | screen-presentation | Rows sourced `generated` or `undecided`, named one by one. Each waits for the operator. |
+| `layout entry is implemented with … generated or undecided row(s)` | screen-presentation | A frame nobody decided is not a frame the code stands behind. |
+| `names a hover affordance and no touch equivalent` | screen-presentation | Heuristic: the file mentions hover and no tap, touch or long-press path. |
 
 ### Style — the mechanical subset of the writing contract
 

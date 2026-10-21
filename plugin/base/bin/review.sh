@@ -40,6 +40,8 @@ entity-coherence.sh \
 stable-blockers.sh \
 touched-entity-lifecycle.sh \
 screen-coherence.sh \
+screen-presentation.sh \
+design-system-coherence.sh \
 field-coverage.sh \
 rationale-wikilink.sh \
 wikilinks-resolve.sh \

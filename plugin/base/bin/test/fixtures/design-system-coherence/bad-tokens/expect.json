@@ -1,0 +1,44 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token `color.primary` holds"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token `color.ghost` aliases `{color.nowhere}`, which names no token"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token `color.a` aliases `{color.b}`, whose chain never reaches a value"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token name `color.brand.main` carries"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token `spacing.4` has no `$type`"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "token `motion.fast` has `$type` `wobble`, outside the closed list"
+    },
+    {
+      "rule": "design-system-coherence",
+      "severity": "error",
+      "message_substring": "which is not a color value"
+    }
+  ],
+  "forbidden": [
+    "token `spacing.gap`",
+    "cites token"
+  ]
+}

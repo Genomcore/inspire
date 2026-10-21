@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "no design-tokens.json beside the design system" }
+  ],
+  "finding_count": 1
+}

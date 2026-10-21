@@ -50,7 +50,7 @@ files under `inspire_kb/03_features/{module}/`.
   state, never history) above all. The closed token list and its section-scoped
   exemptions live there.
 - No embedded ADR content (>~10 lines of rationale without an ADR link).
-- All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `components/`,
+- All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `layouts/`, `components/`,
   `01_adr/`, `design-system.md`).
 
 ### 4. Cross-layer coverage

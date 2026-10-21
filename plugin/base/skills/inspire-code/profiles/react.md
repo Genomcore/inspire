@@ -42,7 +42,7 @@ not the answer.
   `dangerouslySetInnerHTML` with unsanitized input.
 
 ## Review focus
-- **styling**: uses the design-system tokens (`05_screens/design-system.md`) and the
+- **styling**: uses the design-system tokens (`05_screens/design-tokens.json`, meanings in `05_screens/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
   shared component layer; no hardcoded colors/spacing, no ad-hoc one-off styles.
 - **accessibility**: interactive elements are keyboard-navigable with correct roles,
   labels, and focus management; forms announce errors.

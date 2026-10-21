@@ -3,6 +3,13 @@
 
 ## When creating a new screen
 
+0. **Check the ground first.** `design-system.md` names the supported viewports
+   and the reference, and `layouts/` holds the surface `shell`. If any is missing,
+   say so and run the missing piece first — the range through
+   `/inspire-bootstrap design-system`, the shell as a layout entry measured per
+   [`_references/ui-reference.md`](../../_references/ui-reference.md). A screen
+   specified before them guesses whether a phone is in scope and what frame it sits
+   in.
 1. **Identify the feature.** Every screen references at least one feature ID from
    the module's `03_features`.
 2. **Resolve the target tree** from the surface roster
@@ -25,19 +32,36 @@
    invokes and what follows each outcome (`### Dispatches`), where it can go
    (`### Navigation`), and which states it can be in (`### States`). Key every row
    screen-locally. Drop a subsection with nothing in it.
-6. **Name a layout only if one fits.** Read the `**Purpose:**` first lines of
+6. **Name a pattern only if one fits.** Read the `**Purpose:**` first lines of
    `patterns/[!_]*.md` and name the pattern whose regions match this screen's
    structure. A screen that fits none names none — omit the line rather than
    writing `bespoke`. The project's own conventions (default list layout, header
-   layout, tabs, toolbar rules) live in the patterns and `design-system.md`.
+   layout, tabs, toolbar rules) live in the patterns, the layouts and
+   `design-system.md`.
+6b. **Name the layout that frames it.** Read the `**Purpose:**` first lines of
+   `layouts/[!_]*.md` and name the frame whose `**Pattern:**` matches the one just
+   named. Where several frame the same pattern, the geometry decides — a record with
+   tabs and a record without them are two frames over one `detail`. Where none fits,
+   draft the entry rather than writing the measurements into the screen
+   ([`screen-catalog.md`](screen-catalog.md) § When adding a new pattern, layout or
+   component).
 7. **Declare the components** the screen instantiates, on the `**Components:**`
    line: relative wikilinks into `05_screens/components/`
    (`[[{rel-to-05_screens}/components/{name}]]`). Link, never re-describe — a
-   component's props belong to its own entry.
+   component's props belong to its own entry. **A component this screen names and
+   the catalog does not hold gets its entry now**, at `**State:** to-extract`, with
+   its props, its anatomy and its states — never a name with nothing behind it.
+7b. **Write `## Render`.** Capture the reference at the widths
+   [`_references/ui-reference.md`](../../_references/ui-reference.md) lists, then
+   give every column, field and meta value the screen shows a row: field type,
+   component, treatment (tokens by path in braces, the glyph by library and name),
+   alignment, and — for a table's columns — what each does at narrow widths. A
+   hover-only treatment names its touch equivalent in the same cell. Shape and
+   rules: [`format-screen.md`](format-screen.md) § `## Render`.
 8. **Never write a route.** Not in the H1, not in a section: routes derive from
    `module:` + `screen:`. `routes` renders the map.
-9. **Deviations only.** Do NOT redescribe the structure the pattern already
-   defines. Write in present state — R6 of the
+9. **Deviations only.** Do NOT redescribe the structure the pattern or the
+   geometry the layout already defines, and write no measurement of the frame. Write in present state — R6 of the
    [writing contract](../../_references/writing-style.md) (never history) applies
    from the first draft.
 10. **No ASCII layout diagrams** — stated once as the no-ASCII rule in

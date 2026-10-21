@@ -24,7 +24,8 @@ lifecycle: draft         # draft | accepted | stable | superseded
 
 **Features:** FEAT-01, FEAT-02
 **Pattern:** [[../patterns/list]]
-**Components:** [[../components/data-table]]
+**Layout:** [[../layouts/collection]]
+**Components:** [[../components/data-table]], [[../components/person-chip]]
 
 ## Purpose
 
@@ -60,12 +61,26 @@ everything else on the screen serves that search.
 | `empty` | `main` returns zero rows | the empty-collection message and the create action |
 | `form-error` | `create` rejects | the field errors, inline, with the form still filled |
 | `error` | `delete` rejects | the failure message, with the row still in place |
+
+## Render
+
+### Table
+
+| Value | Field type | Component | Treatment | Align | Narrow |
+|---|---|---|---|---|---|
+| Name | person | `person-chip` | `lucide-user` 16px, the name in `{font.size.sm}` | left | sticky |
+| Email | text | `data-table` cell | `{color.text.secondary}` | left | hidden below laptop |
+| Last seen | date | `data-table` cell | relative, the absolute date on hover; on touch, a tap on the cell shows it | right | scroll |
 ```
 
 Required: the frontmatter identity block, the H1 title, the `**Features:**` line,
 a non-empty `## Purpose`, and `## Bindings` with at least one of its four
-subsections. Optional and presence-free: `**Pattern:**`, `**Components:**`,
-`## Module-specific deviations`, `## Current prototype`, `## Notes`.
+subsections. Optional and presence-free: `**Pattern:**`, `**Layout:**`,
+`**Components:**`, `## Render`, `## Module-specific deviations`,
+`## Current prototype`, `## Notes`. Two of them are owed rather than free: a screen
+naming a pattern names the layout that frames it, and a screen declaring `### Data`
+carries `## Render` — `screen-presentation.sh` warns on either, and derivation never
+reads them.
 
 ## Identity — the id is the referent
 
@@ -120,17 +135,22 @@ the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md)
 | Line | Required | What it declares |
 |---|---|---|
 | `**Features:**` | yes | the feature ids this screen realizes, comma-separated |
-| `**Pattern:**` | no | one repeatable layout, as a wikilink into `patterns/` |
+| `**Pattern:**` | no | one repeatable structure, as a wikilink into `patterns/` |
+| `**Layout:**` | no | the page frame it sits in, as a wikilink into `layouts/` |
 | `**Components:**` | no | the shared components this screen instantiates, as wikilinks into `components/` |
 
-`**Pattern:**` is a **peer layout dependency**, not the screen's definition: it
-constrains presentation and nothing else, and a screen that names none is not a
-special case — it simply inherits no shared layout. Its declarations stand on
-their own either way. Both lines are **ordering edges** for the emanation loop: a
-shared layout and a shared component are units it emanates too, so a screen
-declaring them waits for their wave instead of waiting for someone to build them
-by hand first
+`**Pattern:**` and `**Layout:**` are **peer presentation dependencies**, not the
+screen's definition: they constrain presentation and nothing else, and a screen
+that names neither is not a special case — it inherits no shared structure and no
+shared frame. Its declarations stand on their own either way. A screen naming a
+pattern names the layout that frames it, because a structure with no measurements
+is a rebuild the implementer has to invent. `**Pattern:**` and `**Components:**`
+are **ordering edges** for the emanation loop: a shared pattern and a shared
+component are units it emanates too, so a screen declaring them waits for their
+wave instead of waiting for someone to build them by hand first
 ([`_references/emanation-plan.md`](../../_references/emanation-plan.md)).
+`**Layout:**` is not one yet: the loop does not emanate layouts, so the implementer
+reads the frame from the entry the screen names.
 
 ## `## Purpose` — who comes here, and what for
 
@@ -197,6 +217,37 @@ a screen-local key**:
   valid and needs no escape.
 - Drop any subsection the screen has nothing to declare in. `## Bindings` itself
   stays, with at least one subsection under it.
+
+## `## Render` — how each value is drawn
+
+The bindings say what the screen shows; `## Render` says how. One H3 per region of
+the pattern, in reading order, each holding a table:
+
+| Column | Holds |
+|---|---|
+| `Value` | the column, field, meta value or control, in the product's words |
+| `Field type` | its field type from `design-system.md`, or `—` for a control |
+| `Component` | the catalog component that draws it, backticked, with its variant: `` `button` `outline` ``; `+` joins two |
+| `Treatment` | tokens by path in braces, the glyph by library and name, the copy, and any hover state with its touch equivalent |
+| `Align` | `left` · `centre` · `right` |
+| `Narrow` | on a table of columns only: `always` · `sticky` · `scroll` · `hidden below {width}` — what the column does below the widest range |
+
+Four rules hold it:
+
+- **Every value the screen shows has a row.** A value named only in prose — a
+  column list in a sentence — leaves the implementer to pick a treatment, and the
+  one they pick is the generic one.
+- **Every component it names has an entry.** Name a component that
+  `components/` does not hold, and write its entry at `**State:** to-extract` in
+  the same turn ([`screen-catalog.md`](screen-catalog.md)).
+- **Every glyph is named.** `lucide-folder`, never "a folder icon" or "the resource
+  icon".
+- **No measurement of the frame.** A width, a padding or a gap of a region belongs
+  to the layout; Render holds what is drawn inside it.
+
+`## Render` **mints no claim.** Derivation does not read it, so editing a treatment
+never re-emanates a unit, and adding the section to a `stable` screen leaves its
+contract untouched.
 
 ## Claims
 

@@ -1,0 +1,24 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-presentation",
+      "severity": "warning",
+      "message_substring": "render table 'Table' lists a table's columns and carries no Narrow column"
+    },
+    {
+      "rule": "screen-presentation",
+      "severity": "warning",
+      "message_substring": "render row 'Role' has Narrow 'folds away'"
+    },
+    {
+      "rule": "screen-presentation",
+      "severity": "warning",
+      "message_substring": "render row 'Role' draws with component 'role-badge', which has no components/ entry"
+    }
+  ],
+  "finding_count": 3,
+  "forbidden": [
+    "'person-chip', which"
+  ]
+}

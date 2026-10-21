@@ -1,0 +1,1 @@
+{ "exit": 0, "findings": [ { "rule": "screen-presentation", "severity": "warning", "message_substring": "screen declares data and no '## Render' table" } ], "finding_count": 1 }

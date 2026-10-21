@@ -1,0 +1,9 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "no '## Supported viewports' section" },
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "no '## Icons' section" },
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "no '## Reference' section" }
+  ],
+  "finding_count": 3
+}

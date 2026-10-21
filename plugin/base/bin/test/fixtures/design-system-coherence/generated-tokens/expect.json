@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "findings": [
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "2 token(s) generated and decided by nobody yet: color.accent spacing.4" }
+  ],
+  "finding_count": 1
+}

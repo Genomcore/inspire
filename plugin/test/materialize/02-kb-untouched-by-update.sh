@@ -137,6 +137,8 @@ check "KB regression: ticket in 99_tracker/tickets survives update" \
   "[ -f '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' ] && [ '$ticket_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/99_tracker/tickets/TICKET-001.md' | cut -d' ' -f1)\" ]"
 check "KB regression: customized design-system.md survives update" \
   "[ -f '$kbp/inspire_kb/05_screens/design-system.md' ] && [ '$design_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/05_screens/design-system.md' | cut -d' ' -f1)\" ]"
+check "KB regression: update never seeds default tokens beside an existing design system" \
+  "[ ! -f '$kbp/inspire_kb/05_screens/design-tokens.json' ]"
 
 kb_count_after="$(find "$kbp/inspire_kb" -type f | wc -l | tr -d ' ')"
 # The old form of this assertion — "no KB files added or removed" — was true

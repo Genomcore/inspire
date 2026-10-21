@@ -9,8 +9,11 @@ lifecycle: draft
      the H1 title, the Features line, a non-empty ## Purpose, and ## Bindings
      with at least one of its four subsections (### Data · ### Dispatches ·
      ### Navigation · ### States).
-     Optional / presence-free: the Pattern and Components lines,
-     ## Module-specific deviations, ## Current prototype, ## Notes.
+     Optional / presence-free: the Pattern, Layout and Components lines,
+     ## Render, ## Module-specific deviations, ## Current prototype, ## Notes.
+     A screen naming a Pattern names the Layout that frames it, and a screen
+     declaring ### Data carries ## Render; screen-presentation.sh warns when
+     either is missing.
      This split is the single source of the two lists the validator encodes.
 
      `id` is minted once and never re-derived from location: the default mint is
@@ -22,6 +25,7 @@ lifecycle: draft
 
 **Features:** FEAT-01, FEAT-02
 **Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
+**Layout:** [[{rel-to-05_screens}/layouts/{layout-name}]]
 **Components:** [[{rel-to-05_screens}/components/{component-name}]]
 
 <!-- One paragraph of prose — no table, no list: who comes to this screen, for
@@ -76,6 +80,30 @@ lifecycle: draft
 |---|---|---|
 | `empty` | `main` returns zero rows | {what the user sees} |
 | `{state-key}` | `create` rejects | {what the user sees} |
+
+<!-- How every value this screen shows is drawn. One H3 per region of the
+     pattern, in reading order; one row per column, field, meta value or
+     control. Field type comes from design-system.md, Component names a
+     components/ entry (write the entry, at to-extract, in the same turn),
+     Treatment cites tokens by path in braces and names every glyph by its
+     library and name (`lucide-folder`), Align is left · centre · right.
+     A table of columns adds Narrow: always · sticky · scroll ·
+     hidden below {width} — what the column does below the widest range.
+     Mints no claim: a Render edit re-emanates nothing. -->
+## Render
+
+### {Region}
+
+| Value | Field type | Component | Treatment | Align |
+|---|---|---|---|---|
+| {value} | {field type} | `{component}` `{variant}` | {tokens, glyph, copy} | left |
+
+### Table
+
+| Value | Field type | Component | Treatment | Align | Narrow |
+|---|---|---|---|---|---|
+| {column} | {field type} | `{component}` | {tokens, glyph} | left | sticky |
+| {column} | {field type} | — | {tokens} | right | hidden below {width} |
 
 <!-- Optional — only when the screen deviates from the pattern's defaults, or
      when which component fills which region needs saying. -->

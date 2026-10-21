@@ -126,6 +126,7 @@ check "lock carries NO file hashes"   "[ \"\$(jq -r 'has(\"files\")' '$proj/.ins
 check "lock carries a real template_sha" \
   "[ \"\$(jq -r .template_sha '$proj/.inspire.lock')\" = \"\$(jq -r .commit '$PLUGIN_ROOT/manifests/$manifest_version.json')\" ]"
 check "design system seeded"          "[ -f '$proj/inspire_kb/05_screens/design-system.md' ]"
+check "design tokens seeded beside it" "cmp -s '$PLUGIN_ROOT/base/kb/00_bootstrap/theme.tokens.json' '$proj/inspire_kb/05_screens/design-tokens.json'"
 check "product roots created"         "[ -d '$proj/source' ] && [ -d '$proj/prototype' ]"
 check "no template hook leaked"       "[ -z \"\$(find '$proj/.claude' -name 'template-*.sh')\" ]"
 check "CLAUDE.md seeded"              "[ -f '$proj/CLAUDE.md' ]"
