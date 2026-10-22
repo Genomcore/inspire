@@ -361,7 +361,7 @@ design space; an `accepted` artifact has been declared emanable, and
 `draft → accepted` is the human pre-flight gate where a keyed entry that is
 *there but wrong* has to block. This covers everything about the content of a
 keyed entry: vocabulary, arity, duplicate keys, referents, the `unique`+`create`
-join, a misplaced `Constraints:` line — `OS-E4`–`OS-E8`, `OS-A2`, `OS-A5`–`OS-A10`,
+join, a misplaced `Constraints:` line — `OS-E4`–`OS-E9`, `OS-A2`, `OS-A5`–`OS-A10`,
 `OS-F2`–`OS-F5`, `OS-X1`–`OS-X4`.
 
 **The five presence classes are flat warnings at every lifecycle state in 0.9**
@@ -401,6 +401,7 @@ release to run.
 | `OS-E6` | two entries share one key in one keyspace |
 | `OS-E7` | a `references(...)` argument resolves to no entity document |
 | `OS-E8` | a `Constraints:` line is not its H3's **first content line** — detected by counting the H3's content lines (blank and comment-only lines excluded) and reporting every `Constraints:` line after the first of them; a second `Constraints:` line under one H3 is therefore reported too, since at most one line can be first. The line is still **read and checked** wherever it sits: ignoring it is what let a typo'd constraint silently stop being asserted. Also the class for a misplaced per-input `Constraints:` line in an action descriptor — one shape, one id |
+| `OS-E9` | a `### {field}` sub-section under `## Fields` names no row of the table — its constraints bind no field. It happens by deletion: the row goes and its sub-section stays |
 
 ### Action descriptor
 

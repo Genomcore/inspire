@@ -89,7 +89,7 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | `rationale-wikilink` (≥1 wikilink in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `wikilinks-resolve` (every `[[wikilink]]` resolves to a file) | warning | error | error | warning |
 | `keys-present` — what a keyed entry says (`OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6`) | warning | error | error | warning |
-| `constraints-mechanics` — vocabulary, arity and placement (`OS-E2` · `OS-E4` · `OS-E8`) | warning | error | error | warning |
+| `constraints-mechanics` — vocabulary, arity, placement and a row for every field sub-section (`OS-E2` · `OS-E4` · `OS-E8` · `OS-E9`) | warning | error | error | warning |
 | `head-referents` — every name a head mentions exists (`OS-E7` · `OS-X1`–`OS-X4`) | warning | error | error | warning |
 
 The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .inspire/bin/constraints-mechanics.sh
 #
-# Rule: `Constraints:` lines are well-formed. Three small mechanical checks
+# Rule: `Constraints:` lines are well-formed. Four small mechanical checks
 # grouped into one pass, the way `frontmatter-mechanics.sh` groups its three:
 #
 #   (1) THE `id` MARKER. Every entity document's `## Fields` table has an `id`
@@ -29,7 +29,14 @@
 #       ignored in silence, typos and all, so a claim the author believed they
 #       had made simply stopped being asserted.
 #
-#   (3) CONSTRAINT WORDS LEFT IN PROSE (W-1). A `Notes` or `Description` cell
+#   (3) EVERY FIELD SUB-SECTION NAMES A FIELD (OS-E9). A `### {field}` under
+#       an entity's `## Fields` whose name is no row of the table describes a
+#       field that does not exist, and its constraints bind nothing. It happens
+#       by deletion — the row goes and its sub-section stays — and nothing else
+#       reports it: `action-fields-in-entity` sees the row only when an action
+#       still touches the field.
+#
+#   (4) CONSTRAINT WORDS LEFT IN PROSE (W-1). A `Notes` or `Description` cell
 #       still carrying a constraint after the constraint itself moved to a
 #       `Constraints:` line — the entity's `## Fields` Notes, the descriptor's
 #       `## Inputs` Description, and the descriptor's `## Entities` field-touch
@@ -41,9 +48,9 @@
 #       token quoted as a token names the constraint rather than restating it.
 #
 # Check (2) is lifecycle-progressive (`sdd_progressive_severity`): warning at
-# draft, error at accepted and stable, warning again at superseded — and so is
+# draft, error at accepted and stable, warning again at superseded — and so are
 # `OS-E8`, since a misplaced line is something the current format's own author
-# got wrong. Check (1)'s `OS-E1` is the exception: it is one of the five
+# got wrong, and check (3)'s `OS-E9`, for the same reason. Check (1)'s `OS-E1` is the exception: it is one of the five
 # OLD-SHAPE PRESENCE classes, which are FLAT WARNINGS at every lifecycle in
 # 0.9 so that a vault upgraded to this release is not red at pre-PR and at
 # `promote` on every entity it already had — and since 0.8.0 shipped none of
@@ -206,6 +213,22 @@ check_entity() {
   while IFS= read -r h3; do
     [ -z "$h3" ] && continue
     cm_check_line "$copy" "$file" "Fields" "$h3" "$sev" "OS-E4" no
+  done < <(kh_h3_names "$copy" "Fields")
+
+  # OS-E9 — every per-field sub-section names a row of the table. A sub-section
+  # the table does not declare carries constraints that bind nothing: its row was
+  # deleted and the H3 left behind, or it was written for a field that never
+  # existed. The vocabulary pass above still reads its line, so a typo there is
+  # reported too.
+  local bare
+  while IFS= read -r h3; do
+    [ -z "$h3" ] && continue
+    bare="${h3//\`/}"
+    if ! grep -Fxq -- "$bare" <<< "$fields"; then
+      sdd_finding "$sev" "constraints-mechanics" "$file" \
+        "OS-E9: \`### $bare\` names no row of ## Fields — its constraints bind no field; add the row, or remove the sub-section"
+      sdd_count_by_severity "$sev"
+    fi
   done < <(kh_h3_names "$copy" "Fields")
 
   if [ "$has_id" = "yes" ]; then
