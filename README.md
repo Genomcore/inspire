@@ -75,7 +75,7 @@ product you build on top.
 > they're materialized into a **governed** project by `/inspire:init` (the KB
 > skeleton and the product roots, respectively), not shipped here. This list
 > covers the repo's top level, not every file `/inspire:init` writes — see
-> [`CLAUDE.md`](CLAUDE.md)'s *Structure* section for the fuller breakdown of
+> [`AGENTS.md`](AGENTS.md)'s *Structure* section for the fuller breakdown of
 > `plugin/base/`.
 
 The skills + validators + hooks under `plugin/base/` are the **guardrail layer**:

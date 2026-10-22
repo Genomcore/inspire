@@ -17,7 +17,7 @@ bump, or if the version is already tagged. `plugin/scripts/` is deliberately **n
 exempt from that check: it decides how every install behaves. The manifest is
 generated **last**, from the commit carrying the bump: it hashes
 `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
-classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
+classes afterwards invalidates it — while `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`,
 `docs/`, `base/kb/` and `base/templates/` do not perturb it.
 
 ## After the merge
