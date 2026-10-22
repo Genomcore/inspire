@@ -27,12 +27,6 @@ repo is both its source and its own marketplace.
     upgrade tell an operator's edit apart from a file that is stale — a
     distinction `.inspire.lock` cannot make, since it lives on the operator's
     machine and pre-0.3 installs often wrote no lock at all.
-  - `plugin/scripts/lib/` — the sourced units `materialize.sh` is built from:
-    `manifest.sh` (fingerprint-detect a version, assert a layout signature),
-    `hop-ops.sh` (the five operations a hop may perform, each of which either acts
-    or records), `chain.sh` (run the hops between two versions), `merge.sh` (the
-    three-way classifier and its applier), `report.sh` (the operator-facing
-    report), `common.sh`.
   - `plugin/scripts/hops/` — `layouts.tsv` (each layout's structural markers and
     where it materializes `base/`) plus one executable bash script per version that
     moved something. A version that moved nothing has no file: a hop's **absence**
@@ -334,90 +328,12 @@ asks the operator anything.
   assertion. A bare word narrows the run to the jobs whose name contains it
   (`run.sh upgrade`, `run.sh 06-hop-ops`, `run.sh golden`).
 
-  | area | covers |
-  |---|---|
-  | `plugin/test/upgrade/` | detection, layout signatures, hop ops, the chain, the merge, end-to-end upgrades — one file per concern |
-  | `plugin/test/materialize/` | `init` and `update` against scratch projects |
-  | `plugin/test/manifest/` | `gen-manifest.sh` + every shipped manifest reproduces |
-  | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
-  | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
-  | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 87-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 87 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the twelve catalog ones spawn none, because no review rule owns a component's or a pattern's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
-
-  **Every file also runs on its own**, from any directory and with no
-  environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
-  prints its own summary; the cache is an accelerator, never a dependency. The
-  shared assertion vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/`
-  holds no tests and the runner never runs it.
-
-  A run takes minutes rather than seconds, and that is fixture builds and
-  process spawns, not a hang. **Do not record wall-clock figures in this file** —
-  measurements of the same job on the same machine vary by more than the jobs
-  differ from each other, so a number here measures load rather than the estate.
-  Measure it yourself when you need to know.
-
-  The shape is stable. The run is **spawn-bound**: roughly four-fifths kernel
-  time, `fork` and `exec` rather than computation. So raising `-j` past the core
-  count buys nothing, and the lever that works is "spawn fewer processes" rather
-  than "schedule better". Cost follows the process count almost exactly — the
-  `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
-  matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 87 and 76 fixtures, because each
-  fixture spawns a rule and the validators under it; `run.sh` **shards** both
-  (see below). Next come a handful of `upgrade/` and `materialize/` files that
-  build several period-correct fixtures each.
-
-  Every job is **parallel-safe**: every scratch tree is a private `mktemp` one
-  and the repo is only ever read, so any number of copies — several worktrees at
-  once, the same file twice over, a single file beside a full run — run
-  concurrently without interfering. The one shared tree is the fixture cache each
-  `run.sh` builds inside its own `mktemp -d`: read-only to the jobs,
-  fingerprinted after the build and again before exit, so a job that writes into
-  it fails the run and the failure names the cache rather than the job. Keep the
-  cache inside `mktemp -d`: a fixed path under `/tmp` produces phantom failures
-  in the upgrade suite.
-- Fixtures cost the repo nothing: every tag ships a runnable installer, so
-  `git archive <tag>` plus that era's own installer yields a genuine
-  period-correct project tree. `plugin/test/lib/fixtures.sh` does this — prefer it
-  over hand-built trees, and note that a pre-0.3 project legitimately retains
-  `.inspire/{bin,hooks,skills,templates}` as the staged source `install.sh` copied
-  FROM. An assertion on the destination alone is **vacuous** here: "the
-  destination exists" passes whether or not the code under test ran, and seven
-  assertions in this repo have been vacuous for exactly that reason. Assert the
-  source side too, or pick a path the old installer cannot have staged. When unsure,
-  stub the function to a no-op *on a copy* and confirm the assertion fails.
+  Test-suite internals — golden-job sharding, running one file alone, why a run
+  is spawn-bound, parallel safety and the fixture cache, and how to build
+  period-correct fixtures without writing vacuous assertions — live in
+  `plugin/test/CLAUDE.md`. Do not record wall-clock figures in either file.
 - **Symlinks are not supported** anywhere in a managed path. Nothing INSPIRE ships is
   one; this is a declared limitation, not a gap to close.
-- A release needs both `plugin/.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json` bumped together, a matching
-  `plugin/manifests/<version>.json`, and a `CHANGELOG.md` section — the root
-  changelog is the release-note channel, one section per release, and the
-  convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
-  blocks `gh pr create` if the two versions diverge, if the runtime changed without a
-  bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
-  exempt from that check: it decides how every install behaves. The manifest is
-  generated **last**, from the commit carrying the bump: it hashes
-  `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
-  classes afterwards invalidates it — while `CHANGELOG.md`, `CLAUDE.md`,
-  `docs/`, `base/kb/` and `base/templates/` do not perturb it.
-- **Merging is not releasing.** Two steps follow the merge, in this order:
-  1. **Cut a lightweight tag `v<version>` on the merge commit** —
-     `git tag v<version> <merge-sha> && git push origin v<version>`. Every
-     release does it this way: `v0.9.0`, `v0.9.1` and `v0.9.2` all point at
-     their PR's merge commit, not at the bump commit inside it.
-  2. **Publish a GitHub release** for that tag, titled `v<version>`, whose body
-     is that version's `CHANGELOG.md` section with the `## <version> — <date>`
-     heading dropped — `gh release create v<version> --title v<version>
-     --notes-file <notes>`. The changelog section *is* the release notes; there
-     is no second place to write them.
-
-  The tag carries two checks, and both go quiet without it.
-  `plugin/test/manifest/03-reproduction-sweep.sh` checks an
-  **untagged** manifest by regenerating from the commit the manifest itself
-  names — self-referential, so it only proves the manifest describes the commit
-  it claims to; the **tagged** path regenerates from the tag with `.commit`
-  excluded, which is the check that proves the manifest describes what was
-  actually released. And `fixture_from_tag` builds every period-correct fixture
-  with `git archive <tag>`, so a version that was never tagged can never become
-  a fixture, and the upgrade suite permanently loses the ability to test
-  upgrading *from* it.
+- Releasing (version bumps, the hash manifest, `CHANGELOG.md`, and the post-merge
+  tag + GitHub release — **merging is not releasing**) follows the
+  `inspire-release` skill in `.claude/skills/`.
