@@ -43,8 +43,8 @@ Direction:
 Open design questions:
 
 - **Identity.** `docs/adr/adr-artifact-trust.md` records who endorsed an artifact.
-  `docs/adr/adr-upgrade-path.md`, decision D11 ("Git is read-only against the
-  operator's repository"), means authorship cannot be read from git. Profiles need a
+  The rule in `docs/adr/adr-upgrade-path.md`, section "Git is read-only against the
+  operator's repository", means authorship cannot be read from git. Profiles need a
   stable operator identity from somewhere else.
 - **Scope conflict.** `adr-artifact-trust.md` defines trust as "not a gate, not a review
   rule, not a quality score, not a maturity model". Weighting by profile moves toward a

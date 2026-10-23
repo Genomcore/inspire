@@ -60,8 +60,9 @@ Proposed shape:
 - [ ] Trust stamps (`plugin/base/bin/trust.sh`) state which file they cover, or that
       they cover both.
 - [ ] Existing single-file ADRs keep working. Either a reader accepts both shapes, or an
-      explicit migration moves them in line with `docs/adr/adr-upgrade-path.md` decision
-      D10, which keeps the KB additive.
+      explicit migration moves them. That migration must respect the upgrade rule in
+      `docs/adr/adr-upgrade-path.md`, section "The KB is additive in both init and
+      update".
 
 ## Notes
 

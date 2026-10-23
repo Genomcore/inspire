@@ -64,9 +64,9 @@ link is enough" closes the question without a new artifact.
   - An unedited shipped `inspire-spike` file is deleted, because the upgrade merge marks
     files that INSPIRE no longer ships as "no longer part of INSPIRE".
   - An edited one is kept.
-  - An existing project's `06_spikes/` content is left in place. Under
-    `docs/adr/adr-upgrade-path.md` decision D10, the KB is additive and has no delete
-    outcome.
+  - An existing project's `06_spikes/` content is left in place. The upgrade rule in
+    `docs/adr/adr-upgrade-path.md`, section "The KB is additive in both init and
+    update", gives the KB no delete outcome.
   - The upgrade report tells the operator that the spike layer is retired.
 
 ## Notes
