@@ -1,9 +1,15 @@
 # tracker/ — the template's own roadmap tracker
 
-Two ticket families live here. **`F01`–`F13`** are the post-0.6 release foci — one ticket
+Three ticket families live here. **`F01`–`F13`** are the post-0.6 release foci — one ticket
 per focus, `epic: roadmap`. **`070-*`** are follow-ups filed at the 0.7.0 close and its
 PR review — small, independently schedulable items, `epic: follow-up`; the prefix names
-the release that surfaced them, not the release that fixes them.
+the release that surfaced them, not the release that fixes them. **`B<n>-*`** are decisions
+from the maintainers' design reviews held while training new operators, `epic: roadmap`;
+`B1` is the first review, `B2` the next, and so on. Those reviews' working notes are not
+public, so every `B<n>` ticket opens with an `## Origin` section that states the decision
+in full. A reader needs nothing outside this repository to act on it. A decision that
+needs no work in this repository gets no ticket; it is recorded on the ticket or ADR it
+affects.
 
 This is a plain root-level folder, **not** a materialized `inspire_kb/` — the template repo
 is not a governed project, and a root `inspire_kb/` here could confuse the upgrade
@@ -16,7 +22,7 @@ deviations:
   release-plus-slug form (`070-glossary-population`) instead of random `TASK-xxxxxx`.
   Random ids exist for concurrent creation in live projects; a roadmap with stable natural
   keys reads better by name.
-- **Extended `skills:` enum.** Tickets may name `extract` and `lesson`; the shipped enum
+- **Extended `skills:` enum.** Tickets may name `extract`, `lesson` and `spike`; the shipped enum
   predates those skills.
 
 ## Three rules for filing
