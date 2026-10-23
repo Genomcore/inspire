@@ -2,7 +2,7 @@
 id: F11-lessons
 title: "F11 LESSONS — the loop closes where it was opened"
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-10-23
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -39,9 +39,17 @@ Hard dependency: F05-restruct seeds the capture triggers — without them the ca
 accumulates the signal this loop closes on. **Discharged**: F05 shipped in 0.7.0
 (`d93eb59` — the pointer blockquote in 13 skills plus
 `_references/lesson-capture.md`, which `inspire-lesson` owns), so this ticket is
-unblocked and the catalog is now accumulating. The upstream observer stays shelved: it needs
-this local loop's output, plus infrastructure and an owner that do not exist. Bundles
-LOOP-02..04 + LOOP-06.
+unblocked and the catalog is now accumulating. The upstream observer is out of this
+ticket's scope, and out of INSPIRE's (see below). Bundles LOOP-02..04 + LOOP-06.
+
+**2026-10-23, decided at a maintainers' design review.** Collecting lessons across
+projects is not INSPIRE's job. It belongs to the INSPIRE Factory, a separate service, not
+part of this repository, that runs emanation for every project in the company and so sees
+all of them. INSPIRE keeps local capture (`/inspire-lesson`) and this ticket's local
+consumption loop. The upstream observer described in
+`docs/adr/adr-runtime-lifecycle-and-lessons.md` (the component that collects lessons from
+projects and generalizes them into core lessons) is not built in this repository. That ADR
+needs an amendment that names the Factory as the observer's owner.
 
 ## Notes from the 0.7.0 close (C5-P2)
 
