@@ -30,8 +30,9 @@ restructuring, not a rename. It has three parts:
 2. **Typed file extensions.** Each artifact type gets its own file extension, such as
    `.adr.md`, `.entity.md` and `.action.md`, so a file's type no longer depends on the
    directory it sits in.
-3. **Surfaces and modules.** Evaluate how the new layout aligns with surfaces, because
-   the review found that surfaces and modules may overlap.
+3. **Surfaces and modules.** Define the difference between a surface and a module. The
+   review found that the two concepts may overlap, and the new layout depends on
+   whether they are two concepts or one.
 
 ## Description
 
@@ -127,19 +128,44 @@ the extensions change:
 - **Frontmatter.** Whether the extension replaces any frontmatter field that records
   type today, or must agree with it.
 
-### Part 3: surfaces and modules
+### Part 3: what is the difference between a surface and a module?
 
-A *surface* is one delivery unit of the product (`ui`, `headless` or `lib`), declared in
-a project's `00_bootstrap/surfaces.md`. A *module* is a partition of the domain. Today
-screens are placed by surface first, then module:
-`05_screens/{surface}/{module}/{screen}.md`. The review found that the two concepts may
-overlap. The design states:
+The question is conceptual: what each concept is, and whether INSPIRE needs both.
+Where surfaces sit in the new layout follows from the answer.
 
-- the boundary between surfaces and modules;
-- where surface scoping sits once the module owns the directory under `01_spec/`:
-  inside `{module}/screens/`, or in frontmatter;
-- whether `docs/adr/adr-suites-and-surfaces.md` needs an amendment. That ADR rejected a
-  `module/surface/screen` order for screens, and this change reopens that question.
+The current definitions come from `docs/adr/adr-suites-and-surfaces.md`:
+
+- A **module** partitions the domain. It answers *what capabilities exist*. All
+  surfaces share one module registry and one domain tree.
+- A **surface** is a deliverable that faces someone: `ui` (a person looks at it),
+  `headless` (an API, worker or event consumer) or `lib` (a shared package). It answers
+  *where a capability is delivered*. A project declares its surfaces in
+  `00_bootstrap/surfaces.md`, and a module may be delivered by several surfaces.
+
+On paper, the two are independent axes. In practice, the same ADR ties them together in
+three places:
+
+- **Services are partitioned by module.** When several `headless` surfaces own
+  capabilities, the split between them is recorded per module ("the admin service
+  serves `tenancy` and `quotas`"). With one service per module, a surface and a module
+  name the same thing.
+- **Service boundaries redraw module boundaries.** The ADR's rule is that one module's
+  actions wanting to live in two services means the module is wrong, and the module is
+  split. So a surface boundary can force a module boundary.
+- **Screens are indexed by both.** Screens are placed by surface, then module:
+  `05_screens/{surface}/{module}/{screen}.md`.
+
+The design answers:
+
+- What each concept is, in one definition each, stated so that a reader can tell for
+  any artifact whether it belongs to a module, a surface, or both.
+- Whether they are two concepts or one. Possible answers:
+  - two independent axes, with sharper definitions;
+  - one is a view of the other;
+  - they merge into one concept.
+- What follows for the layout under `01_spec/`, for the `surfaces:` frontmatter field,
+  and for `docs/adr/adr-suites-and-surfaces.md`, which may need amending or
+  superseding.
 
 ### Other constraints the design must handle
 
@@ -171,8 +197,10 @@ to typed extensions breaks that rule. The design chooses one of three options:
       naming rule and the uniqueness rule for each type.
 - [ ] The ADR lists the validators, `sdd_find_*` helpers, templates and skills that
       change because of the extensions and the new layout.
-- [ ] The ADR settles the surface/module boundary. "They do not overlap, and here is the
-      boundary" is a valid answer.
+- [ ] The ADR defines the difference between a surface and a module, and says whether
+      INSPIRE keeps both concepts. "Two independent axes, defined as follows" is a valid
+      answer. The ADR also states what its answer changes in the layout and in
+      `adr-suites-and-surfaces.md`.
 - [ ] The ADR names where cross-module ADRs and the shared catalog live, and how
       cross-module links resolve.
 - [ ] The ADR states how an existing project reaches the new layout, and how that path
