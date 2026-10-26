@@ -12,6 +12,11 @@ PLUGIN_ROOT="$HERE/.."
 
 MZ="$PLUGIN_ROOT/scripts/materialize.sh"
 
+# kb_deletes <plan log> — the deletions inside the KB, which is everything hop
+# 0.7.0 retires. The plan's own delete total also counts whatever later releases
+# dropped from the runtime, and those are not this file's subject.
+kb_deletes() { grep -c '^  delete   inspire_kb/' "$1"; }
+
 # The version-patched fake plugin root of test-upgrade.sh:1575-1592, which
 # pins this block's TARGET at 0.7.0 whatever plugin.json says next.
 fake7="$(mktemp -d)"
@@ -35,25 +40,25 @@ printf -- '---\nkind: module-hub\nprefix: BILL\n---\n\n# Billing\n' \
 h7_reg="$p/inspire_kb/02_modules/_index.md"
 grep -v '_e\.g\._' "$h7_reg" > "$h7_reg.tmp" && mv "$h7_reg.tmp" "$h7_reg"
 printf '| Billing | `BILL` | [[billing]] |\n| Auth | AUTH | [[auth|Auth]] |\n' >> "$h7_reg"
-h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$w/log")"
 eq "derive-equal: hub-backed rows behind pristine prose retire silently" \
-   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, (.ask|length)]')" "[3,0]"
+   "$(printf '%s' "$h7_plan" | jq -cr --argjson d "$(kb_deletes "$w/log")" '[$d, (.ask|length)]')" "[3,0]"
 
 # BLOCKER-1 regression: authored prose around a PERFECTLY-synced table is
 # content the row compare cannot see — the non-row gate must route it to ask.
 printf '\nTeam note: check with Ops before renaming modules.\n' >> "$h7_reg"
-h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$w/log")"
 eq "derive-equal is gated on pristine prose: an added note asks instead" \
-   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   "$(printf '%s' "$h7_plan" | jq -cr --argjson d "$(kb_deletes "$w/log")" '[$d, .ask]')" \
    '[2,["inspire_kb/02_modules/_index.md"]]'
 
 # BLOCKER-2 regression: zero hubs and a deleted example row must not compare
 # "equal to nothing" and retire — nothing to derive from is not a proof.
 rm -f "$p/inspire_kb/02_modules/auth.md" "$p/inspire_kb/02_modules/billing.md"
 grep -v '_e\.g\._' "$seeds7/02_modules__index.md" > "$h7_reg"
-h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
+h7_plan="$(bash "$MZ" --mode plan --plugin-root "$FP7" --project-root "$p" 2>"$w/log")"
 eq "an empty derivation proves nothing: table-less registry asks" \
-   "$(printf '%s' "$h7_plan" | jq -cr '[.verdicts.delete, .ask]')" \
+   "$(printf '%s' "$h7_plan" | jq -cr --argjson d "$(kb_deletes "$w/log")" '[$d, .ask]')" \
    '[2,["inspire_kb/02_modules/_index.md"]]'
 fixture_cleanup "$w"
 rm -rf "$fake7"

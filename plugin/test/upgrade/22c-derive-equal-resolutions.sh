@@ -12,6 +12,11 @@ PLUGIN_ROOT="$HERE/.."
 
 MZ="$PLUGIN_ROOT/scripts/materialize.sh"
 
+# kb_deletes <plan log> — the deletions inside the KB, which is everything hop
+# 0.7.0 retires. The plan's own delete total also counts whatever later releases
+# dropped from the runtime, and those are not this file's subject.
+kb_deletes() { grep -c '^  delete   inspire_kb/' "$1"; }
+
 # The version-patched fake plugin root of test-upgrade.sh:1575-1592, which
 # pins this block's TARGET at 0.7.0 whatever plugin.json says next.
 fake7="$(mktemp -d)"
@@ -36,7 +41,7 @@ eq "diverged plan asks about both files (ask[])" \
 eq "diverged plan's merged ask count agrees" \
    "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "2"
 eq "the two pristine TOCs still retire around the questions" \
-   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "2"
+   "$(kb_deletes "$h7_plan_log")" "2"
 check "the footer counts the same two decisions" \
   "grep -q '2 decision(s) needed' '$h7_plan_log'"
 h7_up="$(bash "$MZ" --mode update --plugin-root "$FP7" --project-root "$p" 2>/dev/null)"
