@@ -5,6 +5,12 @@ nobody watching, and what the operator does the morning it stops. Nothing here
 ships as an executable — a wrapper would couple the runtime to one harness's CLI
 flags, the same direction rule that keeps the tool from calling an agent.
 
+INSPIRE Factory is the other way to run emanation unattended: a separate service
+that runs each unit in containers. It reads the image, services, setup and checks
+from a committed `.inspire/emanate.yml` and refuses to start without one. Write it
+with `/inspire-emanate-config init` before the first factory run; nothing below
+applies to the factory.
+
 ## The headless call
 
 The harness's own non-interactive mode runs one slash-command invocation to
