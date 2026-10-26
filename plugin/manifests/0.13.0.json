@@ -1,5 +1,5 @@
 {
-  "commit": "5aa110bb191e964b0db5e3bfff0b04425a94a592",
+  "commit": "83950a6f5c62e67339d026fe0ced83c4b33e4da3",
   "files": {
     ".claude/agents/README.txt": "af28a568eb5928c374c565274e2316b2be3083b1201449f7aa7ffcfa76d02f3d",
     ".claude/agents/inspire-contracter.md": "66556bab3578d1278bc748e7899f0df2f297f00f8e079cbe35e5912d88e688f3",
@@ -16,7 +16,7 @@
     ".claude/skills/_references/conventions/_example.md": "ad2c3ceef85ceb8c991e1715a16b8b784e55ae60a4b8cec85a4dca3f1ab92809",
     ".claude/skills/_references/conventions/graphql.md": "758f11355e1b3b36a9c7f516bcb72b2cfb16dcb937eda8f4098e0f61247b58c3",
     ".claude/skills/_references/conventions/rest.md": "101c34bd332321436fc7d88fd516f8b3622093cde3091bda5cba644719759853",
-    ".claude/skills/_references/derived-contract.md": "a08dceae0db95fa7d3917a5b57e1099f48d3fe04e1452a147635ea59fb9c08da",
+    ".claude/skills/_references/derived-contract.md": "919c5e0fa6db6106039c57e2929723bcb101cfe7838b6cea03dd60c3ef1ad298",
     ".claude/skills/_references/emanation-plan.md": "c34471ee04f5365a2f533d9ed934832d8561eac8521083d319b03e424326c31b",
     ".claude/skills/_references/findings-format.md": "1154754da10c18d14c3c3bedb5192078dc2603bf4a6a3f43b2d3260a08a26156",
     ".claude/skills/_references/gate-verdict.md": "c4cb0afb55649e0195e81def7d4780f1ebda780eda58c204f198fbf2f69cb74b",
@@ -28,7 +28,7 @@
     ".claude/skills/_references/product-roots.md": "ca8bf5add8306f77048b1c6dfe80c71e624788ae8d637322f13a88bac34b0384",
     ".claude/skills/_references/quality-gates.md": "7820a6b362288844682b1c9c267acfcf2d8d4c0c2eb69487bfff3b95a9fafd49",
     ".claude/skills/_references/stack-skill-example.md": "628a1611bddab5c1307226e397ef248e9cc37cbee0107ea34efed78777998b3b",
-    ".claude/skills/_references/stack-skills.md": "66c5e1e44145ab0d64b231a965d73c12530514e7885fb6814d4cc805fb39178a",
+    ".claude/skills/_references/stack-skills.md": "0b5fcdfcdda137998091784ea0defb87f6694c90e73df50445f94adb879290f5",
     ".claude/skills/_references/surface-scope.md": "151a7f0e0c6709b86ee07d333db011fcda9843d370d2e7d0e8a142388d778eca",
     ".claude/skills/_references/trust-stamps.md": "6ec6685ccb59fba803d3e56e9c54461989123db6479a4667d6442238bc6430ca",
     ".claude/skills/_references/ui-reference.md": "f0298134a1cbfca9c88396014855cb37e17f239c31a46cc071cb4b27a0cdb905",
