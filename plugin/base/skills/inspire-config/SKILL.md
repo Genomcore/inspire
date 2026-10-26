@@ -1,11 +1,11 @@
 ---
-name: inspire-emanate-config
+name: inspire-config
 description: "Write and check the project's .inspire/emanate.yml, the file that tells INSPIRE Factory which image, services, environment, setup and checks every unit runs with: derive a proposal from stack.md and its profiles, ask what they cannot answer, and validate it with the factory's own reader. Use when preparing a project for its first factory run, after a stack change, or when the factory refuses the file. Operator work only: never part of coding a unit."
 argument-hint: "init|review"
 user-invocable: true
 ---
 
-# /inspire-emanate-config — The factory's project file
+# /inspire-config — The factory's project file
 
 ## Scope
 
@@ -34,10 +34,10 @@ orchestrator, and it never reads this file. The two share the source, which is
 
 ## Invocation
 
-- `/inspire-emanate-config init` — derive, ask, validate, then write the file on
+- `/inspire-config init` — derive, ask, validate, then write the file on
   approval. On an existing file it proposes a migration, never a rewrite
   ([`references/derive.md`](references/derive.md) § Updating an existing file).
-- `/inspire-emanate-config review` — read-only: validate the committed file and
+- `/inspire-config review` — read-only: validate the committed file and
   list every warning from [`references/validate.md`](references/validate.md).
   Writes nothing.
 

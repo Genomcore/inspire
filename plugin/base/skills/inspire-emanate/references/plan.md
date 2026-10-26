@@ -6,7 +6,7 @@ run, and it is what `run` executes internally at t=0 before it builds anything.
 
 This plan is the in-session loop's. A run on INSPIRE Factory plans in the factory
 instead, and refuses to start without a committed `.inspire/emanate.yml`, which
-`/inspire-emanate-config` writes.
+`/inspire-config` writes.
 
 ```
 /inspire-emanate plan [until <goal>] [--scope PATH]... [--ceiling N] [--reemanate SEL]...

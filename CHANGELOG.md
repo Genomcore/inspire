@@ -17,7 +17,7 @@ directory and changes no validator, so a vault that passed 0.11.1 passes 0.12.0.
 
 ### Added
 
-- **`/inspire-emanate-config`.** INSPIRE Factory runs a project from one committed
+- **`/inspire-config`.** INSPIRE Factory runs a project from one committed
   file, `.inspire/emanate.yml`: the image every unit runs in, the services its tests
   reach, the environment, the setup, and the phases of checks that end in the claims
   check. The skill explains that format, derives a proposal from `stack.md` and the

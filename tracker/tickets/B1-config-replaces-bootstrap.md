@@ -162,15 +162,15 @@ Each needs a home:
   is a service in the environment that a toolchain's `depends_on` names. Confirm this
   during implementation.
 
-**Amended 2026-10-26 (emanate-3, `/inspire-emanate-config`):** the Factory no longer
+**Amended 2026-10-26 (emanate-3, `/inspire-config`):** the Factory no longer
 reads a spec config or scans the repository. Since its project-conventions release
 it reads one committed file, `.inspire/emanate.yml` — `image`, `services`, `env`,
 `setup` and `phases` of checks — and refuses a run without it. The new skill
-`/inspire-emanate-config` derives that file from `stack.md` and the profiles,
+`/inspire-config` derives that file from `stack.md` and the profiles,
 validates it with the Factory's own reader, and never starts a service. That
 narrows this ticket. `.inspire/config.json` keeps `source_root` and
 `prototype_root` but drops `toolchains`, `journeys` and `environment`; the compose
 environment, the Dockerfiles and `config-check` are withdrawn; the "What the
 Factory does with it" section above no longer holds. A wizard that answers the
-technical questions hands over to `/inspire-emanate-config` instead of writing a
+technical questions hands over to `/inspire-config` instead of writing a
 second description of the same environment.

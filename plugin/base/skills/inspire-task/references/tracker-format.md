@@ -51,7 +51,7 @@ related_to: [TASK-xxx]             # list of IDs
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
   domain | screens | prototype | workspace | adr | task | code | surface |
-  emanate-config` — which
+  config` — which
   skills cover the work. `[]` means the work doesn't map to a skill (tooling, ops,
   packaging).
 - **`surfaces`**: optional — a list of roster ids or `all`; useful for filtering suite

@@ -1,5 +1,5 @@
-# Emanate config — the format
-> Part of [inspire-emanate-config](../SKILL.md). Read when the entry's index routes here.
+# Config — the format
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 `.inspire/emanate.yml` has five top-level keys. The factory's reader is the
 authority, and this page summarizes it: when the two disagree, the reader wins

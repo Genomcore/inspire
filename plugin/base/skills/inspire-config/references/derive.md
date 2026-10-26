@@ -1,5 +1,5 @@
-# Emanate config — deriving the file
-> Part of [inspire-emanate-config](../SKILL.md). Read when the entry's index routes here.
+# Config — deriving the file
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 `stack.md` and the profiles give the file its structure: paths, services, setup,
 commands and claim roots. They never give the image, exact tags, or which commands

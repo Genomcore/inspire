@@ -117,7 +117,7 @@ repo is both its source and its own marketplace.
         authors role judgment of its own.
       - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
-        `emanate-config` (writes and validates `.inspire/emanate.yml`, the one file
+        `config` (writes and validates `.inspire/emanate.yml`, the one file
         INSPIRE Factory reads to run a project — image, services, env, setup and
         phases of checks — derived from `stack.md` and the profiles and checked
         with the Factory's own reader; `init` · `review`),

@@ -93,7 +93,7 @@ observer, keyed by `id` and the date prefix, not inside the fork.
 
 - **`skill`**: `bootstrap | module | feature | domain | screens | prototype | spike |
   adr | code | extract | task | workspace | lesson | surface |
-  emanate-config`, or `runtime` for
+  config`, or `runtime` for
   cross-cutting lessons (install, hooks, validators, the methodology itself).
 - **`category`** — why the lesson exists (descriptive, for the observer's clustering):
   - `preference` — a house convention / the way this project wants it done.

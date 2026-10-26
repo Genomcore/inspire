@@ -1,5 +1,5 @@
-# Emanate config — validating the file
-> Part of [inspire-emanate-config](../SKILL.md). Read when the entry's index routes here.
+# Config — validating the file
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 Validation has three layers. The factory's reader decides the format. This skill
 then checks what the reader cannot see. The image probe, which needs Docker, is
