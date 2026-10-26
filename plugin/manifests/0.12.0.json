@@ -1,5 +1,5 @@
 {
-  "commit": "9043fbcf95d6410672957ae23a7be14d5e81735d",
+  "commit": "a2250a55d4d92c1a8c341a9f018e33777ba20cd1",
   "files": {
     ".claude/agents/README.txt": "af28a568eb5928c374c565274e2316b2be3083b1201449f7aa7ffcfa76d02f3d",
     ".claude/agents/inspire-contracter.md": "66556bab3578d1278bc748e7899f0df2f297f00f8e079cbe35e5912d88e688f3",
@@ -103,10 +103,10 @@
     ".claude/skills/inspire-domain/references/type-mapping.md": "1b1d97126bea4446beaffb9da7c7692e55bb36a4fb75e443c32a89a424855a8a",
     ".claude/skills/inspire-domain/templates/action.md.template": "41bba735389ca4738d06e202211e16da5175144939d0759640d6ae4db9a1b68e",
     ".claude/skills/inspire-domain/templates/entity.md.template": "38c2eb7c356d760d6d42b2b3f06ac8c5f38176edb05c705cd1f15cac86709a4f",
-    ".claude/skills/inspire-emanate-config/SKILL.md": "82717dc1f8da5addaa26aff59465818dce6760eb41c62b3f8098cf064a5f1c4c",
-    ".claude/skills/inspire-emanate-config/references/derive.md": "73ba4aa2329a1cf214e42c67cd32ba044462487acf1299e83c93ec6b0a40750b",
-    ".claude/skills/inspire-emanate-config/references/format.md": "33fc17c5a310c4d8beb78169c373ce943c6ea7103365441807e8e41bd06c13bb",
-    ".claude/skills/inspire-emanate-config/references/validate.md": "bba0887b585a1de4d575a77e56607ed5e105dc1034e2899d97bc7f940d2ca871",
+    ".claude/skills/inspire-emanate-config/SKILL.md": "b3f244dddc3ff94a32d62b1581ace1c4133b0247f18181d09b754aed228bf54c",
+    ".claude/skills/inspire-emanate-config/references/derive.md": "e6aa39473e70f52073e8593f06c919a08c5d17cd162b960adf8ac56670213359",
+    ".claude/skills/inspire-emanate-config/references/format.md": "48443c02e14a4f00a66f793457dab6f14af916c1dccf731ef0e8adce44595dbc",
+    ".claude/skills/inspire-emanate-config/references/validate.md": "77658c09b2e72f526572835ceef7a89c81f4dd4f873700006df683eba1a6779b",
     ".claude/skills/inspire-emanate/SKILL.md": "fffa772295ff7e6132379afe0b88048c9528c5565f03ab3cf282d54ea74db6a7",
     ".claude/skills/inspire-emanate/references/plan.md": "ff947af96c45044827b3ecaf99686d32c8959259e4cf77c84c5cb8ceb21048d3",
     ".claude/skills/inspire-emanate/references/report-skeleton.md": "e844797c84ea773f635e489cfa49b2a30bc60455a2c86bb7d602b12db4fc7617",
