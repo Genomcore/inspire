@@ -288,10 +288,10 @@ derived by the TypeScript producer that replaces `emanate-derive.sh`;
 the Bash deriver does not emit them and retires with that move.
 
 - **The profile set** is the suite-wide one: `stack.md`'s frontmatter
-  `profiles:` list, or the inference fallback from its `## Layer: Name`
-  headings — the resolution `/inspire-emanate plan` uses (`plan-stack.sh`).
-  Each id reads the skill whose frontmatter `stack:` is that id; an id no skill
-  declares is skipped.
+  `profiles:` list, plus the language each declared skill names in `language:`.
+  Nothing is inferred from `stack.md`'s headings: no `profiles:`, no stack
+  skills. Each id reads the skill whose frontmatter `stack:` is that id; an id
+  no skill declares is skipped.
   A surface's own `**Profiles:**` list is not consulted.
 - **The binding profile** is the one profile in that set whose frontmatter says
   `layer: backend` and whose `## Bindings` section is not blank. None: the action

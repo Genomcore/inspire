@@ -17,6 +17,13 @@ and the skill's own name does not matter. Stack skills are **data the coding age
 reads** — they never change the fact that the KB (`00_bootstrap` → `04_domain`) is
 the source of truth.
 
+`profiles:` is the only source of a project's stack: nothing is inferred from
+`stack.md`'s headings, so a project with no `profiles:` gets no stack skill. A
+framework skill's `language:` brings its language skill along (`profiles: [react,
+nestjs]` also gets `typescript`), and a skill's `layer:` decides which units it
+reaches: `frontend` or `backend` units only, every unit when it has no `layer:` or
+any other value.
+
 INSPIRE ships `inspire-code-react`, `inspire-code-nestjs`, `inspire-code-angular`,
 `inspire-code-ios`, `inspire-code-android` (framework skills) and
 `inspire-code-typescript` (a language skill). A project adds its own beside them.
