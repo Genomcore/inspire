@@ -86,6 +86,14 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
+- **Review checks.** Optional, and only when the operator wants them (Q13): each
+  costs a reviewer session per round and its findings cost repairs. One phase
+  named `review`, after `tests`, with one check per concern. The default reads
+  `'{profiles}#Review focus'`: today the android, angular, ios, nestjs and react
+  profiles carry that section. Add a project skill or a file (`CLAUDE.md`, a
+  section of a conventions document) only when the operator names it, and give
+  each check a one-sentence `focus`. Every skill and `read` entry must be
+  committed before the run.
 - **The claims check.** The last phase, alone. Roots are literal directories that
   hold tests: `<source_root>/<package>/test`, plus `src` where tests sit beside the
   code (NestJS `*.spec.ts`, Rust). Never a glob copied from `## Test conventions`,
@@ -117,6 +125,7 @@ sources leave it open.
 | Q10 | Are there generated artifacts (Prisma, codegen)? | the recipe has no such row | none |
 | Q11 | Does any test need a real secret, or `setup` a private registry? | the code reads an external credential | no — the factory has no channel for secrets; say so |
 | Q12 | Does the machine reach the internet through a proxy or a mirror? | always | no; if yes, `HTTP(S)_PROXY` plus a `NO_PROXY` naming `orchestrator` and every service |
+| Q13 | Add a review phase? With which rules: the profiles' `## Review focus`, project skills, other files? | a profile has `## Review focus`, or the operator asks | no review; if yes, `'{profiles}#Review focus'` |
 
 ## What is never deduced
 
@@ -125,6 +134,7 @@ sources leave it open.
 | `image.name` and its registry | no profile names an image, and an unpullable one stops the run |
 | exact service tags | the prose gives only the major version |
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
+| whether to review, and against which rules | a review is a cost the operator chooses |
 | secrets | `env` is committed and shown to every agent |
 
 ## An empty project

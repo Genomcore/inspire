@@ -102,9 +102,11 @@ variables belong in `env`.
 | `name` | a nonempty label | `… phases[<i>].name must be a nonempty string` |
 | `checks` | a nonempty list of mappings; a bare `- npm test` is an error | `… phase <name> checks must be a nonempty list` · `… phases[<i>].checks[<j>] must be a mapping` |
 | (shape) | exactly one `claims` check, alone in the last phase | `…: the claims check must be the only check of the last phase` |
-| (shape) | at least one phase of `run` checks before it | `…: at least one phase of run checks must come before the claims phase` |
+| (shape) | at least one phase of `run` or `review` checks before it | `…: at least one phase of run checks must come before the claims phase` |
 
-A check holding the key `claims` is a claims check; any other check is a run check.
+A check holding the key `claims` is a claims check, one holding `review` is a
+review check, and any other check is a run check. Run and review checks may share
+a phase.
 
 ### Run checks
 
@@ -117,6 +119,53 @@ There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
 command starts with `set -o pipefail`. Agents run these same commands, exactly as
 written.
+
+### Review checks
+
+A review check runs no command: a reviewer agent judges the unit's change against
+the rules the check gives it.
+
+| Key | Rule | Factory error |
+|---|---|---|
+| (keys) | only `name` and `review` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, review` |
+| `review` (keys) | a mapping with only `skills`, `read`, `focus` | `… check <name> review has unknown key <k>; allowed keys: skills, read, focus` |
+| `skills` | a list of skill names: lowercase letters, digits, hyphens | `… check <name> review.skills must list nonempty strings` · `… check <name>: skill <s> must be the name of a project or factory skill` |
+| `read` | a list of entries, below | `… check <name> review.read must list nonempty strings` |
+| (shape) | at least one of `skills` and `read` | `… check <name>: a review needs skills or read to know what to check` |
+| `focus` | optional; one sentence that narrows what to judge | `… check <name> review.focus must be a nonempty string` |
+
+A `read` entry is a file in the repository, whole (`CLAUDE.md`) or one `##`
+section of it (`docs/api.md#Errors`), or `{profiles}#<Section>`: that section of
+every profile `stack.md` lists, skipping the profiles without it. A skill is a
+factory skill or a project skill committed at `.claude/skills/<name>/SKILL.md`
+with a frontmatter `description`.
+
+The reader checks the shape only. The runner resolves every review before the
+release is created, reading the committed files at `HEAD`, and stops at the first
+of:
+
+- `Two review checks are named <name>; review check names must be unique`
+- `Review check <name>: skill <s> is neither a factory skill nor committed at .claude/skills/<s>/SKILL.md`
+- `Review check <name>: skill <s> has no description in its frontmatter`
+- `Review check <name>: read <path> must be a file inside the repository`
+- `Review check <name>: <path> is not committed`
+- `Review check <name>: read <entry> found no file` · `… found no ## <Section> section`
+
+How the factory runs a review:
+
+- The reviewer reads the worktree read-only, with only the check's skills, the
+  `read` context and the `focus`, and judges the diff from the release to the
+  unit's `HEAD`. Lockfiles are left out of that diff.
+- Only a finding on a file the unit changed, and on a line it added, counts. Any
+  counted finding turns the check red, and a repair agent receives the findings
+  like the output of a red run check.
+- After a repair, the review rechecks its earlier findings and judges only what
+  the repair added; code an earlier review accepted never fails later.
+- A reviewer that gives no verdict twice fails the unit without a repair.
+- `review_model` in `emanate.json` picks the reviewer's model; without it the
+  reviewer uses `model`.
+- Each review costs a model session per round, and its findings cost repairs.
+  Narrow it with `focus`, and order it after the cheaper phases.
 
 ### The claims check
 
@@ -139,10 +188,11 @@ or `.venv` makes the scan read all of it. Point at the directories that hold tes
   that phase's red checks together.
 - Each new try starts again from the first phase. `max_tries` in `emanate.json`
   bounds the repairs.
-- The claims check runs only once every run check is green.
+- The claims check runs only once every run and review check is green.
 - Order phases from cheap to expensive: lint and types, then tests, then claims.
 
-Agents cannot change this file during a run: it is a protected path. A wrong
+Agents cannot change this file during a run: it is a protected path, and so are
+the project skill folders and the `read` files a review check uses. A wrong
 command, root or image is not repaired. It spends every unit's repairs and then
 fails them all.
 
@@ -193,6 +243,12 @@ phases:
         run: 'cd source && npx --no-install jest --config jest.config.json --maxWorkers=2'
       - name: E2E tests
         run: 'cd source && npx --no-install jest --config test/jest-e2e.json'
+  - name: review
+    checks:
+      - name: Conventions
+        review:
+          read: ['{profiles}#Review focus']
+          focus: 'Report only clear violations of the review focus in code this change adds.'
   - name: claims
     checks:
       - name: Claim citations
@@ -202,3 +258,5 @@ phases:
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
 Postgres is still initializing. The e2e suite takes no `--maxWorkers`: the flag
 overrides the `maxWorkers: 1` its config sets, and the NestJS profile requires 1.
+The review phase reads the `## Review focus` section of the react and nestjs
+profiles; drop it to run without reviews.

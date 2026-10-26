@@ -26,6 +26,9 @@ directory and changes no validator, so a vault that passed 0.11.1 passes 0.12.0.
   reader. Without a Factory checkout it reports *validation pending*. It never starts
   a service and never commits. `init` writes the file on approval; `review` is
   read-only.
+  It also covers the optional `review` checks (Factory emanate-2): a reviewer agent
+  judges each unit's change against the profiles' `## Review focus`, project skills
+  or other committed files, and its findings get a repair like a red check.
 
 ### Changed
 

@@ -55,6 +55,10 @@ warning explicitly.
 | `npm run <x>` with no script `<x>`; `npx --no-install <bin>` with `<bin>` not a dependency | warning | the command fails in every unit |
 | an image tag ending `-slim` or `-alpine`, or `latest` | warning | no `git`, musl, or a toolchain that moves between runs |
 | `uv sync --frozen` | warning | propose `--locked` |
+| a review check whose name repeats another review check's | error | the runner stops before the release |
+| a review `skills` name with no `.claude/skills/<name>/SKILL.md` committed, and not a factory skill | error | the runner stops before the release |
+| a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
+| a review check without `focus` | warning | the reviewer judges every rule it was given |
 
 ## 3. The image probe (optional)
 

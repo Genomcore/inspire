@@ -19,8 +19,10 @@ deduce, and validates the result.
 
 **Does NOT own:**
 
-- `.inspire/emanate.json` — the factory's own settings (`model`, `sandbox`,
-  `base_branch`, `max_tries`). Read for `base_branch`, never written.
+- `.inspire/emanate.json` — the factory's own settings (`model`, `review_model`,
+  `sandbox`, `base_branch`, `max_tries`). Read for `base_branch`, never written.
+- The skills and files a `review` check names. The check points at them; it never
+  writes them.
 - `stack.md` and the profiles. They are the source this skill derives from; a gap
   in them goes to `/inspire-bootstrap stack`, never patched here.
 - Starting services, or any container left running.
@@ -86,8 +88,9 @@ Read the reference before the step it covers. The table is an index, not the flo
    the verdict is *validation pending*, said in those words.
 2. **Write only what the reader accepts today.** A key the factory does not yet
    read fails the whole run, so a key the operator remembers from a ticket
-   (`tests`, `roots`, `review`, `report`) is never written until validation
-   accepts it.
+   (`tests`, `roots`, `report`) is never written until validation accepts it.
+   A `review` check needs a factory with review checks (emanate-2); an older
+   reader refuses it, so validate before proposing one.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that
