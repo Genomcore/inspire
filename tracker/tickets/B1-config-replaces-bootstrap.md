@@ -155,6 +155,10 @@ Each needs a home:
 - [ ] `config-check` exists and enforces the pass and refusal rules above, with tests.
 - [ ] `/inspire:update` moves an existing project from bootstrap's outputs to Config's,
       and does not re-ask anything `stack.md` already answers.
+- [ ] `output_language` is a key of `.inspire/config.json`, read at install and update.
+      Changing it on a project with artifacts warns about the refactor.
+- [ ] The wizard asks for the target before the stack, and offers the recommended stack
+      or "other".
 
 ## Notes
 
@@ -174,3 +178,43 @@ environment, the Dockerfiles and `config-check` are withdrawn; the "What the
 Factory does with it" section above no longer holds. A wizard that answers the
 technical questions hands over to `/inspire-config` instead of writing a
 second description of the same environment.
+
+**Amended 2026-10-26 (design review, second session): output language.** This settles
+the output-language part of "The other half of bootstrap".
+
+- *Decision:* there is no organisation-wide "English only" rule. A project picks its KB
+  language at the start, and INSPIRE applies it deterministically at install and update.
+  Changing it mid-project counts as a refactor.
+- *Today:* the language is not stored in a skill. It is `output_language` in
+  `00_bootstrap/project.md`. The session-start hook reads it and injects it into every
+  session, and `_references/output-language.md` tells every skill to follow it. An update
+  never replaces a KB file, so an update cannot reset it. What is still prose-only is
+  applying it: the agent is told the language and is trusted to use it.
+- *Change:* `output_language` becomes a key of the spec config, `.inspire/config.json`,
+  which Config writes and install and update read. It replaces
+  `/inspire-bootstrap language`. The default stays `en`. Changing it on a project that
+  already has artifacts warns that existing artifacts stay in the old language and that
+  translating them is a refactor.
+- *Open:* the review mentioned both a config key and an environment variable. This
+  ticket already defines a config file, so a key fits better. And does "deterministic"
+  mean more than injecting the language each session, for example writing it into the
+  skills at install? That would turn every update into a local edit to merge.
+
+**Amended 2026-10-26 (design review, second session): the wizard asks for targets.**
+Agreed at low priority: needed eventually, not urgent.
+
+- *Today:* bootstrap asks platform questions directly. For a mobile app it suggests
+  React Native with Expo, a stack INSPIRE has no profile for. The surfaces question also
+  asks about deliverables indirectly, in terms a newcomer won't know.
+- *Change:* the wizard's first question is the target: desktop-only web · responsive
+  web · progressive web app · native mobile · executable binary · other. It then offers
+  the recommended stack (React + NestJS today) or "other", as free text. Choosing "other"
+  means the operator knows what they want and can add their own profiles. The wording is
+  written for someone who doesn't know the technical options.
+- *Open:* how this relates to the surfaces question depends on part 3 of
+  `B1-kb-structure`, which asks what separates a surface from a module.
+- *Not decided:* the review proposed removing the `ios` and `android` profiles under a
+  company policy that still has to be confirmed. They stay while native mobile is a
+  target: the profiles and the target change together or not at all. Neither profile
+  declares a language profile today, so emanation refuses both (`PR-06`). Keeping native
+  mobile as a real target eventually means fixing that.
