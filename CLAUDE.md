@@ -67,7 +67,7 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 15 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 16 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
@@ -115,8 +115,12 @@ repo is both its source and its own marketplace.
         a merge with trailers, never a KB write, lifecycle included. It consumes
         `inspire-code` as the doctrine router (the roles README) and never
         authors role judgment of its own.
-      - **Housekeeping** (6) — set up and keep the workspace coherent: `bootstrap`
+      - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
+        `config` (writes and validates `.inspire/emanate.yml`, the one file
+        INSPIRE Factory reads to run a project — image, services, env, setup and
+        phases of checks — derived from `stack.md` and the profiles and checked
+        with the Factory's own reader; `init` · `review`),
         `surface` (the suite's surface roster and its lifecycle — `add`
         greenfield/split/adopt · `retire` · `review`; owns
         `00_bootstrap/surfaces.md`), `extract` (brownfield onboarding — fan out

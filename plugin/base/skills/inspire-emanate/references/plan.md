@@ -4,6 +4,10 @@ Answer what a scope would deliver, and answer it **read-only**. `plan` is the
 cheap goal check: it is what an operator runs before committing an afternoon to a
 run, and it is what `run` executes internally at t=0 before it builds anything.
 
+This plan is the in-session loop's. A run on INSPIRE Factory plans in the factory
+instead, and refuses to start without a committed `.inspire/emanate.yml`, which
+`/inspire-config` writes.
+
 ```
 /inspire-emanate plan [until <goal>] [--scope PATH]... [--ceiling N] [--reemanate SEL]...
 ```

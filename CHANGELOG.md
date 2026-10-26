@@ -9,6 +9,34 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.12.0 — 2026-10-26
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.12.0 keeps the 0.3 layout and the 0.9.0 payload classes. It adds one skill
+directory and changes no validator, so a vault that passed 0.11.1 passes 0.12.0.
+
+### Added
+
+- **`/inspire-config`.** INSPIRE Factory runs a project from one committed
+  file, `.inspire/emanate.yml`: the image every unit runs in, the services its tests
+  reach, the environment, the setup, and the phases of checks that end in the claims
+  check. The skill explains that format, derives a proposal from `stack.md` and the
+  resolved profiles, asks only what they leave open (the image, exact service tags,
+  which commands block a unit), and validates the result with the Factory's own
+  reader. Without a Factory checkout it reports *validation pending*. It never starts
+  a service and never commits. `init` writes the file on approval; `review` is
+  read-only.
+  It also covers the optional `review` checks (Factory emanate-2): a reviewer agent
+  judges each unit's change against the profiles' `## Review focus`, project skills
+  or other committed files, and its findings get a repair like a red check.
+
+### Changed
+
+- `/inspire-emanate`'s `plan` and unattended references say that a Factory run needs
+  the file and name the skill that writes it. The in-session loop does not read it.
+- Tracker: `B1-config-replaces-bootstrap` is amended. The Factory reads
+  `.inspire/emanate.yml`, not `.inspire/config.json`.
+
 ## 0.11.1 — 2026-10-21
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

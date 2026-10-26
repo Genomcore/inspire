@@ -50,7 +50,8 @@ related_to: [TASK-xxx]             # list of IDs
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  domain | screens | prototype | workspace | adr | task | code | surface` — which
+  domain | screens | prototype | workspace | adr | task | code | surface |
+  config` — which
   skills cover the work. `[]` means the work doesn't map to a skill (tooling, ops,
   packaging).
 - **`surfaces`**: optional — a list of roster ids or `all`; useful for filtering suite
