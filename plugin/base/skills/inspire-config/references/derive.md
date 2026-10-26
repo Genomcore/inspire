@@ -8,9 +8,9 @@ block a unit. Those are proposed and confirmed, every time.
 ## Read the sources
 
 Resolve the roots **as the factory run does**, not as this shell does:
-`SDD_KB_ROOT` / `SDD_PROFILES_ROOT` from the checkout's `.env`, then `kb_root` /
-`profiles_root` from the committed `.inspire/emanate.json`, then the defaults
-`inspire_kb` and `.claude/skills/inspire-code/profiles`. Warn when this shell
+`SDD_KB_ROOT` from the checkout's `.env`, then `kb_root` from the committed
+`.inspire/emanate.json`, then the default `inspire_kb`. The stack skills are always
+the `.claude/skills/*/SKILL.md` whose `stack:` names an id in `stack.md`. Warn when this shell
 carries a different value; the run never sees it.
 
 | Source | What it gives | Key |

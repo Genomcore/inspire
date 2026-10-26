@@ -21,7 +21,7 @@ thing that ever touches a disk.
 ```
 emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
                 [--reemanate SEL]... [--goal SEL]
-                [--profiles-root DIR] [--agents-root DIR]
+                [--skills-root DIR] [--agents-root DIR]
 ```
 
 | flag | meaning |
@@ -31,7 +31,7 @@ emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
 | `--tests-root DIR` | repeatable. The tree(s) walked for `@claim` tokens, to work out which units are already **realized**. **No default**: given none, no tests tree is read and no unit is realized. See § Realization |
 | `--reemanate SEL` | repeatable. Treat the units `SEL` names as unrealized for this run. See § Selectors |
 | `--goal SEL` | the run's target, same selector grammar. Adds the goal's remaining closure — its dependencies, plus the screens that navigate to it — and the floor to it, and the ceiling is then measured against **that** floor. May be given once |
-| `--profiles-root DIR` | where the stack profiles live. Default `.claude/skills/inspire-code/profiles`, env override `INSPIRE_PROFILES_ROOT` |
+| `--skills-root DIR` | where the skills live; a stack id resolves to the skill whose `stack:` names it. Default `.claude/skills`, env override `INSPIRE_SKILLS_ROOT` |
 | `--agents-root DIR` | where the agent shells live. Default `.claude/agents`, env override `INSPIRE_AGENTS_ROOT` |
 
 `--tests-root` mirrors the gate's flag and deliberately drops its default. The
@@ -582,7 +582,7 @@ or names no column at all.
 | `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier. A catalog target takes `PR-04` / `PR-05` instead. **A warning on a navigation edge**, an error on an ordering one: a link out with nowhere to land is a broken affordance on a page that is otherwise buildable, which is what lets a screen be emanated ahead of the `draft` screen it links to; an ordering edge to the same target leaves nothing to build at all | error, or warning on navigation | the target's layer |
 | `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
-| `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
+| `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-bootstrap` |
 | `PR-07` | the unit's matching framework set is unusable — **not** merely plural, since a spawn applies the union of the set's rules. Either 2+ of its frameworks share one `layer:`, so nothing states which of them builds this unit (one finding per tied layer); or the set is empty, so nothing states how the unit is built at all — a declared id with no file on disk, a declared profile whose `layer:` names neither axis, or nothing declared | error | the declaring file's layer (`inspire-bootstrap` for `stack.md`) |
 | `PR-20` | the declared `--ceiling` is below the **effective** floor (`goal.floor` when a goal was named, else `floor`). **A warning, never a blocker**: a lower ceiling yields partial-but-reported delivery in graph order, so it does not flip `ready` and a run whose only finding is this one exits 0 | warning | — |
 | `PR-22` | `stack.md` declares test-infrastructure components and **no** resolved framework profile carries a `## Test infrastructure` probe recipe, so nothing can tell a healthy component from a suite that never ran. **A warning**: the components may well be up, and plan never probes to find out. It has to be said at t=0 all the same — an unattended run would read the connection error as red, burn the unit's whole rework budget proving nothing, then cascade the stall | warning | `inspire-bootstrap` |
@@ -617,7 +617,7 @@ hardcoded directory name — the roots are configurable everywhere else in
 | `$SDD_SPEC_ROOT` (`04_domain/`) | `inspire-domain` |
 | `$SDD_KB_ROOT/05_screens` | `inspire-screens` |
 | `$SDD_KB_ROOT/00_bootstrap` | `inspire-bootstrap` |
-| anything else — a profile file, the agents root | `inspire-code` |
+| anything else — a stack skill, the agents root | `inspire-bootstrap` |
 
 ## Determinism
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # .inspire/bin/profile-gates-installed.sh
 #
-# Rule: every quality gate a resolved stack profile DECLARES is actually present in the
-# project's config.
+# Rule: every quality gate a resolved stack skill DECLARES is actually present in the
+# project's config. A stack skill is any `.claude/skills/*/SKILL.md` whose frontmatter
+# `stack:` names an id from `stack.md`'s `profiles:`.
 #
 # This is the gate that guards the other gates. A profile's `## Quality gates` section is
 # the spec for a project's mechanical enforcement, and without this rule nothing compares
@@ -44,19 +45,19 @@
 #   config-missing          the config file the gate names does not exist. Error: the claim
 #                           cannot be checked, and an unverifiable gate must not read as a
 #                           passing one.
-#   profile-missing         `stack.md` resolves a profile that has no file. Error.
 #   gates-undeclared        the profile has a `## Quality gates` section and no `gates:`
 #                           frontmatter. Warning, not error: declaring the contract is work
 #                           this rule is asking for, not a defect in the project's code.
 #
-# Only profiles the project actually resolves are checked — `stack.md`'s `profiles:` — so an
-# unused profile in the catalogue never blocks anyone.
+# Only stack skills the project actually resolves are checked — `stack.md`'s `profiles:` —
+# so an unused skill in the catalogue never blocks anyone, and an id no skill declares
+# (a database with no conventions of its own) is a legal stack with nothing to check.
 #
-# Reads the KB (stack.md), the runtime (the profiles) and the product's config, so it is
+# Reads the KB (stack.md), the runtime (the stack skills) and the product's config, so it is
 # deliberately absent from `review.sh`'s default rule list: that hands every rule the spec
 # root, and this one takes no scope at all.
 #
-# Config (env, all optional): SDD_BOOTSTRAP_ROOT · SDD_PROFILES_ROOT · SDD_SOURCE_ROOT.
+# Config (env, all optional): SDD_BOOTSTRAP_ROOT · SDD_SKILLS_ROOT · SDD_SOURCE_ROOT.
 #
 # Usage:
 #   .inspire/bin/profile-gates-installed.sh
@@ -83,21 +84,14 @@ fi
 PROFILES="$(sdd_fm_list "$STACK_FILE" '.profiles')"
 if [ -z "$PROFILES" ]; then
   sdd_finding "warning" "$RULE" "$STACK_FILE" \
-    "declares no \`profiles:\` — /inspire-code falls back to inference, and with no resolved profile there is no gate contract to enforce"
+    "declares no \`profiles:\` — with no stack id there is no stack skill, and so no gate contract to enforce"
   sdd_count_warning
   sdd_exit_with_counters
   exit $?
 fi
 
 check_profile() {
-  local id="$1" profile="$SDD_PROFILES_ROOT/$1.md"
-
-  if [ ! -f "$profile" ]; then
-    sdd_finding "error" "$RULE" "$STACK_FILE" \
-      "resolves profile \`$id\` but $profile does not exist — the stack names a contract nothing defines"
-    sdd_count_error
-    return 0
-  fi
+  local id="$1" profile="$2"
 
   local count
   count="$(yq --front-matter=extract '.gates | length' "$profile" 2>/dev/null || echo 0)"
@@ -148,9 +142,13 @@ check_profile() {
   done
 }
 
+# A stack id no skill declares (`postgres` with no skill of its own) carries no gate
+# contract, so it has nothing to check.
 while IFS= read -r id; do
   [ -z "$id" ] && continue
-  check_profile "$id"
+  while IFS= read -r skill; do
+    [ -n "$skill" ] && check_profile "$id" "$skill"
+  done <<< "$(sdd_stack_skills "$id")"
 done <<< "$PROFILES"
 
 sdd_exit_with_counters

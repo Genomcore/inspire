@@ -40,7 +40,7 @@ What this skill does **not** own:
   roster's second UI surface triggers, and the moves a later split performs.
 - the `surfaces:` field on individual artifacts — `inspire-adr`, `inspire-feature`
   and `inspire-task` stamp their own.
-- the packages themselves — the roster records a `Package` path; `inspire-code`
+- the packages themselves — the roster records a `Package` path; the coding stage
   scaffolds it on first emanation.
 
 ## Invocation
@@ -85,7 +85,7 @@ screens split** (below). Which `add` came first has no bearing on it.
    the roster entry stands either way.
 
 `add` only **records** the `Package` path. It does not create the directory,
-scaffold a project, or install anything: `inspire-code` materializes the package
+scaffold a project, or install anything: the coding stage materializes the package
 lazily, on the first emanation into that surface.
 
 ### Split
@@ -268,8 +268,6 @@ Render findings in the shared operator-facing format from
 - `/inspire-prototype` — one shell per UI surface, behind the suite landing.
 - `/inspire-extract` — reads a joining codebase and emits the surface candidates
   the *adopt* arrival consumes.
-- `/inspire-code` — resolves a surface's package and profiles from the roster and
-  scaffolds the package on first emanation.
 - `/inspire-bootstrap` — the shape interview ("one surface or several?") delegates
   each declaration here.
 - `/inspire-workspace` — the global pre-PR review; checks that every `surfaces:`

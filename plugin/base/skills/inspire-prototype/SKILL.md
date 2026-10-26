@@ -19,10 +19,10 @@ clarity lands in the vault.
 
 > **Agile on purpose.** No tests, no auth, no persistence, minimal controls — only
 > what's needed to *learn*. Rigor (tests, error handling, robustness) is reserved
-> for real implementation in [`/inspire-code`](../inspire-code/SKILL.md). Building
+> for real implementation in the coding stage. Building
 > the mock, borrow the UI conventions of the codification stage — the
 > **design system** ([`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md))
-> and the UI **stack profile** (`/inspire-code`'s `react` etc.) — but in sketch mode.
+> and the UI **stack skill** (`inspire-code-react` etc.) — but in sketch mode.
 >
 > **Vertical spikes are a different skill.** Deep, functional, throwaway builds in
 > their own external repos answering *"can we build it as we think?"* →
@@ -125,7 +125,7 @@ loop stay the user's.
 2. **Adopt, don't reinvent.** Before writing new UI, check the component catalog
    (`05_screens/components`) and existing prototype code for something canonical.
 3. **Mocked, not real.** The prototype *visualizes* decisions; it does not implement
-   backends, auth, persistence, or tests. That's `/inspire-code`.
+   backends, auth, persistence, or tests. That's the coding stage.
 4. **Verify by running, not just building.** A green build is not a working screen —
    runtime issues (bad data coercion, render loops, null derefs) often render a
    blank page a build won't catch. Launch the prototype and drive the affected flow
@@ -154,5 +154,4 @@ loop stay the user's.
 - `/inspire-screens` · `/inspire-domain` · `/inspire-feature` · `/inspire-adr` — the
   spec skills the learnings loop co-evolves.
 - `/inspire-spike` — vertical spikes (external functional prototypes).
-- `/inspire-code` — the real implementation, once the prototype has clarified the thing.
 - `run` / `verify` — launch and exercise the prototype end to end.

@@ -4,8 +4,8 @@ A **quality gate** is a check a machine runs every time, which refuses to let wo
 through when it fails. This reference states three things: where a given rule
 belongs, how a rule gets adopted in a codebase that cannot satisfy it yet, and where
 its threshold must live. It is stack-agnostic — the concrete tools and commands that
-realize it live in each stack profile's `## Quality gates`
-([`inspire-code/profiles/README.md`](../inspire-code/profiles/README.md)).
+realize it live in each stack skill's `## Quality gates`
+([`stack-skills.md`](stack-skills.md)).
 
 Why the runtime carries this at all: when most code is written by an agent, review by
 reading stops scaling long before the code stops arriving. What a human stops
@@ -62,8 +62,8 @@ optimizing against a movable obstacle looks like.
 Corollary — **scoping a check to the change dissolves the problem**. A check that only
 judges the diff has nothing to compare against and therefore no baseline to store,
 trust, or keep honest. That is often the cheaper design, not a weaker one: the
-per-diff mutation drill ([`../inspire-code/references/tdd.md`](../inspire-code/references/tdd.md),
-step 7) replaces a repo-wide mutation score for exactly this reason, and pays for it
+per-diff mutation drill (mutate each changed line's behavior and confirm a test fails)
+replaces a repo-wide mutation score for exactly this reason, and pays for it
 in the one currency to be explicit about — it says nothing about code the diff does not
 touch. Name that limit when choosing the design (Rule 2's third branch); a scoped check
 sold as a global one is the failure mode.
@@ -155,6 +155,6 @@ step 3: a human act, handed over as a ticket.
 | Consumer | Uses it for |
 |---|---|
 | `/inspire-bootstrap stack` | installing a new project's gates from its profiles; declaring the external one |
-| `/inspire-code review` | a missing mechanical check is a finding, with the gate that should own it |
-| `/inspire-code` authoring flows | which violations the toolchain already refuses, so they are never written |
-| stack profiles (`## Quality gates`) | the per-framework translation of Rules 1–2 |
+| code review | a missing mechanical check is a finding, with the gate that should own it |
+| code authoring | which violations the toolchain already refuses, so they are never written |
+| stack skills (`## Quality gates`) | the per-framework translation of Rules 1–2 |

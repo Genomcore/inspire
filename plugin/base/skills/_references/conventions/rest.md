@@ -56,9 +56,8 @@ was written first.
 
 ## Response shape
 
-- A test asserts the **whole** body, success or error, per
-  [`inspire-code/references/tdd.md`](../../inspire-code/references/tdd.md) — never a
-  field or two out of an envelope.
+- A test asserts the **whole** body, success or error — never a field or two out of
+  an envelope.
 - The expected value is built from the domain entity, never from the value under test.
 - Loose matchers are for values that are genuinely non-deterministic: generated ids,
   timestamps, cursors. Everything else is an exact value, including the error code and

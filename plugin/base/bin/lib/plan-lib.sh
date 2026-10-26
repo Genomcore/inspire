@@ -101,7 +101,7 @@ plan_owner() {
   if plan_under "$p" "$(sdd_scope_norm "$SDD_SPEC_ROOT")"; then printf 'inspire-domain'
   elif plan_under "$p" "$(sdd_scope_norm "$SDD_KB_ROOT/05_screens")"; then printf 'inspire-screens'
   elif plan_under "$p" "$(sdd_scope_norm "$SDD_KB_ROOT/00_bootstrap")"; then printf 'inspire-bootstrap'
-  else printf 'inspire-code'
+  else printf 'inspire-bootstrap'
   fi
 }
 

@@ -62,7 +62,7 @@ trap 'rm -rf "$TMP"' EXIT
 plan_in() {
   local fx="$1"; shift
   ( cd "$FX/$fx" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
-      bash "$BIN/emanate-plan.sh" --profiles-root spec/profiles \
+      bash "$BIN/emanate-plan.sh" --skills-root spec/skills \
         --agents-root spec/agents "$@" 2>/dev/null )
 }
 
@@ -141,30 +141,31 @@ fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # The SHIPPED profiles satisfy the resolver they are read by. A fixture carries
-# its own `spec/profiles` tree, so no golden can state anything about the
+# its own `spec/skills` tree, so no golden can state anything about the
 # profiles a real project installs — and `PR-06` is per framework now, which
 # makes every shipped framework profile's `language:` line load-bearing.
 # ─────────────────────────────────────────────────────────────────────────────
 
-PROFILES="$SKILLS/inspire-code/profiles"
+SDD_SKILLS_ROOT="$SKILLS"
 . "$BIN/_lib.sh"
 
-# profile_language <id> — that profile's `language:` value, or empty.
-profile_language() { sdd_fm_value "$PROFILES/$1.md" '.language'; }
+# profile_file <id> — the shipped skill declaring `stack: <id>`, or empty.
+profile_file() { sdd_stack_skills "$1" | head -n 1; }
+# profile_language <id> — that skill's `language:` value, or empty.
+profile_language() { sdd_fm_value "$(profile_file "$1")" '.language'; }
 
-if [ ! -d "$PROFILES" ]; then
-  bad "the shipped profiles directory is where the resolver's default says it is"
+if [ -z "$(profile_file nestjs)" ]; then
+  bad "the shipped stack skills are where the resolver's default says they are"
 else
   broken=""
-  for p in "$PROFILES"/*.md; do
-    case "$(basename "$p")" in README.md|_*) continue ;; esac
+  for p in "$SKILLS"/*/SKILL.md; do
+    [ -n "$(sdd_fm_value "$p" '.stack')" ] || continue
     [ "$(sdd_fm_value "$p" '.layer')" = "language" ] && continue
     lang="$(sdd_fm_value "$p" '.language')"
     [ -n "$lang" ] || continue
-    [ -f "$PROFILES/$lang.md" ] \
-      && [ "$(sdd_fm_value "$PROFILES/$lang.md" '.layer')" = "language" ] \
-      && continue
-    broken="$broken $(basename "$p" .md)->$lang"
+    lf="$(profile_file "$lang")"
+    [ -n "$lf" ] && [ "$(sdd_fm_value "$lf" '.layer')" = "language" ] && continue
+    broken="$broken $(sdd_fm_value "$p" '.stack')->$lang"
   done
   eq "every shipped framework profile that names a language resolves one" "$broken" ""
   # R2: angular closes with one line, and the two native stacks refuse on
@@ -195,7 +196,7 @@ overseer_verdict() {
     printf -- 'model: inherit\n---\n\nA project-added lens.\n'
   } > "$root/extra-overseer.md"
   out="$( cd "$FX/clean-single-unit" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
-          bash "$BIN/emanate-plan.sh" --profiles-root spec/profiles \
+          bash "$BIN/emanate-plan.sh" --skills-root spec/skills \
             --agents-root "$root" 2>/dev/null )"
   code=$?
   printf '%s\t%s' "$code" \
@@ -222,7 +223,7 @@ cp "$BIN"/*.sh "$STUB/" && cp "$BIN"/lib/*.sh "$STUB/lib/"
 printf '#!/usr/bin/env bash\nexit 3\n' > "$STUB/emanate-derive.sh"
 chmod +x "$STUB/emanate-derive.sh"
 stub_out="$( cd "$FX/clean-single-unit" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
-             bash "$STUB/emanate-plan.sh" --profiles-root spec/profiles \
+             bash "$STUB/emanate-plan.sh" --skills-root spec/skills \
                --agents-root spec/agents 2>/dev/null )"
 eq "a derive exiting outside {0,4} is exit 6" "$?" "6"
 eq "and exit 6 prints nothing on stdout" "$stub_out" ""
@@ -280,7 +281,7 @@ eq "the degenerate segment X..X selects exactly X" \
 sel_diag() {
   local fx="$1" out code diag=other; shift
   out="$( cd "$FX/$fx" && SDD_SPEC_ROOT=spec/sdd SDD_KB_ROOT=spec/kb \
-            bash "$BIN/emanate-plan.sh" --profiles-root spec/profiles \
+            bash "$BIN/emanate-plan.sh" --skills-root spec/skills \
               --agents-root spec/agents "$@" 2>"$TMP/sel.err" )"
   code=$?
   case "$(cat "$TMP/sel.err")" in

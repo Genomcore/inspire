@@ -4,8 +4,7 @@
 ## Acceptance-criteria quality gate
 
 Acceptance criteria are the contract the coding stage tests against
-([`/inspire-code tdd`](../../inspire-code/SKILL.md) turns each testable criterion into
-a test). Weak criteria leak into weak tests and rework. So whenever criteria are
+(it turns each testable criterion into a test). Weak criteria leak into weak tests and rework. So whenever criteria are
 authored or changed — in `create` (before writing) and in `update` (when the
 `## Acceptance criteria` change) — pass them through this gate first, as a Senior
 Technical Product Owner would. It is a **judgment gate, not a subcommand**: run it
@@ -30,7 +29,7 @@ line between the two is the project's resolved wire convention
 
 - **Do not write criteria for the convention's always-present cases.** "Returns 404 for
   an unknown id", "returns 401 without a token" — these hold for every action of the
-  transport, `/inspire-code tdd` derives them, and restating them per feature is the
+  transport, the coding stage derives them, and restating them per feature is the
   duplication that drifts the day the convention changes.
 - **Do write a criterion for every error the feature's actions declare** in their
   `## Errors`. That is the half a convention cannot derive, because the error is

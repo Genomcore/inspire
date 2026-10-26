@@ -276,7 +276,7 @@ fingerprint; they are told apart by their ids, which is what ids are for.
 ### Binding claims
 
 An action is reachable only through the surface its backend profile renders, so
-the profile's `## Bindings` section (`inspire-code/profiles/README.md`) derives
+the profile's `## Bindings` section ([`stack-skills.md`](stack-skills.md)) derives
 three claims per action with no authoring: **the route exists** · **it
 dispatches to this action's service method** · **its guard matches the
 `actor(…)` preconditions**. Without them a unit can be satisfied by tests that
@@ -290,7 +290,8 @@ the Bash deriver does not emit them and retires with that move.
 - **The profile set** is the suite-wide one: `stack.md`'s frontmatter
   `profiles:` list, or the inference fallback from its `## Layer: Name`
   headings — the resolution `/inspire-emanate plan` uses (`plan-stack.sh`).
-  Each id reads `$SDD_PROFILES_ROOT/{id}.md`; an id with no file is skipped.
+  Each id reads the skill whose frontmatter `stack:` is that id; an id no skill
+  declares is skipped.
   A surface's own `**Profiles:**` list is not consulted.
 - **The binding profile** is the one profile in that set whose frontmatter says
   `layer: backend` and whose `## Bindings` section is not blank. None: the action

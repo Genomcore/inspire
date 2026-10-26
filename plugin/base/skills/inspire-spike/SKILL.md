@@ -88,8 +88,8 @@ here?
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **Never build the spike here.** The code lives in its external repo; this skill
-   only registers and harvests. Building is the spike author's job (or `/inspire-code`
-   for real implementation).
+   only registers and harvests. Building is the spike author's job (or the coding
+   stage, for real implementation).
 2. **Writing to the external repo needs explicit permission.** Suggesting a
    `Learnings.md` / `CLAUDE.md` section is fine; adding it requires a clear operator
    yes. Default to read-only on repos that aren't this project.
@@ -109,4 +109,3 @@ here?
   reach `prototyped` maturity (record the `**Prototype:**` pointer there).
 - `/inspire-feature` · `/inspire-domain` — where a captured capability lands as a
   feature or contract.
-- `/inspire-code` — the real, in-repo implementation the spike de-risks.

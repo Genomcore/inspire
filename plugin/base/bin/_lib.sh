@@ -74,10 +74,30 @@ if [ -z "${SDD_SOURCE_ROOT:-}" ]; then
 fi
 SDD_SOURCE_ROOT="${SDD_SOURCE_ROOT:-source}"
 
-# Where the stack profiles live. Part of the runtime rather than the KB, so NOT derived
-# from the spec root — a fixture redirecting SDD_SPEC_ROOT must still be able to point
-# at its own profile tree.
-SDD_PROFILES_ROOT="${SDD_PROFILES_ROOT:-.claude/skills/inspire-code/profiles}"
+# Where the skills live. Part of the runtime rather than the KB, so NOT derived from the
+# spec root — a fixture redirecting SDD_SPEC_ROOT must still be able to point at its own
+# skill tree.
+SDD_SKILLS_ROOT="${SDD_SKILLS_ROOT:-.claude/skills}"
+
+# sdd_stack_skills <id> → every $SDD_SKILLS_ROOT/*/SKILL.md whose frontmatter `stack:`
+# is <id>, one per line in glob order. The skill's own name never matters, and a stack
+# id no skill declares prints nothing: that is a legal stack, not a missing file. One
+# awk over every skill rather than a yq per skill, because the planner calls this once
+# per resolved id.
+sdd_stack_skills() {
+  local files=( "$SDD_SKILLS_ROOT"/*/SKILL.md )
+  [ -f "${files[0]}" ] || return 0
+  awk -v id="$1" '
+    FNR == 1 { fm = ($0 == "---"); next }
+    fm && $0 == "---" { fm = 0; next }
+    fm && /^stack:/ {
+      v = $0
+      sub(/^stack:[[:space:]]*/, "", v); sub(/[[:space:]]*#.*$/, "", v)
+      gsub(/^["\047]|["\047]$/, "", v)
+      if (v == id) print FILENAME
+    }
+  ' "${files[@]}"
+}
 
 # Where the product's tests live, and what a test file is called. Shared by every rule
 # that checks a KB claim against the tests, so the two cannot drift apart. The scope is

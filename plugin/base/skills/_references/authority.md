@@ -150,7 +150,7 @@ shape they share.
 
 | Consumer | Uses it for |
 |---|---|
-| `/inspire-code` | which of the descriptor, the convention, the profile and the criterion decides a test |
+| the coding stage | which of the descriptor, the convention, the stack skill and the criterion decides a test |
 | `/inspire-screens` | the triangulation matrix's `Authority` column |
 | `/inspire-adr` | whether a decision belongs at the ADR rung at all |
 | `/inspire-workspace review` | an undeclared contradiction is drift, and drift is a finding |

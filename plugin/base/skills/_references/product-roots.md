@@ -6,7 +6,7 @@ frontmatter of
 
 | Field | Points at | Default | Owner skill |
 |-------|-----------|---------|-------------|
-| `source_root` | the production code INSPIRE realizes | `source` | `inspire-code` |
+| `source_root` | the production code INSPIRE realizes | `source` | `inspire-bootstrap` |
 | `prototype_root` | the horizontal, mock-data prototype | `prototype` | `inspire-prototype` |
 
 ## The rule

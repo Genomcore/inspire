@@ -21,7 +21,7 @@ and code is generated from what is specified.
   `98_lessons` · `99_tracker`. Each layer folder has its own README.
 - **Skills** — the `inspire-*` slash commands (`inspire-bootstrap`,
   `inspire-module`, `inspire-feature`, `inspire-domain`, `inspire-screens`,
-  `inspire-adr`, `inspire-code`, …) read and write these layers. Operate the
+  `inspire-adr`, …) read and write these layers. Operate the
   KB through a skill rather than editing it by hand.
 - **Validators** — `.inspire/bin/review.sh` checks the domain layer for
   mechanical and coherence errors; it is also callable from CI

@@ -132,7 +132,7 @@ using one would make a path or a field value ambiguous.
 | `inspire-surface` | owns `surfaces.md` — the only skill that adds or retires a surface, and the diagnostic for roster coherence |
 | `inspire-screens` | owns the shape of the screens tree: the right surface directory, created lazily |
 | `inspire-adr`, `inspire-feature`, `inspire-task` | stamp `surfaces:` on the artifacts they write |
-| `inspire-code` | resolves the target surface's package and profiles from the roster; surfaces never import each other, sharing flows through `lib` packages |
+| the coding stage | resolves the target surface's package and stack from the roster; surfaces never import each other, sharing flows through `lib` packages |
 | `inspire-prototype` | one shell per UI surface, behind the suite landing |
 | `inspire-workspace` | checks every `surfaces:` value resolves to a roster id, and reports per-surface health |
 | `inspire-domain` | owns nothing here, deliberately — the domain is the layer surface scoping never touches |
