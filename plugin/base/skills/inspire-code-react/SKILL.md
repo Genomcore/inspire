@@ -21,10 +21,7 @@ infrastructure** — all data access behind an interface, with a mock/real switc
 the UI is testable without a backend. Global state in a dedicated store, not in
 prop-drilled component state.
 
-- Components MUST NOT hold business logic or access data; a hook MUST be the only
-  caller of the `api/` client.
-- All data access MUST sit behind an interface in the `api/` (repository) layer, with a
-  mock and a real implementation the app switches between.
+- Components MUST NOT access data; a hook MUST be the only caller of the `api/` client.
 
 Module boundaries: not yet formulated for this stack — deliberately deferred to a
 frontend iteration that exercises them, rather than transcribed untested from the
@@ -45,7 +42,7 @@ not the answer.
   writing or modifying any spec or mock.
 
 ## Forbidden patterns
-- Components MUST NOT hold business logic or fetch data — push it to a hook /
+- **No business logic or data fetching in components** — push it to a hook /
   use-case.
 - Tests MUST NOT define mocks inline — register them in the shared mock layer.
 - User-facing strings MUST NOT be hardcoded — labels, errors and tooltips go through
@@ -54,7 +51,7 @@ not the answer.
   `dangerouslySetInnerHTML` MUST NOT receive unsanitized input.
 
 ## Review focus
-- **styling**: MUST use the design-system tokens (`05_screens/design-tokens.json`, meanings in `05_screens/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
+- **styling**: uses the design-system tokens (`05_screens/design-tokens.json`, meanings in `05_screens/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
   shared component layer; no hardcoded colors/spacing, no ad-hoc one-off styles.
 - **accessibility**: interactive elements MUST be keyboard-navigable with correct roles,
   labels and focus management, and forms MUST announce errors.
