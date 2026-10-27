@@ -1,5 +1,5 @@
 {
-  "commit": "16c4254a73a85cafa142c9cfac934bf642f0a256",
+  "commit": "24f1af01c986b816837b93e5a07965c10e41a746",
   "files": {
     ".claude/agents/README.txt": "af28a568eb5928c374c565274e2316b2be3083b1201449f7aa7ffcfa76d02f3d",
     ".claude/agents/inspire-contracter.md": "66556bab3578d1278bc748e7899f0df2f297f00f8e079cbe35e5912d88e688f3",
@@ -212,5 +212,5 @@
   },
   "layout": "0.3",
   "released": "2026-10-27",
-  "version": "0.13.0"
+  "version": "0.12.1"
 }
