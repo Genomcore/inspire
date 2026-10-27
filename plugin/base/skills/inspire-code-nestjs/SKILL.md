@@ -56,6 +56,12 @@ gates:
     expect: absent
 ---
 
+Rules here use MUST, MUST NOT, SHOULD and MAY (RFC 2119). MUST and MUST NOT are
+required: code that breaks one is wrong. SHOULD is the default; depart from it only
+with the reason written in the code or the commit. MAY is optional. A **Seed**
+section is the project's own convention: code MUST follow it exactly as written
+until the project edits it.
+
 ## Layering
 Domain-driven, four layers. **domain/** — pure TypeScript interfaces, types, enums;
 no framework imports. **infrastructure/** — persistence entities, repositories
@@ -65,6 +71,13 @@ the business logic; one primary service per aggregate, dedicated services for
 complex flows (no God objects). **controllers/** — DTOs (request DTOs implement the
 domain interface; response DTOs map in their constructor) + the controller. Business
 logic never lives in a controller.
+
+- Business logic MUST live in `application/` services and MUST NOT live in a controller.
+- A controller handler MUST call one service method and map its result; it MUST NOT
+  catch, inspect or translate errors. Domain errors MUST reach HTTP through an
+  exception filter (`@Catch(SomeDomainError)`), registered on the controller or the app.
+- Request DTOs MUST implement the domain interface they carry; response DTOs MUST
+  build themselves from the domain object in their constructor.
 
 **Module boundaries.** A module exposes its application services and nothing below
 them: another module never imports its `infrastructure/` or `domain/` internals — it
@@ -78,9 +91,15 @@ name and not an entity's, it is shared. Connection configuration carries no enti
 knowledge — a table or collection name belongs to the repository of the module that
 owns the entity, never to the shared client's config.
 
+- A module's `exports` MUST list only its `application/` services; it MUST NOT export a
+  repository, an entity or anything else below them.
+- The database client MUST live in `src/common/<system>/` (for example
+  `src/common/database/`) from its first use, and its configuration MUST NOT import
+  or name any feature module's entity, table or migration.
+
 ## Test conventions
-- **Unit** (`*.spec.ts`) — **every application service has one, and it is part of the
-  feature's definition of done**: it covers the happy path and *every* business-logic
+- **Unit** (`*.spec.ts`) — **every application service MUST have one, and it is part
+  of the feature's definition of done**: it covers the happy path and *every* business-logic
   branch and corner case the service owns. Exhaustiveness lives at this level because
   this level is cheap — dependencies are mocked (a typed auto-mock helper, not
   hand-rolled objects), so a case costs milliseconds — and each test asserts the
@@ -190,24 +209,29 @@ own `## Test infrastructure`; the compose file realizes them:
   burning a unit's rework budget on it.
 
 ## Forbidden patterns
-- Services throw a **generic `Error` with `cause`**, never HTTP exceptions —
-  translating to HTTP is the controller/filter's job.
-- **Repositories never validate input** — validation lives in the DTO (with a
+- Services MUST throw a **generic `Error` with `cause`** (or a domain error that passes
+  `cause`) and MUST NOT throw HTTP exceptions — translating to HTTP is the exception
+  filter's job.
+- **Repositories MUST NOT validate input** — validation lives in the DTO (with a
   controller) or the service (without one).
-- DI by concrete class when there is one implementation; an abstract class as the
-  contract when there are several. Never interface + string token + `@Inject`.
-- No ORM/DB technology in class names (`EmailTemplateRepository`, not
+- DI MUST use the concrete class when there is one implementation and an abstract class
+  as the contract when there are several. It MUST NOT use interface + string token +
+  `@Inject`.
+- Class names MUST NOT carry an ORM/DB technology (`EmailTemplateRepository`, not
   `…MongooseRepository`).
-- **No silent domain mutations** — every meaningful create/update/delete emits the
+- **No silent domain mutations** — every meaningful create/update/delete MUST emit the
   project's typed audit event from the service layer (never the controller or
   repository); operational logging is not a substitute. Scope and shape:
   [`references/coding-standards.md`](references/coding-standards.md).
 
 ## Review focus
-- **api-contract**: request/response DTOs validate at the boundary
-  (`class-validator`) and the OpenAPI/Swagger surface (`@ApiProperty`,
-  `@ApiOperation`, `@ApiResponse`) matches the actual shape.
-- **security**: OWASP checks on new endpoints, guards, and auth logic —
+- **api-contract**: the API MUST be documented with Swagger (`@nestjs/swagger`). Every
+  route MUST carry `@ApiOperation` and `@ApiResponse`, every request and response DTO
+  field MUST carry `@ApiProperty`, and the app MUST serve the OpenAPI document at
+  `/api/docs` (add `@nestjs/swagger` with the first endpoint if the project lacks it).
+  Request DTOs MUST validate at the boundary (`class-validator`), and the documented
+  shape MUST match the actual one.
+- **security**: new endpoints, guards and auth logic MUST pass OWASP checks —
   authorization (not only authentication), input validation, no sensitive data in
   logs or error responses.
 
@@ -348,9 +372,9 @@ console output shares that stream.
 
 ## Bindings
 
-> **Seed.** Everything below is a default this template ships, not a rule INSPIRE
-> enforces. Edit it to match the project's real API shape; the machinery reads
-> whatever this section declares. See [`stack-skills.md`](../_references/stack-skills.md) § Seeds.
+> **Seed.** The project's API convention: code MUST follow it exactly as written. The
+> project MAY edit it to match its real API shape; the machinery reads whatever this
+> section declares. See [`stack-skills.md`](../_references/stack-skills.md) § Seeds.
 
 An action's binding is **derived from its id**, never authored per action. An id is
 `{module}::{entity}::{verb}`; the path is `/{module}/{entities}`, where `{entities}`
