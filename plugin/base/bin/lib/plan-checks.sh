@@ -371,7 +371,7 @@ plan_resolve_edges() {
     fi
     case "$lc" in stable|accepted) continue ;; esac
     case "$dkind" in
-      pattern|component) plan_find_catalog "$uid" "$dkind" "$did" "$dpath"; continue ;;
+      pattern|component|layout) plan_find_catalog "$uid" "$dkind" "$did" "$dpath"; continue ;;
     esac
     state="is at lifecycle \`$lc\`"
     [ -n "$lc" ] || state="declares no lifecycle"
@@ -381,10 +381,10 @@ plan_resolve_edges() {
   done < "$PLAN_TMP/deps.tsv"
 }
 
-# plan_find_catalog — PR-04 (component) and PR-05 (pattern): the entry's
-# `**State:**` is neither `implemented` nor `to-extract`, so it is neither
-# delivered nor a unit anything can emanate, and the screen naming it has
-# nothing to wait for. A `to-extract` entry outside the scope is treated the way
+# plan_find_catalog — PR-04 (component), PR-05 (pattern) and PR-27 (layout):
+# the entry's `**State:**` is neither `implemented` nor `to-extract`, so it is
+# neither delivered nor a unit anything can emanate, and the screen naming it
+# has nothing to wait for. A `to-extract` entry outside the scope is treated the way
 # an out-of-scope `accepted` unit is — someone else's run.
 plan_find_catalog() {
   local uid="$1" dkind="$2" did="$3" dpath="$4" owner state msg fix
@@ -392,11 +392,12 @@ plan_find_catalog() {
   state="$(sdd_catalog_state "$dpath")"
   msg="declared $dkind \`$did\` is at \`**State:** ${state:-—}\` — neither \`implemented\` nor \`to-extract\`, so it is neither delivered nor emanatable"
   fix="set its \`**State:**\` to \`to-extract\` so it enters the frontier, or to \`implemented\` once its code exists"
-  # Both ids spelled out rather than picked into a variable: `test-plan-lib.sh`
+  # Every id spelled out rather than picked into a variable: `test-plan-lib.sh`
   # holds the catalogue and the code to the same set of literals, and an id the
   # grep cannot see is an id the document is free to drift from.
   case "$dkind" in
     component) plan_find "PR-04" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
+    layout)    plan_find "PR-27" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
     *)         plan_find "PR-05" "error" "$uid" "$dpath" "$owner" "$msg" "$fix" ;;
   esac
 }
@@ -416,9 +417,9 @@ plan_check_regions() {
 
 plan_define_remedy() {
   case "$1" in
-    screen)            printf '/inspire-screens create %s' "$2" ;;
-    pattern|component) printf '/inspire-screens extract %s %s' "$1" "$2" ;;
-    *)                 printf '/inspire-domain define %s' "$2" ;;
+    screen)                   printf '/inspire-screens create %s' "$2" ;;
+    pattern|component|layout) printf '/inspire-screens extract %s %s' "$1" "$2" ;;
+    *)                        printf '/inspire-domain define %s' "$2" ;;
   esac
 }
 
@@ -616,7 +617,7 @@ plan_check_ceiling() {
 
 # plan_closure_screens — the goal closure's screen ids, sorted. The kind comes
 # from the join of `idpath.tsv` with `scanned.tsv`, never from the path: a
-# pattern and a component live under `05_screens/` too.
+# pattern, a layout and a component live under `05_screens/` too.
 plan_closure_screens() {
   awk -F'\t' -v scanf="$PLAN_TMP/scanned.tsv" -v idpathf="$PLAN_TMP/idpath.tsv" '
     FILENAME == scanf   { if ($2 == "screen") screen[$1] = 1; next }

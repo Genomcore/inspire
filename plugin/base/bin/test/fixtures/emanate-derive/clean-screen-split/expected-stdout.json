@@ -44,6 +44,7 @@
     "id": "list",
     "path": "spec/kb/05_screens/patterns/list.md"
   },
+  "layouts": [],
   "components": [
     {
       "id": "data-table",

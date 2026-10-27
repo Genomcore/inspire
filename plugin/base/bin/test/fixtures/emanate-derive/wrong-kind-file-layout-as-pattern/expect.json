@@ -1,0 +1,11 @@
+{
+  "exit": 3,
+  "args": [
+    "pattern",
+    "--file",
+    "spec/kb/05_screens/layouts/collection.md"
+  ],
+  "stdout_jq": [
+    { "expr": ".", "equals": "" }
+  ]
+}

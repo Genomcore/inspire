@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 # .inspire/bin/lib/derive-catalog.sh
 #
-# Library — the CATALOG half of the derived contract: the `component` and
-# `pattern` kinds (ED10). Sourced after `_lib.sh`, `_keyed-heads.sh`,
-# `derive-json.sh` and `derive-refusals.sh`.
+# Library — the CATALOG half of the derived contract: the `component`,
+# `pattern` and `layout` kinds (ED10). Sourced after `_lib.sh`,
+# `_keyed-heads.sh`, `derive-json.sh` and `derive-refusals.sh`.
 #
-# THE THREE OWNERSHIPS ARE THE CONTRACT (D10). A component owns its props and
-# the states it renders; a pattern owns its regions — named holes, each with a
-# fill and an accepted content kind — and the geometry they sit in. Neither owns
-# the other's half, so neither derives it, and a region naming the fields its
-# content shows is a prop that leaked into a layout rather than a region derive
-# should read.
+# THE OWNERSHIPS ARE THE CONTRACT (D10). A component owns its props and the
+# states it renders; a pattern owns its regions — named holes, each with a fill
+# and an accepted content kind; a layout owns the geometry those holes sit at,
+# per supported width. None owns another's half, so none derives it, and a
+# region naming the fields its content shows is a prop that leaked into a
+# pattern rather than a region derive should read.
 #
-# CLAIMS ARE WHAT A TEST CAN CITE: one per prop, per component state and per
-# region, fingerprinted like every other kind's. `## Structure` and
-# `## Variants` are carried and never claimed — a structural bullet is prose no
-# oracle checks, and a claim no oracle can cover is a claim that reads as
-# covered by construction.
+# CLAIMS ARE WHAT A TEST CAN CITE: one per prop, per component state, per
+# region, per geometry row and per breakpoint row, fingerprinted like every
+# other kind's. `## Structure`, `## Frame`, `## Composition` and `## Variants`
+# are carried and never claimed — a structural bullet is prose no oracle
+# checks, and a claim no oracle can cover is a claim that reads as covered by
+# construction.
 #
 # A CATALOG ENTRY'S LIFECYCLE IS ITS `**State:**`, mapped by
 # `sdd_catalog_lifecycle` in `_lib.sh`: one definition, because `plan` reads the
@@ -24,7 +25,7 @@
 #
 # NO REVIEW RULE OWNS A CATALOG ENTRY'S SHAPE — `screen-coherence` reads a
 # pattern only through an adopting screen — so the sweep consults none for these
-# two kinds and the `DR-C*` classes here are the whole of the strictness.
+# three kinds and the `DR-C*` classes here are the whole of the strictness.
 
 # The two region vocabularies, closed, and `screen-coherence.sh`'s own: `Fill`
 # is required|optional and `Accepts` is one or more of data|dispatch|nav|static.
@@ -92,9 +93,10 @@ derive_catalog_state() {
   printf '%s' "$state"
 }
 
-# derive_catalog_prose <copy> — the `## Structure` items and the `## Variants`
-# items, spooled. List items only: the tokens paragraph both sections sit beside
-# points at the design system and restates nothing the entry owns.
+# derive_catalog_prose <copy> <section>… — each section's list items, spooled
+# under its name lowercased. List items only: the tokens paragraph these
+# sections sit beside points at the design system and restates nothing the
+# entry owns.
 #
 # An item is its marker line plus its INDENTED continuations: a vault kept at 80
 # columns wraps a bullet, and a half-sentence freezes an interface that cannot
@@ -103,8 +105,9 @@ derive_catalog_state() {
 # An indented sub-bullet still opens its own item: the marker rules run first.
 derive_catalog_prose() {
   local copy="$1" section spool line
-  for section in Structure Variants; do
-    spool="$([ "$section" = Structure ] && echo structure || echo variants)"
+  shift
+  for section in "$@"; do
+    spool="$(printf '%s' "$section" | tr '[:upper:]' '[:lower:]')"
     while IFS= read -r line; do
       derive_norm_g "$line"
       [ -n "$DERIVE_NORM" ] && derive_row "$spool" "$DERIVE_NORM"
@@ -125,7 +128,7 @@ derive_component() {
   kh_strip_comments "$file" > "$copy"
   derive_init_spools props states structure variants
   U_STATE="$(derive_catalog_state "$file")"
-  derive_catalog_prose "$copy"
+  derive_catalog_prose "$copy" Structure Variants
 
   while IFS="$DERIVE_FS" read -r c1 c2; do
     key="$(derive_norm "${c1//\`/}")"
@@ -156,7 +159,7 @@ derive_pattern() {
   kh_strip_comments "$file" > "$copy"
   derive_init_spools regions structure variants
   U_STATE="$(derive_catalog_state "$file")"
-  derive_catalog_prose "$copy"
+  derive_catalog_prose "$copy" Structure Variants
 
   # A17: a pattern and a component order only by a DECLARED edge between them,
   # never by an assumed tier, and this line is the declaration.
@@ -195,9 +198,88 @@ derive_pattern() {
     "$(derive_remedy "$file")"
 }
 
-# The two renderers share every field but the owned collection, and they are
+# derive_layout_key <cell> — a geometry or breakpoint cell as a claim-id
+# segment: backticks stripped, whitespace collapsed, and each remaining space a
+# dash. Layout cells name things in prose (`registry rail`, `every supported
+# width`), and a `@claim` id ends at the first whitespace, so the spelling a
+# citation can carry is the only one a key can take.
+derive_layout_key() {
+  local key
+  key="$(derive_norm "${1//\`/}")"
+  printf '%s' "${key// /-}"
+}
+
+# The surface shell frames every route, so it makes the one claim no other
+# layout makes: the code mounts it around every route. Its geometry claims hold
+# on the frame; this one holds on the application, and without it a shell can be
+# built and tested and still frame nothing.
+DERIVE_SHELL_LAYOUT="shell"
+
+derive_layout() {
+  local file="$1" id="$2" copy="$DERIVE_TMP/unit.md"
+  local key c1 c2 c3 c4 first second seen="" target changes=()
+  kh_strip_comments "$file" > "$copy"
+  derive_init_spools geometry breakpoints frame composition variants
+  U_STATE="$(derive_catalog_state "$file")"
+  derive_catalog_prose "$copy" Frame Composition Variants
+
+  # The pattern a layout frames is a declared edge, as a pattern's own
+  # `**Components:**` line is: the frame places holes that must exist first. The
+  # shell's `**Pattern:** —` declares none.
+  while IFS= read -r target; do
+    [ -n "$target" ] || continue
+    derive_row requires pattern "${target##*/}"
+  done < <(derive_header_links "$copy" '**Pattern:**')
+
+  # A row is keyed by its first two cells together — `Element` and `Property`,
+  # `Range` and `Region` — because neither alone names one measurement.
+  while IFS="$DERIVE_FS" read -r c1 c2 c3 c4; do
+    first="$(derive_layout_key "$c1")"
+    second="$(derive_layout_key "$c2")"
+    key=""
+    [ -n "$first" ] && [ -n "$second" ] && key="$first/$second"
+    derive_catalog_key "$file" "geometry" "$key" "$seen" || continue
+    seen="$seen|$key|"
+    derive_row geometry "$(derive_norm "${c1//\`/}")" "$(derive_norm "$c2")" \
+      "$(derive_norm "$c3")" "$(derive_norm "$c4")"
+    derive_claim "$id/geometry/$key" test "$c3"
+  done < <(derive_catalog_rows "$copy" "Geometry")
+  if [ ! -s "$DERIVE_TMP/geometry.spool" ]; then
+    derive_refuse "DR-C6" "$file" \
+      "DR-C6: layout entry declares no \`## Geometry\` table, and its measurements are the whole of what it owns" \
+      "$(derive_remedy "$file")"
+  fi
+
+  # Breakpoint rows sharing a range and a region are one claim, their changes in
+  # table order: an author states a measured change and the proposal beside it
+  # as two rows, and both describe how that one region behaves in that range.
+  : > "$DERIVE_TMP/breakpoint-changes"
+  while IFS="$DERIVE_FS" read -r c1 c2 c3 c4; do
+    first="$(derive_layout_key "$c1")"
+    second="$(derive_layout_key "$c2")"
+    key=""
+    [ -n "$first" ] && [ -n "$second" ] && key="$first/$second"
+    derive_catalog_key "$file" "breakpoint" "$key" "" || continue
+    derive_row breakpoints "$(derive_norm "$c1")" "$(derive_norm "${c2//\`/}")" \
+      "$(derive_norm "$c3")" "$(derive_norm "$c4")"
+    printf '%s%s%s\n' "$key" "$DERIVE_FS" "$c3" >> "$DERIVE_TMP/breakpoint-changes"
+  done < <(derive_catalog_rows "$copy" "Breakpoints")
+  while IFS="$DERIVE_FS" read -r -a changes; do
+    derive_claim "$id/breakpoint/${changes[0]}" test "${changes[@]:1}"
+  done < <(awk -F"$DERIVE_FS" -v fs="$DERIVE_FS" '
+      !($1 in joined) { order[++n] = $1; joined[$1] = $1 }
+      { joined[$1] = joined[$1] fs $2 }
+      END { for (i = 1; i <= n; i++) print joined[order[i]] fs }
+    ' "$DERIVE_TMP/breakpoint-changes")
+
+  if [ "$id" = "$DERIVE_SHELL_LAYOUT" ]; then
+    derive_claim "$id/mount/every-route" test "every route"
+  fi
+}
+
+# The renderers share every field but the owned collection, and they are
 # written out rather than folded into one: a contract's shape is what its
-# consumers read, and a conditional key set is harder to read than two lists.
+# consumers read, and a conditional key set is harder to read than three lists.
 derive_component_json() {
   local args=() a
   while IFS= read -r a; do args[${#args[@]}]="$a"; done < <(derive_rawfile_args)
@@ -238,6 +320,32 @@ derive_pattern_json() {
        regions: (recs($regions)
                  | map({region: .[0], fill: cel(.;1), accepts: cel(.;2),
                         holds: cel(.;3)})),
+       claims: claimlist($claims)}
+    '
+}
+
+derive_layout_json() {
+  local args=() a
+  while IFS= read -r a; do args[${#args[@]}]="$a"; done < <(derive_rawfile_args)
+  jq -n "${args[@]}" \
+    --arg schema "$DERIVE_SCHEMA" --arg kind layout --arg id "$U_ID" \
+    --arg path "$U_PATH" --arg lifecycle "$U_LIFECYCLE" --arg state "$U_STATE" \
+    --arg purpose "$U_PURPOSE" \
+    "$DERIVE_JQ_PRELUDE"'
+      {schema: $schema,
+       unit: {kind: $kind, id: $id, path: $path, lifecycle: $lifecycle,
+              state: $state},
+       purpose: $purpose,
+       requires: reqlist($requires),
+       frame: (recs($frame) | map(.[0])),
+       geometry: (recs($geometry)
+                  | map({element: .[0], property: cel(.;1), value: cel(.;2),
+                         source: cel(.;3)})),
+       breakpoints: (recs($breakpoints)
+                     | map({range: .[0], region: cel(.;1), change: cel(.;2),
+                            source: cel(.;3)})),
+       composition: (recs($composition) | map(.[0])),
+       variants: (recs($variants) | map(.[0])),
        claims: claimlist($claims)}
     '
 }
