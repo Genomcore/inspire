@@ -18,9 +18,12 @@
 # fingerprinted, so the spellings `→ state \`x\`` and `state \`x\`` are one
 # claim rather than two.
 #
-# PATTERNS AND COMPONENTS ARE NOT DERIVE KINDS. A screen's contract lists them
-# as declared dependencies — id, resolved path, and a component's `**State:**`
-# line — and readiness over those states is the `plan` script's question.
+# A SCREEN'S PATTERN, LAYOUT AND COMPONENTS ARE NOT DERIVED HERE. Its contract
+# lists them as declared dependencies — id, resolved path, and a component's
+# `**State:**` line — each derives as its own unit, and readiness over those
+# states is the `plan` script's question. The surface shell is the one edge no
+# line declares: it frames every route, so every screen requires it once its
+# entry exists.
 
 # derive_bindings_table <copy> — `## Bindings` as records: `SUB<FS>{name}` per
 # H3 and `R<FS>{cells…}` per data row, in document order, so one pass knows
@@ -59,19 +62,20 @@ derive_bindings_table() {
   '
 }
 
-# derive_catalog_file <screen-dir> <target> — the pattern/component entry a
+# derive_catalog_file <screen-dir> <target> [catalog] — the catalog entry a
 # header wikilink names. The same two-catalog fallback `screen-coherence.sh`
 # uses, because a `../` depth shifts when a surface split moves the screen and
-# the catalogs did not move with it.
+# the catalogs did not move with it. A `**Layout:**` link names its catalog,
+# since a layout and the pattern it frames may share a stem.
 derive_catalog_file() {
-  local dir="$1" target="${2%%#*}" cand base
+  local dir="$1" target="${2%%#*}" catalogs="${3:-patterns components}" cand base catalog
   [ -n "$target" ] || return 1
   for cand in "$dir/$target" "$dir/$target.md" "$target" "$target.md"; do
     [ -f "$cand" ] && { printf '%s' "$cand"; return 0; }
   done
   base="${target##*/}"
-  for cand in "$SDD_KB_ROOT/05_screens/patterns/$base.md" \
-              "$SDD_KB_ROOT/05_screens/components/$base.md"; do
+  for catalog in $catalogs; do
+    cand="$SDD_KB_ROOT/05_screens/$catalog/$base.md"
     [ -f "$cand" ] && { printf '%s' "$cand"; return 0; }
   done
   return 1
@@ -149,7 +153,7 @@ derive_screen() {
   dir="$(dirname "$file")"
   kh_strip_comments "$file" > "$copy"
   derive_screen_index
-  derive_init_spools features data dispatches navigation states components
+  derive_init_spools features data dispatches navigation states components layouts
 
   while IFS= read -r feat; do
     feat="$(derive_norm "$feat")"
@@ -168,6 +172,23 @@ derive_screen() {
         "$(derive_remedy "$file")"
     fi
     derive_row requires pattern "$U_PATTERN_ID"
+  fi
+
+  # Every frame the line names, nested ones included: a screen inside a tab
+  # panel of `record-tabbed` inside the shell sits in all three.
+  while IFS= read -r target; do
+    [ -n "$target" ] || continue
+    if ! entry="$(derive_catalog_file "$dir" "$target" layouts)"; then
+      entry=""
+      derive_refuse "DR-R4" "$file" \
+        "DR-R4: **Layout:** names \`$target\`, which resolves to no layout entry" \
+        "$(derive_remedy "$file")"
+    fi
+    derive_row layouts "${target##*/}" "$entry"
+    derive_row requires layout "${target##*/}"
+  done < <(derive_header_links "$copy" '**Layout:**')
+  if [ -f "$SDD_KB_ROOT/05_screens/layouts/$DERIVE_SHELL_LAYOUT.md" ]; then
+    derive_row requires layout "$DERIVE_SHELL_LAYOUT"
   fi
 
   while IFS= read -r target; do
@@ -241,6 +262,8 @@ derive_screen_json() {
        pattern: (if $pattern == "" then null
                  else {id: $pattern,
                        path: (if $patternpath == "" then null else $patternpath end)} end),
+       layouts: (recs($layouts)
+                 | map({id: .[0], path: (if cel(.;1) == "" then null else cel(.;1) end)})),
        components: (recs($components)
                     | map({id: .[0],
                            path: (if cel(.;1) == "" then null else cel(.;1) end),

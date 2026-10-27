@@ -1,0 +1,8 @@
+{
+  "exit": 0,
+  "args": [
+    "screen",
+    "users.list"
+  ],
+  "stdout": "expected-stdout.json"
+}

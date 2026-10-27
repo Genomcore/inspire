@@ -1,0 +1,21 @@
+{
+  "exit": 0,
+  "args": [
+    "--profiles-root",
+    "spec/profiles",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | join(\",\")", "equals": "" },
+    { "expr": "[.units[] | .kind + \":\" + .id] | join(\",\")", "equals": "layout:collection,component:data-table,layout:shell,screen:users.list" },
+    { "expr": ".floor", "equals": "2" },
+    { "expr": ".waves[0] | join(\",\")", "equals": "collection,data-table,shell" },
+    { "expr": ".waves[1] | join(\",\")", "equals": "users.list" },
+    { "expr": "[.units[] | select(.id == \"shell\") | .lifecycle] | join(\"\")", "equals": "accepted" },
+    { "expr": "[.units[] | select(.id == \"shell\") | (.module == null) and (.surface == null)] | join(\"\")", "equals": "true" },
+    { "expr": "[.units[] | select(.id == \"shell\") | .profiles | join(\",\")] | join(\"\")", "equals": "react,typescript" },
+    { "expr": ".ready", "equals": "true" }
+  ],
+  "forbidden": ["PR-27", "NOT READY"]
+}

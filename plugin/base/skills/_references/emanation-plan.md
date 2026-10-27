@@ -139,7 +139,7 @@ generic catch-all would collapse two different answers into one.
   navigation and self edges as well; see § The ordering edge set.
 - **`units[].surface`** is the surface a split screens tree puts a screen under,
   `null` for every other kind and for the flat suite-of-one shape.
-  **`units[].module`** is `null` for the two catalog kinds, which have none.
+  **`units[].module`** is `null` for the three catalog kinds, which have none.
   **`units[].population`** is the entity marker derive carries — `internal`,
   `external`, or `null` for every kind that is not an entity. Plan decides
   nothing with it: no wave, no readiness class and no refusal reads it. It is
@@ -175,11 +175,12 @@ their frontier is empty has a shorter question to answer first.
 
 ## What a unit is, and which are in the frontier
 
-**Unit kinds are exactly derive's five** — `entity`, `action`, `screen`,
-`component`, `pattern`. A shared layout and a shared component are units the
-loop emanates, not readiness errors on the screens that declare them (ED10):
-refusing there would have made the loop unable to touch any screen whose UI kit
-had not been hand-built first.
+**Unit kinds are exactly derive's six** — `entity`, `action`, `screen`,
+`component`, `pattern`, `layout`. A shared pattern, layout and component are
+units the loop emanates, not readiness errors on the screens that declare them
+(ED10): refusing there would have made the loop unable to touch any screen whose
+UI kit had not been hand-built first. The surface shell is a layout like any
+other, framing every route; that is why every screen requires it.
 
 **The frontier is every unit at `lifecycle: accepted`, within scope.** `accepted`
 is design closed and the contract being implemented, which is exactly what
@@ -193,11 +194,11 @@ carries no `lifecycle:` field. What that line means is
 § "`**State:**` is the entry's lifecycle"; what the loop does with it is: the
 `accepted` analogue enters the frontier, the `stable` analogue satisfies an edge
 out of band, and an entry stating neither leaves a screen declaring it unready
-(`PR-04` / `PR-05`). `sdd_catalog_lifecycle` in `_lib.sh` is the one
+(`PR-04` / `PR-05` / `PR-27`). `sdd_catalog_lifecycle` in `_lib.sh` is the one
 implementation of the mapping, which derive reads too: two answers to "is this
 component delivered?" would be one too many.
 
-A catalog entry's `units[].module` is `null` and its `surface` always is: both
+A catalog entry's `units[].module` is `null` and its `surface` always is: the
 catalogs are suite-wide and a shared entry belongs to every module that
 instantiates it.
 
@@ -205,9 +206,9 @@ instantiates it.
 
 **Every `requires[]` edge is asked the same question, whatever its kind: it must
 resolve (`PR-02`), and its target must be delivered or in the frontier —
-otherwise `PR-03`, or `PR-04` / `PR-05` when the target is a catalog entry. What
-differs is the SEVERITY of the answer: an ordering edge refuses, a navigation
-edge warns.** What the edge set below narrows is the ORDERING, and only the
+otherwise `PR-03`, or `PR-04` / `PR-05` / `PR-27` when the target is a catalog
+entry. What differs is the SEVERITY of the answer: an ordering edge refuses, a
+navigation edge warns.** What the edge set below narrows is the ORDERING, and only the
 ordering.
 
 The ordering edge set is derive's `requires[]`, minus three kinds of edge that
@@ -247,17 +248,20 @@ one that is neither delivered nor in the frontier. The edge is not dropped, and
 a vault cannot reach an entity it never plans to build by making the reference
 nullable.
 
-**Pattern and component edges order like every other kind** since ED10 made both
-units: a screen waits for its layout's and its components' wave. A17's sibling
-rule survives — a pattern and a component order only by a *declared* edge
-between them (a pattern's own `**Components:**` line), never by an assumed tier.
+**Pattern, layout and component edges order like every other kind** since ED10
+made them units: a screen waits for its pattern's, its layouts' and its
+components' wave, and for the shell's whenever `layouts/shell` exists — no line
+declares that edge, because the shell frames every route. A17's sibling rule
+survives — catalog entries order only by a *declared* edge between them (a
+pattern's own `**Components:**` line, a layout's `**Pattern:**` line), never by
+an assumed tier.
 
 **An edge orders a wave only when its target is itself in the frontier.** An edge
 to a `stable` artifact — or an `implemented` catalog entry — is satisfied out of
 band; an edge to an `accepted` unit outside the scope is another run's business;
 an edge to anything else — `draft`, `superseded`, or a lifecycle nothing states
-— is `PR-03`, `PR-04` or `PR-05` by the target's kind, an error unless the edge
-is navigation.
+— is `PR-03`, `PR-04`, `PR-05` or `PR-27` by the target's kind, an error unless
+the edge is navigation.
 
 An edge whose target resolves to no artifact at all is `PR-02`, again an error
 unless the edge is navigation. Resolution is vault-wide even when ordering is
@@ -579,7 +583,7 @@ or names no column at all.
 |---|---|---|---|
 | `PR-01` | derive refused this unit — one finding per class in its `refused[]`, carrying derive's `class` (as `derive_class`), `target`, `message` and `remedy` verbatim, never re-worded | error | the target's layer |
 | `PR-02` | a `requires[]` edge resolves to no artifact in the vault. Derive records the edge and never resolves it. **A warning on a navigation edge**, an error on an ordering one — the split is the edge's kind, never its target's lifecycle. Derive's `DR-R3` reaches a dangling screen transition first, so the warning arm is currently unreachable | error, or warning on navigation | the depending unit's layer |
-| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier. A catalog target takes `PR-04` / `PR-05` instead. **A warning on a navigation edge**, an error on an ordering one: a link out with nowhere to land is a broken affordance on a page that is otherwise buildable, which is what lets a screen be emanated ahead of the `draft` screen it links to; an ordering edge to the same target leaves nothing to build at all | error, or warning on navigation | the target's layer |
+| `PR-03` | a `requires[]` edge resolves, but the target is neither `stable` nor in the frontier. A catalog target takes `PR-04` / `PR-05` / `PR-27` instead. **A warning on a navigation edge**, an error on an ordering one: a link out with nowhere to land is a broken affordance on a page that is otherwise buildable, which is what lets a screen be emanated ahead of the `draft` screen it links to; an ordering edge to the same target leaves nothing to build at all | error, or warning on navigation | the target's layer |
 | `PR-04` | a declared **component**'s `**State:**` is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screen naming it has nothing to wait for | error | `inspire-screens` |
 | `PR-05` | the same for a declared **pattern** — **or** an `implemented` pattern whose entry has no `## Regions` table, so the screen-to-layout join is unverified. A `to-extract` pattern with no regions never reaches this row: it is derive's `DR-C3`, arriving as `PR-01`. `screen-coherence` reports the regions shape as a warning on the pattern file; at emanation an unverifiable join is a rendering the contracter would guess at | error | `inspire-screens` |
 | `PR-06` | a framework profile the unit is built under reaches no language profile — it declares no `language:` at all (the shipped `ios` and `android`), or names a file that is absent, or names one whose `layer:` is not `language`. One finding **per framework**, so a mixed suite cannot resolve one framework's language and quietly render every other framework's units with it | error | `inspire-code` |
@@ -590,6 +594,7 @@ or names no column at all.
 | `PR-24` | `stack.md` declares test-infrastructure components and its `## Worktree recipe` declares **no step**, so nothing states how a fresh phase worktree reaches them. **A warning**, for `PR-22`'s reason and keyed on the same declaration: the run can improvise one, and the first field run did — fourteen minutes of it, before the first spawn, arriving at values a second run would have inferred differently. A heading with no rows reads as absent, since that is the state a seeded project starts in. Silent when no component is declared: the environment half of a recipe has nothing to point at, and installing dependencies is the framework profile's `## Build & verify`, not the project's | warning | `inspire-bootstrap` |
 | `PR-25` | a precondition or error entry carries **no head** and its prose names an authorization concept — the framework profile's `## Bindings` renders a guard from `actor({role})` and a **public route** from its absence, so the rule the prose states is enforced by nothing, while the entry itself derives a test-oracle claim about that prose and the suite goes green. **A warning, and a heuristic**, exactly `W-1`'s posture: recognising an access rule in prose means matching words that have legitimate prose uses, and a heuristic does not get to block anything. The vocabulary is `_keyed-heads.sh`'s `KH_PROSE_AUTHZ_PHRASES`, beside `W-1`'s list and read by the same matcher. Reported over the **whole frontier**, before realization narrows it: an already-realized unit's route is public today. One finding per unit, naming every key, since the remedy is one touch of the descriptor | warning | the unit's layer |
 | `PR-26` | a **prose-only** `## Invariants` entry whose subject may not be this entity — its prose names another entity document of the vault (its dotted id, its name, or one of its fields), or it names no `## Fields` row of this entity at all. A headed invariant is already read by `keyed-heads.md` § Coherence; a prose-only one is read by nothing, and the claim it derives can only be asserted here as an absence, which is green before anything is built and stays green through every violation. **A warning, and a heuristic**, `PR-25`'s posture: a subject is not something prose states outright. The vocabulary is the vault's own identifiers rather than a word list, so a suite that declares no such entity never warns on the word. One finding per unit, naming every key and the arm it fired on, since the remedy is one touch of the entity document | warning | `inspire-domain` |
+| `PR-27` | a declared **layout**'s `**State:**` — the shell's included — is neither `implemented` nor `to-extract`, so it is neither delivered nor emanatable and the screens it frames have nothing to wait for | error | `inspire-screens` |
 
 ### Refusals — nothing is planned, the run exits 4
 

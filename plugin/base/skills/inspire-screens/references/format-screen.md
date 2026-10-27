@@ -136,7 +136,7 @@ the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md)
 |---|---|---|
 | `**Features:**` | yes | the feature ids this screen realizes, comma-separated |
 | `**Pattern:**` | no | one repeatable structure, as a wikilink into `patterns/` |
-| `**Layout:**` | no | the page frame it sits in, as a wikilink into `layouts/` |
+| `**Layout:**` | no | the page frame it sits in, as a wikilink into `layouts/` — or every frame, outermost first, when one nests inside another |
 | `**Components:**` | no | the shared components this screen instantiates, as wikilinks into `components/` |
 
 `**Pattern:**` and `**Layout:**` are **peer presentation dependencies**, not the
@@ -144,13 +144,13 @@ screen's definition: they constrain presentation and nothing else, and a screen
 that names neither is not a special case — it inherits no shared structure and no
 shared frame. Its declarations stand on their own either way. A screen naming a
 pattern names the layout that frames it, because a structure with no measurements
-is a rebuild the implementer has to invent. `**Pattern:**` and `**Components:**`
-are **ordering edges** for the emanation loop: a shared pattern and a shared
-component are units it emanates too, so a screen declaring them waits for their
-wave instead of waiting for someone to build them by hand first
-([`_references/emanation-plan.md`](../../_references/emanation-plan.md)).
-`**Layout:**` is not one yet: the loop does not emanate layouts, so the implementer
-reads the frame from the entry the screen names.
+is a rebuild the implementer has to invent. `**Pattern:**`, `**Layout:**` and
+`**Components:**` are **ordering edges** for the emanation loop: a shared pattern,
+layout and component are units it emanates too, so a screen declaring them waits
+for their wave instead of waiting for someone to build them by hand first
+([`_references/emanation-plan.md`](../../_references/emanation-plan.md)). The
+surface shell needs no line: it frames every route, so every screen waits for
+`layouts/shell` once that entry exists.
 
 ## `## Purpose` — who comes here, and what for
 

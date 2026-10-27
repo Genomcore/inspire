@@ -22,14 +22,14 @@
 #   emanate-derive.sh <kind> <id>
 #   emanate-derive.sh <kind> --file <path>
 #
-#   <kind>    entity | action | screen | component | pattern. The positional
-#             kind is not redundant with the id: a 2-segment id is an entity OR
-#             a screen, a 3-segment id an action OR a collision-minted screen,
-#             and a bare word a component OR a pattern.
+#   <kind>    entity | action | screen | component | pattern | layout. The
+#             positional kind is not redundant with the id: a 2-segment id is an
+#             entity OR a screen, a 3-segment id an action OR a collision-minted
+#             screen, and a bare word a component, a pattern OR a layout.
 #   <id>      the artifact's own id — `auth.user`, `auth.user.create`,
 #             `users.list`, `admin.users.list`, or a catalog entry's filename
-#             stem (`data-table`, `filtered-list`), which is the only name a
-#             pattern or component file carries. The colon display form is
+#             stem (`data-table`, `filtered-list`, `shell`), which is the only
+#             name a pattern, layout or component file carries. The colon display form is
 #             accepted and read as the dotted one.
 #   --file    the artifact's path, in place of <id>; the kind is still given.
 #             The plan tool usually holds the path already.
@@ -92,7 +92,7 @@ source "$SCRIPT_DIR/lib/derive-domain.sh"
 source "$SCRIPT_DIR/lib/derive-screen.sh"
 source "$SCRIPT_DIR/lib/derive-catalog.sh"
 
-DERIVE_KINDS="entity|action|screen|component|pattern"
+DERIVE_KINDS="entity|action|screen|component|pattern|layout"
 
 usage() {
   echo "usage: emanate-derive.sh <$DERIVE_KINDS> <id>" >&2
@@ -118,7 +118,7 @@ done
 
 # Spelled out rather than `$DERIVE_KINDS`: a `case` pattern is expanded after
 # the `|` separators are parsed, so the variable would match one literal string.
-case "$KIND" in entity|action|screen|component|pattern) ;; *) usage ;; esac
+case "$KIND" in entity|action|screen|component|pattern|layout) ;; *) usage ;; esac
 [ -n "$UNIT_ARG" ] && [ -n "$UNIT_FILE" ] && usage
 [ -z "$UNIT_ARG" ] && [ -z "$UNIT_FILE" ] && usage
 
@@ -178,14 +178,12 @@ domain_scan() {
   return 1
 }
 
-# catalog_path_for <kind> <id> — 05_screens/{patterns,components}/{id}.md, the
-# one layout a catalog entry has: both catalogs are suite-wide and never move
+# catalog_path_for <kind> <id> — 05_screens/{patterns,layouts,components}/{id}.md,
+# the one place a catalog entry sits: the catalogs are suite-wide and never move
 # into a surface tree, so there is no second place to look and no index to
 # build.
 catalog_path_for() {
-  local dir
-  [ "$1" = "pattern" ] && dir=patterns || dir=components
-  printf '%s/05_screens/%s/%s.md' "$SDD_KB_ROOT" "$dir" "$2"
+  printf '%s/05_screens/%ss/%s.md' "$SDD_KB_ROOT" "$1" "$2"
 }
 
 # kind_holds <path> <kind> — exit 0 when the finder for that kind reaches that
@@ -208,6 +206,7 @@ kind_holds() {
     action)    sdd_find_actions "$dir"    | grep -qxF "$path" ;;
     pattern)   sdd_find_patterns "$dir"   | grep -qxF "$path" ;;
     component) sdd_find_components "$dir" | grep -qxF "$path" ;;
+    layout)    sdd_find_layouts "$dir"    | grep -qxF "$path" ;;
   esac
 }
 
@@ -222,7 +221,7 @@ else
       derive_screen_index
       U_PATH="$(derive_screen_by_id "$U_ARG_DOTTED")"
       [ -n "$U_PATH" ] || not_found "$U_ARG_DOTTED" ;;
-    component|pattern)
+    component|pattern|layout)
       U_PATH="$(catalog_path_for "$KIND" "$UNIT_ARG")"
       [ -f "$U_PATH" ] || not_found "$UNIT_ARG" ;;
     *)
@@ -268,10 +267,11 @@ if [ -z "$U_ID" ]; then
   U_ID="$(basename "$U_PATH" .md)"
   [ "$KIND" = "screen" ] && U_ID="$(basename "$(dirname "$U_PATH")").$U_ID"
 fi
-# A catalog entry has no module and never will: both catalogs are suite-wide,
-# and a shared layout or component belongs to every module that instantiates it.
+# A catalog entry has no module and never will: the catalogs are suite-wide,
+# and a shared pattern, layout or component belongs to every module that
+# instantiates it.
 case "$KIND" in
-  component|pattern) U_LIFECYCLE="$(sdd_catalog_lifecycle "$U_PATH")" ;;
+  component|pattern|layout) U_LIFECYCLE="$(sdd_catalog_lifecycle "$U_PATH")" ;;
   *)
     [ -n "$U_MODULE" ] || U_MODULE="${U_ID%%.*}"
     [ "$KIND" = "screen" ] && [ -z "$U_SCREEN" ] && U_SCREEN="${U_ID##*.}"
@@ -303,13 +303,14 @@ case "$KIND" in
   screen)    derive_screen "$U_PATH" "$U_ID" ;;
   component) derive_component "$U_PATH" "$U_ID" ;;
   pattern)   derive_pattern "$U_PATH" "$U_ID" ;;
+  layout)    derive_layout "$U_PATH" "$U_ID" ;;
 esac
 derive_sweep_collect "$KIND"
 
 # A catalog entry states its purpose on a header LINE, the way it states its
 # state — there is no `## Purpose` section to read.
 case "$KIND" in
-  component|pattern)
+  component|pattern|layout)
     U_PURPOSE="$(derive_norm "$(derive_header_line "$DERIVE_TMP/unit.md" '**Purpose:**')")" ;;
   *)
     U_PURPOSE="$(derive_norm "$(sdd_body_prose "$DERIVE_TMP/unit.md" "Purpose")")" ;;
@@ -388,6 +389,7 @@ case "$KIND" in
   screen)    derive_screen_json ;;
   component) derive_component_json ;;
   pattern)   derive_pattern_json ;;
+  layout)    derive_layout_json ;;
 esac
 report_derived
 exit "$EXIT_OK"

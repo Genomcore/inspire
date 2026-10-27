@@ -1,0 +1,63 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "layout",
+    "id": "shell",
+    "path": "spec/kb/05_screens/layouts/shell.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "the surface chrome — a sidebar beside a top bar over the routed content.",
+  "requires": [],
+  "frame": [
+    "Sidebar, on the inline-start edge",
+    "Top bar, over the content",
+    "Content, the routed screen"
+  ],
+  "geometry": [
+    {
+      "element": "sidebar",
+      "property": "width",
+      "value": "`{size.sidebar}`",
+      "source": "design-tokens.json"
+    },
+    {
+      "element": "top bar",
+      "property": "height",
+      "value": "`{size.topbar}`",
+      "source": "design-tokens.json"
+    }
+  ],
+  "breakpoints": [
+    {
+      "range": "mobile",
+      "region": "sidebar",
+      "change": "collapses behind a menu button in the top bar",
+      "source": "reference"
+    }
+  ],
+  "composition": [],
+  "variants": [],
+  "claims": [
+    {
+      "id": "shell/geometry/sidebar/width",
+      "oracle": "test",
+      "fingerprint": "sha256:f2195597da429b3fc476b237a3dd46cb732a1cf63cb700a87d9882b126578ae3"
+    },
+    {
+      "id": "shell/geometry/top-bar/height",
+      "oracle": "test",
+      "fingerprint": "sha256:0aaf0d1df2e40e8562d359fdf3dc6dec10905b52fae19185612191d5af5de0ff"
+    },
+    {
+      "id": "shell/breakpoint/mobile/sidebar",
+      "oracle": "test",
+      "fingerprint": "sha256:75b306ccdc36ba1b20def3b26a6c18f9762912a9cf495409c2ce8ea8c6629836"
+    },
+    {
+      "id": "shell/mount/every-route",
+      "oracle": "test",
+      "fingerprint": "sha256:7a9c2ee62c61988fd72287b913b181b1cbc48282339d23f94435256d432fe5c2"
+    }
+  ]
+}
