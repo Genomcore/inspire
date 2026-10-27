@@ -1,5 +1,5 @@
 {
-  "commit": "dfa637bafd285b4a48b18be0595ccb424a1b7acb",
+  "commit": "eb7453fec4776b0dc951fbc08304018efc6e4bd0",
   "files": {
     ".claude/agents/README.txt": "af28a568eb5928c374c565274e2316b2be3083b1201449f7aa7ffcfa76d02f3d",
     ".claude/agents/inspire-contracter.md": "66556bab3578d1278bc748e7899f0df2f297f00f8e079cbe35e5912d88e688f3",
@@ -63,7 +63,7 @@
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
     ".claude/skills/inspire-code-nestjs/references/nock-helpers.md": "5128678c14604a893dd21658aa7ff643f246c56740da607f90aae41d67311b8a",
     ".claude/skills/inspire-code-nestjs/references/testing.md": "de1510cddd5cc0619a705aa6c4f7aac22884d78ad3c9ea548f7c63f2977c66a4",
-    ".claude/skills/inspire-code-react/SKILL.md": "3bbad69e59d05aaa5e5d2344759435e1a42ffc09b2065487038f387d36e77880",
+    ".claude/skills/inspire-code-react/SKILL.md": "bcfabd06db8bfc5dc739ce375aadb970cc3cab71dd5b4e26a3122885d006743f",
     ".claude/skills/inspire-code-react/references/testing.md": "4710e1e472b0554e48643ca2ea272e8d2b40b40bb4a03c91edfdc1765044bf11",
     ".claude/skills/inspire-code-typescript/SKILL.md": "e70a9f08dd9a0b9a197f48742f28412da4740dab48b5aead901599b80a263772",
     ".claude/skills/inspire-config/SKILL.md": "4f730677f15c18b31ac51a9840781700cb84d0e3640c3c909e7d3ed1216597b6",
