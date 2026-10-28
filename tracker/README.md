@@ -81,12 +81,12 @@ filed in the Factory's tracker when the change here lands, never before.
 
 ## Where things stand (2026-10-28, post-0.12.1)
 
-**25 open tickets.** A tracker pass on 2026-10-28 closed seven and filed none:
+**26 open tickets.** A tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
 - `F09-screens`, `F10-flows` — absorbed into `B3-navigation-map` (entry screens, actor
   and visibility, the screens `_index.md`).
-- `F12-guide`, `F13-viz`, `B1-operator-profiles` — cancelled under rule 2.
+- `F12-guide`, `F13-viz` — cancelled under rule 2.
 - `090-change-scoped-test-runs` — cancelled; its cost is the emanation test estate, which
   leaves with emanation.
 
@@ -100,10 +100,12 @@ Factory work.
 - **Follow-ups (6):** `0911-file-scope-silent-pass` (High), `070-format-doc-consolidation`,
   `070-relocate-validator-tests`, `080-comment-density-cleanup`,
   `090-actor-head-without-a-role`, `090-reference-data-home`.
-- **First design review, B1 (5):** `B1-kb-structure` and `B1-config-replaces-bootstrap`
+- **First design review, B1 (6):** `B1-kb-structure` and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. Then
-  `B1-adr-decision-rationale`, `B1-decisions-in-context` and `B1-spikes-out-of-the-kb`.
+  `B1-adr-decision-rationale`, `B1-decisions-in-context`, `B1-spikes-out-of-the-kb`, and
+  `B1-operator-profiles` (Low, long-term; it now holds part 3 of
+  `B2-endorsement-reliability`).
 - **Second design review, B2 (2):** `B2-endorsement-reliability` (parts 1 and 2),
   `B2-git-hooks-at-init`.
 - **Third design review, B3 (7):** `B3-entry-points`, `B3-action-effects`,

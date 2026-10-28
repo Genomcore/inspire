@@ -72,13 +72,13 @@ what gets reported.
       compares them.
 - [ ] D2 of `docs/adr/adr-artifact-trust.md` is amended to describe the check.
 - [x] Part 3 is filed as its own ticket or folded into `B1-operator-profiles`, and the
-      close note says which. *Answered 2026-10-28:* see Notes.
+      close note says which. *Answered 2026-10-28:* folded into `B1-operator-profiles`.
 
 ## Notes
 
-**Amended 2026-10-28 (tracker pass): part 3 is out of scope.** It is recorded with the
-long-term direction of `B1-operator-profiles`, which was cancelled on the same day and
-keeps both open questions readable in the archive. The PR approver comes from the git
-host, and the INSPIRE Factory is the component that reaches the git host and knows who
-signs in. So part 3 is unlikely to be built in this repository. This ticket closes on
-parts 1 and 2.
+**Amended 2026-10-28 (tracker pass): part 3 folds into `B1-operator-profiles`.** Both
+questions about part 3 come down to operator identity: who counts as the endorser, and
+where several contributors are recorded. The PR approver comes from the git host, which
+the INSPIRE Factory reaches, and the Factory also knows who signs in. That ticket's ADR
+answers part 3 with the rest of the identity question. This ticket closes on parts 1
+and 2.
