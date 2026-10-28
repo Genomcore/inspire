@@ -124,7 +124,8 @@ the grouped human report.
   the field constraints in table order then the invariants; for an action the
   input constraints, preconditions, behavior steps, postconditions, errors and
   then its three binding claims;
-  for a screen the data, dispatch, navigation and state bindings; for a
+  for a screen the parameter, data, dispatch, navigation and state bindings,
+  in the order the file writes them; for a
   component its props then its states; for a pattern its regions; for a layout
   its geometry rows, then its breakpoint rows, then — for the shell alone — its
   mount claim.
@@ -197,14 +198,19 @@ vocabulary.
   `{id, path, state}` where `state` is the entry's `**State:**` line. The shell
   edge is in `requires` only: no line names it, so the screen declares nothing
   about it.
-- **`bindings`** is `{data, dispatches, navigation, states}`. A dispatch's
+- **`bindings`** is `{parameters, data, dispatches, navigation, states}`. A
+  parameter is `{key, in, type, required, notes}`, its `type` resolved like
+  every other `Type` cell. A data row and a navigation row carry `params`, the
+  `param \`{key}\`` tokens written in them, in order. A dispatch's
   `on_success` / `on_error` are canonicalized to `nav:{screen-id}` ·
-  `state:{key}` · `refresh:{key}` · `none`.
-- **`route`** is `{module, screen, default}`. The inputs are the declared
+  `state:{key}` · `refresh:{key}` · `none`; a navigate outcome that passes
+  parameters appends them, `nav:{screen-id}({key},{key})`.
+- **`route`** is `{module, screen, default, path}`. The inputs are the declared
   `module:` and `screen:` fields, never the id string, so a collision-minted
-  `admin.users.list` still renders `/users/list`. `default` is the
-  stack-agnostic rendering `/{module}/{screen}`; the shell prefix and the exact
-  rendering belong to the framework profile.
+  `admin.users.list` still renders `/users/list`. `path` lists the `path`
+  parameters in row order, and `default` is the stack-agnostic rendering
+  `/{module}/{screen}` with one `/{key}` segment per entry of `path`; the shell
+  prefix and the exact rendering belong to the framework profile.
 - **`structure`**, **`frame`**, **`composition`** and **`variants`** are the
   list items of `## Structure`, `## Frame`, `## Composition` and `## Variants`,
   ordinals stripped. Both are **carried and never claimed**: a
@@ -247,8 +253,9 @@ declared key, the way every other kind's are:
 {action}/error/{code}
 {action}/binding/route                   {action}/binding/dispatch
 {action}/binding/guard
-{screen-id}/data/{key}                   {screen-id}/dispatch/{key}
-{screen-id}/nav/{key}                    {screen-id}/state/{key}
+{screen-id}/param/{key}                  {screen-id}/data/{key}
+{screen-id}/dispatch/{key}               {screen-id}/nav/{key}
+{screen-id}/state/{key}
 {component-id}/prop/{name}               {component-id}/state/{key}
 {pattern-id}/region/{key}
 {layout-id}/geometry/{element}/{property}
@@ -293,9 +300,10 @@ whitespace-collapsed and trimmed:
 | binding route | `route` · the input names, sorted and comma-joined · the bindings text |
 | binding dispatch | `dispatch` · the bindings text |
 | binding guard | `guard` · the roles, sorted and comma-joined, or `public` · the bindings text |
+| screen parameter | in · type name · required · notes |
 | screen data | action id · notes |
 | screen dispatch | action id · trigger · canonical `on_success` · canonical `on_error` |
-| screen navigation | target screen id · trigger |
+| screen navigation | target screen id, with `({key},…)` appended when it passes parameters · trigger |
 | screen state | when · presentation |
 | component prop | what it carries |
 | component state | when · presentation |
@@ -431,6 +439,8 @@ this table name the same thing.
 | `DR-S10` | a state whose `When` anchors nothing declared | touch the screen |
 | `DR-S11` | the pattern join: a required region finds no binding of a kind it accepts | touch the screen |
 | `DR-S12` | a `stable` screen declaring a `to-extract` component | touch the screen |
+| `DR-S13` | a parameter whose `In` is neither `path` nor `query`, whose `Required` is neither `yes` nor `no`, or a `path` one that is not required | touch the screen |
+| `DR-S14` | a `param \`{key}\`` naming a parameter the screen — or, for a transition, its target — does not declare | touch the screen |
 | `DR-C1` | a catalog entry's `**State:**` is absent, or outside the closed pair `implemented` \| `to-extract` — so its lifecycle is unstated and no run can place it | touch the entry |
 | `DR-C2` | a component entry declares no `## API / Slots` props table, or one with no rows: its props are the whole of what it owns | touch the entry |
 | `DR-C3` | a pattern entry declares no `## Regions` table, or one with no rows: it has no holes to inject and nothing to join a screen against | touch the entry |
