@@ -26,7 +26,7 @@
 # Usage:
 #   emanate-plan.sh [--scope PATH]... [--ceiling N] [--tests-root DIR]...
 #                   [--reemanate SEL]... [--goal SEL]
-#                   [--profiles-root DIR] [--agents-root DIR]
+#                   [--skills-root DIR] [--agents-root DIR]
 #
 #   --scope PATH   repeatable. A KB path — a directory or a single file —
 #                  intersected with each layer through the same scope contract
@@ -53,9 +53,9 @@
 #                  names the goal's remaining dependency closure and the floor
 #                  to it, and the ceiling is measured against THAT floor rather
 #                  than the whole scope's.
-#   --profiles-root DIR  where the stack profiles live. Default
-#                  `.claude/skills/inspire-code/profiles`, env override
-#                  $INSPIRE_PROFILES_ROOT.
+#   --skills-root DIR    where the skills live; a stack id resolves to the
+#                  skill whose frontmatter `stack:` names it. Default
+#                  `.claude/skills`, env override $INSPIRE_SKILLS_ROOT.
 #   --agents-root DIR    where the agent shells live. Default `.claude/agents`,
 #                  env override $INSPIRE_AGENTS_ROOT.
 #
@@ -165,7 +165,7 @@ PLAN_EFFECTIVE_FLOOR=0
 PLAN_DELIVERABLE=0
 PLAN_REALIZED_ALL=false
 PLAN_READY=true
-PLAN_PROFILES_ROOT="${INSPIRE_PROFILES_ROOT:-.claude/skills/inspire-code/profiles}"
+SDD_SKILLS_ROOT="${INSPIRE_SKILLS_ROOT:-$SDD_SKILLS_ROOT}"
 PLAN_AGENTS_ROOT="${INSPIRE_AGENTS_ROOT:-.claude/agents}"
 PLAN_SCOPE_ARGS=""
 PLAN_REEMANATE_ARGS=""
@@ -224,9 +224,9 @@ while [ $# -gt 0 ]; do
     --reemanate=*)   add_reemanate "${1#--reemanate=}"; shift ;;
     --goal)          [ $# -ge 2 ] || die_usage "--goal needs a selector"; set_goal "$2"; shift 2 ;;
     --goal=*)        set_goal "${1#--goal=}"; shift ;;
-    --profiles-root) [ $# -ge 2 ] || die_usage "--profiles-root needs a directory"
-                     PLAN_PROFILES_ROOT="$2"; shift 2 ;;
-    --profiles-root=*) PLAN_PROFILES_ROOT="${1#--profiles-root=}"; shift ;;
+    --skills-root)   [ $# -ge 2 ] || die_usage "--skills-root needs a directory"
+                     SDD_SKILLS_ROOT="$2"; shift 2 ;;
+    --skills-root=*) SDD_SKILLS_ROOT="${1#--skills-root=}"; shift ;;
     --agents-root)   [ $# -ge 2 ] || die_usage "--agents-root needs a directory"
                      PLAN_AGENTS_ROOT="$2"; shift 2 ;;
     --agents-root=*) PLAN_AGENTS_ROOT="${1#--agents-root=}"; shift ;;

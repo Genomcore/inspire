@@ -20,8 +20,7 @@ declares the departure.
 
 ## Resolution
 
-Same mechanism as the stack profiles ([`inspire-code/profiles/README.md`](../../inspire-code/profiles/README.md)),
-resolved from [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
+Resolved from [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares
    `wire_conventions: [<id>, …]`, use that set. `/inspire-bootstrap stack`
@@ -101,7 +100,7 @@ instead of an interpretation.
 | Consumer | Uses it for |
 |---|---|
 | `/inspire-bootstrap stack` | asking the project-policy questions once, recording the answers |
-| `/inspire-code tdd` | deriving the full test list before writing the first failing test |
-| `/inspire-code review` | a case the convention requires and no test covers is a finding |
+| test authoring | deriving the full test list before writing the first failing test |
+| code review | a case the convention requires and no test covers is a finding |
 | `/inspire-feature` | the acceptance-criteria gate: a declared error with no criterion |
 | `/inspire-domain` | whether a descriptor needs a deviation note at all |

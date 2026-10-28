@@ -54,35 +54,35 @@ Define or update `stack.md` — the official application stack, including its
    [`01_adr`](../../../../inspire_kb/01_adr) — surface that and offer to chain
    `/inspire-adr create`.
 
-### Stack profiles (for `/inspire-code`)
+### Stack skills
 
-`stack.md` also drives which **stack profiles** `/inspire-code` layers onto its
-generic coding-stage checks. After confirming the layers:
+`stack.md` also decides which **stack skills** reach the coding stage. After
+confirming the layers:
 
-1. **Maintain the `profiles:` frontmatter line** — the set of framework ids that
-   have (or should have) a profile, derived from the chosen frontend/backend
-   frameworks (React → `react`, NestJS → `nestjs`, …). It is `/inspire-code`'s
-   deterministic resolution key — the resolution rules live in
-   [`profiles/README.md`](../../inspire-code/profiles/README.md) § Resolution.
-2. **Offer to scaffold missing profiles.** For any id in `profiles:` with no file at
-   `.claude/skills/inspire-code/profiles/{id}.md`, offer to create a lean profile
-   from the contract ([`profiles/README.md`](../../inspire-code/profiles/README.md)) so
-   the coding stage starts stack-aware. Framework conventions only — org policy
+1. **Maintain the `profiles:` frontmatter line** — the stack ids of the project,
+   derived from the chosen frameworks, languages, databases and libraries
+   (React → `react`, NestJS → `nestjs`, PostgreSQL → `postgres`, …). A skill whose
+   frontmatter `stack:` names one of these ids is served to that stack's units; the
+   contract lives in [`stack-skills.md`](../../_references/stack-skills.md).
+2. **Offer to scaffold missing stack skills.** For any framework or language id in
+   `profiles:` that no `.claude/skills/*/SKILL.md` declares as its `stack:`, offer to
+   create a lean one from the contract
+   ([`stack-skill-example.md`](../../_references/stack-skill-example.md)) so the coding
+   stage starts stack-aware. An id with no conventions of its own (a database the
+   framework skill already covers) needs no skill. Framework conventions only — org policy
    (branch naming, private registries, CI) stays in the project's `CLAUDE.md`
    (seeded by `/inspire:init`, refined by the `init` flow's CLAUDE.md step in
    [`../SKILL.md`](../SKILL.md) § Subcommand: init, whose long form is
    [`bootstrap-identity.md`](bootstrap-identity.md); that step also creates one if
    the project somehow lacks it).
-3. **Check every stack language has a language profile.** Profiles compose along two
-   axes: a framework profile declares `language: <id>` and pulls that language
-   profile in, and the language profile is where a semantic type's rendering lives
-   (`typescript.md` ships). A framework profile without one, or a `language:` naming a
-   file that does not exist, is worth fixing here rather than later: attended
-   `/inspire-code` runs degrade to generic, but `/inspire-emanate plan` **refuses** a
-   unit whose stack has no language profile — a missing rendering home is a readiness
-   error, not a silent generic emission. A language whose only surface is a plain
-   library needs no framework profile; list its language profile in `profiles:`
-   directly.
+3. **Check every stack language has a language skill.** Stack skills compose along
+   two axes: a framework skill declares `language: <id>` and pulls that language skill
+   in, and the language skill is where a semantic type's rendering lives
+   (`inspire-code-typescript` ships). A framework skill without one, or a `language:`
+   naming an id no skill declares, is worth fixing here rather than later: a missing
+   rendering home means the coding stage guesses how a semantic type renders. A
+   language whose only surface is a plain library needs no framework skill; list its
+   id in `profiles:` directly.
 
 ### Wire conventions (selected with the stack)
 

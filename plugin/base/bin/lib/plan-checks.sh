@@ -475,7 +475,7 @@ plan_check_language() {
     # Only per-framework repairs are offered: the check is per framework, so a
     # language profile declared in `stack.md` satisfies no branch of it and an
     # operator who does that first sees nothing change.
-    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-code" \
+    plan_find "PR-06" "error" "$uid" "$(plan_path_norm "$gap")" "inspire-bootstrap" \
       "framework profile \`$fw\` $miss, so nothing states how a semantic type renders" \
       "$fix"
   done < "$sel.gap"
@@ -516,7 +516,7 @@ plan_check_framework_none() {
   named="${want:+\`layer: $want\` }framework"
   target="$src"
   if [ -s "$PLAN_TMP/prof/$key.missing" ]; then
-    target="$(plan_path_norm "$PLAN_PROFILES_ROOT")"
+    target="$(plan_path_norm "$SDD_SKILLS_ROOT")"
     miss="names no $named profile: $(plan_id_list "$PLAN_TMP/prof/$key.missing") is declared and no profile file of that name is on disk"
     fix="add the missing profile under \`$target\`, or declare a $named profile that is there in \`$src\`"
   elif [ -s "$sel.odd" ]; then
@@ -591,7 +591,7 @@ plan_check_preflight() {
     plan_find "PR-22" "warning" "" \
       "$(plan_path_norm "$SDD_KB_ROOT/00_bootstrap/stack.md")" "inspire-bootstrap" \
       "the stack declares $n test-infrastructure component(s) ($(plan_id_list "$PLAN_TMP/components.tsv")) and no resolved framework profile carries a \`## Test infrastructure\` probe recipe, so nothing can tell a healthy component from a suite that never ran" \
-      "add a \`## Test infrastructure\` section to a resolved framework profile under \`$(plan_path_norm "$PLAN_PROFILES_ROOT")\`, or remove the components that no longer apply"
+      "add a \`## Test infrastructure\` section to a resolved framework profile under \`$(plan_path_norm "$SDD_SKILLS_ROOT")\`, or remove the components that no longer apply"
   fi
   if [ ! -s "$PLAN_TMP/recipe.tsv" ]; then
     plan_find "PR-24" "warning" "" \

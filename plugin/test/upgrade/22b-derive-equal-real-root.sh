@@ -11,6 +11,11 @@ PLUGIN_ROOT="$HERE/.."
 . "$PLUGIN_ROOT/scripts/lib/manifest.sh"
 
 MZ="$PLUGIN_ROOT/scripts/materialize.sh"
+
+# kb_deletes <plan log> — the deletions inside the KB, which is everything hop
+# 0.7.0 retires. The plan's own delete total also counts whatever later releases
+# dropped from the runtime, and those are not this file's subject.
+kb_deletes() { grep -c '^  delete   inspire_kb/' "$1"; }
 seeds7="$HERE/fixtures/retired-seeds"
 
 # Pristine seeds, REAL plugin root (the T2-deferred swap, landed post-bump):
@@ -48,7 +53,7 @@ check "plan names the new references as creates (sampled by name)" \
    grep -q 'create   .claude/skills/_references/lesson-capture.md' '$h7_plan_log' && \
    grep -q 'create   .claude/skills/inspire-screens/references/screen-validate.md' '$h7_plan_log'"
 eq "plan predicts exactly the 3 retirements (delete count)" \
-   "$(printf '%s' "$h7_plan" | jq -r '.verdicts.delete')" "3"
+   "$(kb_deletes "$h7_plan_log")" "3"
 eq "plan predicts no questions (merged ask count)" \
    "$(printf '%s' "$h7_plan" | jq -r '.verdicts.ask')" "0"
 eq "plan predicts no questions (ask[])" \
@@ -72,8 +77,9 @@ check "the three retired indexes are gone" \
 # Record/act parity on the whole tree: the set of files that DISAPPEARED is
 # exactly the set the plan predicted — additions (lock, log, seeds) are the
 # update's normal business and are not losses.
-h7_lost="$(comm -23 <(printf '%s\n' "$h7_list_before") <(cd "$p" && find . -type f | LC_ALL=C sort))"
-eq "only the three predicted files disappeared" "$h7_lost" \
+h7_lost="$(comm -23 <(printf '%s\n' "$h7_list_before") <(cd "$p" && find . -type f | LC_ALL=C sort) \
+           | grep '^\./inspire_kb/')"
+eq "only the three predicted KB files disappeared" "$h7_lost" \
 "./inspire_kb/02_modules/_index.md
 ./inspire_kb/05_screens/components/_index.md
 ./inspire_kb/05_screens/patterns/_index.md"

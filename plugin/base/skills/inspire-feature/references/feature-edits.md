@@ -74,7 +74,7 @@ dependencies, promoting priority, changing state
    old ID and offer fixes.
 5. Run [`review {feature-id}`](feature-review.md) to verify no drift.
 
-**State advances usually arrive from the coding stage.** `/inspire-code tdd` offers
+**State advances usually arrive from the coding stage.** It offers
 the ladder's two moves at its cycle's edges — 🟡 → 🔵 when implementation starts,
 🔵 → 🟢 when every criterion is claimed by a green test — and chains here on
 acceptance: the offer is its, the write is this skill's. A state-only update is the

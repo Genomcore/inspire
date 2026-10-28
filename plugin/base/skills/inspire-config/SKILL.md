@@ -105,5 +105,5 @@ Read the reference before the step it covers. The table is an index, not the flo
 ## Related skills
 
 - `/inspire-bootstrap stack` — owns `stack.md`, the source this skill reads.
-- `/inspire-code` — the profiles' `## Build & verify` and `## Test conventions`.
+- the stack skills — their `## Build & verify` and `## Test conventions`.
 - `/inspire-emanate` — the in-session emanation loop; it does not read this file.

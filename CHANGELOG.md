@@ -9,6 +9,43 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.13.0 — 2026-10-28
+
+Upgrade with `/inspire:update` from any released version. The 0.3 layout stays; a
+hop moves your edited stack profiles into the new skills.
+
+### Breaking for existing vaults
+
+- **`inspire-code` is gone.** Its subcommands (`tdd`, `review`, `debug`,
+  `fix-build`, `fix-vulns`), their references and the role doctrine under
+  `references/roles/` no longer ship. Coding runs in INSPIRE Factory. The
+  `/inspire-emanate` skill and the five agent shells still ship, but they point at
+  role docs that no longer exist, so treat them as unsupported.
+- **Every stack profile is a skill of its own.** `.claude/skills/inspire-code/profiles/<id>.md`
+  is now `.claude/skills/inspire-code-<id>/SKILL.md`, and its deep material is
+  `.claude/skills/inspire-code-<id>/references/`. The frontmatter swaps `kind` and
+  `id` for `name`, `description` and `stack: <id>`; `layer`, `language` and `gates`
+  are unchanged, and so is every section. A profile you edited (your `## Bindings`,
+  say) is moved to its new path unchanged, and the update asks about it, because
+  its frontmatter has to change too: keep yours and give it the new keys by hand
+  (`--take-mine`), or take the shipped skill and keep yours at the old path
+  (`--take-base`). A profile you authored yourself stays where it is, and nothing
+  reads it there. Move it to `.claude/skills/<name>/SKILL.md` with `stack: <id>`.
+
+### Changed
+
+- **A stack is matched by frontmatter, not by a path.** A skill with `stack: <id>`
+  is served only to the units whose `stack.md` `profiles:` names that id, and a
+  skill without `stack` is served to every unit. The id can be a framework, a
+  language, a database or a library, and the skill can be named anything.
+  `profile-gates-installed.sh` and `emanate-plan.sh` resolve ids this way.
+  `SDD_PROFILES_ROOT` becomes `SDD_SKILLS_ROOT`, defaulting to `.claude/skills`,
+  and `emanate-plan.sh --profiles-root` becomes `--skills-root`. An id that no
+  skill declares is legal and has no gates to check. The INSPIRE Factory
+  counterpart is Genomcore/inspire-factory#109 and #110.
+- **The profile contract moved** to `.claude/skills/_references/stack-skills.md`,
+  with its annotated skeleton at `_references/stack-skill-example.md`.
+
 ## 0.12.1 — 2026-10-27
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

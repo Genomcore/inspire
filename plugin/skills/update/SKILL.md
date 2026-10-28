@@ -315,7 +315,7 @@ skill waits on it: everything above is what the current release actually does.
    (`plugin/manifests/<version>.json`) and the current `base/` — not against any lock;
    the lock's old `files` map is gone. A file the *project* authored at a path no
    manifest lists and the new base does not carry — e.g.
-   `.claude/skills/inspire-code/profiles/mystack.md` — always classifies as `keep`
+   `.claude/skills/inspire-code-nestjs/references/mystack.md` — always classifies as `keep`
    ("yours — INSPIRE never shipped this") and is never touched or deleted, even though it
    sits inside a skill directory INSPIRE owns. This is the fix for the pre-0.3 behaviour
    (`install.sh` used to `rm -rf` a whole owned entry, destroying exactly these files) —

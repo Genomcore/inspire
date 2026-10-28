@@ -22,9 +22,9 @@ predicate this one narrows.
 valid. Narrower than the base type's predicate, never wider.
 
 **Rendering** — `—` when the base type's rendering is right (the common case), or the
-id of the language profile that carries an explicit row for this type
-(`.claude/skills/inspire-code/profiles/{id}.md`). Adding the row and naming the
-profile here are one act; a type naming a profile that has no row for it is a
+stack id of the language skill that carries an explicit row for this type
+(the `.claude/skills/*/SKILL.md` whose `stack:` is that id). Adding the row and naming
+the skill here are one act; a type naming a skill that has no row for it is a
 readiness error, exactly as a type with no base type is.
 
 > Declaring a type here is a **plain edit** — it neither needs an ADR nor changes the

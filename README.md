@@ -154,7 +154,7 @@ at init and is yours from then on.
 > packages) — sharing **one** domain, one design system and one prototype. Declare them
 > with `/inspire-surface add`; the roster at `inspire_kb/00_bootstrap/surfaces.md` then
 > scopes screens by directory, gives spanning artifacts a `surfaces:` blast radius, and
-> tells `/inspire-code` which package it is emanating into. A project that declares none
+> tells the coding stage which package it is emanating into. A project that declares none
 > is a suite of one, and its KB carries no surface scoping at all.
 
 > **Output language.** Every skill authors its artifacts in the project's declared

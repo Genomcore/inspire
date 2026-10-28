@@ -9,9 +9,11 @@
 # profile, because an unattended run with no rendering table emits a guess
 # that compiles. The resolution order — suite-wide `profiles:`, a UI surface's
 # own `**Profiles:**`, then each framework profile's `language:` — is
-# `inspire-code/profiles/README.md` § Resolution and
+# `_references/stack-skills.md` and
 # `inspire-surface/references/roster-format.md` § Body; this file implements it
-# and owns no rule of its own.
+# and owns no rule of its own. A profile id resolves to the skill whose
+# frontmatter `stack:` names it (`sdd_stack_skills`); the first one in glob
+# order answers for its `layer:` and `language:`.
 #
 # There are TWO axes and each has its own refusal. The framework axis picks the
 # SET a persona spawn is briefed with — the applied rules are its members' union,
@@ -89,7 +91,7 @@ plan_resolve_profiles() {
   : > "$out.resolved.raw"; : > "$out.missing"
   while IFS= read -r id; do
     [ -n "$id" ] || continue
-    file="$PLAN_PROFILES_ROOT/$id.md"
+    file="$(plan_profile_file "$id")"
     if [ ! -f "$file" ]; then
       printf '%s\n' "$id" >> "$out.missing"
       continue
@@ -101,6 +103,15 @@ plan_resolve_profiles() {
   LC_ALL=C sort -u "$out.resolved.raw" -o "$out.resolved.raw"
   mv "$out.resolved.raw" "$out.resolved"
   LC_ALL=C sort -u "$out.missing" -o "$out.missing"
+}
+
+# plan_profile_file <id> — the SKILL.md that declares `stack: <id>`, or, when none
+# does, the path one would be authored at: a missing profile still needs a file
+# for a finding to name.
+plan_profile_file() {
+  local f
+  f="$(sdd_stack_skills "$1" | head -n 1)"
+  printf '%s' "${f:-$SDD_SKILLS_ROOT/$1/SKILL.md}"
 }
 
 # plan_unit_layer <kind> — the profile `layer:` a unit of that kind is built by,
@@ -153,10 +164,10 @@ plan_unit_profiles() {
     printf '%s\t%s\n' "$id" "$layer" >> "$sel.fw"
     printf '%s\n' "$id" >> "$sel.set.raw"
     if [ -z "$language" ]; then
-      printf 'no-language-declared\t%s\t%s\n' "$id" "$PLAN_PROFILES_ROOT/$id.md" >> "$sel.gap"
+      printf 'no-language-declared\t%s\t%s\n' "$id" "$(plan_profile_file "$id")" >> "$sel.gap"
       continue
     fi
-    lfile="$PLAN_PROFILES_ROOT/$language.md"
+    lfile="$(plan_profile_file "$language")"
     if [ ! -f "$lfile" ]; then
       printf 'absent\t%s\t%s\n' "$id" "$lfile" >> "$sel.gap"
       continue
@@ -280,7 +291,7 @@ plan_probe_profiles() {
   sel="$(plan_unit_profiles suite entity)"
   while IFS=$'\t' read -r id _; do
     [ -n "$id" ] || continue
-    sdd_has_section "$PLAN_PROFILES_ROOT/$id.md" "Test infrastructure" \
+    sdd_has_section "$(plan_profile_file "$id")" "Test infrastructure" \
       && printf '%s\n' "$id"
   done < "$sel.fw"
 }

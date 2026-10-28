@@ -2,13 +2,13 @@
 
 The **universal semantic vocabulary** used by action descriptors and entity documents: what each type means, the predicate a value of it must satisfy, and the meaning of every `Mapping`-column token. It is stack-agnostic and closed — a descriptor written against it stays portable across every language a project ever targets.
 
-**Rendering lives elsewhere.** How `timestamp` becomes a TypeScript type, an OpenAPI fragment or a SQL column is a per-target question, and per-target answers live in the **language profile** (`inspire-code/profiles/{language}.md`, e.g. [`typescript.md`](../../inspire-code/profiles/typescript.md)). This file never carries a language, an engine or a schema dialect. The split has three homes:
+**Rendering lives elsewhere.** How `timestamp` becomes a TypeScript type, an OpenAPI fragment or a SQL column is a per-target question, and per-target answers live in the **language skill** (the skill whose `stack:` is the language, e.g. [`inspire-code-typescript`](../../inspire-code-typescript/SKILL.md)). This file never carries a language, an engine or a schema dialect. The split has three homes:
 
 | part | home |
 |---|---|
 | universal vocabulary + predicates | **this file** (runtime, stack-agnostic) |
 | a project's own semantic types | [`00_bootstrap/semantic-types.md`](../../../../inspire_kb/00_bootstrap/semantic-types.md) (project content) |
-| per-target rendering | the language profile ([`inspire-code/profiles/`](../../inspire-code/profiles/README.md)) |
+| per-target rendering | the language skill ([`stack-skills.md`](../../_references/stack-skills.md)) |
 
 ## The vocabulary
 

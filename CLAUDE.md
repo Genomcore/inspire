@@ -67,59 +67,37 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 16 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
         (external verticals) · `adr`.
-      - **Codification** (2) — `inspire-code`: the coding stage that turns the KB
-        into production code under `source/` (subcommands `tdd` · `review` ·
-        `debug` · `fix-build` · `fix-vulns`), always re-anchoring to the ADRs,
-        descriptors and acceptance criteria that specify it, and handing drift
-        back to the specifying skills. Stack-agnostic, layering optional **stack
-        profiles** (`inspire-code/profiles/`, resolved on demand from
-        `00_bootstrap/stack.md`), composed along **two axes**: a **framework**
-        profile (`react`, `nestjs`, `angular`, `ios`, `android`) carries
-        architecture plus the project-owned binding / route / persistence
-        **seeds**, keeps its deep material in `profiles/{id}/references/` loaded
-        only on need, and names the **language** profile (`typescript`) that
-        carries semantic-type rendering and the declaration-only-tree recipe.
-        The template ships those lean defaults; a project adds its own — note
-        that only `react`, `nestjs` and `angular` currently declare a
-        `language:` — `ios` and `android` deliberately declare none, and so
-        refuse. Attended subcommands never block on a
-        missing profile; `/inspire-emanate`'s plan stage refuses **per unit** on profile
-        resolution — `PR-06` when a framework profile the unit is built under
-        reaches no `layer: language` profile, and `PR-07` when a `layer:` the
-        unit resolves carries two framework profiles, or none at all. A unit
-        resolves a *set* and the applied rules are the union of its members',
-        so the ordinary fullstack suite spanning two layers refuses nothing. Its **judgment is filed by role**, not by subcommand:
-        `references/roles/` holds one doc per position of the loop — contracter ·
-        tester · implementer · security overseer · quality overseer — beside a
-        README carrying the role model, the envelope's two halves and the
-        additive-only roster rule. `tdd` (attended, here) and `/inspire-emanate`
-        (unattended, its own skill) read the same docs;
-        `review` holds the two overseer lenses; `fix-vulns`
-        shares the security overseer's standing rules. The subcommand references
-        keep their own flow and point there for the doctrine, so a rule has one
-        home.
-        · `inspire-emanate`: the **unattended emanation loop**, its own skill
-        rather than an `inspire-code` subcommand — the session that loads it *is*
-        the orchestrator. `/inspire-emanate` runs a goal loop hands-off to an exit
-        condition with zero human turns between t=0 and the report: `plan` reads
-        `emanate-plan.sh` and refuses rather than start a run that provably cannot
-        reach its goal; `run` walks each wave, spawning each of a unit's three
-        personas into its own phase worktree (the two overseers get none: an
-        overseer writes nothing), gating on the overseers and on
-        `emanate-gate.sh`'s deterministic verdict, and **promoting git-side** —
-        a merge with trailers, never a KB write, lifecycle included. It consumes
-        `inspire-code` as the doctrine router (the roles README) and never
-        authors role judgment of its own.
+      - **Codification** (7) — coding itself runs in INSPIRE Factory; what ships
+        here is what it reads. Six **stack skills** — `inspire-code-react` ·
+        `inspire-code-nestjs` · `inspire-code-angular` · `inspire-code-ios` ·
+        `inspire-code-android` · `inspire-code-typescript` — each an ordinary
+        skill carrying one stack's conventions, with its deep material in its own
+        `references/`. One optional frontmatter field, `stack: <id>`, scopes a
+        skill: it is served only to the units whose `stack.md` `profiles:` names
+        that id, and a skill without it is served to every unit. The id can be a
+        framework, a language, a database or a library, and the skill's own name
+        never matters — a project adds its own (`stack: postgres`) beside these.
+        `layer:` and `language:` compose them along **two axes**: a **framework**
+        skill carries architecture plus the project-owned binding / route /
+        persistence **seeds** and names the **language** skill (`typescript`) that
+        carries semantic-type rendering and the declaration-only-tree recipe —
+        only `react`, `nestjs` and `angular` declare a `language:`. The contract is
+        `_references/stack-skills.md`. The validators resolve an id the same way
+        (`sdd_stack_skills` in `_lib.sh`, over `SDD_SKILLS_ROOT`).
+        · `inspire-emanate`: the in-session **unattended emanation loop**.
+        **Unsupported since 0.13.0**: its role doctrine (`inspire-code`'s
+        `references/roles/`) was removed with `inspire-code`, and nothing keeps it
+        working — only the Factory's emanation has to.
       - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `config` (writes and validates `.inspire/emanate.yml`, the one file
         INSPIRE Factory reads to run a project — image, services, env, setup and
-        phases of checks — derived from `stack.md` and the profiles and checked
+        phases of checks — derived from `stack.md` and the stack skills and checked
         with the Factory's own reader; `init` · `review`),
         `surface` (the suite's surface roster and its lifecycle — `add`
         greenfield/split/adopt · `retire` · `review`; owns
@@ -133,7 +111,7 @@ repo is both its source and its own marketplace.
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
         `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
-        `keyed-heads.md`); it is
+        `keyed-heads.md`, `stack-skills.md`); it is
         **not** matched by an `inspire-*` glob.
     - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
       definitions, materialized where Claude Code discovers them and merged with
@@ -152,8 +130,8 @@ repo is both its source and its own marketplace.
       `inspire-quality-overseer`. A shell is an identity, a permission envelope
       (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
       only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
-      Bash can write) and a pointer at its doctrine in
-      `inspire-code/references/roles/`. The **overseer roster is additive-only
+      Bash can write) and a pointer at its doctrine — which no longer ships, so the
+      shells are as unsupported as `/inspire-emanate` itself. The **overseer roster is additive-only
       and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
       whose `tools:` line is present and names no writing tool; a project adds
       its own, and the two shipped ones are non-removable — `/inspire-emanate`
