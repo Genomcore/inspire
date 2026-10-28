@@ -2,7 +2,7 @@
 id: B3-ui-text-keys
 title: "B3 — Screens use text keys, never literals"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -68,3 +68,10 @@ layer"). `nestjs` doesn't, and nothing at the spec level or in review makes it a
 - [ ] The product's supported languages have a declared home, separate from
       `output_language`.
 - [ ] The open questions have written answers in this ticket's close note.
+
+## Notes
+
+**Factory port (2026-10-28 tracker pass).** Emanated code is written by the INSPIRE
+Factory's unit agents, which follow the Factory's own test-writing instructions. The
+rule that tests assert keys, not translated text, needs the matching change there, filed
+in the Factory's tracker when this ticket's rule lands.

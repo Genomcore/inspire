@@ -2,7 +2,7 @@
 id: 080-comment-density-cleanup
 title: "080 — comment-heavy runtime and test files: a comments-only trim pass"
 created: 2026-08-26
-updated: 2026-08-26
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -11,7 +11,7 @@ size: M
 importance: Low
 skills: []
 status: Open
-blocked_by: [T0.75]
+blocked_by: []
 related_to: []
 ---
 
@@ -56,3 +56,9 @@ comments to the rule in the same change.
 - `plugin/scripts/lib/merge.sh:146` and `plugin/test/upgrade/10-three-way-classifier.sh:31` — the
   tab-in-a-name trap keeps its one line but lost its "where it is recorded" pointer (the B1 commit /
   the T0.75a fable verdict); the rule wants both.
+
+**Amended 2026-10-28 (tracker pass):** `blocked_by: [T0.75]` is cleared. The T0.75 test
+estate shipped in 0.9.0. The files are still in this register at 0.12.1:
+`scripts/lib/merge.sh` is 240 comment lines of 599 and `scripts/materialize.sh` 436 of
+1209. Emanation is moving to the INSPIRE Factory, and its retirement rewrites
+`materialize.sh` and the hops, so trim those files after that change, not before it.

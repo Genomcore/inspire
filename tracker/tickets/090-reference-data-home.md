@@ -2,7 +2,7 @@
 id: 090-reference-data-home
 title: "090 — reference rows have no home, so an invariant about them has no owner"
 created: 2026-09-09
-updated: 2026-09-09
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -43,8 +43,9 @@ Two halves, and the second only exists once the first is decided:
 
 - [ ] The first half is decided and written where a project reads it — the entity format
       doctrine, not `docs/adr/`.
-- [ ] The second half names the emitter, or states that the loop does not emit reference
-      rows and what an author writes instead.
+- [ ] If the first half mints a claim, the close note says so and the emitter is filed in
+      the INSPIRE Factory's tracker. If it does not, the entity doctrine states what an
+      author writes instead.
 - [ ] `keyed-heads.md` § Oracles and `derived-contract.md` follow the decision if it mints
       a claim; if it does not, the doctrine says so, so the shape stops reaching the gate.
 - [ ] Ratifying closes it: "the knowledge base describes shape, never data" is a complete
@@ -60,3 +61,9 @@ that surfaced them — `immutable` by the store-oracle decision, `inv/I1` by
 This one is filed instead because it is not answerable in a sitting: it needs a home for
 something the knowledge base currently has no shape for, and the answer changes what an
 entity document may contain.
+
+**Amended 2026-10-28 (tracker pass): narrowed to the first half.** The phases that would
+emit rows (contracter, tester, implementer) run in the INSPIRE Factory, which builds the
+code and provides each unit's database. Who emits reference rows is therefore the
+Factory's question, and it exists only if this ticket decides the KB declares them. This
+ticket decides where rows are declared, or that the KB holds none.

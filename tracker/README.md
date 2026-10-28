@@ -1,9 +1,10 @@
 # tracker/ — the template's own roadmap tracker
 
-Three ticket families live here. **`F01`–`F13`** are the post-0.6 release foci — one ticket
-per focus, `epic: roadmap`. **`070-*`** are follow-ups filed at the 0.7.0 close and its
-PR review — small, independently schedulable items, `epic: follow-up`; the prefix names
-the release that surfaced them, not the release that fixes them. **`B<n>-*`** are decisions
+Three ticket families live here. **`F01`–`F14`** are the post-0.6 release foci — one ticket
+per focus, `epic: roadmap`. **Release-prefixed follow-ups** (`070-*`, `080-*`, `090-*`,
+`0911-*`, …) are small, independently schedulable items filed at a release's close or
+review, `epic: follow-up`; the prefix names the release that surfaced them, not the
+release that fixes them. **`B<n>-*`** are decisions
 from the maintainers' design reviews held while training new operators, `epic: roadmap`;
 `B1` is the first review, `B2` the next, and so on. Those reviews' working notes are not
 public, so every `B<n>` ticket opens with an `## Origin` section that states the decision
@@ -18,7 +19,7 @@ fingerprinting. The format still mirrors the on-disk contract a governed project
 `Open | Done | Cancelled`, closed tickets move to `tickets/archive/` — with two declared
 deviations:
 
-- **Descriptive ids.** Files and `id:` use the focus key (`F01-derive` … `F13-viz`) or the
+- **Descriptive ids.** Files and `id:` use the focus key (`F01-derive` … `F14-semantic-types`) or the
   release-plus-slug form (`070-glossary-population`) instead of random `TASK-xxxxxx`.
   Random ids exist for concurrent creation in live projects; a roadmap with stable natural
   keys reads better by name.
@@ -71,34 +72,48 @@ whose theme it shares — a cancelled bag stays readable, so the routing is neve
 closes, and the ticket's Notes say so — the archive keeps the history, the open set keeps
 only what is still true.
 
-## Where things stand (2026-08-19, post-0.7.0)
+**Factory work goes to the Factory's tracker.** The INSPIRE Factory
+(Genomcore/inspire-factory) runs emanation, builds the code and reads the KB with its own
+deriver. A ticket here covers what the KB says and what attended sessions do. When a
+change here needs matching work in the Factory (a format the Factory's deriver must read,
+a rule its agents must follow), the ticket says so in a note, and the Factory ticket is
+filed in the Factory's tracker when the change here lands, never before.
 
-**0.7.0 closed four foci: F01, F02, F03 and F05** — all in `tickets/archive/`, each with
-its acceptance criteria ticked against the shipped tree rather than the release notes.
-That collapsed the original `F01 → F02 → F06 → F07` spine to its back half.
+## Where things stand (2026-10-28, post-0.12.1)
 
-- **Spine:** `F04-mech` (now unblocked, head of the line) → `F06-tdd` (unblocked by F02's
-  `AC-n` ids) → `F07-gates`.
-- **Free lanes:** F08, F09, F12, F13 — no incoming dependencies, any window.
-- **Unblocked by F05:** F11-lessons; its capture triggers shipped in 0.7.0, so the catalog
-  now accumulates the signal the consumption loop closes on.
-- **Design track:** F10-flows, which also inherited F01's one carried item — the screens
-  `_index.md` is the sole surviving index obligation in the runtime.
-- **Follow-ups: two.** `070-format-doc-consolidation` — domain artifact shape lives in
-  both `templates/*.md.template` and `references/format-*.md`, and the two drifted apart
-  once already without either side failing (the 0.7.0 T7 review's MAJOR-3). It is the one
-  0.7.0 follow-up with a proven failure behind it. `070-relocate-validator-tests` — three
-  small defects in the template's own test harness.
+**25 open tickets.** A tracker pass on 2026-10-28 closed seven and filed none:
 
-**0.7.0 finished with two follow-ups, not seven.** Of the seven filed at the close: two
-were absorbed into the focus that owns their surface (rule 1), one was a nice-to-have and
-was dropped (rule 2), and two were **answered on the spot rather than tracked** —
-`070-glossary-population` (the empty-seed-plus-manual-authoring status quo is sufficient;
-the glossary is product content and `inspire-bootstrap` already owns it) and
-`070-ladder-unification` (four layers measure four different things and correctly use four
-vocabularies). A question that can be answered in a sitting should be answered, not filed:
-tracking it converts a decision into a queue entry, and queue entries outlive the thing
-that motivated them.
+- `F14-semantic-types` — Done; all three criteria shipped.
+- `F09-screens`, `F10-flows` — absorbed into `B3-navigation-map` (entry screens, actor
+  and visibility, the screens `_index.md`).
+- `F12-guide`, `F13-viz`, `B1-operator-profiles` — cancelled under rule 2.
+- `090-change-scoped-test-runs` — cancelled; its cost is the emanation test estate, which
+  leaves with emanation.
+
+It also narrowed several tickets to their attended half (`F06-tdd`, `F07-gates`,
+`090-reference-data-home`) and added Factory notes where a change here needs matching
+Factory work.
+
+- **Foci (5):** `F04-mech` (the script split waits for emanation to leave), `F06-tdd`
+  (review Phase 0 only), `F07-gates` (the ratchet's use/mention defect), `F08-authority`,
+  `F11-lessons` (the local loop and the observer ADR amendment).
+- **Follow-ups (6):** `0911-file-scope-silent-pass` (High), `070-format-doc-consolidation`,
+  `070-relocate-validator-tests`, `080-comment-density-cleanup`,
+  `090-actor-head-without-a-role`, `090-reference-data-home`.
+- **First design review, B1 (5):** `B1-kb-structure` and `B1-config-replaces-bootstrap`
+  are the two XL design items. Config waits on one decision: which shape the spec config
+  takes, the original description or the shipped `.inspire/emanate.yml`. Then
+  `B1-adr-decision-rationale`, `B1-decisions-in-context` and `B1-spikes-out-of-the-kb`.
+- **Second design review, B2 (2):** `B2-endorsement-reliability` (parts 1 and 2),
+  `B2-git-hooks-at-init`.
+- **Third design review, B3 (7):** `B3-entry-points`, `B3-action-effects`,
+  `B3-action-verbs`, `B3-navigation-map`, `B3-overridable-types`,
+  `B3-screen-parameters`, `B3-ui-text-keys`. Most change the KB format, so most carry a
+  Factory note.
+
+A question that can be answered in a sitting should be answered, not filed: tracking it
+converts a decision into a queue entry, and queue entries outlive the thing that
+motivated them.
 
 Context and provenance: the foci, themes, dependency graph and original critical path live
 in `~/.agent/diagrams/inspire-070-clarity-map.{md,html}`; the underlying evidence per

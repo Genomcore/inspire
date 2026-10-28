@@ -2,15 +2,15 @@
 id: F13-viz
 title: "F13 VIZ — deliverables in the project's own identity"
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: M
 importance: Mid
 skills: [bootstrap, workspace]
-status: Open
+status: Cancelled
 blocked_by: []
 related_to: [F12-guide]
 ---
@@ -40,3 +40,14 @@ template.
 Free lane, rider-sized. New skill: touches the manifest and the hardcoded-count test —
 the same fixed cost [[F12-guide]] pays; see that ticket for why the two are scheduled
 together but not merged. Bundles VIZ-01..04.
+
+## Cancelled 2026-10-28 — no defect behind it (rule 2)
+
+The ticket names nothing broken: the workspace review and the trust report already exist
+as markdown, and nothing fails for want of a designed render. It was filed as a rider
+and rode none of the releases from 0.7.0 to 0.12.1. A rendered view of project state is
+also the direction of the INSPIRE Factory's own pages, which show a project's KB and runs
+without a skill in the runtime.
+
+The design point survives here if the work comes back: a generic renderer takes its
+identity from the project's `design-system.md` token roles and carries no house style.

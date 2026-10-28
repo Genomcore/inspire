@@ -2,12 +2,12 @@
 id: F07-gates
 title: "F7 GATES — enforcement the author cannot negotiate with"
 created: 2026-08-13
-updated: 2026-09-09
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
 epic: roadmap
-size: XL
+size: S
 importance: High
 skills: [code]
 status: Open
@@ -29,9 +29,10 @@ kept out of the author's reach.
 
 ## Acceptance criteria
 
-- [ ] Gates ADR merged; D2 decided and its consequences named.
-- [ ] External profile source resolves at run time; a sync upstream never conflicts with
-      an operator edit.
+- [x] Gates ADR merged; D2 decided and its consequences named. *Answered 2026-10-28,
+      no ADR:* see the tracker-pass amendment below.
+- [x] External profile source resolves at run time; a sync upstream never conflicts with
+      an operator edit. *Dropped 2026-10-28:* see the tracker-pass amendment below.
 - [ ] Suppression accounting exists: greppable form, in-place justification, falling
       ceiling.
 
@@ -63,3 +64,20 @@ The rearchitecture release — moves doctrine from tier-2 prose into tier-1 mach
 edge: after F06-tdd (prove the cheap checks first); the ADR can be drafted during F06.
 Bundles CODE-03..05 core. The runtime/telemetry link (deck link 6) stays on the shelf —
 it needs production reach no skill can install.
+
+**Amended 2026-10-28 (tracker pass): narrowed to the ratchet, XL → S.**
+
+- *AC-1, the gates question.* It has an answer on both sides. Attended, the shipped
+  overseer pair is non-removable and a project may only add overseers (the 0.8.0
+  amendment above). Unattended, the INSPIRE Factory runs every gate of a run, and a
+  project declares its own checks as the phases of its `.inspire/emanate.yml`. Code-side
+  gates are a declared extension point there, and no ADR in this repository is left to
+  write.
+- *AC-2, the external profile source.* Who owns stack profiles is moving: the Factory's
+  work in progress reads profiles from the project's own skills. An external source in
+  `inspire-code` has no settled consumer, so the criterion is dropped. It is refiled
+  once profile ownership settles, if a mirror still needs to plug in.
+- *AC-3 stays.* `escape-hatch-ratchet.sh` already counts suppressions against a ceiling
+  from `.escape-hatches.json` that only moves down, and the pre-commit and pre-PR hooks
+  run it. What remains is the 2026-09-09 defect: the counted form must be
+  distinguishable from prose that names it.

@@ -2,7 +2,7 @@
 id: 070-format-doc-consolidation
 title: "070 — domain artifact shape lives in two places"
 created: 2026-08-18
-updated: 2026-08-19
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [domain]
 status: Open
 blocked_by: []
-related_to: [F02-contracts, 070-glossary-population, 070-ladder-unification]
+related_to: [F02-contracts, 070-glossary-population, 070-ladder-unification, B1-kb-structure]
 ---
 
 ## Description
@@ -43,3 +43,11 @@ shipped in 0.7.0 and are archived; what they deferred lives on as
 [[070-glossary-population]] (a contract rule reads a file nothing writes) and
 [[070-ladder-unification]] (four maturity vocabularies). Separate work, one origin — read
 the other two before scoping this one.
+
+**Amended 2026-10-28 (tracker pass): three homes now, not two.** At 0.12.1,
+`format-action.md` and `format-entity.md` still open with an inline `## Canonical shape`,
+the templates hold the skeleton, and `inspire-domain/examples/` holds
+`canonical-action.md`, `canonical-action-meta.md` and `canonical-entity.md`. AC-1's
+target exists, but the inline copies were never removed. `B1-kb-structure` rewrites the
+templates for typed extensions, so schedule this with or after that change, so that the
+shape is consolidated once.

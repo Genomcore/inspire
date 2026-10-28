@@ -2,17 +2,17 @@
 id: F09-screens
 title: "F9 SCREENS — the UI layer catches up with the domain layer"
 created: 2026-08-13
-updated: 2026-09-09
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: M
 importance: Mid
 skills: [screens, module, feature]
-status: Open
+status: Cancelled
 blocked_by: []
-related_to: [F10-flows]
+related_to: [F10-flows, B3-navigation-map]
 ---
 
 ## Description
@@ -56,3 +56,23 @@ unauthenticated root, a deep-link target), and plan's nav-root reading should ho
 so `PR-23` stops warning about the one screen that is entry-less by design. Fold into
 AC-3's actor/visibility axis; the plan-side reading follows the vocabulary, not the
 other way round.
+
+## Cancelled 2026-10-28 — absorbed into B3-navigation-map
+
+The emanation-loop epic shipped the bounded extensions. The route map derives from
+`module` + `screen` (`inspire-screens/references/screen-routes.md`), transition targets
+resolve through the screen-id index of `wikilinks-resolve.sh`, and the screen format
+carries keyed `### States` and `### Navigation`.
+
+Two items remain, and both are navigation questions:
+
+- **Entry screens.** A way to declare a screen as reached without navigation: an
+  unauthenticated root or a deep-link target. This ticket called it an "entry point";
+  `B3-entry-points` now uses that name for what calls an action, so the navigation
+  ticket says "entry screen".
+- **Actor and visibility.** Which actors see a screen, and so which menus and starts
+  differ by role.
+
+Both belong to the shell-level navigation question of `B3-navigation-map` ("menus, tabs,
+the start screen: which artifact owns it?"), which carries them from here. The `PR-23`
+reading follows that vocabulary once it exists.

@@ -2,7 +2,7 @@
 id: F11-lessons
 title: "F11 LESSONS — the loop closes where it was opened"
 created: 2026-08-13
-updated: 2026-10-23
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -32,6 +32,8 @@ current catalog.
       moves absorbed ones to `archive/`.
 - [ ] `apply` materializes a lesson into its target skill with an operator-visible plan.
 - [ ] Legacy `98_skill_learnings/` presence produces a warning.
+- [ ] `docs/adr/adr-runtime-lifecycle-and-lessons.md` names the INSPIRE Factory as the
+      owner of the upstream observer (the 2026-10-23 decision in the Notes below).
 
 ## Notes
 

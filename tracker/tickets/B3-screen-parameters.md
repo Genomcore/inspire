@@ -2,7 +2,7 @@
 id: B3-screen-parameters
 title: "B3 — Screens declare their input parameters"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -70,3 +70,11 @@ ticket, `B3-navigation-map`, so parameters can land without waiting for that ses
       fixtures for the pass and fail cases.
 - [ ] A declared parameter that no test covers is reported as a finding.
 - [ ] The two open questions have written answers in this ticket's close note.
+
+## Notes
+
+**Factory port (2026-10-28 tracker pass).** The INSPIRE Factory derives contracts with
+its own reader of the KB, and it counts test citations for the code it builds. A
+`### Parameters` table that derives claims, and the "every parameter has a test" rule,
+need the matching change in the Factory's deriver, filed in the Factory's tracker when
+this ticket's format lands.

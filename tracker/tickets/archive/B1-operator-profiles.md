@@ -2,17 +2,17 @@
 id: B1-operator-profiles
 title: "B1 — trust and guardrails treat every operator the same"
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: XL
 importance: Low
 skills: [workspace]
-status: Open
+status: Cancelled
 blocked_by: []
-related_to: [B1-config-replaces-bootstrap]
+related_to: [B1-config-replaces-bootstrap, B2-endorsement-reliability]
 ---
 
 ## Origin
@@ -70,3 +70,20 @@ Open design questions:
 
 - The ADR may conclude that per-operator weighting is not worth its cost and that the
   functional/technical role split is enough. That is a valid close.
+
+## Cancelled 2026-10-28 — a long-term direction, not pending work (rule 2)
+
+The decision is marked long-term, no defect stands behind it, and its only deliverable is
+an ADR that may conclude the work is not worth its cost. The tracker's README gives such a
+decision no ticket: it is recorded where it applies. This file is that record, and the
+open questions above stay readable in the archive.
+
+Two facts for whoever revives it:
+
+- **Identity.** The question "a stable operator identity from somewhere else" has a
+  likely answer outside this repository. The INSPIRE Factory signs people in and keeps
+  each project's members, so a profile would hang off that identity rather than off git
+  or the KB.
+- **Endorsement.** Part 3 of `B2-endorsement-reliability` (the PR approver as endorser,
+  several contributors in place of one `by`) needs the same identity and the git host. It
+  is recorded on that ticket as out of scope and belongs with this direction.
