@@ -1,0 +1,21 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "undeclared parameter: data row 'main' relies on param 'search', which this screen does not declare"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "undeclared parameter: dispatch 'create' passes param 'uid', which users.detail does not declare"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "undeclared parameter: navigation 'advanced' passes param 'tab', which users.detail does not declare"
+    }
+  ],
+  "forbidden": ["param 'id'", "param 'q'", "navigation 'row'"]
+}

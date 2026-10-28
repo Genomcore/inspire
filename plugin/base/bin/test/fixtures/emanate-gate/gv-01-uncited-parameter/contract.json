@@ -1,0 +1,33 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "screen",
+    "id": "users.detail",
+    "path": "spec/kb/05_screens/users/detail.md",
+    "lifecycle": "accepted",
+    "module": "users",
+    "screen": "detail"
+  },
+  "claims": [
+    {
+      "id": "users.detail/param/id",
+      "oracle": "test",
+      "fingerprint": "sha256:7189a8f366285500b1cd1d49c01f8878da7053e63f1b502d43440bce42501fb4"
+    },
+    {
+      "id": "users.detail/param/view",
+      "oracle": "test",
+      "fingerprint": "sha256:47e5ccc07661450af034dfe7f4c69f235541c4ace894f70e9d8386d49c215aed"
+    },
+    {
+      "id": "users.detail/data/record",
+      "oracle": "test",
+      "fingerprint": "sha256:45879e7b5914e085df9fe8332993406b6a60375c5deeff0d9348e59d3d8ca421"
+    },
+    {
+      "id": "users.detail/state/missing",
+      "oracle": "test",
+      "fingerprint": "sha256:a119e4619eb15c4d3b83cc5e58e0552e5521b16ee1603c0f9a040896f59bcd01"
+    }
+  ]
+}

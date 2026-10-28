@@ -4,10 +4,11 @@
 # Library — the screen half of the derived contract. Sourced after `_lib.sh`,
 # `_keyed-heads.sh`, `derive-json.sh` and `derive-refusals.sh`.
 #
-# BINDINGS ARE THE SCREEN'S OWN (D10/A11): the four `## Bindings` subsections
+# BINDINGS ARE THE SCREEN'S OWN (D10/A11): the five `## Bindings` subsections
 # are the contract whether or not a `**Pattern:**` is named, and every claim is
 # keyed by the screen id and the row's own declared key —
-#   {id}/data/{key} · {id}/dispatch/{key} · {id}/nav/{key} · {id}/state/{key}
+#   {id}/param/{key} · {id}/data/{key} · {id}/dispatch/{key} · {id}/nav/{key} ·
+#   {id}/state/{key}
 # — never by slot and never by position, so a pattern change re-keys nothing and
 # neither does a move.
 #
@@ -113,16 +114,30 @@ derive_nav_target() {
   printf '%s' "$id"
 }
 
+derive_param_refs() {
+  printf '%s\n' "$1" | awk '{
+    s = $0
+    while (match(s, /param[ \t]+`[^`]+`/)) {
+      t = substr(s, RSTART, RLENGTH)
+      sub(/^param[ \t]+`/, "", t)
+      sub(/`$/, "", t)
+      out = out (out == "" ? "" : ",") t
+      s = substr(s, RSTART + RLENGTH)
+    }
+  } END { printf "%s", out }'
+}
+
 # derive_outcome <cell> <file> — an outcome cell in canonical form. A cell
 # outside the three declared forms is left visible as `unresolved:…`; it never
 # reaches a clean contract, because `screen-coherence.sh` already refused the
 # screen over it (DR-S8).
 derive_outcome() {
-  local cell key
+  local cell key params
   cell="$(derive_norm "$1")"
   case "$cell" in
     ''|'-'|'—'|'–'|'n/a'|'none') printf 'none' ;;
-    *'[['*']]'*)                 printf 'nav:%s' "$(derive_nav_target "$cell" "$2")" ;;
+    *'[['*']]'*)                 params="$(derive_param_refs "$cell")"
+                                 printf 'nav:%s%s' "$(derive_nav_target "$cell" "$2")" "${params:+($params)}" ;;
     'state '*|'→ state '*)       key="${cell##*state }"; printf 'state:%s' "$(derive_norm "${key//\`/}")" ;;
     'refresh '*|'→ refresh '*)   key="${cell##*refresh }"; printf 'refresh:%s' "$(derive_norm "${key//\`/}")" ;;
     *)                           printf 'unresolved:%s' "$cell" ;;
@@ -150,10 +165,11 @@ derive_action_ref() {
 derive_screen() {
   local file="$1" id="$2" copy="$DERIVE_TMP/unit.md" dir
   local sub marker c1 c2 c3 c4 c5 key act trig ok err tgt entry state target feat
+  local placement req params
   dir="$(dirname "$file")"
   kh_strip_comments "$file" > "$copy"
   derive_screen_index
-  derive_init_spools features data dispatches navigation states components layouts
+  derive_init_spools features parameters data dispatches navigation states components layouts
 
   while IFS= read -r feat; do
     feat="$(derive_norm "$feat")"
@@ -216,9 +232,16 @@ derive_screen() {
     key="$(derive_norm "${c1//\`/}")"
     [ -n "$key" ] || continue
     case "$sub" in
+      Parameters)
+        placement="$(derive_norm "${c2//\`/}")"
+        req="$(derive_norm "${c4//\`/}")"
+        derive_type_cell "$c3" "parameter \`$key\`" "$file"
+        derive_row parameters "$key" "$placement" "$DERIVE_TNAME" "$DERIVE_TBASE" "$req" "$c5"
+        [ "$placement" = "path" ] && U_ROUTE="$U_ROUTE/{$key}"
+        derive_claim "$id/param/$key" test "$placement" "$DERIVE_TNAME" "$req" "$c5" ;;
       Data)
         act="$(derive_action_ref "$c2" "$file")"
-        derive_row data "$key" "$act" "$c3"
+        derive_row data "$key" "$act" "$c3" "$(derive_param_refs "$c2 $c3")"
         [ -n "$act" ] && derive_row requires action "$act"
         derive_claim "$id/data/$key" test "$act" "$c3" ;;
       Dispatches)
@@ -228,14 +251,17 @@ derive_screen() {
         err="$(derive_outcome "$c5" "$file")"
         derive_row dispatches "$key" "$act" "$trig" "$ok" "$err"
         [ -n "$act" ] && derive_row requires action "$act"
-        case "$ok" in nav:?*) derive_row requires screen "${ok#nav:}" ;; esac
-        case "$err" in nav:?*) derive_row requires screen "${err#nav:}" ;; esac
+        tgt="${ok#nav:}"
+        case "$ok" in nav:?*) derive_row requires screen "${tgt%%(*}" ;; esac
+        tgt="${err#nav:}"
+        case "$err" in nav:?*) derive_row requires screen "${tgt%%(*}" ;; esac
         derive_claim "$id/dispatch/$key" test "$act" "$trig" "$ok" "$err" ;;
       Navigation)
         tgt="$(derive_nav_target "$c2" "$file")"
-        derive_row navigation "$key" "$tgt" "$c3"
+        params="$(derive_param_refs "$c2")"
+        derive_row navigation "$key" "$tgt" "$c3" "$params"
         [ -n "$tgt" ] && derive_row requires screen "$tgt"
-        derive_claim "$id/nav/$key" test "$tgt" "$c3" ;;
+        derive_claim "$id/nav/$key" test "$tgt${params:+($params)}" "$c3" ;;
       States)
         derive_row states "$key" "$c2" "$c3"
         derive_claim "$id/state/$key" test "$c2" "$c3" ;;
@@ -269,15 +295,22 @@ derive_screen_json() {
                            path: (if cel(.;1) == "" then null else cel(.;1) end),
                            state: cel(.;2)})),
        bindings: {
-         data: (recs($data) | map({key: .[0], action: cel(.;1), notes: cel(.;2)})),
+         parameters: (recs($parameters)
+                      | map({key: .[0], in: cel(.;1), type: typ(cel(.;2); cel(.;3)),
+                             required: cel(.;4), notes: cel(.;5)})),
+         data: (recs($data)
+                | map({key: .[0], action: cel(.;1), notes: cel(.;2),
+                       params: (cel(.;3) | if . == "" then [] else split(",") end)})),
          dispatches: (recs($dispatches)
                       | map({key: .[0], action: cel(.;1), trigger: cel(.;2),
                              on_success: cel(.;3), on_error: cel(.;4)})),
          navigation: (recs($navigation)
-                      | map({key: .[0], target: cel(.;1), trigger: cel(.;2)})),
+                      | map({key: .[0], target: cel(.;1), trigger: cel(.;2),
+                             params: (cel(.;3) | if . == "" then [] else split(",") end)})),
          states: (recs($states)
                   | map({key: .[0], when: cel(.;1), presentation: cel(.;2)}))},
-       route: {module: $module, screen: $screen, default: $route},
+       route: {module: $module, screen: $screen, default: $route,
+               path: (recs($parameters) | map(select(cel(.;1) == "path") | .[0]))},
        claims: claimlist($claims)}
     '
 }

@@ -28,10 +28,13 @@
    intent. An answer that only rephrases the title means the screen's job is
    still unclear — ask again before writing bindings.
 5. **Declare the bindings.** `## Bindings` is the screen's own semantics, and the
-   part worth the interview time: which actions feed it (`### Data`), which it
-   invokes and what follows each outcome (`### Dispatches`), where it can go
-   (`### Navigation`), and which states it can be in (`### States`). Key every row
-   screen-locally. Drop a subsection with nothing in it.
+   part worth the interview time: what it is opened with — a record id, a
+   filter, a mode flag (`### Parameters`) — which actions feed it (`### Data`),
+   which it invokes and what follows each outcome (`### Dispatches`), where it
+   can go (`### Navigation`), and which states it can be in (`### States`). Key
+   every row screen-locally, and mark with `param \`{key}\`` each data row that
+   loads by a parameter and each transition that passes one. Drop a subsection
+   with nothing in it.
 6. **Name a pattern only if one fits.** Read the `**Purpose:**` first lines of
    `patterns/[!_]*.md` and name the pattern whose regions match this screen's
    structure. A screen that fits none names none — omit the line rather than

@@ -25,8 +25,11 @@ What follows is the whole list, mechanical and judgment alike.
    *(mechanical, warning)*
 4. **Bindings resolve internally.** Every dispatch outcome names a declared state
    key, a declared data key, or a screen id; every state's `When` references a
-   declared data key, dispatch key, or a deviation; keys are unique per
-   subsection. *(mechanical)*
+   declared data key, dispatch key, parameter key, or a deviation; keys are
+   unique per subsection; a parameter travels in `path` or `query`, and a path
+   one is required; every `param \`{key}\`` a data row relies on is declared by
+   this screen, and every one a transition passes is declared by its target.
+   *(mechanical)*
 5. **Bindings resolve outward.** Every action wikilink resolves to a descriptor in
    `04_domain`; every navigation target resolves to a screen id.
    *(mechanical, via `wikilinks-resolve`)*

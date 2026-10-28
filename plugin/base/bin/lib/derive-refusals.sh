@@ -78,6 +78,9 @@ derive_class_of() {
         "state not anchored"*)                       printf 'DR-S10' ;;
         "pattern join:"*)                            printf 'DR-S11' ;;
         "stable screen declares a to-extract component"*) printf 'DR-S12' ;;
+        "parameter placement"*|"parameter required value"*|\
+        "parameter optional in path"*)               printf 'DR-S13' ;;
+        "undeclared parameter"*)                     printf 'DR-S14' ;;
         *)                                           printf 'DR-U1' ;;
       esac ;;
     sections-present)

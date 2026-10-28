@@ -1,0 +1,37 @@
+---
+id: users.detail
+module: users
+screen: detail
+lifecycle: accepted
+---
+
+# User
+
+**Features:** FEAT-01
+
+## Purpose
+
+An administrator comes here to read one account in full, after picking it out
+of the roster.
+
+## Bindings
+
+### Parameters
+
+| Key | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | uuid | no | the account shown |
+| `view` | body | enum<quick\|advanced> | maybe | the advanced view loads no extra data |
+
+### Data
+
+| Key | Action | Notes |
+|---|---|---|
+| `record` | [[auth.user.get\|auth::user::get]] | the account named by param `id` |
+
+### States
+
+| Key | When | Presentation |
+|---|---|---|
+| `missing` | `record` returns nothing | the not-found message |
+| `advanced` | `view` is advanced | every field, the audit trail included |

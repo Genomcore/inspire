@@ -98,8 +98,9 @@ Four facts about that shape carry the rest of this skill:
   comes here, for which task, what they see first. It is what the emanating agent
   would otherwise have to guess from the feature links. It restates no binding
   and names no route.
-- **The screen owns its semantics.** `## Bindings` declares the data sources,
-  dispatches, navigation and states, keyed screen-locally, and generates claims
+- **The screen owns its semantics.** `## Bindings` declares the input
+  parameters, data sources, dispatches, navigation and states, keyed
+  screen-locally, and generates claims
   whether or not a pattern is named. `**Pattern:**` is a peer dependency
   constraining presentation, never the screen's definition. One transition, one
   declaration, one claim: a transition a dispatch causes is that dispatch's
