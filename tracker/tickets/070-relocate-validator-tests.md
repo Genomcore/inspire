@@ -2,7 +2,7 @@
 id: 070-relocate-validator-tests
 title: "070 — three test-harness defects"
 created: 2026-08-18
-updated: 2026-08-19
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -22,14 +22,15 @@ each is a small fix, and none of them is a design question.
 
 ## Acceptance criteria
 
-- [ ] **`plugin/test/test-materialize.sh:119` needs a SKIP path.** The check "every
-on-disk `base/kb` directory ships at least one tracked file" asks git a question, so
-it is unrunnable outside a git checkout — a copy-based harness reads one false
-failure. Skip when `git rev-parse` fails rather than fail. - [ ] **`test-
-materialize.sh:755,758` are mislabelled.** Both say "guard: real v0.3       lock…" while
-exercising a **v0.6.0** fixture. A label naming the wrong version is       worse than no
-label. - [ ] **Mutation harnesses must restore file modes** (`chmod` before `mv`). Cost
-an hour       to diagnose once; also a lesson candidate for the project's own catalog.
+- [ ] **`plugin/test/materialize/01-init-current-tree.sh:155` needs a SKIP path.** The
+      check "every on-disk `base/kb` directory ships at least one tracked file" asks git a
+      question, so it is unrunnable outside a git checkout — a copy-based harness reads
+      one false failure. Skip when `git rev-parse` fails rather than fail.
+- [ ] **`plugin/test/materialize/09-input-guards.sh:124,127,129` are mislabelled.** All
+      three say "guard: real v0.3 …" while exercising a **v0.6.0** fixture. A label
+      naming the wrong version is worse than no label.
+- [ ] **Mutation harnesses must restore file modes** (`chmod` before `mv`). Cost an hour
+      to diagnose once; also a lesson candidate for the project's own catalog.
 
 ## Notes
 
@@ -49,3 +50,7 @@ materializes` prose.
 
 The three defects above arrived via `070-carryforwards` (cancelled 2026-08-19) and are
 independent of all that.
+
+**Amended 2026-10-28 (tracker pass):** `test-materialize.sh` is now split across
+`plugin/test/materialize/`, and the criteria name the files that hold each check today.
+The first two defects are still present at 0.12.1.

@@ -2,17 +2,17 @@
 id: F10-flows
 title: "F10 FLOWS — journeys as first-class knowledge"
 created: 2026-08-13
-updated: 2026-08-25
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: L
 importance: Mid
 skills: [screens, feature, prototype, adr]
-status: Open
+status: Cancelled
 blocked_by: []
-related_to: [F09-screens, F01-derive]
+related_to: [F09-screens, F01-derive, B3-navigation-map]
 ---
 
 ## Description
@@ -59,3 +59,15 @@ that is posture, not the retirement.
 `_index.md`, which is authored nav and could not go before nav had a home. AC-2 above is
 therefore no longer a shared item — it is the *sole* surviving index obligation in the
 whole runtime, and F10 is its only owner.
+
+## Cancelled 2026-10-28 — absorbed into B3-navigation-map
+
+The one remaining item is retiring the screens `_index.md`, and the condition it waited
+for has shipped: navigation's authored home is the screen's own `### Navigation` rows and
+dispatch outcomes. The file is still written. `screen-create.md` step 12 registers each
+new screen in its module directory's `_index.md`, and `screen-update.md` step 6
+reconciles it.
+
+Whether a stored navigation artifact exists at all is the question of
+`B3-navigation-map`. A per-module `_index.md` is one, so that session decides its fate
+with the rest, and that ticket carries the retirement from here.

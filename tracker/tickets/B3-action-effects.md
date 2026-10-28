@@ -2,7 +2,7 @@
 id: B3-action-effects
 title: "B3 — An action with more than one effect"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -70,3 +70,10 @@ and the availability counter can't refresh both.
 - [ ] If triggered actions are adopted, the format requires a precondition and an exit
       condition on each triggered step.
 - [ ] The open questions have written answers in this ticket's close note.
+
+## Notes
+
+**Factory port (2026-10-28 tracker pass).** The INSPIRE Factory derives contracts with
+its own reader of the KB. A multi-key refresh, and triggered actions if adopted, change
+the derived contract, so the Factory's deriver needs the matching change, filed in the
+Factory's tracker when this ticket's format lands.

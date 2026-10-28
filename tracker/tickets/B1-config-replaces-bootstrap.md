@@ -2,7 +2,7 @@
 id: B1-config-replaces-bootstrap
 title: "B1 — /inspire:config with a shipped default replaces /inspire-bootstrap"
 created: 2026-10-23
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -234,3 +234,21 @@ Direction stated, design still pending.
   from `config.json`, or the two could merge. And this ticket has config as a *plugin*
   skill, so it can run before init, while `/inspire-config` is a materialized project
   skill. Which one wins?
+
+**Amended 2026-10-28 (tracker pass): the shape of the spec config is open, and the
+ticket waits on it.**
+
+- *The conflict.* The Description above (toolchains per unit kind, a compose
+  environment, `config-check`, a plugin skill) and what shipped (the Factory's
+  `.inspire/emanate.yml` with one project `image`, and `/inspire-config` as a project
+  skill that writes it) describe two different configs. The 2026-10-26 and 2026-10-27
+  amendments narrow the ticket toward the shipped one. The original description is not
+  withdrawn by a decision, only by those amendments. Which one the spec config is gets
+  decided before this ticket is scheduled, and the decision is recorded here.
+- *Two themes.* The ticket holds Config (the stack, the spec config, the environment)
+  and Init (the interview: language, identity, theme, and the retirement of
+  `/inspire-bootstrap` and `theme.md`). Once the config shape is decided, it splits into
+  one ticket for each.
+- *Factory coupling.* The Factory's own ticket `emanate-4` removes the scaffold step from
+  every run. It can land only once a project gets its scaffold elsewhere, which this
+  ticket gives to Config.

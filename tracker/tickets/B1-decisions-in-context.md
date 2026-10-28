@@ -2,7 +2,7 @@
 id: B1-decisions-in-context
 title: "B1 — a session starts without the project's decisions in context"
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -67,3 +67,6 @@ Questions the design answers:
 - This ticket does not depend on `B1-adr-decision-rationale`. It can read each ADR's
   `## Decision` section today. The split makes the digest shorter and its source
   cleaner, which is why the two are related.
+- **Factory consumer (2026-10-28 tracker pass).** The emanation half of the digest is
+  the INSPIRE Factory's: its unit agents receive the digest only if the Factory passes
+  it on. That work is filed in the Factory's tracker once the digest script ships here.

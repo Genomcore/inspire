@@ -2,15 +2,15 @@
 id: 090-change-scoped-test-runs
 title: "090 — the inner loop runs the whole estate: scope a run to what the change touches"
 created: 2026-09-08
-updated: 2026-09-08
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: follow-up
 size: M
 importance: Medium
 skills: []
-status: Open
+status: Cancelled
 blocked_by: []
 related_to: []
 ---
@@ -97,3 +97,15 @@ Two things deliberately **not** in this ticket, under the one-theme rule:
 Measurement caveat worth carrying: at this granularity the numbers are noisy — the same
 job measured 216 s and 106 s in two runs at the same `-j`. CLAUDE.md's standing warning
 applies, and any figure in this ticket is a single-run observation on one machine.
+
+## Cancelled 2026-10-28 — the cost belongs to the emanation estate
+
+The four biggest costs the ticket priced are the emanation loop's integration tests:
+`golden/emanate-plan`, `test-plan-lib.sh` and `golden/emanate-derive`, beside the
+`materialize.sh` runs. Emanation is moving to the INSPIRE Factory, which already runs it
+with a deriver and a planner of its own. When the in-repo loop leaves, those jobs leave
+with it, and the wall this ticket measured is no longer the wall to scope.
+
+The bare-word filters of `run.sh` cover the inner loop meanwhile. Refile against the
+estate that remains, measured after the emanation scripts leave, if a full run is still
+the bottleneck of a change.

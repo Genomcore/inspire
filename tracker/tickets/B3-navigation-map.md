@@ -2,7 +2,7 @@
 id: B3-navigation-map
 title: "B3 — The navigation map: a design session on whether to store it"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [screens]
 status: Open
 blocked_by: []
-related_to: [B3-screen-parameters]
+related_to: [B3-screen-parameters, F09-screens, F10-flows]
 ---
 
 ## Origin
@@ -65,3 +65,28 @@ was proposed then, and put on hold until this session.
 - [ ] Keeping the map derived is a valid outcome. If the session decides that, this
       ticket closes Done with no code change, and any fix it calls for is filed as its
       own ticket.
+- [ ] The decision names the fate of the per-module screens `_index.md`: retired, or
+      kept as the stored artifact.
+- [ ] The decision says how a screen declares that it is an entry screen, and how a
+      screen's actors and visibility are stated.
+
+## Notes
+
+**Amended 2026-10-28 (tracker pass): two cancelled tickets route here.**
+
+- *From `F10-flows`:* retiring the screens `_index.md`. "Nothing stores it" holds for
+  the route map, but not for navigation as a whole. `screen-create.md` step 12 registers
+  every new screen in its module directory's `_index.md`, and `screen-update.md` step 6
+  reconciles it. So a stored navigation file exists today, and the session decides
+  whether it stays.
+- *From `F09-screens`:* the **entry screen**, a screen reached without navigation (an
+  unauthenticated root such as a sign-in page, or a deep-link target), and the **actor
+  and visibility** of a screen. Both are shell-level navigation. `PR-23` warns that a
+  sign-in screen has no navigable way in, which is correct for its rule and wrong for
+  that screen. The plan's reading follows the vocabulary this session settles. The term
+  is "entry screen" because `B3-entry-points` uses "entry point" for what calls an
+  action.
+
+If the answer to "what went wrong in the emanation run" is code that ignored the spec,
+the fix is in the INSPIRE Factory, which builds that code, and it is filed in the
+Factory's tracker.

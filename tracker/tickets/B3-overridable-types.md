@@ -2,7 +2,7 @@
 id: B3-overridable-types
 title: "B3 — Default semantic types a project can override"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -81,3 +81,13 @@ appears to have shipped.
       recorded in this ticket's close note.
 - [ ] Setup offers the defaults in one step.
 - [ ] The open questions have written answers in this ticket's close note.
+
+## Notes
+
+**Amended 2026-10-28 (tracker pass).**
+
+- *F14 is closed.* Its three criteria were checked against the 0.12.1 tree and it is
+  archived as Done, so the third open question has its answer.
+- *Factory port.* The INSPIRE Factory derives contracts with its own reader of the KB. A
+  collection type and overridable defaults change what that reader accepts, and the
+  matching change is filed in the Factory's tracker when this ticket's format lands.

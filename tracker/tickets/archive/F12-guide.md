@@ -2,15 +2,15 @@
 id: F12-guide
 title: "F12 GUIDE — INSPIRE explains itself"
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: S
 importance: Mid
 skills: []
-status: Open
+status: Cancelled
 blocked_by: []
 related_to: [F13-viz]
 ---
@@ -41,3 +41,15 @@ wave. New skill: touches the manifest and the hardcoded-count test — **the sam
 a concierge router and a deliverables renderer share nothing but that overhead, and one
 ticket covering both would describe neither. `skills: []` because
 the enum predates it — the work creates the skill it would name. Bundles GUIDE-01..03.
+
+## Cancelled 2026-10-28 — no defect behind it (rule 2)
+
+The ticket names nothing broken. It was filed as a rider for any window and rode none of
+the releases from 0.7.0 to 0.12.1. Its first criterion, D7 (route, bundle or link), is a
+question rather than a deliverable. The shared new-skill cost it counted on goes with
+[[F13-viz]], cancelled on the same day.
+
+The training of new INSPIRE operators is the likeliest source of a real case. Refile when
+an operator asks a methodology or project-state question and the runtime gives a wrong
+answer or none. That case also settles D7: it shows whether the operator lacked a router
+or lacked the content.

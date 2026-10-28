@@ -2,15 +2,15 @@
 id: F14-semantic-types
 title: "F14 SEMANTIC TYPES — the ownership split: universal · project · language profile"
 created: 2026-08-25
-updated: 2026-08-25
+updated: 2026-10-28
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@dario.blasco"
+closed_at: 2026-10-28
 epic: roadmap
 size: M
 importance: High
 skills: [code, bootstrap]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F06-tdd, F07-gates]
 ---
@@ -53,3 +53,18 @@ Source decisions: emanation-loop design doc D5 (rendering home), D6 (binding /
 persistence conventions live in the same profile layer as seeds, freely edited,
 never upgraded over). Closes when 0.8.0 ships T3, or independently if the epic
 reshapes.
+
+## Closed 2026-10-28 — shipped
+
+Each criterion, checked against the tree at 0.12.1:
+
+- [x] `inspire-code/profiles/typescript.md` carries the rendering, and
+      `type-mapping.md` names the language profile as the home of every per-target
+      answer. `react.md`, `nestjs.md` and `angular.md` declare `language:`.
+- [x] `00_bootstrap/semantic-types.md` is seeded. `type-mapping.md` keeps the
+      universal vocabulary, and `profiles/README.md` documents the three homes.
+- [x] `PR-06` (`bin/lib/plan-checks.sh`, `plan_check_language`) refuses a unit
+      whose framework profile reaches no language profile, and names the profile.
+
+What the 2026-10-27 design review asked of semantic types beyond this split (overridable
+defaults, a collection type, a support table) is `B3-overridable-types`.

@@ -2,7 +2,7 @@
 id: F04-mech
 title: "F4 MECH — move mechanical work from prose to scripts"
 created: 2026-08-13
-updated: 2026-10-20
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -25,18 +25,19 @@ scripted); script the tracker and lesson mechanics (ID generation, status→loca
 filters, frontmatter stamping); move the workspace review's counting phases to a script
 and re-pin the report skeletons to its output.
 
-Pre-work: split the oversized scripts — a list 0.7.0 made longer, not shorter. Re-measured
-2026-08-19: `materialize.sh` **1116** (was 968) · `prose-style.sh` **812** (new) ·
-`_lib.sh` **750** (was 448) · `trust.sh` **562** (unchanged) · `sections-present.sh`
-**456** (new).
+Pre-work: split the oversized scripts — a list every release since 0.7.0 has made longer.
+Re-measured 2026-10-28 at 0.12.1: `materialize.sh` **1209** · `_lib.sh` **970** ·
+`prose-style.sh` **866** · `_keyed-heads.sh` **628** · `screen-coherence.sh` **628** ·
+`scripts/lib/merge.sh` **599** · `emanate-harvest.sh` **589** · `trust.sh` **564** ·
+`sections-present.sh` **510**.
 
 ## Acceptance criteria
 
 - [ ] Each scripted check is deleted from the prose that stated it (no copy N+1).
 - [ ] Tracker and lesson mechanics run as scripts; skills call them.
 - [ ] Workspace Phases 5–6 numbers come from a script; report skeletons consume them.
-- [ ] No shipped script exceeds ~500 LOC — five offenders as of 0.7.0, not the three
-      this ticket was written against.
+- [ ] No shipped script exceeds ~500 LOC — nine offenders at 0.12.1, five at 0.7.0,
+      three when this ticket was written.
 - [ ] **Five `prose-style.sh` items cleared while that script is open.** R3's stopword
       list is missing `cannot`, so "the auth subsystem cannot delegate" reads as a noun
       run — one word. R3 also flags `None beyond Fields constraints.`, the one-line
@@ -48,12 +49,15 @@ Pre-work: split the oversized scripts — a list 0.7.0 made longer, not shorter.
       `::` can never match, because the id-stripper eats them before comparison
       (commented in-script) — fix the stripper or state the restriction in the contract.
       And Q9, below.
-- [ ] **Q9 decided or cancelled.** F03-style recorded only "the 250-vs-300 threshold
+- [x] **Q9 decided or cancelled.** F03-style recorded only "the 250-vs-300 threshold
       question (Q9) stays deferred", and at F03's close neither number appeared in
       `prose-style.sh`, `writing-style.md`, the source proposal or the clarity map.
       Reconstruct what the two numbers measured — and **cancel the item outright if the
       answer is that the shipped R2 (25 words/sentence) and R5 (6 sentences/paragraph)
       caps already settled it**, which is the likeliest reading.
+      *Cancelled 2026-10-28:* the shipped caps settle it. `prose-style.sh` caps R2 at 35
+      words per sentence and R5 at 8 sentences per paragraph, and neither 250 nor 300
+      appears in `prose-style.sh` or `writing-style.md`.
 
 ## Notes
 
@@ -88,3 +92,10 @@ Two deferrals recorded: review.sh's silent skip of non-executable rule scripts
 the review); trust.sh's unreachable `surfaces.md` branch (`trust.sh:181` maps
 `00_bootstrap/surfaces.md` to the `surface` owner, but `scan_paths()` at
 `trust.sh:224-235` never walks that path — the case arm is dead code).
+
+**Amended 2026-10-28 (tracker pass): hold the split until emanation leaves.** Emanation
+is moving to the INSPIRE Factory. When the in-repo loop leaves, `emanate-harvest.sh`, the
+`plan-*` and `gate-*` units and the `derive-*` units leave with it, and `_lib.sh` and
+`materialize.sh` lose the code that serves them. Splitting those scripts first splits
+code that is about to go. The prose-style items, the tracker and lesson scripts and the
+workspace counting phases do not wait.

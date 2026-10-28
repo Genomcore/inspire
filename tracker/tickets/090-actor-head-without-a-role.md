@@ -2,7 +2,7 @@
 id: 090-actor-head-without-a-role
 title: "090 — V3 can say which role may act, and cannot say that anyone signed in may"
 created: 2026-09-09
-updated: 2026-09-09
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [domain]
 status: Open
 blocked_by: []
-related_to: [090-plan-headless-authorization]
+related_to: [090-plan-headless-authorization, B3-entry-points]
 ---
 
 ## Description
@@ -64,3 +64,14 @@ profile implements, and that belongs with the format's owner rather than with a 
 `actor(...)`'s own doctrine is unaffected and is not in question here: a trust-boundary
 claim is a precondition of the action, true wherever it runs, and never a surface-side
 annotation. The gap is only in what the argument list can say.
+
+**Amended 2026-10-28 (tracker pass).**
+
+- *Relation to `B3-entry-points`.* That ticket asks whether this one folds into it. It
+  stays separate: this ticket is authorization (who may invoke an action), and the entry
+  point is exposure (how a call reaches it). If `B3-entry-points` makes an action with
+  no entry point internal, a missing head stops meaning *public*. The two shapes this
+  ticket names still need a head or a written answer.
+- *Factory port.* The INSPIRE Factory derives contracts with its own reader of the KB.
+  If V3 gains a head, the Factory's deriver needs the same head, filed in the Factory's
+  tracker when this ticket's answer lands.

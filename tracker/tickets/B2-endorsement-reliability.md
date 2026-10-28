@@ -2,7 +2,7 @@
 id: B2-endorsement-reliability
 title: "B2 — an endorsement can be lost on the same day and hides later edits"
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -71,5 +71,14 @@ what gets reported.
 - [ ] Existing date-only stamps stay valid, and the close note says how the check
       compares them.
 - [ ] D2 of `docs/adr/adr-artifact-trust.md` is amended to describe the check.
-- [ ] Part 3 is filed as its own ticket or folded into `B1-operator-profiles`, and the
-      close note says which.
+- [x] Part 3 is filed as its own ticket or folded into `B1-operator-profiles`, and the
+      close note says which. *Answered 2026-10-28:* folded into `B1-operator-profiles`.
+
+## Notes
+
+**Amended 2026-10-28 (tracker pass): part 3 folds into `B1-operator-profiles`.** Both
+questions about part 3 come down to operator identity: who counts as the endorser, and
+where several contributors are recorded. The PR approver comes from the git host, which
+the INSPIRE Factory reaches, and the Factory also knows who signs in. That ticket's ADR
+answers part 3 with the rest of the identity question. This ticket closes on parts 1
+and 2.

@@ -2,7 +2,7 @@
 id: B1-operator-profiles
 title: "B1 — trust and guardrails treat every operator the same"
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Low
 skills: [workspace]
 status: Open
 blocked_by: []
-related_to: [B1-config-replaces-bootstrap]
+related_to: [B1-config-replaces-bootstrap, B2-endorsement-reliability]
 ---
 
 ## Origin
@@ -70,3 +70,12 @@ Open design questions:
 
 - The ADR may conclude that per-operator weighting is not worth its cost and that the
   functional/technical role split is enough. That is a valid close.
+
+**Amended 2026-10-28 (tracker pass).**
+
+- **Identity.** The question "a stable operator identity from somewhere else" has a
+  likely answer outside this repository. The INSPIRE Factory signs people in and keeps
+  each project's members, so the ADR weighs that identity against git and the KB.
+- **Endorsement.** Part 3 of `B2-endorsement-reliability` folds in here: the PR approver
+  as endorser, and several contributors in place of one `by`. It needs the same identity,
+  and the git host, which the Factory reaches. The ADR answers it with the rest.

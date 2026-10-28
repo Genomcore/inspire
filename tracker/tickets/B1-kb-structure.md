@@ -2,7 +2,7 @@
 id: B1-kb-structure
 title: "B1 — revamp the KB: one spec directory by module, typed file extensions"
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -214,3 +214,17 @@ to typed extensions breaks that rule. The design chooses one of three options:
   to cover both, and module-scoped ADRs move to `01_spec/{module}/adr/`.
 - `B1-spikes-out-of-the-kb` removes `06_spikes`, so the new layout has one fewer layer
   to place.
+
+**Amended 2026-10-28 (tracker pass): the INSPIRE Factory reads this layout too.**
+
+- *Motivation.* Emanation is moving to the INSPIRE Factory, where a run starts from a
+  plan selected in the Factory's own planner, not from `emanate-plan.sh --scope`. The
+  "emanating a module" motivation, and the rejected `--module` selector, stop applying
+  once the in-repo loop leaves. "Reviewing a module" stands on its own and carries the
+  ticket.
+- *Factory port.* The Factory reads the KB with its own scanner and deriver, which
+  hardcode today's paths (`orchestrator/src/kb/referenced-kind.ts` and
+  `orchestrator/src/contracts/derivation-context.ts` in Genomcore/inspire-factory match
+  `05_screens/components/`, `05_screens/patterns/` and `05_screens/layouts/`). The new
+  layout and the typed extensions break both, so the ADR's list of what changes names
+  them, and the implementation tickets it files include one in the Factory's tracker.

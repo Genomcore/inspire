@@ -2,7 +2,7 @@
 id: F06-tdd
 title: "F6 TDD — tests that can actually fail"
 created: 2026-08-13
-updated: 2026-08-25
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -27,9 +27,13 @@ inputs, declared once instead of restated per feature.
 
 ## Acceptance criteria
 
-- [ ] `references/tdd.md` carries the mutation step; a worked example shows a surviving
-      mutant handled as a test gap.
-- [ ] Coverage check: every `AC-n` in a feature maps to at least one claiming test.
+- [x] `references/tdd.md` carries the mutation step; a worked example shows a surviving
+      mutant handled as a test gap. *Shipped:* step 7, "The mutation drill", with a table
+      of mutations and what each survivor tells, and the rule that every survivor is a
+      test gap.
+- [x] Coverage check: every `AC-n` in a feature maps to at least one claiming test.
+      *Shipped:* `bin/criteria-have-tests.sh`, which `tdd.md` runs: a warning while the
+      feature is 🟡 Planned, blocking from 🔵 on.
 - [ ] Review Phase 0 consumes the check's output instead of asserting coverage in prose.
 
 ## Notes
@@ -50,3 +54,10 @@ Hard dependency: F02-contracts ships the criterion IDs — **discharged** in 0.7
 F07-gates: prove the cheap checks before building the architecture. Bundles CODE-01/02
 from the vectors report; source doctrine:
 `../../sandbox/docs/inspire-guardrails-deck.html`, links 1–2.
+
+**Amended 2026-10-28 (tracker pass): one criterion remains, and it is attended.** AC-1
+and AC-2 have shipped. AC-3 has not: review Phase 0
+(`inspire-code/references/review-dimensions.md` § Phase 0) still asks in prose whether
+every testable criterion is covered, and never reads `criteria-have-tests.sh`. Claim
+coverage of code that emanation builds is the INSPIRE Factory's, which counts the
+`@claim` citations itself, so this ticket closes on attended review alone.

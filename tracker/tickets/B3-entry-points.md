@@ -2,7 +2,7 @@
 id: B3-entry-points
 title: "B3 — Entry points: how an action gets called"
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -97,3 +97,17 @@ reader more than an odd one.
       public route, and the framework profiles' route derivation follows that.
 - [ ] Screens' `### Dispatches` are read as direct entry points with no format change.
 - [ ] The open questions have written answers in this ticket's close note.
+
+## Notes
+
+**Amended 2026-10-28 (tracker pass).**
+
+- *`090-actor-head-without-a-role` stays separate.* It is the authorization half (who
+  may invoke), this ticket is exposure (how a call arrives), and that ticket records the
+  answer.
+- *Factory port.* The INSPIRE Factory derives contracts and routes with its own reader of
+  the KB, and its run engine builds the code. A new artifact type, its exposure, and the
+  scheduled and event kinds each need matching Factory work, filed in the Factory's
+  tracker when this ticket's format lands.
+- *Not "entry screen".* `B3-navigation-map` carries a different idea, a screen reached
+  without navigation, and calls it an entry screen to keep this ticket's name free.
