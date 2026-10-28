@@ -1,3 +1,0 @@
-no tokens: every claim this entity carries is oracle:store, `immutable` among
-them, so the schema its contracter emitted is the whole oracle and the unit
-passes with no test citing anything

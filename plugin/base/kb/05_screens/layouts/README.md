@@ -18,7 +18,7 @@ A screen names both: `**Pattern:** [[../patterns/list]]` and
 bars, every persistent control — is a layout entry too, `shell.md`, that no screen
 names because it frames every route.
 
-A layout at `**State:** to-extract` is a unit the emanation loop builds, like a
+A layout at `**State:** to-extract` is a unit INSPIRE Factory builds, like a
 pattern or a component: each `## Geometry` and `## Breakpoints` row is a claim its
 tests cite, and a screen waits for every layout its `**Layout:**` line names. Every
 screen also waits for `shell`, whose contract adds one claim more — the application

@@ -134,8 +134,7 @@ check "CLAUDE.md is the stub"         "grep -q 'Provisional stub' '$proj/CLAUDE.
 check ".gitignore created"            "[ -f '$proj/.gitignore' ]"
 check ".gitignore ignores settings.local.json" "grep -qF '.claude/settings.local.json' '$proj/.gitignore'"
 # .claude/worktrees/ is the house convention for every worktree a skill cuts,
-# and /inspire-emanate's t=0 refuses a dirty launch checkout — so a run that
-# left its own goal worktree showing as untracked would refuse the next run.
+# so each one would otherwise show as untracked in the checkout it came from.
 check ".gitignore ignores .claude/worktrees/" "grep -qxF '.claude/worktrees/' '$proj/.gitignore'"
 
 # Directory shipping is a GIT property, not a working-tree one: git tracks

@@ -94,7 +94,7 @@ catalogue is
 An unanswered decision is recorded as **not decided yet**, never left out: the
 convention's own default then applies, and saying so is what keeps a later test
 from pinning a different choice as though it were the contract.
-`/inspire-emanate plan` reports these rows so a spawned tester asserts the
+INSPIRE Factory hands these rows to the unit agents, so a test asserts the
 project's decision instead of inventing one.
 
 ## Test infrastructure
@@ -116,9 +116,8 @@ What turns a fresh checkout into a tree the suites actually run in — the
 every path whose basename is `.env`, so the operator's own file can neither be
 read nor copied), then the **dependencies** and the **generated artifacts** that
 are git-ignored and therefore absent from a new worktree. One row per step, run
-in the order written. `/inspire-emanate` runs these in every phase worktree
-before a persona spawns; without them a run improvises its own, differently each
-time. Commands only — no `.env` file is ever written.
+in the order written. INSPIRE Factory runs these in every unit worktree before
+its agent starts; without them a run improvises its own, differently each time. Commands only — no `.env` file is ever written.
 
 | Step | Command |
 |---|---|

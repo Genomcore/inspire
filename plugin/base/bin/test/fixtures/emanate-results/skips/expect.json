@@ -1,5 +1,0 @@
-{
-  "exit": 0,
-  "args": ["--from", "jest-report.json"],
-  "stdout": "expected-stdout.json"
-}

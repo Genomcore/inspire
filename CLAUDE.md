@@ -133,45 +133,16 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **five `emanate-*` scripts are the same class of thing** — the
-      emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
-      `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
-      the **strict** parser that refuses an old shape rather than read it as an
-      empty section, and the one place the 0.9 grace on the presence classes is
-      paid for — see
-      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
-      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
-      already realized** → dependency waves → the floor versus the declared
-      ceiling → every readiness check, plus the run-level facts a spawn brief
-      needs — the declared test infrastructure and the project's wire-convention
-      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
-      stdout and nothing written anywhere — see
-      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
-      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
-      result → one pass/fail verdict on stdout, the deterministic evidence an
-      overseer's approval can never stand in for — see
-      [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
-      are the three big enough to decompose, each into its own family of sourced
-      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
-      `gate-*`). Plan and gate **compose on derive's output, never its
-      implementation** — neither sources a `derive-*` unit — and the one unit
-      they do share is `gate-citations.sh`, because the `@claim` token has one
-      scanner and two readings: coverage for gate, realization for plan.
-      `emanate-results.sh` (a test runner's own report → the
-      `inspire.suite-results/1` manifest on stdout) exists because gate reads
-      that one shape and nothing else, and leaving its production to the
-      orchestrator's judgement would put a schema inside prose doctrine — the
-      one place a persona could hand gate a plausible-but-wrong shape and have
-      every claim read as not-run. `emanate-harvest.sh` (a phase worktree's owned
-      diff → one integration commit) is pure git. Those last two source no lib
-      unit at all, and each says so in its own header.
+      The derived contract INSPIRE Factory builds every unit from is specified in
+      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md);
+      the Factory implements it, and nothing under `base/bin/` derives one.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its seven hand-wired siblings, and uses the third form
+      rule at a time plus its two hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`
@@ -312,7 +283,7 @@ asks the operator anything.
   | `plugin/test/test-fixtures.sh` | the period-correct fixture builder and its per-run cache |
   | `plugin/test/test-lib-common.sh` | `log`, `sha256_of`, `hash_paths`, `arr_to_json`, `version_cmp` |
   | `plugin/test/test-run.sh` | `run.sh` itself, against synthetic estates |
-  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded 95-fixture rule sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the heaviest, at 95 fixtures: derive runs the rules that own the `OS-*` classes rather than re-implementing them, so most fixtures spawn four validators — the seventeen catalog ones spawn none, because no review rule owns a catalog entry's shape. **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
+  | golden jobs | the validators, via golden fixtures — `run-tests.sh <rule>` per rule, plus its two hand-wired siblings. A rule with more than a dozen fixtures is **sharded** into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process however many cores the machine has, so an unsharded rule with many fixtures sets the run's floor on its own. The PASS/FAIL lines are per scenario either way, so `--inventory` cannot tell whether a rule was sharded — which is what makes changing the shard size safe. A filter still names the rule (`run.sh golden/sections-present` runs all of its shards). **Each hand-wired sibling counts as one run-level assertion**, so adding assertions inside one does not move `run.sh`'s total; read its own summary for that |
 
   **Every file also runs on its own**, from any directory and with no
   environment: `bash plugin/test/upgrade/06-hop-ops.sh` builds what it needs and
@@ -329,13 +300,10 @@ asks the operator anything.
   The shape is stable. The run is **spawn-bound**: roughly four-fifths kernel
   time, `fork` and `exec` rather than computation. So raising `-j` past the core
   count buys nothing, and the lever that works is "spawn fewer processes" rather
-  than "schedule better". Cost follows the process count almost exactly — the
-  `emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
-  matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-  `emanate-derive` and `emanate-plan`, at 95 and 78 fixtures, because each
-  fixture spawns a rule and the validators under it; `run.sh` **shards** both
-  (see below). Next come a handful of `upgrade/` and `materialize/` files that
-  build several period-correct fixtures each.
+  than "schedule better". Cost follows the process count almost exactly, at the
+  few milliseconds a `fork`+`exec` costs. The heavy jobs are a handful of
+  `upgrade/` and `materialize/` files that build several period-correct fixtures
+  each, and the golden rules with the most fixtures, which `run.sh` **shards**.
 
   Every job is **parallel-safe**: every scratch tree is a private `mktemp` one
   and the repo is only ever read, so any number of copies — several worktrees at

@@ -154,10 +154,9 @@ that names neither is not a special case — it inherits no shared structure and
 shared frame. Its declarations stand on their own either way. A screen naming a
 pattern names the layout that frames it, because a structure with no measurements
 is a rebuild the implementer has to invent. `**Pattern:**`, `**Layout:**` and
-`**Components:**` are **ordering edges** for the emanation loop: a shared pattern,
+`**Components:**` are **ordering edges** for INSPIRE Factory: a shared pattern,
 layout and component are units it emanates too, so a screen declaring them waits
-for their wave instead of waiting for someone to build them by hand first
-([`_references/emanation-plan.md`](../../_references/emanation-plan.md)). The
+for their wave instead of waiting for someone to build them by hand first. The
 surface shell needs no line: it frames every route, so every screen waits for
 `layouts/shell` once that entry exists.
 

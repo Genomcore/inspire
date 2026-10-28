@@ -201,8 +201,8 @@ own `## Test infrastructure`; the compose file realizes them:
   - **attended** — ask the operator to run
     `docker compose up -d` (or `--wait`, which blocks until healthchecks pass), and
     wait for them.
-  - **unattended** (an emanation run) — **refuse**, name the unhealthy components and
-    print that command in the report. There is nobody to ask, and a phase agent that
+  - **unattended** (an INSPIRE Factory run) — **refuse**, name the unhealthy components
+    and print that command in the report. There is nobody to ask, and a unit agent that
     stops to ask spends the whole run waiting on a turn that never comes.
 - Then run `npm run test:e2e` once. A connection error is **not** red; it is a suite that
   never ran — which is why an unattended run refuses instead of reading it as red and
@@ -360,15 +360,6 @@ equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx 
 {package}`). Never run a workspace-wide install or build from a subcommand when a
 filtered form exists. E2E still runs against a real database — filter which package's
 suite runs, never what it runs against.
-
-**Machine-readable results.** The unattended loop needs the suite's outcome as
-data, not as console text: `npm run test -- --json --outputFile={file}` and
-`npm run test:e2e -- --json --outputFile={file}`, then
-`.inspire/bin/emanate-results.sh --from {file} [--from {file}]…` to convert both
-reports into the `inspire.suite-results/1` manifest `emanate-gate.sh --results`
-reads. **Both commands are tolerated non-zero** — a red suite is precisely the run
-whose report the gate needs. `--outputFile` rather than stdout because the suite's
-console output shares that stream.
 
 ## Bindings
 

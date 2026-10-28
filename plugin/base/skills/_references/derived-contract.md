@@ -1,8 +1,8 @@
 # The derived contract
 
-The structured, language-neutral projection of one **unit** — what
-`.inspire/bin/emanate-derive.sh` prints on stdout, and the single input both the
-readiness gate and the contracter agent read. This file owns its JSON shape, the
+The structured, language-neutral projection of one **unit** — what INSPIRE
+Factory's deriver prints on stdout, and the single input both its planner and the
+unit's agent read. This file owns its JSON shape, the
 fingerprint rule, the exit codes and the refusal classes derive names itself.
 
 The old-shape catalogue it shares with authoring-time review is
@@ -48,13 +48,14 @@ emanates from a use case directly.
 ## CLI
 
 ```
-emanate-derive.sh <entity|action|screen|component|pattern|layout> <id>
-emanate-derive.sh <entity|action|screen|component|pattern|layout> --file <path>
+derive <entity|action|screen|component|pattern|layout> <id>
+derive <entity|action|screen|component|pattern|layout> --file <path>
 ```
 
 The current working directory is the repo root; `SDD_SPEC_ROOT` (default
 `inspire_kb/04_domain`) and `SDD_KB_ROOT` (default `inspire_kb`) name the two
-layers, as everywhere in `.inspire/bin/`.
+layers, as everywhere in `.inspire/bin/`. INSPIRE Factory exposes this as
+`bun run derive`.
 
 **It writes nothing** — no file, no log, no KB edit. Stdout is JSON, stderr is
 the grouped human report.
@@ -66,7 +67,6 @@ the grouped human report.
 | `3` | unit not found. A screen deeper than `05_screens/{surface}/{module}/{screen}.md` lands here: the screen finders do not reach past that depth, so nothing in the vault can see it |
 | `4` | **refused** — see below |
 | `5` | roots missing: `$SDD_KB_ROOT`, or `$SDD_SPEC_ROOT` for a domain kind, is not a directory |
-| `127` | a required tool is missing (`jq`, `yq`, or a sha256 digest) |
 
 ## The contract
 
@@ -93,7 +93,7 @@ the grouped human report.
   populated because its document is malformed.
 - **`purpose`** is the unit's intent, whitespace-collapsed to one line — the
   `## Purpose` prose, or the `**Purpose:**` header line for a catalog entry,
-  which has no such section. It is what the contracter would otherwise have to
+  which has no such section. It is what the unit's agent would otherwise have to
   reconstruct from links.
 - **`requires`** is the dependency edge set, deduplicated and sorted: an
   action's frontmatter `requires:` plus every entity it touches; an entity's
@@ -105,7 +105,7 @@ the grouped human report.
   layout's `**Pattern:**` line. A component declares none — A17's rule is that
   catalog entries order only by a *declared* edge between them, never by an
   assumed tier. Whether a required id exists is
-  `/inspire-emanate plan`'s question — derive records the edge.
+  the planner's question — derive records the edge.
 - **`requires[].ordering`** says whether the edge is a *build-time* dependency —
   whether the target must be finished first. It is `true` everywhere except on a
   **deferred reference**: a `references(…)` on an entity **field** whose
@@ -118,8 +118,7 @@ the grouped human report.
   argument keys into must exist to be keyed into.
   Whether an ordering edge actually *orders a wave* is still the planner's
   policy, not derive's — `plan` drops navigation and self edges too. Derive
-  carries the fact; `_references/emanation-plan.md` § *The ordering edge set*
-  states what is done with it.
+  carries the fact; the planner decides what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order then the invariants; for an action the
   input constraints, preconditions, behavior steps, postconditions, errors and
@@ -155,14 +154,12 @@ has no venue — the only assertable form of it is an absence, green before
 anything is built and green through every violation — and derive says nothing
 about that. The net is `PR-26` at plan time, a heuristic over the vault's own
 identifiers, and the authoring rule it points at
-(`inspire-domain`'s `references/format-entity.md`). The contracter reaches the
-same conclusion later, as an `error · specification` exit, after a spawn and an
-overseer read per unit; that exit stays, and is no longer the first thing to
-notice the defect.
+(`inspire-domain`'s `references/format-entity.md`). Without it, the defect would
+surface only when the unit's agent tries to test the claim.
 
 A **type** is `{ "name", "base" }`, always. Every `Type` cell must resolve —
 `## Entities` field-touch rows included — and an empty one is `DR-T2` rather than
-a `null`: a field whose type nothing states is a rendering the contracter would
+a `null`: a field whose type nothing states is a rendering the unit's agent would
 have to guess at. `base` is the universal semantic type from
 [`type-mapping.md`](../inspire-domain/references/type-mapping.md); a project's
 own type from `00_bootstrap/semantic-types.md` resolves to its declared base
@@ -224,7 +221,7 @@ vocabulary.
   patterns and navigation rules, a layout's holds the gaps the reference shows,
   a component entry has no such section at all, and carrying it would invent a
   contract half for one kind of entry. A requirement written there reaches no
-  persona: it belongs in `## Structure`, `## Frame`, `## Composition`,
+  agent: it belongs in `## Structure`, `## Frame`, `## Composition`,
   `## Variants`, or the table that owns it. A layout's `## Adopters` is not
   carried either: the adopting screens already declare the edge.
 - **`regions`** carries the pattern's holes verbatim, `Fill` and `Accepts`
@@ -235,7 +232,7 @@ vocabulary.
   — it says what kind of content it takes, never which fields that content shows.
 - **`geometry`** and **`breakpoints`** carry a layout's two tables row by row,
   cells whitespace-collapsed and nothing else. `source` is carried so the
-  contracter can tell a decided value (`design-system.md §…`,
+  unit's agent can tell a decided value (`design-system.md §…`,
   `design-tokens.json`) from a proposal (`reference`, `generated`, `undecided`);
   it is never part of a claim, because promoting a row's source without
   changing its value changes nothing the code renders.
@@ -333,8 +330,7 @@ build its service by hand, and the running application never exposes it.
 
 The claims are identities only: the contract carries no binding section, and an
 implementer reads the profile and the action's preconditions itself. They are
-derived by the TypeScript producer that replaces `emanate-derive.sh`;
-the Bash deriver does not emit them and retires with that move.
+derived by INSPIRE Factory's deriver.
 
 - **The profile set** is the suite-wide one: `stack.md`'s frontmatter
   `profiles:` list, plus the language each declared skill names in `language:`.
@@ -457,21 +453,7 @@ recognise would be exactly the silent-green trap the strictness exists to close.
 
 ## Consumers
 
-[`/inspire-emanate plan`](emanation-plan.md) aggregates the stdout objects — it
-must never parse stderr — and turns refusals into readiness findings grouped by
-owning skill. [`/inspire-emanate run`'s gate step](gate-verdict.md) reads
-`claims` and matches them against citing tests. The contracter agent reads
-everything else. All three read this file for what a field means.
-
-**Sourcing the units instead of running the entry** is the other way in, and the
-line between the two is worth stating. The reuse surface is
-`.inspire/bin/lib/derive-*.sh` after `_lib.sh` and `_keyed-heads.sh`:
-`derive_scratch` (which must run first — every other unit reads `$DERIVE_TMP`,
-and the caller owns the EXIT trap that removes it), the readers, the fingerprint
-helpers, and the sweep (`derive_sweep_require` · `derive_sweep_start` ·
-`derive_sweep_collect`, which need `$DERIVE_BIN` — it defaults to the directory
-holding the rules, so only a caller relocating them has to set it). What belongs
-to the entry and not to the surface: the `U_*` globals it fills from the
-artifact's identity, and the `derive_*_json` renderers that read them. A
-consumer that wants a contract runs `emanate-derive.sh`; a consumer that wants a
-reader sources the unit.
+INSPIRE Factory's planner aggregates the stdout objects — it must never parse
+stderr — and turns refusals into readiness findings grouped by owning skill. Its
+gate reads `claims` and matches them against citing tests, and the unit's agent
+reads everything else. All of them read this file for what a field means.

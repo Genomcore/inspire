@@ -54,16 +54,14 @@ keep() {
 : > "$TMP/files"
 # EVERY job is weighted into ONE largest-first order, golden ones included.
 # They used to be appended after the sorted files, unsorted — so the estate's
-# two heaviest jobs by far, golden/emanate-plan and golden/emanate-derive,
-# launched last and ran out the tail nearly alone. The wall is the heaviest job
-# plus whatever is launched after it, which is exactly what that ordering
-# maximised.
+# heaviest golden jobs launched last and ran out the tail nearly alone. The wall
+# is the heaviest job plus whatever is launched after it, which is exactly what
+# that ordering maximised.
 #
 # The proxies:
 #   file    — its byte size, the one cost that cannot go stale as blocks move.
-#   golden  — its fixture count × FIXTURE_WEIGHT. A fixture runs the rule and,
-#             for the emanate ones, up to four validators under it, so it is
-#             worth far more than a byte of test script. The constant only has
+#   golden  — its fixture count × FIXTURE_WEIGHT. A fixture runs the rule, so
+#             it is worth far more than a byte of test script. The constant only has
 #             to order the list, and 250 is the figure that puts the estate's
 #             heaviest golden job (67 fixtures) next to its heaviest file
 #             (~17 KB), which is where measurement puts them.
@@ -148,12 +146,7 @@ if [ -d "$GOLDEN/fixtures" ]; then
   done
 fi
 for s in "lib-tests.sh${TAB}_lib.sh/readers" \
-         "test-trust.sh${TAB}trust.sh/behaviour" \
-         "test-harvest.sh${TAB}emanate-harvest.sh/behaviour" \
-         "test-derive-lib.sh${TAB}emanate-derive.sh/library" \
-         "test-plan-lib.sh${TAB}emanate-plan.sh/library" \
-         "test-gate-lib.sh${TAB}emanate-gate.sh/library" \
-         "test-results.sh${TAB}emanate-results.sh/behaviour"; do
+         "test-trust.sh${TAB}trust.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
   keep "golden/$script" || continue

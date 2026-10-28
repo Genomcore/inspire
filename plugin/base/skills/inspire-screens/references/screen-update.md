@@ -77,7 +77,7 @@ is: new behaviour belongs on the screen that replaced it, and the id is the
 referent something downstream still points at
 ([`screen-lifecycle.md`](screen-lifecycle.md) § How `promote` walks). A
 superseded screen reaches this flow through a `review` or `validate` finding, or
-through an operator-directed derivation; never through `/inspire-emanate`, whose
+through an operator-directed derivation; never through INSPIRE Factory, whose
 frontier admits `accepted` only.
 
 A screen with no frontmatter at all reads as `draft`

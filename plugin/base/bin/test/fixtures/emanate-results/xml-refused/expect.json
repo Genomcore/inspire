@@ -1,5 +1,0 @@
-{
-  "exit": 5,
-  "args": ["--from", "junit.xml"],
-  "stdout_jq": [{ "expr": ".schema", "equals": "" }]
-}

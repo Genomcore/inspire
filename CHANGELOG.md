@@ -20,6 +20,19 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   kept shell's doctrine any more, so delete it once you have moved your own rules
   out of it. `.claude/agents/` keeps only its README, and your own agents there are
   untouched.
+- **The emanation scripts are gone too.** `.inspire/bin/emanate-derive.sh`,
+  `emanate-plan.sh`, `emanate-gate.sh`, `emanate-results.sh`, `emanate-harvest.sh`
+  and their units under `.inspire/bin/lib/` served only that loop; INSPIRE Factory
+  derives, plans and gates natively. `/inspire:update` deletes them. A script or CI
+  job of yours that called one breaks.
+
+### Changed
+
+- `_references/derived-contract.md` now specifies the contract INSPIRE Factory's
+  deriver produces, and `_references/emanation-plan.md` and `gate-verdict.md` are
+  removed. `inspire-code-nestjs` no longer asks for `emanate-results.sh` output.
+- Every skill and KB README that named `/inspire-emanate`, its roles or its scripts
+  now names INSPIRE Factory.
 
 ## 0.14.0 — 2026-10-28
 

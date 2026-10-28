@@ -93,7 +93,7 @@ built — in the prototype ([`/prototype`](../../prototype)) or in production.
   parameter — a record id, a filter, a mode flag — says whether it travels in the
   path or the query; the spec states it rather than leaving the code to deduce
   it. These stand whether or not a
-  pattern is named, and each row is one claim the emanation loop can cover. A
+  pattern is named, and each row is one claim INSPIRE Factory can cover. A
   transition a dispatch causes is that dispatch's outcome, never also a
   navigation row: one transition, one declaration, one claim.
 - **Optional dependencies** — a `**Pattern:**` line naming one shared structure, a

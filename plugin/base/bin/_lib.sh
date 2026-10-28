@@ -552,10 +552,6 @@ sdd_find_catalog() {
     | sort
 }
 
-sdd_find_patterns()   { sdd_find_catalog "${1:-$SDD_KB_ROOT}" patterns; }
-sdd_find_components() { sdd_find_catalog "${1:-$SDD_KB_ROOT}" components; }
-sdd_find_layouts()    { sdd_find_catalog "${1:-$SDD_KB_ROOT}" layouts; }
-
 # sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
 # or empty when it declares none.
 sdd_catalog_state() {
@@ -568,24 +564,6 @@ sdd_catalog_state() {
       exit
     }
   ' "$1"
-}
-
-# sdd_catalog_lifecycle <file> — the lifecycle a catalog entry's `**State:**`
-# stands for, and the ONE definition of it: derive reads it to fill a contract's
-# `unit.lifecycle`, plan reads it to build the frontier, and two answers to
-# "is this delivered?" would be one too many.
-#
-# A catalog entry carries no `lifecycle:` and needs the same three answers a
-# domain artifact's gives. `implemented` is delivered, so it satisfies an edge
-# out of band and never emanates — `stable`. `to-extract` is authored with no
-# code behind it, which is exactly what emanates — `accepted`. Anything else,
-# an absent line included, states neither, and the empty answer is what the
-# readiness checks report on.
-sdd_catalog_lifecycle() {
-  case "$(sdd_catalog_state "$1")" in
-    implemented) printf 'stable' ;;
-    to-extract)  printf 'accepted' ;;
-  esac
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

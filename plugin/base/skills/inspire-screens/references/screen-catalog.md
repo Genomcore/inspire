@@ -66,14 +66,11 @@ when no row of its `## Geometry` or `## Breakpoints` table is still sourced
 `generated` or `undecided`: a frame nobody decided is not a frame the code stands
 behind.
 
-**A pattern, layout or component entry at `to-extract` is a unit the emanation
-loop emanates**, never a blocker on the screens that name it — the shell
-included, which every screen waits for. What the loop does with each word, and
-what it reports when the line states neither, is
-[`_references/emanation-plan.md`](../../_references/emanation-plan.md) —
-including why these shapes are read strictly there: an entry with no props table,
-a pattern with no regions or a layout with no geometry is a rendering the
-contracter would have to invent.
+**A pattern, layout or component entry at `to-extract` is a unit INSPIRE
+Factory emanates**, never a blocker on the screens that name it — the shell
+included, which every screen waits for. Its deriver reads these shapes strictly:
+an entry with no props table, a pattern with no regions or a layout with no
+geometry is a rendering the unit's agent would have to invent.
 
 Extracting a pattern out of screens that already declare bindings changes nothing
 about those bindings — they are screen-owned, and the promoted layout only gains
