@@ -5,6 +5,12 @@ stack: typescript
 layer: language
 ---
 
+Rules here use MUST, MUST NOT, SHOULD and MAY (RFC 2119). MUST and MUST NOT are
+required: code that breaks one is wrong. SHOULD is the default; depart from it only
+with the reason written in the code or the commit. MAY is optional. A **Seed**
+section is the project's own convention: code MUST follow it exactly as written
+until the project edits it.
+
 The **language profile** for TypeScript: the one home for how a semantic type
 renders at the implementation boundary, and for how this language yields a
 declaration-only tree. It carries no architecture — layering, tests, forbidden

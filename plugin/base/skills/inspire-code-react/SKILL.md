@@ -6,6 +6,12 @@ layer: frontend
 language: typescript
 ---
 
+Rules here use MUST, MUST NOT, SHOULD and MAY (RFC 2119). MUST and MUST NOT are
+required: code that breaks one is wrong. SHOULD is the default; depart from it only
+with the reason written in the code or the commit. MAY is optional. A **Seed**
+section is the project's own convention: code MUST follow it exactly as written
+until the project edits it.
+
 ## Layering
 Presentation stays dumb; logic flows outward through thin layers. **Components** —
 render + local UI state only; no business logic, no direct data access. **Hooks** —
@@ -15,18 +21,20 @@ infrastructure** — all data access behind an interface, with a mock/real switc
 the UI is testable without a backend. Global state in a dedicated store, not in
 prop-drilled component state.
 
+- Components MUST NOT access data; a hook MUST be the only caller of the `api/` client.
+
 Module boundaries: not yet formulated for this stack — deliberately deferred to a
 frontend iteration that exercises them, rather than transcribed untested from the
 backend rules. The contract in `_references/stack-skills.md` still applies; this line is the deferral,
 not the answer.
 
 ## Test conventions
-- **Unit / component** — the component test runner + Testing Library; query by role
-  first (`getByRole` > `getByText` > `getByTestId`), assert what the user sees, not
+- **Unit / component** — the component test runner + Testing Library; queries SHOULD
+  go by role first (`getByRole` > `getByText` > `getByTestId`), assert what the user sees, not
   internals.
 - **E2E** — the project's browser test runner against the running app.
-- GIVEN/WHEN/THEN. **Mocks are centralized** (a `tests/**/mocks/` layer), never
-  inline per-test; a test overrides only the fields it cares about.
+- GIVEN/WHEN/THEN. **Mocks MUST be centralized** in a `tests/**/mocks/` layer and
+  MUST NOT be defined inline per test; a test overrides only the fields it cares about.
 - Run: `npm run test` · `npm run test:e2e`.
 - The authoring detail — the GIVEN/WHEN/THEN comment discipline and the centralized
   mock architecture with its extension steps — lives in
@@ -36,18 +44,18 @@ not the answer.
 ## Forbidden patterns
 - **No business logic or data fetching in components** — push it to a hook /
   use-case.
-- **No inline mocks** — register them in the shared mock layer.
-- **No hardcoded user-facing strings** — labels, errors, and tooltips go through the
-  i18n / constants layer.
-- **Sanitize external URLs** before using them in `href`/navigation; never
-  `dangerouslySetInnerHTML` with unsanitized input.
+- Tests MUST NOT define mocks inline — register them in the shared mock layer.
+- User-facing strings MUST NOT be hardcoded — labels, errors and tooltips go through
+  the i18n / constants layer.
+- External URLs MUST be sanitized before use in `href`/navigation, and
+  `dangerouslySetInnerHTML` MUST NOT receive unsanitized input.
 
 ## Review focus
 - **styling**: uses the design-system tokens (`05_screens/design-tokens.json`, meanings in `05_screens/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
   shared component layer; no hardcoded colors/spacing, no ad-hoc one-off styles.
-- **accessibility**: interactive elements are keyboard-navigable with correct roles,
-  labels, and focus management; forms announce errors.
-- **security**: forms, auth, and navigation validate input and guard against
+- **accessibility**: interactive elements MUST be keyboard-navigable with correct roles,
+  labels and focus management, and forms MUST announce errors.
+- **security**: forms, auth and navigation MUST validate input and guard against
   XSS/open-redirect.
 
 ## Quality gates
@@ -74,8 +82,8 @@ filtered form exists; a UI surface is verified by its own package going green.
 
 ## Routes
 
-> **Seed.** A default this template ships, not a rule INSPIRE enforces — edit it to
-> match the project's real routing. See [`stack-skills.md`](../_references/stack-skills.md) § Seeds.
+> **Seed.** The project's routing convention: code MUST follow it exactly as written.
+> The project MAY edit it to match its real routing. See [`stack-skills.md`](../_references/stack-skills.md) § Seeds.
 
 A screen's route is **derived from its `module:` + `screen:` frontmatter**, never
 from its file path and never from its `id` string: a collision-minted
@@ -96,9 +104,11 @@ routes to `/users/list`, with no doubled surface segment.
   concatenation above to render an actual route.)
 - A screen whose data binding identifies a single entity appends `/:{param}`, named
   after the identifying input (`/users/detail/:userId`).
-- **One route table per surface**, generated from the screen set (`src/routes.tsx`).
-  No route string is ever authored twice: the screen file's frontmatter is the only
-  place a module and screen name live.
+- There MUST be **one route table per surface**, generated from the screen set
+  (`src/routes.tsx`). No route string is ever authored twice: the screen file's
+  frontmatter is the only place a module and screen name live.
+- Code MUST resolve every route through a `routeOf('{screen id}')` helper built from that
+  table; a literal path string MUST NOT appear outside the route table.
 - Navigation targets screens **by id** and resolves through this same rule, so a
   route and a screen can never disagree — and moving a screen between surfaces
   changes no route.
@@ -107,7 +117,7 @@ routes to `/users/list`, with no doubled surface segment.
 
 > **Seed**, as above.
 
-How a screen's `## Bindings` keys reach an action. One generated client function per
+How a screen's `## Bindings` keys reach an action. There MUST be one client function per
 action, named from the dotted id in camelCase — `auth.user.list` → `authUserList()` —
 living in the surface's `api/` layer (the repository layer of `## Layering`). Its
 transport is the backend profile's binding table; the two sections are the two ends
@@ -117,10 +127,12 @@ of one wire.
   `created` / `updated` / `deleted` head (vocabulary V4 of
   [`keyed-heads.md`](../_references/keyed-heads.md)) makes it a mutation;
   anything else is a query.
-- **Data keys** → one query hook per key, `use{ActionIdCamelCased}` (`useAuthUserList`),
-  with cache key `['{screen-id}', '{key}']` so a screen binding the same action twice
+- **Data keys** → MUST be one query hook per key, `use{ActionIdCamelCased}`
+  (`useAuthUserList`), built on TanStack Query (`@tanstack/react-query`, added with the
+  first data key if the project lacks it) unless the project names another query
+  cache, with cache key `['{screen-id}', '{key}']` so a screen binding the same action twice
   stays two independent reads.
-- **Dispatch keys** → one mutation hook per key, named the same way. The row's
+- **Dispatch keys** → MUST be one mutation hook per key, named the same way. The row's
   **On success** / **On error** attributes become its `onSuccess` / `onError`,
   rendering whichever of the three declared forms is present: a navigation
   outcome (`→ [[{screen-id}]]`) resolves through `## Routes` by screen id; a
@@ -130,8 +142,8 @@ of one wire.
   next read re-fetches.
 - **State keys** → a slice of the screen's own store, keyed by the declared key.
   Nothing is lifted to global state unless another screen's bindings name it.
-- **Nav keys** → `navigate(routeOf('{target screen id}'))`, never a literal path.
-- Components never call the client directly (see `## Forbidden patterns`) — the hook
+- **Nav keys** → MUST use `navigate(routeOf('{target screen id}'))`, never a literal path.
+- Components MUST NOT call the client directly (see `## Forbidden patterns`) — the hook
   is its only caller.
 
 ## Persistence

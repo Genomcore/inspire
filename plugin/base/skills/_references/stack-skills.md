@@ -161,8 +161,9 @@ architecture, and architecture is the framework skill's.
 
 ## Seeds
 
-`## Bindings`, `## Routes` and `## Persistence` are **project-owned conventions**,
-not rules INSPIRE enforces. The shipped `react` and `nestjs` skills carry
+`## Bindings`, `## Routes` and `## Persistence` are **project-owned conventions**:
+INSPIRE's validators do not enforce them, but code MUST follow a seed exactly as
+written until the project edits it. The shipped `react` and `nestjs` skills carry
 defaults — a REST shape, a route shape, an ORM — purely as **seeds**: a starting
 convention so a fresh project is not asked to invent one. Every consumer reads
 whatever the skill declares, so editing a seed changes the emitted code and
