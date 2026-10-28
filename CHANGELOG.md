@@ -9,7 +9,7 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.13.0 — 2026-10-26
+## 0.13.0 — 2026-10-28
 
 Upgrade with `/inspire:update` from any released version. The 0.3 layout stays; a
 hop moves your edited stack profiles into the new skills.
@@ -45,6 +45,48 @@ hop moves your edited stack profiles into the new skills.
   counterpart is Genomcore/inspire-factory#109 and #110.
 - **The profile contract moved** to `.claude/skills/_references/stack-skills.md`,
   with its annotated skeleton at `_references/stack-skill-example.md`.
+
+## 0.12.1 — 2026-10-27
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.12.1 keeps the 0.3 layout and the 0.9.0 payload classes.
+
+### Breaking for existing vaults
+
+- **Layouts are emanation units.** A layout entry at `**State:** to-extract` now
+  enters the frontier, and a screen waits for every layout its `**Layout:**` line
+  names, and for `layouts/shell` whenever it exists. A screen naming a layout whose
+  `**State:**` is absent or outside `implemented` | `to-extract` is no longer ready:
+  `PR-27`. Give every layout a `**State:**`, `implemented` for the frames the code
+  already has.
+- **A layout must be derivable.** One with no `## Geometry` rows refuses with
+  `DR-C6`, and two `## Geometry` rows for the same element and property refuse with
+  `DR-C4`. Rows that differ only in backticks or spacing count as the same key.
+
+### Added
+
+- `emanate-derive.sh layout <id>`: the sixth unit kind. Its contract carries
+  `frame`, `geometry`, `breakpoints`, `composition` and `variants`, and one claim
+  per `## Geometry` row (`{layout}/geometry/{element}/{property}`) and per range and
+  region of `## Breakpoints` (`{layout}/breakpoint/{range}/{region}`, every row of
+  that range and region in one claim). Each key cell becomes a claim-id segment with
+  its spaces as dashes, since a `@claim` token ends at the first whitespace. A layout
+  requires the pattern its `**Pattern:**` names.
+- **The shell is placed around every page.** The `shell` layout derives
+  `shell/mount/every-route`, a claim only a test of the mounted application covers,
+  and every screen requires it, so the frame is built before any screen and nothing
+  ships it unmounted.
+- `PR-27` in the readiness catalogue: a declared layout's `**State:**` states
+  neither, so the screens it frames have nothing to wait for.
+
+### Changed
+
+- A screen's derived contract carries `layouts`, one `{id, path}` per link on its
+  `**Layout:**` line, outermost first. `DR-R4` covers a `**Layout:**` link that
+  resolves to no layout entry.
+- `format-screen.md`, `screen-catalog.md`, `screen-lifecycle.md` and the
+  `layouts/` README no longer say the loop skips layouts. `**Layout:**` may name
+  every frame a screen sits in, when one nests inside another.
 
 ## 0.12.0 — 2026-10-26
 

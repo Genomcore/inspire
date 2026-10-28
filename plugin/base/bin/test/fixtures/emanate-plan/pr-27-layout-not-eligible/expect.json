@@ -1,0 +1,19 @@
+{
+  "exit": 1,
+  "args": [
+    "--skills-root",
+    "spec/skills",
+    "--agents-root",
+    "spec/agents"
+  ],
+  "stdout_jq": [
+    { "expr": "[.findings[].code] | unique | join(\",\")", "equals": "PR-27" },
+    { "expr": ".findings[0].target", "equals": "spec/kb/05_screens/layouts/collection.md" },
+    { "expr": ".findings[0].owner", "equals": "inspire-screens" },
+    { "expr": ".findings[0].unit", "equals": "users.list" },
+    { "expr": ".findings[0].message | test(\"planned\")", "equals": "true" },
+    { "expr": "[.units[].id] | join(\",\")", "equals": "data-table,users.list" },
+    { "expr": ".ready", "equals": "false" }
+  ],
+  "forbidden": ["PR-04"]
+}

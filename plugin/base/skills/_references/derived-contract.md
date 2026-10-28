@@ -11,7 +11,7 @@ copied here, because two catalogues of one class is one catalogue too many.
 
 ## What a unit is
 
-Five kinds, and the kind is always given explicitly:
+Six kinds, and the kind is always given explicitly:
 
 | kind | artifact | id |
 |---|---|---|
@@ -20,18 +20,19 @@ Five kinds, and the kind is always given explicitly:
 | `screen` | `05_screens/[{surface}/]{module}/{screen}.md` | `users.list` · `admin.users.list` |
 | `component` | `05_screens/components/{name}.md` | `data-table` |
 | `pattern` | `05_screens/patterns/{name}.md` | `filtered-list` |
+| `layout` | `05_screens/layouts/{name}.md` | `collection` · `shell` |
 
 The kind is positional rather than inferred because a 2-segment id is an entity
 *or* a screen, a 3-segment id an action *or* a collision-minted screen, and a
-bare word a component *or* a pattern.
+bare word a component, a pattern *or* a layout.
 
 **A catalog entry's id is its filename stem** — the opposite of a screen, whose
 id is minted write-once and never re-derived from location. An entry carries no
-identity block at all, and both catalogs are suite-wide and never move into a
-surface tree, so there is exactly one place to look and nothing positional to
-lose. A catalog entry has no `module` either: a shared layout or component
-belongs to every module that instantiates it, so the key is absent rather than
-guessed.
+identity block at all, and the three catalogs are suite-wide and never move
+into a surface tree, so there is exactly one place to look and nothing
+positional to lose. A catalog entry has no `module` either: a shared pattern,
+layout or component belongs to every module that instantiates it, so the key is
+absent rather than guessed.
 
 **A catalog entry's lifecycle is its `**State:**` line**, over a closed
 vocabulary: `to-extract` (authored, no code behind it yet) is the analogue of
@@ -47,8 +48,8 @@ emanates from a use case directly.
 ## CLI
 
 ```
-emanate-derive.sh <entity|action|screen|component|pattern> <id>
-emanate-derive.sh <entity|action|screen|component|pattern> --file <path>
+emanate-derive.sh <entity|action|screen|component|pattern|layout> <id>
+emanate-derive.sh <entity|action|screen|component|pattern|layout> --file <path>
 ```
 
 The current working directory is the repo root; `SDD_SPEC_ROOT` (default
@@ -81,7 +82,7 @@ the grouped human report.
 
 - **`unit`** carries the identity as declared, never as inferred from location.
   A screen with no identity block is refused, not renamed. `module` is absent
-  for the two catalog kinds, and `state` is theirs alone.
+  for the three catalog kinds, and `state` is theirs alone.
 - **`unit.population`** is an entity's alone — `internal` (the default a missing
   `population:` field means) or `external`, the marker
   [`inspire-domain/references/format-entity.md`](../inspire-domain/references/format-entity.md)
@@ -97,10 +98,13 @@ the grouped human report.
 - **`requires`** is the dependency edge set, deduplicated and sorted: an
   action's frontmatter `requires:` plus every entity it touches; an entity's
   `references(…)` targets; a screen's data and dispatch actions, its navigation
-  targets (including a dispatch outcome that navigates), its pattern and its
-  components; a pattern's own `**Components:**` line. A component declares none
-  — A17's rule is that a pattern and a component order only by a *declared* edge
-  between them, never by an assumed tier. Whether a required id exists is
+  targets (including a dispatch outcome that navigates), its pattern, every
+  layout its `**Layout:**` line names and its components — plus the surface
+  shell, `layouts/shell`, whenever that entry exists, since it frames every
+  route and no screen names it; a pattern's own `**Components:**` line; a
+  layout's `**Pattern:**` line. A component declares none — A17's rule is that
+  catalog entries order only by a *declared* edge between them, never by an
+  assumed tier. Whether a required id exists is
   `/inspire-emanate plan`'s question — derive records the edge.
 - **`requires[].ordering`** says whether the edge is a *build-time* dependency —
   whether the target must be finished first. It is `true` everywhere except on a
@@ -121,7 +125,9 @@ the grouped human report.
   input constraints, preconditions, behavior steps, postconditions, errors and
   then its three binding claims;
   for a screen the data, dispatch, navigation and state bindings; for a
-  component its props then its states; for a pattern its regions.
+  component its props then its states; for a pattern its regions; for a layout
+  its geometry rows, then its breakpoint rows, then — for the shell alone — its
+  mount claim.
 
 ### Shared shapes
 
@@ -172,9 +178,10 @@ vocabulary.
 |---|---|
 | `entity` | `fields` (each `{name, type, notes, constraints[]}`) · `invariants` |
 | `action` | `inputs` (each `{name, type, required, description, constraints[]}`) · `outputs` · `entities` · `preconditions` · `behavior` · `postconditions` · `errors` |
-| `screen` | `features` · `pattern` · `components` · `bindings` · `route` |
+| `screen` | `features` · `pattern` · `layouts` · `components` · `bindings` · `route` |
 | `component` | `structure` · `variants` · `props` (each `{name, carries}`) · `states` (each `{key, when, presentation}`) |
 | `pattern` | `structure` · `variants` · `regions` (each `{region, fill, accepts, holds}`) |
+| `layout` | `frame` · `geometry` (each `{element, property, value, source}`) · `breakpoints` (each `{range, region, change, source}`) · `composition` · `variants` |
 
 - **`outputs`** is `{ "entity", "fields" }`. The whole-entity one-liner
   (`An array of [[auth.user|auth::user]] entities.`) sets `entity` and leaves
@@ -184,8 +191,12 @@ vocabulary.
   fields}`, and each touched field carries **the entity document's own
   constraints** for that field. They are carried, never claimed: the claim about
   a field belongs to the entity's contract and is minted exactly once, there.
-- **`pattern`** is `{id, path}` or `null`; **`components`** is a list of
-  `{id, path, state}` where `state` is the entry's `**State:**` line.
+- **`pattern`** is `{id, path}` or `null`; **`layouts`** is a list of
+  `{id, path}`, one per link on the `**Layout:**` line in the order written —
+  a frame nested in another names both; **`components`** is a list of
+  `{id, path, state}` where `state` is the entry's `**State:**` line. The shell
+  edge is in `requires` only: no line names it, so the screen declares nothing
+  about it.
 - **`bindings`** is `{data, dispatches, navigation, states}`. A dispatch's
   `on_success` / `on_error` are canonicalized to `nav:{screen-id}` ·
   `state:{key}` · `refresh:{key}` · `none`.
@@ -194,8 +205,9 @@ vocabulary.
   `admin.users.list` still renders `/users/list`. `default` is the
   stack-agnostic rendering `/{module}/{screen}`; the shell prefix and the exact
   rendering belong to the framework profile.
-- **`structure`** and **`variants`** are the list items of `## Structure` and
-  `## Variants`, ordinals stripped. Both are **carried and never claimed**: a
+- **`structure`**, **`frame`**, **`composition`** and **`variants`** are the
+  list items of `## Structure`, `## Frame`, `## Composition` and `## Variants`,
+  ordinals stripped. Both are **carried and never claimed**: a
   structural bullet is prose no oracle checks, and a claim no oracle can cover
   reads as covered by construction. The tokens paragraph those sections sit
   beside points at the design system and restates nothing the entry owns, so it
@@ -203,16 +215,24 @@ vocabulary.
   continuation lines**, joined: a vault wrapped at 80 columns says the same
   thing as one that is not. An indented sub-bullet opens its own item.
 - **`## Notes` is not carried.** A pattern entry's Notes holds caveats, related
-  patterns and navigation rules, a component entry has no such section at all,
-  and carrying it would invent a contract half for one kind of entry. A
-  requirement written there reaches no persona: it belongs in `## Structure`,
-  `## Variants`, or the table that owns it.
+  patterns and navigation rules, a layout's holds the gaps the reference shows,
+  a component entry has no such section at all, and carrying it would invent a
+  contract half for one kind of entry. A requirement written there reaches no
+  persona: it belongs in `## Structure`, `## Frame`, `## Composition`,
+  `## Variants`, or the table that owns it. A layout's `## Adopters` is not
+  carried either: the adopting screens already declare the edge.
 - **`regions`** carries the pattern's holes verbatim, `Fill` and `Accepts`
   lowercased by nobody: the two vocabularies are `screen-coherence.sh`'s own
   (`required` | `optional`, and one or more of `data` · `dispatch` · `nav` ·
   `static`), and a value outside them is `DR-C5` — an empty cell or a dash
   excepted, since that rule owns the join and tolerates both. A region is a hole
   — it says what kind of content it takes, never which fields that content shows.
+- **`geometry`** and **`breakpoints`** carry a layout's two tables row by row,
+  cells whitespace-collapsed and nothing else. `source` is carried so the
+  contracter can tell a decided value (`design-system.md §…`,
+  `design-tokens.json`) from a proposal (`reference`, `generated`, `undecided`);
+  it is never part of a claim, because promoting a row's source without
+  changing its value changes nothing the code renders.
 
 ## Claim ids
 
@@ -231,12 +251,30 @@ declared key, the way every other kind's are:
 {screen-id}/nav/{key}                    {screen-id}/state/{key}
 {component-id}/prop/{name}               {component-id}/state/{key}
 {pattern-id}/region/{key}
+{layout-id}/geometry/{element}/{property}
+{layout-id}/breakpoint/{range}/{region}
+shell/mount/every-route
 ```
 
 `{op}` is the constraint word itself, one claim per word, so changing a
 constraint retires that claim and mints the new one while every sibling stays
 covered. A row keyed by nothing, or by a key already taken in the same table, is
 `DR-C4`: both break the claim's one job, which is to name one thing.
+
+**A layout row is keyed by its first two cells together**, since neither alone
+names one measurement. Each becomes a segment the way a `@claim` token can carry
+it: backticks stripped, whitespace collapsed, every remaining space a dash —
+`registry rail` · `padding on the toggle edge` is
+`shell/geometry/registry-rail/padding-on-the-toggle-edge`, and `every supported
+width` · `records area` is
+`collection/breakpoint/every-supported-width/records-area`. Breakpoint rows
+sharing a range and a region are one claim, their changes in table order: an
+author writes the measured change and the proposal beside it as two rows, and
+both say how that one region behaves in that range. The **shell** — the layout
+entry named `shell` — makes one more claim, that the application mounts it
+around every route: its geometry claims hold on the frame, this one on the
+application, and without it a shell can be built, tested and still frame
+nothing.
 
 ## The fingerprint
 
@@ -262,6 +300,9 @@ whitespace-collapsed and trimmed:
 | component prop | what it carries |
 | component state | when · presentation |
 | pattern region | fill · accepts · what it holds |
+| layout geometry | value |
+| layout breakpoint | every change for that range and region, in table order |
+| shell mount | `every route` |
 
 The **canonical head text** is `word` or `word(a1,a2)` with each argument
 trimmed, so `len(3, 64)` and `len(3,64)` are one claim. A dispatch's outcomes
@@ -345,7 +386,7 @@ second copy of a check to drift. The rules consulted, and nothing else:
 |---|---|
 | `entity` · `action` | `keys-present` · `constraints-mechanics` · `head-referents` · `sections-present` |
 | `screen` | `screen-coherence` · `sections-present` |
-| `component` · `pattern` | none |
+| `component` · `pattern` · `layout` | none |
 
 Nothing a consulted rule reports against the unit is ignored. A message carrying
 an `OS-*` prefix is filed under that class; the rest map to the `DR-*` ids below;
@@ -356,7 +397,7 @@ a relaxation.** No review rule owns a catalog entry's own shape:
 `screen-coherence` reaches a pattern only through an adopting screen, so a
 pattern-scoped run finds no screen to reach it from and a consulted rule would
 report nothing at all — silence that would read as a clean entry. The `DR-C*`
-classes below are therefore the whole of the strictness for these two kinds,
+classes below are therefore the whole of the strictness for these three kinds,
 not half of it.
 
 ### `DR-*` — the classes derive names itself
@@ -377,7 +418,7 @@ this table name the same thing.
 | `DR-R1` | an action's `## Entities` names an entity with no document on disk | touch the artifact |
 | `DR-R2` | a screen binding names an action id that resolves to no descriptor | touch the screen |
 | `DR-R3` | a transition target — a `### Navigation` row, or a `→ [[…]]` dispatch outcome — resolves to no screen id | touch the screen |
-| `DR-R4` | a `**Pattern:**` or `**Components:**` link resolves to no catalog entry | touch the screen |
+| `DR-R4` | a `**Pattern:**`, `**Layout:**` or `**Components:**` link resolves to no catalog entry | touch the screen |
 | `DR-S1` | the screen identity block is absent or incomplete — the pre-0.9 screen | touch the screen |
 | `DR-S2` | the identity contradicts itself or the vault: lifecycle enum, id shape, module-versus-path, `superseded_by`, a duplicate id, a route collision | touch the screen |
 | `DR-S3` | a route authored into the H1 | touch the screen |
@@ -393,8 +434,9 @@ this table name the same thing.
 | `DR-C1` | a catalog entry's `**State:**` is absent, or outside the closed pair `implemented` \| `to-extract` — so its lifecycle is unstated and no run can place it | touch the entry |
 | `DR-C2` | a component entry declares no `## API / Slots` props table, or one with no rows: its props are the whole of what it owns | touch the entry |
 | `DR-C3` | a pattern entry declares no `## Regions` table, or one with no rows: it has no holes to inject and nothing to join a screen against | touch the entry |
-| `DR-C4` | a keyed row in a catalog table carries no key, or repeats one already taken in that table | touch the entry |
+| `DR-C4` | a keyed row in a catalog table carries no key — for a layout, either of its two key cells is empty — or repeats one already taken in that table; a layout's `## Breakpoints` rows may share one, and make one claim | touch the entry |
 | `DR-C5` | a region's `Fill` or `Accepts` value falls outside the closed vocabularies `screen-coherence.sh` reads for the join | touch the entry |
+| `DR-C6` | a layout entry declares no `## Geometry` table, or one with no rows: its measurements are the whole of what it owns | touch the entry |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |

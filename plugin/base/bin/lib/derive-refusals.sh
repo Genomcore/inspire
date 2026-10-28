@@ -38,9 +38,9 @@ derive_remedy() {
   id="$(awk -F'\t' -v p="$path" '$1 == p { print $2; exit }' "$DERIVE_TMP/targets.tsv")"
   kind="$(awk -F'\t' -v p="$path" '$1 == p { print $3; exit }' "$DERIVE_TMP/targets.tsv")"
   case "$kind" in
-    screen)            printf '/inspire-screens update %s' "$id" ;;
-    component|pattern) printf '/inspire-screens extract %s %s' "$kind" "$id" ;;
-    *)                 printf '/inspire-domain update %s' "$id" ;;
+    screen)                   printf '/inspire-screens update %s' "$id" ;;
+    component|pattern|layout) printf '/inspire-screens extract %s %s' "$kind" "$id" ;;
+    *)                        printf '/inspire-domain update %s' "$id" ;;
   esac
 }
 
@@ -101,9 +101,9 @@ DERIVE_SWEEP_DIRS=""
 
 derive_sweep_rules() {
   case "$1" in
-    screen)            printf '%s' "$DERIVE_RULES_SCREEN" ;;
-    component|pattern) printf '%s' "$DERIVE_RULES_CATALOG" ;;
-    *)                 printf '%s' "$DERIVE_RULES_DOMAIN" ;;
+    screen)                   printf '%s' "$DERIVE_RULES_SCREEN" ;;
+    component|pattern|layout) printf '%s' "$DERIVE_RULES_CATALOG" ;;
+    *)                        printf '%s' "$DERIVE_RULES_DOMAIN" ;;
   esac
 }
 

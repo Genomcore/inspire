@@ -2,7 +2,7 @@
 id: B1-config-replaces-bootstrap
 title: "B1 — /inspire:config with a shipped default replaces /inspire-bootstrap"
 created: 2026-10-23
-updated: 2026-10-26
+updated: 2026-10-27
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -218,3 +218,19 @@ Agreed at low priority: needed eventually, not urgent.
   target: the profiles and the target change together or not at all. Neither profile
   declares a language profile today, so emanation refuses both (`PR-06`). Keeping native
   mobile as a real target eventually means fixing that.
+
+**Amended 2026-10-27 (design review, third session): one config skill, not two.**
+Direction stated, design still pending.
+
+- *Today:* `/inspire-config` (0.12.0) writes and validates `.inspire/emanate.yml`. This
+  ticket plans a plugin skill, `/inspire:config`, that writes `.inspire/config.json`. The
+  two names differ by one character.
+- *Direction:* one config skill. `/inspire-config` was named to grow into the project's
+  whole configuration, with emanation as one part. It grows to cover the spec config, so
+  no second skill named `/inspire:config` is built.
+- *Candidate keys:* the default semantic types (`B3-overridable-types`) and the product's
+  supported languages (`B3-ui-text-keys`) are candidate keys of that config.
+- *Open:* one file or two? `emanate.yml` could stay as the Factory's input, generated
+  from `config.json`, or the two could merge. And this ticket has config as a *plugin*
+  skill, so it can run before init, while `/inspire-config` is a materialized project
+  skill. Which one wins?

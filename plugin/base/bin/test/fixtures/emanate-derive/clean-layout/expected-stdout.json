@@ -1,0 +1,107 @@
+{
+  "schema": "inspire.derived-contract/1",
+  "unit": {
+    "kind": "layout",
+    "id": "collection",
+    "path": "spec/kb/05_screens/layouts/collection.md",
+    "lifecycle": "accepted",
+    "state": "to-extract"
+  },
+  "purpose": "the frame of a roster — a toolbar over the records, the status line under them.",
+  "requires": [
+    {
+      "kind": "pattern",
+      "id": "filtered-list",
+      "ordering": true
+    }
+  ],
+  "frame": [
+    "The toolbar, full width",
+    "The records, scrolling",
+    "The status line, pinned to the bottom edge"
+  ],
+  "geometry": [
+    {
+      "element": "toolbar",
+      "property": "height",
+      "value": "`{size.toolbar}`",
+      "source": "design-tokens.json"
+    },
+    {
+      "element": "toolbar",
+      "property": "gap",
+      "value": "`{spacing.2}` between controls",
+      "source": "design-tokens.json"
+    },
+    {
+      "element": "records area",
+      "property": "overflow",
+      "value": "scrolls vertically, never horizontally",
+      "source": "reference"
+    },
+    {
+      "element": "status line",
+      "property": "padding inline",
+      "value": "`{spacing.4}`",
+      "source": "generated"
+    }
+  ],
+  "breakpoints": [
+    {
+      "range": "every supported width",
+      "region": "records area",
+      "change": "takes the height the toolbar and status line leave",
+      "source": "reference"
+    },
+    {
+      "range": "tablet",
+      "region": "toolbar",
+      "change": "its search field shrinks to `{size.search-min}`",
+      "source": "reference"
+    },
+    {
+      "range": "tablet",
+      "region": "toolbar",
+      "change": "wraps its controls onto a second row",
+      "source": "undecided"
+    }
+  ],
+  "composition": [
+    "The status line aligns with the records' first column."
+  ],
+  "variants": [
+    "**Faceted** — a facet rail on the inline-start edge, `{size.rail}` wide."
+  ],
+  "claims": [
+    {
+      "id": "collection/geometry/toolbar/height",
+      "oracle": "test",
+      "fingerprint": "sha256:d956a15bb31ffeea505a34e749747337ffc5e506135ecf202d00655f52e8a517"
+    },
+    {
+      "id": "collection/geometry/toolbar/gap",
+      "oracle": "test",
+      "fingerprint": "sha256:495eb47b5f0798178f5add490c97c22975075fb4bb8b7944ece4c28cf7f928b1"
+    },
+    {
+      "id": "collection/geometry/records-area/overflow",
+      "oracle": "test",
+      "fingerprint": "sha256:0ac5beda3e2af89939b24818a52e619cf0772560e0f3f460198b3fb3513caffa"
+    },
+    {
+      "id": "collection/geometry/status-line/padding-inline",
+      "oracle": "test",
+      "fingerprint": "sha256:0d3811c4fd5add8bfa805942c3e04f6ffad879066d5b4d8f6cd918c5dd32118f"
+    },
+    {
+      "id": "collection/breakpoint/every-supported-width/records-area",
+      "oracle": "test",
+      "fingerprint": "sha256:d2cb625203db470dc45c0f134a54c5e3e64810df935f032f435b6e658b2e375f"
+    },
+    {
+      "id": "collection/breakpoint/tablet/toolbar",
+      "oracle": "test",
+      "fingerprint": "sha256:a183f018d8e280cae1ecb8afdb9b6d38b6d5f8e652f269c64f331d48d1cbff20"
+    }
+  ]
+}

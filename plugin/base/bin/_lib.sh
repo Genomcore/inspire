@@ -531,12 +531,12 @@ sdd_find_screens() {
     | sort
 }
 
-# Design-system CATALOG entries: one file per shared layout or shared component,
-# at 05_screens/{patterns,components}/{name}.md and nowhere deeper. Both
-# catalogs are suite-wide and never move into a surface tree, so there is no
-# second shape to accept. `_`-prefixed names are navigation or templates rather
-# than entries (`inspire-screens` spells this `patterns/[!_]*.md`), and
-# `README.md` is excluded as it is everywhere else.
+# Design-system CATALOG entries: one file per shared pattern, layout or
+# component, at 05_screens/{patterns,layouts,components}/{name}.md and nowhere
+# deeper. The three catalogs are suite-wide and never move into a surface
+# tree, so there is no second shape to accept. `_`-prefixed names are
+# navigation or templates rather than entries (`inspire-screens` spells this
+# `patterns/[!_]*.md`), and `README.md` is excluded as it is everywhere else.
 sdd_find_catalog() {
   local scope="$1" dir="$2"
   [ -d "$scope" ] || return 0
@@ -554,6 +554,7 @@ sdd_find_catalog() {
 
 sdd_find_patterns()   { sdd_find_catalog "${1:-$SDD_KB_ROOT}" patterns; }
 sdd_find_components() { sdd_find_catalog "${1:-$SDD_KB_ROOT}" components; }
+sdd_find_layouts()    { sdd_find_catalog "${1:-$SDD_KB_ROOT}" layouts; }
 
 # sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
 # or empty when it declares none.

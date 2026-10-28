@@ -115,12 +115,13 @@ plan_profile_file() {
 }
 
 # plan_unit_layer <kind> — the profile `layer:` a unit of that kind is built by,
-# empty for the kinds no layer answers for (R8). A screen, a component and a
-# pattern are frontend by construction. An entity and an action take the whole
-# framework set instead: the domain-versus-service partition is an ADR decision
-# nothing on disk states, and a multi-layer set is a legal briefing (R8').
+# empty for the kinds no layer answers for (R8). A screen, a component, a
+# pattern and a layout are frontend by construction. An entity and an action
+# take the whole framework set instead: the domain-versus-service partition is
+# an ADR decision nothing on disk states, and a multi-layer set is a legal
+# briefing (R8').
 plan_unit_layer() {
-  case "$1" in screen|component|pattern) printf 'frontend' ;; esac
+  case "$1" in screen|component|pattern|layout) printf 'frontend' ;; esac
 }
 
 # plan_unit_profiles <key> <kind> — the profile selection this unit emanates
@@ -299,7 +300,7 @@ plan_probe_profiles() {
 # under. Only a UI surface partitions the set: which surface a screen sits in is
 # positional and readable, while the domain-versus-service partition an entity
 # or an action would need is not. A catalog entry is suite-wide by construction
-# — `patterns/` and `components/` never move into a surface tree.
+# — `patterns/`, `layouts/` and `components/` never move into a surface tree.
 plan_unit_profile_key() {
   local kind="$1" surface="$2"
   if [ "$kind" = "screen" ] && [ -n "$surface" ] \

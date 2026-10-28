@@ -36,6 +36,7 @@ plan_enumerate() {
     sdd_find_screens    "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tscreen" }'
     sdd_find_patterns   "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tpattern" }'
     sdd_find_components "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tcomponent" }'
+    sdd_find_layouts    "${dir:-$SDD_KB_ROOT}"   | awk '{ print $0 "\tlayout" }'
   } | if [ -n "$only" ]; then awk -F'\t' -v p="$only" '$1 == p'; else cat; fi
 }
 
@@ -46,8 +47,8 @@ plan_enumerate() {
 # disagree about whether a component is already delivered.
 plan_lifecycle_of() {
   case "$2" in
-    component|pattern) sdd_catalog_lifecycle "$1" ;;
-    *)                 sdd_fm_value "$1" '.lifecycle' ;;
+    component|pattern|layout) sdd_catalog_lifecycle "$1" ;;
+    *)                        sdd_fm_value "$1" '.lifecycle' ;;
   esac
 }
 
@@ -230,9 +231,9 @@ plan_dep_path() {
       plan_screen_index
       plan_index_lookup "$PLAN_TMP/screen-ids.tsv" "$id"
       return 0 ;;
-    # A catalog entry's name IS its filename stem and both catalogs are
+    # A catalog entry's name IS its filename stem and the catalogs are
     # suite-wide, so there is one place to look and no index to fall back to.
-    pattern|component)
+    pattern|component|layout)
       p="$SDD_KB_ROOT/05_screens/${kind}s/$id.md"
       [ -f "$p" ] && plan_path_norm "$p"
       return 0 ;;

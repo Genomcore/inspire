@@ -60,8 +60,8 @@ carries no `lifecycle:` of its own. Two orderings meet here and both are correct
 - **Birth order** — `/inspire-extract` may discover a shared component *after* the
   screens that adopt it. Discovery running behind adoption is specification-time
   work, not a defect.
-- **Wave order** — a screen emanates a wave behind the patterns and components it
-  declares, in the same run. It never waits for them to be hand-built: an entry at
+- **Wave order** — a screen emanates a wave behind the patterns, layouts and
+  components it declares, and behind the shell, in the same run. It never waits for them to be hand-built: an entry at
   `to-extract` is a unit the loop emanates, and only an entry stating neither
   `to-extract` nor `implemented` leaves a screen unready.
 
