@@ -9,6 +9,18 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## Unreleased
+
+### Breaking for existing vaults
+
+- **`/inspire-emanate` and the five agent shells are gone.** Code emanation runs in
+  INSPIRE Factory. 0.13.0 already marked them unsupported, because their role
+  doctrine left with `inspire-code`. `/inspire:update` deletes the skill and every
+  shell you never touched, and keeps an edited one where it is. Nothing reads a
+  kept shell's doctrine any more, so delete it once you have moved your own rules
+  out of it. `.claude/agents/` keeps only its README, and your own agents there are
+  untouched.
+
 ## 0.13.0 — 2026-10-28
 
 Upgrade with `/inspire:update` from any released version. The 0.3 layout stays; a

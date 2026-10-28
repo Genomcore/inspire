@@ -67,12 +67,12 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 20 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
         (external verticals) · `adr`.
-      - **Codification** (7) — coding itself runs in INSPIRE Factory; what ships
+      - **Codification** (6) — coding itself runs in INSPIRE Factory; what ships
         here is what it reads. Six **stack skills** — `inspire-code-react` ·
         `inspire-code-nestjs` · `inspire-code-angular` · `inspire-code-ios` ·
         `inspire-code-android` · `inspire-code-typescript` — each an ordinary
@@ -89,10 +89,6 @@ repo is both its source and its own marketplace.
         only `react`, `nestjs` and `angular` declare a `language:`. The contract is
         `_references/stack-skills.md`. The validators resolve an id the same way
         (`sdd_stack_skills` in `_lib.sh`, over `SDD_SKILLS_ROOT`).
-        · `inspire-emanate`: the in-session **unattended emanation loop**.
-        **Unsupported since 0.13.0**: its role doctrine (`inspire-code`'s
-        `references/roles/`) was removed with `inspire-code`, and nothing keeps it
-        working — only the Factory's emanation has to.
       - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `config` (writes and validates `.inspire/emanate.yml`, the one file
@@ -124,18 +120,10 @@ repo is both its source and its own marketplace.
       header carries the full argument, and no `0.9.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
-      class's own README is a `.txt` for exactly that reason. It ships the **five
-      role shells** of the emanation loop — `inspire-contracter` ·
-      `inspire-tester` · `inspire-implementer` · `inspire-security-overseer` ·
-      `inspire-quality-overseer`. A shell is an identity, a permission envelope
-      (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
-      only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
-      Bash can write) and a pointer at its doctrine — which no longer ships, so the
-      shells are as unsupported as `/inspire-emanate` itself. The **overseer roster is additive-only
-      and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
-      whose `tools:` line is present and names no writing tool; a project adds
-      its own, and the two shipped ones are non-removable — `/inspire-emanate`
-      refuses to run when either is missing or fails that shape.
+      class's own README is a `.txt` for exactly that reason. It ships only that README: the five role shells of the
+      in-session emanation loop were removed with `/inspire-emanate`, because code
+      emanation runs in INSPIRE Factory. The class stays, so an upgrade deletes a
+      shipped shell an operator never touched and keeps an edited one.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
