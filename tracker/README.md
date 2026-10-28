@@ -81,7 +81,7 @@ filed in the Factory's tracker when the change here lands, never before.
 
 ## Where things stand (2026-10-28, post-0.12.1)
 
-**26 open tickets.** A tracker pass on 2026-10-28 closed six and filed none:
+**29 open tickets.** A tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
 - `F09-screens`, `F10-flows` — absorbed into `B3-navigation-map` (entry screens, actor
@@ -112,6 +112,11 @@ Factory work.
   `B3-action-verbs`, `B3-navigation-map`, `B3-overridable-types`,
   `B3-screen-parameters`, `B3-ui-text-keys`. Most change the KB format, so most carry a
   Factory note.
+- **Fourth design review, B4 (3):** `B4-section-keys` (High; translated headings fail
+  validation today), `B4-one-home-per-value`, `B4-prose-checks-before-commit` (blocked by
+  `0911-file-scope-silent-pass`). The same session amended `F06-tdd` (no tests is not a
+  pass), `0911-file-scope-silent-pass` (a file must be checked, not refused) and
+  `B2-git-hooks-at-init`.
 
 A question that can be answered in a sitting should be answered, not filed: tracking it
 converts a decision into a queue entry, and queue entries outlive the thing that
