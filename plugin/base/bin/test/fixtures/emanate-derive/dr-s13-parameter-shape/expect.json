@@ -1,0 +1,17 @@
+{
+  "exit": 4,
+  "args": [
+    "screen",
+    "users.detail"
+  ],
+  "stdout_jq": [
+    {
+      "expr": "[.refused[].class] | unique | join(\",\")",
+      "equals": "DR-S13"
+    },
+    {
+      "expr": "has(\"claims\")",
+      "equals": "false"
+    }
+  ]
+}

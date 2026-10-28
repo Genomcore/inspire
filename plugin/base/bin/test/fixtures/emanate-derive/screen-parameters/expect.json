@@ -1,0 +1,18 @@
+{
+  "exit": 0,
+  "args": [
+    "screen",
+    "users.list"
+  ],
+  "stdout_jq": [
+    { "expr": ".bindings.parameters | map(\"\\(.key):\\(.in):\\(.type.name):\\(.type.base):\\(.required)\") | join(\",\")", "equals": "q:query:string:string:no" },
+    { "expr": ".bindings.data[0].params | join(\",\")", "equals": "q" },
+    { "expr": ".bindings.navigation[0].params | join(\",\")", "equals": "id,view" },
+    { "expr": ".bindings.navigation[0].target", "equals": "users.detail" },
+    { "expr": ".bindings.dispatches[0].on_success", "equals": "nav:users.detail(id)" },
+    { "expr": "[.requires[] | select(.kind == \"screen\") | .id] | unique | join(\",\")", "equals": "users.detail" },
+    { "expr": "[.claims[].id | select(contains(\"/param/\"))] | join(\",\")", "equals": "users.list/param/q" },
+    { "expr": ".route.default", "equals": "/users/list" },
+    { "expr": ".route.path | length", "equals": "0" }
+  ]
+}

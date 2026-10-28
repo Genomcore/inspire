@@ -58,11 +58,13 @@
     }
   ],
   "bindings": {
+    "parameters": [],
     "data": [
       {
         "key": "main",
         "action": "auth.user.list",
-        "notes": "primary table feed"
+        "notes": "primary table feed",
+        "params": []
       }
     ],
     "dispatches": [
@@ -85,7 +87,8 @@
       {
         "key": "row",
         "target": "users.detail",
-        "trigger": "clicking a row"
+        "trigger": "clicking a row",
+        "params": []
       }
     ],
     "states": [
@@ -109,7 +112,8 @@
   "route": {
     "module": "users",
     "screen": "list",
-    "default": "/users/list"
+    "default": "/users/list",
+    "path": []
   },
   "claims": [
     {

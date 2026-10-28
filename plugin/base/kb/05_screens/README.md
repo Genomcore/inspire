@@ -88,8 +88,11 @@ built — in the prototype ([`/prototype`](../../prototype)) or in production.
   what they see first. One paragraph of prose, required: it orients a human
   reader and gives the emanating agent the screen's intent, which the feature
   links alone do not carry. It restates no binding and names no route.
-- **Its own `## Bindings`** — the data sources, dispatches, navigation targets and
-  states it declares, each keyed screen-locally. These stand whether or not a
+- **Its own `## Bindings`** — the input parameters, data sources, dispatches,
+  navigation targets and states it declares, each keyed screen-locally. A
+  parameter — a record id, a filter, a mode flag — says whether it travels in the
+  path or the query; the spec states it rather than leaving the code to deduce
+  it. These stand whether or not a
   pattern is named, and each row is one claim the emanation loop can cover. A
   transition a dispatch causes is that dispatch's outcome, never also a
   navigation row: one transition, one declaration, one claim.

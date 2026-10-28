@@ -7,8 +7,8 @@ lifecycle: draft
 
 <!-- Required: the frontmatter identity block (id · module · screen · lifecycle),
      the H1 title, the Features line, a non-empty ## Purpose, and ## Bindings
-     with at least one of its four subsections (### Data · ### Dispatches ·
-     ### Navigation · ### States).
+     with at least one of its five subsections (### Parameters · ### Data ·
+     ### Dispatches · ### Navigation · ### States).
      Optional / presence-free: the Pattern, Layout and Components lines,
      ## Render, ## Module-specific deviations, ## Current prototype, ## Notes.
      A screen naming a Pattern names the Layout that frames it, and a screen
@@ -42,8 +42,9 @@ lifecycle: draft
 
 <!-- The screen's own semantics, declared whether or not a Pattern is named.
      Keys are screen-local and unique per subsection; each row generates one
-     claim ({id}/data/{key} · {id}/dispatch/{key} · {id}/nav/{key} ·
-     {id}/state/{key}). Drop a subsection this screen has nothing to declare in.
+     claim ({id}/param/{key} · {id}/data/{key} · {id}/dispatch/{key} ·
+     {id}/nav/{key} · {id}/state/{key}). Drop a subsection this screen has
+     nothing to declare in.
      A pipe-syntax wikilink inside a table cell escapes its pipe (`\|`) — an
      unescaped one would end the cell. A bare colon-form link is equally valid.
 
@@ -54,13 +55,25 @@ lifecycle: draft
 
      A state's `When` anchors by naming a declared key in BACKTICKS
      (`main` returns zero rows) — an unbackticked mention is not read as an
-     anchor and the state is reported as free-floating. -->
+     anchor and the state is reported as free-floating.
+
+     ### Parameters declares the screen's inputs: a record id, a filter, a mode
+     flag that loads nothing. In is `path` or `query`, and a path one is
+     required. A data row that relies on one, and a transition that passes one
+     to its target, says so with param `{key}` — the target must declare it. -->
+
+### Parameters
+
+| Key | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `id` | path | uuid | yes | {which record this screen shows} |
+| `view` | query | enum<quick\|advanced> | no | {what the flag changes} |
 
 ### Data
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what this feed is for} |
+| `main` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what this feed is for}, by param `id` |
 
 ### Dispatches
 
@@ -73,6 +86,7 @@ lifecycle: draft
 | Key | Target | Trigger |
 |---|---|---|
 | `back` | [[{target-screen-id}]] | {what the user does} |
+| `open` | [[{target-screen-id}]] param `{target-param-key}` | {what the user does} |
 
 ### States
 
