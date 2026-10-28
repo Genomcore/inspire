@@ -9,6 +9,38 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.12.2 — 2026-10-28
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.12.2 keeps the 0.3 layout and the 0.9.0 payload classes. A screen with no
+`### Parameters` derives exactly as before, every fingerprint included.
+
+### Added
+
+- **Screens declare their input parameters.** `## Bindings` takes a fifth
+  subsection, `### Parameters` — Key · In (`path` | `query`) · Type · Required ·
+  Notes — for a record id, a filter, or a mode flag that loads no data. Each row
+  is a claim, `{id}/param/{key}`, so a parameter no test cites is `GV-01` at the
+  gate.
+- **`param `{key}`` declares reliance.** A `### Data` row that loads by a
+  parameter names one this screen declares; a `### Navigation` target or a
+  `→ [[…]]` dispatch outcome that passes one names one the target declares. A
+  state's `When` may anchor on a parameter key.
+- `screen-coherence.sh` reports an undeclared parameter, an `In` outside
+  `path` | `query`, a `Required` outside `yes` | `no`, and an optional path
+  parameter. Derive refuses them as `DR-S14` and `DR-S13`; an unresolvable
+  parameter type is `DR-T1`.
+
+### Changed
+
+- A screen's derived contract carries `bindings.parameters`, a `params` list on
+  every data and navigation row, and `route.path`. `route.default` appends one
+  `/{key}` segment per path parameter, in row order; the exact syntax stays the
+  framework profile's. A navigate outcome that passes parameters canonicalizes to
+  `nav:{screen-id}({key},…)`.
+- `/inspire-screens routes` renders path parameters into the route map, and the
+  transition graph shows what each edge passes.
+
 ## 0.12.1 — 2026-10-27
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
