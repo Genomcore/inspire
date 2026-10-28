@@ -35,30 +35,37 @@ everything else on the screen serves that search.
 
 ## Bindings
 
+### Parameters
+
+| Key | In | Type | Required | Notes |
+|---|---|---|---|---|
+| `q` | query | string | no | the search text, kept across a reload |
+
 ### Data
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | primary table feed |
+| `main` | [[auth.user.list\|auth::user::list]] | primary table feed, filtered by param `q` |
 
 ### Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] | state `form-error` |
+| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] param `id` | state `form-error` |
 | `delete` | [[auth.user.delete\|auth::user::delete]] | row action | refresh `main` | state `error` |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] | clicking a row |
+| `row` | [[users.detail]] param `id` | clicking a row |
 
 ### States
 
 | Key | When | Presentation |
 |---|---|---|
 | `empty` | `main` returns zero rows | the empty-collection message and the create action |
+| `filtered` | `q` is set | the search text in the field, and an action that clears it |
 | `form-error` | `create` rejects | the field errors, inline, with the form still filled |
 | `error` | `delete` rejects | the failure message, with the row still in place |
 
@@ -74,7 +81,7 @@ everything else on the screen serves that search.
 ```
 
 Required: the frontmatter identity block, the H1 title, the `**Features:**` line,
-a non-empty `## Purpose`, and `## Bindings` with at least one of its four
+a non-empty `## Purpose`, and `## Bindings` with at least one of its five
 subsections. Optional and presence-free: `**Pattern:**`, `**Layout:**`,
 `**Components:**`, `## Render`, `## Module-specific deviations`,
 `## Current prototype`, `## Notes`. Two of them are owed rather than free: a screen
@@ -108,8 +115,10 @@ reads them.
 A screen's route derives from its declared `module:` and `screen:` fields, exactly
 as an action id derives its endpoint. The default rendering is
 `/{module}/{screen}`; a UI surface contributes **only its shell prefix**
-(`{shell}/{module}/{screen}`), and the exact rendering belongs to the framework
-profile, like every other binding convention.
+(`{shell}/{module}/{screen}`), and every `path` parameter the screen declares
+appends one segment, in the order its `### Parameters` rows are written
+(`/users/detail/{id}`). The exact rendering — the parameter syntax included —
+belongs to the framework profile, like every other binding convention.
 
 The id string is **not** a route input. A collision-minted `admin.users.list`
 (`module: users`, `screen: list`) still renders `/users/list` under the admin
@@ -174,11 +183,12 @@ that does two jobs.
 
 ## `## Bindings` — the screen's own semantics
 
-Four subsections, and the set is closed. Each takes a table whose **first column is
+Five subsections, and the set is closed. Each takes a table whose **first column is
 a screen-local key**:
 
 | Subsection | Columns | Declares |
 |---|---|---|
+| `### Parameters` | Key, In, Type, Required, Notes | the inputs this screen is opened with |
 | `### Data` | Key, Action, Notes | which actions feed this screen |
 | `### Dispatches` | Key, Action, Trigger, On success, On error | which actions this screen invokes, and what follows |
 | `### Navigation` | Key, Target, Trigger | the transitions **no dispatch on this screen causes** |
@@ -207,7 +217,7 @@ a screen-local key**:
   wikilinks resolve through the id index in `.inspire/bin/wikilinks-resolve.sh`,
   so a positional file name never has to match one.
 - **A state's `When` must reference something declared** — a data key, a dispatch
-  key, or a deviation. A free-floating state is a finding. The reference anchors
+  key, a parameter key, or a deviation. A free-floating state is a finding. The reference anchors
   **only through backticks**: `` `main` returns zero rows `` anchors on the data
   key `main`, while the same sentence written `main returns zero rows` does not
   and is reported as unanchored. The backticks are what separate a declared key
@@ -217,6 +227,43 @@ a screen-local key**:
   valid and needs no escape.
 - Drop any subsection the screen has nothing to declare in. `## Bindings` itself
   stays, with at least one subsection under it.
+
+## `### Parameters` — what the screen is opened with
+
+A screen's inputs are stated, never deduced from the code that happens to read
+them. One row per input:
+
+| Column | Holds |
+|---|---|
+| `Key` | the parameter's name — screen-local, and the name a transition passes |
+| `In` | `path` or `query`: where it travels |
+| `Type` | its semantic type, resolved like every other `Type` cell in the KB |
+| `Required` | `yes` or `no` |
+| `Notes` | what it selects or changes, in the product's words |
+
+- **A parameter need not feed a data binding.** A mode flag — a quick view
+  versus an advanced one — loads nothing and is still an input: declare it, and
+  anchor the state it produces on its key.
+- **A path parameter is required.** A path segment cannot be absent, so
+  `path` with `Required: no` is a finding; an optional input travels in the
+  query.
+- **A record inside a record is two path parameters**, outer first — an
+  annotation of a study declares `study` then `annotation`. There is no nested
+  shape: the route still derives from `module` + `screen`, and how the segments
+  interleave is the framework profile's rendering.
+- **Reliance is declared with `param \`{key}\``.** A `### Data` row that loads by
+  a parameter names it in its cells (`filtered by param \`q\``) and must name one
+  this screen declares. A transition that passes one — a `### Navigation`
+  target, or a `→ [[{screen-id}]]` dispatch outcome — writes it after the link
+  (`[[users.detail]] param \`id\``), and it must be one the **target** declares.
+  Write the token once per parameter.
+- **A screen with no URL reads the same table.** On a native target the rows
+  are the screen's typed inputs — the arguments its navigation passes —
+  and `In` is the profile's to map; the declaration does not change.
+
+Every parameter is a claim (§ Claims), so each one, mode flags included, is
+covered by a test of its own: an uncovered parameter fails the gate like any
+other uncovered claim.
 
 ## `## Render` — how each value is drawn
 
@@ -255,13 +302,16 @@ Every binding row is one claim, keyed by the screen id and the row's own key:
 
 | Family | Claim id |
 |---|---|
+| parameter | `{id}/param/{key}` |
 | data | `{id}/data/{key}` |
 | dispatch | `{id}/dispatch/{key}` |
 | navigation | `{id}/nav/{key}` |
 | state | `{id}/state/{key}` |
 
 A row's cells feed that claim's fingerprint — the dispatch's outcomes included, so
-changing an outcome re-emanates that one dispatch and nothing else. Because every
+changing an outcome re-emanates that one dispatch and nothing else, and the
+parameters a transition passes included, so passing one more re-emanates that
+one transition. Because every
 key is screen-keyed rather than slot-keyed, a pattern change never re-keys a claim,
 and neither does a move.
 

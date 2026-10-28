@@ -13,11 +13,14 @@
 #     at every state: two screens declaring one `id`, and two screens deriving
 #     one route in one shell.
 #
-#   BINDINGS — `## Bindings` carries the screen's own semantics, in four
-#     subsections and no others (`Data` · `Dispatches` · `Navigation` ·
-#     `States`). Every row is keyed, keys are unique per subsection, every
-#     dispatch outcome names a declared state key, a declared data key or a
-#     screen id, and every state's `When` references something declared.
+#   BINDINGS — `## Bindings` carries the screen's own semantics, in five
+#     subsections and no others (`Parameters` · `Data` · `Dispatches` ·
+#     `Navigation` · `States`). Every row is keyed, keys are unique per
+#     subsection, every dispatch outcome names a declared state key, a declared
+#     data key or a screen id, and every state's `When` references something
+#     declared. A parameter travels in `path` or `query`, and a path one is
+#     required; every `param \`key\`` a data row relies on is declared here, and
+#     every one a transition passes is declared by its target screen.
 #
 #   JOIN — where `**Pattern:**` names a layout, each of that layout's REQUIRED
 #     regions accepting a binding kind finds one: a `list` layout with no data
@@ -59,7 +62,7 @@ SC_ROWS="$(mktemp -t sdd-screen-rows.XXXXXX)"
 SC_SEEN="$(mktemp -t sdd-screen-seen.XXXXXX)"
 trap 'rm -f "$SC_INDEX" "$SC_ROWS" "$SC_SEEN"' EXIT
 
-BINDING_SUBSECTIONS="Data Dispatches Navigation States"
+BINDING_SUBSECTIONS="Parameters Data Dispatches Navigation States"
 LIFECYCLE_STATES="draft accepted stable superseded"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -431,7 +434,7 @@ check_bindings() {
     if [ "$anchored" = 0 ]; then
       while IFS= read -r tok; do
         [ -z "$tok" ] && continue
-        if awk -F'\t' -v k="$tok" '($1 == "Data" || $1 == "Dispatches") && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
+        if awk -F'\t' -v k="$tok" '($1 == "Data" || $1 == "Dispatches" || $1 == "Parameters") && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
           anchored=1
           break
         fi
@@ -445,9 +448,94 @@ check_bindings() {
     fi
     if [ "$anchored" = 0 ]; then
       emit "$sev" "$file" \
-        "state not anchored: '$key' names no declared data key, dispatch key or deviation in its When"
+        "state not anchored: '$key' names no declared data key, dispatch key, parameter or deviation in its When"
     fi
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "States" { print }' "$SC_ROWS")
+}
+
+sc_param_refs() {
+  printf '%s\n' "$1" | awk '{
+    s = $0
+    while (match(s, /param[ \t]+`[^`]+`/)) {
+      t = substr(s, RSTART, RLENGTH)
+      sub(/^param[ \t]+`/, "", t)
+      sub(/`$/, "", t)
+      print t
+      s = substr(s, RSTART + RLENGTH)
+    }
+  }'
+}
+
+sc_declared_params() {
+  sc_parse_bindings "$1" | awk -F'\t' '$1 == "ROW" && $2 == "Parameters" { gsub(/`/, "", $3); print $3 }'
+}
+
+check_param_refs_target() {
+  local file="$1" sev="$2" cell="$3" where="$4" target target_file declared ref
+  target="$(sc_link_target "$cell")"
+  [ -n "$target" ] || return 0
+  target_file="$(awk -F'\t' -v k="$target" '$2 == k { print $1; exit }' "$SC_INDEX")"
+  [ -n "$target_file" ] || return 0
+  declared=" $(sc_declared_params "$target_file" | tr '\n' ' ') "
+  while IFS= read -r ref; do
+    [ -z "$ref" ] && continue
+    case "$declared" in
+      *" $ref "*) ;;
+      *) emit "$sev" "$file" \
+           "undeclared parameter: $where passes param '$ref', which $target does not declare under '### Parameters'" ;;
+    esac
+  done < <(sc_param_refs "$cell")
+}
+
+check_parameters() {
+  local file="$1" sev="$2" line key placement required ref col cell
+
+  while IFS= read -r line; do
+    key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
+    [ -n "$key" ] || continue
+    placement="$(sc_bare "$(printf '%s\n' "$line" | cut -f4)")"
+    required="$(sc_bare "$(printf '%s\n' "$line" | cut -f6)" | tr '[:upper:]' '[:lower:]')"
+    case "$placement" in
+      path|query) ;;
+      *) emit "$sev" "$file" \
+           "parameter placement: '$key' is in '$placement' — a parameter travels in 'path' or 'query'" ;;
+    esac
+    case "$required" in
+      yes|no) ;;
+      *) emit "$sev" "$file" \
+           "parameter required value: '$key' says '$required' — required is 'yes' or 'no'" ;;
+    esac
+    if [ "$placement" = "path" ] && [ "$required" = "no" ]; then
+      emit "$sev" "$file" \
+        "parameter optional in path: '$key' is a path segment, and a path segment cannot be absent — make it required or move it to the query"
+    fi
+  done < <(awk -F'\t' '$1 == "ROW" && $2 == "Parameters" { print }' "$SC_ROWS")
+
+  while IFS= read -r line; do
+    key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
+    while IFS= read -r ref; do
+      [ -z "$ref" ] && continue
+      if ! awk -F'\t' -v k="$ref" '$1 == "Parameters" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
+        emit "$sev" "$file" \
+          "undeclared parameter: data row '$key' relies on param '$ref', which this screen does not declare under '### Parameters'"
+      fi
+    done < <(sc_param_refs "$(printf '%s\n' "$line" | cut -f4-)")
+  done < <(awk -F'\t' '$1 == "ROW" && $2 == "Data" { print }' "$SC_ROWS")
+
+  while IFS= read -r line; do
+    key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
+    check_param_refs_target "$file" "$sev" "$(printf '%s\n' "$line" | cut -f4)" "navigation '$key'"
+  done < <(awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { print }' "$SC_ROWS")
+
+  while IFS= read -r line; do
+    key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
+    for col in 6 7; do
+      cell="$(printf '%s\n' "$line" | cut -f$col)"
+      case "$cell" in
+        *"[["*"]]"*) check_param_refs_target "$file" "$sev" "$cell" "dispatch '$key'" ;;
+      esac
+    done
+  done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 }
 
 # sc_reported_patterns — one line per pattern file already reported for a
@@ -621,6 +709,7 @@ if [ -n "$SCREEN_SCOPE" ]; then
 
     check_identity "$screen_file" "$s_sev" "$s_id" "$s_module" "$s_screen" "$s_lifecycle"
     check_bindings "$screen_file" "$s_sev"
+    check_parameters "$screen_file" "$s_sev"
     check_join "$screen_file" "$s_sev" "$s_lifecycle"
   done < <(sdd_find_screens "$SCREEN_SCOPE")
 fi

@@ -1,0 +1,21 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "parameter optional in path: 'id' is a path segment"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "parameter placement: 'view' is in 'body'"
+    },
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "parameter required value: 'view' says 'maybe'"
+    }
+  ],
+  "forbidden": ["undeclared parameter", "parameter placement: 'id'", "parameter required value: 'id'"]
+}

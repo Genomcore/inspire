@@ -12,18 +12,25 @@ One row per screen, ordered by surface, then module, then screen:
 | Screen id | Surface | Route | Lifecycle |
 |---|---|---|---|
 | `users.list` | portal | `/portal/users/list` | accepted |
+| `users.detail` | portal | `/portal/users/detail/{id}` | accepted |
 | `admin.users.list` | admin | `/admin/users/list` | draft |
 
 - The **route** is `/{module}/{screen}` from the screen's declared `module:` and
   `screen:` fields, prefixed by that surface's roster `Shell` value when the suite
   declares two or more UI surfaces. In a suite-of-one there is no prefix.
+- Every **`path` parameter** the screen declares under `### Parameters` appends
+  one segment, in row order: `users.detail` declaring `id` renders
+  `/users/detail/{id}`. A record inside a record is two segments, outer first.
+  `query` parameters never enter the route; they are listed in the transition
+  graph, where they are passed.
 - The **id** never enters the route. A collision-minted `admin.users.list` still
   renders `/users/list` under the admin shell — the surface segment appears once,
   as the shell, or not at all.
 - A `shared/` screen renders **one row per shell that serves it**: the same spec,
   reachable at each shell's prefix.
-- The exact rendering — trailing slashes, index routes, parameter syntax for a
-  detail screen's record — belongs to the framework profile. State which profile
+- The exact rendering — trailing slashes, index routes, the parameter syntax
+  (`{id}` here, `:id` or `[id]` under a profile) and how nested segments
+  interleave — belongs to the framework profile. State which profile
   the rendering came from when one is declared.
 
 **Route collisions.** Two screens deriving the same route in the same shell are a
@@ -40,6 +47,10 @@ The edges come from the bindings, never from prose:
 - every `### Dispatches` outcome of the form `→ [[{screen-id}]]` — labelled with
   the dispatch key and the side it fires on (success or error)
 
+Each edge carries the `param \`{key}\`` tokens written after its link, so the
+graph shows what every transition passes. A passed parameter the target does not
+declare is a finding `screen-coherence.sh` reports.
+
 Report, in this order:
 
 1. the edge list, grouped by source screen;
@@ -48,6 +59,10 @@ Report, in this order:
    the operator, never an error: a route typed by hand is still a route.
 3. **dangling targets** — edges pointing at an id no screen declares. These are
    findings, and `wikilinks-resolve` reports them independently.
+4. **unpassed required parameters** — an edge into a screen that declares a
+   required parameter the edge does not pass. A question for the operator, never
+   an error: a value a profile carries implicitly is still a value, but the spec
+   should say so.
 
 Targets are ids. A transition therefore survives every move, rename and surface
 split its target goes through — which is the whole reason navigation names screens

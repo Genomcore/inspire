@@ -1,0 +1,4 @@
+{ "schema": "inspire.suite-results/1",
+  "tests": [ { "file": "tests/detail.spec.ts",
+               "name": "opens the account named in the path",
+               "status": "passed" } ] }
