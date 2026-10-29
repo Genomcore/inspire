@@ -401,10 +401,8 @@ precondition changes the guard, and the two can never disagree.
 **The safety net for that rule is `PR-25`**, since the rule is silent in both
 directions: a precondition that states its access rule in *prose* renders no
 guard either, and derives only a test-oracle claim about the prose, so nothing
-asserts the denial. Plan warns when a headless precondition or error reads like
-an access rule — see
-[`emanation-plan.md`](../_references/emanation-plan.md) § An access rule
-stated in prose.
+asserts the denial. INSPIRE Factory's planner warns when a headless precondition
+or error reads like an access rule.
 
 Three claims derive from this section per action, with no authoring: the route
 exists (`{action}/binding/route`) · it dispatches to that action's service method

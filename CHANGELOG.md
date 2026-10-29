@@ -24,7 +24,12 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `emanate-plan.sh`, `emanate-gate.sh`, `emanate-results.sh`, `emanate-harvest.sh`
   and their units under `.inspire/bin/lib/` served only that loop; INSPIRE Factory
   derives, plans and gates natively. `/inspire:update` deletes them. A script or CI
-  job of yours that called one breaks.
+  job of yours that called one breaks. An `emanate-*.sh` you edited is kept, but it
+  no longer runs: the `lib/` units it sources are gone. Delete it.
+- **Your knowledge base is not rewritten.** `/inspire:update` never edits
+  `inspire_kb/`, so an existing `00_bootstrap/stack.md` keeps its two mentions of
+  `/inspire-emanate`. Those rows are now read by INSPIRE Factory; reword the
+  mentions by hand.
 
 ### Changed
 

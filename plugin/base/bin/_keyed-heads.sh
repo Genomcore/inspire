@@ -358,31 +358,19 @@ kh_check_head() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Prose heuristics — two closed phrase lists and the one matcher over them
+# Prose heuristics — a closed phrase list and the matcher over it
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# Both lists name words that also have legitimate prose uses, so both are
-# heuristics, and a heuristic does not get to block anything: every finding built
-# on either is a flat warning that never refuses. Both are deliberately short and
-# closed, and both are semicolon-separated on ONE line — a value passed through
-# `awk -v` may not contain a literal newline on every supported host.
-#
-# The two live together because the matcher does, and the matcher is shared so
-# that one answer to "does this prose say X" cannot drift into two.
+# The list names words that also have legitimate prose uses, so it is a
+# heuristic, and a heuristic does not get to block anything: every finding built
+# on it is a flat warning that never refuses. It is deliberately short and
+# closed, and semicolon-separated on ONE line — a value passed through `awk -v`
+# may not contain a literal newline on every supported host.
 
 # W-1: constraint words in a `Notes` or `Description` cell, so that a constraint
 # left behind after its machine-readable form moved to a Constraints line is
 # surfaced.
 KH_PROSE_CONSTRAINT_PHRASES="unique;immutable;nullable;not null;never updated;write-once;regex;defaults to;at least;at most"
-
-# PR-25: authorization words in the prose of a precondition or error entry that
-# carries NO head. A `P{n}` with no `actor(...)` renders no guard — the framework
-# profile's `## Bindings` is explicit that it renders a public route — and
-# derives only a test-oracle claim about its own prose, so nobody asserts the
-# denial and the suite goes green over an unguarded endpoint. The list carries
-# both spellings of the -ise/-ize pairs and the plurals, because matching is on
-# whole words.
-KH_PROSE_AUTHZ_PHRASES="admin;administration;administrator;administrators;authenticated;authorisation;authorised;authorization;authorized;forbidden;membership;memberships;permission;permissions;privilege;privileges;role;roles;unauthenticated;unauthorised;unauthorized"
 
 # kh_prose_hits <phrases>
 #   stdin: one text per line. stdout: `{line number}<TAB>{phrase}`, one record
