@@ -2,7 +2,7 @@
 id: B2-git-hooks-at-init
 title: "B2 — INSPIRE's commit rules apply only to commits Claude Code makes"
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-28
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: []
 status: Open
 blocked_by: []
-related_to: []
+related_to: [B4-prose-checks-before-commit]
 ---
 
 ## Origin
@@ -67,3 +67,11 @@ No hook stops a commit to `main`. In a test project, Claude Code committed strai
 
 - Branch protection and required approvals on the remote are repository settings, not
   INSPIRE features. The review kept them out of scope.
+
+**Amended 2026-10-28 (fourth design-review session): half of the first open question.**
+The review placed the KB checks before a commit, prose-style included, and never on
+each edit (`B4-prose-checks-before-commit`). So when INSPIRE installs a git pre-commit
+hook, that hook runs the same checks as the Claude Code one, and a commit from a
+terminal gets them too. Still open: whether the KB review is essential enough to install
+in every project, or only the protected-branch guard. Neither ticket blocks the other:
+this one decides where hooks live, that one decides what the commit check runs.

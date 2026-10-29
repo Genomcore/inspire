@@ -2,7 +2,7 @@
 id: 0911-file-scope-silent-pass
 title: "0911 — a file passed as scope checks nothing and reports PASS"
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-28
 reporter: "@irene.gonzalez"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: []
 status: Open
 blocked_by: []
-related_to: [F04-mech]
+related_to: [F04-mech, B4-prose-checks-before-commit]
 ---
 
 ## Description
@@ -44,9 +44,22 @@ checks nothing is worse than one that says out loud it cannot".
 
 ## Acceptance criteria
 
-- A file passed as scope is either checked as a one-file scope, or refused with a
-  non-zero exit and a message naming the accepted scope shape. Either is a valid close;
-  silent success is not.
+- A file passed as scope is checked as a one-file scope: every rule that applies to
+  that file runs on it, and on nothing else. Silent success is not a valid close, and
+  neither, since 2026-10-28, is refusing the file (see Notes).
 - A golden fixture pins the behaviour for `review.sh` with a file scope.
-- If files become a valid scope, the authoring skills can run the mechanical checks on
-  the file they just wrote, the way they run `trust.sh stamp` today.
+
+## Notes
+
+**Amended 2026-10-28 (fourth design-review session).** The review confirmed the defect
+and its importance. Two changes follow:
+
+- *Refusing is no longer a valid close.* `B4-prose-checks-before-commit` runs the
+  checks on staged files and on the file a skill just wrote, so it needs a file to be a
+  working scope. A loud refusal would have closed this ticket and left that one with
+  nothing to build on.
+- *The third criterion moved out.* "If files become a valid scope, the authoring skills
+  can run the mechanical checks on the file they just wrote" is new behaviour, not the
+  fix, so it is now a criterion of `B4-prose-checks-before-commit`. This ticket closes
+  on the fix and its fixture alone.
+
