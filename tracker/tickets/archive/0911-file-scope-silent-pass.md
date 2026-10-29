@@ -2,15 +2,15 @@
 id: 0911-file-scope-silent-pass
 title: "0911 — a file passed as scope checks nothing and reports PASS"
 created: 2026-10-20
-updated: 2026-10-28
+updated: 2026-10-29
 reporter: "@irene.gonzalez"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-10-29
 epic: follow-up
 size: S
 importance: High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: [F04-mech, B4-prose-checks-before-commit]
 ---
@@ -63,3 +63,29 @@ and its importance. Two changes follow:
   fix, so it is now a criterion of `B4-prose-checks-before-commit`. This ticket closes
   on the fix and its fixture alone.
 
+
+## Resolution
+
+Shipped in 0.14.2. A file passed as scope is checked as a one-file scope.
+
+- The six KB finders in `_lib.sh` (`actions`, `entities`, `features`, `adrs`,
+  `screens`, `catalog`) take any existing path, not only a directory, and
+  `sdd_scope_intersect` resolves a file's physical path through its directory.
+  `adr-maturity-matches-features.sh` and `criteria-have-tests.sh` accept a file the
+  same way.
+- **The scope bounds what a rule reports on, not what it reads.** Three rules built
+  their cross-file context from the scope, so a one-file scope judged the file without
+  the rest of the tree: `stable-blockers.sh` reported its `requires` target as not
+  found, `field-coverage.sh` reported every field uncovered, and `acyclic-deps.sh`
+  missed a cycle through another file. They now build the id index, the touch table
+  and the `requires` graph from the whole domain root, and report only on what is in
+  scope. The same bug hit a module scope whose files point at another module.
+- A sweep over every existing golden fixture ran each rule once on the whole tree and
+  once per flagged file: each file got the same findings both ways (152 of 152). The
+  two pattern-catalog findings of `screen-coherence.sh` are the exception, and not a
+  file-scope one: they are raised while checking the screens that use the pattern, so a
+  `patterns/` directory scope does not report them either.
+- Fixtures: `review/file-scope` pins `review.sh` on a file (findings for that file,
+  none for a broken file beside it), and `acyclic-deps/file-scope-cycle`,
+  `stable-blockers/file-scope-dep-elsewhere` and `field-coverage/file-scope-touch-elsewhere`
+  pin the three cross-file rules. Each fails without the fix.

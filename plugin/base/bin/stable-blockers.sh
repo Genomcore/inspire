@@ -20,7 +20,7 @@ sdd_init_counters
 
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
-sdd_build_id_index "$SCOPE"
+sdd_build_id_index "$SDD_SPEC_ROOT"
 trap 'rm -f "${SDD_ID_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r action; do

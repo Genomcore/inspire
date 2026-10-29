@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "args": ["spec/sdd/auth/user/auth.user.md"],
+  "findings": [
+    { "severity": "error", "rule": "sections-present", "message_substring": "entity document missing required section" }
+  ],
+  "forbidden": ["billing"]
+}

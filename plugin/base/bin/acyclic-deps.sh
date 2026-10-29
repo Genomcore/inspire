@@ -32,11 +32,21 @@ sdd_init_counters
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 # Build the id → path index up front so we can resolve names for findings.
-sdd_build_id_index "$SCOPE"
+sdd_build_id_index "$SDD_SPEC_ROOT"
 
 EDGES_FILE="$(mktemp -t sdd-edges.XXXXXX)"
 STDERR_FILE="$(mktemp -t sdd-tsort-stderr.XXXXXX)"
-trap 'rm -f "$EDGES_FILE" "$STDERR_FILE" "${SDD_ID_INDEX_FILE:-}"' EXIT
+IN_SCOPE_FILE="$(mktemp -t sdd-in-scope.XXXXXX)"
+trap 'rm -f "$EDGES_FILE" "$STDERR_FILE" "$IN_SCOPE_FILE" "${SDD_ID_INDEX_FILE:-}"' EXIT
+
+while IFS= read -r action; do
+  [ -z "$action" ] && continue
+  sdd_fm_value "$action" '.id'
+done < <(sdd_find_actions "$SCOPE") > "$IN_SCOPE_FILE"
+
+in_scope() {
+  grep -qxF -- "$1" "$IN_SCOPE_FILE"
+}
 
 # Collect (from_id, to_id) pairs from `.requires` lists.
 # tsort expects TAB-separated pairs.
@@ -50,7 +60,7 @@ while IFS= read -r action; do
     to_id="$(sdd_unwrap_wikilink "$req")"
 
     # Self-loops — BSD tsort silently elides these, so detect directly.
-    if [ "$from_id" = "$to_id" ]; then
+    if [ "$from_id" = "$to_id" ] && in_scope "$from_id"; then
       path="$(sdd_resolve_id "$from_id")"
       sdd_finding \
         "error" \
@@ -62,7 +72,7 @@ while IFS= read -r action; do
 
     printf '%s\t%s\n' "$from_id" "$to_id" >> "$EDGES_FILE"
   done < <(sdd_fm_list "$action" '.requires')
-done < <(sdd_find_actions "$SCOPE")
+done < <(sdd_find_actions "$SDD_SPEC_ROOT")
 
 # No edges → trivially acyclic.
 if [ ! -s "$EDGES_FILE" ]; then
@@ -89,6 +99,7 @@ if grep -qE "cycle in data|input contains a loop" "$STDERR_FILE"; then
   )
   for member in $(printf '%s' "$cycle_members" | tr ',' '\n'); do
     [ -z "$member" ] && continue
+    in_scope "$member" || continue
     path="$(sdd_resolve_id "$member")"
     sdd_finding \
       "error" \
