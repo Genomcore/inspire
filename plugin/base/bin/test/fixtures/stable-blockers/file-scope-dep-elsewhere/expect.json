@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "args": ["spec/sdd/auth/user/auth.user.create.md"],
+  "findings": [
+    { "rule": "stable-blockers", "message_substring": "requires auth::password::hash which is at lifecycle: draft" }
+  ],
+  "forbidden": ["requires target not found"]
+}

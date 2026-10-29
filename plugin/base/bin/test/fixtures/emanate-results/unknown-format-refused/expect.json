@@ -1,5 +1,0 @@
-{
-  "exit": 2,
-  "args": ["--from", "jest-report.json", "--format", "junit"],
-  "stdout_jq": [{ "expr": ".schema", "equals": "" }]
-}

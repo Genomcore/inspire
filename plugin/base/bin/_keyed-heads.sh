@@ -70,24 +70,6 @@ KH_V4="created:1 updated:1 deleted:1 unchanged:1 returns:1"
 # own arity. `default` is absent on purpose: a default cannot fail.
 KH_V5="unique:+ nonnull:+ immutable:+ enum:+ min:+ max:+ len:+ pattern:+ references:+ actor:1 exists:1 absent:1 state:2"
 
-# Which oracle asserts a claim carrying this head. Everything not listed here —
-# every other head, and every prose-only entry — is a test-oracle claim.
-#
-# `immutable` is here because no test can reach it: the write path is a
-# repository the entity unit never emits, and a declaration-only `readonly` is
-# erased before the store sees the update. It takes a column form instead — see
-# keyed-heads.md § Oracles.
-KH_STORE_ORACLE="unique nonnull default references immutable"
-
-# kh_oracle_of <word> — "store" or "test".
-kh_oracle_of() {
-  local w="$1" s
-  for s in $KH_STORE_ORACLE; do
-    [ "$w" = "$s" ] && { printf 'store\n'; return 0; }
-  done
-  printf 'test\n'
-}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Severity — the 0.9 grace on the presence classes
 # ─────────────────────────────────────────────────────────────────────────────
@@ -376,31 +358,19 @@ kh_check_head() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Prose heuristics — two closed phrase lists and the one matcher over them
+# Prose heuristics — a closed phrase list and the matcher over it
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# Both lists name words that also have legitimate prose uses, so both are
-# heuristics, and a heuristic does not get to block anything: every finding built
-# on either is a flat warning that never refuses. Both are deliberately short and
-# closed, and both are semicolon-separated on ONE line — a value passed through
-# `awk -v` may not contain a literal newline on every supported host.
-#
-# The two live together because the matcher does, and the matcher is shared so
-# that one answer to "does this prose say X" cannot drift into two.
+# The list names words that also have legitimate prose uses, so it is a
+# heuristic, and a heuristic does not get to block anything: every finding built
+# on it is a flat warning that never refuses. It is deliberately short and
+# closed, and semicolon-separated on ONE line — a value passed through `awk -v`
+# may not contain a literal newline on every supported host.
 
 # W-1: constraint words in a `Notes` or `Description` cell, so that a constraint
 # left behind after its machine-readable form moved to a Constraints line is
 # surfaced.
 KH_PROSE_CONSTRAINT_PHRASES="unique;immutable;nullable;not null;never updated;write-once;regex;defaults to;at least;at most"
-
-# PR-25: authorization words in the prose of a precondition or error entry that
-# carries NO head. A `P{n}` with no `actor(...)` renders no guard — the framework
-# profile's `## Bindings` is explicit that it renders a public route — and
-# derives only a test-oracle claim about its own prose, so nobody asserts the
-# denial and the suite goes green over an unguarded endpoint. The list carries
-# both spellings of the -ise/-ize pairs and the plurals, because matching is on
-# whole words.
-KH_PROSE_AUTHZ_PHRASES="admin;administration;administrator;administrators;authenticated;authorisation;authorised;authorization;authorized;forbidden;membership;memberships;permission;permissions;privilege;privileges;role;roles;unauthenticated;unauthorised;unauthorized"
 
 # kh_prose_hits <phrases>
 #   stdin: one text per line. stdout: `{line number}<TAB>{phrase}`, one record
@@ -429,52 +399,6 @@ kh_prose_hits() {
   '
 }
 
-# kh_prose_names <own> <foreign>
-#   stdin: one text per line. stdout: `{line number}<TAB>own|foreign<TAB>{name}`,
-#   one record per hit, with the line number carrying the same meaning it carries
-#   above. Both vocabularies are semicolon-separated and either may be empty.
-#
-# A sibling of `kh_prose_hits` rather than a mode of it, because the two read
-# prose for different things and would have to disagree on two points to share
-# one body. The vocabulary here is the VAULT'S OWN identifiers — entity ids,
-# entity names, field names — not a closed list of English words:
-#
-#   - A backticked token is the most deliberate way to name an identifier, so
-#     backticks are kept. `kh_prose_hits` strips them for the opposite reason: a
-#     backticked `unique` is the constraint being named, not one left in prose.
-#   - `.`, `_` and digits are word characters, so `workspace.role`,
-#     `case_assignment` and `org_id` are each ONE token. `kh_prose_hits` turns
-#     every non-letter into a space, which would split all three.
-#
-# Two vocabularies in one pass because the caller asks both questions of the
-# same prose, and a second spawn per unit is what a whole-vault plan cannot
-# afford.
-kh_prose_names() {
-  awk -v own="$1" -v foreign="$2" '
-    BEGIN {
-      no = split(own, O, ";"); nf = split(foreign, F, ";")
-      for (i = 1; i <= no; i++) if (O[i] != "") V[O[i]] = "own"
-      # Foreign never overwrites own: a token both vocabularies carry belongs to
-      # this entity too, and reads as its own.
-      for (i = 1; i <= nf; i++) if (F[i] != "" && !(F[i] in V)) V[F[i]] = "foreign"
-    }
-    {
-      s = tolower($0)
-      gsub(/[^a-z0-9._-]/, " ", s)
-      n = split(s, W, " ")
-      delete seen
-      for (i = 1; i <= n; i++) {
-        w = W[i]
-        # Sentence punctuation clings to a token: `it.` and `-- role` are the
-        # word plus a delimiter this split had no reason to drop.
-        gsub(/^[._-]+|[._-]+$/, "", w)
-        if (w == "" || (w in seen) || !(w in V)) continue
-        seen[w] = 1
-        printf "%d\t%s\t%s\n", NR, V[w], w
-      }
-    }
-  '
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Constraints lines

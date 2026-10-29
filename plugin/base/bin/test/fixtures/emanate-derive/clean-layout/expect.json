@@ -1,8 +1,0 @@
-{
-  "exit": 0,
-  "args": [
-    "layout",
-    "collection"
-  ],
-  "stdout": "expected-stdout.json"
-}

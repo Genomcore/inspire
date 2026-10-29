@@ -70,7 +70,7 @@ sdd_init_counters
 
 SCOPE="${1:-$SDD_FEATURES_ROOT}"
 
-if [ ! -d "$SCOPE" ]; then
+if [ ! -e "$SCOPE" ]; then
   sdd_finding "warning" "adr-maturity-matches-features" "$SCOPE" \
     "features root does not exist — no ADR claim can be checked"
   sdd_count_warning

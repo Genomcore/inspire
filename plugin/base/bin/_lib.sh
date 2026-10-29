@@ -324,7 +324,7 @@ sdd_scope_norm() {
 }
 
 # sdd_scope_intersect <scope> <layer_root>
-#   Prints the directory a rule should scan for that layer, or nothing at all
+#   Prints the path a rule should scan for that layer, or nothing at all
 #   when the scope and the layer are disjoint. The cases:
 #     - empty scope         → the whole layer
 #     - scope inside layer  → the scope
@@ -352,9 +352,13 @@ sdd_scope_intersect() {
     "$scope"/*) printf '%s\n' "$root"; return 0 ;;
   esac
 
-  if [ -d "$scope" ] && [ -d "$root" ]; then
+  if [ -e "$scope" ] && [ -d "$root" ]; then
     local pscope proot
-    pscope="$(cd "$scope" 2>/dev/null && pwd -P)" || return 0
+    if [ -d "$scope" ]; then
+      pscope="$(cd "$scope" 2>/dev/null && pwd -P)" || return 0
+    else
+      pscope="$(cd "$(dirname "$scope")" 2>/dev/null && pwd -P)/${scope##*/}" || return 0
+    fi
     proot="$(cd "$root" 2>/dev/null && pwd -P)" || return 0
     case "$pscope" in
       "$proot" | "$proot"/*) printf '%s\n' "$scope"; return 0 ;;
@@ -396,7 +400,7 @@ sdd_find_actions() {
   local scope
   scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
   [ -n "$scope" ] || return 0
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
     | sort
@@ -410,7 +414,7 @@ sdd_find_entities() {
   local scope
   scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
   [ -n "$scope" ] || return 0
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
     | grep -vE '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
@@ -485,7 +489,7 @@ sdd_entity_population() {
 # use cases.
 sdd_find_features() {
   local scope="${1:-$SDD_KB_ROOT}"
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | awk -F'(^|/)03_features/' '
         NF > 1 {
@@ -502,7 +506,7 @@ sdd_find_features() {
 # is the discriminator, so READMEs and index files never match.
 sdd_find_adrs() {
   local scope="${1:-$SDD_KB_ROOT}"
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "adr-*.md" 2>/dev/null \
     | grep -E '(^|/)01_adr/' \
     | sort
@@ -517,7 +521,7 @@ sdd_find_adrs() {
 # outside both shapes and are therefore not screens.
 sdd_find_screens() {
   local scope="${1:-$SDD_KB_ROOT}"
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | awk -F'(^|/)05_screens/' '
         NF > 1 {
@@ -539,7 +543,7 @@ sdd_find_screens() {
 # `patterns/[!_]*.md`), and `README.md` is excluded as it is everywhere else.
 sdd_find_catalog() {
   local scope="$1" dir="$2"
-  [ -d "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
   find "$scope" -type f -name "*.md" 2>/dev/null \
     | awk -F'(^|/)05_screens/' -v d="$dir" '
         NF > 1 {
@@ -551,10 +555,6 @@ sdd_find_catalog() {
       ' \
     | sort
 }
-
-sdd_find_patterns()   { sdd_find_catalog "${1:-$SDD_KB_ROOT}" patterns; }
-sdd_find_components() { sdd_find_catalog "${1:-$SDD_KB_ROOT}" components; }
-sdd_find_layouts()    { sdd_find_catalog "${1:-$SDD_KB_ROOT}" layouts; }
 
 # sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
 # or empty when it declares none.
@@ -568,24 +568,6 @@ sdd_catalog_state() {
       exit
     }
   ' "$1"
-}
-
-# sdd_catalog_lifecycle <file> — the lifecycle a catalog entry's `**State:**`
-# stands for, and the ONE definition of it: derive reads it to fill a contract's
-# `unit.lifecycle`, plan reads it to build the frontier, and two answers to
-# "is this delivered?" would be one too many.
-#
-# A catalog entry carries no `lifecycle:` and needs the same three answers a
-# domain artifact's gives. `implemented` is delivered, so it satisfies an edge
-# out of band and never emanates — `stable`. `to-extract` is authored with no
-# code behind it, which is exactly what emanates — `accepted`. Anything else,
-# an absent line included, states neither, and the empty answer is what the
-# readiness checks report on.
-sdd_catalog_lifecycle() {
-  case "$(sdd_catalog_state "$1")" in
-    implemented) printf 'stable' ;;
-    to-extract)  printf 'accepted' ;;
-  esac
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

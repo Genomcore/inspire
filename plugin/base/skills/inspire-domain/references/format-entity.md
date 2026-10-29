@@ -176,7 +176,7 @@ the requirement.
 
 **Beside a `references(…)`, `nonnull` also decides build order**, so state it
 deliberately. `` Constraints: `nonnull, references(auth.org)` `` says the row
-cannot exist before its organisation, and `/inspire-emanate` builds `auth.org`
+cannot exist before its organisation, and INSPIRE Factory builds `auth.org`
 in an earlier wave. Leave `nonnull` off and the reference is a **back-pointer**
 — `case.current_report_id` next to `report.case_id` — populated once both sides
 exist, so neither side has to precede the other. That is what lets a mutual pair

@@ -61,12 +61,12 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 20 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (7) — capture what the product is and why: `module` ·
         `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
         (external verticals) · `adr`.
-      - **Codification** (7) — coding itself runs in INSPIRE Factory; what ships
+      - **Codification** (6) — coding itself runs in INSPIRE Factory; what ships
         here is what it reads. Six **stack skills** — `inspire-code-react` ·
         `inspire-code-nestjs` · `inspire-code-angular` · `inspire-code-ios` ·
         `inspire-code-android` · `inspire-code-typescript` — each an ordinary
@@ -83,10 +83,6 @@ repo is both its source and its own marketplace.
         only `react`, `nestjs` and `angular` declare a `language:`. The contract is
         `_references/stack-skills.md`. The validators resolve an id the same way
         (`sdd_stack_skills` in `_lib.sh`, over `SDD_SKILLS_ROOT`).
-        · `inspire-emanate`: the in-session **unattended emanation loop**.
-        **Unsupported since 0.13.0**: its role doctrine (`inspire-code`'s
-        `references/roles/`) was removed with `inspire-code`, and nothing keeps it
-        working — only the Factory's emanation has to.
       - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
         (greenfield foundation: language, stack, theme + the live design system),
         `config` (writes and validates `.inspire/emanate.yml`, the one file
@@ -118,18 +114,10 @@ repo is both its source and its own marketplace.
       header carries the full argument, and no `0.9.0` hop exists because nothing
       moved. Claude Code parses **every** `*.md` under this root as an agent
       definition, so nothing without valid agent frontmatter may ship here — the
-      class's own README is a `.txt` for exactly that reason. It ships the **five
-      role shells** of the emanation loop — `inspire-contracter` ·
-      `inspire-tester` · `inspire-implementer` · `inspire-security-overseer` ·
-      `inspire-quality-overseer`. A shell is an identity, a permission envelope
-      (its `tools:` allowlist — personas keep `Bash` and `Agent`; overseers carry
-      only `Read, Grep, Glob`, because D3 says an overseer writes nothing and
-      Bash can write) and a pointer at its doctrine — which no longer ships, so the
-      shells are as unsupported as `/inspire-emanate` itself. The **overseer roster is additive-only
-      and needs no new key**: an overseer is any `.claude/agents/*-overseer.md`
-      whose `tools:` line is present and names no writing tool; a project adds
-      its own, and the two shipped ones are non-removable — `/inspire-emanate`
-      refuses to run when either is missing or fails that shape.
+      class's own README is a `.txt` for exactly that reason. It ships only that README: the five role shells of the
+      in-session emanation loop were removed with `/inspire-emanate`, because code
+      emanation runs in INSPIRE Factory. The class stays, so an upgrade deletes a
+      shipped shell an operator never touched and keeps an edited one.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
       CI never depends on a path inside `.claude/`. Spec root is configurable via
@@ -139,45 +127,16 @@ repo is both its source and its own marketplace.
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
-      The **five `emanate-*` scripts are the same class of thing** — the
-      emanation loop's mechanics (D8), tools outside `review.sh`'s rule list.
-      `emanate-derive.sh` (a unit's KB artifacts → the derived contract on stdout,
-      the **strict** parser that refuses an old shape rather than read it as an
-      empty section, and the one place the 0.9 grace on the presence classes is
-      paid for — see
-      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md)),
-      `emanate-plan.sh` (a scope's frontier snapshot **minus what the tests show is
-      already realized** → dependency waves → the floor versus the declared
-      ceiling → every readiness check, plus the run-level facts a spawn brief
-      needs — the declared test infrastructure and the project's wire-convention
-      decisions; one selector grammar drives `--reemanate` and `--goal`, JSON on
-      stdout and nothing written anywhere — see
-      [base/skills/_references/emanation-plan.md](plugin/base/skills/_references/emanation-plan.md))
-      and `emanate-gate.sh` (a unit's claims × the tests citing them × the suite
-      result → one pass/fail verdict on stdout, the deterministic evidence an
-      overseer's approval can never stand in for — see
-      [base/skills/_references/gate-verdict.md](plugin/base/skills/_references/gate-verdict.md))
-      are the three big enough to decompose, each into its own family of sourced
-      units under `base/bin/lib/` → `.inspire/bin/lib/` (`derive-*`, `plan-*`,
-      `gate-*`). Plan and gate **compose on derive's output, never its
-      implementation** — neither sources a `derive-*` unit — and the one unit
-      they do share is `gate-citations.sh`, because the `@claim` token has one
-      scanner and two readings: coverage for gate, realization for plan.
-      `emanate-results.sh` (a test runner's own report → the
-      `inspire.suite-results/1` manifest on stdout) exists because gate reads
-      that one shape and nothing else, and leaving its production to the
-      orchestrator's judgement would put a schema inside prose doctrine — the
-      one place a persona could hand gate a plausible-but-wrong shape and have
-      every claim read as not-run. `emanate-harvest.sh` (a phase worktree's owned
-      diff → one integration commit) is pure git. Those last two source no lib
-      unit at all, and each says so in its own header.
+      The derived contract INSPIRE Factory builds every unit from is specified in
+      [base/skills/_references/derived-contract.md](plugin/base/skills/_references/derived-contract.md);
+      the Factory implements it, and nothing under `base/bin/` derives one.
       `base/bin/test/` (the golden fixtures + test runner) **never** materializes
       — validators are not an extension point, so a project has no local rule
       authoring to preserve. Template test suite: `bash plugin/base/bin/test/run-tests.sh`,
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its seven hand-wired siblings, and uses the third form
+      rule at a time plus its two hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
       registered in a materialized project's `.claude/settings.json`

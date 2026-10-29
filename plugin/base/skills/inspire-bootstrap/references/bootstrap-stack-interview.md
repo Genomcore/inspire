@@ -130,13 +130,13 @@ per-feature one — resolve it here, right after the layers:
    error is not a red test, it is a test that never ran.
 4. **Check the resolved profiles carry a probe recipe** for them — each framework
    profile's own `## Test infrastructure` section. A stack that declares components
-   and resolves no profile that can probe them is what `/inspire-emanate plan`
+   and resolves no profile that can probe them is what INSPIRE Factory's planner
    reports as `PR-22`: an unattended run would read the connection error as red and
    burn a unit's whole rework budget proving nothing. Offer to author the profile
    section rather than leaving the warning standing.
 
-Why this belongs at bootstrap: an unattended emanation run refuses at t=0 when a
-declared component is not healthy, and it can only do that against a declaration. A
+Why this belongs at bootstrap: an unattended INSPIRE Factory run refuses before
+it starts when a declared component is not healthy, and it can only do that against a declaration. A
 project that never made one gets a safety property that is vacuous by construction.
 
 ### The worktree recipe (declared with the components)
@@ -166,7 +166,7 @@ is not a recipe.
    run the suites. A recipe that has never been executed is a guess, and the run
    that discovers it is wrong is the one with nobody watching.
 
-`/inspire-emanate plan` reports the rows and warns as `PR-24` when components are
+INSPIRE Factory's planner reports the rows and warns as `PR-24` when components are
 declared and no step is — a run then improvises an environment before its first
 spawn, and the first field run spent a quarter of an hour doing exactly that.
 

@@ -54,19 +54,16 @@ keep() {
 : > "$TMP/files"
 # EVERY job is weighted into ONE largest-first order, golden ones included.
 # They used to be appended after the sorted files, unsorted — so the estate's
-# two heaviest jobs by far, golden/emanate-plan and golden/emanate-derive,
-# launched last and ran out the tail nearly alone. The wall is the heaviest job
-# plus whatever is launched after it, which is exactly what that ordering
-# maximised.
+# heaviest golden jobs launched last and ran out the tail nearly alone. The wall
+# is the heaviest job plus whatever is launched after it, which is exactly what
+# that ordering maximised.
 #
 # The proxies:
 #   file    — its byte size, the one cost that cannot go stale as blocks move.
-#   golden  — its fixture count × FIXTURE_WEIGHT. A fixture runs the rule and,
-#             for the emanate ones, up to four validators under it, so it is
-#             worth far more than a byte of test script. The constant only has
-#             to order the list, and 250 is the figure that puts the estate's
-#             heaviest golden job (67 fixtures) next to its heaviest file
-#             (~17 KB), which is where measurement puts them.
+#   golden  — its fixture count × FIXTURE_WEIGHT. A fixture runs the rule, so
+#             it is worth far more than a byte of test script. The constant only has
+#             to order the list, and 250 is the figure measurement put a
+#             fixture at against a byte of test script.
 #   sibling — one behavioural script, weighted like a mid-sized file, since
 #             nothing about it can be counted without running it.
 FIXTURE_WEIGHT=250
@@ -103,7 +100,7 @@ done
 #
 # A rule with many fixtures is SHARDED, because a single run-tests.sh is one
 # process and therefore one core however many the machine has — which made the
-# estate's two longest jobs, at 84 and 67 fixtures, its floor: no ordering can
+# estate's longest golden jobs its floor: no ordering can
 # make a run shorter than its longest job, and no -j helps a job that cannot
 # use a second core. Each shard is an ordinary job over a named subset, so the
 # PASS/FAIL lines — and with them the run's inventory — are exactly the ones an
@@ -148,12 +145,7 @@ if [ -d "$GOLDEN/fixtures" ]; then
   done
 fi
 for s in "lib-tests.sh${TAB}_lib.sh/readers" \
-         "test-trust.sh${TAB}trust.sh/behaviour" \
-         "test-harvest.sh${TAB}emanate-harvest.sh/behaviour" \
-         "test-derive-lib.sh${TAB}emanate-derive.sh/library" \
-         "test-plan-lib.sh${TAB}emanate-plan.sh/library" \
-         "test-gate-lib.sh${TAB}emanate-gate.sh/library" \
-         "test-results.sh${TAB}emanate-results.sh/behaviour"; do
+         "test-trust.sh${TAB}trust.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
   keep "golden/$script" || continue

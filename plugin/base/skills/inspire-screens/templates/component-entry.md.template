@@ -30,7 +30,7 @@ never by value. Name every glyph by its library and name (`lucide-chevron-right`
      Presentation). These are the component's OWN renderings — empty, loading,
      error — the ones every screen instantiating it inherits. A state a single
      screen enters belongs to that screen's `### States` instead. Each row is
-     one claim the emanation loop covers with a render test. -->
+     one claim INSPIRE Factory covers with a render test. -->
 
 | Key | When | Presentation |
 |---|---|---|

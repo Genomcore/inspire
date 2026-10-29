@@ -21,9 +21,7 @@
 #                     "exit": N,
 #                     "args":      ["scope", ...],
 #                     "findings":  [{rule, message_substring, severity?}, ...],
-#                     "forbidden": ["substring", ...],
-#                     "stdout":    "<file>",
-#                     "stdout_jq": [{expr, equals}, ...]
+#                     "forbidden": ["substring", ...]
 #                   }
 #
 # `args` is optional and defaults to none — the same argv-free invocation every
@@ -38,15 +36,6 @@
 # plus an empty `findings` list matches any output at all, including the wrong
 # findings. Any fixture whose point is that something does *not* fire states so
 # in `forbidden`.
-#
-# `stdout` and `stdout_jq` are both optional and both exist for the same reason:
-# a rule's product is its findings, but a TOOL's product is its stdout, and a
-# fixture that asserted only the exit code of a tool would assert almost
-# nothing. `stdout` names a file in the fixture directory compared with the run's
-# stdout after `jq -S .` on both sides — key order is not a claim. `stdout_jq`
-# asserts one `jq -r` expression at a time, which is how a fixture states a
-# thing about the output without pinning the whole of it (a refusal's class set;
-# that a key is absent). Every existing fixture omits both and is unaffected.
 #
 # Exit 0 if all tests pass, 1 otherwise.
 
@@ -73,7 +62,7 @@ TAB="$(printf '\t')"
 # keys come back as tagged, tab-delimited records, one per line —
 #
 #   E exit · A argv word · F severity,rule,message_substring
-#   C finding_count · B forbidden substring · S golden stdout file
+#   C finding_count · B forbidden substring
 #   T a value this protocol cannot carry
 #
 # — and the reader below turns them back into the same variables the assertions
@@ -82,14 +71,11 @@ TAB="$(printf '\t')"
 # `T` is the protocol's own guard, and it is not hypothetical: the delimiters
 # are tab and newline, so a value containing either would be read as two fields
 # or two records and would then assert something other than what the fixture
-# says. `stdout_jq` is READ SEPARATELY BELOW for exactly that reason — its
-# `equals` is the one value in the estate that legitimately spans lines (a
-# pretty-printed JSON array), and folding it in here truncated it at the first
-# newline and compared against "[". Nothing this reader handles has ever
-# carried either delimiter; a fixture that starts to fails loudly instead.
+# says. Nothing this reader handles has ever carried either delimiter; a fixture
+# that starts to fails loudly instead.
 EXPECT_READER='
   def vals: [ .args[]?, (.findings[]? | .rule, .message_substring, (.severity // "")),
-              .forbidden[]?, (.stdout // "") ]
+              .forbidden[]? ]
             | map(tostring);
   [ (if (vals | any(test("[\t\n]"))) then ["T"] else [] end),
     ["E\t" + (.exit | tostring)],
@@ -97,17 +83,15 @@ EXPECT_READER='
     (.findings // [] | map("F\t" + (.severity // "") + "\t" + (.rule // "")
                               + "\t" + (.message_substring // ""))),
     (if has("finding_count") then ["C\t" + (.finding_count | tostring)] else [] end),
-    (.forbidden // [] | map("B\t" + .)),
-    (if (.stdout // "") != "" then ["S\t" + .stdout] else [] end)
+    (.forbidden // [] | map("B\t" + .))
   ] | flatten | .[]
 '
 
-# Two scratch files for the whole sweep instead of two mktemp calls per fixture.
+# One scratch file for the whole sweep instead of a mktemp call per fixture.
 # Truncated by the `>` redirection on every run, and private to this process, so
 # any number of run-tests.sh can run side by side.
 RUN_TMP="$(mktemp -d)"
 trap 'rm -rf "$RUN_TMP"' EXIT
-actual_stdout="$RUN_TMP/stdout"
 actual_stderr="$RUN_TMP/stderr"
 
 # A filter narrows the GLOB, not each iteration. Walking all 400-odd fixture
@@ -153,7 +137,7 @@ for fixture in ${1+"$@"}; do
 
   # Read before the pushd so the expect file is found by the absolute path it
   # already has. `args` is optional and defaults to none.
-  expected_exit=""; expected_count=""; expected_stdout=""; undelimitable=0
+  expected_exit=""; expected_count=""; undelimitable=0
   fixture_args=(); exp_findings=(); exp_forbidden=()
   while IFS= read -r rec; do
     case "$rec" in
@@ -163,7 +147,6 @@ for fixture in ${1+"$@"}; do
       F*)  exp_findings+=("${rec#F$TAB}") ;;
       C*)  expected_count="${rec#C$TAB}" ;;
       B*)  exp_forbidden+=("${rec#B$TAB}") ;;
-      S*)  expected_stdout="${rec#S$TAB}" ;;
     esac
   done < <(jq -r "$EXPECT_READER" "$expect_file")
 
@@ -182,7 +165,7 @@ for fixture in ${1+"$@"}; do
 
   pushd "$fixture" >/dev/null
   SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \
-    "$script" ${fixture_args[@]+"${fixture_args[@]}"} >"$actual_stdout" 2>"$actual_stderr"
+    "$script" ${fixture_args[@]+"${fixture_args[@]}"} >/dev/null 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null
 
@@ -243,55 +226,6 @@ for fixture in ${1+"$@"}; do
     fi
   done
 
-  # A tool's product is its stdout, so a fixture may pin it whole … Each side is
-  # normalized separately and the normalization's own exit status is checked: a
-  # comparison of two things `jq` could not read passes trivially, which is how a
-  # golden regenerated from a broken run would freeze the breakage. An EMPTY file
-  # is the sharp case: `jq -S .` reads one happily and prints nothing, so two
-  # empty sides compare equal — a fixture that pins stdout needs stdout.
-  if [ -n "$expected_stdout" ]; then
-    want_norm="$RUN_TMP/want"; got_norm="$RUN_TMP/got"
-    if [ ! -f "$fixture/$expected_stdout" ]; then
-      pass=false
-      echo "FAIL $rule/$scenario (missing golden stdout: $expected_stdout)" >&2
-    elif ! jq -S . "$fixture/$expected_stdout" > "$want_norm" 2>/dev/null \
-         || [ ! -s "$want_norm" ]; then
-      pass=false
-      echo "FAIL $rule/$scenario (golden $expected_stdout is not readable JSON)" >&2
-    elif ! jq -S . "$actual_stdout" > "$got_norm" 2>/dev/null || [ ! -s "$got_norm" ]; then
-      pass=false
-      echo "FAIL $rule/$scenario (stdout is not readable JSON)" >&2
-    elif ! diff -u "$want_norm" "$got_norm" >/dev/null; then
-      pass=false
-      echo "FAIL $rule/$scenario (stdout differs from $expected_stdout)" >&2
-      diff -u "$want_norm" "$got_norm" | head -40 >&2
-    fi
-  fi
-
-  # … or state one thing about it at a time. An entry missing either key is a
-  # defect in the fixture, not a pass: `jq -r '.equals'` on an entry without one
-  # yields "null", and "null" is what an unreadable stdout yields too.
-  #
-  # These keep their own jq calls, unlike every other key: `equals` may be a
-  # pretty-printed JSON value and so may span lines, which the tagged-record
-  # reader above cannot carry. Command substitution keeps a value's interior
-  # newlines, which is precisely what makes this form the right one here.
-  while IFS= read -r probe; do
-    [ -n "$probe" ] || continue
-    if ! echo "$probe" | jq -e 'has("expr") and has("equals")' >/dev/null 2>&1; then
-      pass=false
-      echo "FAIL $rule/$scenario (stdout_jq entry needs both 'expr' and 'equals': $probe)" >&2
-      continue
-    fi
-    probe_expr="$(echo "$probe" | jq -r '.expr')"
-    probe_want="$(echo "$probe" | jq -r '.equals')"
-    probe_got="$(jq -r "$probe_expr" "$actual_stdout" 2>/dev/null)"
-    if [ "$probe_got" != "$probe_want" ]; then
-      pass=false
-      echo "FAIL $rule/$scenario (stdout_jq '$probe_expr': expected '$probe_want', got '$probe_got')" >&2
-    fi
-  done < <(jq -c '.stdout_jq[]?' "$expect_file")
-
   if $pass; then
     echo "PASS $rule/$scenario"
   else
@@ -348,96 +282,6 @@ if [ -z "$filter" ]; then
     cat "$trust_out" >&2
   fi
   rm -f "$trust_out"
-fi
-
-# emanate-harvest.sh is likewise a tool, not a review rule: it emits no
-# findings and there is no inspire_kb/ tree to scan, only git state (refs,
-# reflog, tree contents) that fixtures/{rule}/{scenario}/ has no vocabulary
-# for. Same hand-wiring as trust.sh above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  harvest_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-harvest.sh" >"$harvest_out" 2>&1; then
-    echo "PASS emanate-harvest.sh/behaviour"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-harvest.sh/behaviour" >&2
-    cat "$harvest_out" >&2
-  fi
-  rm -f "$harvest_out"
-fi
-
-# emanate-derive.sh has fixtures — its product is stdout, which the loop above
-# now compares — but three of its claims are about a RELATIONSHIP no single
-# fixture holds: two derivations of near-identical trees, the library data
-# against the document that specifies it, and a class id no rule emits a message
-# for. Those live in their own script, hand-wired like the three above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  derive_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-derive-lib.sh" >"$derive_out" 2>&1; then
-    echo "PASS emanate-derive.sh/library"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-derive.sh/library" >&2
-    cat "$derive_out" >&2
-  fi
-  rm -f "$derive_out"
-fi
-
-# emanate-plan.sh has fixtures too, and four of its claims sit outside any one of
-# them: that two runs over one tree are byte-identical, that a run leaves every
-# byte and every mtime of that tree alone, that the PR-* ids the code emits are
-# exactly the ids emanation-plan.md catalogues, and the shapes only a broken bin
-# tree can reach. Same hand-wiring as the four above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  plan_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-plan-lib.sh" >"$plan_out" 2>&1; then
-    echo "PASS emanate-plan.sh/library"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-plan.sh/library" >&2
-    cat "$plan_out" >&2
-  fi
-  rm -f "$plan_out"
-fi
-
-# emanate-gate.sh has fixtures too; four of its claims fit none of them: a run
-# leaves the fixture tree byte- and mtime-identical, `--contract -` and a doubled
-# `--tests-root` read the verdict a plain file does, the GV-* ids the code names
-# still equal the catalogue documenting them, and stdout is EMPTY on every exit
-# that carries no verdict. Same hand-wiring as the five above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  gate_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-gate-lib.sh" >"$gate_out" 2>&1; then
-    echo "PASS emanate-gate.sh/library"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-gate.sh/library" >&2
-    cat "$gate_out" >&2
-  fi
-  rm -f "$gate_out"
-fi
-
-# emanate-results.sh has fixtures too, and its central claim fits none of them:
-# that the manifest it emits is the one `lib/gate-results.sh` actually reads. A
-# fixture pins its stdout against a golden written by the same hand, which two
-# tools that had drifted apart would pass just as happily. The cross-tool run,
-# the absolute-path stripping no portable golden can carry, and the byte-level
-# emptiness of a refusal's stdout live there. Same hand-wiring as the six above.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  results_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-results.sh" >"$results_out" 2>&1; then
-    echo "PASS emanate-results.sh/behaviour"
-  else
-    failed=$((failed + 1))
-    echo "FAIL emanate-results.sh/behaviour" >&2
-    cat "$results_out" >&2
-  fi
-  rm -f "$results_out"
 fi
 
 echo ""

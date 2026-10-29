@@ -46,6 +46,59 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   bytes, so git recorded nothing and the endorsement looked as if it never
   happened.
 
+## 0.14.2 — 2026-10-29
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change.
+
+### Fixed
+
+- **A file passed as scope is checked.** `review.sh <file>` and every rule under it
+  used to check nothing and report PASS when given a single file, so an agent that
+  checked each file it wrote saw them all clean. A file is now a one-file scope:
+  every rule that applies to it runs on it, and nothing else is reported.
+- **A scoped run judges a file against the whole tree.** `stable-blockers.sh`,
+  `field-coverage.sh` and `acyclic-deps.sh` built their context from the scope, so a
+  module or file scope reported a `requires` target in another module as not found,
+  reported a field as uncovered when only another module's action touched it, and
+  missed a cycle running through another module. They now read the whole domain tree
+  and report only on what is in scope.
+
+## 0.14.1 — 2026-10-29
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
+0.14.1 keeps the 0.3 layout and the 0.9.0 payload classes, and needs no hop. The
+in-session emanation loop leaves the runtime; the upgrade deletes every piece of
+it you never edited and keeps every piece you did.
+
+### Breaking for existing vaults
+
+- **`/inspire-emanate` and the five agent shells are gone.** Code emanation runs in
+  INSPIRE Factory. 0.13.0 already marked them unsupported, because their role
+  doctrine left with `inspire-code`. `/inspire:update` deletes the skill and every
+  shell you never touched, and keeps an edited one where it is. Nothing reads a
+  kept shell's doctrine any more, so delete it once you have moved your own rules
+  out of it. `.claude/agents/` keeps only its README, and your own agents there are
+  untouched.
+- **The emanation scripts are gone too.** `.inspire/bin/emanate-derive.sh`,
+  `emanate-plan.sh`, `emanate-gate.sh`, `emanate-results.sh`, `emanate-harvest.sh`
+  and their units under `.inspire/bin/lib/` served only that loop; INSPIRE Factory
+  derives, plans and gates natively. `/inspire:update` deletes them. A script or CI
+  job of yours that called one breaks. An `emanate-*.sh` you edited is kept, but it
+  no longer runs: the `lib/` units it sources are gone. Delete it.
+- **Your knowledge base is not rewritten.** `/inspire:update` never edits
+  `inspire_kb/`, so an existing `00_bootstrap/stack.md` keeps its two mentions of
+  `/inspire-emanate`. Those rows are now read by INSPIRE Factory; reword the
+  mentions by hand.
+
+### Changed
+
+- `_references/derived-contract.md` now specifies the contract INSPIRE Factory's
+  deriver produces, and `_references/emanation-plan.md` and `gate-verdict.md` are
+  removed. `inspire-code-nestjs` no longer asks for `emanate-results.sh` output.
+- Every skill and KB README that named `/inspire-emanate`, its roles or its scripts
+  now names INSPIRE Factory.
+
 ## 0.14.0 — 2026-10-28
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
