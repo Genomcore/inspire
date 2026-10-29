@@ -28,10 +28,6 @@ deduce, and validates the result.
 - Starting services, or any container left running.
 - The commit. The operator commits the file; the skill says where.
 
-`/inspire-emanate` is a different loop: the session that loads it is the
-orchestrator, and it never reads this file. The two share the source, which is
-`stack.md` and the profiles, so a stack change re-runs this skill.
-
 ## Invocation
 
 - `/inspire-config init` — derive, ask, validate, then write the file on
@@ -106,4 +102,3 @@ Read the reference before the step it covers. The table is an index, not the flo
 
 - `/inspire-bootstrap stack` — owns `stack.md`, the source this skill reads.
 - the stack skills — their `## Build & verify` and `## Test conventions`.
-- `/inspire-emanate` — the in-session emanation loop; it does not read this file.

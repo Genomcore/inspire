@@ -168,8 +168,7 @@ figure reads as understanding while the fact stays unstated.
 
 > **Bad.** The gate is the load-bearing wall of the loop, and nothing reaches the
 > branch without earning its way past it.
-> **Good.** `emanate-gate.sh` returns a pass or fail verdict. A unit merges only on
-> a pass.
+> **Good.** The gate returns a pass or fail verdict. A unit merges only on a pass.
 
 Verbs of mechanism are not metaphor. A parser *refuses* a shape, a check *emits* a
 finding, a script *returns* a verdict — each names something that happens. Verbs

@@ -6,17 +6,14 @@ carries what matters only when working on the tests themselves.
 ## Golden jobs
 
 The validators run via golden fixtures — `run-tests.sh <rule>` per rule, plus its
-seven hand-wired siblings. A rule with more than a dozen fixtures is **sharded**
+two hand-wired siblings. A rule with more than a dozen fixtures is **sharded**
 into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin
 slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process
-however many cores the machine has, so an unsharded 95-fixture rule sets the run's
-floor on its own. The PASS/FAIL lines are per scenario either way, so
+however many cores the machine has, so an unsharded rule with many fixtures sets the
+run's floor on its own. The PASS/FAIL lines are per scenario either way, so
 `--inventory` cannot tell whether a rule was sharded — which is what makes
 changing the shard size safe. A filter still names the rule (`run.sh
-golden/emanate-plan` runs all of its shards). `golden/emanate-derive` is among the
-heaviest, at 95 fixtures: derive runs the rules that own the `OS-*` classes rather
-than re-implementing them, so most fixtures spawn four validators — the seventeen
-catalog ones spawn none, because no review rule owns a catalog entry's shape.
+golden/sections-present` runs all of its shards).
 **Each hand-wired sibling counts as one run-level assertion**, so adding
 assertions inside one does not move `run.sh`'s total; read its own summary for
 that.
@@ -40,13 +37,11 @@ yourself when you need to know.
 The shape is stable. The run is **spawn-bound**: roughly four-fifths kernel time,
 `fork` and `exec` rather than computation. So raising `-j` past the core count
 buys nothing, and the lever that works is "spawn fewer processes" rather than
-"schedule better". Cost follows the process count almost exactly — the
-`emanate-plan` fixtures run ~28,000 of them per sweep, and measured system time
-matches that at the few milliseconds a `fork`+`exec` costs. The heavy jobs are
-`emanate-derive` and `emanate-plan`, at 95 and 78 fixtures, because each fixture
-spawns a rule and the validators under it; `run.sh` **shards** both (see above).
-Next come a handful of `upgrade/` and `materialize/` files that build several
-period-correct fixtures each.
+"schedule better". Cost follows the process count almost exactly, at
+the few milliseconds a `fork`+`exec` costs. The heavy jobs are a handful of
+`upgrade/` and `materialize/` files that build several period-correct fixtures
+each, and the golden rules with the most fixtures, which `run.sh` **shards** (see
+above).
 
 ## Parallel safety
 

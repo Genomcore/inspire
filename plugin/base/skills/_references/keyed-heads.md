@@ -180,7 +180,7 @@ requirement the marked one.
 never redundant next to a foreign key. A `nonnull` reference is STRUCTURAL — the
 row cannot exist before its target — and emanation builds the target first.
 Without it the reference is DEFERRED: the column is populated once both sides
-exist, and `/inspire-emanate` does not order the wave on it, which is what lets a
+exist, and the planner does not order the wave on it, which is what lets a
 mutual pair (a case pointing at its current report, the report carrying a
 `nonnull` case id) plan at all. State `nonnull` where the key is genuinely
 required and leave it off a back-pointer, and the ordering follows.
@@ -230,8 +230,7 @@ the action and never a surface-side annotation.
 it no claim at all.** A framework profile derives the route's guard from
 `actor({role})` and derives a public route from its absence, so a prose access
 rule renders nothing and is asserted by nobody. `PR-25` warns about the shape at
-plan time ([`emanation-plan.md`](emanation-plan.md) § An access rule stated in
-prose); it is a heuristic and never a refusal, so the head is still the author's
+plan time (INSPIRE Factory's planner); it is a heuristic and never a refusal, so the head is still the author's
 to write.
 
 ### V4 — postcondition heads (`Q{n}`)
@@ -287,9 +286,9 @@ value — a `BEFORE UPDATE` trigger in a SQL store, whatever the equivalent is
 elsewhere — and the framework profile's `## Persistence` declares which. Two
 consequences follow, and both are the ordinary store-claim ones rather than
 anything new: an uncited `immutable` is `store-uncited`, counted and never a
-finding ([`gate-verdict.md`](gate-verdict.md)), and a store-violation test may
+finding, and a store-violation test may
 still cite it, green on arrival by design. A profile that declares **no** form
-for it is a rendering hole, so the contracter refuses the emission and names the
+for it is a rendering hole, so the unit's agent refuses the emission and names the
 file to edit — it never emits a field whose immutability nothing enforces.
 
 ## Coherence, beyond grammar
@@ -327,8 +326,7 @@ no column, no writer, no sentinel row — which is green before anything is buil
 and stays green through every violation.
 
 `PR-26` is the safety net, at plan time and over the vault's own identifiers
-([`emanation-plan.md`](emanation-plan.md) § An invariant about another entity),
-the way `PR-25` is the net for an access rule stated in prose. Like `PR-25` it is
+(INSPIRE Factory's planner), the way `PR-25` is the net for an access rule stated in prose. Like `PR-25` it is
 a heuristic and never a refusal, so where the subject is filed stays the
 author's.
 
@@ -341,7 +339,7 @@ findings.
 
 The class ids are stable; they are what a reader's own goldens are keyed on.
 
-The strict reader is `.inspire/bin/emanate-derive.sh`, and it refuses on every
+The strict reader is INSPIRE Factory's deriver, and it refuses on every
 entity, action and cross-artifact class below **whatever severity review
 reported it at** — the grace in the next section is review's alone. Use-case
 files are not one of its kinds, so `OS-F*` stays review's entirely.

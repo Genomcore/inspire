@@ -1,4 +1,0 @@
-{
-  "exit": 3,
-  "args": ["--contract", "contract.json", "--results", "results.json"]
-}

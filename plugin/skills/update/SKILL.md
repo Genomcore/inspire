@@ -205,8 +205,8 @@ entirely). Skill edits need no session restart: `.claude/skills/` already existe
 session start, so edits to files inside it load live. **The agents class is the
 caveat.** When this run created `.claude/agents/` for the first time — every project
 coming from 0.7 or earlier — say plainly that a directory which appears mid-session may
-not be discovered until the next one, so the role shells can need a fresh session before
-`/agents` lists them. Then remind the operator to review the git diff and commit.
+not be discovered until the next one, so an agent the project adds there can need a fresh session
+before `/agents` lists it. Then remind the operator to review the git diff and commit.
 
 ## Step 5 — Backfill the UI specification
 

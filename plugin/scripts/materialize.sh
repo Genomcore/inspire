@@ -404,11 +404,9 @@ seed_claude_md() {
 #   .claude/settings.local.json  Claude Code's personal per-user override
 #                                file, which must never be committed/shared.
 #   .claude/worktrees/           the house convention for every worktree a
-#                                skill cuts. /inspire-emanate's t=0 REFUSES a
-#                                dirty launch checkout, and its own goal
-#                                worktree lives here — without this line the
-#                                run would dirty the checkout the next run
-#                                then refuses on.
+#                                skill cuts (inspire-module's scan cuts one per
+#                                module) — without this line each would show
+#                                as untracked in the checkout it came from.
 # A pre-existing .gitignore is never replaced: the block is appended under a
 # marked comment. A block that is already there is EXTENDED with whatever
 # entries it lacks rather than left alone — a project installed before an

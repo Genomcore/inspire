@@ -111,12 +111,10 @@ grammar and its closed head vocabularies ([`keyed-heads.md`](keyed-heads.md)),
 the four-state lifecycle ([`lifecycle-rules.md`](lifecycle-rules.md)), claim ids
 and the `@claim` token a test carries, trust stamps
 ([`trust-stamps.md`](trust-stamps.md)), the finding format
-([`findings-format.md`](findings-format.md)), the artifact shapes
-`.inspire/bin/emanate-derive.sh` refuses rather than read as empty, and the
-`inspire.suite-results/1` manifest `.inspire/bin/emanate-gate.sh` reads and
-nothing else. None of them carries a default for an artifact to specialize: an
-artifact that departed would not be readable by whatever has to act on it, so the
-override would not lose an argument — it would fail to be stated.
+([`findings-format.md`](findings-format.md)), and the artifact shapes
+the derived-contract parser refuses rather than read as empty. None of them
+carries a default for an artifact to specialize: an artifact that departed would
+not be readable by whatever has to act on it, so the override would not lose an argument — it would fail to be stated.
 
 Apply the criterion, and apply **that** criterion rather than "notation versus
 decision", which is the framing it is easy to reach for and which does not hold.
