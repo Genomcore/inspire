@@ -11,7 +11,7 @@ writing a hash is not a trust primitive, so `.inspire/bin/trust.sh` owns all of 
 ---
 endorsed:              # human-owned — the machine never writes, updates or removes it
   by: "@dario"         # resolved from git config user.email
-  at: 2026-09-13       # when they stamped; informational, never a check input
+  at: "2026-09-13T10:42:07+02:00"  # when they stamped, to the second
 produced:              # machine-owned — overwritten wholesale on every write
   skill: domain        # the skill that performed the write
   skill_sha: 3f9c2a1   # composite hash of its deployed dir — THE staleness comparand
@@ -24,14 +24,18 @@ produced:              # machine-owned — overwritten wholesale on every write
 After every KB write you make, run `trust.sh stamp <file> --skill <name>` — a skill's
 whole provenance duty, and what it writes replaces the block wholesale. Staleness is
 **ecosystem divergence, never age**: no check reads a clock, the dates are for humans.
+Even the one check that looks at time does not compare clocks — see `CHANGED SINCE
+ENDORSED` below.
 
 ## Endorsement
 
 `trust.sh endorse <file>`, run only after an explicit operator yes, is the only thing
 that writes the human-owned block. It answers *who is the last human that put their name
-on this?* — a name and a date. Read it honestly: **a human put their name here at that
-point in history; the content may have evolved since, and git history is the audit
-trail.** Attestation, not content-pinning. A skill may recognize an endorsement moment
+on this?* — a name and a timestamp to the second, so every re-endorsement changes the
+file and leaves a commit. Read it honestly: **a human put their name here at that point
+in history; the content may have evolved since, and git history is the audit trail.**
+Attestation, not content-pinning — but an edit since is no longer silent: the report
+flags it, and re-endorsing (after an explicit yes) clears it. A skill may recognize an endorsement moment
 and *propose* one — top-rung lifecycle promotions are the native place, those flows being
 operator-confirmed ceremonies already — and the human decides. Consent is unenforceable
 by machinery: nothing checks that anyone was asked, so the discipline lives in prose.
@@ -75,13 +79,14 @@ Position decides the owning skill — `01_adr` → adr, `02_modules` → module,
 ## Report
 
 `trust.sh report [--summary]` recomputes everything on every run — no ledger, nothing to
-rebaseline; `trust.sh skill-sha <dir>` gives one directory's composite hash. Six groups,
+rebaseline; `trust.sh skill-sha <dir>` gives one directory's composite hash. Seven groups,
 keyed by producer transition, since "23 artifacts under a different `inspire-feature`" is
 one judgment and not 23:
 
 | Group | What it means |
 |---|---|
 | `UNENDORSED` | no `endorsed:` block |
+| `CHANGED SINCE ENDORSED` | the artifact changed after the commit that recorded its current endorsement — committed later in that commit's history, or edited in the working tree. Changes to the `endorsed:` and `produced:` blocks alone never count. Decided by history, not clocks, so a date-only `at` from before 0.15.0 works unchanged; outside a git repository the check is skipped |
 | `STALE` | the stamped skill hash differs from the map owner's installed hash |
 | `REFS-CHANGED` | the shared references moved — one vault-wide line |
 | `PRE-PROVENANCE` | no `produced:` block; a shrinking cohort, never backfilled |
