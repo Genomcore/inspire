@@ -35,8 +35,9 @@ Success side, by verb (the action verb taxonomy in
 | `get` | `200` | |
 | `list` | `200` | Always paginated, including when the page is empty — an empty page is `200` with an empty collection, never `404`. |
 | `create` | `201` | |
-| `edit` / `enable` / `disable` / `move` | `200` | |
+| `edit` | `200` | |
 | `delete` | `204` | |
+| A verb from the project's `adr-action-verbs` | by what it does | Creates a new record → `201`; removes one → `204`; anything else → `200`. |
 
 ## Project policy — asked once, recorded in stack.md
 

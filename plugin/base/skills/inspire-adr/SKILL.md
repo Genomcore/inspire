@@ -94,6 +94,23 @@ services — is a modularity smell: split the module (`inspire-module`), do not 
 actions. BFFs are adapters, not capability owners: they consume the domain and
 never appear in the partition.
 
+### The action-verbs ADR
+
+A named pattern for the project's **action verbs**: the last segment of every
+action id. The verbs come from the application's own domain (a library reserves,
+cancels and picks up a book), and they are one system-wide decision, recorded in one
+ADR with the fixed id **`adr-action-verbs`**. `/inspire-domain` reads it whenever it
+lands an action's verb, and falls back to its default set (`list` · `get` ·
+`create` · `edit` · `delete`) while the ADR does not exist.
+
+The ADR lists each verb with the kind of change it names, and any rule attached to a
+kind of verb (an event every mutation emits, timestamps every mutable entity
+carries). It does not restate the generic rules in
+[`inspire-domain/references/interview-prompts-action.md`](../inspire-domain/references/interview-prompts-action.md):
+one target object per action, plural verbs for reads that return many, singular
+verbs for reads that return one. A new verb is added here before the descriptor
+that uses it lands.
+
 ### Template
 
 Template: [`templates/adr.md.template`](templates/adr.md.template) — the

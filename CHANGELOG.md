@@ -9,6 +9,29 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.15.0 — unreleased
+
+### Changed
+
+- **Each project models its own action verbs.** The verbs come from the
+  application's domain and are recorded in one ADR with the fixed id
+  `adr-action-verbs`. `/inspire-domain` reads it when it lands an action's verb,
+  falls back to `list` · `get` · `create` · `edit` · `delete` while the ADR does
+  not exist, and adds a new verb to it before the descriptor that uses it lands.
+  `/inspire-adr` documents the ADR as a named pattern. The generic rules stay: one
+  target object per action, plural verbs for reads that return many, singular verbs
+  for reads that return one, and a change the domain names gets its own verb.
+- `_references/conventions/rest.md` keys its success statuses on the default verbs,
+  and maps any other verb by what it does: creates a record → `201`, removes one →
+  `204`, otherwise `200`.
+
+### Fixed
+
+- The action interview no longer imposes one platform's vocabulary (`deploy`,
+  `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
+  audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
+  has. Its pagination numbers went too: the wire convention owns pagination.
+
 ## 0.14.0 — 2026-10-28
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:

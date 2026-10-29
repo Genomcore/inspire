@@ -153,7 +153,7 @@ Storage details, runtime engine, boot mechanics, persistence layer — also out 
 
 ## Verb & touch conventions
 
-The action verb (last id segment) and the per-field touch verbs follow a **cross-module taxonomy** — source of truth [[adr-plt-action-verb-conventions]], operationalized in [`interview-prompts-action.md`](interview-prompts-action.md) under *Action verb taxonomy*. In brief: reads are `list`/`get` (+ plural sub-collection verbs, always paginated) with per-field touch `read`/`read-whole`; mutations split by nature (`create`/`edit`/`deploy`/`move`/`rollback`/`enable`/`disable`/`delete`), never an overloaded `update`.
+The action verb (the last id segment) is **the project's own**. It comes from the application's domain and is recorded in the ADR `adr-action-verbs` (see [`/inspire-adr`](../../inspire-adr/SKILL.md), *The action-verbs ADR*). A project with no such ADR uses the default set: `list` · `get` · `create` · `edit` · `delete`. Whatever the verbs, a few rules are generic: the verb acts on the one entity the id names; reads that return many take a plural verb and are paginated, while reads that return one take a singular verb; and a change the domain names gets its own verb, never an overloaded `edit` or `update`. The per-field touch verbs (`read`/`read-whole` and the effect verbs) are INSPIRE's and fixed. The interview applies all of this under *Action verb taxonomy* in [`interview-prompts-action.md`](interview-prompts-action.md).
 
 ## Wikilink convention
 
