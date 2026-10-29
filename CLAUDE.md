@@ -376,7 +376,10 @@ asks the operator anything.
   changelog is the release-note channel, one section per release, and the
   convention starts at 0.9.0. `.claude/hooks/template-runtime-version.sh`
   blocks `gh pr create` if the two versions diverge, if the runtime changed without a
-  bump, or if the version is already tagged. `plugin/scripts/` is deliberately **not**
+  bump, or if the version is already tagged. It checks only PRs into `main`: ticket
+  work lands on a `release/<version>` branch cut from `main`, its PRs carry no bump,
+  and the one PR from that branch to `main` carries the bump, the changelog section
+  and the manifest. `plugin/scripts/` is deliberately **not**
   exempt from that check: it decides how every install behaves. The manifest is
   generated **last**, from the commit carrying the bump: it hashes
   `plugin/base/{bin,hooks,skills,agents}`, so any change under those four
