@@ -12,6 +12,9 @@ context, the options weighed, the choice, and its consequences.
   module-scoped decisions) — the glob is the catalog. Slug-only — no numeric
   prefix: numbers collide when two branches each grab the next one. The
   canonical id is the filename without `.md`.
+- **The project's action verbs** live in one ADR with the fixed id
+  `adr-action-verbs`. `inspire-domain` reads it when it names an action, and
+  uses its default verbs until it exists.
 
 ADRs constrain the layers below them: specs, prototypes and UI must stay
 aligned with any decision within its maturity's reach.

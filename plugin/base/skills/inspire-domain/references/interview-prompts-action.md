@@ -97,17 +97,21 @@ Ask which error codes the action emits and the operator-facing message for each.
 
 ## Action verb taxonomy
 
-Cross-module convention — **source of truth is [[adr-plt-action-verb-conventions]]**. The interview must land the verb *before* shaping the descriptor; the choice is not free-form.
+The verbs are the **project's**, not INSPIRE's. They come from the application's own domain (a library reserves, cancels and picks up a book), and they stay consistent within it. INSPIRE ships only the generic rules below and a small default set.
 
-**Reads.**
-- **Collection** (returns many) → **plural** verb (`list`, `versions`, `executions`), **always paginated**: `limit` (default 50, cap 200) + opaque `cursor` → a page + `next_cursor`. Sub-collections use verbs scoped to the *root* entity (`function::versions`), never a sub-entity `::list` in the catalog.
-- **Item** (returns one) → **singular** verb (`get`, `version`).
+**The project's verb record** is the ADR `inspire_kb/01_adr/adr-action-verbs.md`. Read it before landing the verb. When it exists it is the source of truth, cross-cutting rules included. When it does not, use the default set below. The interview lands the verb *before* shaping the descriptor.
+
+**Generic rules.**
+- **One target object.** The verb acts on the entity the id names (`module::entity::verb`). Other entities the action touches are effects under `## Entities`, never a second target.
+- **Collection reads** (returns many) → a **plural** verb (`list`), paginated in the shape the project's wire convention declares. A sub-collection reads through a plural verb scoped to the root entity (`book::copies`), never a sub-entity `::list`.
+- **Item reads** (returns one) → a **singular** verb (`get`).
 - Per-field touch: `read-whole` (whole entity → enumerate only keys/filters) vs `read` (subset → enumerate surfaced fields). `list` is **not** a per-field touch (only a `## Touched by` value in the entity doc).
+- **One verb per kind of change.** A change the domain names gets its own verb (`reserve`, `cancel`, `approve`), not an `edit` of a status field. A single verb spanning two kinds of change is the anti-pattern this taxonomy exists to prevent.
 
-**Mutations — split by nature, never a catch-all `update`:**
-`create` · `edit` (in-place metadata patch) · `deploy` (mint an immutable version) · `move` (re-parent across namespace/OU — grant on **both** OUs) · `rollback` (forward-create restore, never reactivate) · `enable`/`disable` (activation — a dedicated verb pair, **not** an `edit` field) · `delete`.
+**Default set**, used when the project has no verb record: `list` · `get` · `create` · `edit` (in-place change of the target's own data) · `delete`.
 
 ### Probes
-- **Verb-fit probe.** When the operator proposes a mutation, ask which taxon it *is*. If they say "update," push: metadata (`edit`), a new version (`deploy`), a re-parent (`move`), or activation (`enable`/`disable`)? A single verb spanning two of these is the anti-pattern this taxonomy exists to prevent.
+- **Verb-fit probe.** When the operator proposes a mutation, ask what kind of change it *is*. If they say "update", push: an in-place change of the target's own data (`edit`), or a change the domain has its own word for? A domain word becomes the verb.
 - **Collection/item probe.** "Returns many or one? Many → plural verb + pagination; one → singular verb + the item's key." Always ask for a read.
-- **Cross-cutting probe.** Mutations emit `{entity}.{verb-past}` to the Event Bus (Audit subscribes — no direct audit writes); mutable entities carry `created_at` + `updated_at`; OU is derived via namespace/parent (`move` is the only re-attachment).
+- **Record probe.** When the verb is not in the project's record (or, with no record, not in the default set), ask whether it is new vocabulary. If it is, add it to `adr-action-verbs` (create the ADR through `/inspire-adr create action-verbs` if it does not exist yet) before the descriptor lands, so the next action reuses it.
+- **Cross-cutting probe.** When the project's verb record attaches a rule to a kind of verb (an event every mutation emits, timestamps every mutable entity carries), confirm the descriptor honours it. With no record there is no cross-cutting rule to apply.
