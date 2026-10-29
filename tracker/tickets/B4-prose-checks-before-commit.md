@@ -2,7 +2,7 @@
 id: B4-prose-checks-before-commit
 title: "B4 — prose-style findings reach the author only at pre-PR"
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -11,7 +11,7 @@ size: S
 importance: Mid
 skills: [domain, feature, adr, screens]
 status: Open
-blocked_by: [0911-file-scope-silent-pass]
+blocked_by: []
 related_to: [B2-git-hooks-at-init, F04-mech]
 ---
 
@@ -75,8 +75,8 @@ one idea per sentence, not four paragraphs for one idea, and a hard limit fights
 
 ## Notes
 
-- `blocked_by: 0911-file-scope-silent-pass`: checking a staged file, or the file a skill
-  just wrote, needs a single file to be a valid scope.
+- Was `blocked_by: 0911-file-scope-silent-pass`: checking a staged file, or the file a
+  skill just wrote, needs a single file to be a valid scope. 0.14.2 made it one.
 - `B2-git-hooks-at-init` installs git hooks. When it lands, the git pre-commit runs the
   same checks as the Claude Code one, so a commit from a terminal is checked too.
 - `F04-mech` carries five fixes to what the prose-style rules find. This ticket changes

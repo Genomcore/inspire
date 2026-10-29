@@ -44,7 +44,7 @@ while IFS= read -r action; do
   sdd_entities_touched "$action" \
     | sdd_expand_whole_reads \
     | awk -F'\t' '{ print $1 "\t" $2 }'
-done < <(sdd_find_actions "$SCOPE") | sort -u >> "$touches"
+done < <(sdd_find_actions "$SDD_SPEC_ROOT") | sort -u >> "$touches"
 
 # Iterate every entity document. For each declared field, check whether
 # any action touches it.

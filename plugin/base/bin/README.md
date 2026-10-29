@@ -155,6 +155,8 @@ The library targets action descriptors under `inspire_kb/04_domain/{module}/{ent
 
 **The scope contract.** `review.sh` forwards its single `$1` to every rule unchanged, and a rule checks exactly `$1 ∩ its own layers`. Intersection has these cases: the scope lies inside a layer (scan the scope, within that layer); the layer lies inside the scope (scan the whole layer); neither (skip that layer entirely). With no `$1` at all, every layer scans its own full root. One helper — `sdd_scope_intersect` in `_lib.sh` — answers this for every layer, including the domain finders, so no two callers can drift on what a scope means. It compares normalized paths (leading `./`, repeated `/`, trailing `/`) and falls back to a physical comparison when both sides exist, because an absolute and a relative spelling of one directory are one directory.
 
+**A file is a scope too.** `review.sh inspire_kb/04_domain/auth/user/auth.user.md` checks that one file with every rule that applies to it, and reports on nothing else. The scope bounds what a rule *reports on*, never what it *reads*: a rule that needs the rest of the tree to judge a file — the `requires` graph, the id index behind a `requires` target, the actions that touch an entity's fields — still builds that from the whole domain root, so a file is judged exactly as it is in a full run.
+
 Two roots name those layers, and they mean different things on purpose:
 
 - `SDD_SPEC_ROOT` (default `inspire_kb/04_domain`) — the domain tree, with exactly the meaning it has always had. Every domain rule is rooted here.
@@ -175,6 +177,9 @@ Both consequences follow by construction rather than by special case. A scoped d
 
 # Scope to a single module
 .inspire/bin/review.sh inspire_kb/04_domain/auth
+
+# Scope to a single file
+.inspire/bin/review.sh inspire_kb/04_domain/auth/user/auth.user.md
 ```
 
 Scripts read from the **current working directory** as the repo root. Run

@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "args": ["spec/sdd/auth/user/auth.user.md"],
+  "findings": [
+    { "rule": "field-coverage", "message_substring": "field-uncovered" }
+  ],
+  "forbidden": ["auth::user.id is declared"]
+}

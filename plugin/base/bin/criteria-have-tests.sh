@@ -73,7 +73,7 @@ sdd_init_counters
 
 SCOPE="${1:-$SDD_FEATURES_ROOT}"
 
-if [ ! -d "$SCOPE" ]; then
+if [ ! -e "$SCOPE" ]; then
   sdd_finding "warning" "criteria-have-tests" "$SCOPE" \
     "features root does not exist — no criterion can be traced"
   sdd_count_warning
