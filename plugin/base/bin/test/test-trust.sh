@@ -25,6 +25,7 @@ ne(){ if [ "$2" != "$3" ]; then ok "$1"; else bad "$1 (both are '$2')"; fi; }
 yes(){ if [ -n "$2" ]; then ok "$1"; else bad "$1 (empty)"; fi; }
 has(){ if printf '%s\n' "$3" | grep -q -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
 hasnt(){ if printf '%s\n' "$3" | grep -q -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
+sha256sum_of(){ if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1"; else shasum -a 256 "$1"; fi | awk '{print $1}'; }
 filesame(){ if diff -u "$2" "$3" >/dev/null 2>&1; then ok "$1"; else bad "$1 (differs)"; fi; }
 
 if [ ! -x "$TRUST" ]; then
@@ -193,9 +194,17 @@ grep -A5 '^produced:' "$NOFM" > "$ROOT/produced-before.txt"
 rc=0; ( cd "$P" && "$TRUST" endorse inspire_kb/05_screens/login.md ) >/dev/null || rc=$?
 eq "endorse: exits 0"        "$rc" "0"
 eq "endorse: by is @ + the local part of git user.email" "$(fm "$NOFM" '.endorsed.by')" "@tester"
-eq "endorse: at is today"    "$(fm "$NOFM" '.endorsed.at')" "$TODAY"
+AT1="$(fm "$NOFM" '.endorsed.at')"
+eq "endorse: at is today, to the second, with a colon offset" \
+  "$(printf '%s' "$AT1" | grep -cE "^${TODAY}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}\$")" "1"
 filesame "endorse: produced block byte-for-byte" \
   <(grep -A5 '^produced:' "$NOFM") "$ROOT/produced-before.txt"
+
+cp "$NOFM" "$ROOT/endorsed-once.md"
+sleep 1
+( cd "$P" && "$TRUST" endorse inspire_kb/05_screens/login.md ) >/dev/null
+ne "endorse: a second endorsement the same day changes the file" \
+  "$(sha256sum_of "$NOFM")" "$(sha256sum_of "$ROOT/endorsed-once.md")"
 
 # endorse must also work on a file that has no frontmatter yet
 BARE="$P/inspire_kb/03_features/checkout.md"
@@ -211,6 +220,90 @@ rc=0
 ( cd "$NOMAIL" && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 "$TRUST" endorse a.md ) >/dev/null 2>&1 || rc=$?
 ne "endorse: an unset git user.email is a clear error" "$rc" "0"
 eq "endorse: nothing written when the email is unset" "$(grep -c '^endorsed:' "$NOMAIL/a.md")" "0"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# report — CHANGED SINCE ENDORSED
+# ═══════════════════════════════════════════════════════════════════════════
+
+ADR_REL="inspire_kb/01_adr/adr-a.md"
+
+drift_repo(){
+  local d="$ROOT/drift-$1"
+  mkdir -p "$d/.claude/skills/_references" "$d/inspire_kb/01_adr"
+  mkskill "$d/.claude/skills/inspire-adr"
+  printf 'refs\n' > "$d/.claude/skills/_references/r.md"
+  printf -- '---\nid: adr-a\n---\n\n# A\n\nThe decision.\n' > "$d/$ADR_REL"
+  git init -q "$d" >/dev/null 2>&1
+  git -C "$d" config user.email "tester@example.com"
+  git -C "$d" config user.name "tester"
+  git -C "$d" add -A
+  git -C "$d" commit -qm init
+  printf '%s\n' "$d"
+}
+commit_all(){ git -C "$1" add -A && git -C "$1" commit -qm "$2"; }
+endorse_in(){ ( cd "$1" && "$TRUST" endorse "$ADR_REL" ) >/dev/null; }
+drift_of(){ group_block 'CHANGED SINCE ENDORSED' "$(cd "$1" && "$TRUST" report)"; }
+
+D1="$(drift_repo committed)"
+endorse_in "$D1"; commit_all "$D1" endorse
+hasnt "drift: an endorsement with nothing after it is not flagged" 'adr-a.md' "$(drift_of "$D1")"
+printf 'An edit.\n' >> "$D1/$ADR_REL"
+has "drift: an uncommitted edit after the endorsement is flagged" 'adr-a.md' "$(drift_of "$D1")"
+commit_all "$D1" edit
+DRIFT1="$(drift_of "$D1")"
+has "drift: a committed edit after the endorsement is flagged" 'adr-a.md' "$DRIFT1"
+has "drift: the line names who endorsed and when" \
+  "endorsed by @tester at $(fm "$D1/$ADR_REL" '.endorsed.at')" "$DRIFT1"
+has "drift: --summary counts it" '1 changed-since-endorsed' "$(cd "$D1" && "$TRUST" report --summary)"
+sleep 1
+endorse_in "$D1"
+hasnt "drift: re-endorsing clears it before the commit" 'adr-a.md' "$(drift_of "$D1")"
+commit_all "$D1" reendorse
+hasnt "drift: a commit that only re-endorses does not count as a change" 'adr-a.md' "$(drift_of "$D1")"
+( cd "$D1" && "$TRUST" stamp "$ADR_REL" --skill adr ) >/dev/null; commit_all "$D1" restamp
+hasnt "drift: a commit that only re-stamps produced: does not count" 'adr-a.md' "$(drift_of "$D1")"
+
+D2="$(drift_repo same-commit)"
+printf 'Edited, then endorsed.\n' >> "$D2/$ADR_REL"
+endorse_in "$D2"; commit_all "$D2" "edit and endorse"
+hasnt "drift: the edit inside the endorsing commit is endorsed" 'adr-a.md' "$(drift_of "$D2")"
+
+D3="$(drift_repo clockless)"
+printf 'Edited first.\n' >> "$D3/$ADR_REL"
+git -C "$D3" add -A
+GIT_COMMITTER_DATE="2030-01-01T00:00:00+00:00" GIT_AUTHOR_DATE="2030-01-01T00:00:00+00:00" \
+  git -C "$D3" commit -qm "edit dated after the endorsement"
+endorse_in "$D3"; commit_all "$D3" endorse
+hasnt "drift: history decides, not clocks — an earlier commit with a later date is endorsed" \
+  'adr-a.md' "$(drift_of "$D3")"
+
+D4="$(drift_repo merged)"
+git -C "$D4" checkout -qb side
+printf 'Edited on a branch.\n' >> "$D4/$ADR_REL"
+git -C "$D4" add -A
+GIT_COMMITTER_DATE="2020-01-01T00:00:00+00:00" GIT_AUTHOR_DATE="2020-01-01T00:00:00+00:00" \
+  git -C "$D4" commit -qm "branch edit dated before the endorsement"
+git -C "$D4" checkout -q -
+endorse_in "$D4"; commit_all "$D4" endorse
+git -C "$D4" merge -q --no-edit side >/dev/null 2>&1
+eq "fixture: the branch edit merged cleanly" "$(grep -c 'Edited on a branch.' "$D4/$ADR_REL")" "1"
+has "drift: a branch edit merged after the endorsement is flagged, whatever its date" \
+  'adr-a.md' "$(drift_of "$D4")"
+
+D5="$(drift_repo legacy)"
+yq -i --front-matter=process '.endorsed = {"by": "@dario", "at": "2026-08-01"}' "$D5/$ADR_REL"
+commit_all "$D5" "legacy endorsement"
+hasnt "drift: a date-only stamp with nothing after it is not flagged" 'adr-a.md' "$(drift_of "$D5")"
+printf 'A later edit.\n' >> "$D5/$ADR_REL"; commit_all "$D5" edit
+has "drift: a date-only stamp is compared the same way" 'adr-a.md' "$(drift_of "$D5")"
+
+DRIFT_STUB="$ROOT/trust-drift-stubbed.sh"
+sed 's/^changed_since_endorsed() {$/changed_since_endorsed() { return 1; #/' "$TRUST" > "$DRIFT_STUB"
+chmod +x "$DRIFT_STUB"
+ne "stub-guard: the stub actually replaced the drift check" \
+  "$(diff -q "$DRIFT_STUB" "$TRUST" >/dev/null 2>&1; echo $?)" "0"
+hasnt "stub-guard: the stubbed tool cannot see the drift" 'adr-a.md' \
+  "$(group_block 'CHANGED SINCE ENDORSED' "$(cd "$D5" && "$DRIFT_STUB" report)")"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # report — one artifact per group

@@ -2,15 +2,15 @@
 id: B2-endorsement-reliability
 title: "B2 — an endorsement can be lost on the same day and hides later edits"
 created: 2026-10-26
-updated: 2026-10-28
+updated: 2026-10-29
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-10-29
 epic: roadmap
 size: M
 importance: High
 skills: [workspace]
-status: Open
+status: Done
 blocked_by: []
 related_to: [B1-operator-profiles]
 ---
@@ -64,13 +64,13 @@ what gets reported.
 
 ## Acceptance criteria
 
-- [ ] `trust.sh endorse` writes `at` to the second, with a time zone offset. Two
+- [x] `trust.sh endorse` writes `at` to the second, with a time zone offset. Two
       endorsements on the same day produce two different files.
-- [ ] The trust report flags "changed since endorsed" from commit times, ignoring commits
+- [x] The trust report flags "changed since endorsed" from commit times, ignoring commits
       that change only the `endorsed` block. Re-endorsing clears the flag.
-- [ ] Existing date-only stamps stay valid, and the close note says how the check
+- [x] Existing date-only stamps stay valid, and the close note says how the check
       compares them.
-- [ ] D2 of `docs/adr/adr-artifact-trust.md` is amended to describe the check.
+- [x] D2 of `docs/adr/adr-artifact-trust.md` is amended to describe the check.
 - [x] Part 3 is filed as its own ticket or folded into `B1-operator-profiles`, and the
       close note says which. *Answered 2026-10-28:* folded into `B1-operator-profiles`.
 
@@ -82,3 +82,39 @@ where several contributors are recorded. The PR approver comes from the git host
 the INSPIRE Factory reaches, and the Factory also knows who signs in. That ticket's ADR
 answers part 3 with the rest of the identity question. This ticket closes on parts 1
 and 2.
+
+## Resolution
+
+Parts 1 and 2 shipped. Part 3 is `B1-operator-profiles`'s, as amended above.
+
+- **`at` to the second.** `trust.sh endorse` writes `at` as ISO-8601 with a colon
+  offset (`2026-10-29T10:45:52+01:00`), so a second endorsement the same day writes new
+  bytes and leaves a commit.
+- **`CHANGED SINCE ENDORSED`**, a seventh report group, also counted by `--summary`.
+  It names who endorsed and when, and its remedy is to re-endorse.
+
+**History, not clocks.** The ticket asked for commit times compared against `at`. We
+settled the comparison by the commit graph instead, because clocks misfire both ways: a
+rebase moves commit dates past `at` (a false flag), and a branch edited before the
+endorsement but merged after it carries the earlier date (a miss). The check finds `E`,
+the commit that recorded the current `endorsed` block (it carries the block and its
+parent doesn't). It flags the artifact when a commit in `E..HEAD` (merges excluded) or
+the working tree changed it outside the `endorsed` and `produced` blocks. So:
+
+- a commit that only re-endorses, or only re-stamps `produced:`, doesn't count;
+- the commit that records the endorsement counts as endorsed, whatever else it changes;
+- an endorsement not yet committed is newer than every commit, so it clears the flag at
+  once;
+- outside a git repository, or for an untracked file, the check is skipped.
+
+**Date-only stamps** stay valid, and need no special comparison: `E` is found by the
+block's value, so a stamp written before 0.15.0 is checked exactly like a new one. Its
+only weakness is the one part 1 fixes: a same-day re-endorsement wrote no new bytes, so
+it left no `E` to find.
+
+`docs/adr/adr-artifact-trust.md` D2 carries the amendment. `trust-stamps.md` describes
+the new group, and `test-trust.sh` covers every case above, including a stub guard that
+proves the drift assertions fail when the check is disabled.
+
+Not covered: a rename restarts the history the check reads, so an edit made before a
+move isn't seen after it. That can only miss a flag, never raise a false one.

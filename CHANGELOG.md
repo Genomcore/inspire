@@ -11,6 +11,15 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.15.0 — unreleased
 
+### Added
+
+- **`CHANGED SINCE ENDORSED`**, a seventh `trust.sh report` group, also counted by
+  `--summary`. An endorsed artifact lands in it when a commit after the one that
+  recorded its current endorsement, or the working tree, changed it outside the
+  `endorsed:` and `produced:` blocks. Re-endorsing clears it. It is decided by git
+  history, never by comparing clocks, so rebases and merged branches don't
+  mislead it, and a date-only `at` written before 0.15.0 is checked the same way.
+
 ### Changed
 
 - **Each project models its own action verbs.** The verbs come from the
@@ -24,6 +33,8 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 - `_references/conventions/rest.md` keys its success statuses on the default verbs,
   and maps any other verb by what it does: creates a record → `201`, removes one →
   `204`, otherwise `200`.
+- `trust.sh endorse` writes `at` to the second with its offset
+  (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
 
 ### Fixed
 
@@ -31,6 +42,9 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
   has. Its pagination numbers went too: the wire convention owns pagination.
+- Re-endorsing an artifact the same day it was last endorsed wrote the same
+  bytes, so git recorded nothing and the endorsement looked as if it never
+  happened.
 
 ## 0.14.0 — 2026-10-28
 
