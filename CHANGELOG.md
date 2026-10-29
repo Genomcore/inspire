@@ -9,6 +9,24 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.14.2 — 2026-10-29
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change.
+
+### Fixed
+
+- **A file passed as scope is checked.** `review.sh <file>` and every rule under it
+  used to check nothing and report PASS when given a single file, so an agent that
+  checked each file it wrote saw them all clean. A file is now a one-file scope:
+  every rule that applies to it runs on it, and nothing else is reported.
+- **A scoped run judges a file against the whole tree.** `stable-blockers.sh`,
+  `field-coverage.sh` and `acyclic-deps.sh` built their context from the scope, so a
+  module or file scope reported a `requires` target in another module as not found,
+  reported a field as uncovered when only another module's action touched it, and
+  missed a cycle running through another module. They now read the whole domain tree
+  and report only on what is in scope.
+
 ## 0.14.1 — 2026-10-29
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk:
