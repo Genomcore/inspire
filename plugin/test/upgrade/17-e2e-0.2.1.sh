@@ -70,10 +70,10 @@ while IFS= read -r f; do
 done < <(find "$PLUGIN_ROOT/base/kb" -type f)
 eq "KB received every file of the newer skeleton" "$missing_kb" "0"
 
-# settings.json: exactly the two marked hooks, and none of the three old ones.
-eq "two INSPIRE-MANAGED hooks registered" \
+# settings.json: exactly the three marked registrations, and none of the three old ones.
+eq "three INSPIRE-MANAGED hooks registered" \
    "$(jq '[.. | objects | select(has("command")) | select(.command|contains("INSPIRE-MANAGED"))] | length' \
-      "$p/.claude/settings.json")" "2"
+      "$p/.claude/settings.json")" "3"
 eq "no .claude/hooks registrations remain" \
    "$(jq '[.. | objects | select(has("command")) | select(.command|contains(".claude/hooks/"))] | length' \
       "$p/.claude/settings.json")" "0"

@@ -104,6 +104,8 @@ check "USER SKILL PRESERVED"          "[ -f '$proj/.claude/skills/my-own-skill/S
 check "FOREIGN SETTINGS PRESERVED"    "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
 check "marker present"                "grep -q INSPIRE-MANAGED '$proj/.claude/settings.json'"
 check "one PreToolUse command"        "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
+check "one PostToolUse command"       "[ \"\$(jq '[.hooks.PostToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
+check "PostToolUse routes to dispatch" "jq -e '.hooks.PostToolUse[0].matcher == \"Bash\" and (.hooks.PostToolUse[0].hooks[0].command | contains(\"dispatch.sh\"))' '$proj/.claude/settings.json' >/dev/null"
 check "marketplace declared"          "jq -e '.extraKnownMarketplaces.inspire' '$proj/.claude/settings.json' >/dev/null"
 check "settings still parses"         "jq -e . '$proj/.claude/settings.json' >/dev/null"
 check "enabledPlugins is a record"      "[ \"\$(jq -r '.enabledPlugins|type' '$proj/.claude/settings.json')\" = object ]"
@@ -165,6 +167,7 @@ check "every git-tracked base/kb directory materialized on init" \
 "$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype >/dev/null 2>&1
 check "idempotent PreToolUse"         "[ \"\$(jq '[.hooks.PreToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
+check "idempotent PostToolUse"        "[ \"\$(jq '[.hooks.PostToolUse[].hooks[]]|length' '$proj/.claude/settings.json')\" = 1 ]"
 check "idempotent foreign key"        "jq -e '.permissions.allow[0]' '$proj/.claude/settings.json' >/dev/null"
 
 # drift-check is now a deprecated alias for --mode plan (Task 12): it no
