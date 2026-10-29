@@ -286,6 +286,12 @@ case "$cmd" in
   *) exit 0 ;;
 esac
 
+pr_base="$(printf '%s\n' "$cmd" | sed -nE "s/.*(--base[= ]|-B )[\"']?([^\"' ]+).*/\2/p" | head -1)"
+case "$pr_base" in
+  ''|main|origin/main) ;;
+  *) exit 0 ;;
+esac
+
 cd "$HOME_ROOT" || exit 0
 
 # Base is the merge-base with main — the PR's actual diff, not everything that
