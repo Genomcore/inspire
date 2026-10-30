@@ -9,6 +9,20 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.14.3 — 2026-10-30
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change.
+
+### Changed
+
+- **NestJS tests build entity data with Object Mothers.** `inspire-code-nestjs`
+  states the rule in `## Test conventions`, where the first unit to write tests reads
+  it: entity data comes from a mother extending the project's `Mother<T>`, every field
+  from `@faker-js/faker` (installed by the first unit that needs it), never an object
+  literal or a `buildX()` helper. `references/testing.md` § Mothers opens with the same
+  MUST. Before, the rule lived only in `testing.md` and no generated test used it.
+
 ## 0.14.2 — 2026-10-29
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
