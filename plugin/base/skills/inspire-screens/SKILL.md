@@ -291,8 +291,11 @@ When uncertain which layer a finding belongs to, ask the user.
    whether to propagate visible UI changes to the prototype — which edits trigger
    the ask, and what each answer leads to, are
    [`references/screen-propagation.md`](references/screen-propagation.md)'s.
-11. **Stamp every write.** After `create`, `update`, `validate`, or `extract`
-   writes a screen or catalog file, run
+11. **Check and stamp every write.** After `create`, `update`, `validate`, or
+   `extract` writes a screen or catalog file,
+   run `.inspire/bin/review.sh <file>` and fix what it reports on that
+   file: every error, and every warning the operator does not choose to keep
+   ([write-checks](../_references/write-checks.md)). Then run
    `.inspire/bin/trust.sh stamp <file> --skill screens`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first

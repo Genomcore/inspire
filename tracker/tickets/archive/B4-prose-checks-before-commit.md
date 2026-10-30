@@ -4,13 +4,13 @@ title: "B4 — prose-style findings reach the author only at pre-PR"
 created: 2026-10-28
 updated: 2026-10-29
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-10-29
 epic: roadmap
 size: S
 importance: Mid
 skills: [domain, feature, adr, screens]
-status: Open
+status: Done
 blocked_by: []
 related_to: [B2-git-hooks-at-init, F04-mech]
 ---
@@ -82,3 +82,52 @@ one idea per sentence, not four paragraphs for one idea, and a hard limit fights
 - `F04-mech` carries five fixes to what the prose-style rules find. This ticket changes
   when they run. Neither waits for the other.
 - No Factory port. This changes attended sessions only.
+
+## Resolution
+
+Shipped on `release/0.15.0`. The check runs right after the commit instead of right
+before it, and the reason is the first open question.
+
+- **After each commit, a KB review of the committed files.** `dispatch.sh` is now
+  registered on PostToolUse for Bash as well, and routes `git commit` there to
+  `post-commit.sh`. It runs `review.sh <file>` on each KB file the new commit
+  contains, in every layer, and reports every finding on those files (prose style
+  included) by exiting 2. On PostToolUse that sends stderr to the agent and undoes
+  nothing. Deleted files are skipped, and a commit with no KB file reports nothing.
+- **Errors block as they did.** `pre-commit.sh` is unchanged: before the commit, it
+  still blocks on the two domain graph rules for the staged modules. The new review
+  reports errors without blocking, and errors still block the pull request. Turning
+  more rules into commit blockers would be a separate decision.
+- **The four authoring skills check each write.** `/inspire-domain`,
+  `/inspire-feature`, `/inspire-adr` and `/inspire-screens` run `review.sh <file>`
+  after each write, fix the findings, and then stamp. They are the four skills whose
+  layers the rules cover. `_references/write-checks.md` says what to fix now (errors,
+  and warnings about the file's own text) and what to tell the operator about instead
+  (warnings that wait on another artifact, and warnings the operator keeps).
+- **No per-edit hook.** The reason is written in `AGENTS.md`, next to where hooks are
+  registered, and in `write-checks.md`.
+- **Tests.** `plugin/test/hooks/01-post-commit.sh` drives `dispatch.sh` the way Claude
+  Code does. It checks that a committed feature (outside `04_domain`) gets its
+  `sections-present` error and its R2 and R6 prose warnings, that a file the commit does
+  not contain is not reported, and that PreToolUse never runs the review. 7 of its 14
+  assertions fail with the old dispatcher. `materialize/01-init-current-tree.sh` checks
+  the PostToolUse registration and that a second init does not duplicate it. The
+  criterion asked for tests of a *pre*-commit check; the check moved after the commit,
+  so the tests did too.
+
+### Answers to the open questions
+
+- **How does a warning reach the agent without blocking the commit?** Through a
+  PostToolUse hook that exits 2. The hooks reference
+  (code.claude.com/docs/en/hooks) says PreToolUse stdout and stderr on exit 0 never
+  reach Claude. The one PreToolUse way to pass text while letting the command through
+  is `additionalContext` together with `permissionDecision: "allow"`, and `allow`
+  skips the operator's permission prompt for that command. A response that adds
+  context without a decision is not documented. PostToolUse exit 2 is documented as
+  "Shows stderr to Claude; the tool already ran", which is exactly a report that
+  cannot block.
+- **Do the skills need to restate the rules as commands?** No. The skills already
+  cite the writing rules, and agents skip prose they are only pointed at. What
+  changes behaviour is a finding about the file in front of them, so each skill now
+  runs the checker and acts on its output, and `writing-style.md` stays the one
+  place the rules live.

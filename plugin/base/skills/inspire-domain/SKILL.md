@@ -167,8 +167,11 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire-task` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
 10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire-feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
-11. **Stamp every write.** After a descriptor or entity document is written,
-    run `.inspire/bin/trust.sh stamp <file> --skill domain`
+11. **Check and stamp every write.** After a descriptor or entity document is
+    written, run `.inspire/bin/review.sh <file>` and fix what it reports on that
+    file: every error, and every warning the operator does not choose to keep
+    ([write-checks](../_references/write-checks.md)). Then run
+    `.inspire/bin/trust.sh stamp <file> --skill domain`
     ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
     that carries `endorsed:` is disclosed to the operator first
     ([trust-stamps](../_references/trust-stamps.md#endorsement)).

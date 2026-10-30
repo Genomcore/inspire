@@ -663,8 +663,12 @@ merge_settings() {
     | .hooks.PreToolUse = ((.hooks.PreToolUse // [])
       | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
       | map(select((.hooks | length) > 0)))
+    | .hooks.PostToolUse = ((.hooks.PostToolUse // [])
+      | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
+      | map(select((.hooks | length) > 0)))
     | .hooks.SessionStart += [ { hooks: [ { type: "command", command: $session_cmd } ] } ]
     | .hooks.PreToolUse  += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
+    | .hooks.PostToolUse += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
     | if $declare_marketplace then
         .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + { inspire: { source: { source: "github", repo: $repo_slug } } })
         | .enabledPlugins = ((.enabledPlugins // {}) + { "inspire@inspire": true })

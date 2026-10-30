@@ -267,8 +267,11 @@ the operator runs it.
    required section.
 5. **Consult the task tracker** ([`/inspire-task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
-6. **Stamp every write.** After an ADR file is written — the decision, the
-   rationale, or both — run, for each one,
+6. **Check and stamp every write.** After an ADR file is written — the
+   decision, the rationale, or both — run `.inspire/bin/review.sh <file>` on
+   each one and fix what it reports on that file: every error, and every
+   warning the operator does not choose to keep
+   ([write-checks](../_references/write-checks.md)). Then run, for each one,
    `.inspire/bin/trust.sh stamp <file> --skill adr`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
    that carries `endorsed:` is disclosed to the operator first
