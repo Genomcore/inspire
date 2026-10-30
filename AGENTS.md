@@ -136,7 +136,7 @@ repo is both its source and its own marketplace.
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its three hand-wired siblings, and uses the third form
+      rule at a time plus its four hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two
       scripts are registered in a materialized project's `.claude/settings.json`,
@@ -150,8 +150,9 @@ repo is both its source and its own marketplace.
       fixing a finding is itself an edit, so the hook fires again and can loop.
       The authoring skills check each file they write instead
       (`_references/write-checks.md`). `session-start` injects the
-      project's `output_language` — and the runtime version from `.inspire.lock`
-      — into every session.
+      project's `output_language`, the runtime version from `.inspire.lock` and
+      the decision digest `base/bin/decisions.sh` prints — every live ADR's
+      `## Decision`, held to a budget — into every session.
     - `base/kb/` → `inspire_kb/` — the **knowledge-base skeleton**: the navigable
       graph a project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
       `02_modules`, `03_features`, `04_domain`, `05_screens`, `06_spikes`,
