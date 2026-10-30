@@ -34,8 +34,14 @@
 #     AC-id shape inside the last of those.
 #
 #   ADR — `01_adr/adr-*.md` (severity: warning)
-#     ## Context · ## Decision · ## Consequences · ## Alternatives considered ·
-#     ## Related ADRs, plus `### Breaking changes` under ## Consequences.
+#     A decision `adr-{slug}.md` links its rationale with a
+#     `**Rationale:** [[adr-{slug}.rationale]]` line and holds ## Decision, and
+#     nothing of the rationale. Its `adr-{slug}.rationale.md` holds ## Context ·
+#     ## Consequences · ## Alternatives considered · ## Related ADRs, plus
+#     `### Breaking changes` under ## Consequences, and no ## Decision. Either
+#     file without the other is a finding. A file in the single-file shape
+#     (no `**Rationale:**` line, no rationale beside it) is still checked for
+#     all five sections, and is reported as waiting for `/inspire-adr migrate`.
 #
 #   Screen — `05_screens/**` (severity: lifecycle-progressive)
 #     an H1 title, the `**Features:**` header line, a non-empty ## Purpose and
@@ -106,6 +112,9 @@ FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
 ADR_SECTIONS=("Context" "Decision" "Consequences" "Alternatives considered" \
               "Related ADRs")
+ADR_DECISION_SECTIONS=("Decision")
+ADR_RATIONALE_SECTIONS=("Context" "Consequences" "Alternatives considered" \
+                        "Related ADRs")
 SCREEN_SECTIONS=("Purpose" "Bindings")
 
 # The canonical orders are the section arrays themselves: the format specs
@@ -392,12 +401,8 @@ check_feature() {
   check_acceptance_criteria "$tmp" "$file"
 }
 
-check_adr() {
-  local file="$1"
-  sp_strip_to_tmp "$file" || return 0
-  local tmp="$SP_TMP"
-  sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
-
+check_breaking_changes() {
+  local tmp="$1" file="$2"
   # `### Breaking changes` is presence-only — an ADR that breaks nothing still
   # says so — but it must sit under `## Consequences`: a heading that drifted
   # to another parent answers a different question. Reported only when
@@ -413,6 +418,65 @@ check_adr() {
       sdd_count_warning
     fi
   fi
+}
+
+report_misplaced() {
+  local tmp="$1" file="$2" prefix="$3" found="" section
+  shift 3
+  for section in "$@"; do
+    sdd_has_section "$tmp" "$section" && found="${found:+$found,}$section"
+  done
+  [ -z "$found" ] && return 0
+  sdd_finding "warning" "sections-present" "$file" "$prefix: $found"
+  sdd_count_warning
+}
+
+check_adr() {
+  local file="$1" rationale="${1%.md}.rationale.md" links_rationale=0
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
+  has_line_prefix "$tmp" "**Rationale:**" && links_rationale=1
+
+  if [ "$links_rationale" = 0 ] && [ ! -f "$rationale" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR is in the single-file shape — /inspire-adr migrate splits it into a decision and a rationale"
+    sdd_count_warning
+    sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
+    check_breaking_changes "$tmp" "$file"
+    return 0
+  fi
+
+  if [ ! -f "$rationale" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR decision names a rationale that does not exist: ${rationale##*/}"
+    sdd_count_warning
+  elif [ "$links_rationale" = 0 ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR decision does not link its rationale: add '**Rationale:** [[$(basename "$rationale" .md)]]'"
+    sdd_count_warning
+  fi
+  sections_report "$tmp" "$file" "ADR decision" "warning" "" \
+    "${ADR_DECISION_SECTIONS[@]}"
+  report_misplaced "$tmp" "$file" \
+    "ADR decision carries rationale section(s), which belong in ${rationale##*/}" \
+    "${ADR_RATIONALE_SECTIONS[@]}"
+}
+
+check_adr_rationale() {
+  local file="$1" decision="${1%.rationale.md}.md"
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
+  if [ ! -f "$decision" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR rationale has no decision beside it: ${decision##*/}"
+    sdd_count_warning
+  fi
+  sections_report "$tmp" "$file" "ADR rationale" "warning" "" \
+    "${ADR_RATIONALE_SECTIONS[@]}"
+  check_breaking_changes "$tmp" "$file"
+  report_misplaced "$tmp" "$file" \
+    "ADR rationale carries the decision, which belongs in ${decision##*/}" \
+    "${ADR_DECISION_SECTIONS[@]}"
 }
 
 check_screen() {
@@ -498,6 +562,11 @@ if [ -n "$ADR_SCOPE" ]; then
     [ -z "$adr" ] && continue
     check_adr "$adr"
   done < <(sdd_find_adrs "$ADR_SCOPE")
+
+  while IFS= read -r rationale; do
+    [ -z "$rationale" ] && continue
+    check_adr_rationale "$rationale"
+  done < <(sdd_find_adr_rationales "$ADR_SCOPE")
 fi
 
 if [ -n "$SCREEN_SCOPE" ]; then

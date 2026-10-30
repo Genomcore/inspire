@@ -136,7 +136,7 @@ repo is both its source and its own marketplace.
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its two hand-wired siblings, and uses the third form
+      rule at a time plus its three hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
     - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two
       scripts are registered in a materialized project's `.claude/settings.json`,

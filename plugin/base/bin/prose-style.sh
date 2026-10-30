@@ -851,7 +851,7 @@ if [ -n "$ADR_SCOPE" ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     check_file "$f" "adr"
-  done < <(sdd_find_adrs "$ADR_SCOPE")
+  done < <(sdd_find_adrs "$ADR_SCOPE"; sdd_find_adr_rationales "$ADR_SCOPE")
 fi
 
 if [ -n "$SCREEN_SCOPE" ]; then

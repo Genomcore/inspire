@@ -13,6 +13,11 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ### Added
 
+- **`/inspire-adr migrate`** splits each single-file ADR into its decision and its
+  rationale. `.inspire/bin/adr-split.sh` moves every line verbatim, and the skill then
+  offers to move any reasons left in `## Decision` to the rationale, word for word.
+  `/inspire:update` counts the single-file ADRs at the end of a run and offers the
+  migration; it never runs it.
 - **`CHANGED SINCE ENDORSED`**, a seventh `trust.sh report` group, also counted by
   `--summary`. An endorsed artifact lands in it when a commit after the one that
   recorded its current endorsement, or the working tree, changed it outside the
@@ -33,6 +38,14 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ### Changed
 
+- **An ADR is two files.** `adr-{slug}.md` holds the decision: its status, blast
+  radius, modules and one or a few imperative statements. `adr-{slug}.rationale.md`
+  beside it holds the context, consequences, alternatives and related ADRs. The pair
+  shares one id, and `[[adr-{slug}]]` reaches the decision. At `implemented` both
+  files are immutable. `sections-present` checks each file of the pair, and keeps
+  checking a single-file ADR while reporting it, as a warning, as waiting for
+  `/inspire-adr migrate`. Run the migration once on an existing project to clear
+  those warnings.
 - **Each project models its own action verbs.** The verbs come from the
   application's domain and are recorded in one ADR with the fixed id
   `adr-action-verbs`. `/inspire-domain` reads it when it lands an action's verb,

@@ -12,8 +12,9 @@ Validate the vault structure at the top level (not module-scoped).
      parses as a hub (H1 title + `prefix:` frontmatter); no stray non-hub
      `.md` sits at the `02_modules/` root — anything matching the glob must
      *be* a hub, and every module has exactly one.
-   - ADR files are `inspire_kb/01_adr/adr-*.md` — the glob is the ADR
-     catalog. Every file under `01_adr/` matches that naming rule.
+   - ADR files are `inspire_kb/01_adr/adr-*.md` — the glob, less the
+     `adr-*.rationale.md` files, is the ADR catalog. Every file under `01_adr/`
+     matches that naming rule, and each rationale sits beside its decision.
 3. **Screens module directories:** every `inspire_kb/05_screens/` module
    directory — flat `{module}/` or surface-first `{surface}/{module}/` (per
    [`_references/surface-scope.md`](../../_references/surface-scope.md)) —

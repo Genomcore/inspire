@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "ADR is in the single-file shape"
+    }
+  ],
+  "forbidden": ["missing required", "empty section(s)", "ADR decision", "ADR rationale"]
+}

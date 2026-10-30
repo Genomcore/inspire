@@ -6,7 +6,7 @@ carries what matters only when working on the tests themselves.
 ## Golden jobs
 
 The validators run via golden fixtures — `run-tests.sh <rule>` per rule, plus its
-two hand-wired siblings. A rule with more than a dozen fixtures is **sharded**
+three hand-wired siblings. A rule with more than a dozen fixtures is **sharded**
 into several jobs, each `run-tests.sh <rule> <scenario>…` over a round-robin
 slice, and reported as `golden/<rule>#N`: one `run-tests.sh` is one process
 however many cores the machine has, so an unsharded rule with many fixtures sets the

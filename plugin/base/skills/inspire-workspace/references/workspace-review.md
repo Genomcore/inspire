@@ -32,7 +32,8 @@
   surface-first screens tree a module's screens live in one or more
   `{surface}/{module}/` directories: it owes at least one, never one per surface —
   a module realized on a single surface is normal.
-- ADR files are `inspire_kb/01_adr/adr-*.md`.
+- ADR files are `inspire_kb/01_adr/adr-*.md`: a decision, and its
+  `adr-*.rationale.md` beside it. Read the decision for what binds.
 - Modules are the module hubs: `inspire_kb/02_modules/*.md` excluding `_*.md`
   and `README.md`.
 

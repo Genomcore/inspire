@@ -272,6 +272,14 @@ If `.inspire/bin/trust.sh` exists, offer — never run unprompted — `.inspire/
 report`. What its groups mean is explained at
 `.claude/skills/_references/trust-stamps.md`; point there rather than restating it.
 
+## Step 8 — Single-file ADRs
+
+If `.inspire/bin/adr-split.sh` exists, run `.inspire/bin/adr-split.sh --list`. It writes
+nothing. When it lists files, say how many ADRs are still single files, and offer —
+never run unprompted — `/inspire-adr migrate`, which splits each one into a decision and
+a rationale. The KB is the operator's (`adr-upgrade-path` D10), so the upgrade itself
+never splits them.
+
 ## What this skill is, and what is missing from it
 
 Update has two halves, and only one of them can be a script:

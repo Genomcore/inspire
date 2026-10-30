@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "ADR decision names a rationale that does not exist: adr-auth-sessions.rationale.md"
+    }
+  ],
+  "forbidden": ["single-file shape", "missing required"]
+}
