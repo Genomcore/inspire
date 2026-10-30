@@ -166,7 +166,7 @@ Each needs a home:
   is a service in the environment that a toolchain's `depends_on` names. Confirm this
   during implementation.
 
-**Amended 2026-10-26 (emanate-3, `/inspire-config`):** the Factory no longer
+**Amended 2026-10-26 (`/inspire-config`):** the Factory no longer
 reads a spec config or scans the repository. Since its project-conventions release
 it reads one committed file, `.inspire/emanate.yml` — `image`, `services`, `env`,
 `setup` and `phases` of checks — and refuses a run without it. The new skill
@@ -249,8 +249,8 @@ ticket waits on it.**
   and Init (the interview: language, identity, theme, and the retirement of
   `/inspire-bootstrap` and `theme.md`). Once the config shape is decided, it splits into
   one ticket for each.
-- *Factory coupling.* The Factory's own ticket `emanate-4` removes the scaffold step from
-  every run. It can land only once a project gets its scaffold elsewhere, which this
+- *Factory coupling.* The Factory plans to remove the scaffold step from every run. It
+  can land only once a project gets its scaffold elsewhere, which this
   ticket gives to Config.
 
 **Amended 2026-10-30 (fifth design-review session): the project's base is specified in

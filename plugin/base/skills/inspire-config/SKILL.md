@@ -85,8 +85,8 @@ Read the reference before the step it covers. The table is an index, not the flo
 2. **Write only what the reader accepts today.** A key the factory does not yet
    read fails the whole run, so a key the operator remembers from a ticket
    (`tests`, `roots`, `report`) is never written until validation accepts it.
-   A `review` check needs a factory with review checks (emanate-2); an older
-   reader refuses it, so validate before proposing one.
+   A `review` check needs a factory with review checks (0.11.0 or later); an
+   older reader refuses it, so validate before proposing one.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that

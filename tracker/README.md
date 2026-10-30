@@ -77,7 +77,9 @@ only what is still true.
 deriver. A ticket here covers what the KB says and what attended sessions do. When a
 change here needs matching work in the Factory (a format the Factory's deriver must read,
 a rule its agents must follow), the ticket says so in a note, and the Factory ticket is
-filed in the Factory's tracker when the change here lands, never before.
+filed in the Factory's tracker when the change here lands, never before. The note
+describes the Factory work in words and never names a Factory ticket: those ids belong to
+the other tracker and can change. The Factory ticket names the ticket here.
 
 ## Where things stand (2026-10-30, post-0.14.2)
 
