@@ -86,7 +86,7 @@ after the rest of the session context. The design questions have these answers:
   own tracker once this lands.
 
 The output is pinned in full by `plugin/base/bin/test/test-decisions.sh`, and
-`plugin/test/hooks/01-session-start-decisions.sh` covers the hook: the digest arrives,
+`plugin/test/hooks/02-session-start-decisions.sh` covers the hook: the digest arrives,
 a project with no live ADR and an install without the script get none, and a digest
 over budget is injected as an index within 6,000 characters.
 

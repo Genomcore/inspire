@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .claude/inspire/hooks/dispatch.sh
 #
-# Single PreToolUse/Bash entry point for the INSPIRE runtime. Parses the hook
+# Single PreToolUse/PostToolUse Bash entry point for the INSPIRE runtime. Parses the hook
 # payload once, applies the worktree self-scoping guard once, then routes to the
 # matching check by command pattern.
 #
@@ -31,13 +31,15 @@ SESSION_ROOT="$(cd -P "$SESSION_ROOT_RAW" 2>/dev/null && pwd -P)" || SESSION_ROO
 HOOK_INPUT=$(cat)
 cmd=$(printf '%s' "$HOOK_INPUT" | jq -r '.tool_input.command // ""' 2>/dev/null)
 [ -n "$cmd" ] || exit 0
+event=$(printf '%s' "$HOOK_INPUT" | jq -r '.hook_event_name // "PreToolUse"' 2>/dev/null)
 
 cd "$HOME_ROOT" || exit 0
 
 # Routing table: command pattern → check script. First match wins; a check's exit
 # code becomes the dispatcher's. Add a row to extend.
-case "$cmd" in
-  *"git commit"*)   exec "$HOOK_DIR/pre-commit.sh" "$cmd" ;;
-  *"gh pr create"*) exec "$HOOK_DIR/pre-pr.sh"     "$cmd" ;;
-  *)                exit 0 ;;
+case "$event:$cmd" in
+  PreToolUse:*"git commit"*)   exec "$HOOK_DIR/pre-commit.sh"  "$cmd" ;;
+  PreToolUse:*"gh pr create"*) exec "$HOOK_DIR/pre-pr.sh"      "$cmd" ;;
+  PostToolUse:*"git commit"*)  exec "$HOOK_DIR/post-commit.sh" "$cmd" ;;
+  *)                           exit 0 ;;
 esac

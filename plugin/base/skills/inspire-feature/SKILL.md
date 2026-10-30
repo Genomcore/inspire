@@ -103,8 +103,11 @@ fit exactly is worse than no head.
    `update` run it inline — what the gate checks, and what a criterion that cannot
    be made testable means, are
    [`references/feature-ac-gate.md`](references/feature-ac-gate.md)'s.
-10. **Stamp every write.** After `create`, `update`, or `delete` writes the
-    use-case file, run `.inspire/bin/trust.sh stamp <file> --skill feature`
+10. **Check and stamp every write.** After `create`, `update`, or `delete`
+    writes the use-case file, run `.inspire/bin/review.sh <file>` and fix what
+    it reports on that file: every error, and every warning the operator does
+    not choose to keep ([write-checks](../_references/write-checks.md)). Then
+    run `.inspire/bin/trust.sh stamp <file> --skill feature`
     ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
     that carries `endorsed:` is disclosed to the operator first
     ([trust-stamps](../_references/trust-stamps.md#endorsement)).

@@ -101,7 +101,7 @@ repo is both its source and its own marketplace.
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
         `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
-        `keyed-heads.md`, `stack-skills.md`); it is
+        `write-checks.md`, `keyed-heads.md`, `stack-skills.md`); it is
         **not** matched by an `inspire-*` glob.
     - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
       definitions, materialized where Claude Code discovers them and merged with
@@ -138,11 +138,18 @@ repo is both its source and its own marketplace.
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
       rule at a time plus its four hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
-    - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
-      registered in a materialized project's `.claude/settings.json`
-      (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
-      `pre-commit.sh` and `pre-pr.sh` still ship as files but are invoked *by*
-      `dispatch.sh` rather than registered directly. `session-start` injects the
+    - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two
+      scripts are registered in a materialized project's `.claude/settings.json`,
+      each tagged `# INSPIRE-MANAGED`: `session-start.sh` on SessionStart, and
+      `dispatch.sh` on both PreToolUse and PostToolUse for Bash. `pre-commit.sh`,
+      `pre-pr.sh` and `post-commit.sh` ship as files and are invoked *by*
+      `dispatch.sh`, which routes on the event and the command: the two `pre-`
+      checks can block, and `post-commit.sh` reviews the KB files a commit
+      contains and reports to the agent without blocking. **No INSPIRE hook runs
+      on each file edit**, and none should be added: it slows every write, and
+      fixing a finding is itself an edit, so the hook fires again and can loop.
+      The authoring skills check each file they write instead
+      (`_references/write-checks.md`). `session-start` injects the
       project's `output_language`, the runtime version from `.inspire.lock` and
       the decision digest `base/bin/decisions.sh` prints — every live ADR's
       `## Decision`, held to a budget — into every session.

@@ -7,8 +7,10 @@ rules, and emit structured findings.
 Two consumers wrap this library:
 
 - **Hooks** (`.claude/inspire/hooks/*.sh`) call these scripts at tool-call time
-  via Claude Code's PreToolUse Bash matchers — `pre-commit.sh` on
-  `git commit`, `pre-pr.sh` on `gh pr create`.
+  via Claude Code's Bash matchers. Before the command runs (PreToolUse),
+  `pre-commit.sh` on `git commit` and `pre-pr.sh` on `gh pr create` can block it.
+  After a commit (PostToolUse), `post-commit.sh` reviews each KB file the commit
+  contains and reports the findings to the agent without blocking anything.
 - **Skills** invoke them via the `Bash` tool inside conversational
   sessions. `/inspire-domain review` for read-only checks;
   `/inspire-domain promote` uses the write-test-revert pattern against
