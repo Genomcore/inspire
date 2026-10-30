@@ -19,6 +19,17 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `endorsed:` and `produced:` blocks. Re-endorsing clears it. It is decided by git
   history, never by comparing clocks, so rebases and merged branches don't
   mislead it, and a date-only `at` written before 0.15.0 is checked the same way.
+- **A KB review after each commit.** After a `git commit` in a Claude Code
+  session, `post-commit.sh` reviews each KB file the commit contains, in every
+  layer, and reports the findings to the agent. It never blocks: the commit has
+  already happened. Before, prose findings and every finding outside `04_domain`
+  first appeared when a pull request was opened. `/inspire:update` registers it:
+  `dispatch.sh` now also runs on PostToolUse for Bash.
+- **The authoring skills check what they write.** `/inspire-domain`,
+  `/inspire-feature`, `/inspire-adr` and `/inspire-screens` run
+  `review.sh <file>` on each file they write, fix what it reports, then stamp it.
+  `_references/write-checks.md` says which findings to fix now and which to hand
+  to the operator.
 
 ### Changed
 
