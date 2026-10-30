@@ -78,4 +78,4 @@ so a project with 🟢 Implemented features and no tests passes pre-PR. Once one
 exists, every untested criterion is reported. The suppression was meant to keep one clear
 message instead of a hundred, not to turn an error into a warning. The defect is in the
 check this focus shipped, so it is a criterion here rather than a ticket of its own. The
-INSPIRE Factory's half, an empty suite completing a unit, is its `informes-1` ticket.
+INSPIRE Factory's half, an empty suite completing a unit, is in the Factory's tracker.
