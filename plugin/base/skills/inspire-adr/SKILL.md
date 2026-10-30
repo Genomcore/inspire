@@ -64,7 +64,8 @@ Every ADR is a pair of files that share one id:
   `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:`
   or `**Prototype:**` line, the `surfaces:` frontmatter, and `## Decision`: one or a few
   imperative statements ("Authentication uses the Better Auth library."). It binds, so
-  every session that specifies or builds reads it, and it stays short.
+  it stays short: the session-start hook injects every live decision into every
+  session, through `.inspire/bin/decisions.sh`.
 - **`adr-{slug}.rationale.md` — the rationale.** `**Decision:** [[adr-{slug}]]`, then
   `## Context`, `## Consequences` (with `### Breaking changes`),
   `## Alternatives considered` and `## Related ADRs`. It explains the decision and

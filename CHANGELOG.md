@@ -13,6 +13,13 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ### Added
 
+- **Every session starts with the project's live decisions.** The session-start hook
+  injects a digest of every ADR that is neither superseded nor rejected: its id,
+  maturity, surfaces, title and `## Decision` text, never its rationale.
+  `.inspire/bin/decisions.sh` prints the same digest for anything that runs agents
+  outside a session, and `--surface <id>` narrows it to one surface. The hook holds it
+  to 6,000 characters; past that it injects an index of the decisions and points to
+  the script. A project with no live ADR gets nothing.
 - **`/inspire-adr migrate`** splits each single-file ADR into its decision and its
   rationale. `.inspire/bin/adr-split.sh` moves every line verbatim, and the skill then
   offers to move any reasons left in `## Decision` to the rationale, word for word.
