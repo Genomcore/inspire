@@ -1,0 +1,18 @@
+# {Title} — rationale
+
+**Decision:** [[adr-{slug}]]
+
+## Context
+What problem or question prompted this decision, and why the decision answers it.
+
+## Consequences
+What follows — positive and negative. Include breaking changes.
+
+### Breaking changes
+- ...
+
+## Alternatives considered
+1. **{alternative}.** Why rejected.
+
+## Related ADRs
+- [[adr-xxx]] — {relation}

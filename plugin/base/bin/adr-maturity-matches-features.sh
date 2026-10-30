@@ -92,6 +92,7 @@ adr_path_for() {
   base="$(sdd_wikilink_target "$target")"
   base="${base##*/}"
   base="${base%.md}"
+  base="${base%.rationale}"
   [ -z "$base" ] && return 1
   [ -d "$SDD_ADR_ROOT" ] || return 1
   find "$SDD_ADR_ROOT" -type f -name "${base}.md" 2>/dev/null | head -1

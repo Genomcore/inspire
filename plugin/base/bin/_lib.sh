@@ -502,12 +502,21 @@ sdd_find_features() {
     | sort
 }
 
-# ADR files under 01_adr/: one `adr-{slug}.md` per decision. The `adr-` prefix
-# is the discriminator, so READMEs and index files never match.
+# ADR decision files under 01_adr/: one `adr-{slug}.md` per decision. The `adr-`
+# prefix is the discriminator, so READMEs and index files never match, and a
+# decision's `adr-{slug}.rationale.md` pair is not a decision of its own.
 sdd_find_adrs() {
   local scope="${1:-$SDD_KB_ROOT}"
   [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "adr-*.md" 2>/dev/null \
+  find "$scope" -type f -name "adr-*.md" ! -name "*.rationale.md" 2>/dev/null \
+    | grep -E '(^|/)01_adr/' \
+    | sort
+}
+
+sdd_find_adr_rationales() {
+  local scope="${1:-$SDD_KB_ROOT}"
+  [ -e "$scope" ] || return 0
+  find "$scope" -type f -name "adr-*.rationale.md" 2>/dev/null \
     | grep -E '(^|/)01_adr/' \
     | sort
 }

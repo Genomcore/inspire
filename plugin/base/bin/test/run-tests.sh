@@ -284,6 +284,19 @@ if [ -z "$filter" ]; then
   rm -f "$trust_out"
 fi
 
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  split_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-adr-split.sh" >"$split_out" 2>&1; then
+    echo "PASS adr-split.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL adr-split.sh/behaviour" >&2
+    cat "$split_out" >&2
+  fi
+  rm -f "$split_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]

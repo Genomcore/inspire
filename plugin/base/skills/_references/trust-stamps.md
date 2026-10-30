@@ -56,6 +56,9 @@ by machinery: nothing checks that anyone was asked, so the discipline lives in p
 | `theme.md`, `_template.md`, `README.md` | no | no |
 | `06_spikes`, `98_lessons`, `99_tracker` | no | no — meta layers; lessons keep their own version stamping |
 
+An ADR's decision `adr-{slug}.md` and its rationale `adr-{slug}.rationale.md` are two
+artifacts: each carries its own blocks, and endorsing one says nothing about the other.
+
 Exclusions go **by path and filename, never by frontmatter**: the live `design-system.md`
 inherits `status: template` from the copy of `theme.md` that seeded it, so a frontmatter
 predicate would excuse a project's real design system. Where a file has no frontmatter at

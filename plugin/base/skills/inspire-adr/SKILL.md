@@ -1,6 +1,6 @@
 ---
 name: inspire-adr
-description: "ADR lifecycle for architectural decisions that span two or more modules or surfaces, or are system-wide: create / update / promote / supersede along a maturity ladder (design → prototyped → implemented). Use when proposing, recording, advancing, or retiring an architectural decision."
+description: "ADR lifecycle for architectural decisions that span two or more modules or surfaces, or are system-wide: create / update / promote / supersede / migrate along a maturity ladder (design → prototyped → implemented). Use when proposing, recording, advancing, or retiring an architectural decision."
 ---
 
 # /inspire-adr — Architecture Decision Records
@@ -41,7 +41,7 @@ propagated (the *propagation contract*):
   (record it with a `**Prototype:**` pointer to that repo). The horizontal
   prototype does **not** count. Still refined in place.
 - `implemented` — additionally realized in the **product codebase**. **Immutable —
-  `supersede` to change.**
+  both files of the pair; `supersede` to change.**
 - `superseded` (by [[x]]) / `rejected` — terminal.
 
 There is no `proposed`/`accepted` state: an ADR present and not
@@ -54,17 +54,40 @@ happens in chat before authoring.
 - `/inspire-adr update {id}` — modify an ADR (supersede required only at `implemented`)
 - `/inspire-adr promote {id} {maturity}` — advance maturity and propagate consequences
 - `/inspire-adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
+- `/inspire-adr migrate [{id}…]` — split single-file ADRs into a decision and a rationale
+
+## The decision and its rationale
+
+Every ADR is a pair of files that share one id:
+
+- **`adr-{slug}.md` — the decision.** The H1 title, `**Status:**`,
+  `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:`
+  or `**Prototype:**` line, the `surfaces:` frontmatter, and `## Decision`: one or a few
+  imperative statements ("Authentication uses the Better Auth library."). It binds, so
+  every session that specifies or builds reads it, and it stays short.
+- **`adr-{slug}.rationale.md` — the rationale.** `**Decision:** [[adr-{slug}]]`, then
+  `## Context`, `## Consequences` (with `### Breaking changes`),
+  `## Alternatives considered` and `## Related ADRs`. It explains the decision and
+  constrains nothing, so it is read only when someone questions or supersedes it.
+
+The test for a sentence in `## Decision`: would a reader who follows it build
+something different without it? If not, it is a reason, and it belongs in the rationale.
+A `[[adr-{slug}]]` wikilink always means the decision; link the rationale by its own
+name only when the reasons are the point.
 
 ## Subcommand: create {prefix-slug}
 
 ### Conventions
 
 - **Filename:** `adr-{module-prefix}-{slug}.md` for module-specific, or
-  `adr-{slug}.md` for cross-cutting. Slug-only — no numeric prefix.
+  `adr-{slug}.md` for cross-cutting, and the same name with `.rationale.md` for its
+  rationale. Slug-only — no numeric prefix.
 - **Slug uniqueness:** unique within a prefix; cross-cutting slugs unique
   vault-wide.
 - **Location:** `inspire_kb/01_adr/`.
-- **Canonical ID:** the filename (without `.md`). The H1 is the human title.
+- **Canonical ID:** the decision's filename (without `.md`). The rationale shares it.
+  The H1 is the human title, and the rationale's H1 is the same title followed by
+  `— rationale`.
 - **Blast radius:** the `surfaces:` frontmatter field the template below carries.
   The filename keeps encoding **module** scope and `**Modules affected:**` keeps
   listing the modules; the frontmatter declares **surface** scope. Three
@@ -113,8 +136,9 @@ that uses it lands.
 
 ### Template
 
-Template: [`templates/adr.md.template`](templates/adr.md.template) — the
-`Supersedes:` header line is optional (add only when superseding, per the
+Templates: [`templates/adr.md.template`](templates/adr.md.template) for the decision
+and [`templates/adr.rationale.md.template`](templates/adr.rationale.md.template) for the
+rationale — the decision's `Supersedes:` header line is optional (add only when superseding, per the
 `supersede` subcommand below); the `surfaces:` frontmatter defaults suite-wide by
 omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
 
@@ -123,7 +147,9 @@ omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
 1. **Ask** the user: short title, modules affected, blast radius (the `surfaces:`
    field — see Conventions; a suite-of-one is never asked), context, the decision,
    key consequences, alternatives considered.
-2. **Write the ADR file** at the computed path.
+2. **Write both files** at the computed paths: the decision, then its rationale. Keep
+   every reason out of `## Decision` (see [the decision and its
+   rationale](#the-decision-and-its-rationale)).
 3. **Propose ADR references** in the feature files that should link to it: list
    files to edit, wait for approval.
 4. Set `**Status:** design` by default. Use `promote` later to advance.
@@ -131,13 +157,17 @@ omission, per [`_references/surface-scope.md`](../_references/surface-scope.md).
 ## Subcommand: update {id}
 
 Modify an ADR in place. At `design` / `prototyped` maturity this is the **normal
-path** — freely edit any section, including `Decision`; record new evidence (e.g. a
+path** — freely edit either file, including `Decision`; record new evidence (e.g. a
 `**Prototype:**` pointer) when it drove the change.
 
-**Only at `Status: implemented`** does a change to the `Decision` section require
-`supersede` (product code depends on it — preserve the audit trail): present a
-warning and offer to switch approach. `supersede` also stays available at any
-maturity for a genuine reversal you want recorded as a distinct decision.
+**At `Status: implemented`** both files are frozen: a change to either one requires
+`supersede` (product code depends on the decision, and the reasons it was taken are
+part of the audit trail): present a warning and offer to switch approach. `migrate`
+is the one exception, because it moves text without changing it. `supersede` also
+stays available at any maturity for a genuine reversal you want recorded as a
+distinct decision.
+
+When the ADR is still in the single-file shape, offer `migrate` for it first.
 
 ## Subcommand: promote {id} {maturity}
 
@@ -146,15 +176,16 @@ consequences to the layers the new maturity reaches.
 
 1. Verify the ADR exists and the transition is a **forward** step. Reject skips and
    downgrades — refine the `Decision` in place with `update` instead.
-2. Update `**Status:** {maturity}`. For `prototyped`, require a `**Prototype:**`
-   pointer (which external repo validated it, and the evidence); for `implemented`,
+2. Update `**Status:** {maturity}` in the decision file. For `prototyped`, require a
+   `**Prototype:**` pointer (which external repo validated it, and the evidence); for `implemented`,
    note where in the codebase it lives.
 3. **Propagate / record evidence:** confirm the design workspace reflects the
    decision, then for each affected module invoke `/inspire-module review {module}`
    to detect where the ADR's consequences are not yet reflected. Surface the gaps
    as follow-up actions.
 4. **Propose endorsement.** Ask the operator whether to endorse the promoted
-   ADR; on an explicit yes, run `.inspire/bin/trust.sh endorse <file>`
+   decision, then separately whether to endorse its rationale; on each explicit yes,
+   run `.inspire/bin/trust.sh endorse <file>` on that file
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
 
 ## Subcommand: supersede {id} {new-id}
@@ -163,9 +194,38 @@ Replace an ADR with a new one that changes its decision (create the new ADR firs
 via `create`).
 
 1. Verify both ADRs exist (the old one at any non-terminal maturity).
-2. Update the old ADR: `**Status:** superseded by [[{new-id}]]`.
-3. Update the new ADR's header: `Supersedes: [[{old-id}]]`.
+2. Update the old decision file: `**Status:** superseded by [[{new-id}]]`. Its
+   rationale stays as it is.
+3. Update the new decision file's header: `Supersedes: [[{old-id}]]`.
 4. Grep `inspire_kb/` for references to the old ADR; propose updates.
+
+## Subcommand: migrate [{id}…]
+
+Split ADRs written before the pair existed: one file holding all five sections. With
+no ids it takes every single-file ADR in `inspire_kb/01_adr/`. A project's KB is the
+operator's, so an upgrade never runs this on its own: `/inspire:update` offers it, and
+the operator runs it.
+
+1. **List.** Run `.inspire/bin/adr-split.sh --list` (or with the ids' paths). Nothing
+   listed means nothing to do.
+2. **Disclose.** For each listed file carrying `endorsed:`, say that the split rewrites
+   content that person endorsed, and on which date
+   ([trust-stamps](../_references/trust-stamps.md#endorsement)).
+3. **Split.** Run `.inspire/bin/adr-split.sh` on the listed paths. It moves every line
+   verbatim: the frontmatter, the header and `## Decision` stay in `adr-{slug}.md`, a
+   `**Rationale:**` link joins the header, and every other section moves, in order, to
+   `adr-{slug}.rationale.md`. It reports one line per file: `split`, or `skipped` for a
+   file with no `## Decision` section. Write that section with the operator for each
+   skipped file, then run the script on it again.
+4. **Trim each decision.** The old template asked `## Decision` for "what we decided
+   and why", so many of them carry reasons. For each split ADR, read `## Decision`
+   and show the operator the sentences that fail the test in [the decision and its
+   rationale](#the-decision-and-its-rationale), with the proposal to move them, word
+   for word, to the end of the rationale's `## Context`. Move them on a yes. This
+   step changes no word either, so it is allowed at `implemented` too. A decision
+   whose every sentence binds needs no question.
+5. **Stamp** both files of every pair (rule 6 below). Propose no endorsement:
+   nothing was decided.
 
 ## Rules
 
@@ -176,8 +236,9 @@ via `create`).
 > keys/values, wikilink slugs, filenames) stay verbatim.
 
 > **Writing contract.** ADR prose follows
-> [`_references/writing-style.md`](../_references/writing-style.md). `## Context`,
-> `## Decision`, `## Consequences` and `## Alternatives considered` are normative prose
+> [`_references/writing-style.md`](../_references/writing-style.md). `## Decision` in
+> the decision file and `## Context`, `## Consequences` and `## Alternatives considered`
+> in the rationale are normative prose
 > (R1–R6); `**Modules affected:**` and any tabular section are structured (R3, R4, R6).
 > R6 carries section-scoped exemptions this skill relies on — see the
 > *no historical language* rule below.
@@ -189,8 +250,8 @@ via `create`).
 
 1. **Maturity is explicit, and only `implemented` is immutable.** `create` defaults
    to `design` and `promote` is the only way forward; a `design` / `prototyped` ADR
-   is refined in place with `update`, while changing an `implemented` ADR's
-   `Decision` requires `supersede`.
+   is refined in place with `update`, while changing either file of an `implemented`
+   ADR requires `supersede`.
 2. **Propagate to the maturity's reach.** Design-workspace coherence (features +
    screen spec + horizontal prototype + specs) is required at every maturity;
    `prototyped` adds a pointer to an external functional prototype, `implemented` a
@@ -206,7 +267,8 @@ via `create`).
    required section.
 5. **Consult the task tracker** ([`/inspire-task list`](../inspire-task/SKILL.md))
    for tracked items; don't re-open what's already ticketed.
-6. **Stamp every write.** After an ADR is written, run
+6. **Stamp every write.** After an ADR file is written — the decision, the
+   rationale, or both — run, for each one,
    `.inspire/bin/trust.sh stamp <file> --skill adr`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting an ADR
    that carries `endorsed:` is disclosed to the operator first

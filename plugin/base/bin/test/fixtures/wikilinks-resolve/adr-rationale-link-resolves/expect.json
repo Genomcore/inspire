@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "wikilinks-resolve", "severity": "error", "message_substring": "adr-auth-cookies.rationale" }
+  ],
+  "forbidden": ["[[adr-auth-sessions]]", "[[adr-auth-sessions.rationale]]", "'adr-auth-sessions'", "'adr-auth-sessions.rationale'"]
+}

@@ -145,7 +145,8 @@ if [ -d "$GOLDEN/fixtures" ]; then
   done
 fi
 for s in "lib-tests.sh${TAB}_lib.sh/readers" \
-         "test-trust.sh${TAB}trust.sh/behaviour"; do
+         "test-trust.sh${TAB}trust.sh/behaviour" \
+         "test-adr-split.sh${TAB}adr-split.sh/behaviour"; do
   script="${s%%$TAB*}"; label="${s#*$TAB}"
   [ -f "$GOLDEN/$script" ] || continue
   keep "golden/$script" || continue
