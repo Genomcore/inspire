@@ -2,7 +2,7 @@
 id: B1-spikes-out-of-the-kb
 title: "B1 — spikes are tracked inside the KB, but they are experiments outside it"
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-30
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -55,6 +55,10 @@ link is enough" closes the question without a new artifact.
 - [ ] `06_spikes/` is removed from the KB skeleton (`plugin/base/kb/`). `inspire-spike`
       is removed from the payload, or reduced to a single capture step that writes
       straight into ADRs and other spec, with no spike file of its own.
+- [ ] `/inspire-extract` has a spike mode: pointed at a spike's repository, it returns
+      ADR, feature and entity candidates with their evidence. *Added 2026-10-30:* see
+      the fifth design-review amendment below, which also drops the "reduced to a
+      capture step" option of the first criterion.
 - [ ] No file under `plugin/base/` still points at `06_spikes` or `inspire-spike`.
 - [ ] `inspire-adr`'s evidence rule for `prototyped` names its new target: a repository
       link, or the spike summary if one is added.
@@ -74,3 +78,24 @@ link is enough" closes the question without a new artifact.
 - What a project does with its existing spike repositories (archive, delete or keep) is
   that project's decision, not the runtime's. So are the broken links that follow. This
   ticket only adds the retirement notice to the upgrade report.
+
+**Amended 2026-10-30 (fifth design-review session): what a spike produces.**
+
+- *Decision:* a spike is throwaway. What it produces is conclusions, ADRs and
+  specification, never code to keep: the product is built from the spec, not from the
+  spike's code. A spike is not held to INSPIRE's tests or gates. It may use the stack
+  skills when realism matters, for example in a performance spike, so its conclusions
+  reflect code written the way the product's will be. INSPIRE needs a way to extract a
+  finished spike's conclusions into the KB.
+- *Change:* the capture step this ticket allows becomes a mode of `/inspire-extract`. It
+  is pointed at the spike's repository and returns ADR, feature and entity candidates
+  with their evidence. The option of keeping a reduced `inspire-spike` is dropped.
+- *Not now:* a "light mode" that applies some gates and skips tests was proposed and
+  deferred. A spike carries no INSPIRE test or gate requirement.
+- *Factory design:* the INSPIRE Factory's control-plane design gives extract two modes.
+  `intent` reads code without running it and writes KB drafts, so the spike mode can
+  build on it for entities and actions. It does not capture conclusions or ADRs, which
+  is the part this decision needs most. `adopt` moves existing code into the product,
+  and it is not for spikes.
+- *Open:* when a team wants to keep a spike's code anyway, is `adopt` the supported
+  path, or is the answer always "re-specify and build"?
