@@ -166,6 +166,8 @@ render_records() {
           if (name == "component") comp = i
           if (name == "narrow") narrow = i
         }
+        if (!comp && n >= 3) comp = 3
+        if (!narrow && n >= 6) narrow = 6
         if (!narrow && tolower(h3) ~ /table|column/) print "NONARROW\037" h3
         next
       }

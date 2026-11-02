@@ -80,6 +80,9 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   validating, and `/inspire:update` counts those headings and recommends rewriting
   them: `.inspire/bin/heading-keys.sh` adds the ids, and the skill then translates
   the labels when `output_language` is not English. It never rewrites unprompted.
+  Translated table headers read correctly too: the domain readers took a Spanish
+  `| Campo | Tipo |` header row for a field named `Campo`, and the render check
+  lost its Component and Narrow columns once their headers were translated.
 - The action interview no longer imposes one platform's vocabulary (`deploy`,
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project

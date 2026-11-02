@@ -491,6 +491,8 @@ kh_split_constraints() {
 kh_first_column() {
   sdd_body_section "$1" "$2" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       /^\|/ {
         gsub(/^\|[[:space:]]*|[[:space:]]*\|$/, "")
         n = split($0, parts, /[[:space:]]*\|[[:space:]]*/)
@@ -499,7 +501,6 @@ kh_first_column() {
         gsub(/^`|`$/, "", cell)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
         if (cell == "" || cell ~ /^-+$/) next
-        if (cell == "Parameter" || cell == "Field" || cell == "Action" || cell == "Key") next
         print cell
       }
     '

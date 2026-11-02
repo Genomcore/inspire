@@ -942,6 +942,8 @@ sdd_entities_touched() {
   local file="$1"
   sdd_body_section "$file" "Entities" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       # Entity header: ### [[module.entity|module::entity]] (V3)
       # or:            ### [[module::entity]]                 (bare)
       /^###[[:space:]]+\[\[/ {
@@ -994,8 +996,7 @@ sdd_entities_touched() {
         # Strip surrounding backticks from cells (preserve mid-cell ticks).
         gsub(/^`|`$/, "", field)
         gsub(/^`|`$/, "", type)
-        # Skip header / separator rows
-        if (field == "Field" || field ~ /^-+$/) next
+        if (field ~ /^-+$/) next
         printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", rid, field, touch, type, mapping, notes, as_input, effect
       }
     '
@@ -1054,13 +1055,15 @@ sdd_entity_fields() {
   local file="$1"
   sdd_body_section "$file" "Fields" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       /^\|[[:space:]]*`?[A-Za-z_][A-Za-z0-9_]*`?[[:space:]]*\|/ {
         gsub(/^\|[[:space:]]*|[[:space:]]*\|$/, "")
         n = split($0, parts, /[[:space:]]*\|[[:space:]]*/)
         if (n < 1) next
         field = parts[1]
         gsub(/^`|`$/, "", field)
-        if (field == "Field" || field ~ /^-+$/) next
+        if (field ~ /^-+$/) next
         print field
       }
     '

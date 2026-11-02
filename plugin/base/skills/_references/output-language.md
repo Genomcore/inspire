@@ -37,7 +37,18 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
 - the **section ids** that open headings (`ENT4`) — see below;
 - the **bold header-line markers** a validator reads (`**Status:**`,
   `**State:**`, `**Features:**`, `**Pattern:**`, `**Rationale:**`,
-  `**Decision:**`, …) and their enum values.
+  `**Decision:**`, `**Effect:**`, …) and their enum values;
+- the **line markers and sentinels** of the keyed formats: a field's
+  `Constraints:` line, the declared-none body `None.`, entry keys (`I1`, `P1`,
+  `B1`, `Q1`, `AC-1`, `AF-1`) and the heads after them (`unique(email)`);
+- the **vocabulary cells** of a table: a touch (`read`, `written`, `write`), a
+  `Required` answer (`yes`, `no`), a region's `Fill` and `Accepts`, a render row's
+  `Align` and `Narrow`, a binding's outcome (`→ [[…]]`, ``state `key` ``,
+  ``refresh `key` ``, ``param `key` ``).
+
+A table's **column headers** are prose: translate them (`| Campo | Tipo | Notas |`).
+The validators read a table's columns by position, so its columns keep the order
+the template gives them.
 
 Translate the **prose** — titles, descriptions, rationale, section bodies, review
 findings addressed to the operator. Never the keys.
