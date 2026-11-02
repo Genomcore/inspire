@@ -69,12 +69,13 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ### Fixed
 
-- **A KB written in another language validates.** A heading is a key, then an
-  optional translated label: `## Fields: Campos`. Every validator finds a section by
-  its key, the English name the template ships, and never reads the label. A Spanish
-  or Catalan KB failed every mandatory-section check before. Existing headings are
-  bare keys, so nothing needs migrating. `_references/output-language.md` tells the
-  authoring skills to write `{key}: {label}` when `output_language` is not English.
+- **A KB written in another language validates.** A heading is a key, then a label
+  in the project's language: `## Fields: Campos`. Every validator finds a section by
+  its key, the English name, and never reads the label. A Spanish or Catalan KB
+  failed every mandatory-section check before. The templates and the seeded pattern
+  entries ship every heading in that form, with an English label (`## Fields:
+  Fields`), and the authoring skills write it in every language. A bare `## Fields`
+  still reads as its key, so existing headings need no migration.
 - The action interview no longer imposes one platform's vocabulary (`deploy`,
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project

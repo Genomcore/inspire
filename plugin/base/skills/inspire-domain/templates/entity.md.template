@@ -5,13 +5,13 @@ entity: {{ENTITY}}
 lifecycle: draft
 ---
 
-## Purpose
+## Purpose: Purpose
 {{ONE_TO_THREE_SENTENCES_STATING_WHAT_THIS_ENTITY_IS_AND_WHY_IT_EXISTS_AS_A_DISCRETE_OBJECT}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds the role of this entity in the {{MODULE_SUBSYSTEM_NAME}}.
 
-## Rationale
+## Rationale: Rationale
 {{PARAGRAPH_EXPLAINING_WHY_THE_ENTITY_EXISTS_WHY_THESE_FIELDS_AND_WHAT_MOTIVATES_THE_SHAPE}} The design follows the discipline laid out in [[{{ADR_BACK_SOURCE}}|{{ADR_DISPLAY_TEXT}}]], where {{ADR_CLAIM_SUMMARY}}. {{SECOND_CLAIM_WITH_INLINE_WIKILINK}} grounded in [[{{SECOND_PDD_BACK_SOURCE}}|{{SECOND_PDD_DISPLAY_TEXT}}]].
 
-## Invariants
+## Invariants: Invariants
 - `I1` — {{OPTIONAL_HEAD_FROM_V2_ELSE_DELETE_THIS_SEGMENT}} — {{INVARIANT_PROSE}}.
 - `I2` — {{INVARIANT_PROSE_WITH_NO_HEAD}}.
 
@@ -25,7 +25,7 @@ lifecycle: draft
   `None beyond Fields constraints.` The section must be present either way.
 -->
 
-## Fields
+## Fields: Fields
 
 | Field           | Type        | Notes                                |
 |-----------------|-------------|--------------------------------------|
@@ -57,7 +57,7 @@ Constraints: `nonnull, immutable, default(now)`
   never that it exists.
 -->
 
-## Touched by
+## Touched by: Touched by
 
 | Action                                                                           | Touch  | Notes                          |
 |----------------------------------------------------------------------------------|--------|--------------------------------|

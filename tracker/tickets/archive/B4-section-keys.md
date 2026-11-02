@@ -94,9 +94,11 @@ the whole KB, headings included, in their own language.
 
 ## Resolution
 
-A heading is `## {key}` or `## {key}: {label}`. The key is the English section name the
-template already ships, and the label after the first `: ` is free text in the
-project's language: `## Fields: Campos`. `sdd_heading_key` in `_lib.sh` reads a heading
+A heading is `## {key}: {label}`. The key is the English section name, and the label
+after the first `: ` is free text in the project's language: `## Fields: Campos`. The
+templates and the seeded pattern entries ship every heading in that form with an
+English label (`## Fields: Fields`), and the authoring skills write it in every
+language, English included, so a KB has one heading shape. `sdd_heading_key` in `_lib.sh` reads a heading
 that way, and every section reader there (`sdd_body_section`, `sdd_body_prose`,
 `sdd_has_section`, `sdd_has_subsection`, `sdd_body_subsection`) looks a section up by
 key. The validators that read headings themselves use the same function or the same
@@ -105,14 +107,12 @@ shape: `sections-present.sh` (its order check), `prose-style.sh`, `_keyed-heads.
 
 The open questions have these answers:
 
-- **Key form: the English name.** An opaque code reads worst for an operator and would
-  have changed every heading in every existing KB. The English name is what every
-  heading already is, so the templates already ship the keys, and the reader accepts
-  both shapes with no migration: an existing `## Fields` is a key with no label.
-  English projects write the bare key, as they always have. The risk that the name looks
-  translatable is answered in `output-language.md`, which lists heading keys as
-  machine-read tokens. A heading translated without its key is reported loudly, as a
-  missing section, never read as an empty one.
+- **Key form: the English name.** An opaque code reads worst for an operator. The
+  English name is what every existing heading already is, so the reader accepts both
+  shapes with no migration: an existing `## Fields` is a key with no label. The risk
+  that the name looks translatable is answered in `output-language.md`, which lists
+  heading keys as machine-read tokens. A heading translated without its key is
+  reported loudly, as a missing section, never read as an empty one.
 - **Per format or global: neither question arises.** A key is a section name, so it
   means the same role wherever it appears (`Purpose` in an entity, an action and a
   screen). No code table exists to scope.
