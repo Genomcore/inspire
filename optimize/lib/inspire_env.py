@@ -16,6 +16,7 @@ LIB = Path(__file__).resolve().parent
 RUN_CHECKS = LIB / "run-checks.ts"
 CLAUDE = os.environ.get("CLAUDE_CLI_BIN", "claude")
 NODE = os.environ.get("NODE_BIN", "node")
+ROLLOUT_MODEL = os.environ.get("ROLLOUT_MODEL", "claude-opus-5-5")
 FRONTMATTER = re.compile(r"\A(---\n.*?\n---\n)(.*)\Z", re.S)
 ROLLOUT_TOOLS = "Read,Glob,Grep,Write,Edit,Skill,Bash(bash .inspire/bin/*),Bash(.inspire/bin/*)"
 NON_INTERACTIVE = (
@@ -54,7 +55,7 @@ def _changed_files(root: Path, before: dict[str, str]) -> dict[str, str]:
 
 def _run_agent(work: Path, prompt: str, timeout: int) -> str:
     cmd = [
-        CLAUDE, "-p", "--output-format", "json",
+        CLAUDE, "-p", "--output-format", "json", "--model", ROLLOUT_MODEL,
         "--permission-mode", "acceptEdits",
         "--allowedTools", ROLLOUT_TOOLS,
         "--strict-mcp-config",

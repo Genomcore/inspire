@@ -1,4 +1,4 @@
-import { defineCheck } from '../../../../lib/check.ts'
+import { defineCheck } from '../../../lib/check.ts'
 
 export default defineCheck({
   kind: 'agent',

@@ -1,0 +1,3 @@
+This repository is the OpenBIMS product, freshly scaffolded. The code lives in source/: the NestJS backend in source/src (tests in source/test) and the React frontend in source/web/src (tests in source/web/test). The product is bilingual (English and Spanish). Dependencies are not installed: do not run npm, just write the code and its tests. Assume every backend endpoint named below exists and answers problem+json errors ({ type, title, status, detail, errors?: [{ field, message }] }).
+
+Extend GET /api/is-alive so it also returns the application version (from package.json) and the process uptime in seconds, keeping its current answer for the frontend client.

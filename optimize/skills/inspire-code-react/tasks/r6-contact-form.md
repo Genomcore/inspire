@@ -1,0 +1,3 @@
+This repository is the OpenBIMS product, freshly scaffolded. The code lives in source/: the NestJS backend in source/src (tests in source/test) and the React frontend in source/web/src (tests in source/web/test). The product is bilingual (English and Spanish). Dependencies are not installed: do not run npm, just write the code and its tests. Assume every backend endpoint named below exists and answers problem+json errors ({ type, title, status, detail, errors?: [{ field, message }] }).
+
+Add the screen support.contact: a form with name (required), email (required, valid) and message (10 to 1000 characters) posted to POST /api/support/messages. Validate in the browser, show the server's 422 field errors, announce a success message and clear the form.

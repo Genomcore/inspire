@@ -1,0 +1,3 @@
+This repository is the OpenBIMS product, freshly scaffolded. The code lives in source/: the NestJS backend in source/src (tests in source/test) and the React frontend in source/web/src (tests in source/web/test). The product is bilingual (English and Spanish). Dependencies are not installed: do not run npm, just write the code and its tests. Assume every backend endpoint named below exists and answers problem+json errors ({ type, title, status, detail, errors?: [{ field, message }] }).
+
+Add feature flags: GET /api/flags returns the flags named in the FLAGS environment variable (comma separated) with their state, and POST /api/flags/:name/toggle switches one for the admin role; an unknown flag is a 404 problem. Toggles are audited.

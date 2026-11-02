@@ -1,20 +1,74 @@
-# skill → complaints. Every complaint of a skill is evaluated on every run of
-# that skill; `optimized: false` on any of them is what puts the skill in the run.
-# The first complaint of each skill is its original intent, so optimizing for a
-# new complaint can never trade away what the skill is for.
+# skill → { fixture?, tasks, complaints }. Every check of every complaint of a
+# skill scores every task of that skill; `optimized: false` on any complaint is
+# what puts the skill in the run. The first complaint is the skill's original
+# intent, so optimizing for a new complaint can never trade away what it is for.
 #
-#   tasks:  glob of prompt files (≥3: one val, one test, the rest train). A
-#           directory named like a task (tasks/foo.md → tasks/foo/) is copied
-#           over the workspace before that task runs.
-#   checks: .ts files exporting defineCheck(...). Run deterministic → judge →
-#           agent; the first failing tier zeroes the rest.
+#   fixture:  optional project copied in as the workspace (.git and node_modules
+#             skipped); without it, a fresh INSPIRE project is materialized.
+#   tasks:    glob of prompt files, ≥3 (a third val, one test, the rest train).
+#             tasks/foo/ beside tasks/foo.md is copied over the workspace first.
+#   checks:   .ts files exporting defineCheck(...). Run deterministic → judge →
+#             agent; the first failing tier zeroes the rest.
+#
+# The inspire-code-* complaints are the rules the blind 44-rule review of the
+# simple-case Factory runs (R1–R8, 2026-10-27) kept finding broken.
 
 inspire-adr:
-  - id: intent
-    optimized: false
-    tasks: skills/inspire-adr/intent/tasks/*.md
-    checks:
-      - skills/inspire-adr/intent/checks/adr-file-created.ts
-      - skills/inspire-adr/intent/checks/kb-review-passes.ts
-      - skills/inspire-adr/intent/checks/records-a-decision.ts
-      - skills/inspire-adr/intent/checks/follows-the-skill.ts
+  tasks: skills/inspire-adr/tasks/*.md
+  complaints:
+    - id: intent
+      optimized: true
+      checks:
+        - skills/inspire-adr/checks/adr-file-created.ts
+        - skills/inspire-adr/checks/kb-review-passes.ts
+        - skills/inspire-adr/checks/records-a-decision.ts
+        - skills/inspire-adr/checks/follows-the-skill.ts
+
+inspire-code-react:
+  fixture: ~/inspire-bench-wt/fixtures/simple-case-scaffold
+  tasks: skills/inspire-code-react/tasks/*.md
+  complaints:                       # one per item of the hand version's "Before you finish" checklist
+    - id: intent
+      optimized: false
+      checks: [skills/inspire-code-react/checks/z-intent.ts]
+    - id: api-behind-interface
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c1-api-interface.ts, skills/inspire-code-react/checks/j1-api-interface.ts]
+    - id: literal-routes
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c2-no-literal-routes.ts]
+    - id: inline-mocks
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c3-mocks-in-specs.ts, skills/inspire-code-react/checks/j4-test-data.ts]
+    - id: hardcoded-strings
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c4-jsx-literals.ts, skills/inspire-code-react/checks/j2-strings.ts]
+    - id: form-errors-not-announced
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c5-form-errors.ts, skills/inspire-code-react/checks/j3-forms.ts]
+    - id: query-keys
+      optimized: false
+      checks: [skills/inspire-code-react/checks/c6-query-keys.ts]
+
+inspire-code-nestjs:
+  fixture: ~/inspire-bench-wt/fixtures/simple-case-scaffold
+  tasks: skills/inspire-code-nestjs/tasks/*.md
+  complaints:
+    - id: intent
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/z-intent.ts]
+    - id: swagger
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/c1-swagger.ts]
+    - id: http-errors-in-services
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/c2-errors.ts, skills/inspire-code-nestjs/checks/j1-errors.ts]
+    - id: impure-domain
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/c3-domain-pure.ts]
+    - id: unaudited-mutations
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/c4-audit.ts, skills/inspire-code-nestjs/checks/j2-audit.ts]
+    - id: missing-service-specs
+      optimized: false
+      checks: [skills/inspire-code-nestjs/checks/c5-service-specs.ts]

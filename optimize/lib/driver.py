@@ -20,18 +20,23 @@ MATERIALIZE = PLUGIN / "scripts" / "materialize.sh"
 COMPLAINTS = OPTIMIZE / "complaints.yaml"
 RUNS = OPTIMIZE / "runs"
 MIN_TASKS = 3
+EXEC_TIMEOUT = 1800
+WORKERS = 4
+FIXTURE_IGNORE = shutil.ignore_patterns(".git", "node_modules", "dist", "coverage")
 
 TRAIN = {"batch_size": 4, "num_epochs": 2, "accumulation": 1}
 GRADIENT = {"minibatch_size": 4, "merge_batch_size": 4}
+EVALUATION = {"gate_metric": "soft"}
 MODEL = {"backend": "claude", "optimizer_backend": "claude_chat", "target_backend": "claude_chat", "optimizer": "claude-opus-5-5"}
 
 NO_SKILLOPT_HOME = "SKILLOPT_HOME must point at a source checkout of microsoft/skillopt (its configs/ are not in the wheel)."
 NOTHING_TO_DO = "Nothing to optimize: every complaint is optimized: true."
 UNKNOWN_SKILL = "{skill}: no such skill under plugin/base/skills/"
-TOO_FEW_TASKS = "{skill}/{complaint}: {n} task(s), need at least {min} (one each for train, val and test)."
+TOO_FEW_TASKS = "{skill}: {n} task(s), need at least {min} (val, test and train)."
 MISSING_CHECK = "{skill}/{complaint}: check not found: {path}"
 NO_CHECKS = "{skill}/{complaint}: no checks"
-PLAN_LINE = "{skill}: {pending} pending of {total} complaint(s), {tasks} task(s)"
+MISSING_FIXTURE = "{skill}: fixture not found: {path}"
+PLAN_LINE = "{skill}: {pending} pending of {total} complaint(s), {checks} check(s), {tasks} task(s)"
 RUN_DONE = "{skill}: best skill at {best}\n  review: diff -u {source} {best}"
 RUN_FAILED = "{skill}: SkillOpt exited {code}, see {out}"
 
@@ -40,33 +45,53 @@ def fail(message: str) -> None:
     sys.exit(message)
 
 
-def resolve_items(skill: str, complaints: list[dict]) -> dict[str, list[dict]]:
+def local_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else OPTIMIZE / path
+
+
+def resolve_checks(skill: str, entry: dict) -> list[str]:
+    checks: list[str] = []
+    for complaint in entry["complaints"]:
+        if not complaint.get("checks"):
+            fail(NO_CHECKS.format(skill=skill, complaint=complaint["id"]))
+        for check in complaint["checks"]:
+            path = OPTIMIZE / check
+            if not path.is_file():
+                fail(MISSING_CHECK.format(skill=skill, complaint=complaint["id"], path=path))
+            if str(path) not in checks:
+                checks.append(str(path))
+    return checks
+
+
+def resolve_items(skill: str, entry: dict) -> dict[str, list[dict]]:
+    tasks = sorted(OPTIMIZE.glob(entry["tasks"]))
+    if len(tasks) < MIN_TASKS:
+        fail(TOO_FEW_TASKS.format(skill=skill, n=len(tasks), min=MIN_TASKS))
+    checks = resolve_checks(skill, entry)
+    n_val = max(1, len(tasks) // 3)
     splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
-    for complaint in complaints:
-        cid = complaint["id"]
-        tasks = sorted(OPTIMIZE.glob(complaint["tasks"]))
-        if len(tasks) < MIN_TASKS:
-            fail(TOO_FEW_TASKS.format(skill=skill, complaint=cid, n=len(tasks), min=MIN_TASKS))
-        checks = [OPTIMIZE / c for c in complaint.get("checks") or []]
-        if not checks:
-            fail(NO_CHECKS.format(skill=skill, complaint=cid))
-        for check in checks:
-            if not check.is_file():
-                fail(MISSING_CHECK.format(skill=skill, complaint=cid, path=check))
-        for i, task in enumerate(tasks):
-            fixture = task.with_suffix("")
-            split = "val" if i == 0 else "test" if i == 1 else "train"
-            splits[split].append({
-                "id": f"{cid}--{task.stem}",
-                "task_type": cid,
-                "prompt": task.read_text(encoding="utf-8").strip(),
-                "fixture": str(fixture) if fixture.is_dir() else "",
-                "checks": [str(c) for c in checks],
-            })
+    for i, task in enumerate(tasks):
+        fixture = task.with_suffix("")
+        split = "val" if i < n_val else "test" if i == n_val else "train"
+        splits[split].append({
+            "id": task.stem,
+            "task_type": skill,
+            "prompt": task.read_text(encoding="utf-8").strip(),
+            "fixture": str(fixture) if fixture.is_dir() else "",
+            "checks": checks,
+        })
     return splits
 
 
-def materialize(workspace: Path) -> None:
+def prepare_workspace(skill: str, entry: dict, workspace: Path) -> None:
+    if entry.get("fixture"):
+        fixture = local_path(entry["fixture"])
+        if not fixture.is_dir():
+            fail(MISSING_FIXTURE.format(skill=skill, path=fixture))
+        shutil.copytree(fixture, workspace, ignore=FIXTURE_IGNORE)
+        subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+        return
     workspace.mkdir(parents=True)
     subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
     subprocess.run(
@@ -75,17 +100,18 @@ def materialize(workspace: Path) -> None:
     )
 
 
-def optimize(skill: str, complaints: list[dict], skillopt_home: Path) -> None:
+def optimize(skill: str, entry: dict, skillopt_home: Path) -> None:
     from inspire_env import split_frontmatter
 
     source = SKILLS / skill / "SKILL.md"
     run = RUNS / skill / time.strftime("%Y%m%d-%H%M%S")
-    splits = resolve_items(skill, complaints)
-    for split, items in splits.items():
+    for split, items in resolve_items(skill, entry).items():
         (run / "data" / split).mkdir(parents=True)
         (run / "data" / split / "items.json").write_text(json.dumps(items, indent=2), encoding="utf-8")
 
-    materialize(run / "workspace")
+    prepare_workspace(skill, entry, run / "workspace")
+    shutil.rmtree(run / "workspace" / ".claude" / "skills" / skill, ignore_errors=True)
+    shutil.copytree(SKILLS / skill, run / "workspace" / ".claude" / "skills" / skill)
     body = run / "initial_skill.md"
     body.write_text(split_frontmatter(source.read_text(encoding="utf-8"))[1], encoding="utf-8")
 
@@ -94,13 +120,16 @@ def optimize(skill: str, complaints: list[dict], skillopt_home: Path) -> None:
         "model": MODEL,
         "train": TRAIN,
         "gradient": GRADIENT,
+        "evaluation": EVALUATION,
         "env": {
             "name": "inspire",
             "skill_init": str(body),
             "split_mode": "split_dir",
             "split_dir": str(run / "data"),
             "out_root": str(run / "skillopt"),
-            "exec_timeout": 900,
+            "exec_timeout": EXEC_TIMEOUT,
+            "workers": WORKERS,
+            "analyst_workers": WORKERS,
             "skill_name": skill,
             "skill_source": str(source),
             "workspace_template": str(run / "workspace"),
@@ -139,11 +168,11 @@ def main() -> None:
     if args.train:
         return train(args.train)
 
-    catalog: dict[str, list[dict]] = yaml.safe_load(COMPLAINTS.read_text(encoding="utf-8")) or {}
+    catalog: dict[str, dict] = yaml.safe_load(COMPLAINTS.read_text(encoding="utf-8")) or {}
     pending = {
-        skill: complaints
-        for skill, complaints in catalog.items()
-        if (not args.skills or skill in args.skills) and any(not c.get("optimized") for c in complaints)
+        skill: entry
+        for skill, entry in catalog.items()
+        if (not args.skills or skill in args.skills) and any(not c.get("optimized") for c in entry["complaints"])
     }
     for skill in pending:
         if not (SKILLS / skill / "SKILL.md").is_file():
@@ -152,10 +181,16 @@ def main() -> None:
         print(NOTHING_TO_DO)
         return
 
-    for skill, complaints in pending.items():
-        splits = resolve_items(skill, complaints)
-        tasks = sum(len(items) for items in splits.values())
-        print(PLAN_LINE.format(skill=skill, pending=sum(not c.get("optimized") for c in complaints), total=len(complaints), tasks=tasks))
+    for skill, entry in pending.items():
+        splits = resolve_items(skill, entry)
+        complaints = entry["complaints"]
+        print(PLAN_LINE.format(
+            skill=skill,
+            pending=sum(not c.get("optimized") for c in complaints),
+            total=len(complaints),
+            checks=len(resolve_checks(skill, entry)),
+            tasks=sum(len(items) for items in splits.values()),
+        ))
     if args.dry_run:
         return
 
@@ -163,8 +198,8 @@ def main() -> None:
     if not home or not (Path(home) / "configs" / "_base_" / "default.yaml").is_file():
         fail(NO_SKILLOPT_HOME)
     sys.path.insert(0, str(LIB))
-    for skill, complaints in pending.items():
-        optimize(skill, complaints, Path(home))
+    for skill, entry in pending.items():
+        optimize(skill, entry, Path(home))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { defineCheck } from '../../../../lib/check.ts'
+import { defineCheck } from '../../../lib/check.ts'
 
 export default defineCheck({
   kind: 'deterministic',
