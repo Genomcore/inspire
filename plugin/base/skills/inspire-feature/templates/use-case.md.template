@@ -14,10 +14,10 @@
 **Depends on:** [[{feature-id}]], [[{feature-id}]]
 <!-- omit the Depends on line entirely when there are no dependencies -->
 
-## Actor: Actor
+## UC1: Actor
 {Primary persona}
 
-## Preconditions: Preconditions
+## UC2: Preconditions
 - `P1` — {what must be true before this flow starts}
 - `P2` — {a second precondition, or delete this line}
 
@@ -31,7 +31,7 @@
   is written as the single line `None.`
 -->
 
-## Main flow: Main flow
+## UC3: Main flow
 1. `B1` — {Step 1}
 2. `B2` — {Step 2}
 
@@ -40,13 +40,13 @@
   identity, so deleting a step leaves a gap rather than renumbering the survivors.
 -->
 
-## Alternative flows: Alternative flows
+## UC4: Alternative flows
 ### AF-1: {Description}
 
-## Error flows: Error flows
+## UC5: Error flows
 ### EF-1: {Description}
 
-## Postconditions: Postconditions
+## UC6: Postconditions
 - `Q1` — {what is true after successful completion}
 
 <!--
@@ -55,7 +55,7 @@
   returns(field) — prose-only otherwise.
 -->
 
-## Acceptance criteria: Acceptance criteria
+## UC7: Acceptance criteria
 <!-- ids are stable: never renumber; a new criterion takes the next free id; never reuse a deleted id; gaps are legal -->
 - [ ] AC-1: {Testable criterion 1}
 - [ ] AC-2: {Testable criterion 2}

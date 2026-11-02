@@ -1,48 +1,28 @@
 #!/usr/bin/env bash
 # .inspire/bin/heading-keys.sh
 #
-# Rewrites each bare templated heading of a KB artifact into the `{key}: {label}`
-# shape, with the key as its English label: `## Fields` becomes `## Fields: Fields`.
-# A heading that already carries a label, an unknown heading, and anything inside
-# frontmatter, a fence or an HTML comment are left as they are.
+# Rewrites each templated heading of a KB artifact that still carries its English
+# section name into the `{id}: {label}` shape: `## Fields` becomes `## ENT4: Fields`,
+# and `## Fields: Campos` becomes `## ENT4: Campos`. The ids are `SDD_SECTION_IDS`
+# in _lib.sh. A heading that already carries an id, an unknown heading, and
+# anything inside frontmatter, a fence or an HTML comment are left as they are.
 #
 # Usage:
 #   .inspire/bin/heading-keys.sh --list [path...]   # print `{file}<TAB>{count}`, write nothing
 #   .inspire/bin/heading-keys.sh [path...]          # rewrite, print `rewrote<TAB>{file}<TAB>{count}`
-#   .inspire/bin/heading-keys.sh --keys             # print `{kind}<TAB>{heading}` for every key
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
 
-KEYS_action='Purpose|Inputs|Outputs|Entities|Preconditions|Behavior|Postconditions|Errors'
-KEYS_entity='Purpose|Rationale|Invariants|Fields|Touched by'
-KEYS_feature='Actor|Preconditions|Main flow|Alternative flows|Error flows|Postconditions|Acceptance criteria'
-KEYS_adr='Context|Decision|Consequences|Consequences>Breaking changes|Alternatives considered|Related ADRs'
-KEYS_screen='Purpose|Bindings|Bindings>Parameters|Bindings>Data|Bindings>Dispatches|Bindings>Navigation|Bindings>States|Render|Module-specific deviations|Current prototype|Notes'
-KEYS_pattern='Structure|Regions|Variants|Notes'
-KEYS_component='Structure|API / Slots|States|Variants|Instances'
-KEYS_layout='Frame|Geometry|Breakpoints|Composition|Variants|Adopters|Notes'
-KEYS_module='Overview|Relationships|Use cases|Screens|Domain|Module ADRs'
-KEYS_spike='Question|Scope|Learnings|Outcome'
 KINDS="action entity feature adr screen pattern component layout module spike"
 
 MODE="rewrite"
-case "${1:-}" in
-  --list) MODE="list"; shift ;;
-  --keys)
-    for kind in $KINDS; do
-      eval "keys=\$KEYS_$kind"
-      printf '%s\n' "$keys" | tr '|' '\n' | while IFS= read -r key; do
-        case "$key" in
-          *'>'*) printf '%s\t### %s\n' "$kind" "${key#*>}" ;;
-          *) printf '%s\t## %s\n' "$kind" "$key" ;;
-        esac
-      done
-    done
-    exit 0 ;;
-esac
+if [ "${1:-}" = "--list" ]; then
+  MODE="list"
+  shift
+fi
 [ $# -eq 0 ] && set -- "$SDD_KB_ROOT"
 
 find_flat() {
@@ -72,12 +52,18 @@ files_of_kind() {
 }
 
 rewrite_headings() {
-  awk -v keys="$2" '
+  awk -v kind="$2" '
       NR == 1 && $0 == "---" { fm = 1; print; next }
       fm { if ($0 == "---") fm = 0; print; next }
       sdd_fence($0) { print; next }
       sdd_in_fence() { print; next }
-      BEGIN { n = split(keys, k, "|"); for (i = 1; i <= n; i++) known[k[i]] = 1 }
+      BEGIN {
+        n = split(ENVIRON["SDD_SECTION_IDS"], rows, "\n")
+        for (i = 1; i <= n; i++) {
+          split(rows[i], f, "\t")
+          if (f[1] == kind) id_of[f[4] ">" f[3]] = f[2]
+        }
+      }
       {
         line = $0; rest = line; visible = ""
         while (rest != "") {
@@ -92,24 +78,31 @@ rewrite_headings() {
         if (visible != line) { print; next }
       }
       /^## / {
-        parent = sdd_heading_key($0, "## ")
-        if (index($0, ":") == 0 && (parent in known)) { print "## " parent ": " parent; count++; next }
+        parent = sdd_heading_name($0, "## ")
+        if (relabel($0, "## ", ">")) next
       }
-      /^### / {
-        h = sdd_heading_key($0, "### ")
-        if (index($0, ":") == 0 && ((parent ">" h) in known)) { print "### " h ": " h; count++; next }
-      }
+      /^### / { if (relabel($0, "### ", parent ">")) next }
       { print }
       END { print count + 0 > "/dev/stderr" }
+      function relabel(line, prefix, scope,   key, label) {
+        key = sdd_heading_key(line, prefix)
+        if (!((scope key) in id_of)) return 0
+        label = substr(line, length(prefix) + 1)
+        if (index(label, ": ") > 0) label = substr(label, index(label, ": ") + 2)
+        else { sub(/:?[[:space:]]*$/, "", label) }
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", label)
+        print prefix id_of[scope key] ": " label
+        count++
+        return 1
+      }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
 status=0
 for kind in $KINDS; do
-  eval "keys=\$KEYS_$kind"
   while IFS= read -r file; do
     [ -z "$file" ] && continue
-    count="$(rewrite_headings "$file" "$keys" 2>&1 >"$file.tmp")"
+    count="$(rewrite_headings "$file" "$kind" 2>&1 >"$file.tmp")"
     case "$count" in ''|*[!0-9]*) false ;; esac || {
       rm -f "$file.tmp"; printf 'failed\t%s\n' "$file"; status=1; continue
     }

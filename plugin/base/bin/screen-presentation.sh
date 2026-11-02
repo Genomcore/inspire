@@ -209,12 +209,12 @@ check_touch() {
   body="$(awk '
     /^---[ \t]*$/ && NR == 1 { fm = 1; next }
     fm { if ($0 ~ /^---[ \t]*$/) fm = 0; next }
-    /^## Notes/ { skip = 1; next }
+    sdd_heading_name($0, "## ") == "Notes" { skip = 1; next }
     /^## / { skip = 0 }
     /<!--/ { incomment = 1 }
     incomment { if ($0 ~ /-->/) incomment = 0; next }
     !skip { print }
-  ' "$file")"
+  '"${SDD_AWK_HEADING_FUNCS}" "$file")"
   printf '%s' "$body" | grep -qi 'hover' || return 0
   printf '%s' "$body" | grep -qiE 'touch|tap|long-press|long press' && return 0
   emit "$file" "names a hover affordance and no touch equivalent: give it a tap or long-press path"

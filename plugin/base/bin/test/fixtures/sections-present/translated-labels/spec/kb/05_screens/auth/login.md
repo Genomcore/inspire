@@ -9,13 +9,13 @@ lifecycle: accepted
 
 **Features:** FEAT-01
 
-## Purpose: Propósito
+## SCR1: Propósito
 
 Un miembro sin sesión llega aquí y quiere una.
 
-## Bindings: Vínculos
+## SCR2: Vínculos
 
-### States: Estados
+### SCR7: Estados
 
 | Key | When | Presentation |
 |---|---|---|

@@ -661,8 +661,8 @@ sdd_count_by_severity() {
 # ─────────────────────────────────────────────────────────────────────────────
 # Markdown body section extraction
 #
-# Extracts the content under a markdown H2 header, found by its key (see
-# sdd_heading_key), up to the next H2 or EOF. Frontmatter and prose above the
+# Extracts the content under a markdown H2 header, found by its section name
+# (see sdd_heading_name), up to the next H2 or EOF. Frontmatter and prose above the
 # first H2 are ignored.
 #
 # Two structures are read the same way by every helper below, because getting
@@ -744,6 +744,71 @@ SDD_AWK_FENCE_FUNCS='
   function sdd_in_fence() { return sdd_fence_ch != "" }
 '
 
+SDD_SECTION_IDS='entity	ENT1	Purpose	
+entity	ENT2	Rationale	
+entity	ENT3	Invariants	
+entity	ENT4	Fields	
+entity	ENT5	Touched by	
+action	ACT1	Purpose	
+action	ACT2	Inputs	
+action	ACT3	Outputs	
+action	ACT4	Entities	
+action	ACT5	Preconditions	
+action	ACT6	Behavior	
+action	ACT7	Postconditions	
+action	ACT8	Errors	
+feature	UC1	Actor	
+feature	UC2	Preconditions	
+feature	UC3	Main flow	
+feature	UC4	Alternative flows	
+feature	UC5	Error flows	
+feature	UC6	Postconditions	
+feature	UC7	Acceptance criteria	
+adr	ADR1	Context	
+adr	ADR2	Decision	
+adr	ADR3	Consequences	
+adr	ADR4	Breaking changes	Consequences
+adr	ADR5	Alternatives considered	
+adr	ADR6	Related ADRs	
+screen	SCR1	Purpose	
+screen	SCR2	Bindings	
+screen	SCR3	Parameters	Bindings
+screen	SCR4	Data	Bindings
+screen	SCR5	Dispatches	Bindings
+screen	SCR6	Navigation	Bindings
+screen	SCR7	States	Bindings
+screen	SCR8	Render	
+screen	SCR9	Module-specific deviations	
+screen	SCR10	Current prototype	
+screen	SCR11	Notes	
+pattern	PAT1	Structure	
+pattern	PAT2	Regions	
+pattern	PAT3	Variants	
+pattern	PAT4	Notes	
+component	CMP1	Structure	
+component	CMP2	API / Slots	
+component	CMP3	States	
+component	CMP4	Variants	
+component	CMP5	Instances	
+layout	LAY1	Frame	
+layout	LAY2	Geometry	
+layout	LAY3	Breakpoints	
+layout	LAY4	Composition	
+layout	LAY5	Variants	
+layout	LAY6	Adopters	
+layout	LAY7	Notes	
+module	MOD1	Overview	
+module	MOD2	Relationships	
+module	MOD3	Use cases	
+module	MOD4	Screens	
+module	MOD5	Domain	
+module	MOD6	Module ADRs	
+spike	SPK1	Question	
+spike	SPK2	Scope	
+spike	SPK3	Learnings	
+spike	SPK4	Outcome	'
+export SDD_SECTION_IDS
+
 SDD_AWK_HEADING_FUNCS='
   function sdd_heading_key(line, prefix,   h) {
     if (index(line, prefix) != 1) return ""
@@ -752,6 +817,15 @@ SDD_AWK_HEADING_FUNCS='
     sub(/:$/, "", h)
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
     return h
+  }
+  function sdd_heading_name(line, prefix,   k, n, i, rows, f) {
+    if (!sdd_ids_loaded) {
+      n = split(ENVIRON["SDD_SECTION_IDS"], rows, "\n")
+      for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); sdd_name_of[f[2]] = f[3] }
+      sdd_ids_loaded = 1
+    }
+    k = sdd_heading_key(line, prefix)
+    return (k in sdd_name_of) ? sdd_name_of[k] : k
   }
 '
 
@@ -763,7 +837,7 @@ sdd_body_section() {
   local header="$2"
   awk -v header="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      sdd_heading_key($0, "## ") == header { capture = 1; next }
+      sdd_heading_name($0, "## ") == header { capture = 1; next }
       /^## / && capture { exit }
       capture { print }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
@@ -810,7 +884,7 @@ sdd_has_section() {
   esac
   awk -v pfx="$prefix" -v hdr="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      sdd_heading_key($0, pfx) == hdr { found = 1; exit }
+      sdd_heading_name($0, pfx) == hdr { found = 1; exit }
       END { exit !found }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
@@ -825,9 +899,9 @@ sdd_has_subsection() {
   local header="$3"
   awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      sdd_heading_key($0, "## ") == ph { inparent = 1; next }
+      sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
-      inparent && sdd_heading_key($0, "### ") == sh { found = 1; exit }
+      inparent && sdd_heading_name($0, "### ") == sh { found = 1; exit }
       END { exit !found }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
@@ -844,9 +918,9 @@ sdd_body_subsection() {
   local header="$3"
   awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      !capture && sdd_heading_key($0, "## ") == ph { inparent = 1; next }
+      !capture && sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { if (capture) exit; inparent = 0; next }
-      inparent && sdd_heading_key($0, "### ") == sh { capture = 1; next }
+      inparent && sdd_heading_name($0, "### ") == sh { capture = 1; next }
       /^### / && capture { exit }
       capture { print }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"

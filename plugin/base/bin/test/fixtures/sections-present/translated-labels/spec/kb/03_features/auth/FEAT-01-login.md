@@ -3,24 +3,24 @@
 **State:** 🟡 Planned
 **Priority:** Core
 
-## Actor: Actor
+## UC1: Actor
 Operador
 
-## Preconditions: Precondiciones
+## UC2: Precondiciones
 El operador tiene una cuenta.
 
-## Main flow: Flujo principal
+## UC3: Flujo principal
 1. El operador envía correo y contraseña.
 2. El sistema emite una sesión.
 
-## Alternative flows: Flujos alternativos
+## UC4: Flujos alternativos
 ### AF-1: Ya ha iniciado sesión
 
-## Error flows: Flujos de error
+## UC5: Flujos de error
 ### EF-1: Contraseña incorrecta
 
-## Postconditions: Postcondiciones
+## UC6: Postcondiciones
 Existe una sesión para el operador.
 
-## Acceptance criteria: Criterios de aceptación
+## UC7: Criterios de aceptación
 - [ ] AC-1: Un correo y una contraseña válidos producen una sesión.

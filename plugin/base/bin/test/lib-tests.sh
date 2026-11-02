@@ -144,38 +144,42 @@ hasnt "body_subsection stops at the next H3"       "unrelated"             "$sub
 hasnt "body_subsection takes the FIRST match only" "second parent"         "$sub"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Heading keys — `## {key}` or `## {key}: {label}`, looked up by key
+# Section ids — `## {ID}: {label}` or the legacy name, looked up by section name
 # ─────────────────────────────────────────────────────────────────────────────
 
 cat > "$ROOT/keyed.md" <<'EOF'
-## Fields: Campos
+## ENT4: Campos
 | Field | Type |
 
 ## Touched by:
 modificada
 
-## Consequences: Consecuencias
-### Breaking changes: Cambios incompatibles
+## ADR3: Consecuencias
+### ADR4: Cambios incompatibles
 - el formato del token cambia
 
 ## Fieldset
 not the Fields section
 
+## ENT99: Unknown id
+an id in no table names no section
+
 ## Errors:sin espacio
 EOF
 
-yes "has_section finds a key before a label"       sdd_has_section "$ROOT/keyed.md" "Fields"
+yes "has_section finds a section by its id"        sdd_has_section "$ROOT/keyed.md" "Fields"
 no  "has_section never matches the label"          sdd_has_section "$ROOT/keyed.md" "Campos"
-yes "has_section reads a bare trailing colon"      sdd_has_section "$ROOT/keyed.md" "Touched by"
-no  "has_section never matches a key's prefix"     sdd_has_section "$ROOT/keyed.md" "Field"
+yes "has_section reads a legacy name, bare colon"  sdd_has_section "$ROOT/keyed.md" "Touched by"
+no  "has_section never matches a name's prefix"    sdd_has_section "$ROOT/keyed.md" "Field"
 no  "has_section needs a space after the colon"    sdd_has_section "$ROOT/keyed.md" "Errors"
-yes "has_subsection finds keyed parent and child" \
+yes "has_section matches an unknown id literally"  sdd_has_section "$ROOT/keyed.md" "ENT99"
+yes "has_subsection finds id parent and id child" \
     sdd_has_subsection "$ROOT/keyed.md" "Consequences" "Breaking changes"
-has   "body_section returns a keyed section's body" "Field | Type" \
+has   "body_section returns an id section's body"   "Field | Type" \
       "$(sdd_body_section "$ROOT/keyed.md" "Fields")"
-hasnt "body_section stops at the next keyed H2"     "modificada" \
+hasnt "body_section stops at the next H2"           "modificada" \
       "$(sdd_body_section "$ROOT/keyed.md" "Fields")"
-has   "body_subsection reads under keyed headings"  "el formato" \
+has   "body_subsection reads under id headings"     "el formato" \
       "$(sdd_body_subsection "$ROOT/keyed.md" "Consequences" "Breaking changes")"
 
 # ─────────────────────────────────────────────────────────────────────────────

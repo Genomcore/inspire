@@ -31,9 +31,9 @@ has_decision_section() {
     /^(```|~~~)/ { fence = !fence; next }
     !fence && /<!--/ && !/-->/ { incomment = 1; next }
     incomment { if (/-->/) incomment = 0; next }
-    !fence && /^## Decision[[:space:]]*(:([[:space:]].*)?)?$/ { found = 1; exit }
+    !fence && sdd_heading_name($0, "## ") == "Decision" { found = 1; exit }
     END { exit !found }
-  ' "$1"
+  '"${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
 split_adr() {
@@ -54,7 +54,7 @@ split_adr() {
       if (incomment) { if (/-->/) incomment = 0 }
       else if (!fence && /<!--/ && !/-->/) incomment = 1
       else if (!fence && /^## /) {
-        section = ($0 ~ /^## Decision[[:space:]]*(:([[:space:]].*)?)?$/) ? "dec" : "rat"
+        section = (sdd_heading_name($0, "## ") == "Decision") ? "dec" : "rat"
         started = 1
       }
     }
@@ -90,7 +90,7 @@ split_adr() {
       for (i = 1; i <= nr; i++) head[++nh] = rat[i]
       flush(rat_out, nh, head)
     }
-  ' "$file" || return 1
+  '"${SDD_AWK_HEADING_FUNCS}" "$file" || return 1
 
   mv "$file.tmp" "$file"
   mv "$rationale.tmp" "$rationale"

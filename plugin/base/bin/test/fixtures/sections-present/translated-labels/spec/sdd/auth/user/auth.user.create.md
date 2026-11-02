@@ -8,22 +8,22 @@ requires: []
 superseded_by: null
 ---
 
-## Purpose: Propósito
+## ACT1: Propósito
 Crear un usuario.
 
-## Inputs: Entradas
+## ACT2: Entradas
 
 | Parameter | Type  | Required | Description |
 |-----------|-------|----------|-------------|
 | `email`   | email | yes      | Acceso.     |
 
-## Outputs: Salidas
+## ACT3: Salidas
 
 | Field | Type | Description          |
 |-------|------|----------------------|
 | `id`  | uuid | Id del nuevo usuario.|
 
-## Entities: Entidades
+## ACT4: Entidades
 
 ### [[auth.user|auth::user]]
 **Effect:** create
@@ -32,8 +32,8 @@ Crear un usuario.
 |-------|---------|------|----------|-------|
 | `id`  | written | uuid | `uuid()` |       |
 
-## Behavior: Comportamiento
+## ACT6: Comportamiento
 1. Persistir.
 
-## Errors: Errores
+## ACT8: Errores
 - `none`

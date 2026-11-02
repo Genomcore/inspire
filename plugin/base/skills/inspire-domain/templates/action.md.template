@@ -8,10 +8,10 @@ requires: []
 superseded_by: null
 ---
 
-## Purpose: Purpose
+## ACT1: Purpose
 {{ONE_PARAGRAPH_RATIONALE}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds that claim.
 
-## Inputs: Inputs
+## ACT2: Inputs
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -30,7 +30,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
   is the only home for required-ness, and two spellings of one fact drift.
 -->
 
-## Outputs: Outputs
+## ACT3: Outputs
 
 <!--
   Pick the sub-pattern that fits and delete the others:
@@ -44,7 +44,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 |---|---|---|
 | `{{OUTPUT_FIELD}}` | `{{TYPE}}` | {{DESCRIPTION}} |
 
-## Entities: Entities
+## ACT4: Entities
 
 ### [[{{MODULE}}.{{ENTITY}}|{{MODULE}}::{{ENTITY}}]]
 **As input:** {{AS_INPUT}} · **Effect:** {{EFFECT}}
@@ -53,7 +53,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 |---|---|---|---|---|
 | `{{FIELD}}` | {{TOUCH}} | `{{TYPE}}` | {{MAPPING}} | {{NOTES}} |
 
-## Preconditions: Preconditions
+## ACT5: Preconditions
 - `P1` — {{OPTIONAL_HEAD_FROM_V3_ELSE_DELETE_THIS_SEGMENT}} — {{WHAT_MUST_HOLD_BEFORE}}.
 - `P2` — {{PRECONDITION_PROSE_WITH_NO_HEAD}}.
 
@@ -65,7 +65,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
   bullets with the single line `None.` — the section still has to be present.
 -->
 
-## Behavior: Behavior
+## ACT6: Behavior
 1. `B1` — {{STEP_DESCRIPTION}}, following the model defined in [[{{BACK_SOURCE}}|{{BACK_SOURCE_DISPLAY}}]].
 2. `B2` — {{STEP_DESCRIPTION_2}}.
 
@@ -74,7 +74,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
   `Bn` key is identity. Deleting a step leaves a gap; nothing is renumbered or reused.
 -->
 
-## Postconditions: Postconditions
+## ACT7: Postconditions
 - `Q1` — {{OPTIONAL_HEAD_FROM_V4_ELSE_DELETE_THIS_SEGMENT}} — {{WHAT_HOLDS_AFTERWARDS}}.
 - `Q2` — {{POSTCONDITION_PROSE_WITH_NO_HEAD}}.
 
@@ -85,7 +85,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
   does not — it is the regression guard.
 -->
 
-## Errors: Errors
+## ACT8: Errors
 - `{{ERROR_CODE}}` — {{OPTIONAL_HEAD_FROM_V5_ELSE_DELETE_THIS_SEGMENT}} — operator-facing message: "{{MESSAGE}}"
 
 <!--

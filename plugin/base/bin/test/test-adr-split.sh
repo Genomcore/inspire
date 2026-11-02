@@ -152,10 +152,10 @@ printf '# Bare\n\n## Decision\nUse it.\n\n## Context\nWhy.\n' > "$ADR/adr-bare.m
 eq "with no header lines, the link goes under the H1" "$(cat "$ADR/adr-bare.md")" \
   "$(printf '# Bare\n\n**Rationale:** [[adr-bare.rationale]]\n\n## Decision\nUse it.')"
 
-printf '# Opacos\n\n## Context: Contexto\nPor qué.\n\n## Decision: Decisión\nUsarlo.\n' > "$ADR/adr-es.md"
+printf '# Opacos\n\n## ADR1: Contexto\nPor qué.\n\n## ADR2: Decisión\nUsarlo.\n' > "$ADR/adr-es.md"
 "$SPLIT" "$ADR/adr-es.md" >/dev/null
-eq "a translated label still keys the decision" "$(cat "$ADR/adr-es.md")" \
-  "$(printf '# Opacos\n\n**Rationale:** [[adr-es.rationale]]\n\n## Decision: Decisión\nUsarlo.')"
+eq "a section id still keys the decision" "$(cat "$ADR/adr-es.md")" \
+  "$(printf '# Opacos\n\n**Rationale:** [[adr-es.rationale]]\n\n## ADR2: Decisión\nUsarlo.')"
 
 echo ""
 echo "Passed: $pass · Failed: $fail"

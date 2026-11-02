@@ -57,10 +57,11 @@
 # lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
 # file written before the identity block existed starts blocking a commit.
 #
-# A section is "present" when an H2 header with its key exists in the body —
-# `## Fields` or `## Fields: Campos`, the label after the key being free text in
-# the project's language (sdd_heading_key in _lib.sh) — not inside frontmatter, not inside a fenced code block (a template
-# quoted in a fence documents a section, it does not declare one), and, for the
+# A section is "present" when an H2 header with its id exists in the body —
+# `## ENT4: Campos`, or the legacy bare name `## Fields`, the label after the id
+# being free text in the project's language (sdd_heading_name in _lib.sh) — not
+# inside frontmatter, not inside a fenced code block (a template quoted in a
+# fence documents a section, it does not declare one), and, for the
 # three non-domain layers, not inside an HTML comment (their templates carry
 # guidance comments that name the very sections this rule looks for).
 # A section is "non-empty" when at least one line of body content (other than
@@ -190,7 +191,7 @@ strip_html_comments() {
 h2_stream() {
   awk \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      /^## / { print sdd_heading_key($0, "## ") }
+      /^## / { print sdd_heading_name($0, "## ") }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
@@ -243,6 +244,29 @@ sections_report() {
       "$kind has empty section(s) (header present but no body content): $empty"
     sdd_count_by_severity "$sev"
   fi
+}
+
+check_foreign_ids() {
+  local file="$1" target="$2" kind="$3" fmt="$4" found
+  found="$(awk -v fmt="$fmt" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      BEGIN {
+        n = split(ENVIRON["SDD_SECTION_IDS"], rows, "\n")
+        for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); fmt_of[f[2]] = f[1] }
+      }
+      /^###? / {
+        k = sdd_heading_key($0, ($0 ~ /^### /) ? "### " : "## ")
+        if ((k in fmt_of) && fmt_of[k] != fmt && !(k in seen)) {
+          seen[k] = 1
+          out = out (out == "" ? "" : ",") k
+        }
+      }
+      END { print out }
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file")"
+  [ -z "$found" ] && return 0
+  sdd_finding "warning" "sections-present" "$target" \
+    "$kind carries section id(s) of another format: $found"
+  sdd_count_warning
 }
 
 # join_list <item...> — ", "-joined, for the order message.
@@ -308,6 +332,7 @@ check_action() {
   sections_report "$file" "$file" "action descriptor" "error" "" \
     "${ACTION_CORE_SECTIONS[@]}"
   check_order "$file" "action descriptor" "OS-A10" "${ACTION_SECTIONS[@]}"
+  check_foreign_ids "$file" "$file" "action descriptor" action
 }
 
 check_entity() {
@@ -316,6 +341,7 @@ check_entity() {
   sections_report "$file" "$file" "entity document" "error" "Touched by" \
     "${ENTITY_SECTIONS[@]}"
   check_order "$file" "entity document" "-" "${ENTITY_SECTIONS[@]}"
+  check_foreign_ids "$file" "$file" "entity document" entity
 }
 
 # check_acceptance_criteria <read_file> <target>
@@ -396,6 +422,7 @@ check_feature() {
   sections_report "$tmp" "$file" "use-case file" "warning" "" \
     "${FEATURE_SECTIONS[@]}"
   check_acceptance_criteria "$tmp" "$file"
+  check_foreign_ids "$tmp" "$file" "use-case file" feature
 }
 
 check_breaking_changes() {
@@ -440,6 +467,7 @@ check_adr() {
     sdd_count_warning
     sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
     check_breaking_changes "$tmp" "$file"
+    check_foreign_ids "$tmp" "$file" "ADR" adr
     return 0
   fi
 
@@ -457,6 +485,7 @@ check_adr() {
   report_misplaced "$tmp" "$file" \
     "ADR decision carries rationale section(s), which belong in ${rationale##*/}" \
     "${ADR_RATIONALE_SECTIONS[@]}"
+  check_foreign_ids "$tmp" "$file" "ADR decision" adr
 }
 
 check_adr_rationale() {
@@ -474,6 +503,7 @@ check_adr_rationale() {
   report_misplaced "$tmp" "$file" \
     "ADR rationale carries the decision, which belongs in ${decision##*/}" \
     "${ADR_DECISION_SECTIONS[@]}"
+  check_foreign_ids "$tmp" "$file" "ADR rationale" adr
 }
 
 check_screen() {
@@ -524,6 +554,7 @@ check_screen() {
       "screen file carries a retired section: ## Instantiation — its declarations move to keyed ## Bindings rows"
     sdd_count_by_severity "$sev"
   fi
+  check_foreign_ids "$tmp" "$file" "screen file" screen
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

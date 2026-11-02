@@ -7,6 +7,7 @@ set -uo pipefail
 
 HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 KEYS="$HERE/../heading-keys.sh"
+source "$HERE/../_lib.sh"
 SECTIONS="$HERE/../sections-present.sh"
 SKILLS="$HERE/../../skills"
 
@@ -23,12 +24,18 @@ if [ ! -x "$KEYS" ]; then
   exit 1
 fi
 
-template_keys() {
-  local kind="$1" t
-  shift
+template_ids() {
+  local t
   for t in "$@"; do
-    grep -E '^#{2,3} ([^:]+): \1$' "$SKILLS/$t" | sed -E 's/^(#+ [^:]+): .*/\1/' \
-      | awk -v k="$kind" '{ print k "\t" $0 }'
+    awk '
+      /^## / { parent = "" }
+      /^#{2,3} [A-Z]+[0-9]+: / {
+        id = $2; sub(/:$/, "", id)
+        name = $0; sub(/^#+ [A-Z]+[0-9]+: /, "", name)
+        printf "%s\t%s\t%s\n", id, name, ($1 == "###" ? parent : "")
+        if ($1 == "##") parent = name
+      }
+    ' "$SKILLS/$t"
   done | sort -u
 }
 for pair in \
@@ -44,9 +51,10 @@ for pair in \
   "spike inspire-spike/templates/spike.md.template"; do
   set -- $pair
   kind="$1"; shift
-  want="$(IFS=' '; template_keys "$kind" "$@")"
-  got="$("$KEYS" --keys | awk -F'\t' -v k="$kind" '$1 == k' | sort -u)"
-  eq "the $kind keys are the template's headings" "$got" "$want"
+  want="$(template_ids "$@")"
+  got="$(printf '%s\n' "$SDD_SECTION_IDS" | awk -F'\t' -v k="$kind" '$1 == k { print $2 "\t" $3 "\t" $4 }' | sort -u)"
+  [ -n "$want" ] || bad "the $kind template carries no section id"
+  eq "the $kind ids are the template's headings" "$got" "$want"
 done
 
 ROOT="$(mktemp -d -t inspire-heading-keys-test.XXXXXX)" || exit 1
@@ -64,10 +72,10 @@ lifecycle: draft
 ## Purpose
 The user account. [[pdd|pdd]]
 
-## Rationale: Justificación
+## ENT2: Justificación
 Already keyed, so left alone.
 
-## Invariants
+## Invariants: Invariantes
 None beyond Fields constraints.
 
 <!--
@@ -117,23 +125,23 @@ has "the decision is rewritten"          "rewrote	$SDD_KB_ROOT/01_adr/adr-auth-s
 has "the screen is rewritten"            "rewrote	$SCREEN	4" "$out"
 
 E="$(cat "$ENTITY")"
-has   "a bare key gains its English label"  "## Purpose: Purpose" "$E"
-has   "a two-word key keeps its spacing"    "## Touched by: Touched by" "$E"
-has   "a keyed heading is left alone"       "## Rationale: Justificación" "$E"
-hasnt "a translated label is not doubled"   "Rationale: Rationale" "$E"
+has   "a bare name gains its id and keeps the name as label" "## ENT1: Purpose" "$E"
+has   "a two-word name maps to its id"     "## ENT5: Touched by" "$E"
+has   "a name with a label keeps the label" "## ENT3: Invariantes" "$E"
+has   "an id heading is left alone"         "## ENT2: Justificación" "$E"
 has   "an unknown heading stays as written" $'\n## Extra\n' "$(printf '\n%s\n' "$E")"
 has   "a field H3 stays as written"         $'\n### id\n' "$(printf '\n%s\n' "$E")"
 eq    "a commented and a fenced heading stay, the real one changes" \
-      "$(grep -c '^## Fields$' "$ENTITY") $(grep -c '^## Fields: Fields$' "$ENTITY")" "2 1"
+      "$(grep -c '^## Fields$' "$ENTITY") $(grep -c '^## ENT4: Fields$' "$ENTITY")" "2 1"
 has   "frontmatter is untouched"            $'---\nid: auth.user\nlifecycle: draft\n---' "$E"
 
 A="$(cat "$ADR")"
-has "Breaking changes under Consequences gains its label" $'## Consequences: Consequences\nWhat.\n\n### Breaking changes: Breaking changes' "$A"
-has "Breaking changes under another parent stays"         $'## Alternatives considered: Alternatives considered\n### Breaking changes\n' "$A"
+has "Breaking changes under Consequences gains its id" $'## ADR3: Consequences\nWhat.\n\n### ADR4: Breaking changes' "$A"
+has "Breaking changes under another parent stays"     $'## ADR5: Alternatives considered\n### Breaking changes\n' "$A"
 
 S="$(cat "$SCREEN")"
-has "a binding subsection gains its label" "### States: States" "$S"
-has "a Render region keeps its name"       $'## Render: Render\n\n### States\n' "$S"
+has "a binding subsection gains its id"  "### SCR7: States" "$S"
+has "a Render region keeps its name"      $'## SCR8: Render\n\n### States\n' "$S"
 
 findings="$("$SECTIONS" "$SDD_KB_ROOT" 2>&1 >/dev/null)"
 hasnt "the rewritten KB passes sections-present" "missing required" "$findings"

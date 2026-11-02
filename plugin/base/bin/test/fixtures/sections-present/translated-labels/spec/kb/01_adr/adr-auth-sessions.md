@@ -4,5 +4,5 @@
 **Modules affected:** [[auth]]
 **Rationale:** [[adr-auth-sessions.rationale]]
 
-## Decision: Decisión
+## ADR2: Decisión
 Los tokens de sesión son cadenas opacas, emitidas por el servidor.

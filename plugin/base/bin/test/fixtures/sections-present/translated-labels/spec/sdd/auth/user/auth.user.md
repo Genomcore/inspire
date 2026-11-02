@@ -5,22 +5,22 @@ entity: user
 lifecycle: accepted
 ---
 
-## Purpose: Propósito
+## ENT1: Propósito
 La cuenta de usuario.
 
-## Rationale: Justificación
+## ENT2: Justificación
 Modelo de identidad.
 
-## Invariants: Invariantes
+## ENT3: Invariantes
 None beyond Fields constraints.
 
-## Fields: Campos
+## ENT4: Campos
 
 | Field | Type | Notes          |
 |-------|------|----------------|
 | `id`  | uuid | Clave primaria.|
 
-## Touched by: Modificada por
+## ENT5: Modificada por
 
 | Action                                  | Touch   | Notes            |
 |-----------------------------------------|---------|------------------|

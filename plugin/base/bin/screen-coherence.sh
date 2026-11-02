@@ -132,7 +132,7 @@ sc_parse_bindings() {
     /^###[ \t]/ {
       h = $0
       sub(/^###[ \t]+/, "### ", h)
-      sect = sdd_heading_key(h, "### ")
+      sect = sdd_heading_name(h, "### ")
       print "SUB\t" sect
       hdr = 1
       next

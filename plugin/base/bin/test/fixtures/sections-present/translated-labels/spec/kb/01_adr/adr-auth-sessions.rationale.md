@@ -2,17 +2,17 @@
 
 **Decision:** [[adr-auth-sessions]]
 
-## Context: Contexto
+## ADR1: Contexto
 Las sesiones necesitan un identificador seguro en tránsito.
 
-## Consequences: Consecuencias
+## ADR3: Consecuencias
 Los clientes no pueden inspeccionar un token.
 
-### Breaking changes: Cambios incompatibles
+### ADR4: Cambios incompatibles
 - Ninguno.
 
-## Alternatives considered: Alternativas consideradas
+## ADR5: Alternativas consideradas
 1. **JWT firmados.** Descartado: la revocación es más difícil.
 
-## Related ADRs: ADR relacionados
+## ADR6: ADR relacionados
 - [[adr-auth-password-hashing]] — decisión hermana.

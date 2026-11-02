@@ -13,7 +13,7 @@
 
 {One-paragraph description of the pattern.}
 
-## Structure: Structure
+## PAT1: Structure
 
 1. {Structural element 1}
 2. {Structural element 2}
@@ -21,7 +21,7 @@
 A pattern carries no measurement: where its regions sit, at what size and at
 which width belongs to the [`layouts/`](../layouts) entry that frames it.
 
-## Regions: Regions
+## PAT2: Regions
 
 <!-- Regions are HOLES, never prop mirrors: a region says what kind of content it
      accepts, never which fields that content shows. A component's props belong to
@@ -36,11 +36,11 @@ which width belongs to the [`layouts/`](../layouts) entry that frames it.
 |---|---|---|---|
 | `{region}` | required | static | {the content this hole takes} |
 
-## Variants: Variants
+## PAT3: Variants
 
 - **{Variant name}** — {when to use it}.
 
-## Notes: Notes
+## PAT4: Notes
 
 <!-- Commentary a run never reads: no derivation carries this section, so a
      requirement written here reaches no persona and is lost. Requirements go

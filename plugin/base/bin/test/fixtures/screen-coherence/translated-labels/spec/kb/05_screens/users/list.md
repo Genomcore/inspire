@@ -10,34 +10,34 @@ lifecycle: accepted
 **Features:** FEAT-01
 **Pattern:** [[../patterns/list]]
 
-## Purpose: Propósito
+## SCR1: Propósito
 
 An administrator comes here to find one member of the workspace among many.
 The roster leads, so the reader sees who exists before choosing anyone to act
 on.
 
-## Bindings: Vínculos
+## SCR2: Vínculos
 
-### Data: Datos
+### SCR4: Datos
 
 | Key | Action | Notes |
 |---|---|---|
 | `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
 
-### Dispatches: Acciones
+### SCR5: Acciones
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
 | `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] | state `form-error` |
 | `delete` | [[auth.user.delete\|auth::user::delete]] | row action | refresh `main` | state `gone` |
 
-### Navigation: Navegación
+### SCR6: Navegación
 
 | Key | Target | Trigger |
 |---|---|---|
 | `row` | [[users.detail]] | clicking a row |
 
-### States: Estados
+### SCR7: Estados
 
 | Key | When | Presentation |
 |---|---|---|

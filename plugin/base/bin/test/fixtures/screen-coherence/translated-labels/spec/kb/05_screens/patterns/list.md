@@ -2,7 +2,7 @@
 
 **Purpose:** show many records of one kind.
 
-## Regions: Regiones
+## PAT2: Regiones
 
 | Region | Fill | Accepts | What it holds |
 |---|---|---|---|

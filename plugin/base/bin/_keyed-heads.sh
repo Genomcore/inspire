@@ -411,7 +411,7 @@ kh_h3_names() {
   local file="$1" parent="$2"
   awk -v ph="$parent" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      sdd_heading_key($0, "## ") == ph { inparent = 1; next }
+      sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
       inparent && /^### / {
         h = substr($0, 5)

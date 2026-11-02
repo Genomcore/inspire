@@ -283,22 +283,23 @@ never splits them.
 ## Step 9 — Heading keys
 
 If `.inspire/bin/heading-keys.sh` exists, run `.inspire/bin/heading-keys.sh --list`. It
-writes nothing. When it lists files, say how many KB artifacts still carry bare headings
-(`## Fields`) and **recommend** rewriting them into the `{key}: {label}` shape
-(`_references/output-language.md`): the KB then has one heading shape, the one every
-skill now writes, and its headings read in `output_language`. Present it as the
+writes nothing. When it lists files, say how many KB artifacts still name their
+sections by the English name (`## Fields`) and **recommend** rewriting them into the
+`{ID}: {label}` shape (`_references/output-language.md`): the KB then has one heading
+shape, the one every skill now writes, and its headings read in `output_language`. Present it as the
 recommended option, not as one of two equal choices. The KB is the operator's
 (`adr-upgrade-path` D10), so rewrite only on their yes:
 
-1. Run `.inspire/bin/heading-keys.sh`. Each rewritten heading carries its English key as
-   its label: `## Fields: Fields`.
+1. Run `.inspire/bin/heading-keys.sh`. Each rewritten heading carries its section id,
+   and keeps its label or takes the English name as one: `## Fields` becomes
+   `## ENT4: Fields`.
 2. If `output_language` in `inspire_kb/00_bootstrap/project.md` is not English, translate
-   the label of every heading the script rewrote, in the files it reported. Change only
-   the text after `: `. The key stays verbatim.
+   every English label the script wrote, in the files it reported. Change only the text
+   after `: `. The id stays verbatim.
 3. Run `.inspire/bin/review.sh inspire_kb` and report anything it finds.
 
-The validators read a bare heading as its key, so a project that declines keeps
-validating.
+The validators still read the English name as its section, so a project that declines
+keeps validating.
 
 ## What this skill is, and what is missing from it
 

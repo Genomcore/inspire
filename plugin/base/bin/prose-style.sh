@@ -276,7 +276,7 @@ h2_list() {
   awk \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
       /^## / {
-        h = sdd_heading_key($0, "## ")
+        h = sdd_heading_name($0, "## ")
         if (h != "" && !(h in seen)) { seen[h] = 1; print h }
       }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
@@ -483,7 +483,9 @@ prose_scan() {
 
       # `### Breaking changes` runs until the next H3 or the end of the section.
       if (skipbc == "1") {
-        if (line ~ /^[[:space:]]*###[[:space:]]+Breaking changes[[:space:]]*(:([[:space:]].*)?)?$/) { bc = 1 }
+        hl = line
+        sub(/^[[:space:]]+/, "", hl)
+        if (sdd_heading_name(hl, "### ") == "Breaking changes") { bc = 1 }
         else if (line ~ /^[[:space:]]*#{1,6}[[:space:]]/) { bc = 0 }
       }
 
@@ -577,7 +579,7 @@ prose_scan() {
     }
 
     END { unit_end() }
-  '
+  '"${SDD_AWK_HEADING_FUNCS}"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
