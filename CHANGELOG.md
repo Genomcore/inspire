@@ -76,7 +76,7 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   entries ship every heading in that form, with an English label (`## Fields:
   Fields`), and the authoring skills write it in every language. A bare `## Fields`
   still reads as its key, so an existing KB keeps validating. `/inspire:update`
-  counts the bare headings and offers to rewrite them: `.inspire/bin/heading-keys.sh`
+  counts the bare headings and recommends rewriting them: `.inspire/bin/heading-keys.sh`
   adds the English label, and the skill then translates the labels when
   `output_language` is not English. It never rewrites unprompted.
 - The action interview no longer imposes one platform's vocabulary (`deploy`,

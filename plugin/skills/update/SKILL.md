@@ -284,9 +284,11 @@ never splits them.
 
 If `.inspire/bin/heading-keys.sh` exists, run `.inspire/bin/heading-keys.sh --list`. It
 writes nothing. When it lists files, say how many KB artifacts still carry bare headings
-(`## Fields`) and offer to rewrite them into the `{key}: {label}` shape
-(`_references/output-language.md`). The KB is the operator's (`adr-upgrade-path` D10), so
-rewrite only on their yes:
+(`## Fields`) and **recommend** rewriting them into the `{key}: {label}` shape
+(`_references/output-language.md`): the KB then has one heading shape, the one every
+skill now writes, and its headings read in `output_language`. Present it as the
+recommended option, not as one of two equal choices. The KB is the operator's
+(`adr-upgrade-path` D10), so rewrite only on their yes:
 
 1. Run `.inspire/bin/heading-keys.sh`. Each rewritten heading carries its English key as
    its label: `## Fields: Fields`.
