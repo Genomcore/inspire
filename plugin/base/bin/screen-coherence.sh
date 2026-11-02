@@ -131,9 +131,9 @@ sc_parse_bindings() {
     incomment { if ($0 ~ /-->/) incomment = 0; next }
     /^###[ \t]/ {
       h = $0
-      sub(/^###[ \t]+/, "", h)
-      print "SUB\t" trim(h)
-      sect = trim(h)
+      sub(/^###[ \t]+/, "### ", h)
+      sect = sdd_heading_key(h, "### ")
+      print "SUB\t" sect
       hdr = 1
       next
     }
@@ -156,7 +156,7 @@ sc_parse_bindings() {
       next
     }
     END { if (nosub) print "NOSUB" }
-  '
+  '"${SDD_AWK_HEADING_FUNCS}"
 }
 
 # sc_bare <text> — a table cell reduced to its key: backticks and spaces gone.

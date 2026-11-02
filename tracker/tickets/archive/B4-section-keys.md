@@ -2,15 +2,15 @@
 id: B4-section-keys
 title: "B4 — translating a KB artifact's headings breaks its validation"
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-11-02
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-02
 epic: roadmap
 size: M
 importance: High
 skills: [domain, feature, adr, screens]
-status: Open
+status: Done
 blocked_by: []
 related_to: [B1-kb-structure]
 ---
@@ -81,16 +81,54 @@ the whole KB, headings included, in their own language.
 
 ## Acceptance criteria
 
-- [ ] Every format's mandatory headings carry a key, and the templates ship with them.
-- [ ] Validators, the deriver and the skills find sections by key. A golden fixture with
+- [x] Every format's mandatory headings carry a key, and the templates ship with them.
+- [x] Validators, the deriver and the skills find sections by key. A golden fixture with
       translated labels passes `sections-present.sh`.
-- [ ] `output-language.md` names heading keys as machine-read tokens and labels as
+- [x] `output-language.md` names heading keys as machine-read tokens and labels as
       translatable.
-- [ ] The design states where each artifact type's identity lives, and adds a frontmatter
+- [x] The design states where each artifact type's identity lives, and adds a frontmatter
       `id` where one is missing and needed.
-- [ ] Existing projects keep validating, through a dual-shape reader or an explicit
+- [x] Existing projects keep validating, through a dual-shape reader or an explicit
       migration that respects the KB-additive upgrade rule.
-- [ ] The open questions have written answers in this ticket's close note.
+- [x] The open questions have written answers in this ticket's close note.
+
+## Resolution
+
+A heading is `## {key}` or `## {key}: {label}`. The key is the English section name the
+template already ships, and the label after the first `: ` is free text in the
+project's language: `## Fields: Campos`. `sdd_heading_key` in `_lib.sh` reads a heading
+that way, and every section reader there (`sdd_body_section`, `sdd_body_prose`,
+`sdd_has_section`, `sdd_has_subsection`, `sdd_body_subsection`) looks a section up by
+key. The validators that read headings themselves use the same function or the same
+shape: `sections-present.sh` (its order check), `prose-style.sh`, `_keyed-heads.sh`,
+`screen-coherence.sh` (the `## Bindings` subsections) and `adr-split.sh`.
+
+The open questions have these answers:
+
+- **Key form: the English name.** An opaque code reads worst for an operator and would
+  have changed every heading in every existing KB. The English name is what every
+  heading already is, so the templates already ship the keys, and the reader accepts
+  both shapes with no migration: an existing `## Fields` is a key with no label.
+  English projects write the bare key, as they always have. The risk that the name looks
+  translatable is answered in `output-language.md`, which lists heading keys as
+  machine-read tokens. A heading translated without its key is reported loudly, as a
+  missing section, never read as an empty one.
+- **Per format or global: neither question arises.** A key is a section name, so it
+  means the same role wherever it appears (`Purpose` in an entity, an action and a
+  screen). No code table exists to scope.
+- **Identity.** No artifact needs a new frontmatter `id`. Entities, actions and screens
+  carry one. A feature's identity is its filename stem (`ANL-02`), which
+  `criteria-have-tests.sh` already qualifies claims by and the H1 repeats as a key. An
+  ADR's identity is its filename `adr-{slug}`, which every wikilink resolves. Neither
+  is ever translated. `output-language.md` states this.
+- **The deriver.** `emanate-derive.sh` left this repository with in-session emanation;
+  the Factory's deriver is the remaining reader, and its port is the Factory note below.
+
+Pinned by `sections-present/translated-labels` (every format, Spanish labels, clean),
+`sections-present/translated-label-without-key` (a label with no key is a missing
+section), `screen-coherence/translated-labels` (a defect inside translated bindings
+is still found, which the old reader missed), the heading-key cases in
+`lib-tests.sh`, and a translated `## Decision` in `test-adr-split.sh`.
 
 ## Notes
 

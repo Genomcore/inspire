@@ -31,7 +31,7 @@ has_decision_section() {
     /^(```|~~~)/ { fence = !fence; next }
     !fence && /<!--/ && !/-->/ { incomment = 1; next }
     incomment { if (/-->/) incomment = 0; next }
-    !fence && /^## Decision[[:space:]]*$/ { found = 1; exit }
+    !fence && /^## Decision[[:space:]]*(:([[:space:]].*)?)?$/ { found = 1; exit }
     END { exit !found }
   ' "$1"
 }
@@ -54,7 +54,7 @@ split_adr() {
       if (incomment) { if (/-->/) incomment = 0 }
       else if (!fence && /<!--/ && !/-->/) incomment = 1
       else if (!fence && /^## /) {
-        section = ($0 ~ /^## Decision[[:space:]]*$/) ? "dec" : "rat"
+        section = ($0 ~ /^## Decision[[:space:]]*(:([[:space:]].*)?)?$/) ? "dec" : "rat"
         started = 1
       }
     }

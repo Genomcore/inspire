@@ -144,6 +144,41 @@ hasnt "body_subsection stops at the next H3"       "unrelated"             "$sub
 hasnt "body_subsection takes the FIRST match only" "second parent"         "$sub"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Heading keys — `## {key}` or `## {key}: {label}`, looked up by key
+# ─────────────────────────────────────────────────────────────────────────────
+
+cat > "$ROOT/keyed.md" <<'EOF'
+## Fields: Campos
+| Field | Type |
+
+## Touched by:
+modificada
+
+## Consequences: Consecuencias
+### Breaking changes: Cambios incompatibles
+- el formato del token cambia
+
+## Fieldset
+not the Fields section
+
+## Errors:sin espacio
+EOF
+
+yes "has_section finds a key before a label"       sdd_has_section "$ROOT/keyed.md" "Fields"
+no  "has_section never matches the label"          sdd_has_section "$ROOT/keyed.md" "Campos"
+yes "has_section reads a bare trailing colon"      sdd_has_section "$ROOT/keyed.md" "Touched by"
+no  "has_section never matches a key's prefix"     sdd_has_section "$ROOT/keyed.md" "Field"
+no  "has_section needs a space after the colon"    sdd_has_section "$ROOT/keyed.md" "Errors"
+yes "has_subsection finds keyed parent and child" \
+    sdd_has_subsection "$ROOT/keyed.md" "Consequences" "Breaking changes"
+has   "body_section returns a keyed section's body" "Field | Type" \
+      "$(sdd_body_section "$ROOT/keyed.md" "Fields")"
+hasnt "body_section stops at the next keyed H2"     "modificada" \
+      "$(sdd_body_section "$ROOT/keyed.md" "Fields")"
+has   "body_subsection reads under keyed headings"  "el formato" \
+      "$(sdd_body_subsection "$ROOT/keyed.md" "Consequences" "Breaking changes")"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Fence tracking — the two CommonMark edges the rules depend on
 #
 # Both are asserted as CommonMark defines them, because that is what _lib.sh

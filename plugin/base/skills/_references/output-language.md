@@ -33,10 +33,42 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
 - frontmatter **keys** and enum **values** (`kind`, `status`, `maturity`, the
   lifecycle states `draft`/`accepted`/`stable`, ADR maturities, …);
 - wikilink **target slugs** and the file / directory names they resolve to;
-- code identifiers, IDs, prefixes, and status-map **keys**.
+- code identifiers, IDs, prefixes, and status-map **keys**;
+- **heading keys** — see below;
+- the **bold header-line markers** a validator reads (`**Status:**`,
+  `**State:**`, `**Features:**`, `**Pattern:**`, `**Rationale:**`,
+  `**Decision:**`, …) and their enum values.
 
 Translate the **prose** — titles, descriptions, rationale, section bodies, review
 findings addressed to the operator. Never the keys.
+
+## Headings: a key, then a label
+
+Every H2 and H3 a template ships is a **heading key**: the stable, English name a
+validator looks the section up by. A heading is written `## {key}` or
+`## {key}: {label}`, and the label after the first `: ` is free text in
+`output_language`:
+
+```markdown
+## Fields: Campos
+## Acceptance criteria: Criterios de aceptación
+### Breaking changes: Cambios incompatibles
+```
+
+- In a project whose `output_language` is not English, write every templated
+  heading as `{key}: {label}`, the label translated. In an English project the
+  bare key is the whole heading — `## Fields` — and needs no label.
+- The key is copied from the template verbatim, case and spacing included. A
+  heading translated *without* its key (`## Campos`) is not the section: the
+  validators report the section as missing.
+- A heading that is itself an identifier — a field's `### {field}`, an entity's
+  `### [[module.entity|module::entity]]`, a keyed flow's `### AF-1: {label}` —
+  keeps the shape its format already gives it.
+
+An artifact's **identity** never lives in a heading or a title. It lives in a token
+that is never translated: the frontmatter `id` of entities, actions and screens, and
+the filename of features (`ANL-02.md`, whose H1 repeats it as `ANL-02: {label}`) and
+ADRs (`adr-{slug}.md`), which is what every wikilink resolves.
 
 ## Exception: lessons (`98_lessons`)
 

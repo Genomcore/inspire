@@ -57,8 +57,9 @@
 # lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
 # file written before the identity block existed starts blocking a commit.
 #
-# A section is "present" when an H2 header with the exact name exists in the
-# body — not inside frontmatter, not inside a fenced code block (a template
+# A section is "present" when an H2 header with its key exists in the body —
+# `## Fields` or `## Fields: Campos`, the label after the key being free text in
+# the project's language (sdd_heading_key in _lib.sh) — not inside frontmatter, not inside a fenced code block (a template
 # quoted in a fence documents a section, it does not declare one), and, for the
 # three non-domain layers, not inside an HTML comment (their templates carry
 # guidance comments that name the very sections this rule looks for).
@@ -183,18 +184,14 @@ strip_html_comments() {
 }
 
 # h2_stream <file>
-#   The file's H2 header names, in document order, read exactly the way
+#   The file's H2 header keys, in document order, read exactly the way
 #   sdd_has_section reads them (outside frontmatter, outside fences). H3s are
 #   not H2s, so per-field `### {field}` sub-sections never enter the stream.
 h2_stream() {
   awk \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      /^## / {
-        h = substr($0, 4)
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
-        print h
-      }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
+      /^## / { print sdd_heading_key($0, "## ") }
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
 # has_line_prefix <file> <prefix>

@@ -409,16 +409,16 @@ kh_prose_hits() {
 #   way `sdd_has_section` reads headers: outside frontmatter, outside fences.
 kh_h3_names() {
   local file="$1" parent="$2"
-  awk -v ph="## $parent" \
+  awk -v ph="$parent" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == ph { inparent = 1; next }
+      sdd_heading_key($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
       inparent && /^### / {
         h = substr($0, 5)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
         print h
       }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # kh_constraints_raw_lines <file> <parent_h2> <h3_name>

@@ -661,8 +661,9 @@ sdd_count_by_severity() {
 # ─────────────────────────────────────────────────────────────────────────────
 # Markdown body section extraction
 #
-# Extracts the content under a markdown H2 header (## SectionName) up to the
-# next H2 or EOF. Frontmatter and prose above the first H2 are ignored.
+# Extracts the content under a markdown H2 header, found by its key (see
+# sdd_heading_key), up to the next H2 or EOF. Frontmatter and prose above the
+# first H2 are ignored.
 #
 # Two structures are read the same way by every helper below, because getting
 # either wrong silently erases the rest of a file from a check:
@@ -743,18 +744,29 @@ SDD_AWK_FENCE_FUNCS='
   function sdd_in_fence() { return sdd_fence_ch != "" }
 '
 
+SDD_AWK_HEADING_FUNCS='
+  function sdd_heading_key(line, prefix,   h) {
+    if (index(line, prefix) != 1) return ""
+    h = substr(line, length(prefix) + 1)
+    sub(/:[[:space:]].*$/, "", h)
+    sub(/:$/, "", h)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
+    return h
+  }
+'
+
 # sdd_body_section <file> <header_name>
 #   Prints the body section content to stdout, verbatim (fenced blocks and
 #   tables included). Empty if not found.
 sdd_body_section() {
   local file="$1"
   local header="$2"
-  awk -v header="## $header" \
+  awk -v header="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      $0 == header { capture = 1; next }
+      sdd_heading_key($0, "## ") == header { capture = 1; next }
       /^## / && capture { exit }
       capture { print }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_body_prose <file> <header_name>
@@ -796,11 +808,11 @@ sdd_has_section() {
     3) prefix="### " ;;
     *) echo "error: sdd_has_section: unsupported header level: $level" >&2; return 2 ;;
   esac
-  awk -v hdr="${prefix}${header}" \
+  awk -v pfx="$prefix" -v hdr="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == hdr { found = 1; exit }
+      sdd_heading_key($0, pfx) == hdr { found = 1; exit }
       END { exit !found }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_has_subsection <file> <parent_h2> <header_h3>
@@ -811,13 +823,13 @@ sdd_has_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" \
+  awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == ph { inparent = 1; next }
+      sdd_heading_key($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
-      inparent && $0 == sh { found = 1; exit }
+      inparent && sdd_heading_key($0, "### ") == sh { found = 1; exit }
       END { exit !found }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_body_subsection <file> <parent_h2> <header_h3>
@@ -830,14 +842,14 @@ sdd_body_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" \
+  awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      !capture && $0 == ph { inparent = 1; next }
+      !capture && sdd_heading_key($0, "## ") == ph { inparent = 1; next }
       /^## / { if (capture) exit; inparent = 0; next }
-      inparent && $0 == sh { capture = 1; next }
+      inparent && sdd_heading_key($0, "### ") == sh { capture = 1; next }
       /^### / && capture { exit }
       capture { print }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_entities_touched <file>
