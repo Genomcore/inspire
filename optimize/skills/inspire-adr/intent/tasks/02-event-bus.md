@@ -1,0 +1,1 @@
+create domain-events-outbox — orders, payments and notifications must react to each other's state changes. We decided to publish domain events through a transactional outbox table polled by a relay, instead of calling the other modules synchronously.

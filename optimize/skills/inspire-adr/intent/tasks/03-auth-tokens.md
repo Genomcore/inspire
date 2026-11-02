@@ -1,0 +1,1 @@
+create session-tokens — the web app and the admin console both authenticate against the identity module. We decided on short-lived access tokens (15 minutes) with rotating refresh tokens stored server-side, rather than long-lived JWTs.

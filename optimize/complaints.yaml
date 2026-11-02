@@ -1,0 +1,20 @@
+# skill → complaints. Every complaint of a skill is evaluated on every run of
+# that skill; `optimized: false` on any of them is what puts the skill in the run.
+# The first complaint of each skill is its original intent, so optimizing for a
+# new complaint can never trade away what the skill is for.
+#
+#   tasks:  glob of prompt files (≥3: one val, one test, the rest train). A
+#           directory named like a task (tasks/foo.md → tasks/foo/) is copied
+#           over the workspace before that task runs.
+#   checks: .ts files exporting defineCheck(...). Run deterministic → judge →
+#           agent; the first failing tier zeroes the rest.
+
+inspire-adr:
+  - id: intent
+    optimized: false
+    tasks: skills/inspire-adr/intent/tasks/*.md
+    checks:
+      - skills/inspire-adr/intent/checks/adr-file-created.ts
+      - skills/inspire-adr/intent/checks/kb-review-passes.ts
+      - skills/inspire-adr/intent/checks/records-a-decision.ts
+      - skills/inspire-adr/intent/checks/follows-the-skill.ts

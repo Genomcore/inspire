@@ -1,0 +1,1 @@
+create money-minor-units — the billing and invoicing modules both handle money. We decided that every monetary amount is stored as an integer count of minor units plus an ISO-4217 currency code, never as a float or decimal string.

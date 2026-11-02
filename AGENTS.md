@@ -172,6 +172,10 @@ repo is both its source and its own marketplace.
   so `/plugin marketplace add Genomcore/inspire` resolves.
 - `.claude/hooks/template-*.sh` — template-maintenance only (e.g. guarding the
   release-identity bump); never shipped to a project.
+- `optimize/` — template-maintenance only: trains the shipped skills' `SKILL.md`
+  against a catalog of complaints (`complaints.yaml`, checks in `.ts`) with
+  Microsoft's SkillOpt. Its output is a reviewed proposal, never a write into
+  `plugin/`. See [optimize/README.md](optimize/README.md).
 - The INSPIRE **microsite / manual** (canonical explanation, published at
   inspire.openbims.dev) does **not** live here: its source is its own repo,
   [Genomcore/inspire-docs](https://github.com/Genomcore/inspire-docs), split out
