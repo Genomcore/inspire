@@ -1,6 +1,5 @@
-{
-  "exit": 0,
+{ "exit": 1, "finding_count": 1,
   "findings": [
-    { "rule": "declared-errors-tested", "message_substring": "test scope does not exist" }
-  ]
-}
+    { "rule": "declared-errors-tested", "severity": "error", "message_substring": "no test files found" }
+  ],
+  "forbidden": ["appears in no test"] }

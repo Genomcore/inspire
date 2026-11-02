@@ -2,15 +2,15 @@
 id: F06-tdd
 title: "F6 TDD — tests that can actually fail"
 created: 2026-08-13
-updated: 2026-10-28
+updated: 2026-11-02
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-02
 epic: roadmap
 size: M
 importance: Very High
 skills: [code, feature]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F07-gates]
 ---
@@ -34,12 +34,19 @@ inputs, declared once instead of restated per feature.
 - [x] Coverage check: every `AC-n` in a feature maps to at least one claiming test.
       *Shipped:* `bin/criteria-have-tests.sh`, which `tdd.md` runs: a warning while the
       feature is 🟡 Planned, blocking from 🔵 on.
-- [ ] Review Phase 0 consumes the check's output instead of asserting coverage in prose.
-- [ ] **No tests is not a pass.** With zero test files, `criteria-have-tests.sh` still
+- [x] Review Phase 0 consumes the check's output instead of asserting coverage in prose.
+      *Closed with no code change:* the Phase 0 this named left with `inspire-code` when
+      the stack skills replaced it, and no shipped skill asserts criterion coverage in
+      prose any more. Attended coverage is `criteria-have-tests.sh` in `pre-pr.sh`.
+- [x] **No tests is not a pass.** With zero test files, `criteria-have-tests.sh` still
       fails when a feature in scope is past 🟡 Planned, and `declared-errors-tested.sh`
       still fails when a descriptor in scope is past `draft`. The single summary message
       may stay, at error severity. A golden fixture per rule pins it: a 🟢 feature, or an
-      `accepted` descriptor, in a project with no tests, fails.
+      `accepted` descriptor, in a project with no tests, fails. *Shipped:* both rules
+      walk their scope with no test file and emit one summary finding at the highest
+      severity in scope. A missing test scope counts as no test file. Fixtures:
+      `criteria-have-tests/no-test-files-{implemented,planned}`,
+      `declared-errors-tested/no-test-files{,-draft}` and `no-tests`.
 
 ## Notes
 

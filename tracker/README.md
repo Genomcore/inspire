@@ -98,8 +98,7 @@ It also narrowed several tickets to their attended half (`F06-tdd`, `F07-gates`,
 `090-reference-data-home`) and added Factory notes where a change here needs matching
 Factory work.
 
-- **Foci (5):** `F04-mech` (the script split waits for emanation to leave), `F06-tdd`
-  (review Phase 0 only), `F07-gates` (the ratchet's use/mention defect, and running the
+- **Foci (4):** `F04-mech` (the script split waits for emanation to leave), `F07-gates` (the ratchet's use/mention defect, and running the
   ratchet in the Factory), `F08-authority`, `F11-lessons` (the local loop and the
   observer ADR amendment).
 - **Follow-ups (5):** `070-format-doc-consolidation`, `070-relocate-validator-tests`,

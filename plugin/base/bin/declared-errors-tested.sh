@@ -38,14 +38,6 @@ sdd_init_counters
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 TEST_SCOPE="$SDD_TEST_SCOPE"
 
-if [ ! -d "$TEST_SCOPE" ]; then
-  sdd_finding "warning" "declared-errors-tested" "$TEST_SCOPE" \
-    "test scope does not exist — no declared error can be verified as tested (set SDD_TEST_SCOPE, or ignore while the project has no code yet)"
-  sdd_count_warning
-  sdd_exit_with_counters
-  exit $?
-fi
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Collect the test files once. Rebuilding this per error code would re-walk the
 # tree for every bullet in the tree.
@@ -55,18 +47,11 @@ TEST_FILES="$(mktemp -t declared-errors-tests.XXXXXX)"
 trap 'rm -f "$TEST_FILES"' EXIT
 sdd_find_test_files > "$TEST_FILES"
 
-# Same suppression as `criteria-have-tests.sh`, for the same reason: with zero test
-# files every declared code is untested by construction, and a finding per code
-# would bury the one actionable signal. The two gates share the discovery logic so
-# they cannot drift on WHAT a test file is; this keeps them agreeing on what to do
-# when there are NONE.
-if [ ! -s "$TEST_FILES" ]; then
-  sdd_finding "warning" "declared-errors-tested" "$TEST_SCOPE" \
-    "no test files found — every declared error below is untested by construction, so the per-code findings are suppressed to keep the real signal readable"
-  sdd_count_warning
-  sdd_exit_with_counters
-  exit $?
-fi
+NO_TESTS=0
+[ -s "$TEST_FILES" ] || NO_TESTS=1
+UNTESTED_CODES=0
+UNTESTED_ACTIONS=0
+UNTESTED_SEVERITY="warning"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Per action: read `## Errors`, extract the leading backticked code from each
@@ -93,6 +78,13 @@ check_action() {
 
   [ -z "$codes" ] && return 0
 
+  if [ "$NO_TESTS" -eq 1 ]; then
+    UNTESTED_CODES=$((UNTESTED_CODES + $(printf '%s\n' "$codes" | grep -c .)))
+    UNTESTED_ACTIONS=$((UNTESTED_ACTIONS + 1))
+    [ "$severity" = "error" ] && UNTESTED_SEVERITY="error"
+    return 0
+  fi
+
   while IFS= read -r code; do
     [ -z "$code" ] && continue
     if sdd_literal_in_tests "$code" "$TEST_FILES"; then
@@ -108,5 +100,11 @@ while IFS= read -r action; do
   [ -z "$action" ] && continue
   check_action "$action"
 done < <(sdd_find_actions "$SCOPE")
+
+if [ "$UNTESTED_CODES" -gt 0 ]; then
+  sdd_finding "$UNTESTED_SEVERITY" "declared-errors-tested" "$TEST_SCOPE" \
+    "no test files found — $UNTESTED_CODES declared errors across $UNTESTED_ACTIONS action descriptors appear in no test (one finding stands for them all; it is an error once any of those descriptors is past \`draft\`, because no tests is not a pass)"
+  sdd_count_by_severity "$UNTESTED_SEVERITY"
+fi
 
 sdd_exit_with_counters

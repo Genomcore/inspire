@@ -85,13 +85,11 @@ TEST_FILES="$(mktemp -t criteria-tests.XXXXXX)"
 trap 'rm -f "$TEST_FILES"' EXIT
 sdd_find_test_files > "$TEST_FILES"
 
-if [ ! -s "$TEST_FILES" ]; then
-  sdd_finding "warning" "criteria-have-tests" "$SDD_TEST_SCOPE" \
-    "no test files found — every criterion below is untraceable by construction, so the per-criterion findings are suppressed to keep the real signal readable"
-  sdd_count_warning
-  sdd_exit_with_counters
-  exit $?
-fi
+NO_TESTS=0
+[ -s "$TEST_FILES" ] || NO_TESTS=1
+UNTESTED_CRITERIA=0
+UNTESTED_FEATURES=0
+UNTESTED_SEVERITY="warning"
 
 # Map the feature's state marker to a severity tier.
 feature_severity() {
@@ -114,6 +112,13 @@ check_feature() {
     | grep -E '^-[[:space:]]+\[[ xX]\]' || true)"
 
   [ -z "$criteria" ] && return 0
+
+  if [ "$NO_TESTS" -eq 1 ]; then
+    UNTESTED_CRITERIA=$((UNTESTED_CRITERIA + $(printf '%s\n' "$criteria" | grep -c .)))
+    UNTESTED_FEATURES=$((UNTESTED_FEATURES + 1))
+    [ "$severity" = "error" ] && UNTESTED_SEVERITY="error"
+    return 0
+  fi
 
   local n=0 id qid
   while IFS= read -r line; do
@@ -148,5 +153,11 @@ while IFS= read -r feature; do
   case "$(basename "$feature")" in README.md|_*) continue ;; esac
   check_feature "$feature"
 done < <(find "$SCOPE" -type f -name '*.md' 2>/dev/null | sort)
+
+if [ "$UNTESTED_CRITERIA" -gt 0 ]; then
+  sdd_finding "$UNTESTED_SEVERITY" "criteria-have-tests" "$SDD_TEST_SCOPE" \
+    "no test files found — $UNTESTED_CRITERIA criteria across $UNTESTED_FEATURES features are claimed by no test (one finding stands for them all; it is an error once any of those features is past 🟡 Planned, because no tests is not a pass)"
+  sdd_count_by_severity "$UNTESTED_SEVERITY"
+fi
 
 sdd_exit_with_counters
