@@ -75,7 +75,10 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   failed every mandatory-section check before. The templates and the seeded pattern
   entries ship every heading in that form, with an English label (`## Fields:
   Fields`), and the authoring skills write it in every language. A bare `## Fields`
-  still reads as its key, so existing headings need no migration.
+  still reads as its key, so an existing KB keeps validating. `/inspire:update`
+  counts the bare headings and offers to rewrite them: `.inspire/bin/heading-keys.sh`
+  adds the English label, and the skill then translates the labels when
+  `output_language` is not English. It never rewrites unprompted.
 - The action interview no longer imposes one platform's vocabulary (`deploy`,
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project

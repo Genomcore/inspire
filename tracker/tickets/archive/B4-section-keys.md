@@ -121,6 +121,11 @@ The open questions have these answers:
   `criteria-have-tests.sh` already qualifies claims by and the H1 repeats as a key. An
   ADR's identity is its filename `adr-{slug}`, which every wikilink resolves. Neither
   is ever translated. `output-language.md` states this.
+- **Existing projects.** The reader accepts a bare heading, so nothing breaks, and
+  `/inspire:update` brings the KB to the one shape on the operator's yes:
+  `heading-keys.sh` rewrites each bare templated heading to `{key}: {key}`, and the
+  skill translates the labels when `output_language` is not English. Asking first
+  follows `adr-upgrade-path` D10, as the single-file ADR migration does.
 - **The deriver.** `emanate-derive.sh` left this repository with in-session emanation;
   the Factory's deriver is the remaining reader, and its port is the Factory note below.
 
@@ -128,7 +133,9 @@ Pinned by `sections-present/translated-labels` (every format, Spanish labels, cl
 `sections-present/translated-label-without-key` (a label with no key is a missing
 section), `screen-coherence/translated-labels` (a defect inside translated bindings
 is still found, which the old reader missed), the heading-key cases in
-`lib-tests.sh`, and a translated `## Decision` in `test-adr-split.sh`.
+`lib-tests.sh`, a translated `## Decision` in `test-adr-split.sh`, and
+`test-heading-keys.sh`, which also holds the script's key lists equal to the templates'
+headings.
 
 ## Notes
 
