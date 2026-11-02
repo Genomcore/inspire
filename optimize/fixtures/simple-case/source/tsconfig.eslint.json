@@ -1,0 +1,1 @@
+{ "extends": "./tsconfig.json", "include": ["src", "test", "eslint.config.mjs"], "compilerOptions": { "allowJs": true, "noEmit": true } }

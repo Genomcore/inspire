@@ -22,7 +22,7 @@ RUNS = OPTIMIZE / "runs"
 MIN_TASKS = 3
 EXEC_TIMEOUT = 1800
 WORKERS = 4
-FIXTURE_IGNORE = shutil.ignore_patterns(".git", "node_modules", "dist", "coverage")
+FIXTURE_IGNORE = shutil.ignore_patterns(".git", "node_modules", "dist", "coverage", ".claude", ".inspire", ".inspire.lock")
 
 TRAIN = {"batch_size": 4, "num_epochs": 2, "accumulation": 1}
 GRADIENT = {"minibatch_size": 4, "merge_batch_size": 4}
@@ -68,6 +68,8 @@ def resolve_items(skill: str, entry: dict) -> dict[str, list[dict]]:
     tasks = sorted(OPTIMIZE.glob(entry["tasks"]))
     if len(tasks) < MIN_TASKS:
         fail(TOO_FEW_TASKS.format(skill=skill, n=len(tasks), min=MIN_TASKS))
+    if entry.get("fixture") and not local_path(entry["fixture"]).is_dir():
+        fail(MISSING_FIXTURE.format(skill=skill, path=local_path(entry["fixture"])))
     checks = resolve_checks(skill, entry)
     n_val = max(1, len(tasks) // 3)
     splits: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
@@ -85,19 +87,15 @@ def resolve_items(skill: str, entry: dict) -> dict[str, list[dict]]:
 
 
 def prepare_workspace(skill: str, entry: dict, workspace: Path) -> None:
-    if entry.get("fixture"):
-        fixture = local_path(entry["fixture"])
-        if not fixture.is_dir():
-            fail(MISSING_FIXTURE.format(skill=skill, path=fixture))
-        shutil.copytree(fixture, workspace, ignore=FIXTURE_IGNORE)
-        subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
-        return
     workspace.mkdir(parents=True)
     subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
     subprocess.run(
         ["bash", str(MATERIALIZE), "--mode", "init", "--plugin-root", str(PLUGIN), "--project-root", str(workspace)],
         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
+    if entry.get("fixture"):
+        shutil.copytree(local_path(entry["fixture"]), workspace, dirs_exist_ok=True, ignore=FIXTURE_IGNORE)
+
 
 
 def optimize(skill: str, entry: dict, skillopt_home: Path) -> None:

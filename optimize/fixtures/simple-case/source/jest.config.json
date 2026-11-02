@@ -1,0 +1,13 @@
+{
+  "projects": [
+    { "displayName": "api", "preset": "ts-jest", "testEnvironment": "node", "rootDir": "src", "testRegex": ".*\\.spec\\.ts$" },
+    {
+      "displayName": "web",
+      "testEnvironment": "jsdom",
+      "rootDir": "web",
+      "testRegex": "test/.*\\.spec\\.tsx?$",
+      "transform": { "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "<rootDir>/test/tsconfig.json" }] },
+      "setupFilesAfterEnv": ["<rootDir>/test/setup.ts"]
+    }
+  ]
+}

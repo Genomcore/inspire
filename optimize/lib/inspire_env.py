@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import hashlib
+import difflib
 import json
 import os
 import re
@@ -8,6 +8,8 @@ import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+from driver import FIXTURE_IGNORE
 
 from skillopt.datasets.base import SplitDataLoader
 from skillopt.envs.base import EnvAdapter
@@ -23,8 +25,6 @@ NON_INTERACTIVE = (
     "You are running headless and nobody will answer questions. "
     "Never ask for confirmation: make the most reasonable assumption, state it, and finish the task."
 )
-MAX_FILE_BYTES = 200_000
-FILES_HEADER = "\n\n## Files written\n"
 RUN_FAILED = "the agent run failed: {}"
 CHECKS_FAILED = "the check runner failed: {}"
 
@@ -34,23 +34,42 @@ def split_frontmatter(text: str) -> tuple[str, str]:
     return (match.group(1), match.group(2)) if match else ("", text)
 
 
-def _snapshot(root: Path) -> dict[str, str]:
+def _snapshot(root: Path) -> dict[str, bytes]:
     return {
-        str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
+        str(p.relative_to(root)): p.read_bytes()
         for p in root.rglob("*")
         if p.is_file() and ".git" not in p.relative_to(root).parts
     }
 
 
-def _changed_files(root: Path, before: dict[str, str]) -> dict[str, str]:
+def _changes(root: Path, before: dict[str, bytes]) -> dict:
     after = _snapshot(root)
-    changed = sorted(path for path, digest in after.items() if before.get(path) != digest)
-    files = {}
-    for path in changed:
-        data = (root / path).read_bytes()
-        if len(data) <= MAX_FILE_BYTES:
-            files[path] = data.decode("utf-8", errors="replace")
-    return files
+    changes = {}
+    for path in sorted(before.keys() | after.keys()):
+        old, new = before.get(path), after.get(path)
+        if old == new:
+            continue
+        # Fail explicitly: a partial text review must never silently pass binary changes.
+        if any(b"\0" in data for data in (old, new) if data is not None):
+            raise ValueError(f"Cannot evaluate binary change: {path}")
+        left = old.decode("utf-8") if old is not None else None
+        right = new.decode("utf-8") if new is not None else None
+        old_lines, new_lines = (left or "").splitlines(keepends=True), (right or "").splitlines(keepends=True)
+        added = [
+            {"line": i + 1, "text": new_lines[i].rstrip("\r\n")}
+            for tag, _, _, start, end in difflib.SequenceMatcher(None, old_lines, new_lines).get_opcodes()
+            if tag in ("insert", "replace") for i in range(start, end)
+        ]
+        patch = "".join(
+            line if line.endswith("\n") else line + "\n\\ No newline at end of file\n"
+            for line in difflib.unified_diff(
+                old_lines, new_lines,
+                fromfile=f"a/{path}" if old is not None else "/dev/null",
+                tofile=f"b/{path}" if new is not None else "/dev/null",
+            )
+        )
+        changes[path] = {"before": left, "after": right, "added": added, "patch": patch}
+    return changes
 
 
 def _run_agent(work: Path, prompt: str, timeout: int) -> str:
@@ -128,16 +147,21 @@ class InspireAdapter(EnvAdapter):
         shutil.rmtree(work, ignore_errors=True)
         shutil.copytree(self.workspace_template, work, symlinks=True)
         if item.get("fixture"):
-            shutil.copytree(item["fixture"], work, dirs_exist_ok=True)
+            shutil.copytree(item["fixture"], work, dirs_exist_ok=True, ignore=FIXTURE_IGNORE)
         (work / ".claude" / "skills" / self.skill_name / "SKILL.md").write_text(self.frontmatter + skill_body, encoding="utf-8")
 
         before = _snapshot(work)
         prompt = f"/{self.skill_name} {item['prompt']}"
         output = _run_agent(work, prompt, self.exec_timeout)
-        files = _changed_files(work, before)
+        changes = _changes(work, before)
+        files = {p: c["after"] for p, c in changes.items() if c["after"] is not None}
+        diff = "\n\n".join(
+            f"diff -- {p} ({'added' if c['before'] is None else 'deleted' if c['after'] is None else 'modified'})\n{c['patch']}"
+            for p, c in changes.items()
+        )
 
         context = out_dir / "work" / f"{item['id']}.context.json"
-        context.write_text(json.dumps({"task": prompt, "workdir": str(work), "output": output, "files": files}), encoding="utf-8")
+        context.write_text(json.dumps({"task": prompt, "workdir": str(work), "output": output, "files": files, "changes": changes, "diff": diff}), encoding="utf-8")
         verdict = _run_checks(context, item["checks"])
 
         trace = out_dir / "predictions" / item["id"]
@@ -145,7 +169,7 @@ class InspireAdapter(EnvAdapter):
         conversation = [
             {"role": "system", "content": skill_body},
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": output + FILES_HEADER + "\n".join(files)},
+            {"role": "assistant", "content": output + "\n\n## Agent diff\n" + diff},
         ]
         (trace / "conversation.json").write_text(json.dumps(conversation, ensure_ascii=False, indent=2), encoding="utf-8")
         (trace / "checks.json").write_text(json.dumps(verdict, ensure_ascii=False, indent=2), encoding="utf-8")

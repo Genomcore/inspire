@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@theme {
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --color-primary: #0d9488;
+  --color-cora: #8b5cf6;
+  --color-healthy: #22c55e;
+  --color-degraded: #eab308;
+  --color-down: #ef4444;
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-white text-slate-900 font-sans antialiased; }
+
+.trace-sweep {
+  stroke-dasharray: 180 820;
+  stroke-dashoffset: 1000;
+  animation: trace-sweep var(--trace-period, 2.8s) linear infinite;
+}
+.trace-sweep--fast { --trace-period: 1.1s; }
+@keyframes trace-sweep { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .trace-sweep { animation: none; stroke-dasharray: none; }
+}

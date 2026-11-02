@@ -1,6 +1,3 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
-
 export type Kind = 'deterministic' | 'judge' | 'agent'
 
 export type Context = {
@@ -8,6 +5,13 @@ export type Context = {
   workdir: string
   output: string
   files: Record<string, string>
+  diff: string
+  changes: Record<string, {
+    before: string | null
+    after: string | null
+    added: Array<{ line: number; text: string }>
+    patch: string
+  }>
 }
 
 export type Verdict = { score: number; reason: string }
@@ -17,37 +21,16 @@ type Base = { pass?: number }
 export type Check =
   | (Base & { kind: 'deterministic'; run: (ctx: Context) => number | Verdict | Promise<number | Verdict> })
   | (Base & { kind: 'judge'; rubric: string })
-  | (Base & { kind: 'agent'; prompt: string; tools?: string[] })
+  | (Base & { kind: 'agent'; prompt: string })
 
 export const defineCheck = (check: Check): Check => check
 
-type Entry = [path: string, body: string]
-
-const SKIP = new Set(['node_modules', '.git', 'dist', 'coverage'])
-
-const walk = (dir: string): string[] =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    SKIP.has(e.name) ? [] : e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)],
+// Preserve original line numbers; unchanged lines are never scanned.
+export const offences = (ctx: Context, path: RegExp, bad: RegExp, except?: RegExp, allow?: RegExp): string[] =>
+  Object.entries(ctx.changes).filter(([p]) => path.test(p) && !except?.test(p)).flatMap(([p, change]) =>
+    change.added.filter(({ text }) => bad.test(text) && !allow?.test(text))
+      .map(({ line, text }) => `${p}:${line} ${text.trim().slice(0, 100)}`),
   )
-
-export const changed = (ctx: Context, path: RegExp, except?: RegExp): Entry[] =>
-  Object.entries(ctx.files).filter(([p]) => path.test(p) && !except?.test(p))
-
-export const tree = (ctx: Context, path: RegExp, except?: RegExp): Entry[] =>
-  walk(join(ctx.workdir, 'source'))
-    .map((f) => relative(ctx.workdir, f))
-    .filter((p) => path.test(p) && !except?.test(p))
-    .map((p) => [p, readFileSync(join(ctx.workdir, p), 'utf8')])
-
-export const scan = (entries: Entry[], bad: RegExp, allow?: RegExp): string[] =>
-  entries.flatMap(([p, body]) =>
-    body.split('\n').flatMap((line, i) =>
-      bad.test(line) && !allow?.test(line) ? [`${p}:${i + 1} ${line.trim().slice(0, 100)}`] : [],
-    ),
-  )
-
-export const offences = (ctx: Context, path: RegExp, bad: RegExp, except?: RegExp): string[] =>
-  scan(changed(ctx, path, except), bad)
 
 export const verdict = (problems: string[], what: string): Verdict =>
   problems.length
