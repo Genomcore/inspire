@@ -20,7 +20,7 @@ decision itself, and the rationale that explains it.
 
 | File | Holds | Read |
 |---|---|---|
-| `adr-{slug}.md` — the **decision** | optional `surfaces:` frontmatter, the H1 title, `**Status:**`, `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:` or `**Prototype:**` line, and `## Decision`: one or a few imperative statements | by every session that specifies or builds |
+| `adr-{slug}.md` — the **decision** | optional `surfaces:` frontmatter, the H1 title, `**Status:**`, `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:` or `**Prototype:**` line, and `## Decision`: one or a few imperative statements | by every session: the session-start hook injects every live decision |
 | `adr-{slug}.rationale.md` — the **rationale** | `**Decision:** [[adr-{slug}]]`, then `## Context`, `## Consequences` with `### Breaking changes`, `## Alternatives considered` and `## Related ADRs` | when someone questions or supersedes the decision |
 
 The decision constrains; the rationale explains and constrains nothing. Status,

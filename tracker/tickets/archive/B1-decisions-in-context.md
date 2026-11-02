@@ -2,15 +2,15 @@
 id: B1-decisions-in-context
 title: "B1 — a session starts without the project's decisions in context"
 created: 2026-10-23
-updated: 2026-10-28
+updated: 2026-10-30
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-10-30
 epic: roadmap
 size: M
 importance: High
 skills: [adr, code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [B1-adr-decision-rationale]
 ---
@@ -52,15 +52,43 @@ Questions the design answers:
 
 ## Acceptance criteria
 
-- [ ] Every attended session in a materialized project starts with the decision digest
+- [x] Every attended session in a materialized project starts with the decision digest
       in context.
-- [ ] The digest is also available as a script's output, so the emanation process can
+- [x] The digest is also available as a script's output, so the emanation process can
       consume it.
-- [ ] The digest has a stated size budget and a stated rule for going over it.
-- [ ] A project with no ADRs gets no digest and pays no cost.
-- [ ] The digest is built mechanically by a script under `plugin/base/bin/` (materialized
+- [x] The digest has a stated size budget and a stated rule for going over it.
+- [x] A project with no ADRs gets no digest and pays no cost.
+- [x] The digest is built mechanically by a script under `plugin/base/bin/` (materialized
       as `.inspire/bin/`), never by a model summarizing ADRs. A golden fixture pins its
       output.
+
+## Resolution
+
+`plugin/base/bin/decisions.sh` builds the digest, and `session-start.sh` injects it
+after the rest of the session context. The design questions have these answers:
+
+- **What goes in.** Every ADR that is neither superseded nor rejected, as one entry:
+  id, maturity, surfaces, title, then its `## Decision` text verbatim, HTML comments
+  removed. `design` and `prototyped` decisions go in with their maturity in the entry,
+  and the digest's head says they can still be refined while an `implemented` one is
+  only superseded. A single-file ADR contributes its `## Decision` alone; a rationale
+  file never appears.
+- **Size.** The hook passes `--budget 6000` (characters). Over it, the digest becomes
+  an index: one line per decision with its id, maturity, surfaces and title, and a
+  pointer to the script for the full text. When even the index is over, it is cut,
+  and its last line counts what it left out. The script alone has no budget.
+- **Scope.** The hook cannot know which surface a session will work on, so it injects
+  every live decision, each labelled with the surfaces it binds. `--surface <id>`
+  narrows the script's output to the ADRs that bind that surface: those listing it,
+  those listing `all`, and those listing none.
+- **The emanation process.** The same script, run from the project root, is what a
+  process running agents outside a session reads. The Factory's half is filed in its
+  own tracker once this lands.
+
+The output is pinned in full by `plugin/base/bin/test/test-decisions.sh`, and
+`plugin/test/hooks/02-session-start-decisions.sh` covers the hook: the digest arrives,
+a project with no live ADR and an install without the script get none, and a digest
+over budget is injected as an index within 6,000 characters.
 
 ## Notes
 

@@ -297,6 +297,19 @@ if [ -z "$filter" ]; then
   rm -f "$split_out"
 fi
 
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  decisions_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-decisions.sh" >"$decisions_out" 2>&1; then
+    echo "PASS decisions.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL decisions.sh/behaviour" >&2
+    cat "$decisions_out" >&2
+  fi
+  rm -f "$decisions_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]

@@ -16,6 +16,10 @@
 # themselves — the reasoning and the examples stay in the contract, which a
 # session reads when it needs them.
 #
+# Last, it injects the decision digest `.inspire/bin/decisions.sh` prints: every
+# live ADR's binding statement, held to a 6,000-character budget. A project with
+# no live ADR gets nothing.
+#
 # Output contract (SessionStart): stdout is JSON with
 #   {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "…"}}
 # additionalContext is prepended to the session context. Exit 0 always — a missing
@@ -115,6 +119,16 @@ if [ -f "$SURFACES_FILE" ] && command -v yq >/dev/null 2>&1; then
 Suite surfaces — \`${ROSTER}\` (see \`inspire_kb/00_bootstrap/surfaces.md\`). Surface-scoped \
 skills resolve scope per \`.claude/skills/_references/surface-scope.md\`: explicit argument \
 wins; with several surfaces and no argument, ask before writing."
+  fi
+fi
+
+DECISIONS_SCRIPT="$PROJECT_ROOT/.inspire/bin/decisions.sh"
+if [ -x "$DECISIONS_SCRIPT" ]; then
+  DECISIONS="$(cd "$PROJECT_ROOT" && "$DECISIONS_SCRIPT" --budget 6000 2>/dev/null || true)"
+  if [ -n "$DECISIONS" ]; then
+    CONTEXT="${CONTEXT}
+
+${DECISIONS}"
   fi
 fi
 
