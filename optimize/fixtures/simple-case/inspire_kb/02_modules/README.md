@@ -1,0 +1,23 @@
+# 02 · Modules
+
+The **module hubs** — the second-level artifact of the product (after the
+global `00_bootstrap`). A *module* is the organizing unit that groups a slice of the
+product; this layer holds its **hub**, decoupled from the layers it links.
+
+- **Skill:** `inspire-module` (create / review / update / scan / delete).
+- **Layout:**
+  ```
+  02_modules/
+    {module}.md   # one hub per module: overview + relationships + links to its
+                  # features (03_features/), screens (05_screens/), specs
+                  # (04_domain/), spikes (06_spikes/) and module-scoped ADRs
+    README.md     # this file
+  ```
+
+  New hub: `.claude/skills/inspire-module/templates/module-hub.md.template` → `{module}.md`.
+
+Each module's detailed content lives in the per-layer subfolders
+(`03_features/{module}/`, `05_screens/{module}/`, `04_domain/{module}/`), **kept in
+sync** with the hub. The hub is the one place that sees the whole module — so the
+feature and screen folders are linked and organized from here, rather than a
+module being "a folder of features."

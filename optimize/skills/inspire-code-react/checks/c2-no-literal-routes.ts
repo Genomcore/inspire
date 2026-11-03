@@ -1,4 +1,4 @@
-import { changed, defineCheck, scan, tree, verdict } from '../../../lib/check.ts'
+import { defineCheck, offences, verdict } from '../../../lib/check.ts'
 
 // Checklist 2: no literal route path outside src/routes.tsx — not in navigate(), <Link to>,
 // <Navigate to>, href, a redirect or a not-found "home" link.
@@ -6,5 +6,5 @@ const LITERAL = /(navigate\(\s*['"`]\/|\bto=\s*\{?\s*['"`]\/|<Navigate[^>]*to=\s
 
 export default defineCheck({
   kind: 'deterministic',
-  run: (ctx) => verdict(scan(tree(ctx, /^source\/web\/src\/.*\.tsx?$/, /\/src\/(routes|route-table)[^/]*\.tsx?$/), LITERAL), 'literal route path outside the route table (use routeOf)'),
+  run: (ctx) => verdict(offences(ctx, /^source\/web\/src\/.*\.tsx?$/, LITERAL, /\/src\/(routes|route-table)[^/]*\.tsx?$/, undefined), 'introduced rule violation'),
 })
