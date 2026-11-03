@@ -2,7 +2,7 @@
 id: B3-entry-points
 title: "B3 — Entry points: how an action gets called"
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-11-03
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -111,3 +111,20 @@ reader more than an odd one.
   tracker when this ticket's format lands.
 - *Not "entry screen".* `B3-navigation-map` carries a different idea, a screen reached
   without navigation, and calls it an entry screen to keep this ticket's name free.
+
+**Amended 2026-11-03 (field evidence, INSPIRE Factory run 9).** Run 9 (Factory v0.12.0,
+INSPIRE 0.14.0) hit the system-condition kind, and it is the one unit of 179 the run
+left unbuilt.
+
+- *The action.* `organisations::organisation::provision` creates the organisation and
+  its owner at first start, from the `SETUP_*` environment variables. Only the API's
+  own startup calls it.
+- *What happened.* The action has no way to say so, and it has no `actor(…)` head, so
+  the Factory built it as a public route: anyone could create an organisation. The
+  security review rejected the unit. The repair added a `SETUP_TOKEN` guard the spec
+  does not declare, which then failed a length check. The unit failed after three
+  attempts.
+- *What the field team asks for.* A way for an action to declare that it runs at
+  startup, with no route, and a claim that checks it. Under this ticket's decision that
+  is a system-condition entry point, with exposure `none`. The claim is part of the
+  third acceptance criterion: an action with no public entry point gets no route.
