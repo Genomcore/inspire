@@ -24,6 +24,12 @@ reads before working — the base context the rest of the KB assumes.
     has settled no naming question yet. R4 of
     [`.claude/skills/_references/writing-style.md`](../../.claude/skills/_references/writing-style.md)
     binds every layer's prose to it.
+  - [`style-tokens.md`](style-tokens.md) — the project's own **R6 and R7 tokens**:
+    words that narrate history and intensifiers, in the project's `output_language`.
+    `prose-style.sh` flags them beside its built-in English lists, and outside
+    English they are the only words R6 and R7 check. A token belongs here only if it
+    almost never states present behavior. Written by `/inspire-bootstrap`; it ships
+    **empty**, like the glossary.
   - [`semantic-types.md`](semantic-types.md) — the **project's own semantic types**:
     the types this project adds to the universal vocabulary defined in
     [`.claude/skills/inspire-domain/references/type-mapping.md`](../../.claude/skills/inspire-domain/references/type-mapping.md).

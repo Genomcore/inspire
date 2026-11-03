@@ -12,6 +12,11 @@
   honest state of a project that has settled no naming question yet. Flag a missing
   file, a broken table, or a row whose approved term also appears in another row's
   rejected synonyms.
+- `style-tokens.md` exists and parses — a `| Check | Token |` header, its separator,
+  then zero or more rows whose check is `R6` or `R7`. **Zero rows is valid.** Flag a
+  missing file, a row with another check, and, when `output_language` is not English,
+  an empty table: R6 and R7 then check nothing but strikethrough, so offer to propose
+  tokens.
 - `stack.md` has a `## Shape` section, and the declared layers are coherent with
   it (no frontend stack on a backend-only product; a data layer iff the shape
   deploys a database; a mobile stack iff mobile is in scope). Flag a `shape:

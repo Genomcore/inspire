@@ -66,9 +66,18 @@ in the project's language anyway.
 
 ## Resolution
 
-R2, R4 and R5 run in every language. R1, R3, R6 and R7 stay English-only. When
-`output_language` is not English, the info note names the four skipped checks and the
-run goes on. The 35-word and 8-sentence signals apply unchanged: nothing measured
+R2, R4 and R5 run in every language. R6 and R7 run in every language against the
+tokens a project declares in the new `00_bootstrap/style-tokens.md`, a `| Check |
+Token |` table in the project's language. In English those rows add to the built-in
+lists; elsewhere they are the only words checked, and R6's strikethrough check runs
+everywhere. The declared tokens share R4's one-pass stream, so they get the same word
+boundary and folding, R6 keeps its exemptions, and R7 keeps one hit per line.
+`/inspire-bootstrap language` proposes rows for a non-English project, and its review
+flags an empty list there. R1 and R3 stay English-only: a passive or a noun cluster
+takes a different shape in each language (`se` passives, chains of `de`, German
+compounds), so no word list carries them, and they stay authoring judgment. When
+`output_language` is not English, the info note names R1 and R3 as skipped and the run
+goes on. The 35-word and 8-sentence signals apply unchanged: nothing measured
 Spanish or Catalan prose to set other ones.
 
 The two English assumptions in the Notes are fixed:
@@ -88,8 +97,13 @@ prose. `writing-style.md` § Enforcement has a table of which check runs in whic
 language. `bin/README.md`, `findings-format.md`, `lifecycle-rules.md` and
 `inspire-domain`'s `review.md` match it. The golden fixture `non-en-partial` replaces
 `non-en-skip`: a Spanish action with id-keyed headings, where a 44-word sentence is an
-R2 finding, a rejected synonym in capitals is an R4 error, and a passive sentence, a
-noun cluster, `previously`, a `no.` sentence end and `compañía` are not findings.
+R2 finding, a rejected synonym in capitals is an R4 error, a declared `ANTERIORMENTE`
+is an R6 finding, a declared `simplemente` is one R7 finding on a line that also holds
+`sin duda`, strikethrough is an R6 finding, and a passive sentence, a noun cluster,
+`previously`, a `no.` sentence end and `compañía` are not findings.
+`non-en-r6-exemptions` pins R6's ADR exemptions on declared tokens, and
+`style-tokens-english` pins that English rows add to the built-in lists without
+reporting a built-in token twice.
 
 ## Notes
 

@@ -66,13 +66,17 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `204`, otherwise `200`.
 - **A KB in another language gets the prose checks that don't depend on English.**
   When `output_language` is not English, `prose-style.sh` runs R2 sentence length, R4
-  glossary synonyms and R5 paragraph length, and its info note names the four checks
-  it skips: R1, R3, R6 and R7, which are English morphology. Before, it checked
-  nothing. R4 still ramps to an error on accepted and stable domain artifacts, so a
+  glossary synonyms and R5 paragraph length, checks R6 and R7 against the tokens
+  `00_bootstrap/style-tokens.md` declares, and its info note names the two checks it
+  skips: R1 and R3, which are English morphology. Before, it checked nothing.
+  `style-tokens.md` is a new KB file that ships empty and that `/inspire:update`
+  seeds; in English its rows add to the built-in R6 and R7 lists, and
+  `/inspire-bootstrap language` proposes rows in the project's language. R6's
+  `~~strikethrough~~` check runs in every language. R4 still ramps to an error on accepted and stable domain artifacts, so a
   Spanish or Catalan KB that uses a rejected synonym can now fail a review. Outside
   English, the sentence splitter uses a shorter abbreviation list without `no`, so
-  `no.` ends a Spanish sentence. In every language, R4 treats an accented letter as
-  part of a word and matches `ORGANIZACIÓN` to `organización`.
+  `no.` ends a Spanish sentence. In every language, R4, R6 and R7 treat an accented
+  letter as part of a word and match `ORGANIZACIÓN` to `organización`.
 - `trust.sh endorse` writes `at` to the second with its offset
   (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
 

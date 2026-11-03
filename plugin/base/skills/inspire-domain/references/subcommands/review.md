@@ -70,10 +70,11 @@ ramp too, in the release after 0.9.
 | Rule | What it catches |
 |---|---|
 | `prose-style` R4 | A synonym the glossary rejects. Same ramp as tier 3 — it reads the object's own `lifecycle:`, and it is the one style check that can reach `error`, because the glossary declared the term. |
-| `prose-style` R1 · R2 · R3 · R5 · R6 · R7 | Passive voice; a sentence over 35 words; a run of four or more stacked nouns; a paragraph over 8 sentences; one of the closed historical-language tokens; one of the closed intensifier tokens. **Warning at every lifecycle, never ramping.** Report R2 and R5 as an invitation to re-read the sentence. |
+| `prose-style` R1 · R2 · R3 · R5 · R6 · R7 | Passive voice; a sentence over 35 words; a run of four or more stacked nouns; a paragraph over 8 sentences; one of the historical-language tokens; one of the intensifier tokens. **Warning at every lifecycle, never ramping.** Report R2 and R5 as an invitation to re-read the sentence. |
 
-R1, R3, R6 and R7 are English-only. A project whose `output_language` is not
-`en` gets a single info-level note naming them, and R2, R4 and R5 still run.
+R1 and R3 are English-only, and outside English R6 and R7 read only the tokens
+`00_bootstrap/style-tokens.md` declares. A project whose `output_language` is not
+`en` gets a single info-level note saying so, and R2, R4 and R5 still run.
 Report that note as it stands, and do not present the run as a full style check:
 the contract in
 [`writing-style.md`](../../../_references/writing-style.md) still binds as

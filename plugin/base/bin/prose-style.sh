@@ -8,20 +8,24 @@
 #
 # ─── Language gate ───────────────────────────────────────────────────────────
 #
-# R1, R3, R6 and R7 are English morphology or English token lists. R2, R4 and R5
-# measure and match, and they bind to a section by its id (`## ACT1: Propósito`
-# is the action's Purpose in any language), so they run in every language. When
+# R1 and R3 are English morphology. R2, R4 and R5 measure and match, and they
+# bind to a section by its id (`## ACT1: Propósito` is the action's Purpose in
+# any language), so they run in every language. R6 and R7 match closed token
+# lists: the built-in lists are English, and `00_bootstrap/style-tokens.md`
+# declares the project's own, in its own language. When
 # `$SDD_KB_ROOT/00_bootstrap/project.md` declares an `output_language` other
-# than English, this script emits ONE info-level note naming the four checks it
-# skips, then runs R2, R4 and R5. Absent or empty `output_language` reads as
-# `en`, exactly as `session-start.sh` reads it.
+# than English, this script emits ONE info-level note naming R1 and R3 as
+# skipped and R6 and R7 as reading only the declared tokens, then runs. R6's
+# `~~strikethrough~~` is not a word, so it is checked in every language. Absent
+# or empty `output_language` reads as `en`, exactly as `session-start.sh` reads
+# it.
 #
-# Two parts of those three checks still read the language. The sentence splitter
+# Two parts of R2, R4 and R5 still read the language. The sentence splitter
 # keeps a period after a known abbreviation inside the sentence, and the English
 # list carries `no`, which ends a Spanish sentence; another language gets the
-# list in PS_ABBREV_ANY. R4's word boundary is ASCII punctuation and space only,
-# so an accented letter is part of a word, and the stream and the glossary are
-# both folded through `fold_latin` so an accented capital matches its lowercase
+# list in PS_ABBREV_ANY. The declared-token word boundary is ASCII punctuation
+# and space only, so an accented letter is part of a word, and the stream and
+# the token lists are folded through `fold_latin` so an accented capital matches its lowercase
 # form whatever the awk and the locale.
 #
 # The field is authored by a human and project.md invites a code OR a plain name,
@@ -35,7 +39,8 @@
 #   R2  sentence length     — over 35 words in one sentence    (contract §R2)
 #   R4  glossary synonyms   — a rejected synonym from `00_bootstrap/glossary.md`
 #   R5  paragraph length    — over 8 sentences in one paragraph
-#   R6  historical language — the CLOSED token list: `previously`, `used to`,
+#   R6  historical language — the tokens `00_bootstrap/style-tokens.md` declares
+#                             for R6, plus, in English, the CLOSED token list: `previously`, `used to`,
 #                             `migrated from`, `~~strikethrough~~`. `replaces`
 #                             and `removed` are deliberately NOT checked: both
 #                             have legitimate present-tense uses in this vault,
@@ -48,8 +53,10 @@
 #                             phrase distinguishes.
 #   R1  passive voice       — be-verb + past participle, heuristic
 #   R3  noun clusters       — 4+ consecutive content nouns, heuristic
-#   R7  figurative language — the CLOSED intensifier list in PS_FLOURISH, first
-#                             hit per line. R7's metaphor half is judgment only.
+#   R7  figurative language — the tokens `00_bootstrap/style-tokens.md` declares
+#                             for R7, plus, in English, the CLOSED intensifier
+#                             list in PS_FLOURISH; first hit per line within
+#                             each. R7's metaphor half is judgment only.
 #
 # Severity. ONLY R4 IS LIFECYCLE-PROGRESSIVE, and only where a `lifecycle:`
 # field exists (the `04_domain` layer, via `sdd_progressive_severity`: draft →
@@ -128,8 +135,9 @@
 #     `` `code spans` `` blanked out, so a token quoted as a token is not a claim
 #     about the system. R2 keeps them — a code span is still a word the reader
 #     reads, and dropping it would under-count the sentence.
-#   - A NON-ENGLISH PROJECT GETS R2, R4 AND R5 ONLY (see the language gate
-#     above). The R2 and R5 caps were set on English prose and apply unchanged.
+#   - A NON-ENGLISH PROJECT GETS NO R1 AND NO R3, AND R6 AND R7 ONLY FOR THE
+#     TOKENS IT DECLARES (see the language gate above). The R2 and R5 caps were
+#     set on English prose and apply unchanged.
 #
 # ─── R6 exemptions (contract § Historical language) ─────────────────────────
 #
@@ -147,16 +155,18 @@
 # it sits in. Widening them to every rule would silently un-check whole lines on the
 # strength of a rule about history.
 #
-# ─── R4, in one pass ─────────────────────────────────────────────────────────
+# ─── Declared tokens, in one pass ────────────────────────────────────────────
 #
-# The synonym scan runs on the PR gate, so it never spawns a process per file
+# R4's glossary synonyms and R6's and R7's declared tokens share one scan. It
+# runs on the PR gate, so it never spawns a process per file
 # per glossary row. Every prose line of every checked file is appended to ONE
 # stream (inline-code spans and wikilink-remnant ids removed), with a parallel
-# index carrying `file / section / layer / original line`. One `grep -inE -f`
-# over that stream finds the hits; one awk attributes each hit to its file and
-# to the approved term. `00_bootstrap/glossary.md` is not in any checked layer,
-# so the glossary never matches itself. No glossary, or a glossary with zero
-# data rows, disables R4 entirely — an empty term list binds nothing.
+# index carrying `file / section / layer / R6-exempt / original line`. One
+# `grep -inE -f` over that stream finds the hits; one awk attributes each hit to
+# its file, its check and, for R4, the approved term. `00_bootstrap/` is not in
+# any checked layer, so a token list never matches itself. A file that is
+# absent or has zero data rows declares nothing — an empty token list binds
+# nothing.
 #
 # Scope: the rule receives one `$1` and checks `$1 ∩ each of its layers` — see
 # `bin/README.md` §Scope, resolved through the same `sdd_scope_intersect` every
@@ -187,6 +197,7 @@ R5_SENTENCE_SIGNAL=8
 # changes what a sentence claims. `fast`, `intuitive` and `robust` are absent on
 # purpose: those name a measurable property, so they belong to the vague-language
 # discipline, where the fix is to state the measurement rather than cut the word.
+PS_HISTORICAL="previously|used to|migrated from"
 PS_FLOURISH="simply|simple matter of|merely|of course|needless to say|it goes without saying|seamless|seamlessly|elegant|elegantly|effortless|effortlessly|powerful"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -204,7 +215,7 @@ fi
 # a plain name as much as a code. `EN`, `en-US`, `en_GB` and `English` all
 # declare English, and reading only the byte string `en` would silently skip
 # every one of them — a checker that quietly checks nothing is worse than one
-# that says it cannot. Anything else is another language and runs R2, R4 and R5.
+# that says it cannot. Anything else is another language and skips R1 and R3.
 PS_LANG="$(printf '%s' "$OUTPUT_LANGUAGE" | tr '[:upper:]' '[:lower:]')"
 PS_ENGLISH=1
 case "$PS_LANG" in
@@ -212,7 +223,7 @@ case "$PS_LANG" in
   *)
     PS_ENGLISH=0
     sdd_finding "info" "prose-style" "$PROJECT_FILE" \
-      "output_language: $OUTPUT_LANGUAGE — prose-style skips R1, R3, R6 and R7, which are English-only, and runs R2, R4 and R5; the writing contract still binds as authoring judgment"
+      "output_language: $OUTPUT_LANGUAGE — prose-style skips R1 and R3, which are English-only, checks R6 and R7 against the tokens 00_bootstrap/style-tokens.md declares, and runs R2, R4 and R5; the writing contract still binds as authoring judgment"
     ;;
 esac
 
@@ -235,18 +246,19 @@ fold_latin() {
 
 PS_TMP=""        # comment-stripped copy of the file being read
 PS_FLAT=""       # the same copy with wikilinks unwrapped — the locator's source
-R4_STREAM=""     # concatenated prose, cleaned, one line per collected line
-R4_INDEX=""      # parallel index: file<TAB>section<TAB>layer<TAB>original line
+TOKEN_STREAM=""     # concatenated prose, cleaned, one line per collected line
+TOKEN_INDEX=""      # parallel index: file<TAB>section<TAB>layer<TAB>R6-exempt<TAB>original line
 
 ps_cleanup() {
   local rc=$?
   [ -n "$PS_TMP" ] && rm -f "$PS_TMP"
   [ -n "$PS_FLAT" ] && rm -f "$PS_FLAT"
-  [ -n "$R4_STREAM" ] && rm -f "$R4_STREAM"
-  [ -n "$R4_INDEX" ] && rm -f "$R4_INDEX"
-  [ -n "${R4_TERMS:-}" ] && rm -f "$R4_TERMS"
-  [ -n "${R4_PATTERNS:-}" ] && rm -f "$R4_PATTERNS"
-  [ -n "${R4_HITS:-}" ] && rm -f "$R4_HITS"
+  [ -n "$TOKEN_STREAM" ] && rm -f "$TOKEN_STREAM"
+  [ -n "$TOKEN_INDEX" ] && rm -f "$TOKEN_INDEX"
+  [ -n "${TOKEN_TERMS:-}" ] && rm -f "$TOKEN_TERMS"
+  [ -n "${TOKEN_PATTERNS:-}" ] && rm -f "$TOKEN_PATTERNS"
+  [ -n "${TOKEN_HITS:-}" ] && rm -f "$TOKEN_HITS"
+  [ -n "${TOKEN_ROWS:-}" ] && rm -f "$TOKEN_ROWS"
   return $rc
 }
 trap ps_cleanup EXIT
@@ -372,15 +384,15 @@ prose_scan() {
     tabular)   do_r3=1; do_r6=1; do_r7=1 ;;
   esac
   [ "$exempt6" = "1" ] && do_r6=0
-  if [ "$PS_ENGLISH" != "1" ]; then do_r1=0; do_r3=0; do_r6=0; do_r7=0; fi
+  if [ "$PS_ENGLISH" != "1" ]; then do_r1=0; do_r3=0; fi
 
   awk -v do_r1="$do_r1" -v do_r2="$do_r2" -v do_r3="$do_r3" \
       -v do_r5="$do_r5" -v do_r6="$do_r6" -v do_r7="$do_r7" -v skipbc="$skipbc" \
       -v maxwords="$R2_WORD_SIGNAL" -v maxsent="$R5_SENTENCE_SIGNAL" \
       -v stopwords="$PS_STOPWORDS" -v irregulars="$PS_IRREGULARS" \
       -v flourish="$PS_FLOURISH" -v abbrevs="$PS_ABBREV" \
-      -v r4stream="${R4_STREAM_ARMED:-}" -v r4index="${R4_INDEX_ARMED:-}" \
-      -v idxrec="$idxrec" '
+      -v tokstream="${TOKEN_STREAM_ARMED:-}" -v tokindex="${TOKEN_INDEX_ARMED:-}" \
+      -v idxrec="$idxrec" -v exsec="$exempt6" -v english="$PS_ENGLISH" '
     function trim(s) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
 
     function emit(c, a, d) {
@@ -495,25 +507,33 @@ prose_scan() {
       # in practice — but it is a silent miss, not a decision. The hyphen is in
       # the classes because a multi-word module slug is kebab-case, and an id
       # the stripper cannot see is an id whose words get read as prose.
-      if (r4stream != "") {
+      # `### Breaking changes` runs until the next H3 or the end of the section.
+      if (skipbc == "1") {
+        hl = raw
+        sub(/^[[:space:]]+/, "", hl)
+        if (sdd_heading_name(hl, "### ") == "Breaking changes") { bc = 1 }
+        else if (raw ~ /^[[:space:]]*#{1,6}[[:space:]]/) { bc = 0 }
+      }
+
+      # The contract scopes these exemptions to R6 and to nothing else
+      # (writing-style.md § Historical language). A `**Status:**` line is still
+      # prose for every other rule, and it still belongs to the paragraph it
+      # sits in.
+      exempt_r6 = (bc == 1) \
+        || raw ~ /^[[:space:]]*\*\*Status:\*\*/ \
+        || raw ~ /^[[:space:]]*(\*\*)?Supersedes:/
+
+      if (tokstream != "") {
         c = tolower(raw)
         gsub(/`[^`]*`/, " ", c)
         gsub(/[a-z0-9_-]+(::[a-z0-9_-]+)+/, " ", c)
         gsub(/[a-z0-9_-]+(\.[a-z0-9_-]+)+/, " ", c)
         gsub(/adr-[a-z0-9_-]+/, " ", c)
-        print c >> r4stream
-        print idxrec "\t" raw >> r4index
+        print c >> tokstream
+        print idxrec "\t" ((exsec == "1" || exempt_r6) ? 1 : 0) "\t" raw >> tokindex
       }
 
       line = raw
-
-      # `### Breaking changes` runs until the next H3 or the end of the section.
-      if (skipbc == "1") {
-        hl = line
-        sub(/^[[:space:]]+/, "", hl)
-        if (sdd_heading_name(hl, "### ") == "Breaking changes") { bc = 1 }
-        else if (line ~ /^[[:space:]]*#{1,6}[[:space:]]/) { bc = 0 }
-      }
 
       if (trim(line) == "") { unit_end(); next }
       if (line ~ /^[[:space:]]*#{1,6}[[:space:]]/) { unit_end(); next }
@@ -528,14 +548,6 @@ prose_scan() {
         # words, so it is not counted as words.
         sub(/^\[[ xX]\][[:space:]]+/, "", body)
       }
-
-      # The contract scopes these exemptions to R6 and to nothing else
-      # (writing-style.md § Historical language). A `**Status:**` line is still
-      # prose for every other rule, and it still belongs to the paragraph it
-      # sits in.
-      exempt_r6 = (bc == 1) \
-        || line ~ /^[[:space:]]*\*\*Status:\*\*/ \
-        || line ~ /^[[:space:]]*(\*\*)?Supersedes:/
 
       # Inline code is not prose. R1 and R6 measure the line with its code spans
       # blanked, so a `previously` quoted as a token — or a wikilink that
@@ -554,7 +566,7 @@ prose_scan() {
 
       if (do_r6 && !exempt_r6) {
         lc = tolower(nocode)
-        if (match(lc, /(^|[^a-z])previously([^a-z]|$)/)) emit("R6", raw, "previously")
+        if (english && match(lc, /(^|[^a-z])previously([^a-z]|$)/)) emit("R6", raw, "previously")
         # `used to` is history only in the historical construction. "The caller
         # used to send a cookie" narrates the past; "the salt is used to derive
         # the key" states present behavior, and a be-verb immediately before the
@@ -563,10 +575,10 @@ prose_scan() {
         # same reasoning that keeps `replaces` and `removed` off the token list.
         # A line carrying both constructions reads as the passive one and is not
         # flagged — under-reporting is the safe direction for a closed list.
-        if (match(lc, /(^|[^a-z])used to([^a-z]|$)/) \
+        if (english && match(lc, /(^|[^a-z])used to([^a-z]|$)/) \
             && !match(lc, /(^|[^a-z])(is|are|was|were|be|been|being|am)[[:space:]]+used to([^a-z]|$)/))
           emit("R6", raw, "used to")
-        if (match(lc, /(^|[^a-z])migrated from([^a-z]|$)/)) emit("R6", raw, "migrated from")
+        if (english && match(lc, /(^|[^a-z])migrated from([^a-z]|$)/)) emit("R6", raw, "migrated from")
         if (nocode ~ /~~[^~]+~~/) emit("R6", raw, "~~strikethrough~~")
       }
 
@@ -578,7 +590,7 @@ prose_scan() {
       # no list separates a figure of speech from a term of art.
       # NOTE: no apostrophe may appear anywhere in this awk program — it is
       # single-quoted, so one would close the quote.
-      if (do_r7) {
+      if (do_r7 && english) {
         lc7 = tolower(nocode)
         for (fi = 1; fi <= nflour; fi++) {
           if (FLOUR[fi] == "") continue
@@ -692,27 +704,26 @@ emit_finding() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# R4 — the glossary term list
+# Declared tokens — R4's glossary, R6's and R7's style tokens
 # ─────────────────────────────────────────────────────────────────────────────
 
-R4_TERMS=""
-R4_PATTERNS=""
-R4_HITS=""
-R4_STREAM_ARMED=""
-R4_INDEX_ARMED=""
+TOKEN_TERMS=""
+TOKEN_PATTERNS=""
+TOKEN_HITS=""
+TOKEN_STREAM_ARMED=""
+TOKEN_INDEX_ARMED=""
 
-# build_glossary — reads `$SDD_KB_ROOT/00_bootstrap/glossary.md` into the two
-# files R4 needs, and arms the collection when there is at least one term to
-# look for. The table is `| Term | Rejected synonyms | Definition |`; the
-# synonyms cell is a comma-separated list. Header and separator rows are
-# skipped, and a row with no rejected synonyms contributes nothing.
-build_glossary() {
+# The token files carry one row per token: regex<TAB>check<TAB>display<TAB>
+# approved term. The approved term is R4's alone and is empty for R6 and R7.
+TOKEN_ROWS=""
+
+# glossary_rows — R4's rows from `$SDD_KB_ROOT/00_bootstrap/glossary.md`. The
+# table is `| Term | Rejected synonyms | Definition |`; the synonyms cell is a
+# comma-separated list. Header and separator rows are skipped, and a row with no
+# rejected synonyms contributes nothing.
+glossary_rows() {
   local glossary="$SDD_KB_ROOT/00_bootstrap/glossary.md"
   [ -f "$glossary" ] || return 0
-
-  R4_TERMS="$(mktemp -t sdd-prose-terms.XXXXXX)" || return 0
-  R4_PATTERNS="$(mktemp -t sdd-prose-pat.XXXXXX)" || return 0
-
   awk -F'[[:space:]]*\\|[[:space:]]*' '
     function esc(s) { gsub(/[][\\.^$*+?(){}|]/, "\\\\&", s); return s }
     /^[[:space:]]*\|/ {
@@ -727,48 +738,81 @@ build_glossary() {
         s = parts[i]
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
         if (s == "" || s == "—" || s == "-" || tolower(s) == "none") continue
-        print tolower(esc(s)) "\t" term "\t" s
+        print tolower(esc(s)) "\tR4\t" s "\t" term
       }
     }
-  ' "$glossary" > "$R4_PATTERNS"
-  paste <(cut -f1 "$R4_PATTERNS" | fold_latin) <(cut -f2- "$R4_PATTERNS") | sort -u > "$R4_TERMS"
+  ' "$glossary"
+}
 
-  if [ ! -s "$R4_TERMS" ]; then
-    # No glossary rows, or none with rejected synonyms: an empty term list binds
-    # nothing, so R4 stays disarmed rather than scanning for the empty pattern.
-    return 0
-  fi
+# style_token_rows — R6's and R7's rows from
+# `$SDD_KB_ROOT/00_bootstrap/style-tokens.md`, a `| Check | Token |` table whose
+# check cell is `R6` or `R7`. Any other row is skipped, header and separator
+# included. An English project already checks the built-in lists, so a declared
+# token equal to a built-in one is dropped rather than reported twice.
+style_token_rows() {
+  local tokens="$SDD_KB_ROOT/00_bootstrap/style-tokens.md" builtin=""
+  [ -f "$tokens" ] || return 0
+  [ "$PS_ENGLISH" = "1" ] && builtin="$PS_HISTORICAL|$PS_FLOURISH"
+  awk -F'[[:space:]]*\\|[[:space:]]*' -v builtin="$builtin" '
+    function esc(s) { gsub(/[][\\.^$*+?(){}|]/, "\\\\&", s); return s }
+    BEGIN { n = split(builtin, b, /\|/); for (i = 1; i <= n; i++) if (b[i] != "") BUILTIN[b[i]] = 1 }
+    /^[[:space:]]*\|/ {
+      check = toupper($2); tok = $3
+      gsub(/[[:space:]`]/, "", check)
+      gsub(/`/, "", tok)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", tok)
+      if (check != "R6" && check != "R7") next
+      if (tok == "" || (tolower(tok) in BUILTIN)) next
+      print tolower(esc(tok)) "\t" check "\t" tok "\t"
+    }
+  ' "$tokens"
+}
+
+# build_tokens — gathers every declared token into the two files the one pass
+# needs, and arms the collection when there is at least one to look for. No
+# declared token, from either file, leaves the collection disarmed rather than
+# scanning for the empty pattern.
+build_tokens() {
+  TOKEN_ROWS="$(mktemp -t sdd-prose-rows.XXXXXX)" || return 0
+  { glossary_rows; style_token_rows; } > "$TOKEN_ROWS"
+  [ -s "$TOKEN_ROWS" ] || return 0
+
+  TOKEN_TERMS="$(mktemp -t sdd-prose-terms.XXXXXX)" || return 0
+  TOKEN_PATTERNS="$(mktemp -t sdd-prose-pat.XXXXXX)" || return 0
+  paste <(cut -f1 "$TOKEN_ROWS" | fold_latin) <(cut -f2- "$TOKEN_ROWS") | sort -u > "$TOKEN_TERMS"
 
   # `\b` is not portable across BSD and GNU grep; an explicit non-word class on
   # both sides is, and says the same thing.
-  awk -F'\t' '{ print "(^|[^a-z0-9_])" $1 "([^a-z0-9_]|$)" }' "$R4_TERMS" > "$R4_PATTERNS"
+  awk -F'\t' '{ print "(^|[^a-z0-9_])" $1 "([^a-z0-9_]|$)" }' "$TOKEN_TERMS" > "$TOKEN_PATTERNS"
 
-  R4_STREAM="$(mktemp -t sdd-prose-stream.XXXXXX)" || return 0
-  R4_INDEX="$(mktemp -t sdd-prose-index.XXXXXX)" || return 0
-  R4_STREAM_ARMED="$R4_STREAM"
-  R4_INDEX_ARMED="$R4_INDEX"
+  TOKEN_STREAM="$(mktemp -t sdd-prose-stream.XXXXXX)" || return 0
+  TOKEN_INDEX="$(mktemp -t sdd-prose-index.XXXXXX)" || return 0
+  TOKEN_STREAM_ARMED="$TOKEN_STREAM"
+  TOKEN_INDEX_ARMED="$TOKEN_INDEX"
 }
 
-# run_r4 — the one pass. One grep over the whole concatenated stream, one awk to
-# attribute each hit back to its file, section and approved term.
-run_r4() {
-  [ -n "$R4_STREAM_ARMED" ] || return 0
-  [ -s "$R4_STREAM" ] || return 0
+# run_tokens — the one pass. One grep over the whole concatenated stream, one
+# awk to attribute each hit back to its file, section and check. R6 skips a line
+# its exemptions cover, and R7 reports the first hit per line, as the built-in
+# checks do.
+run_tokens() {
+  [ -n "$TOKEN_STREAM_ARMED" ] || return 0
+  [ -s "$TOKEN_STREAM" ] || return 0
 
-  R4_HITS="$(mktemp -t sdd-prose-hits.XXXXXX)" || return 0
-  fold_latin < "$R4_STREAM" > "$R4_HITS" && mv "$R4_HITS" "$R4_STREAM"
-  grep -inE -f "$R4_PATTERNS" "$R4_STREAM" > "$R4_HITS" 2>/dev/null
-  [ -s "$R4_HITS" ] || return 0
+  TOKEN_HITS="$(mktemp -t sdd-prose-hits.XXXXXX)" || return 0
+  fold_latin < "$TOKEN_STREAM" > "$TOKEN_HITS" && mv "$TOKEN_HITS" "$TOKEN_STREAM"
+  grep -inE -f "$TOKEN_PATTERNS" "$TOKEN_STREAM" > "$TOKEN_HITS" 2>/dev/null
+  [ -s "$TOKEN_HITS" ] || return 0
 
-  local file section layer anchor syn term sev line msg
-  while IFS=$'\t' read -r file section layer anchor syn term; do
+  local check file section layer anchor tok term sev line msg
+  while IFS=$'\t' read -r check file section layer anchor tok term; do
     [ -z "$file" ] && continue
     if [ "$file" != "$CUR_FILE" ]; then
       CUR_FILE="$file"
       CUR_LAYER="$layer"
       RAMP_SEV=""
-      # The walk's flattened copy is long gone by now — R4 runs after every file
-      # — so it is rebuilt here, once per file that actually has a hit.
+      # The walk's flattened copy is long gone by now — this pass runs after
+      # every file — so it is rebuilt here, once per file that has a hit.
       CUR_READ="$file"
       if [ -n "$PS_FLAT" ] && flatten_copy "$file" "$PS_FLAT"; then
         CUR_READ="$PS_FLAT"
@@ -776,27 +820,36 @@ run_r4() {
     fi
     CUR_LAYER="$layer"
     CUR_SECTION="$section"
+    if [ "$check" != "R4" ]; then
+      emit_finding "$check" "$anchor" "$tok"
+      continue
+    fi
     ramp_sev
     sev="$RAMP_SEV"
     line="$(locate_line "$CUR_READ" "$section" "$anchor")"
-    msg="R4 glossary synonym: '$syn' in '## $section' (line $line) — the glossary's approved term is '$term'"
+    msg="R4 glossary synonym: '$tok' in '## $section' (line $line) — the glossary's approved term is '$term'"
     sdd_finding "$sev" "prose-style" "$file" "$msg"
     sdd_count_by_severity "$sev"
-  done < <(LC_ALL=C awk -F'\t' -v tf="$R4_TERMS" -v xf="$R4_INDEX" -v w="$PS_WORD_BYTES" '
-      FILENAME == tf { pat[++ns] = $1; app[ns] = $2; disp[ns] = $3; next }
-      FILENAME == xf { f[FNR] = $1; s[FNR] = $2; l[FNR] = $3; o[FNR] = $4; next }
+  done < <(LC_ALL=C awk -F'\t' -v tf="$TOKEN_TERMS" -v xf="$TOKEN_INDEX" -v w="$PS_WORD_BYTES" '
+      FILENAME == tf { pat[++ns] = $1; chk[ns] = $2; disp[ns] = $3; app[ns] = $4; next }
+      FILENAME == xf { f[FNR] = $1; s[FNR] = $2; l[FNR] = $3; x6[FNR] = $4; o[FNR] = $5; next }
       {
         p = index($0, ":")
         if (p == 0) next
         n = substr($0, 1, p - 1) + 0
         t = substr($0, p + 1)
         if (!(n in f)) next
+        r7 = 0
         for (i = 1; i <= ns; i++) {
-          if (match(t, "(^|[^" w "])" pat[i] "([^" w "]|$)"))
-            printf "%s\t%s\t%s\t%s\t%s\t%s\n", f[n], s[n], l[n], o[n], disp[i], app[i]
+          if (chk[i] == "R6" && x6[n] == "1") continue
+          if (chk[i] == "R7" && r7) continue
+          if (match(t, "(^|[^" w "])" pat[i] "([^" w "]|$)")) {
+            if (chk[i] == "R7") r7 = 1
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", chk[i], f[n], s[n], l[n], o[n], disp[i], app[i]
+          }
         }
       }
-    ' "$R4_TERMS" "$R4_INDEX" "$R4_HITS")
+    ' "$TOKEN_TERMS" "$TOKEN_INDEX" "$TOKEN_HITS")
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -850,7 +903,7 @@ check_file() {
 # Dispatch — one pass per layer, each over its own slice of the scope
 # ─────────────────────────────────────────────────────────────────────────────
 
-build_glossary
+build_tokens
 
 DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
@@ -890,6 +943,6 @@ if [ -n "$SCREEN_SCOPE" ]; then
   done < <(sdd_find_screens "$SCREEN_SCOPE")
 fi
 
-run_r4
+run_tokens
 
 sdd_exit_with_counters

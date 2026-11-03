@@ -20,6 +20,10 @@ This skill owns the **bootstrap layer** —
 - `theme.md` + `theme.tokens.json` — the **design-system default** (fonts, color
   palette + status map, density, layout, icons, supported viewports) — the
   reusable template, its meaning in markdown and its values as W3C Design Tokens.
+- `style-tokens.md` — the project's **own R6 and R7 tokens**: words that narrate
+  history and intensifiers, in the project's `output_language`. Outside English they
+  are the only words `prose-style.sh` checks for R6 and R7. The `language` flow
+  proposes them.
 - `semantic-types.md` — the project's **own semantic types**, each with a mandatory
   universal base type. It ships empty and no interview here fills it: a type is
   declared the moment domain work meets a field the universal vocabulary
@@ -182,6 +186,12 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    Changing it does **not** retranslate existing artifacts — say so, and offer to
    translate on request. Machine-read tokens (frontmatter keys/values, wikilink
    slugs, filenames, IDs) are never translated regardless.
+4. When the language is not English and `style-tokens.md` has no rows, propose
+   tokens in that language: for R6, words that narrate the past
+   (`anteriormente`, `antes se`, `migrado desde`); for R7, intensifiers that rank a
+   fact rather than state one (`simplemente`, `por supuesto`, `sin duda`). Keep a
+   word only if it almost never states present behavior in that language, and
+   write the rows the operator approves. An empty list is a valid answer.
 
 ## Rules
 
@@ -191,13 +201,14 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > of the conversation language and of the product's own i18n; machine-read tokens
 > (frontmatter keys/values, slugs, filenames) stay verbatim.
 
-> **Writing contract.** `project.md`, `stack.md`, `theme.md`, `glossary.md` and the
+> **Writing contract.** `project.md`, `stack.md`, `theme.md`, `glossary.md`, `style-tokens.md` and the
 > project README follow
 > [`_references/writing-style.md`](../_references/writing-style.md). Their prose
 > sections are normative (R1–R6); token, shape and roster tables are structured
 > sections (R3, R4, R6). `glossary.md` is R4's own term list and sits in this layer, so
 > this skill owns writes to it: a row lands when an interview settles a naming
 > question, carrying the operator's own word. Every other skill reads it.
+> `style-tokens.md` is R6's and R7's token list, and this skill owns it the same way.
 
 > **Lesson capture.** At a natural pause, when the operator's feedback should
 > change how this skill behaves, offer `/inspire-lesson note` — never auto-write
