@@ -74,6 +74,9 @@ it("should find record by id when record exists", async () => {
 
 ## Mothers (test-data builders)
 
+Entity data in a spec MUST come from a mother; an entity object literal or a hand-written
+`buildX()` helper MUST NOT appear in a spec or in `test/support/`.
+
 One Object-Mother per entity, all extending a single abstract `Mother<T>` base class
 the project writes once — the abstraction exists so invocation is identical for every
 entity. A mother generates **every field randomly** (faker) and `make(overrides)`
