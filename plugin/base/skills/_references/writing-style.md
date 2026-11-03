@@ -361,20 +361,28 @@ writing, in whatever `output_language` the project declares. This is the whole
 contract, and it is the half that matters: a rule the writer follows never becomes a
 finding.
 
-**The mechanical checks are a subset, and an English-only one.** They run from
-`.inspire/bin/` at review time. Their scope is narrow, and stated rather than implied:
-*prose-style mechanical checks are en-only; the writing contract still binds as
-authoring judgment.* When `00_bootstrap/project.md` declares an `output_language` other
-than `en`, `prose-style.sh` emits exactly that note at info level and exits without
-findings.
+**The mechanical checks are a subset, and part of it is English-only.** They run from
+`.inspire/bin/` at review time. Which checks run depends on `output_language`:
 
-The reason is structural, not effort. R1, R3, R7's intensifier list and the
-historical-token list are English morphology. More decisively, the binding table above
-is keyed on H2 **names**, and a compliant non-`en` fork translates its headers. Headers
-are prose, not machine-read tokens, so even the language-independent rules would have no
-section kind to bind to. A non-`en` checking strategy is **deferred and recorded**, not
-solved: until one exists, the validator stays an `en`-only subset of a contract that
-binds everywhere.
+| check | English | any other language |
+|---|---|---|
+| R2 sentence length | runs | runs |
+| R4 glossary synonyms | runs | runs |
+| R5 paragraph length | runs | runs |
+| R1 passive voice, R3 noun clusters, R6 historical tokens, R7 intensifiers | run | skipped |
+
+R1, R3 and the R6 and R7 token lists are English morphology. R2 and R5 measure length
+and R4 matches the words the glossary rejects, which the glossary writes in the
+project's language. All three bind to a section through its id, so `## ACT1: Propósito`
+is the action's Purpose in every language. When `00_bootstrap/project.md` declares
+another language, `prose-style.sh` emits one info note that names the four checks it
+skips, then runs the other three. The 35-word and 8-sentence signals apply unchanged.
+
+The sentence splitter keeps a period after a known abbreviation inside its sentence. An
+English KB uses the English list. Another language uses a shorter list of shared and
+Spanish abbreviations, without `no`, because `no.` ends a Spanish sentence. R4 treats
+an accented letter as part of a word and matches an accented capital to its lowercase
+form.
 
 **What can reach `error`, and what cannot.** One check ramps with the artifact's own
 `lifecycle`: R4. Every other rule is a warning at every lifecycle state, in every

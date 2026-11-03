@@ -185,12 +185,12 @@ places in a document, which no grep sees.
 
 ### Info
 
-One emitter, one message. `prose-style` announces that a project is outside its
-reach and stops:
+One emitter, one message. `prose-style` announces which of its checks a project's
+language puts out of reach:
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `prose-style mechanical checks are en-only; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
+| `prose-style skips R1, R3, R6 and R7, which are English-only, and runs R2, R4 and R5; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, and R2, R4 and R5 still check every artifact. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
 
 ## Exit codes
 

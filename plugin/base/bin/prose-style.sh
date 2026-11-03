@@ -8,13 +8,21 @@
 #
 # ─── Language gate ───────────────────────────────────────────────────────────
 #
-# The checks below are English morphology (R1, R3, the R6 and R7 token lists)
-# keyed on English H2 names (the binding table). A compliant non-`en` fork
-# translates its headers — headers are prose, not machine-read tokens — so even the
-# language-independent rules would have no section kind to bind to. When
+# R1, R3, R6 and R7 are English morphology or English token lists. R2, R4 and R5
+# measure and match, and they bind to a section by its id (`## ACT1: Propósito`
+# is the action's Purpose in any language), so they run in every language. When
 # `$SDD_KB_ROOT/00_bootstrap/project.md` declares an `output_language` other
-# than English, this script emits ONE info-level note and exits 0. Absent or
-# empty `output_language` reads as `en`, exactly as `session-start.sh` reads it.
+# than English, this script emits ONE info-level note naming the four checks it
+# skips, then runs R2, R4 and R5. Absent or empty `output_language` reads as
+# `en`, exactly as `session-start.sh` reads it.
+#
+# Two parts of those three checks still read the language. The sentence splitter
+# keeps a period after a known abbreviation inside the sentence, and the English
+# list carries `no`, which ends a Spanish sentence; another language gets the
+# list in PS_ABBREV_ANY. R4's word boundary is ASCII punctuation and space only,
+# so an accented letter is part of a word, and the stream and the glossary are
+# both folded through `fold_latin` so an accented capital matches its lowercase
+# form whatever the awk and the locale.
 #
 # The field is authored by a human and project.md invites a code OR a plain name,
 # so English is recognised case-insensitively as `en`, `en-*`/`en_*` (`en-US`,
@@ -120,7 +128,8 @@
 #     `` `code spans` `` blanked out, so a token quoted as a token is not a claim
 #     about the system. R2 keeps them — a code span is still a word the reader
 #     reads, and dropping it would under-count the sentence.
-#   - A NON-ENGLISH PROJECT IS NOT CHECKED AT ALL (see the language gate above).
+#   - A NON-ENGLISH PROJECT GETS R2, R4 AND R5 ONLY (see the language gate
+#     above). The R2 and R5 caps were set on English prose and apply unchanged.
 #
 # ─── R6 exemptions (contract § Historical language) ─────────────────────────
 #
@@ -195,16 +204,30 @@ fi
 # a plain name as much as a code. `EN`, `en-US`, `en_GB` and `English` all
 # declare English, and reading only the byte string `en` would silently skip
 # every one of them — a checker that quietly checks nothing is worse than one
-# that says it cannot. Anything else is another language and stops the run.
+# that says it cannot. Anything else is another language and runs R2, R4 and R5.
 PS_LANG="$(printf '%s' "$OUTPUT_LANGUAGE" | tr '[:upper:]' '[:lower:]')"
+PS_ENGLISH=1
 case "$PS_LANG" in
   en|en-*|en_*|english) ;;
   *)
+    PS_ENGLISH=0
     sdd_finding "info" "prose-style" "$PROJECT_FILE" \
-      "output_language: $OUTPUT_LANGUAGE — prose-style mechanical checks are en-only; the writing contract still binds as authoring judgment"
-    exit 0
+      "output_language: $OUTPUT_LANGUAGE — prose-style skips R1, R3, R6 and R7, which are English-only, and runs R2, R4 and R5; the writing contract still binds as authoring judgment"
     ;;
 esac
+
+PS_ABBREV_EN="e.g i.e etc vs cf fig no nos mr ms mrs dr prof approx resp al ca st"
+PS_ABBREV_ANY="e.g i.e etc vs cf ca ej ex sr sra dr dra"
+if [ "$PS_ENGLISH" = "1" ]; then PS_ABBREV="$PS_ABBREV_EN"; else PS_ABBREV="$PS_ABBREV_ANY"; fi
+
+PS_LATIN_UPPER="À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö Ø Ù Ú Û Ü Ý Þ"
+PS_LATIN_LOWER="à á â ã ä å æ ç è é ê ë ì í î ï ð ñ ò ó ô õ ö ø ù ú û ü ý þ"
+PS_FOLD_SED="$(paste -d/ <(tr ' ' '\n' <<<"$PS_LATIN_UPPER") <(tr ' ' '\n' <<<"$PS_LATIN_LOWER") | sed 's|^|s/|; s|$|/g;|' | tr -d '\n')"
+PS_WORD_BYTES="a-z0-9_$(printf '\200')-$(printf '\377')"
+
+fold_latin() {
+  LC_ALL=C sed -e "$PS_FOLD_SED"
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Scratch files — one set for the whole run, removed by the EXIT trap
@@ -349,12 +372,13 @@ prose_scan() {
     tabular)   do_r3=1; do_r6=1; do_r7=1 ;;
   esac
   [ "$exempt6" = "1" ] && do_r6=0
+  if [ "$PS_ENGLISH" != "1" ]; then do_r1=0; do_r3=0; do_r6=0; do_r7=0; fi
 
   awk -v do_r1="$do_r1" -v do_r2="$do_r2" -v do_r3="$do_r3" \
       -v do_r5="$do_r5" -v do_r6="$do_r6" -v do_r7="$do_r7" -v skipbc="$skipbc" \
       -v maxwords="$R2_WORD_SIGNAL" -v maxsent="$R5_SENTENCE_SIGNAL" \
       -v stopwords="$PS_STOPWORDS" -v irregulars="$PS_IRREGULARS" \
-      -v flourish="$PS_FLOURISH" \
+      -v flourish="$PS_FLOURISH" -v abbrevs="$PS_ABBREV" \
       -v r4stream="${R4_STREAM_ARMED:-}" -v r4index="${R4_INDEX_ARMED:-}" \
       -v idxrec="$idxrec" '
     function trim(s) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
@@ -378,14 +402,14 @@ prose_scan() {
     }
 
     # An abbreviation-final period does not end a sentence. The list is the
-    # handful that occur in specification prose; a one-letter token is an
-    # initial and is treated the same way.
+    # handful that occur in specification prose, per language (PS_ABBREV); a
+    # one-letter token is an initial and is treated the same way.
     function is_abbrev(s, i,   j, w) {
       j = i
       while (j > 1 && substr(s, j - 1, 1) != " ") j--
       w = tolower(substr(s, j, i - j))
       if (length(w) <= 1) return 1
-      return (w ~ /^(e\.g|i\.e|etc|vs|cf|fig|no|nos|mr|ms|mrs|dr|prof|approx|resp|al|ca|st)$/)
+      return (w in ABBR)
     }
 
     # Index of the character that closes the first complete sentence in s, or 0.
@@ -451,6 +475,8 @@ prose_scan() {
       passive_ed = "(^|[^A-Za-z])(is|are|was|were|be|been|being|am)[ \t]+[A-Za-z]+ed([^A-Za-z]|$)"
       passive_irr = "(^|[^A-Za-z])(is|are|was|were|be|been|being|am)[ \t]+(" irregulars ")([^A-Za-z]|$)"
       nflour = split(flourish, FLOUR, /\|/)
+      n = split(abbrevs, ab, /[[:space:]]+/)
+      for (i = 1; i <= n; i++) if (ab[i] != "") ABBR[ab[i]] = 1
       usent = 0
     }
 
@@ -704,7 +730,8 @@ build_glossary() {
         print tolower(esc(s)) "\t" term "\t" s
       }
     }
-  ' "$glossary" | sort -u > "$R4_TERMS"
+  ' "$glossary" > "$R4_PATTERNS"
+  paste <(cut -f1 "$R4_PATTERNS" | fold_latin) <(cut -f2- "$R4_PATTERNS") | sort -u > "$R4_TERMS"
 
   if [ ! -s "$R4_TERMS" ]; then
     # No glossary rows, or none with rejected synonyms: an empty term list binds
@@ -729,6 +756,7 @@ run_r4() {
   [ -s "$R4_STREAM" ] || return 0
 
   R4_HITS="$(mktemp -t sdd-prose-hits.XXXXXX)" || return 0
+  fold_latin < "$R4_STREAM" > "$R4_HITS" && mv "$R4_HITS" "$R4_STREAM"
   grep -inE -f "$R4_PATTERNS" "$R4_STREAM" > "$R4_HITS" 2>/dev/null
   [ -s "$R4_HITS" ] || return 0
 
@@ -754,17 +782,17 @@ run_r4() {
     msg="R4 glossary synonym: '$syn' in '## $section' (line $line) — the glossary's approved term is '$term'"
     sdd_finding "$sev" "prose-style" "$file" "$msg"
     sdd_count_by_severity "$sev"
-  done < <(awk -F'\t' -v tf="$R4_TERMS" -v xf="$R4_INDEX" '
+  done < <(LC_ALL=C awk -F'\t' -v tf="$R4_TERMS" -v xf="$R4_INDEX" -v w="$PS_WORD_BYTES" '
       FILENAME == tf { pat[++ns] = $1; app[ns] = $2; disp[ns] = $3; next }
       FILENAME == xf { f[FNR] = $1; s[FNR] = $2; l[FNR] = $3; o[FNR] = $4; next }
       {
         p = index($0, ":")
         if (p == 0) next
         n = substr($0, 1, p - 1) + 0
-        t = tolower(substr($0, p + 1))
+        t = substr($0, p + 1)
         if (!(n in f)) next
         for (i = 1; i <= ns; i++) {
-          if (match(t, "(^|[^a-z0-9_])" pat[i] "([^a-z0-9_]|$)"))
+          if (match(t, "(^|[^" w "])" pat[i] "([^" w "]|$)"))
             printf "%s\t%s\t%s\t%s\t%s\t%s\n", f[n], s[n], l[n], o[n], disp[i], app[i]
         }
       }

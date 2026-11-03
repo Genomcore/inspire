@@ -1,0 +1,28 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "info",
+      "message_substring": "output_language: es — prose-style skips R1, R3, R6 and R7, which are English-only, and runs R2, R4 and R5"
+    },
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R2 sentence length: 44 words in '## Purpose'"
+    },
+    {
+      "rule": "prose-style",
+      "severity": "error",
+      "message_substring": "R4 glossary synonym: 'organización' in '## Behavior' .* the glossary's approved term is 'cuenta'"
+    }
+  ],
+  "forbidden": [
+    "R1 passive voice",
+    "R3 noun cluster",
+    "R6 historical language",
+    "R7 figurative language",
+    "R2 sentence length: 36 words",
+    "'compa'"
+  ]
+}
