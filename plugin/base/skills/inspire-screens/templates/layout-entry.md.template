@@ -15,12 +15,12 @@
 
 {One-paragraph description of the frame and what decides its shape.}
 
-## Frame
+## LAY1: Frame
 
 1. {Element 1, top to bottom}
 2. {Element 2}
 
-## Geometry
+## LAY2: Geometry
 
 <!-- Every row carries a Source, and the vocabulary is closed:
        `design-system.md §…`  the design system fixes the value — cite it, never
@@ -41,7 +41,7 @@
 |---|---|---|---|
 | `{element}` | {width · height · padding · gap · order · overflow} | {the value, or a token path in braces} | {design-system.md §… \| design-tokens.json \| reference \| generated \| undecided} |
 
-## Breakpoints
+## LAY3: Breakpoints
 
 <!-- Per width range from design-system.md § Supported viewports: which region
      changes and how — width, columns, stacking, visibility, scroll. A row that
@@ -55,24 +55,24 @@
 | every supported width | {region} | {what holds} | {source} |
 | {range} | {region} | {what changes, and to what} | {source} |
 
-## Composition
+## LAY4: Composition
 
 <!-- The rules that hold between elements and survive a resize: what sits in which
      cluster, what aligns with what, what a state replaces. Not a restatement of the
      tables above. -->
 - {rule}
 
-## Variants
+## LAY5: Variants
 
 - **{Variant name}** — {what differs, and its own geometry rows}.
 
-## Adopters
+## LAY6: Adopters
 
 <!-- Every screen sitting in this frame, by id. While **State** is `to-extract`,
      these are the screens still holding their own copy. -->
 - {screen id}
 
-## Notes
+## LAY7: Notes
 
 <!-- Commentary a run never reads. A requirement written here reaches no persona.
      Requirements go in Frame, Geometry, Breakpoints, Composition or Variants.

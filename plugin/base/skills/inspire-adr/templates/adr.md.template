@@ -13,5 +13,5 @@
      prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
        NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
 
-## Decision
+## ADR2: Decision
 What we decided, as one or a few imperative statements. The reasons go in the rationale.

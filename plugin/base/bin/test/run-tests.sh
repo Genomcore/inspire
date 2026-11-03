@@ -310,6 +310,32 @@ if [ -z "$filter" ]; then
   rm -f "$decisions_out"
 fi
 
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  heading_keys_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-heading-keys.sh" >"$heading_keys_out" 2>&1; then
+    echo "PASS heading-keys.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL heading-keys.sh/behaviour" >&2
+    cat "$heading_keys_out" >&2
+  fi
+  rm -f "$heading_keys_out"
+fi
+
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  translated_kb_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-translated-kb.sh" >"$translated_kb_out" 2>&1; then
+    echo "PASS review.sh/translated-kb"
+  else
+    failed=$((failed + 1))
+    echo "FAIL review.sh/translated-kb" >&2
+    cat "$translated_kb_out" >&2
+  fi
+  rm -f "$translated_kb_out"
+fi
+
 echo ""
 echo "Total: $total · Failed: $failed"
 [ $failed -eq 0 ]

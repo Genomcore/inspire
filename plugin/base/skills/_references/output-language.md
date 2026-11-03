@@ -33,10 +33,57 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
 - frontmatter **keys** and enum **values** (`kind`, `status`, `maturity`, the
   lifecycle states `draft`/`accepted`/`stable`, ADR maturities, …);
 - wikilink **target slugs** and the file / directory names they resolve to;
-- code identifiers, IDs, prefixes, and status-map **keys**.
+- code identifiers, IDs, prefixes, and status-map **keys**;
+- the **section ids** that open headings (`ENT4`) — see below;
+- the **bold header-line markers** a validator reads (`**Status:**`,
+  `**State:**`, `**Features:**`, `**Pattern:**`, `**Rationale:**`,
+  `**Decision:**`, `**Effect:**`, …) and their enum values;
+- the **line markers and sentinels** of the keyed formats: a field's
+  `Constraints:` line, the declared-none body `None.`, entry keys (`I1`, `P1`,
+  `B1`, `Q1`, `AC-1`, `AF-1`) and the heads after them (`unique(email)`);
+- the **vocabulary cells** of a table: a touch (`read`, `written`, `write`), a
+  `Required` answer (`yes`, `no`), a region's `Fill` and `Accepts`, a render row's
+  `Align` and `Narrow`, a binding's outcome (`→ [[…]]`, ``state `key` ``,
+  ``refresh `key` ``, ``param `key` ``).
+
+A table's **column headers** are prose: translate them (`| Campo | Tipo | Notas |`).
+The validators read a table's columns by position, so its columns keep the order
+the template gives them.
 
 Translate the **prose** — titles, descriptions, rationale, section bodies, review
 findings addressed to the operator. Never the keys.
+
+## Headings: a section id, then a label
+
+Every H2 and H3 a template ships is written `{ID}: {label}`. The **section id** —
+capital letters then digits, `ENT4`, `ADR3`, `SCR7` — is what a validator looks the
+section up by, and it never changes. The **label** after the first `: ` is free text
+in `output_language`. The templates ship the English label:
+
+```markdown
+## ENT4: Fields                ← the template, and an English project
+## ENT4: Campos                ← a Spanish project
+### ADR4: Cambios incompatibles
+```
+
+- Copy the id from the template verbatim and write the label in `output_language`,
+  whatever the language. Each format has its own ids (`ENT` entity, `ACT` action,
+  `UC` use case, `ADR` decision and rationale, `SCR` screen, `PAT` pattern, `CMP`
+  component, `LAY` layout, `MOD` module hub, `SPK` spike), numbered in template
+  order. An id from another format's template is not this format's section.
+- A heading without its id (`## Campos`) is not the section: the validators report
+  the section as missing.
+- The validators also read the legacy English name (`## Fields`, `## Fields: Campos`)
+  as its section, so a KB written before ids existed keeps validating. Write the id
+  in every new heading and in every heading you edit.
+- A heading that is itself an identifier — a field's `### {field}`, an entity's
+  `### [[module.entity|module::entity]]`, a keyed flow's `### AF-1: {label}`, a
+  screen's Render region — keeps the shape its format already gives it.
+
+An artifact's **identity** never lives in a heading or a title. It lives in a token
+that is never translated: the frontmatter `id` of entities, actions and screens, and
+the filename of features (`ANL-02.md`, whose H1 repeats it as `ANL-02: {label}`) and
+ADRs (`adr-{slug}.md`), which is what every wikilink resolves.
 
 ## Exception: lessons (`98_lessons`)
 

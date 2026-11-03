@@ -34,11 +34,11 @@ lifecycle: draft
      not carry. It never restates the bindings below (those rows are the
      contract) and never names a route (routes derive from `module` +
      `screen`). Present state, the product's own words, kept short. -->
-## Purpose
+## SCR1: Purpose
 
 {who comes here} {for which task}. {what they see first, and what they do from there.}
 
-## Bindings
+## SCR2: Bindings
 
 <!-- The screen's own semantics, declared whether or not a Pattern is named.
      Keys are screen-local and unique per subsection; each row generates one
@@ -62,33 +62,33 @@ lifecycle: draft
      required. A data row that relies on one, and a transition that passes one
      to its target, says so with param `{key}` — the target must declare it. -->
 
-### Parameters
+### SCR3: Parameters
 
 | Key | In | Type | Required | Notes |
 |---|---|---|---|---|
 | `id` | path | uuid | yes | {which record this screen shows} |
 | `view` | query | enum<quick\|advanced> | no | {what the flag changes} |
 
-### Data
+### SCR4: Data
 
 | Key | Action | Notes |
 |---|---|---|
 | `main` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what this feed is for}, by param `id` |
 
-### Dispatches
+### SCR5: Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
 | `create` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what the user does} | → [[{target-screen-id}]] | state `{state-key}` |
 
-### Navigation
+### SCR6: Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
 | `back` | [[{target-screen-id}]] | {what the user does} |
 | `open` | [[{target-screen-id}]] param `{target-param-key}` | {what the user does} |
 
-### States
+### SCR7: States
 
 | Key | When | Presentation |
 |---|---|---|
@@ -104,7 +104,7 @@ lifecycle: draft
      A table of columns adds Narrow: always · sticky · scroll ·
      hidden below {width} — what the column does below the widest range.
      Mints no claim: a Render edit re-emanates nothing. -->
-## Render
+## SCR8: Render
 
 ### {Region}
 
@@ -121,18 +121,18 @@ lifecycle: draft
 
 <!-- Optional — only when the screen deviates from the pattern's defaults, or
      when which component fills which region needs saying. -->
-## Module-specific deviations
+## SCR9: Module-specific deviations
 
 - {describe only what deviates from the pattern defaults}
 
 <!-- Optional — leave empty when aligned; omit the section entirely until a prototype target exists. -->
-## Current prototype
+## SCR10: Current prototype
 
 - **Target:** {prototype route(s) realizing this screen — the derived route, shell-prefixed in a multi-UI suite — or `none yet`}
 - **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
   - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
 
 <!-- Optional — presence-free. -->
-## Notes
+## SCR11: Notes
 
 - {domain-specific behavior, edge cases, user feedback that informed the design}

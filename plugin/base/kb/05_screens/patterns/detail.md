@@ -6,7 +6,7 @@
 A **single-record view** — everything about one entity instance, on its own route.
 Reached by clicking a row in a [`list`](list.md).
 
-## Structure
+## PAT1: Structure
 
 1. **Header** — the resource glyph + title + key meta (left); actions + back link (right).
 2. **Tabs / sections** — the record's facets (Overview first, Settings last is the
@@ -16,7 +16,7 @@ Reached by clicking a row in a [`list`](list.md).
 A pattern carries no measurement: where these regions sit, at what size and at
 which width belongs to the [`layouts/`](../layouts) entry that frames it.
 
-## Regions
+## PAT2: Regions
 
 | Region | Fill | Accepts | What it holds |
 |---|---|---|---|
@@ -30,12 +30,12 @@ A region is a hole: it says what kind of content it takes, never which fields th
 content shows. Which fields the body renders belongs to the components filling it —
 the screen wires its data binding into them.
 
-## Variants
+## PAT3: Variants
 
 - **Single-page** — no tabs (small records).
 - **Editor** — the detail in an editable mode (or a dedicated edit screen of its own).
 
-## Notes
+## PAT4: Notes
 
 Each detail screen is a route, not a drawer/overlay — that keeps deep links and
 back-navigation working. A screen may opt into an overlay only when it says so

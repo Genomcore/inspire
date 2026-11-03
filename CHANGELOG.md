@@ -69,6 +69,20 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ### Fixed
 
+- **A KB written in another language validates.** A heading is a section id, then
+  a label in the project's language: `## ENT4: Campos`. The id is capital letters then
+  digits, one series per format (`ENT` entity, `ACT` action, `UC` use case, `ADR`,
+  `SCR` screen, …), and every validator finds a section by it, never by the label. A
+  Spanish or Catalan KB failed every mandatory-section check before. The templates
+  and the seeded pattern entries ship every heading with its id and an English label
+  (`## ENT4: Fields`), and the authoring skills write that shape in every language.
+  The English name (`## Fields`) still reads as its section, so an existing KB keeps
+  validating, and `/inspire:update` counts those headings and recommends rewriting
+  them: `.inspire/bin/heading-keys.sh` adds the ids, and the skill then translates
+  the labels when `output_language` is not English. It never rewrites unprompted.
+  Translated table headers read correctly too: the domain readers took a Spanish
+  `| Campo | Tipo |` header row for a field named `Campo`, and the render check
+  lost its Component and Narrow columns once their headers were translated.
 - The action interview no longer imposes one platform's vocabulary (`deploy`,
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project

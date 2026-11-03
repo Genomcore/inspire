@@ -268,7 +268,7 @@ strip_html_comments() {
 }
 
 # h2_list <file>
-#   The file's H2 header names in document order, deduplicated, read outside
+#   The file's H2 header keys in document order, deduplicated, read outside
 #   frontmatter and outside fences. A repeated H2 is listed once: the body
 #   reader answers with the first occurrence either way, so scanning it twice
 #   would only double every finding it makes.
@@ -276,11 +276,10 @@ h2_list() {
   awk \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
       /^## / {
-        h = substr($0, 4)
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
+        h = sdd_heading_name($0, "## ")
         if (h != "" && !(h in seen)) { seen[h] = 1; print h }
       }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
 # section_kind <layer> <header> — normative | ac | tabular
@@ -484,7 +483,9 @@ prose_scan() {
 
       # `### Breaking changes` runs until the next H3 or the end of the section.
       if (skipbc == "1") {
-        if (line ~ /^[[:space:]]*###[[:space:]]+Breaking changes[[:space:]]*$/) { bc = 1 }
+        hl = line
+        sub(/^[[:space:]]+/, "", hl)
+        if (sdd_heading_name(hl, "### ") == "Breaking changes") { bc = 1 }
         else if (line ~ /^[[:space:]]*#{1,6}[[:space:]]/) { bc = 0 }
       }
 
@@ -578,7 +579,7 @@ prose_scan() {
     }
 
     END { unit_end() }
-  '
+  '"${SDD_AWK_HEADING_FUNCS}"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

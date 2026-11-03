@@ -2,17 +2,17 @@
 
 **Decision:** [[adr-{slug}]]
 
-## Context
+## ADR1: Context
 What problem or question prompted this decision, and why the decision answers it.
 
-## Consequences
+## ADR3: Consequences
 What follows — positive and negative. Include breaking changes.
 
-### Breaking changes
+### ADR4: Breaking changes
 - ...
 
-## Alternatives considered
+## ADR5: Alternatives considered
 1. **{alternative}.** Why rejected.
 
-## Related ADRs
+## ADR6: Related ADRs
 - [[adr-xxx]] — {relation}
