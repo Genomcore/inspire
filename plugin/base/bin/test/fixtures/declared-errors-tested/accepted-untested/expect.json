@@ -1,6 +1,4 @@
-{
-  "exit": 1,
+{ "exit": 0,
   "findings": [
-    { "rule": "declared-errors-tested", "message_substring": "invalid_email` appears in no test" }
-  ]
-}
+    { "rule": "declared-errors-tested", "severity": "warning", "message_substring": "invalid_email` appears in no test" }
+  ] }

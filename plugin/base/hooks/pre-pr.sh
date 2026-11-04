@@ -27,8 +27,8 @@ STATUS=0
 "$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb || STATUS=2
 
 # Every error a descriptor declares must be exercised by a test. Lifecycle-progressive
-# on its own (warning at draft, error at accepted+), so this can run unconditionally:
-# a spec still being drafted does not block a PR, a closed contract does.
+# on its own (warning at draft and accepted, error at stable), so this can run
+# unconditionally: a contract still being built does not block a PR, a locked one does.
 errors_tested="$PROJECT_ROOT/.inspire/bin/declared-errors-tested.sh"
 [ -x "$errors_tested" ] && { "$errors_tested" inspire_kb/04_domain || STATUS=2; }
 

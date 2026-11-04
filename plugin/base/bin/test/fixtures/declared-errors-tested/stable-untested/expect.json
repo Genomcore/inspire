@@ -1,0 +1,4 @@
+{ "exit": 1,
+  "findings": [
+    { "rule": "declared-errors-tested", "severity": "error", "message_substring": "invalid_email` appears in no test" }
+  ] }
