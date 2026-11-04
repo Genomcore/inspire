@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "escape-hatch-ratchet", "severity": "error", "message_substring": "lexicon is malformed" }
+  ]
+}

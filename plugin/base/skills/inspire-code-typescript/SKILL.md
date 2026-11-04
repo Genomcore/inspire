@@ -137,3 +137,28 @@ and **decorators** — so anything a framework encodes only in a decorator
 framework profiles declare their bindings as a convention rather than leaving
 them to be read off the code: the convention is legible where the decorator is
 not.
+
+## Lexicon
+
+The `lexicon` block of `.escape-hatches.json`. The ratchet lexes each file with it, as
+the compiler does: a hatch in a string or in a comment's prose is a mention, never a
+use. An `in: comment` pattern counts a comment that starts with it, the way TypeScript
+and ESLint read their directives.
+
+```json
+"lexicon": {
+  "line_comments": ["//"],
+  "block_comments": [{ "open": "/*", "close": "*/" }],
+  "strings": [
+    { "open": "\"", "close": "\"", "escape": "\\" },
+    { "open": "'", "close": "'", "escape": "\\" },
+    { "open": "`", "close": "`", "escape": "\\", "multiline": true,
+      "interpolation": { "open": "${", "close": "}" } }
+  ]
+}
+```
+
+`@ts-expect-error`, `@ts-ignore` and `eslint-disable` patterns are `in: comment`;
+`as any`, `as unknown as` and the non-null `!` are `in: code`. A regex literal is not
+lexed: a quote inside one opens a string that closes at the end of its line, since
+only template literals are `multiline`.

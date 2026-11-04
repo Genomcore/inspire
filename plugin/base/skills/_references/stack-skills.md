@@ -98,7 +98,8 @@ security). Each is a lens name + one line of what it hunts for.
 The concrete tools and rules that mechanically enforce this stack's share of
 [`quality-gates.md`](quality-gates.md): which lint
 rules, which coverage tooling, which of them are absolute vs ratcheted, and which
-suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+suppression syntax counts as this stack's escape hatch, each pattern with where it
+lives (`in: code`, or `in: comment` for a directive). A rule that does not hold for
 this stack is listed as **dropped with its reason**, never left out silently. Names
 tools and rules only — never an org's server or pipeline.
 
@@ -153,6 +154,10 @@ Where the rendering assumes a database engine or runtime, and how to move it.
 
 ## Declaration-only tree
 The recipe: how this language emits signatures without bodies.
+
+## Lexicon
+The `lexicon` block of `.escape-hatches.json`: this language's comment and string
+delimiters, so the escape-hatch ratchet counts a hatch only where it can be used.
 ```
 
 A language skill carries **no** `## Layering`, `## Test conventions`,

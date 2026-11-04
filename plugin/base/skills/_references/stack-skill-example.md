@@ -16,7 +16,7 @@ real skill.
 
 A LANGUAGE profile (`layer: language`, no `language:` field) has a different section
 set — Rendering · Mapping tokens · Project semantic types · Engine notes ·
-Declaration-only tree — and no architecture sections at all. `inspire-code-typescript`
+Declaration-only tree · Lexicon — and no architecture sections at all. `inspire-code-typescript`
 is the shipped worked example; stack-skills.md § File format has its skeleton.
 -->
 
