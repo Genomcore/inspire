@@ -35,7 +35,7 @@ has "the English twin reports an unresolved state"   "state 'gone'" "$EN"
 has "the English twin reports an undeclared param"   "param 'tab'" "$EN"
 has "the English twin reads the render columns"      "Narrow 'wide'" "$EN"
 
-has "prose-style says it is en-only for the Spanish twin" 'output_language: es' "$ES"
+has "prose-style names the checks it skips for the Spanish twin" 'output_language: es' "$ES"
 eq  "every other finding is the same in both languages" \
     "$(printf '%s\n' "$ES" | grep -v '"rule":"prose-style"')" \
     "$(printf '%s\n' "$EN" | grep -v '"rule":"prose-style"')"

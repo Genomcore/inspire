@@ -144,8 +144,9 @@ the second row states a preference about how a sentence reads, and
 [`writing-style.md`](writing-style.md) § Enforcement keeps all of them out of the
 ramp — **nothing gates a commit on style.**
 
-The checks are **English-only**: a project whose `output_language` is not `en`
-gets one info-level note and no findings at all.
+R1 and R3 are **English-only**, and outside English R6 and R7 read only the tokens
+`00_bootstrap/style-tokens.md` declares: a project whose `output_language` is not
+`en` gets one info-level note saying so, and R2, R4 and R5 still run.
 
 Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`, `touched-entity-lifecycle`) but the mechanical and coherence tiers apply unconditionally — type drift, broken references, missing sections, and TODO sludge silently break later promotion otherwise.
 

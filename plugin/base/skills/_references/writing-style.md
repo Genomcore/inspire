@@ -254,6 +254,11 @@ greppable, and a check may act on them:
 - `migrated from`
 - `~~…~~` — strikethrough markup
 
+That list is English. `00_bootstrap/style-tokens.md` adds a project's own R6 tokens,
+and outside English they are the only ones checked. The same test admits a word to it:
+a token belongs there only if it almost never states present behavior in that
+language.
+
 `replaces` and `removed` are **deliberately absent** from that list, though both often
 signal history. Both have legitimate present-tense uses in this vault.
 `**Effect:** replace` is a pinned enum value, and "the row is removed" describes
@@ -361,20 +366,36 @@ writing, in whatever `output_language` the project declares. This is the whole
 contract, and it is the half that matters: a rule the writer follows never becomes a
 finding.
 
-**The mechanical checks are a subset, and an English-only one.** They run from
-`.inspire/bin/` at review time. Their scope is narrow, and stated rather than implied:
-*prose-style mechanical checks are en-only; the writing contract still binds as
-authoring judgment.* When `00_bootstrap/project.md` declares an `output_language` other
-than `en`, `prose-style.sh` emits exactly that note at info level and exits without
-findings.
+**The mechanical checks are a subset, and part of it is English-only.** They run from
+`.inspire/bin/` at review time. Which checks run depends on `output_language`:
 
-The reason is structural, not effort. R1, R3, R7's intensifier list and the
-historical-token list are English morphology. More decisively, the binding table above
-is keyed on H2 **names**, and a compliant non-`en` fork translates its headers. Headers
-are prose, not machine-read tokens, so even the language-independent rules would have no
-section kind to bind to. A non-`en` checking strategy is **deferred and recorded**, not
-solved: until one exists, the validator stays an `en`-only subset of a contract that
-binds everywhere.
+| check | English | any other language |
+|---|---|---|
+| R2 sentence length | runs | runs |
+| R4 glossary synonyms | runs | runs |
+| R5 paragraph length | runs | runs |
+| R6 historical tokens | the built-in list and `style-tokens.md` | `style-tokens.md` |
+| R6 `~~strikethrough~~` | runs | runs |
+| R7 intensifiers | the built-in list and `style-tokens.md` | `style-tokens.md` |
+| R1 passive voice, R3 noun clusters | run | skipped |
+
+R1 and R3 are English morphology. A passive or a noun cluster takes a different shape
+in each language, so no word list carries them over, and they stay authoring judgment
+outside English. R2 and R5 measure length. R4, R6 and R7 match words a project
+declares in its own language: R4 the synonyms `00_bootstrap/glossary.md` rejects, R6
+and R7 the tokens `00_bootstrap/style-tokens.md` lists. The built-in R6 and R7 lists
+are English, so another language checks only the declared tokens, and an empty
+`style-tokens.md` leaves strikethrough as R6's one check. Every check binds to a
+section through its id, so `## ACT1: Propósito` is the action's Purpose in every
+language. When `00_bootstrap/project.md` declares another language, `prose-style.sh`
+emits one info note that says so, then runs. The 35-word and 8-sentence signals apply
+unchanged.
+
+The sentence splitter keeps a period after a known abbreviation inside its sentence. An
+English KB uses the English list. Another language uses a shorter list of shared and
+Spanish abbreviations, without `no`, because `no.` ends a Spanish sentence. R4 treats
+an accented letter as part of a word and matches an accented capital to its lowercase
+form, and so do R6 and R7 on the declared tokens.
 
 **What can reach `error`, and what cannot.** One check ramps with the artifact's own
 `lifecycle`: R4. Every other rule is a warning at every lifecycle state, in every

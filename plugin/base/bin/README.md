@@ -77,16 +77,17 @@ without them is reported, never blocked. `/inspire-bootstrap design-system backf
 
 | Script | Checks | Severity model |
 |---|---|---|
-| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence length (over 35 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (over 8 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`), R7 figurative language (the closed intensifier list, first hit per line), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | **Only R4 ramps**, with the object's own lifecycle in `04_domain`, and it is a flat warning in every other layer: `03_features` and `01_adr` carry no `lifecycle:` for the columns to read, and `05_screens` carries one these checks deliberately do not read — a screen ramps on its contract, never on its prose. R4 is alone because it reads a declaration: the glossary records the rejected word and names the approved one. Every other rule is a **warning at every lifecycle, never ramping**, so nothing here gates a commit on style. |
+| `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across `04_domain`, `03_features`, `01_adr` and `05_screens`: R2 sentence length (over 35 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (over 8 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`, plus the R6 tokens `00_bootstrap/style-tokens.md` declares), R7 figurative language (the closed intensifier list plus the declared R7 tokens, first hit per line), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | **Only R4 ramps**, with the object's own lifecycle in `04_domain`, and it is a flat warning in every other layer: `03_features` and `01_adr` carry no `lifecycle:` for the columns to read, and `05_screens` carries one these checks deliberately do not read — a screen ramps on its contract, never on its prose. R4 is alone because it reads a declaration: the glossary records the rejected word and names the approved one. Every other rule is a **warning at every lifecycle, never ramping**, so nothing here gates a commit on style. |
 
-**English-only, and it says so.** When `00_bootstrap/project.md` declares
+**Partly English-only, and it says so.** When `00_bootstrap/project.md` declares
 an `output_language` other than English — `en`, `en-*`/`en_*` and `english` are
 all read as English, case-insensitively — `prose-style.sh` emits one **info**-level
-note — *prose-style mechanical checks are en-only; the writing contract
-still binds as authoring judgment* — and exits without checking anything. The
-contract still binds everywhere; only the mechanics are `en`-shaped, because R1,
-R3 and the two token lists are English morphology and the binding table is keyed
-on English H2 names. The script's own header states what it reaches and what it does
+note naming R1 and R3 as skipped, then runs the rest. R1 and R3 are English
+morphology. R6 and R7 check `~~strikethrough~~` and the tokens
+`00_bootstrap/style-tokens.md` declares in the project's language, because their
+built-in lists are English. R2 and R5 measure length and R4 matches the glossary's
+own words. Every check binds to a section through its id, which no translation
+changes. The script's own header states what it reaches and what it does
 not: table cells are never read, prose above the first H2 is never read, and the
 per-field `### {field}` prose inside `## Fields` inherits its parent's tabular
 kind.
@@ -145,7 +146,8 @@ Findings are emitted to **stderr** as JSON lines (one finding per line):
 
 Severity is one of `error` (blocking), `warning` (advisory) or `info` (a note
 about the run itself, never about an artifact). `info` has exactly one emitter:
-`prose-style.sh` announcing that a non-`en` project is out of its reach.
+`prose-style.sh` naming the checks a non-`en` project's language puts out of
+its reach.
 
 **Stdout** is reserved for human-readable summary output (used by skills when
 they want to format findings for conversational presentation).

@@ -1,0 +1,22 @@
+{
+  "exit": 0,
+  "finding_count": 3,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R7 figurative language: 'basically' in '## Purpose' .line 10."
+    },
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R7 figurative language: 'simply' in '## Purpose' .line 12."
+    },
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: 'formerly' in '## Purpose' .line 14."
+    }
+  ],
+  "forbidden": ["'lengthy'", "\"severity\":\"info\""]
+}

@@ -17,7 +17,7 @@ questions it actually answers.
 | rung | what sits there | reaches |
 |---|---|---|
 | **runtime** | the `inspire-*` skills, their `references/`, this `_references/` directory, the stack profiles, the wire conventions | every project on this release |
-| **project** | the root `CLAUDE.md`, `00_bootstrap/` (`stack.md`, `theme.md`, `surfaces.md`, `glossary.md`), `05_screens/design-system.md`, `98_lessons/` | this project |
+| **project** | the root `CLAUDE.md`, `00_bootstrap/` (`stack.md`, `theme.md`, `surfaces.md`, `glossary.md`, `style-tokens.md`), `05_screens/design-system.md`, `98_lessons/` | this project |
 | **decision** | an ADR in `01_adr/` | its declared blast radius — suite-wide, or the surfaces its `surfaces:` field names |
 | **module** | a module hub in `02_modules/{module}.md` | one module |
 | **artifact** | a use case in `03_features/`, an entity or action descriptor in `04_domain/`, a screen in `05_screens/` | the one thing it names |
