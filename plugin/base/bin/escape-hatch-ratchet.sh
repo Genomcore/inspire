@@ -123,6 +123,21 @@ fi
 lowerable="$(mktemp -t escape-hatch-lower.XXXXXX)"
 trap 'rm -f "$FILE_LIST" "$lowerable"' EXIT
 
+occurrences() {
+  tr '\n' '\0' < "$FILE_LIST" \
+    | xargs -0 grep -Eoh -- "$1" 2>/dev/null | wc -l | tr -d ' '
+}
+
+offending_lines() {
+  local regex="$1" hit content
+  while IFS= read -r hit; do
+    content="${hit#*:*:}"
+    [ "$(printf '%s\n' "$content" | grep -Eo -- "$regex" | wc -l)" \
+      -gt "$(printf '%s\n' "$content" | grep -Eo -- "\`($regex)\`" | wc -l)" ] \
+      && printf '%s\n' "$hit"
+  done < <(tr '\n' '\0' < "$FILE_LIST" | xargs -0 grep -EnH -- "$regex" 2>/dev/null)
+}
+
 printf '%-24s %8s %8s\n' "PATTERN" "COUNT" "CEILING"
 
 # Fields are extracted per pattern with individual `jq -r` calls, NOT one pass
@@ -156,8 +171,10 @@ while [ "$i" -lt "$pattern_total" ]; do
 
   count=0
   if [ -s "$FILE_LIST" ]; then
-    count="$(tr '\n' '\0' < "$FILE_LIST" \
-      | xargs -0 grep -Eoh -- "$regex" 2>/dev/null | wc -l | tr -d ' ')"
+    matches="$(occurrences "$regex")"
+    mentions="$(occurrences "\`($regex)\`")"
+    count=$((matches - mentions))
+    [ "$count" -lt 0 ] && count=0
   fi
 
   printf '%-24s %8s %8s\n' "$id" "$count" "$ceiling"
@@ -165,8 +182,7 @@ while [ "$i" -lt "$pattern_total" ]; do
   if [ "$count" -gt "$ceiling" ]; then
     # Name the files so the diff that broke it is obvious. Cap the list —
     # the finding is the ceiling breach, not a full inventory.
-    offenders="$(tr '\n' '\0' < "$FILE_LIST" \
-      | xargs -0 grep -EnH -- "$regex" 2>/dev/null | head -5 | tr '\n' ' ')"
+    offenders="$(offending_lines "$regex" | head -5 | tr '\n' ' ')"
     sdd_finding "error" "escape-hatch-ratchet" "$id" \
       "$count occurrences of '$regex' exceed the ceiling of $ceiling — remove one, or raise the ceiling in $CONFIG as a reviewable edit and open a cleanup ticket. First hits: $offenders"
     sdd_count_error
