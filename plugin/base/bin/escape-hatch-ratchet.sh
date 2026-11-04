@@ -20,20 +20,10 @@
 #   {
 #     "scope":      ["source/src", "source/test"],
 #     "extensions": ["ts", "tsx"],
-#     "lexicon": {
-#       "line_comments":  ["//"],
-#       "block_comments": [{ "open": "/*", "close": "*/" }],
-#       "strings": [
-#         { "open": "\"", "close": "\"", "escape": "\\" },
-#         { "open": "'",  "close": "'",  "escape": "\\" },
-#         { "open": "`",  "close": "`",  "escape": "\\", "multiline": true,
-#           "interpolation": { "open": "${", "close": "}" } }
-#       ]
-#     },
 #     "patterns": [
-#       { "id": "ts-ignore",       "in": "comment", "regex": "@ts-ignore",       "ceiling": 0 },
-#       { "id": "ts-expect-error", "in": "comment", "regex": "@ts-expect-error", "ceiling": 4 },
-#       { "id": "as-any",          "in": "code",    "regex": "as any",           "ceiling": 3 }
+#       { "id": "ts-ignore",      "regex": "@ts-ignore",      "ceiling": 0 },
+#       { "id": "ts-expect-error","regex": "@ts-expect-error", "ceiling": 4 },
+#       { "id": "as-any",         "regex": "as any",           "ceiling": 3 }
 #     ]
 #   }
 #
@@ -131,85 +121,21 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 
 lowerable="$(mktemp -t escape-hatch-lower.XXXXXX)"
-LEXICON="$(mktemp -t escape-hatch-lexicon.XXXXXX)"
-CODE_VIEW="$(mktemp -t escape-hatch-code.XXXXXX)"
-COMMENT_VIEW="$(mktemp -t escape-hatch-comments.XXXXXX)"
-trap 'rm -f "$FILE_LIST" "$lowerable" "$LEXICON" "$CODE_VIEW" "$COMMENT_VIEW"' EXIT
+trap 'rm -f "$FILE_LIST" "$lowerable"' EXIT
 
-lexed=false
-if jq -e 'has("lexicon")' "$CONFIG" >/dev/null 2>&1; then
-  if ! jq -e '
-      def token: type == "string" and length > 0;
-      .lexicon | type == "object"
-      and ((.line_comments // []) + (.block_comments // []) | length > 0)
-      and all((.line_comments // [])[]; token)
-      and all((.block_comments // [])[]; (.open | token) and (.close | token))
-      and all((.strings // [])[]; (.open | token) and (.close | token)
-        and ((.interpolation // null) == null
-          or ((.interpolation.open | token) and (.interpolation.close | token))))
-    ' "$CONFIG" >/dev/null 2>&1; then
-    sdd_finding "error" "escape-hatch-ratchet" "$CONFIG" \
-      "lexicon is malformed — it needs at least one comment delimiter, and every delimiter must be a nonempty string; fix it in $CONFIG"
-    sdd_count_error
-    sdd_exit_with_counters
-    exit $?
-  fi
-  jq -r '.lexicon
-    | (.line_comments[]? | "line\t" + .),
-      (.block_comments[]? | "block\t" + .open + "\t" + .close),
-      (.strings[]? | "string\t" + .open + "\t" + .close + "\t" + (.escape // "")
-        + "\t" + (.interpolation.open // "") + "\t" + (.interpolation.close // "")
-        + "\t" + ((.multiline // false) | tostring))' "$CONFIG" > "$LEXICON"
-  if [ -s "$FILE_LIST" ]; then
-    tr '\n' '\0' < "$FILE_LIST" \
-      | xargs -0 awk -v code_out="$CODE_VIEW" -v comment_out="$COMMENT_VIEW" \
-          -f "$SCRIPT_DIR/_hatch-lexer.awk" "$LEXICON"
-  fi
-  lexed=true
-else
-  sdd_finding "warning" "escape-hatch-ratchet" "$CONFIG" \
-    "no lexicon — comments and strings are counted as code, so prose that names a hatch counts as a use; declare one (quality-gates.md Rule 4)"
-  sdd_count_warning
-fi
-
-view_pattern() {
-  case "$1" in
-    comment) printf '^[[:space:]*]*(%s)' "$2" ;;
-    *) printf '%s' "$2" ;;
-  esac
-}
-
-view_file() {
-  case "$1" in
-    comment) printf '%s' "$COMMENT_VIEW" ;;
-    *) printf '%s' "$CODE_VIEW" ;;
-  esac
-}
-
-count_hatches() {
-  local in="$1" regex="$2"
-  if ! $lexed; then
-    tr '\n' '\0' < "$FILE_LIST" \
-      | xargs -0 grep -Eoh -- "$regex" 2>/dev/null | wc -l | tr -d ' '
-  elif [ "$in" = "comment" ]; then
-    cut -f3- "$COMMENT_VIEW" | grep -Ec -- "$(view_pattern comment "$regex")"
-  else
-    cut -f3- "$CODE_VIEW" | grep -Eo -- "$regex" | wc -l | tr -d ' '
-  fi
+occurrences() {
+  tr '\n' '\0' < "$FILE_LIST" \
+    | xargs -0 grep -Eoh -- "$1" 2>/dev/null | wc -l | tr -d ' '
 }
 
 offending_lines() {
-  local in="$1" regex="$2" view record file line_no
-  if ! $lexed; then
-    tr '\n' '\0' < "$FILE_LIST" | xargs -0 grep -EnH -- "$regex" 2>/dev/null
-    return
-  fi
-  view="$(view_file "$in")"
-  cut -f3- "$view" | grep -En -- "$(view_pattern "$in" "$regex")" | cut -d: -f1 | head -5 \
-    | while IFS= read -r record; do
-        IFS=$'\t' read -r file line_no _ < <(sed -n "${record}p" "$view")
-        printf '%s:%s:%s\n' "$file" "$line_no" "$(sed -n "${line_no}p" "$file")"
-      done
+  local regex="$1" hit content
+  while IFS= read -r hit; do
+    content="${hit#*:*:}"
+    [ "$(printf '%s\n' "$content" | grep -Eo -- "$regex" | wc -l)" \
+      -gt "$(printf '%s\n' "$content" | grep -Eo -- "\`($regex)\`" | wc -l)" ] \
+      && printf '%s\n' "$hit"
+  done < <(tr '\n' '\0' < "$FILE_LIST" | xargs -0 grep -EnH -- "$regex" 2>/dev/null)
 }
 
 printf '%-24s %8s %8s\n' "PATTERN" "COUNT" "CEILING"
@@ -224,7 +150,6 @@ while [ "$i" -lt "$pattern_total" ]; do
   id="$(jq -r ".patterns[$i].id // empty" "$CONFIG")"
   regex="$(jq -r ".patterns[$i].regex // empty" "$CONFIG")"
   ceiling="$(jq -r ".patterns[$i].ceiling // 0" "$CONFIG")"
-  in="$(jq -r ".patterns[$i].in // empty" "$CONFIG")"
   i=$((i + 1))
   [ -z "$id" ] && continue
 
@@ -237,12 +162,6 @@ while [ "$i" -lt "$pattern_total" ]; do
     sdd_count_error
     continue
   fi
-  if $lexed && [ "$in" != "code" ] && [ "$in" != "comment" ]; then
-    sdd_finding "error" "escape-hatch-ratchet" "$id" \
-      "pattern '$id' must say \"in\": \"code\" or \"comment\" — with a lexicon, a hatch is found only where it is declared to live; fix it in $CONFIG"
-    sdd_count_error
-    continue
-  fi
   if ! printf '%s' "$ceiling" | grep -qE '^[0-9]+$'; then
     sdd_finding "error" "escape-hatch-ratchet" "$id" \
       "pattern '$id' has a non-integer ceiling ('$ceiling') — it can neither fail nor ratchet; fix it in $CONFIG"
@@ -252,7 +171,10 @@ while [ "$i" -lt "$pattern_total" ]; do
 
   count=0
   if [ -s "$FILE_LIST" ]; then
-    count="$(count_hatches "$in" "$regex")"
+    matches="$(occurrences "$regex")"
+    mentions="$(occurrences "\`($regex)\`")"
+    count=$((matches - mentions))
+    [ "$count" -lt 0 ] && count=0
   fi
 
   printf '%-24s %8s %8s\n' "$id" "$count" "$ceiling"
@@ -260,7 +182,7 @@ while [ "$i" -lt "$pattern_total" ]; do
   if [ "$count" -gt "$ceiling" ]; then
     # Name the files so the diff that broke it is obvious. Cap the list —
     # the finding is the ceiling breach, not a full inventory.
-    offenders="$(offending_lines "$in" "$regex" | head -5 | tr '\n' ' ')"
+    offenders="$(offending_lines "$regex" | head -5 | tr '\n' ' ')"
     sdd_finding "error" "escape-hatch-ratchet" "$id" \
       "$count occurrences of '$regex' exceed the ceiling of $ceiling — remove one, or raise the ceiling in $CONFIG as a reviewable edit and open a cleanup ticket. First hits: $offenders"
     sdd_count_error

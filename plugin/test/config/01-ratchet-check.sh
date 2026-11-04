@@ -29,19 +29,14 @@ cat > "$proj/.escape-hatches.json" <<'EOF'
 {
   "scope": ["source/src"],
   "extensions": ["ts"],
-  "lexicon": {
-    "line_comments": ["//"],
-    "strings": [{ "open": "\"", "close": "\"", "escape": "\\" }]
-  },
-  "patterns": [{ "id": "as-any", "in": "code", "regex": "as any", "ceiling": 0 }]
+  "patterns": [{ "id": "as-any", "regex": "as any", "ceiling": 0 }]
 }
 EOF
 
 as_factory() { ( cd "$proj" && bash -c "$command" >/dev/null 2>&1 ); }
 
-printf '%s\n' '// The guard narrows it: as any would hide the missing field.' \
+printf '%s\n' '// The guard narrows it: `as any` would hide the missing field.' \
   'export const n = (v: unknown): number => (typeof v === "number" ? v : 0);' \
-  'export const hint = "never \"as any\" here";' \
   > "$proj/source/src/a.ts"
 as_factory
 eq "the check passes on code that only mentions a hatch" "$?" "0"

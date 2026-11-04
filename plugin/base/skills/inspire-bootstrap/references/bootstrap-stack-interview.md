@@ -200,8 +200,8 @@ and `profiles:` are confirmed:
    — the lint rules, the test-runner thresholds, and the CI job that runs them. New
    rules go in **absolute**; a rule the existing code cannot satisfy yet enters scoped
    or ratcheted with a `/inspire-task` ticket for the cleanup. Never dropped silently.
-   Seed `.escape-hatches.json` with the stack's suppression patterns from the profile,
-   each with its `in`, and the `lexicon` from the language profile's `## Lexicon`; then run `.inspire/bin/escape-hatch-ratchet.sh --update` to set the ceilings from
+   Seed `.escape-hatches.json` with the stack's suppression patterns from the profile
+   and run `.inspire/bin/escape-hatch-ratchet.sh --update` to set the ceilings from
    what the code actually contains. On a greenfield project that is **zero** — the only
    moment it is free. On existing code, measure **before** raising the lint set:
    raising it is what produces new suppressions, so the honest baseline only exists

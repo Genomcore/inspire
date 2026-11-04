@@ -1,49 +1,7 @@
 {
-  "scope": [
-    "src"
-  ],
-  "extensions": [
-    "ts"
-  ],
+  "scope": ["src"],
+  "extensions": ["ts"],
   "patterns": [
-    {
-      "id": "prop-access",
-      "in": "code",
-      "regex": "foo\\.bar",
-      "ceiling": 1
-    }
-  ],
-  "lexicon": {
-    "line_comments": [
-      "//"
-    ],
-    "block_comments": [
-      {
-        "open": "/*",
-        "close": "*/"
-      }
-    ],
-    "strings": [
-      {
-        "open": "\"",
-        "close": "\"",
-        "escape": "\\"
-      },
-      {
-        "open": "'",
-        "close": "'",
-        "escape": "\\"
-      },
-      {
-        "open": "`",
-        "close": "`",
-        "escape": "\\",
-        "multiline": true,
-        "interpolation": {
-          "open": "${",
-          "close": "}"
-        }
-      }
-    ]
-  }
+    { "id": "prop-access", "regex": "foo\\.bar", "ceiling": 1 }
+  ]
 }

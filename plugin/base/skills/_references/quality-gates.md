@@ -80,9 +80,9 @@ conditions, each of them mechanical, not a habit:
   by itself. `eslint-disable-next-line <rule>`, never a bare file-wide `eslint-disable`.
 - **Justified in place** — a suppression without a written reason is a lint error, not
   a review comment (Rule 1: local and binary, so the linter owns it). Where the reason
-  is "later", it carries the tracker id that owns the cleanup. The ratchet lexes
-  the code with the language's `lexicon`, so a comment saying why a hatch was
-  avoided, or a string that names one, is a mention and never counts as a use.
+  is "later", it carries the tracker id that owns the cleanup. Prose that names a
+  hatch, such as a comment saying why one was avoided, writes it in backticks
+  (`` `as any` ``): the ratchet counts that as a mention, never as a use.
 - **Counted** — the repo-wide total is a ratchet: it may fall, never rise.
 
 That count is the one aggregate whose baseline belongs **inside** the repository, and

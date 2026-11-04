@@ -107,17 +107,11 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
   has. Its pagination numbers went too: the wire convention owns pagination.
-- **The escape-hatch ratchet counts uses, not mentions.** `.escape-hatches.json`
-  takes a `lexicon` (comment delimiters, and string delimiters with their escape,
-  interpolation and whether they span lines), and the ratchet lexes each file with it
-  as a compiler does. An `in: code` pattern counts only outside comments and strings,
-  so `"say \"as any\""` is a mention and `${(v as any).id}` a use. An `in: comment`
-  pattern counts a comment that starts with it, as TypeScript and ESLint read their
-  directives. Before, prose naming a hatch broke the ceiling, so no file in scope
-  could say why a hatch was avoided. With a lexicon, every pattern must say `in`.
-  Without one the ratchet counts raw text as before and warns: add the `## Lexicon`
-  block from `inspire-code-typescript`, and an `in` to each pattern, to your
-  `.escape-hatches.json`.
+- **The escape-hatch ratchet counts uses, not mentions.** A match wrapped in
+  backticks, such as `` `as any` `` in a comment explaining why the cast was avoided,
+  is no longer counted, and the first hits it reports leave out lines that only
+  mention one. Before, prose naming a hatch broke the ceiling, so no file in scope
+  could say why a hatch was avoided.
 - Re-endorsing an artifact the same day it was last endorsed wrote the same
   bytes, so git recorded nothing and the endorsement looked as if it never
   happened.

@@ -112,14 +112,11 @@ it needs production reach no skill can install.
 
 **Closed 2026-11-04.**
 
-- *AC-3.* The ratchet lexes each file with the `lexicon` the config declares
-  (`_hatch-lexer.awk`): comments, strings with escapes, and `${…}` interpolation back
-  into code. An `in: code` pattern counts outside comments and strings, an
-  `in: comment` pattern only a comment that starts with it. The language skill's
-  `## Lexicon` carries the block. The greppable form and the falling ceiling already
-  existed; the justification itself is the linter's (`quality-gates.md` Rule 4).
-  Fixtures `lexer-mentions-not-counted` and `lexer-uses-counted`, plus `no-lexicon`,
-  `pattern-without-in` and `malformed-lexicon`.
+- *AC-3.* The ratchet counts a match wrapped in backticks as a mention, never a use, so
+  prose names a hatch as `` `as any` ``. The greppable form and the falling ceiling
+  already existed; the justification itself is the linter's (`quality-gates.md` Rule 4).
+  Fixtures `mention-not-counted` and `mention-beside-a-use`; both fail on the old
+  script.
 - *AC-4.* `/inspire-config` derives the ratchet check whenever `.escape-hatches.json`
   exists, reads the commit hooks during inspection, and Q6 lists each of their
   commands no check covers. `validate.md` makes a missing ratchet check an error.
