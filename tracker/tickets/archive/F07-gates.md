@@ -2,15 +2,15 @@
 id: F07-gates
 title: "F7 GATES — enforcement the author cannot negotiate with"
 created: 2026-08-13
-updated: 2026-10-30
+updated: 2026-11-04
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-04
 epic: roadmap
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F06-tdd, B5-react-skill-from-the-team]
 ---
@@ -33,9 +33,9 @@ kept out of the author's reach.
       no ADR:* see the tracker-pass amendment below.
 - [x] External profile source resolves at run time; a sync upstream never conflicts with
       an operator edit. *Dropped 2026-10-28:* see the tracker-pass amendment below.
-- [ ] Suppression accounting exists: greppable form, in-place justification, falling
+- [x] Suppression accounting exists: greppable form, in-place justification, falling
       ceiling.
-- [ ] The INSPIRE Factory runs the ratchet before it merges. When
+- [x] The INSPIRE Factory runs the ratchet before it merges. When
       `.escape-hatches.json` exists, `/inspire-config` writes the ratchet as a check, and
       lists every other check the project's commit hooks run, so code the Factory merges
       never fails the next person's commit. A config test covers a project with a
@@ -109,3 +109,18 @@ it needs production reach no skill can install.
   `emanate.yml` today and for the spec config once that design ships.
 - No Factory port: the check is declared in the project's own config, and the Factory
   runs whatever is declared there.
+
+**Closed 2026-11-04.**
+
+- *AC-3.* The ratchet counts a match wrapped in backticks as a mention, never a use, so
+  prose names a hatch as `` `as any` ``. The greppable form and the falling ceiling
+  already existed; the justification itself is the linter's (`quality-gates.md` Rule 4).
+  Fixtures `mention-not-counted` and `mention-beside-a-use`; both fail on the old
+  script.
+- *AC-4.* `/inspire-config` derives the ratchet check whenever `.escape-hatches.json`
+  exists, reads the commit hooks during inspection, and Q6 lists each of their
+  commands no check covers. `validate.md` makes a missing ratchet check an error.
+  `plugin/test/config/01-ratchet-check.sh` runs the derived check as the Factory runs
+  it, from the project root, on a project with a ratchet.
+- No Factory work: the check is declared in the project's `emanate.yml`, and the
+  Factory runs whatever is declared there.
