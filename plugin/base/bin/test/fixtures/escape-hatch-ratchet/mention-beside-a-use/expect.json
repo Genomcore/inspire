@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "escape-hatch-ratchet", "message_substring": "1 occurrences of 'as any' exceed the ceiling of 0" }
+  ]
+}

@@ -55,6 +55,13 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   image's runtime versions.
 - **A dotenv load with `override: true`**, or test code that rewrites a variable,
   silently ignores `env`; raise it.
+- **`.escape-hatches.json`** at the root means the project ratchets its escape
+  hatches, and INSPIRE's pre-commit hook runs the ratchet on every commit that
+  touches its scope.
+- **The commit hooks** give the checks a person's commit must pass: `.husky/*`,
+  `lefthook.yml`, `.pre-commit-config.yaml`, the directory `git config
+  core.hooksPath` names, and `.git/hooks/pre-commit` (this clone only, never
+  committed). List each command they run.
 
 ## Build each key
 
@@ -86,6 +93,19 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
+- **The ratchet check.** When `.escape-hatches.json` exists, phase `quality`
+  runs the ratchet, derived, never asked:
+
+  ```yaml
+      - name: Escape hatches
+        run: '.inspire/bin/escape-hatch-ratchet.sh'
+  ```
+
+  No `cd`: the config's scopes are relative to the root. Without this check, a
+  unit can merge a cast the Factory never counted, and the next person's commit
+  fails on code it did not touch. The ratchet needs `jq` and `yq`, so the image
+  carries both and its description names them; without them the check exits 127
+  in every unit.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
   named `review`, after `tests`, with one check per concern. The default reads
@@ -118,7 +138,7 @@ sources leave it open.
 | Q3 | Which tag and test credentials does service `<n>` use? | per row with no compose entry | the `stack.md` major, newest full tag |
 | Q4 | The database is external: how do the tests reach it? | `## Shape` says external | none — a service cannot model it |
 | Q5 | Which variables does the application read? | no environment file and no `### Layout` | the `### Layout` names |
-| Q6 | Which commands block a unit, and in which phase? List every profile command not in the draft (`cargo fmt --check`, `makemigrations --check`, e2e). | always | quality first, then tests |
+| Q6 | Which commands block a unit, and in which phase? List every profile command not in the draft (`cargo fmt --check`, `makemigrations --check`, e2e), and every command the commit hooks run that no check covers. | always | quality first, then tests; every commit-hook command blocks |
 | Q7 | Which package manager, and how is the monorepo scoped? | no lockfile and `## Tooling` silent | `npm` |
 | Q8 | Confirm each claim root. | always | the roots built above |
 | Q9 | Exclude the tests that cannot run in a container (browser e2e, Android instrumented, Karma with Chrome)? | a profile lists them | exclude |

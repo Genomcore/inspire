@@ -77,6 +77,13 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   English, the sentence splitter uses a shorter abbreviation list without `no`, so
   `no.` ends a Spanish sentence. In every language, R4, R6 and R7 treat an accented
   letter as part of a word and match `ORGANIZACIÓN` to `organización`.
+- **INSPIRE Factory runs the escape-hatch ratchet.** When `.escape-hatches.json`
+  exists, `/inspire-config` writes `.inspire/bin/escape-hatch-ratchet.sh` as a check in
+  phase `quality`, and Q6 lists every command the commit hooks run (husky, lefthook,
+  pre-commit, a hand-written hook) that no check covers. A unit could merge a cast the
+  Factory never counted, so the next person's commit failed on code it never touched.
+  `/inspire-config review` reports a ratchet config with no ratchet check as an error.
+  The image needs `jq` and `yq` for the check.
 - `trust.sh endorse` writes `at` to the second with its offset
   (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
 
@@ -100,6 +107,11 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
   has. Its pagination numbers went too: the wire convention owns pagination.
+- **The escape-hatch ratchet counts uses, not mentions.** A match wrapped in
+  backticks, such as `` `as any` `` in a comment explaining why the cast was avoided,
+  is no longer counted, and the first hits it reports leave out lines that only
+  mention one. Before, prose naming a hatch broke the ceiling, so no file in scope
+  could say why a hatch was avoided.
 - Re-endorsing an artifact the same day it was last endorsed wrote the same
   bytes, so git recorded nothing and the endorsement looked as if it never
   happened.

@@ -80,7 +80,9 @@ conditions, each of them mechanical, not a habit:
   by itself. `eslint-disable-next-line <rule>`, never a bare file-wide `eslint-disable`.
 - **Justified in place** — a suppression without a written reason is a lint error, not
   a review comment (Rule 1: local and binary, so the linter owns it). Where the reason
-  is "later", it carries the tracker id that owns the cleanup.
+  is "later", it carries the tracker id that owns the cleanup. Prose that names a
+  hatch, such as a comment saying why one was avoided, writes it in backticks
+  (`` `as any` ``): the ratchet counts that as a mention, never as a use.
 - **Counted** — the repo-wide total is a ratchet: it may fall, never rise.
 
 That count is the one aggregate whose baseline belongs **inside** the repository, and
@@ -102,7 +104,9 @@ would let a change trade one `@ts-expect-error` for three `as any` and still pas
 `--update` only ever lowers a ceiling; raising one is a hand edit to the config, which
 is exactly the reviewable act described above. It is wired into `pre-commit` and runs
 only when the commit touches a configured scope, so a preexisting breach never blocks an
-unrelated change.
+unrelated change. INSPIRE Factory runs it too: `/inspire-config` writes it as a check
+whenever `.escape-hatches.json` exists, so code a unit merges never fails the next
+person's commit.
 
 ## Rule 5 — a gate the runtime cannot install is declared, never pretended
 
