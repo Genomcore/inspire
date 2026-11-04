@@ -55,6 +55,9 @@ warning explicitly.
 | `npm run <x>` with no script `<x>`; `npx --no-install <bin>` with `<bin>` not a dependency | warning | the command fails in every unit |
 | an image tag ending `-slim` or `-alpine`, or `latest` | warning | no `git`, musl, or a toolchain that moves between runs |
 | `uv sync --frozen` | warning | propose `--locked` |
+| `.escape-hatches.json` exists and no run check calls `.inspire/bin/escape-hatch-ratchet.sh` | error | the Factory merges code the next person's commit refuses |
+| a command the commit hooks run that no check covers, and the operator did not exclude at Q6 | warning | the same, for that command |
+| the ratchet check with an image description that names neither `jq` nor `yq` | warning | without them the check exits 127 in every unit |
 | a review check whose name repeats another review check's | error | the runner stops before the release |
 | a review `skills` name with no `.claude/skills/<name>/SKILL.md` committed, and not a factory skill | error | the runner stops before the release |
 | a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
@@ -73,7 +76,7 @@ docker run --rm --user 1000:1000 -e HOME=/tmp --cap-drop ALL \
 ```
 
 Replace the tools in the last line with the ones `setup` and the checks call
-(`uv`, `cargo clippy`, `cabal`). A failed pull means the run will fail the same
+(`uv`, `cargo clippy`, `cabal`, and `jq` and `yq` for the ratchet). A failed pull means the run will fail the same
 way. `1000:1000` is the factory's default orchestrator user.
 
 Never start a service to try its healthcheck: services are the factory's, started
