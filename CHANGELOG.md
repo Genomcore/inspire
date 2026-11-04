@@ -66,6 +66,11 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `204`, otherwise `200`.
 - `trust.sh endorse` writes `at` to the second with its offset
   (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
+- **An untested declared error blocks at `stable`, not `accepted`.**
+  `declared-errors-tested.sh` warns at `draft` and `accepted` and errors at `stable`.
+  An `accepted` contract is still being implemented, so a spec PR at that stage has no
+  code and cannot have tests yet. Before, an `accepted` descriptor with an untested
+  error failed pre-PR.
 
 ### Fixed
 
@@ -76,6 +81,13 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 - Re-endorsing an artifact the same day it was last endorsed wrote the same
   bytes, so git recorded nothing and the endorsement looked as if it never
   happened.
+- **No tests is not a pass.** With no test file at all, `criteria-have-tests.sh`
+  and `declared-errors-tested.sh` emitted one warning and stopped, so a project with
+  🟢 Implemented features or `stable` descriptors and zero tests passed pre-PR. Both
+  now emit one finding for every untested criterion or declared error in scope, an
+  error once a feature is past 🟡 Planned or a descriptor is `stable`. A missing test
+  scope counts as no test file, so a project with `stable` descriptors and no
+  `source/` now fails pre-PR too.
 
 ## 0.14.2 — 2026-10-29
 
