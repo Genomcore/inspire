@@ -10,10 +10,10 @@
 # (`_references/conventions/`) that a test assert the exact error code rather than a
 # loose matcher. Satisfying this rule and satisfying that one are the same act.
 #
-# Severity is lifecycle-progressive, because TDD writes the spec before the test:
-#   draft            → warning (the test is legitimately not written yet)
-#   accepted, stable → error   (the contract is closed; an untested clause is a lie)
-#   superseded       → skipped (no longer authoritative)
+# Severity follows what the descriptor claims about its implementation:
+#   draft, accepted → warning (the contract is still being built; its tests come with it)
+#   stable          → error   (the implementation is locked; an untested clause is a lie)
+#   superseded      → skipped (no longer authoritative)
 #
 # Like `escape-hatch-ratchet.sh`, this rule reads `source/` as well as the KB, and is
 # deliberately NOT in `review.sh`'s default list: `/inspire-domain review` is a
@@ -66,7 +66,8 @@ check_action() {
   [ "$lifecycle" = "superseded" ] && return 0
 
   local severity
-  severity="$(sdd_progressive_severity "$lifecycle")"
+  severity="warning"
+  [ "$lifecycle" = "stable" ] && severity="error"
 
   local codes
   codes="$(sdd_body_section "$file" "Errors" \
@@ -103,7 +104,7 @@ done < <(sdd_find_actions "$SCOPE")
 
 if [ "$UNTESTED_CODES" -gt 0 ]; then
   sdd_finding "$UNTESTED_SEVERITY" "declared-errors-tested" "$TEST_SCOPE" \
-    "no test files found — $UNTESTED_CODES declared errors across $UNTESTED_ACTIONS action descriptors appear in no test (one finding stands for them all; it is an error once any of those descriptors is past \`draft\`, because no tests is not a pass)"
+    "no test files found — $UNTESTED_CODES declared errors across $UNTESTED_ACTIONS action descriptors appear in no test (one finding stands for them all; it is an error once any of those descriptors is \`stable\`, because no tests is not a pass)"
   sdd_count_by_severity "$UNTESTED_SEVERITY"
 fi
 
