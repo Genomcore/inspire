@@ -2,7 +2,7 @@
 id: B1-kb-structure
 title: "B1 — revamp the KB: one spec directory by module, typed file extensions"
 created: 2026-10-23
-updated: 2026-11-04
+updated: 2026-11-05
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -220,6 +220,10 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
       not by layer directory, in a matching change in Genomcore/inspire-factory.
 - [ ] An explicit migration command moves an existing project to the new layout, and
       `/inspire:update` tells the operator that the migration is mandatory.
+- [ ] The migration keeps every unit's id and the content its claims come from. It writes an
+      explicit `id:` on each screen before moving it. A project built before the migration
+      plans zero units in the INSPIRE Factory after it. If a rebuild cannot be avoided, the
+      close note records why, and which units rebuild.
 - [ ] "Surface" is renamed to "facet" everywhere it reaches: the `surfaces:` frontmatter
       field, `00_bootstrap/surfaces.md`, `/inspire-surface`,
       `_references/surface-scope.md` and `adr-suites-and-surfaces.md`.
@@ -332,3 +336,18 @@ existing concept: `platform` (suggests the backend and mixes bundles back in), `
 (also a design-token scale, and tokens now live in the facet), `shell` (part of a
 facet), `workspace` (`inspire-workspace`), `frame` (layout geometry), `target` (the
 stack skills' targets) and `window` (JavaScript's global).
+
+**Amended 2026-11-05 (Factory review, block 1): the migration keeps built code built.**
+
+- *Decision:* the folder change must not force a re-emanation when the spec did not change.
+  If a rebuild cannot be avoided, this is the only time it happens, and the layout is
+  prepared so that it does not happen again.
+- *Today:* this ticket ships an explicit migration command, and the INSPIRE Factory finds
+  units by a recursive search on the typed extensions. The ticket says nothing about what the
+  migration does to code that is already built. In the Factory, a unit stays built while its
+  claim ids and fingerprints do not change, and the path is not part of them. A screen
+  without `id:` takes its id from its parent folder, so moving it changes its ids.
+- *Change:* a new acceptance criterion. The migration keeps every unit's id and the content
+  its claims come from, and writes an explicit `id:` on each screen before moving it. A
+  project built before the migration plans zero units in the Factory after it. If a rebuild
+  cannot be avoided, the close note records why, and which units rebuild.

@@ -1,6 +1,6 @@
 # tracker/ — the template's own roadmap tracker
 
-Three ticket families live here. **`F01`–`F14`** are the post-0.6 release foci — one ticket
+Four ticket families live here. **`F01`–`F14`** are the post-0.6 release foci — one ticket
 per focus, `epic: roadmap`. **Release-prefixed follow-ups** (`070-*`, `080-*`, `090-*`,
 `0911-*`, …) are small, independently schedulable items filed at a release's close or
 review, `epic: follow-up`; the prefix names the release that surfaced them, not the
@@ -10,7 +10,9 @@ from the maintainers' design reviews held while training new operators, `epic: r
 public, so every `B<n>` ticket opens with an `## Origin` section that states the decision
 in full. A reader needs nothing outside this repository to act on it. A decision that
 needs no work in this repository gets no ticket; it is recorded on the ticket or ADR it
-affects.
+affects. **`FB<n>-*`** are decisions from the INSPIRE Factory's follow-up review that need
+work in this repository, `epic: roadmap`. The maintainers hold that review in blocks, and
+`<n>` is the block's number: `FB1` is the first block. They open with `## Origin` too.
 
 This is a plain root-level folder, **not** a materialized `inspire_kb/` — the template repo
 is not a governed project, and a root `inspire_kb/` here could confuse the upgrade
@@ -81,10 +83,12 @@ filed in the Factory's tracker when the change here lands, never before. The not
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
 
-## Where things stand (2026-10-30, post-0.14.2)
+## Where things stand (2026-11-05)
 
-**29 open tickets.** Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
-`0911-file-scope-silent-pass` shipped in 0.14.2, and the fifth design review filed two.
+**32 open tickets.** Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
+`0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
+`0143-prose-checks-in-any-language` was filed, and the first block of the INSPIRE Factory's
+follow-up review filed two.
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -102,9 +106,10 @@ Factory work.
   (review Phase 0 only), `F07-gates` (the ratchet's use/mention defect, and running the
   ratchet in the Factory), `F08-authority`, `F11-lessons` (the local loop and the
   observer ADR amendment).
-- **Follow-ups (5):** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
+- **Follow-ups (6):** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
   `080-comment-density-cleanup`, `090-actor-head-without-a-role`,
-  `090-reference-data-home`.
+  `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
+  nothing when the KB is not in English; blocked by `B4-section-keys`).
 - **First design review, B1 (6):** `B1-kb-structure` and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
@@ -127,6 +132,13 @@ Factory work.
   The same session amended `F07-gates` (the ratchet runs in the Factory),
   `B1-spikes-out-of-the-kb` (a spike produces spec, never code, and extract gets a spike
   mode) and `B1-config-replaces-bootstrap` (the project's base is specified in config).
+- **INSPIRE Factory follow-up review, block 1, FB1 (2):** how a project enters the Factory
+  and how it is configured. `FB1-install-only-stack-skills` (init installs only the code
+  skills of the project's stack), `FB1-react-native-profile` (a profile for the chosen
+  mobile stack). The same block amended `B1-config-replaces-bootstrap` (each seed names its
+  image, so a functional operator never chooses one) and `B1-kb-structure` (the layout
+  migration keeps built code built). INSPIRE's side of the Factory's version check is filed
+  when the Factory's check ships, and only if it reads something INSPIRE must write.
 
 A question that can be answered in a sitting should be answered, not filed: tracking it
 converts a decision into a queue entry, and queue entries outlive the thing that
