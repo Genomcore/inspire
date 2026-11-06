@@ -61,6 +61,7 @@ never a concept nobody wrote down.
 ## `_migration/`
 
 A project that came from the layered layout (`01_adr` … `05_screens`) has a
-`_migration/` directory written once by `/inspire:migrate`: the screen id map the
+`_migration/` directory written by `/inspire:migrate`: the screen id map the
 INSPIRE Factory reads (`id-map.json`), the plan it applied, and any file it could
-not place. Nothing else writes there.
+not place. The only other writer is `/inspire-face`: splitting a face changes the ids
+of the screens it moves, and each change is added to `id-map.json`.

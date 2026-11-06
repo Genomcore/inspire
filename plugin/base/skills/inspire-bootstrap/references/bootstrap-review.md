@@ -3,7 +3,8 @@
 
 ## Subcommand: review
 
-- `project.md`, `stack.md` and `theme.md` exist and parse.
+- `project.md` and `stack.md` exist and parse, and so does
+  `01_spec/_design-system/theme.md`.
 - `project.md` declares a valid `output_language`. Flag if missing/empty.
 - `glossary.md` exists and parses — a header row and its separator, then zero or more
   data rows. That is the shape R4 of
@@ -27,22 +28,27 @@
 - The project's root `README.md` exists and is the project's own (not the
   template's methodology README, which install removes). Flag if missing and offer
   to run the `readme` flow.
-- No load-bearing stack choice contradicts a current ADR in `01_adr` — one present
-  and not superseded or rejected.
-- `05_screens/design-system.md` exists (it should have been seeded from `theme.md`
+- No load-bearing stack choice contradicts a current global ADR (`*.adr.md` in
+  `01_spec/_adr/`) — one present and not superseded or rejected.
+- `01_spec/_design-system/design-system.md` exists (it should have been seeded from `theme.md`
   at install); flag if missing. It is expected to **diverge** from the default
   `theme.md` as the project evolves — divergence is not drift.
-- `05_screens/design-tokens.json` exists beside it, and `design-system.md` carries
+- `design-system.tokens.json` exists beside it, and `design-system.md` carries
   `## Supported viewports`, `## Icons` and `## Reference` — run
   `.inspire/bin/design-system-coherence.sh`; anything it reports missing is closed
   by the `design-system backfill` flow. Report its count of `generated` tokens as
   values still awaiting a decision.
-- **No `design-system.*.md` sibling exists**, anywhere under `05_screens/`. One is
-  an override attempt by another name; flag it and offer to fold what it holds back
+- **No second design-system file exists**, anywhere under `01_spec/` — no
+  `design-system.*.md`, and no `design-system.md` inside a face. One is an override
+  attempt by another name; flag it and offer to fold what it holds back
   into the one file as a named variant section (see the `design-system` flow in
   [`../SKILL.md`](../SKILL.md) § Subcommand: design-system).
-- If `inspire_kb/00_bootstrap/surfaces.md` exists, the roster's own coherence is
-  `/inspire-surface review`'s check, not this one — point there rather than
-  duplicating it.
+- A face's `{face}.tokens.json` adds tokens only: flag one that redefines a path
+  `design-system.tokens.json` already defines.
+- No `theme.md`, `theme.tokens.json` or roster file sits in `00_bootstrap/`: the
+  theme lives in `01_spec/_design-system/`, and faces and bundles carry their own
+  packaging. A leftover means the KB was not migrated — point to `/inspire:migrate`.
+- The coherence of faces and bundles is `/inspire-face review`'s check, not this
+  one — point there rather than duplicating it.
 - Flag any stack layer still on the seeded default when the project has clearly
   moved past it.

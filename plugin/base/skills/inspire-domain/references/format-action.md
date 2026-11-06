@@ -2,9 +2,9 @@
 
 The format spec for action descriptors. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An action descriptor lives at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`. The full-dotted-id filename (e.g. `auth/user/auth.user.create.md`) disambiguates Obsidian tabs and Quick Switcher, where bare verb filenames like `create.md` recur across entities. Dots — not `::` — because Windows forbids `:` in filenames.
+An action descriptor lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`, beside its entity document. The file name keeps its entity (e.g. `_modules/auth/_domain/user/user.create.action.md`) because action names repeat across entities: a bare `create.action.md` in every entity directory would make link resolution by file name ambiguous inside a module, and Obsidian tabs unreadable. Dots — not `::` — because Windows forbids `:` in filenames. The typed extension is never part of the id: the id is the frontmatter `id:` (`auth::user::create`), and a wikilink names it as `[[auth.user.create|auth::user::create]]`.
 
-A ready-to-copy template of this shape ships at [`../templates/action.md.template`](../templates/action.md.template).
+A ready-to-copy template of this shape ships at [`../templates/action.template.md`](../templates/action.template.md).
 
 ## Canonical shape
 
@@ -21,7 +21,7 @@ superseded_by: null        # required iff lifecycle == superseded
 ---
 
 ## Purpose
-Create a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the auth-provider integration are defined in [[adr-auth-01-identity-model]].
+Create a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the auth-provider integration are defined in [[adr-identity-model]].
 
 ## Inputs
 
@@ -33,7 +33,7 @@ Create a new platform user account from an email + password pair. The [[auth-use
 ### password
 Constraints: `len(12, 128)`
 
-The floor is the platform-wide minimum set by [[adr-auth-02-password-hashing]]; the ceiling exists so a pathological input cannot turn hashing into a denial of service.
+The floor is the platform-wide minimum set by [[adr-password-hashing]]; the ceiling exists so a pathological input cannot turn hashing into a denial of service.
 
 ## Outputs
 
@@ -54,11 +54,11 @@ The floor is the platform-wide minimum set by [[adr-auth-02-password-hashing]]; 
 
 ## Preconditions
 - `P1` — actor(admin) — Only an administrator provisions accounts directly; the public path is [[auth.user.signup|auth::user::signup]].
-- `P2` — absent(auth.user) — No account may already hold the submitted email, per the identity model in [[adr-auth-01-identity-model]].
+- `P2` — absent(auth.user) — No account may already hold the submitted email, per the identity model in [[adr-identity-model]].
 
 ## Behavior
 1. `B1` — Validate the email format against the rules described in [[auth-user-management#email-constraints|the user-management email rules]].
-2. `B2` — Hash the password using [[auth.password.hash|auth::password::hash]], following the auth-provider integration model in [[adr-auth-01-identity-model]].
+2. `B2` — Hash the password using [[auth.password.hash|auth::password::hash]], following the auth-provider integration model in [[adr-identity-model]].
 3. `B3` — Persist a new user row with the hashed credential.
 
 ## Postconditions
@@ -135,7 +135,7 @@ release after 0.9.
 
 ## Pure-contract scope
 
-The descriptor specifies what the action does, what it consumes, what it returns, which entities it touches. **How the action is exposed to callers** (HTTP route, CLI command, MCP tool, workflow node, agent tool) lives in surface-binding artifacts owned by their respective modules (e.g. URE Functions, AI Agents Tools, Devices Edge) and is out of scope for this descriptor.
+The descriptor specifies what the action does, what it consumes, what it returns, which entities it touches. **How the action is exposed to callers** (HTTP route, CLI command, MCP tool, workflow node, agent tool) is out of scope for this descriptor: the action's route, dispatch and guard come from the stack skill's `## Bindings`, and which package publishes it is the bundle that lists it (`{bundle}.bundle.md`).
 
 **What a caller observes when a declared error fires is not out of scope, and it is not the descriptor's job either.** It comes from the project's resolved wire convention ([`_references/conventions/README.md`](../../_references/conventions/README.md), selected in `00_bootstrap/stack.md`): the descriptor names the logical error, the convention maps it to an observable response, once, for every action in the project. Restating a status code per descriptor would be the same duplication `## Outputs` already refuses for field shapes — and drift the same way.
 

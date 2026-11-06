@@ -1,17 +1,20 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+# faces: [face-a, face-b]       # blast radius — the faces this entry serves; omit = the whole project; see `.claude/skills/_references/face-scope.md`
+# bundles: [bundle-a]           # the bundles it serves, when one carries it (a lib); omit = the whole project
 ---
 
 <!-- A layout is a page FRAME: where a pattern's regions sit, at what size, in what
      order, at every supported width. It owns measurements and nothing else. Which
      holes exist belongs to the pattern; what fills one belongs to the component;
-     which data reaches it belongs to the screen. The surface shell is a layout
-     too — `shell`, with `**Pattern:** —`, framing every route. -->
+     which data reaches it belongs to the screen. The face shell is a layout
+     too — `shell`, with `**Pattern:** —`, framing every route of the faces it
+     serves. A linked pattern that does not exist yet is created from its
+     template in the same turn, at **State:** to-extract. -->
 # Layout: {layout-name}
 
 **Purpose:** {one-line description of the frame — first body line, greppable}
 **State:** implemented | to-extract
-**Pattern:** [[../patterns/{pattern-name}]]
+**Pattern:** [[{pattern-name}]]
 
 {One-paragraph description of the frame and what decides its shape.}
 
@@ -25,7 +28,7 @@
 <!-- Every row carries a Source, and the vocabulary is closed:
        `design-system.md §…`  the design system fixes the value — cite it, never
                               restate a different number
-       `design-tokens.json`   the Value cites a token by path in braces
+       `design-system.tokens.json`  the Value cites a token by path in braces
        `reference`            measured from the reference design-system.md
                               § Reference names; not yet a decision
        `generated`            proposed by common sense, no reference held it;
@@ -39,7 +42,7 @@
 
 | Element | Property | Value | Source |
 |---|---|---|---|
-| `{element}` | {width · height · padding · gap · order · overflow} | {the value, or a token path in braces} | {design-system.md §… \| design-tokens.json \| reference \| generated \| undecided} |
+| `{element}` | {width · height · padding · gap · order · overflow} | {the value, or a token path in braces} | {design-system.md §… \| design-system.tokens.json \| reference \| generated \| undecided} |
 
 ## LAY3: Breakpoints
 

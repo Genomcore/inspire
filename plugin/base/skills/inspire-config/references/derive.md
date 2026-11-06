@@ -23,7 +23,7 @@ carries a different value; the run never sees it.
 | `## Test infrastructure` | one service per row; the Component column is its name | `services` |
 | `## Worktree recipe` | the `dependencies` and `generated artifacts` rows; the `environment` row names the variables' file | `setup`, `env` |
 | `## Conventions` (`### Layout`, `### Commands`, when the project wrote them) | real commands and test layout | `run`, `claims` |
-| `surfaces.md`, when present | each surface's `**Package:**` and `**Profiles:**` (which replace the global list) | per-package `cd`, roots |
+| every `*.face.md` and `*.bundle.md` under `01_spec/`, found by extension | each one's `package` and `profiles` frontmatter (`profiles` replaces the global list for that package) | per-package `cd`, roots |
 | each profile's `## Build & verify` | build, lint, types and test commands | `run` |
 | each profile's `## Test conventions` | where tests live | `claims` |
 

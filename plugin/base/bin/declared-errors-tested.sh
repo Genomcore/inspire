@@ -25,7 +25,7 @@
 #
 # Usage:
 #   .inspire/bin/declared-errors-tested.sh                    # whole tree
-#   .inspire/bin/declared-errors-tested.sh inspire_kb/04_domain/analytics
+#   .inspire/bin/declared-errors-tested.sh inspire_kb/01_spec/_modules/analytics
 
 set -uo pipefail
 

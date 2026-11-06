@@ -59,7 +59,7 @@
 #                             each. R7's metaphor half is judgment only.
 #
 # Severity. ONLY R4 IS LIFECYCLE-PROGRESSIVE, and only where a `lifecycle:`
-# field exists (the `04_domain` layer, via `sdd_progressive_severity`: draft →
+# field exists (entities and actions, via `sdd_progressive_severity`: draft →
 # warning, accepted/stable → error, superseded → warning); everywhere else it is
 # a flat warning, because features, ADRs and screens carry no lifecycle at all.
 # R4 is alone there because it is the one check that reads a DECLARATION rather
@@ -175,8 +175,8 @@
 # Usage:
 #   .inspire/bin/prose-style.sh                              # every layer
 #   .inspire/bin/prose-style.sh inspire_kb                   # every layer
-#   .inspire/bin/prose-style.sh inspire_kb/04_domain/auth    # domain only
-#   .inspire/bin/prose-style.sh inspire_kb/01_adr            # ADRs only
+#   .inspire/bin/prose-style.sh inspire_kb/01_spec/_modules/auth/_domain    # one domain
+#   .inspire/bin/prose-style.sh inspire_kb/01_spec/_adr       # global ADRs only
 
 set -uo pipefail
 

@@ -296,7 +296,7 @@ sdd_resolve_id() {
 
 # sdd_scope_norm <path>
 #   Lexical normalization: repeated leading `./` removed, runs of `/` squeezed,
-#   trailing `/` dropped. `./inspire_kb//04_domain/` and `inspire_kb/04_domain`
+#   trailing `/` dropped. `./inspire_kb//01_spec/` and `inspire_kb/01_spec`
 #   name the same directory and must compare equal, or a scope spelled the
 #   second way silently checks nothing.
 sdd_scope_norm() {

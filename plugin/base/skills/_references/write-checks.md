@@ -14,9 +14,9 @@ After you write a file, run:
 ```
 
 A file is a scope of its own: every rule that applies to it runs, and findings are
-reported on that file only. Rules that need the rest of the vault to judge it, such as
-the `requires` graph or which actions touch an entity's fields, still read the whole
-domain tree. Findings arrive on stderr, one JSON line each.
+reported on that file only. Rules that need the rest of the KB to judge it, such as
+the `requires` graph or which actions touch an entity's fields, still read every
+artifact of the types they check. Findings arrive on stderr, one JSON line each.
 
 ## What to do with the findings
 

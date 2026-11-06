@@ -20,8 +20,8 @@
   binding table restating a component's props is drift in the screen: props belong
   to the component's entry.
 
-**Legacy check.** A kept legacy `patterns/` or `components/` `_index.md` is
-operator-owned — the skill no longer reads or maintains it. An entry missing its
+**Legacy check.** A kept `_index.md` in `patterns/` or `components/` is
+operator-owned — the skill neither reads nor maintains it. An entry missing its
 `**Purpose:**` line (or, for components, its `**State:**` line) draws a
 suggest-on-next-touch note; never machine-edit it in.
 
@@ -36,14 +36,11 @@ drift** (prototype ahead of spec).
    [`_references/product-roots.md`](../../_references/product-roots.md), and treat
    `none` as nothing to browse). If it can't be launched, skip this section and note
    it — don't block the audit.
-   With two or more UI surfaces the prototype is one shell per surface behind a
-   suite landing: start the browse at that landing and walk the shell owning the
-   tree being audited, every shell in turn when the audit spans the suite.
+   The prototype holds one shell per face: walk the shell of the face being
+   audited, every shell in turn when the audit spans every face.
 2. **Enumerate routes** by deriving them — `/inspire-screens routes` over the
    scope being audited ([`screen-routes.md`](screen-routes.md)), plus each tab
-   variant and a representative record for a detail screen. A `shared/` screen is browsed in every
-   shell that serves it — the same spec, one visit per shell, since a shell can
-   drift on its own.
+   variant and a representative record for a detail screen.
 3. **For each route:** navigate and read what renders (prefer the accessibility
    tree; screenshots only when layout matters). Then capture it at every width
    [`_references/ui-reference.md`](../../_references/ui-reference.md) lists, and
@@ -78,8 +75,8 @@ change.
 
 ## Cross-screen coherence
 
-- Screens naming the same pattern in a module share their UX (control positions,
-  search placement, tab ordering).
+- Screens naming the same pattern share their UX (control positions, search
+  placement, tab ordering), in one face and across faces.
 - Similar resources across modules share status vocabulary — and, where the same
   state recurs, the same state **key**.
 - Transitions form a connected graph: every screen a user can reach is targeted by

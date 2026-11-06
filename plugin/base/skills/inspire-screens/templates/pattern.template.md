@@ -1,5 +1,6 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+# faces: [face-a, face-b]       # blast radius — the faces this entry serves; omit = the whole project; see `.claude/skills/_references/face-scope.md`
+# bundles: [bundle-a]           # the bundles it serves, when one carries it (a lib); omit = the whole project
 ---
 
 <!-- `list` and `detail` are the two shipped starters (generic, brand-agnostic) —
@@ -9,7 +10,7 @@
 
 **Purpose:** {one-line description of what this pattern is for — first body line, greppable}
 **State:** implemented | to-extract
-**Components:** [[../components/{component-name}]]
+**Components:** [[{component-name}]]
 
 {One-paragraph description of the pattern.}
 

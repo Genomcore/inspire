@@ -1,5 +1,8 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+# faces: [face-a]       # global ADRs only: the face ids this decision affects
+# bundles: [bundle-a]   # global ADRs only: the bundle ids it affects
+# omit both = the whole project; a module or face ADR carries neither (its _adr/ gives the scope)
+# see `.claude/skills/_references/face-scope.md`
 ---
 
 # {Title}

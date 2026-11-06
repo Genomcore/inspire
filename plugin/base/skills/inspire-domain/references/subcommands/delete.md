@@ -15,6 +15,6 @@ Remove an action descriptor and its references from the SDD tree.
    Alternatively: promote auth::user::create superseded and supply a superseded_by pointer.
    ```
 
-3. **No dependents** → confirm with the operator ("Delete `{id}`? This removes the descriptor and its rows in the entity document. [y/N]"). On confirmation, delete the file and re-run [consolidation](../consolidation.md) to remove the action's entries from `{module}.{entity}.md`.
+3. **No dependents** → confirm with the operator ("Delete `{id}`? This removes the descriptor and its rows in the entity document. [y/N]"). On confirmation, delete the file and re-run [consolidation](../consolidation.md) to remove the action's entries from `{entity}.entity.md`.
 
 There is no `--cascade` flag. Cascading deletes rewrite the requires graph silently — the operator must handle each consumer explicitly, so they can reason about what each consumer should do instead.

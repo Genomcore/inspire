@@ -1,10 +1,12 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+# faces: [face-a]       # blast radius: the face ids this use case affects
+# bundles: [bundle-a]   # blast radius: the bundle ids it affects
+# omit both = the whole project; see `.claude/skills/_references/face-scope.md`
 ---
 
 # {FEATURE-ID}: {Feature Name}
 
-> Source: [[../../02_modules/{module}]]
+> Source: [[{module}]]
 
 {One-paragraph description of the feature.}
 

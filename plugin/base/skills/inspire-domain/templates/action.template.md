@@ -60,7 +60,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 <!--
   Heads come from the closed V3 vocabulary in `_references/keyed-heads.md`:
   actor(role) · exists(module.entity) · absent(module.entity) · state(module.entity, value).
-  An actor or trust-boundary constraint belongs HERE, never as a surface annotation: it is
+  An actor or trust-boundary constraint belongs HERE, never as a face or bundle annotation: it is
   true wherever the action runs. If the action is genuinely unconditional, replace both
   bullets with the single line `None.` — the section still has to be present.
 -->

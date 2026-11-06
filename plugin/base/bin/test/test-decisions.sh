@@ -38,7 +38,8 @@ eq "only superseded and rejected ADRs: nothing printed" "$("$DECISIONS")" ""
 
 cat > "$ADR/auth-sessions.adr.md" <<'MD'
 ---
-surfaces: [api, console]
+faces: [console]
+bundles: [api]
 endorsed:
   by: "@someone"
 ---
@@ -79,11 +80,8 @@ A single-file ADR: only its decision is read.
 ## Consequences
 Not in the digest.
 MD
-cat > "$ADR/everywhere.adr.md" <<'MD'
----
-surfaces: all
----
-
+mkdir -p "$SDD_SPEC_ROOT/_modules/core/_adr"
+cat > "$SDD_SPEC_ROOT/_modules/core/_adr/everywhere.adr.md" <<'MD'
 # One clock
 
 **Status:** prototyped
@@ -96,19 +94,19 @@ printf '# No status\n\n## Decision\nUse it.\n' > "$ADR/unlabelled.adr.md"
 printf '# README\n' > "$ADR/README.md"
 
 cat > "$ROOT/full.txt" <<'EOF'
-INSPIRE decisions — 4 live ADR(s) in `inspire_kb/01_spec/`. An ADR listing surfaces binds only those; one listing none binds the whole suite. Follow each one when you specify or build; to change one, use `/inspire-adr`. A `design` or `prototyped` decision can still be refined, an `implemented` one only superseded. The reasons are in each ADR's `.adr.rationale.md`.
+INSPIRE decisions — 4 live ADR(s) in `inspire_kb/01_spec/`. An ADR listing faces binds only those; one listing none binds the whole project. Follow each one when you specify or build; to change one, use `/inspire-adr`. A `design` or `prototyped` decision can still be refined, an `implemented` one only superseded. The reasons are in each ADR's `.adr.rationale.md`.
 
 - **adr-action-verbs** (design) — Action verbs
   - A book is reserved, cancelled and picked up.
   - Every mutation emits an event.
-- **adr-auth-sessions** (implemented; surfaces: api, console) — Session tokens are opaque
+- **adr-auth-sessions** (implemented; faces: console; bundles: api) — Session tokens are opaque
   Session tokens are opaque strings, minted server-side.
 
   No client parses a token.
-- **adr-everywhere** (prototyped) — One clock
-  Every timestamp is UTC.
 - **adr-unlabelled** (no status) — No status
   Use it.
+- **adr-everywhere** (prototyped; module: core) — One clock
+  Every timestamp is UTC.
 EOF
 FULL="$(cat "$ROOT/full.txt")"
 out="$("$DECISIONS")"; rc=$?
@@ -117,15 +115,15 @@ eq "exits 0"         "$rc"  "0"
 
 eq "a budget it fits under changes nothing" "$("$DECISIONS" --budget 100000)" "$FULL"
 
-out="$("$DECISIONS" --surface web)"
-has   "--surface keeps a suite-wide ADR"         "adr-action-verbs" "$out"
-has   "--surface keeps an ADR listing all"       "adr-everywhere" "$out"
-hasnt "--surface drops an ADR for other surfaces" "adr-auth-sessions" "$out"
-has   "--surface names the surface in the head"  "3 live ADR(s) in \`inspire_kb/01_spec/\` that bind the \`web\` surface." "$out"
-has   "--surface keeps an ADR listing it" "adr-auth-sessions" "$("$DECISIONS" --surface console)"
+out="$("$DECISIONS" --face web)"
+has   "--face keeps an ADR listing no face or bundle" "adr-action-verbs" "$out"
+has   "--face keeps a module-scoped ADR"         "adr-everywhere" "$out"
+hasnt "--face drops an ADR for other faces"      "adr-auth-sessions" "$out"
+has   "--face names the face in the head"        "3 live ADR(s) in \`inspire_kb/01_spec/\` that bind the \`web\` face." "$out"
+has   "--face keeps an ADR listing it" "adr-auth-sessions" "$("$DECISIONS" --face console)"
 
 cat > "$ROOT/head.txt" <<'EOF'
-INSPIRE decisions — 4 live ADR(s) in `inspire_kb/01_spec/`. An ADR listing surfaces binds only those; one listing none binds the whole suite. Follow each one when you specify or build; to change one, use `/inspire-adr`. A `design` or `prototyped` decision can still be refined, an `implemented` one only superseded. The reasons are in each ADR's `.adr.rationale.md`.
+INSPIRE decisions — 4 live ADR(s) in `inspire_kb/01_spec/`. An ADR listing faces binds only those; one listing none binds the whole project. Follow each one when you specify or build; to change one, use `/inspire-adr`. A `design` or `prototyped` decision can still be refined, an `implemented` one only superseded. The reasons are in each ADR's `.adr.rationale.md`.
 
 Their full text is over this digest's budget: read an ADR before you specify or build in its area, or run `.inspire/bin/decisions.sh` for every decision.
 EOF
@@ -142,6 +140,28 @@ eq "the index stays within the budget" "$check_len" "1"
 eq "a budget that fits no entry: only the count" "$("$DECISIONS" --budget 10)" "$HEAD_AND_TAIL
 
 - … 4 not listed"
+
+mkdir -p "$SDD_SPEC_ROOT/_faces/web/_adr"
+printf '# Web only\n\n**Status:** design\n\n## Decision\nWeb forms autosave.\n' \
+  > "$SDD_SPEC_ROOT/_faces/web/_adr/autosave.adr.md"
+cat > "$ADR/api-only.adr.md" <<'MD'
+---
+bundles: [api]
+---
+
+# Api errors
+
+**Status:** design
+
+## Decision
+Errors are problem documents.
+MD
+out="$("$DECISIONS" --face web)"
+has   "--face keeps an ADR in that face's _adr/" "adr-autosave" "$out"
+has   "and labels it with its face"              "(design; face: web) — Web only" "$out"
+hasnt "--face drops an ADR listing only bundles" "adr-api-only" "$out"
+hasnt "--face drops an ADR in another face's _adr/" "adr-autosave" "$("$DECISIONS" --face console)"
+has   "without --face, every live ADR"           "6 live ADR(s)" "$("$DECISIONS")"
 
 "$DECISIONS" --budget many >/dev/null 2>&1; eq "a non-numeric budget exits 2" "$?" "2"
 "$DECISIONS" --bogus >/dev/null 2>&1;       eq "an unknown argument exits 2"  "$?" "2"

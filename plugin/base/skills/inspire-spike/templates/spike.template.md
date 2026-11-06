@@ -23,7 +23,7 @@ _The one flow / capability this spike takes end-to-end, and the stack it used._
 _Brought home from the spike. Written to stand on their own — useful even if the
 external repo is later archived._
 
-- **{insight}** → affects [[03_features/{module}/{use-case}]] / [[04_domain/…]] / [[05_screens/…]]
+- **{insight}** → affects [[{use-case}]] / [[{module}.{entity}.{action}|{module}::{entity}::{action}]] / [[{face}.{slug}]] / [[adr-{slug}]]
 
 ## SPK4: Outcome
 

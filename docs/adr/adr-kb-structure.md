@@ -471,8 +471,8 @@ detection still fingerprints the project ([[adr-upgrade-path]] **D3**).
 
 - `inspire-surface` becomes `inspire-face`, and `_references/surface-scope.md` becomes
   `face-scope.md`.
-- Bundles and processes get their own skills (`inspire-bundle`, `inspire-process`),
-  because they are units of their own.
+- `inspire-face` owns bundles as well as faces: both carry packaging, and a face
+  names the bundles it uses. Processes get their own skill, `inspire-process`.
 - Every skill that writes files (`adr`, `bootstrap`, `config`, `domain`, `extract`,
   `feature`, `module`, `prototype`, `screens`, `task`, `workspace`) takes the new paths
   and extensions and creates a draft target for a missing link (D4).

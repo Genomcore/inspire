@@ -107,18 +107,22 @@ session surfaces something worth teaching a skill, record it with \
 \`/inspire-lesson note\`; it is stamped with this runtime version."
 fi
 
-# Surface roster (best-effort): if the project declares suite surfaces, inject a
-# one-line roster so every session knows the suite shape. Absent roster = suite-of-one;
-# inject nothing — sessions stay byte-identical to pre-suite behavior.
-SURFACES_FILE="$PROJECT_ROOT/inspire_kb/00_bootstrap/surfaces.md"
-if [ -f "$SURFACES_FILE" ] && command -v yq >/dev/null 2>&1; then
-  ROSTER="$(yq --front-matter=extract '.surfaces // [] | join(", ")' "$SURFACES_FILE" 2>/dev/null || true)"
-  if [ -n "$ROSTER" ] && [ "$ROSTER" != "null" ]; then
+# Faces and bundles (best-effort): when the project has a face, inject one line
+# naming its faces and bundles, so every session knows which applications and
+# packages a write can target. Found by typed extension, one search each; the id is
+# the file name without its extension. No face, no line.
+SPEC_ROOT="$PROJECT_ROOT/inspire_kb/01_spec"
+if [ -d "$SPEC_ROOT" ]; then
+  FACES="$(find "$SPEC_ROOT" -type f -name '*.face.md' 2>/dev/null \
+    | sed -E 's#^.*/##; s#\.face\.md$##' | sort -u | paste -sd, - | sed 's/,/, /g')"
+  if [ -n "$FACES" ]; then
+    BUNDLES="$(find "$SPEC_ROOT" -type f -name '*.bundle.md' 2>/dev/null \
+      | sed -E 's#^.*/##; s#\.bundle\.md$##' | sort -u | paste -sd, - | sed 's/,/, /g')"
     CONTEXT="${CONTEXT}
 
-Suite surfaces — \`${ROSTER}\` (see \`inspire_kb/00_bootstrap/surfaces.md\`). Surface-scoped \
-skills resolve scope per \`.claude/skills/_references/surface-scope.md\`: explicit argument \
-wins; with several surfaces and no argument, ask before writing."
+INSPIRE faces — \`${FACES}\`; bundles — \`${BUNDLES:-none}\`. Face- and bundle-scoped \
+skills resolve scope per \`.claude/skills/_references/face-scope.md\`: an explicit argument \
+wins; with one face it resolves silently; otherwise ask before writing."
   fi
 fi
 

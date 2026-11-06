@@ -52,7 +52,8 @@ Read the reference before the step it covers. The table is an index, not the flo
 1. **Preconditions.** A git repository; `<kb_root>/00_bootstrap/stack.md` exists;
    the profiles resolve. `ios` in `profiles` stops the skill: iOS needs macOS and
    the factory's sandbox is Linux.
-2. **Read** `stack.md`, `surfaces.md` when present, and the resolved profiles.
+2. **Read** `stack.md`, every `*.face.md` and `*.bundle.md` under
+   `<kb_root>/01_spec/` (their `package` and `profiles`), and the resolved profiles.
 3. **Inspect** the repository, read-only: lockfiles, `package.json` scripts, runner
    configs, test directories, the compose file, `.gitignore`.
 4. **Propose** the whole draft before the first question. Each key carries one

@@ -19,7 +19,7 @@
 #
 # Usage:
 #   .inspire/bin/frontmatter-mechanics.sh                  # scan whole tree
-#   .inspire/bin/frontmatter-mechanics.sh inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/frontmatter-mechanics.sh inspire_kb/01_spec/_modules/auth    # scoped scan
 
 set -uo pipefail
 

@@ -3,7 +3,8 @@
 
 ## Subcommand: theme
 
-Define or update `theme.md` and `theme.tokens.json` — the design-system default.
+Define or update `theme.md` and `theme.tokens.json` in
+`inspire_kb/01_spec/_design-system/` — the design-system default.
 The token **roles** (primary, accent, status map, typography, density) are what
 downstream skills rely on; the values are yours to set, and they live in the JSON
 only — the markdown cites each by its path in braces.
@@ -16,14 +17,15 @@ only — the markdown cites each by its path in braces.
    asked before anything responsive is specified, and the ranges above it.
 3. Present a diff and apply on approval.
 4. **`theme.md` is the default template, not the live design system.** At install
-   it is copied to `05_screens/design-system.md`, which becomes the project's
+   it is copied to `design-system.md` beside it (and `theme.tokens.json` to
+   `design-system.tokens.json`), which becomes the project's
    working design system. So:
    - Edit `theme.md` here to change the **reusable default** (e.g. before
      bootstrapping, or to keep the default in sync).
    - To change the **project's live** design system, use the `design-system`
      subcommand ([`../SKILL.md`](../SKILL.md) § Subcommand: design-system) — that's
      the source of truth once seeded.
-   - Offer to (re)seed `05_screens/design-system.md` from `theme.md` if it doesn't
+   - Offer to (re)seed `design-system.md` from `theme.md` if it doesn't
      exist yet.
 
 ### Abstracting a theme from a mockup's CSS

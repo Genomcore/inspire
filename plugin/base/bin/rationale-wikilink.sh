@@ -20,7 +20,7 @@
 #
 # Usage:
 #   .inspire/bin/rationale-wikilink.sh                  # scan whole tree
-#   .inspire/bin/rationale-wikilink.sh inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/rationale-wikilink.sh inspire_kb/01_spec/_modules/auth    # scoped scan
 
 set -uo pipefail
 

@@ -1,5 +1,5 @@
 ---
-id: {module}.{screen}
+id: {face}.{slug}
 module: {module}
 screen: {screen}
 lifecycle: draft
@@ -16,17 +16,22 @@ lifecycle: draft
      either is missing.
      This split is the single source of the two lists the validator encodes.
 
-     `id` is minted once and never re-derived from location: the default mint is
-     {module}.{screen}, and a newcomer whose default is already taken mints
-     {surface}.{module}.{screen}. Moving the file never touches it. The route is
-     NOT authored here — it derives from `module` + `screen`; see
-     references/format-screen.md. -->
+     `id` is minted once as {face}.{slug} — the face this file sits in and the
+     file's slug ({slug}.screen.md) — and never re-derived from location. Renaming
+     or moving the file never touches it. The route is NOT authored here — it
+     derives from `module` + `screen` under the face's shell; see
+     references/format-screen.md.
+
+     Catalog links are bare ids, never relative paths. A linked screen, pattern,
+     layout or component that does not exist yet is created from its template in
+     the same turn: a screen at lifecycle: draft, a catalog entry at
+     **State:** to-extract. -->
 # {Screen Title}
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[{rel-to-05_screens}/patterns/{pattern-name}]]
-**Layout:** [[{rel-to-05_screens}/layouts/{layout-name}]]
-**Components:** [[{rel-to-05_screens}/components/{component-name}]]
+**Pattern:** [[{pattern-name}]]
+**Layout:** [[{layout-name}]]
+**Components:** [[{component-name}]]
 
 <!-- One paragraph of prose — no table, no list: who comes to this screen, for
      which task, and what they see first. It orients a human reader and gives
@@ -52,6 +57,9 @@ lifecycle: draft
      is that dispatch's `On success`/`On error` outcome and never also a
      Navigation row. ### Navigation declares only the transitions no dispatch on
      this screen causes — a row click, a menu link, a back link, a tab.
+
+     Every action a Data or Dispatches row binds is exposed by a bundle the
+     face lists in `bundles:` (face-exposure.sh).
 
      A state's `When` anchors by naming a declared key in BACKTICKS
      (`main` returns zero rows) — an unbackticked mention is not read as an
@@ -98,7 +106,7 @@ lifecycle: draft
 <!-- How every value this screen shows is drawn. One H3 per region of the
      pattern, in reading order; one row per column, field, meta value or
      control. Field type comes from design-system.md, Component names a
-     components/ entry (write the entry, at to-extract, in the same turn),
+     {name}.component.md entry (write the entry, at to-extract, in the same turn),
      Treatment cites tokens by path in braces and names every glyph by its
      library and name (`lucide-folder`), Align is left · centre · right.
      A table of columns adds Narrow: always · sticky · scroll ·
@@ -128,7 +136,7 @@ lifecycle: draft
 <!-- Optional — leave empty when aligned; omit the section entirely until a prototype target exists. -->
 ## SCR10: Current prototype
 
-- **Target:** {prototype route(s) realizing this screen — the derived route, shell-prefixed in a multi-UI suite — or `none yet`}
+- **Target:** {prototype route(s) realizing this screen — the derived route, under the face's shell — or `none yet`}
 - **Drift:** {informational misalignments between the prototype and this spec; leave empty when aligned}
   - {ADR alignment | data wiring | component adoption | gap | cosmetic} — {what differs}
 

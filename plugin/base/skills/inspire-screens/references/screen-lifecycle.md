@@ -34,7 +34,10 @@ regression, walked by `promote` like every other transition — screens have no
 the checks that apply there. An error finding refuses the promotion.
 
 - **`draft → accepted`** — confirm explicitly. The shape and coherence checks
-  already ran at draft; promotion is the act of locking the bindings.
+  already ran at draft; promotion is the act of locking the bindings. Run
+  `.inspire/bin/face-exposure.sh` over the face: from `accepted` on, an action the
+  screen binds that no bundle of its face exposes is an error, and it refuses the
+  promotion.
 - **`accepted → stable`** — the two dependency gates run: every component the
   screen declares must be at `**State:** implemented` (a `to-extract` component is
   a promise, not a dependency), and every pattern it names must exist with its

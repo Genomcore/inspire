@@ -1,5 +1,6 @@
 ---
-# surfaces: [id-a, id-b]   # blast radius — list of roster ids, or `all`; omit = suite-wide; see `.claude/skills/_references/surface-scope.md`
+# faces: [face-a, face-b]       # blast radius — the faces this entry serves; omit = the whole project; see `.claude/skills/_references/face-scope.md`
+# bundles: [bundle-a]           # the bundles it serves, when one carries it (a lib); omit = the whole project
 ---
 
 # Component: {component-name}

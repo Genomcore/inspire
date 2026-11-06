@@ -68,7 +68,7 @@
 #
 # Usage:
 #   .inspire/bin/constraints-mechanics.sh
-#   .inspire/bin/constraints-mechanics.sh inspire_kb/04_domain/auth
+#   .inspire/bin/constraints-mechanics.sh inspire_kb/01_spec/_modules/auth
 
 set -uo pipefail
 

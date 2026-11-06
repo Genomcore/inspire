@@ -19,17 +19,17 @@ survives after the spike repo goes stale or is archived.
     README.md        # this file
   ```
 
-  New spike: `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md`.
+  New spike: `.claude/skills/inspire-spike/templates/spike.template.md` → `{name}.md`.
 
 ## Adding a spike
 
 1. `/inspire-spike register {name}` copies
-   `.claude/skills/inspire-spike/templates/spike.md.template` → `{name}.md` and
+   `.claude/skills/inspire-spike/templates/spike.template.md` → `{name}.md` and
    fills the repo link, the question, scope, and covered features.
 2. `/inspire-spike capture {name}` harvests its learnings as a **gap analysis**
    against the vault — importing the signal it de-risked, leaving its rough shortcuts
    behind.
 
 Every entry's learnings are written to **stand on their own** and feed back into
-[`03_features`](../03_features), [`04_domain`](../04_domain),
-[`05_screens`](../05_screens) and [`01_adr`](../01_adr).
+the specification in [`01_spec`](../01_spec): its features, domain, screens and
+ADRs.

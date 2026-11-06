@@ -7,7 +7,7 @@
 #
 # Every layer below is checked against the format spec that owns it:
 #
-#   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
+#   Action descriptor — `*.action.md` (severity: error)
 #     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Preconditions ·
 #     ## Behavior · ## Postconditions · ## Errors
 #     in that fixed order (inspire-domain/references/format-action.md).
@@ -24,16 +24,16 @@
 #     skips them cleanly, and one that has gained them in the wrong place is
 #     genuinely out of canonical order.
 #
-#   Entity document — `04_domain`, 2-segment leaf filename (severity: error)
+#   Entity document — `*.entity.md` (severity: error)
 #     ## Purpose · ## Rationale · ## Invariants · ## Fields · ## Touched by
 #     in that fixed order (inspire-domain/references/format-entity.md).
 #
-#   Use-case file — `03_features/{module}/{use-case}.md` (severity: warning)
+#   Use-case file — `*.feature.md` (severity: warning)
 #     ## Actor · ## Preconditions · ## Main flow · ## Alternative flows ·
 #     ## Error flows · ## Postconditions · ## Acceptance criteria, plus the
 #     AC-id shape inside the last of those.
 #
-#   ADR — `01_adr/adr-*.md` (severity: warning)
+#   ADR — `*.adr.md` (and its `*.adr.rationale.md`) (severity: warning)
 #     A decision `adr-{slug}.md` links its rationale with a
 #     `**Rationale:** [[adr-{slug}.rationale]]` line and holds ## Decision, and
 #     nothing of the rationale. Its `adr-{slug}.rationale.md` holds ## Context ·
@@ -43,7 +43,7 @@
 #     (no `**Rationale:**` line, no rationale beside it) is still checked for
 #     all five sections, and is reported as waiting for `/inspire-adr migrate`.
 #
-#   Screen — `05_screens/**` (severity: lifecycle-progressive)
+#   Screen — `*.screen.md` (severity: lifecycle-progressive)
 #     an H1 title, the `**Features:**` header line, a non-empty ## Purpose and
 #     a non-empty ## Bindings. `**Pattern:**`, `**Components:**`,
 #     `## Module-specific deviations`, `## Current prototype` and `## Notes` are
@@ -51,7 +51,7 @@
 #     ## Instantiation is reported as a retired section — its declarations
 #     belong in keyed ## Bindings rows.
 #
-# `03_features` and `01_adr` carry no `lifecycle:` field, so nothing there can
+# Features and ADRs carry no `lifecycle:` field, so nothing there can
 # ramp: their findings are warnings at every moment of their life. The domain
 # layer's order check and every screen finding ramp with the checked object's own
 # lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
@@ -82,16 +82,14 @@
 # sections appearing in a different relative order than the format spec fixes
 # is a violation.
 #
-# Scope: the rule receives one `$1` and checks `$1 ∩ each of its layers` — see
-# `bin/README.md` §Scope. Absent `$1`, every layer scans its own full root:
-# $SDD_SPEC_ROOT for the domain layer, $SDD_KB_ROOT/{03_features,01_adr,
-# 05_screens} for the rest.
+# Scope: the rule receives one `$1` and checks `$1 ∩ 01_spec`, each type by its extension — see
+# `bin/README.md` §Scope. Absent `$1`, it scans the whole spec root.
 #
 # Usage:
 #   .inspire/bin/sections-present.sh                              # every layer
 #   .inspire/bin/sections-present.sh inspire_kb                   # every layer
-#   .inspire/bin/sections-present.sh inspire_kb/04_domain/auth    # domain only
-#   .inspire/bin/sections-present.sh inspire_kb/03_features       # features only
+#   .inspire/bin/sections-present.sh inspire_kb/01_spec/_modules/auth/_domain   # one domain
+#   .inspire/bin/sections-present.sh inspire_kb/01_spec/_modules/auth/_features # its features
 
 set -uo pipefail
 

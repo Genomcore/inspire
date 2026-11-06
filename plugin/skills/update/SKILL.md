@@ -138,7 +138,7 @@ warns that the resolution "matched nothing" while changing nothing.
 For a retirement `ask` (any path under `inspire_kb/` — see the batch note above for the
 discriminator), the choice is **keep** / **retire** only. There is no `merge`: there is no
 base-side file to merge against either way — the index seeds left `base/kb/` in this same
-release, and the ADR index (`01_adr/_index.md`) never shipped one to begin with. **keep**
+release, and the ADR index (`01_adr/_index.md` in the layered layout) never shipped one to begin with. **keep**
 leaves the file on disk untouched (the default if left unresolved); **retire** deletes it.
 Hand both back the same way, as `--take-mine` / `--take-base` in Step 3.
 
@@ -208,6 +208,13 @@ coming from 0.7 or earlier — say plainly that a directory which appears mid-se
 not be discovered until the next one, so an agent the project adds there can need a fresh session
 before `/agents` lists it. Then remind the operator to review the git diff and commit.
 
+**A layered KB.** When a warning says `inspire_kb/` is still on the layered layout
+(`01_adr` … `05_screens`), say plainly that the migration is **mandatory**: from 0.15.0
+the skills and validators read the specification only from `inspire_kb/01_spec/`, and
+this update moved nothing in the KB, because it never does. The next step is
+`/inspire:migrate`, after the update is committed. Skip Steps 5, 8 and 9 — they act on
+`01_spec/` — and run them after the migration instead.
+
 ## Step 5 — Backfill the UI specification
 
 A release can add parts of the screen layer an older vault never wrote — the token
@@ -220,12 +227,13 @@ of warnings.
 1. **Detect.** Run, from the project root:
 
    ```bash
-   .inspire/bin/design-system-coherence.sh inspire_kb/05_screens
-   .inspire/bin/screen-presentation.sh inspire_kb/05_screens
+   .inspire/bin/design-system-coherence.sh inspire_kb/01_spec
+   .inspire/bin/screen-presentation.sh inspire_kb/01_spec
    ```
 
-   No finding from either, or no `inspire_kb/05_screens/design-system.md` at all (a
-   project with no screen layer yet): skip to Step 6. Findings that only count
+   No finding from either, or no `inspire_kb/01_spec/_design-system/design-system.md` at
+   all (a project with no screen layer yet, or one still on the layered layout, which
+   `/inspire:migrate` moves first): skip to Step 6. Findings that only count
    `generated` or `undecided` values are not gaps — they are decisions still open,
    and this step leaves them to the operator.
 2. **Ask once**, in one `AskUserQuestion` with two questions:
@@ -370,7 +378,7 @@ skill waits on it: everything above is what the current release actually does.
    a proven-derivable one is deleted silently, and any divergence from the derivation lands
    in `ask` rather than a silent delete (Step 2's retirement branch). Two further exceptions
    are purely additive and never clobber: `seed_design_system` creates
-   `05_screens/design-system.md`, and `seed_claude_md` creates `CLAUDE.md`, **only if
+   `01_spec/_design-system/design-system.md` (never in a KB still on the layered layout), and `seed_claude_md` creates `CLAUDE.md`, **only if
    absent**.
 3. **No writes happen before Step 2's decisions are gathered.** `--mode plan` itself
    writes nothing, whatever the operator decides — that is asserted by the test suite, not

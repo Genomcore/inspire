@@ -1,7 +1,7 @@
 # Layouts
 
 The **page frames**: what a screen sits inside, measured. One entry per frame,
-suite-wide, beside [`patterns/`](../patterns) and [`components/`](../components).
+project-wide, beside [`patterns/`](../patterns) and [`components/`](../components).
 
 A layout and a pattern describe the same screen from two sides, and the split keeps
 either one small:
@@ -15,7 +15,7 @@ either one small:
 
 A screen names both: `**Pattern:** [[list]]` and
 `**Layout:** [[collection]]`. The face **shell** — the sidebar, the
-bars, every persistent control — is a layout entry too, `shell.md`, that no screen
+bars, every persistent control — is a layout entry too, `shell.layout.md`, that no screen
 names because it frames every route.
 
 A layout at `**State:** to-extract` is a unit INSPIRE Factory builds, like a

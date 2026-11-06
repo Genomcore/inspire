@@ -555,7 +555,7 @@ sc_pattern_regions() {
 
 # The two region vocabularies are closed — `Fill` is required|optional and
 # `Accepts` is one or more of data|dispatch|nav|static, per format-screen.md and
-# `templates/pattern-entry.md.template`. Closed, and until now enforced nowhere:
+# `templates/pattern.template.md`. Closed, and until now enforced nowhere:
 # the join simply dropped a token it did not recognize, so `| body | required |
 # records |` bought the pattern silence instead of a finding, and a region that
 # should have demanded a data binding demanded nothing.

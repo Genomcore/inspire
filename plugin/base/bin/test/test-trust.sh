@@ -110,7 +110,7 @@ yes "skill-sha: an empty dir still yields a hash" "$empty_sha"
 P="$ROOT/proj"
 mkdir -p "$P/.claude/skills/_references"
 for s in adr module feature domain screens bootstrap; do mkskill "$P/.claude/skills/inspire-$s"; done
-printf 'surface scoping rules.\n' > "$P/.claude/skills/_references/surface-scope.md"
+printf 'surface scoping rules.\n' > "$P/.claude/skills/_references/face-scope.md"
 printf '{"inspire_version":"0.5.0","released":"2026-08-01","template_sha":"deadbee","installed_at":"2026-08-01"}\n' \
   > "$P/.inspire.lock"
 git init -q "$P" >/dev/null 2>&1
@@ -314,7 +314,7 @@ mkdir -p "$R/.claude/skills/_references"
 # inspire-feature is deliberately NOT installed — deleting a skill is legitimate
 # use, and its artifacts must land in OWNER NOT INSTALLED, never in STALE.
 for s in adr module domain screens bootstrap; do mkskill "$R/.claude/skills/inspire-$s"; done
-printf 'surface scoping rules.\n' > "$R/.claude/skills/_references/surface-scope.md"
+printf 'surface scoping rules.\n' > "$R/.claude/skills/_references/face-scope.md"
 printf '{"inspire_version":"0.6.0","released":"2026-08-11","template_sha":"cafe123","installed_at":"2026-08-11"}\n' \
   > "$R/.inspire.lock"
 

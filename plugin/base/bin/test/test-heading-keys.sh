@@ -39,16 +39,16 @@ template_ids() {
   done | sort -u
 }
 for pair in \
-  "action inspire-domain/templates/action.md.template" \
-  "entity inspire-domain/templates/entity.md.template" \
-  "feature inspire-feature/templates/use-case.md.template" \
-  "adr inspire-adr/templates/adr.md.template inspire-adr/templates/adr.rationale.md.template" \
-  "screen inspire-screens/templates/screen.md.template" \
-  "pattern inspire-screens/templates/pattern-entry.md.template" \
-  "component inspire-screens/templates/component-entry.md.template" \
-  "layout inspire-screens/templates/layout-entry.md.template" \
-  "module inspire-module/templates/module-hub.md.template" \
-  "spike inspire-spike/templates/spike.md.template"; do
+  "action inspire-domain/templates/action.template.md" \
+  "entity inspire-domain/templates/entity.template.md" \
+  "feature inspire-feature/templates/feature.template.md" \
+  "adr inspire-adr/templates/adr.template.md inspire-adr/templates/adr.rationale.template.md" \
+  "screen inspire-screens/templates/screen.template.md" \
+  "pattern inspire-screens/templates/pattern.template.md" \
+  "component inspire-screens/templates/component.template.md" \
+  "layout inspire-screens/templates/layout.template.md" \
+  "module inspire-module/templates/module.template.md" \
+  "spike inspire-spike/templates/spike.template.md"; do
   set -- $pair
   kind="$1"; shift
   want="$(template_ids "$@")"

@@ -56,7 +56,7 @@ Ask which entities the action touches and how — for each: the effect verb (`cr
 Ask what must already be true for the action to be allowed to run at all. The answer becomes the keyed `## Preconditions` list. `None.` is a valid body — but ask before accepting it, because a genuinely unconditional mutation is rare.
 
 ### Probes
-- **Actor probe.** "Who may invoke this — any authenticated caller, an administrator, the row's own owner? That is `actor(<role>)`, and it belongs here rather than on any surface, because it is true wherever the action runs." Always ask for a mutation. A surface name surfacing in the answer ("admin console only") is the signal that this probe was the missing one.
+- **Actor probe.** "Who may invoke this — any authenticated caller, an administrator, the row's own owner? That is `actor(<role>)`, and it belongs here rather than on any face or bundle, because it is true wherever the action runs." Always ask for a mutation. A face or bundle name in the answer ("admin console only") is the signal that this probe was the missing one.
 - **Existence probe.** "Does the action assume a row already exists (`exists(<entity>)`) or that none does (`absent(<entity>)`)? A `create` almost always has an absence precondition — and that absence is usually the uniqueness constraint restated from the caller's side." Use for every action with an `As input` identification.
 - **State probe.** "Is there a state the row has to be in — active, not-yet-verified, unlocked? That is `state(<entity>, <value>)`, and it should match a real declared value, not an ad-hoc word." Use whenever the entity is lifecycled.
 - **Caller-vs-contract probe.** "Is that a precondition (the action refuses when it does not hold) or a validation step (the action checks it and raises an error)? Both are legitimate; the difference is whether the error is in `## Errors`." Use whenever the operator's answer would fit either section.
@@ -99,7 +99,7 @@ Ask which error codes the action emits and the operator-facing message for each.
 
 The verbs are the **project's**, not INSPIRE's. They come from the application's own domain (a library reserves, cancels and picks up a book), and they stay consistent within it. INSPIRE ships only the generic rules below and a small default set.
 
-**The project's verb record** is the ADR `inspire_kb/01_adr/adr-action-verbs.md`. Read it before landing the verb. When it exists it is the source of truth, cross-cutting rules included. When it does not, use the default set below. The interview lands the verb *before* shaping the descriptor.
+**The project's verb record** is the ADR `adr-action-verbs`, the global `inspire_kb/01_spec/_adr/action-verbs.adr.md`. Read it before landing the verb. When it exists it is the source of truth, cross-cutting rules included. When it does not, use the default set below. The interview lands the verb *before* shaping the descriptor.
 
 **Generic rules.**
 - **One target object.** The verb acts on the entity the id names (`module::entity::verb`). Other entities the action touches are effects under `## Entities`, never a second target.

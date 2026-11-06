@@ -6,8 +6,8 @@
 The feature-level entry point for SDD-layer work. Same three phases as
 [`/inspire-module scan`](../../inspire-module/references/module-scan.md), scoped to
 one feature or one module's features. The worktree check, the plural→singular
-canonicalization on action ids, the existence check at
-`inspire_kb/04_domain/{module}/{entity}/{action}.md`, the one-question-at-a-time
+canonicalization on action ids, the existence check for the action's
+`{entity}.{action}.action.md` in the module's `_domain/`, the one-question-at-a-time
 dialogue, and the chained-authoring handoff to `/inspire-domain define` are that
 file's Phase 1–3 protocol, unchanged for a feature — read it there rather than
 here.
@@ -16,9 +16,9 @@ The one candidate-surfacing delta: scan reads the feature file and infers the
 actions that would realize it (most features map to 1–3), rather than reading
 the actions a module hub and its feature files already declare.
 
-Scan is read-only with respect to `inspire_kb/04_domain/`; authoring lives in
-`/inspire-domain`. **Batch mode** (`scan {module}`) expands this over every
-feature file in `inspire_kb/03_features/{module}/`.
+Scan is read-only with respect to the domain (`*.entity.md`, `*.action.md`);
+authoring lives in `/inspire-domain`. **Batch mode** (`scan {module}`) expands this
+over every `*.feature.md` under `inspire_kb/01_spec/_modules/{module}/`.
 
 ### Phase 4 — Audit report
 

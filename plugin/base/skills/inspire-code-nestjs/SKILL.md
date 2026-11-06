@@ -364,8 +364,8 @@ Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 build: `npm run build` · lint: `npm run lint` · types: `npx tsc --noEmit` ·
 tests: `npm run test` + `npm run test:e2e`
 
-**Monorepo scoping.** In a workspace, scope every command to the target surface's
-package: `pnpm --filter {package} build|lint|test` (or the workspace tool's
+**Monorepo scoping.** In a workspace, scope every command to the target bundle's
+package (its `package` field): `pnpm --filter {package} build|lint|test` (or the workspace tool's
 equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx test
 {package}`). Never run a workspace-wide install or build from a subcommand when a
 filtered form exists. E2E still runs against a real database — filter which package's

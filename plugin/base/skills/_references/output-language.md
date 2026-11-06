@@ -8,9 +8,10 @@ output language**, read from `output_language` in
 ## The rule
 
 Write **every knowledge-base artifact** in `output_language`, whatever it is:
-specs (`04_domain`), features (`03_features`), ADRs (`01_adr`), screen specs
-(`05_screens`), spike learnings (`06_spikes`), tracker entries
-(`99_tracker`), bootstrap docs (`00_bootstrap`) and the project `README.md`.
+everything under `01_spec` (modules, features, entities and actions, ADRs, bundles,
+faces, screens, processes and the design system), spike learnings (`06_spikes`),
+tracker entries (`99_tracker`), bootstrap docs (`00_bootstrap`) and the project
+`README.md`.
 
 This holds regardless of two things it is deliberately independent of:
 
@@ -81,9 +82,11 @@ in `output_language`. The templates ship the English label:
   screen's Render region — keeps the shape its format already gives it.
 
 An artifact's **identity** never lives in a heading or a title. It lives in a token
-that is never translated: the frontmatter `id` of entities, actions and screens, and
-the filename of features (`ANL-02.md`, whose H1 repeats it as `ANL-02: {label}`) and
-ADRs (`adr-{slug}.md`), which is what every wikilink resolves.
+that is never translated: the frontmatter `id` of entities, actions, screens and
+processes, and the file name, without its typed extension, of everything else —
+features (`ANL-02.feature.md`, whose H1 repeats it as `ANL-02: {label}`), modules,
+faces, bundles and ADRs (`{slug}.adr.md`, id `adr-{slug}`). That id is what every
+wikilink resolves.
 
 ## Exception: lessons (`98_lessons`)
 

@@ -50,32 +50,5 @@ loop reads it exactly as it reads a domain artifact's `lifecycle:`, so a
 `to-extract` entry is a unit it emanates and the screens naming it wait for its
 wave rather than refusing over it.
 
-The entries in `components/` are also the reference when the UI is
-built — in the prototype (`/prototype`) or in production.
-
-## Four ownerships
-
-Design-system tokens sit above everything. Below them, patterns, layouts and
-components are **siblings** — none depends on another by construction — and
-screens compose them:
-
-| Owner | Owns | Never owns |
-|---|---|---|
-| a **component** entry | its props, and the states it renders | where it is placed |
-| a **pattern** entry | its regions (named holes) | the fields its content shows, and any measurement |
-| a **layout** entry | the geometry those regions sit at, per supported width | what fills them |
-| a **screen** | the wiring: data → components, components → regions, and how each value it shows is drawn (`## Render`) | tokens, geometry, props |
-
-A region is a hole, never a mirror of some component's props. That is why a
-pattern's `## Regions` table says only how a hole is filled (`required` /
-`optional`) and what kind of content it accepts (`data` · `dispatch` · `nav` ·
-`static`).
-
-All three catalog entries carry a `**State:**` line — `to-extract` (authored, no code
-yet) or `implemented` (built). That line is the entry's lifecycle: the emanation
-loop reads it exactly as it reads a domain artifact's `lifecycle:`, so a
-`to-extract` entry is a unit it emanates and the screens naming it wait for its
-wave rather than refusing over it.
-
 **Skills:** `inspire-bootstrap design-system` (the design system and its tokens),
 `inspire-screens` (components, layouts, patterns).
