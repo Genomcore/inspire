@@ -2,7 +2,7 @@
 id: B1-kb-structure
 title: "B1 — revamp the KB: one spec directory by module, typed file extensions"
 created: 2026-10-23
-updated: 2026-11-04
+updated: 2026-11-06
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -218,8 +218,17 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
       validators use `01_spec/` and the typed extensions.
 - [ ] The INSPIRE Factory finds its units by a recursive search on the typed extensions,
       not by layer directory, in a matching change in Genomcore/inspire-factory.
-- [ ] An explicit migration command moves an existing project to the new layout, and
-      `/inspire:update` tells the operator that the migration is mandatory.
+- [ ] An explicit migration command, `/inspire:migrate`, moves an existing project to the
+      new layout, and `/inspire:update` tells the operator that the migration is mandatory.
+- [ ] The migration never makes a realized unit unrealized. After it, the only new pending
+      units are the grouping bundles, each with one `{bundle}/mount/every-action` claim, and
+      their run changes test files only. If anything else rebuilds, the close note records
+      why, and which units rebuild.
+- [ ] The ADR amends D2 of `docs/adr/adr-upgrade-path.md`: `inspire_version` in
+      `.inspire.lock` is no longer provenance only.
+- [ ] The INSPIRE Factory accepts only INSPIRE 0.15.0 or later. It reads `inspire_version`
+      from `.inspire.lock`, refuses a project without it, and asks for `/inspire:migrate`
+      when the KB is not migrated.
 - [ ] "Surface" is renamed to "facet" everywhere it reaches: the `surfaces:` frontmatter
       field, `00_bootstrap/surfaces.md`, `/inspire-surface`,
       `_references/surface-scope.md` and `adr-suites-and-surfaces.md`.
@@ -332,3 +341,26 @@ existing concept: `platform` (suggests the backend and mixes bundles back in), `
 (also a design-token scale, and tokens now live in the facet), `shell` (part of a
 facet), `workspace` (`inspire-workspace`), `frame` (layout geometry), `target` (the
 stack skills' targets) and `window` (JavaScript's global).
+
+**Amended 2026-11-06 (Factory review, block 1): the migration keeps built code built, and
+the INSPIRE Factory checks the INSPIRE version.**
+
+- *Decision:* the folder change must not force a re-emanation when the spec did not change.
+  The migration changes ids, and it is the migration that changes them, so no realized unit
+  becomes unrealized. The new layout adds grouping bundles, and each bundle is a new unit:
+  emanating it is the only new work, and it is small.
+- *Today:* this ticket ships an explicit migration command, and the INSPIRE Factory finds
+  units by a recursive search on the typed extensions. The ticket says nothing about what the
+  migration does to code that is already built. In the Factory, a unit stays built while its
+  claim ids and fingerprints do not change, and the path is not part of them. A screen
+  without `id:` takes its id from its parent folder, so moving it changes its ids.
+- *Change:* a new acceptance criterion. The migration never makes a realized unit
+  unrealized. After it, the only new pending units are the grouping bundles, each with one
+  `{bundle}/mount/every-action` claim, and their run changes test files only. If anything
+  else rebuilds, the close note records why, and which units rebuild.
+- *Version check:* the new INSPIRE Factory supports INSPIRE 0.15.0 or later only. It reads
+  `inspire_version` from `.inspire.lock`, so this ticket's ADR amends D2 of
+  `docs/adr/adr-upgrade-path.md`, which makes that field provenance only today. The Factory
+  refuses a project whose lock has no `inspire_version`, and when the KB is not migrated it
+  asks the operator to run `/inspire:migrate`. The Factory half of this check is part of
+  this ticket's matching change in Genomcore/inspire-factory.
