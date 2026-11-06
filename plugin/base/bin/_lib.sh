@@ -474,8 +474,37 @@ _sdd_entity_index() {
 # Resolve an entity id (colon form "auth::user" or dotted "auth.user") to its
 # entity document, by its `id:` — never by building a path (D4). Prints the path,
 # or nothing and a non-zero exit when no entity carries that id.
+#
+# The usual home of `{module}::{entity}` is tried first, and accepted only when the
+# file's own `id:` says so — a hint, verified, never the answer by itself. It reads
+# the frontmatter in bash, with no process: rules call this inside `$(...)` once per
+# touched entity, and a subshell cannot keep the index, so without the hint every call
+# would rebuild it. Anything elsewhere falls back to the index.
+_sdd_fm_id_is() {  # _sdd_fm_id_is <file> <dotted-id>
+  local line n=0 v
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    if [ "$n" -eq 1 ]; then [ "$line" = "---" ] || return 1; continue; fi
+    [ "$line" = "---" ] && return 1
+    case "$line" in
+      id:*)
+        v="${line#id:}"; v="${v%%#*}"
+        v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+        v="${v#[\"\']}"; v="${v%[\"\']}"
+        [ "${v//::/.}" = "$2" ]; return ;;
+    esac
+  done < "$1"
+  return 1
+}
+
 sdd_resolve_entity_id() {
-  local rid="${1//::/.}" path
+  local rid="${1//::/.}" path module entity
+  module="${rid%%.*}"; entity="${rid#*.}"
+  path="$SDD_SPEC_ROOT/_modules/$module/_domain/$entity/$entity.entity.md"
+  if [ "$module" != "$rid" ] && [ -f "$path" ] && _sdd_fm_id_is "$path" "$rid"; then
+    printf '%s\n' "$path"
+    return 0
+  fi
   _sdd_entity_index
   path="$(awk -F'\t' -v id="$rid" '$1 == id { print $2; exit }' "$SDD_ENTITY_INDEX_FILE")"
   [ -n "$path" ] || return 1

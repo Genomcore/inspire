@@ -111,6 +111,10 @@ check "a module with no action is not in the bundle" "! grep -q '\[\[mail\]\]' '
 check "the lib chosen as design system makes no bundle" "[ ! -e '$S/_bundles/kit.bundle.md' ]"
 check "the roster is retired, not deleted" "[ -f '$S/_migration/retired/00_bootstrap/surfaces.md' ] && [ ! -e '$P/inspire_kb/00_bootstrap/surfaces.md' ]"
 check "a file it cannot place is kept under _migration/unplaced" "[ -f '$S/_migration/unplaced/04_domain/auth/NOTES.txt' ]"
+N2="$W/ds-no-tokens"; mkdir -p "$N2/inspire_kb/05_screens"; printf '# our ds\n' > "$N2/inspire_kb/05_screens/design-system.md"
+( cd "$N2" && bash "$MIG" --skeleton "$PLUGIN_ROOT/base/kb/01_spec" ) >/dev/null 2>&1
+check "no default tokens beside a design system the project already has" \
+  "[ ! -e '$N2/inspire_kb/01_spec/_design-system/design-system.tokens.json' ] && grep -q 'our ds' '$N2/inspire_kb/01_spec/_design-system/design-system.md'"
 check "the skeleton is seeded around it" "[ -f '$S/README.md' ] && [ -f '$S/_processes/README.md' ]"
 
 eq "a Factory spec_root pinned to a layer follows the KB" "$(jq -r .spec_root "$P/.inspire/emanate.json")" "inspire_kb/01_spec"

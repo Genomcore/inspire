@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [ { "rule": "wikilinks-resolve", "severity": "error", "message_substring": "users/user/users.nobody" } ], "forbidden": ["users/user/users.user]", "users/user/users.user.me]"] }

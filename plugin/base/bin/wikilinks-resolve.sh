@@ -98,6 +98,18 @@ while IFS= read -r screen_file; do
   [ -n "$screen_id" ] && printf '%s\t%s\n' "$screen_id" "$screen_file" >> "$SCREEN_ID_INDEX"
 done < <(sdd_find_screens "$SDD_SPEC_ROOT")
 
+# The migration's screen id map, read once: old id <TAB> new id.
+SCREEN_ALIASES="$(mktemp -t sdd-screen-aliases.XXXXXX)"
+trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "$NAME_INDEX" "$SCREEN_ID_INDEX" "$SCREEN_ALIASES" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+if [ -f "$SDD_SPEC_ROOT/_migration/id-map.json" ]; then
+  jq -r '.screens // {} | to_entries[] | "\(.key)\t\(.value)"' "$SDD_SPEC_ROOT/_migration/id-map.json" \
+    > "$SCREEN_ALIASES" 2>/dev/null || :
+fi
+
+# The entity index, built here in the parent shell so that every resolution below
+# — each one inside a `$(...)` subshell — reuses it instead of rebuilding it.
+_sdd_entity_index
+
 index_has() {
   awk -F'\t' -v k="$2" '$1 == k { found=1; exit } END { exit !found }' "$1"
 }
@@ -107,6 +119,16 @@ resolve_wikilink() {
   # Strip anchor (#section).
   target="${target%%#*}"
   [ -z "$target" ] && return 1
+
+  # Path-shaped target: the name is what the link means (see the header). Reduced
+  # FIRST, because the last segment of a link written for the layered layout is
+  # often an id — `../../users/user/users.user` names the entity `users::user`,
+  # whose file is no longer called `users.user.md`.
+  if [[ "$target" == */* ]]; then
+    target="${target##*/}"
+    target="${target%.md}"
+    [ -z "$target" ] && return 1
+  fi
 
   # Try SDD id (colon form).
   if [[ "$target" == *"::"* ]]; then
@@ -141,14 +163,9 @@ resolve_wikilink() {
     return 0
   fi
   local alias
-  alias="$(sdd_screen_id_alias "$target")"
+  alias="$(awk -F'\t' -v k="$target" '$1 == k { print $2; exit }' "$SCREEN_ALIASES")"
   if [ -n "$alias" ] && index_has "$SCREEN_ID_INDEX" "$alias"; then
     return 0
-  fi
-
-  # Path-shaped target: the name is what the link means (see the header).
-  if [[ "$target" == */* ]]; then
-    target="${target##*/}"
   fi
 
   # Bare basename lookup (PDD, ADR, refs).

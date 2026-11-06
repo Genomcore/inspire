@@ -632,14 +632,17 @@ if [ -n "$SKELETON" ] && [ -d "$SKELETON" ]; then
     cp "$SKELETON/$rel" "$SPEC/$rel"
     printf 'seed\t%s\n' "$SPEC/$rel" >> "$PLAN"
   done
+  # Like materialize's seed_design_system: the default tokens arrive only WITH the
+  # default design system. Beside a design system the project already has, they
+  # would be values nobody decided; /inspire-bootstrap design-system backfill owns that.
   ds="$SPEC/_design-system"
   if [ ! -f "$ds/design-system.md" ] && [ -f "$ds/theme.md" ]; then
     cp "$ds/theme.md" "$ds/design-system.md"
     printf 'seed\t%s\n' "$ds/design-system.md" >> "$PLAN"
-  fi
-  if [ ! -f "$ds/design-system.tokens.json" ] && [ -f "$ds/theme.tokens.json" ]; then
-    cp "$ds/theme.tokens.json" "$ds/design-system.tokens.json"
-    printf 'seed\t%s\n' "$ds/design-system.tokens.json" >> "$PLAN"
+    if [ ! -f "$ds/design-system.tokens.json" ] && [ -f "$ds/theme.tokens.json" ]; then
+      cp "$ds/theme.tokens.json" "$ds/design-system.tokens.json"
+      printf 'seed\t%s\n' "$ds/design-system.tokens.json" >> "$PLAN"
+    fi
   fi
   cp "$PLAN" "$SPEC/_migration/plan.tsv"
 fi
