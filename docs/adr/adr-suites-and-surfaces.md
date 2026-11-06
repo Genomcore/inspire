@@ -1,6 +1,8 @@
 # ADR — Suites and surfaces: one domain, many deliverables
 
-- **Status:** Accepted — 2026-08-05 (shipped in 0.5.0)
+- **Status:** Superseded by [[adr-kb-structure]] (proposed 2026-11-06). Accepted —
+  2026-08-05 (shipped in 0.5.0). D1's rule that the domain is never scoped by surface
+  carries over; the rest is replaced by modules, bundles, faces and processes.
 - **Builds on:** [[adr-plugin-delivery]] **D4e** (the KB is `inspire_kb/`, visible and
   the operator's). Upholds [[adr-upgrade-path]] **D10** (the KB is additive in both
   init and update) — this ADR adds no delete outcome to it and no layout hop.

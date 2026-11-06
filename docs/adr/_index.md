@@ -9,10 +9,11 @@ chronology, which the ids do not. Newest first.
 
 | Date | ADR | Status |
 |------|-----|--------|
+| 2026-11-06 | [adr-kb-structure](adr-kb-structure.md) | Proposed — draft for review |
 | 2026-09-15 | [adr-specification-authority](adr-specification-authority.md) | Accepted — shipped in 0.9.10 |
 | 2026-08-11 | [adr-artifact-trust](adr-artifact-trust.md) | Accepted — shipped in 0.6.0 |
-| 2026-08-05 | [adr-suites-and-surfaces](adr-suites-and-surfaces.md) | Accepted — shipped in 0.5.0 |
-| 2026-08-04 | [adr-upgrade-path](adr-upgrade-path.md) | Accepted — shipped in 0.4.0 |
+| 2026-08-05 | [adr-suites-and-surfaces](adr-suites-and-surfaces.md) | Superseded by `adr-kb-structure` (proposed); shipped in 0.5.0 |
+| 2026-08-04 | [adr-upgrade-path](adr-upgrade-path.md) | Accepted — shipped in 0.4.0; D2 amended by `adr-kb-structure` (proposed) |
 | 2026-07-29 | [adr-plugin-delivery](adr-plugin-delivery.md) | Accepted |
 | 2026-07-29 | [adr-decision-record-ids](adr-decision-record-ids.md) | Accepted |
 | 2026-07-22 | [adr-runtime-lifecycle-and-lessons](adr-runtime-lifecycle-and-lessons.md) | Accepted (design); D1 superseded by `adr-plugin-delivery`; gap 3's migration-path half closed by `adr-upgrade-path` (D6/D7 still the target) |
