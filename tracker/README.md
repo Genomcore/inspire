@@ -85,7 +85,7 @@ the other tracker and can change. The Factory ticket names the ticket here.
 
 ## Where things stand (2026-11-06)
 
-**32 open tickets.** Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
+Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
 `0143-prose-checks-in-any-language` was filed, and the first block of the INSPIRE Factory's
 follow-up review filed two.
@@ -102,15 +102,15 @@ It also narrowed several tickets to their attended half (`F06-tdd`, `F07-gates`,
 `090-reference-data-home`) and added Factory notes where a change here needs matching
 Factory work.
 
-- **Foci (5):** `F04-mech` (the script split waits for emanation to leave), `F06-tdd`
+- **Foci:** `F04-mech` (the script split waits for emanation to leave), `F06-tdd`
   (review Phase 0 only), `F07-gates` (the ratchet's use/mention defect, and running the
   ratchet in the Factory), `F08-authority`, `F11-lessons` (the local loop and the
   observer ADR amendment).
-- **Follow-ups (6):** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
+- **Follow-ups:** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
   `080-comment-density-cleanup`, `090-actor-head-without-a-role`,
   `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
   nothing when the KB is not in English; blocked by `B4-section-keys`).
-- **First design review, B1 (6):** `B1-kb-structure` and `B1-config-replaces-bootstrap`
+- **First design review, B1:** `B1-kb-structure` and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
   Factory's control-plane design, ready for approval, takes the original description.
@@ -118,21 +118,21 @@ Factory work.
   `B1-adr-decision-rationale`, `B1-decisions-in-context`, `B1-spikes-out-of-the-kb`, and
   `B1-operator-profiles` (Low, long-term; it now holds part 3 of
   `B2-endorsement-reliability`).
-- **Second design review, B2 (2):** `B2-endorsement-reliability` (parts 1 and 2),
+- **Second design review, B2:** `B2-endorsement-reliability` (parts 1 and 2),
   `B2-git-hooks-at-init`.
-- **Third design review, B3 (6):** `B3-entry-points`, `B3-action-effects`,
+- **Third design review, B3:** `B3-entry-points`, `B3-action-effects`,
   `B3-action-verbs`, `B3-navigation-map`, `B3-overridable-types`, `B3-ui-text-keys`.
   Most change the KB format, so most carry a Factory note.
-- **Fourth design review, B4 (3):** `B4-section-keys` (High; translated headings fail
+- **Fourth design review, B4:** `B4-section-keys` (High; translated headings fail
   validation today), `B4-one-home-per-value`, `B4-prose-checks-before-commit` (unblocked
   now that 0.14.2 checks a single file). The same session amended `F06-tdd` (no tests is
   not a pass) and `B2-git-hooks-at-init`.
-- **Fifth and last design review, B5 (2):** `B5-react-skill-from-the-team` (High; the
+- **Fifth and last design review, B5:** `B5-react-skill-from-the-team` (High; the
   React stack skill defers its gates and module boundaries), `B5-error-codes-on-the-wire`.
   The same session amended `F07-gates` (the ratchet runs in the Factory),
   `B1-spikes-out-of-the-kb` (a spike produces spec, never code, and extract gets a spike
   mode) and `B1-config-replaces-bootstrap` (the project's base is specified in config).
-- **INSPIRE Factory follow-up review, block 1, FB1 (2):** how a project enters the Factory
+- **INSPIRE Factory follow-up review, block 1, FB1:** how a project enters the Factory
   and how it is configured. `FB1-install-only-stack-skills` (init installs only the code
   skills of the project's stack), `FB1-react-native-profile` (a profile for the chosen
   mobile stack). The same block amended `B1-config-replaces-bootstrap` (each seed names its
