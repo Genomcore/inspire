@@ -87,8 +87,8 @@ the other tracker and can change. The Factory ticket names the ticket here.
 
 Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
-`0143-prose-checks-in-any-language` was filed, and the first block of the INSPIRE Factory's
-follow-up review filed two.
+`0143-prose-checks-in-any-language` was filed, the first block of the INSPIRE Factory's
+follow-up review filed two, and the second block filed `FB2-kb-contradiction-check`.
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -139,6 +139,11 @@ Factory work.
   image, so a functional operator never chooses one) and `B1-kb-structure` (the layout
   migration keeps built code built, and the INSPIRE Factory accepts only INSPIRE 0.15.0 or
   later, read from `.inspire.lock`).
+- **INSPIRE Factory follow-up review, block 2, FB2:** how a unit's agent works during a run.
+  `FB2-kb-contradiction-check` (High; a check before a plan is queued reports ADRs that
+  contradict each other, the stack, the spec or a tracker ticket, and `authority.md` says that
+  tickets are not authority). When the Factory ships its command that checks a branch as it
+  checks a unit, INSPIRE's hooks get a ticket to call it.
 
 A question that can be answered in a sitting should be answered, not filed: tracking it
 converts a decision into a queue entry, and queue entries outlive the thing that
