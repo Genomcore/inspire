@@ -83,7 +83,7 @@ filed in the Factory's tracker when the change here lands, never before. The not
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
 
-## Where things stand (2026-11-05)
+## Where things stand (2026-11-06)
 
 **32 open tickets.** Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
@@ -137,8 +137,8 @@ Factory work.
   skills of the project's stack), `FB1-react-native-profile` (a profile for the chosen
   mobile stack). The same block amended `B1-config-replaces-bootstrap` (each seed names its
   image, so a functional operator never chooses one) and `B1-kb-structure` (the layout
-  migration keeps built code built). INSPIRE's side of the Factory's version check is filed
-  when the Factory's check ships, and only if it reads something INSPIRE must write.
+  migration keeps built code built, and the INSPIRE Factory accepts only INSPIRE 0.15.0 or
+  later, read from `.inspire.lock`).
 
 A question that can be answered in a sitting should be answered, not filed: tracking it
 converts a decision into a queue entry, and queue entries outlive the thing that
