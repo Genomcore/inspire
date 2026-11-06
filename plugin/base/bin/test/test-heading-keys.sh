@@ -59,10 +59,10 @@ done
 
 ROOT="$(mktemp -d -t inspire-heading-keys-test.XXXXXX)" || exit 1
 trap 'rm -rf "$ROOT"' EXIT
-export SDD_KB_ROOT="$ROOT/kb" SDD_SPEC_ROOT="$ROOT/kb/04_domain"
-mkdir -p "$SDD_SPEC_ROOT/auth/user" "$SDD_KB_ROOT/01_adr" "$SDD_KB_ROOT/05_screens/auth"
+export SDD_KB_ROOT="$ROOT/kb" SDD_SPEC_ROOT="$ROOT/kb/01_spec"
+mkdir -p "$SDD_SPEC_ROOT/_modules/auth/_domain/user" "$SDD_SPEC_ROOT/_adr" "$SDD_SPEC_ROOT/_faces/app/_screens"
 
-ENTITY="$SDD_SPEC_ROOT/auth/user/auth.user.md"
+ENTITY="$SDD_SPEC_ROOT/_modules/auth/_domain/user/user.entity.md"
 cat > "$ENTITY" <<'MD'
 ---
 id: auth.user
@@ -103,11 +103,11 @@ An unknown heading stays as written.
 ## Touched by
 MD
 
-ADR="$SDD_KB_ROOT/01_adr/adr-auth-sessions.rationale.md"
+ADR="$SDD_SPEC_ROOT/_adr/auth-sessions.adr.rationale.md"
 printf '# T — rationale\n\n**Decision:** [[adr-auth-sessions]]\n\n## Context\nWhy.\n\n## Consequences\nWhat.\n\n### Breaking changes\n- None.\n\n## Alternatives considered\n### Breaking changes\nWrong parent.\n\n## Related ADRs\n- none\n' > "$ADR"
-printf '# T\n\n**Status:** design\n**Rationale:** [[adr-auth-sessions.rationale]]\n\n## Decision\nDo it.\n' > "$SDD_KB_ROOT/01_adr/adr-auth-sessions.md"
+printf '# T\n\n**Status:** design\n**Rationale:** [[adr-auth-sessions.rationale]]\n\n## Decision\nDo it.\n' > "$SDD_SPEC_ROOT/_adr/auth-sessions.adr.md"
 
-SCREEN="$SDD_KB_ROOT/05_screens/auth/login.md"
+SCREEN="$SDD_SPEC_ROOT/_faces/app/_screens/login.screen.md"
 printf '# Sign in\n\n**Features:** FEAT-01\n\n## Purpose\nSign in.\n\n## Bindings\n\n### States\n\n| Key | When | Presentation |\n|---|---|---|\n| `x` | y | z |\n\n## Render\n\n### States\nA region that happens to share a binding name.\n' > "$SCREEN"
 
 BEFORE="$(cat "$ENTITY" "$ADR" "$SCREEN")"
@@ -121,7 +121,7 @@ eq  "--list writes nothing"              "$(cat "$ENTITY" "$ADR" "$SCREEN")" "$B
 out="$("$KEYS")"; rc=$?
 eq  "a rewrite exits 0"                  "$rc" "0"
 has "the rewrite is reported"            "rewrote	$ENTITY	4" "$out"
-has "the decision is rewritten"          "rewrote	$SDD_KB_ROOT/01_adr/adr-auth-sessions.md	1" "$out"
+has "the decision is rewritten"          "rewrote	$SDD_SPEC_ROOT/_adr/auth-sessions.adr.md	1" "$out"
 has "the screen is rewritten"            "rewrote	$SCREEN	4" "$out"
 
 E="$(cat "$ENTITY")"

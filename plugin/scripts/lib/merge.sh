@@ -557,6 +557,10 @@ apply_base() {
     # 0.3.0 leaves in place and reports to the operator as theirs to remove.
     # Deleting it here would contradict a report they have already read.
     [ -f "$base/$mid" ] && continue                          # still shipped
+    # And by name, not only by coincidence: a bin/test/** path the template's own
+    # fixtures no longer carry (they move whenever the KB layout does) is still
+    # staging residue, never a retired shipped file.
+    _base_excluded "${mid%%/*}" "${mid#*/}" && continue
     [ -f "$root/$found" ] || continue
     printf '%s\0' "$found" >> "$w/p2l"
     printf '%s\t%s\t%s\n' "$found" "$hash" "$mid" >> "$w/p2"

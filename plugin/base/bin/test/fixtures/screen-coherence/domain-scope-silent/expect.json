@@ -1,6 +1,10 @@
 {
   "exit": 0,
-  "args": ["spec/sdd"],
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain"
+  ],
   "findings": [],
-  "forbidden": ["screen-coherence"]
+  "forbidden": [
+    "screen-coherence"
+  ]
 }

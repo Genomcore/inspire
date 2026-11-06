@@ -30,19 +30,19 @@ STATUS=0
 # on its own (warning at draft and accepted, error at stable), so this can run
 # unconditionally: a contract still being built does not block a PR, a locked one does.
 errors_tested="$PROJECT_ROOT/.inspire/bin/declared-errors-tested.sh"
-[ -x "$errors_tested" ] && { "$errors_tested" inspire_kb/04_domain || STATUS=2; }
+[ -x "$errors_tested" ] && { "$errors_tested" inspire_kb/01_spec || STATUS=2; }
 
 # Every acceptance criterion traceable to a test. Same lifecycle-progressive shape:
 # a 🟡 Planned feature warns, a feature being worked on or claimed done blocks.
 criteria_tested="$PROJECT_ROOT/.inspire/bin/criteria-have-tests.sh"
-[ -x "$criteria_tested" ] && { "$criteria_tested" inspire_kb/03_features || STATUS=2; }
+[ -x "$criteria_tested" ] && { "$criteria_tested" inspire_kb/01_spec || STATUS=2; }
 
 # The decision layer must not claim less than the code delivers: every ADR a 🟢 Implemented
 # feature rests on is itself `implemented`. Adopt it green: promote (or demote) the stale
 # claims it finds before landing it, because a gate that is red the day it lands is a gate
 # people learn to bypass.
 adr_maturity="$PROJECT_ROOT/.inspire/bin/adr-maturity-matches-features.sh"
-[ -x "$adr_maturity" ] && { "$adr_maturity" inspire_kb/03_features || STATUS=2; }
+[ -x "$adr_maturity" ] && { "$adr_maturity" inspire_kb/01_spec || STATUS=2; }
 
 # The gate that guards the gates: every quality gate a resolved stack profile declares is
 # actually present in the project's config. Cheap (a few greps) and it protects every other

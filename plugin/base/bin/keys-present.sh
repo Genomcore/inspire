@@ -341,7 +341,7 @@ check_feature() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
-FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
+FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 if [ -n "$DOMAIN_SCOPE" ]; then
   while IFS= read -r action; do

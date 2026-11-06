@@ -906,9 +906,9 @@ check_file() {
 build_tokens
 
 DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
-FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
-ADR_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/01_adr")"
-SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/05_screens")"
+FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
+ADR_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
+SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 if [ -n "$DOMAIN_SCOPE" ]; then
   while IFS= read -r f; do

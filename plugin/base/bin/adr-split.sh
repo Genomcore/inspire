@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # .inspire/bin/adr-split.sh
 #
-# Splits a single-file ADR into its decision `adr-{slug}.md` and its rationale
-# `adr-{slug}.rationale.md`, moving every line verbatim.
+# Splits a single-file ADR into its decision `{slug}.adr.md` and its rationale
+# `{slug}.adr.rationale.md`, moving every line verbatim.
 #
 # Usage:
 #   .inspire/bin/adr-split.sh --list [path...]   # print the single-file ADRs, write nothing
@@ -18,7 +18,7 @@ if [ "${1:-}" = "--list" ]; then
   MODE="list"
   shift
 fi
-[ $# -eq 0 ] && set -- "$SDD_KB_ROOT/01_adr"
+[ $# -eq 0 ] && set -- "$SDD_SPEC_ROOT"
 
 is_single_file() {
   local file="$1"
@@ -38,7 +38,7 @@ has_decision_section() {
 
 split_adr() {
   local file="$1" slug rationale
-  slug="$(basename "$file" .md)"
+  slug="$(sdd_artifact_id "$file")"
   rationale="${file%.md}.rationale.md"
 
   awk -v slug="$slug" -v dec_out="$file.tmp" -v rat_out="$rationale.tmp" '

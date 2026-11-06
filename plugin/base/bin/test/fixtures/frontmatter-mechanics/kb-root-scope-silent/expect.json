@@ -1,6 +1,13 @@
 {
   "exit": 0,
-  "args": ["spec/kb"],
+  "args": [
+    "spec/kb/00_bootstrap"
+  ],
   "findings": [],
-  "forbidden": ["severity", "lifecycle-valid", "requires-resolves", "superseded-by-resolves"]
+  "forbidden": [
+    "severity",
+    "lifecycle-valid",
+    "requires-resolves",
+    "superseded-by-resolves"
+  ]
 }

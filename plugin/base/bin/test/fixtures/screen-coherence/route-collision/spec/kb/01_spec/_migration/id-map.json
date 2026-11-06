@@ -1,0 +1,6 @@
+{
+  "screens": {
+    "users.list": "portal.list",
+    "portal.users.list": "portal.roster"
+  }
+}

@@ -9,9 +9,12 @@ sdd_require_tools || exit 127
 sdd_init_counters
 
 SCOPE="${1:-}"
-SCREENS_ROOT="$SDD_KB_ROOT/05_screens"
-DESIGN_FILE="$SCREENS_ROOT/design-system.md"
-TOKENS_FILE="$SCREENS_ROOT/design-tokens.json"
+# The design system is one file per project, `design-system.md`, found by name under
+# the spec root (adr-kb-structure D3); its global tokens sit beside it as
+# `design-system.tokens.json`.
+DESIGN_FILE="$(find "$SDD_SPEC_ROOT" -type f -name 'design-system.md' 2>/dev/null | sort | head -1)"
+[ -n "$DESIGN_FILE" ] || DESIGN_FILE="$SDD_SPEC_ROOT/_design-system/design-system.md"
+TOKENS_FILE="${DESIGN_FILE%/*}/design-system.tokens.json"
 REQUIRED_SECTIONS=("Supported viewports" "Icons" "Reference")
 
 emit() {
@@ -147,13 +150,14 @@ check_citations() {
     while IFS= read -r path; do
       [ -z "$path" ] && continue
       grep -qxF "$path" "$known" && continue
-      emit "warning" "$file" "cites token {$path}, which design-tokens.json does not define"
+      emit "warning" "$file" "cites token {$path}, which design-system.tokens.json does not define"
     done < <(cited_tokens "$file")
-  done < <(find "$SCREENS_ROOT" -type f -name '*.md' ! -name 'README.md' 2>/dev/null | sort)
+  done < <({ find "$SDD_SPEC_ROOT" -type f -name 'design-system.md' 2>/dev/null
+             for t in screen pattern layout component face; do sdd_find_typed "$SDD_SPEC_ROOT" "$t"; done; } | sort -u)
   rm -f "$known"
 }
 
-SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SCREENS_ROOT")"
+SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 [ -n "$SCOPE_DIR" ] || exit 0
 [ -f "$DESIGN_FILE" ] || exit 0
 
@@ -164,7 +168,7 @@ fi
 if [ ! -f "$TOKENS_FILE" ]; then
   if in_scope "$SCOPE_DIR" "$DESIGN_FILE"; then
     emit "warning" "$DESIGN_FILE" \
-      "no design-tokens.json beside the design system — run /inspire-bootstrap design-system backfill"
+      "no design-system.tokens.json beside the design system — run /inspire-bootstrap design-system backfill"
   fi
   sdd_exit_with_counters
   exit $?

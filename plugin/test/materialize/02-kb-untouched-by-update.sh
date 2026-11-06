@@ -78,6 +78,9 @@ kb_list_before="$(mktemp)"
 kb_seeds_owed=""
 while IFS= read -r rel; do
   [ -z "$rel" ] && continue
+  # A layered KB (this baseline is one) is not owed 01_spec/: it reaches the concept
+  # layout only through /inspire:migrate, never through an update.
+  case "$rel" in 01_spec/*) continue ;; esac
   [ -f "$kbp/inspire_kb/$rel" ] || kb_seeds_owed="$kb_seeds_owed$rel "
 done < <(cd "$PLUGIN_ROOT/base/kb" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)
 kb_seeds_n="$(printf '%s' "$kb_seeds_owed" | wc -w | tr -d ' ')"
@@ -152,6 +155,8 @@ for rel in $kb_seeds_owed; do
 done
 check "KB regression: every owed KB seed arrived ($kb_seeds_n of them)" \
   "[ '$kb_seeds_missing_after' = 0 ]"
+check "KB regression: a layered KB is not seeded with 01_spec/ (that is /inspire:migrate's job)" \
+  "[ ! -e '$kbp/inspire_kb/01_spec' ]"
 check "KB regression: the release's own new KB seed is one of them" \
   "[ -f '$kbp/inspire_kb/00_bootstrap/glossary.md' ]"
 check "KB regression: update added exactly the owed seeds, removed exactly the retired mirrors (count)" \

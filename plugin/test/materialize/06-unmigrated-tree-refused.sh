@@ -38,7 +38,7 @@ check "unmigrated v0.2: the old KB is untouched"      "[ -f '$um/.inspire_kb/03_
 rc_um2=$?
 check "migrated v0.2: init now succeeds"              "[ '$rc_um2' = 0 ]"
 check "migrated v0.2: the migrated KB survives it"    "[ -f '$um/inspire_kb/03_features/feat-login.md' ] && grep -q 'The real, only copy' '$um/inspire_kb/03_features/feat-login.md'"
-check "migrated v0.2: skeleton filled in around it"   "[ -f '$um/inspire_kb/03_features/README.md' ] && [ -f '$um/inspire_kb/99_tracker/README.md' ]"
+check "migrated v0.2: skeleton filled in around it"   "[ -f '$um/inspire_kb/00_bootstrap/README.md' ] && [ -f '$um/inspire_kb/99_tracker/README.md' ]"
 rm -rf "$(dirname "$um")"
 
 summary

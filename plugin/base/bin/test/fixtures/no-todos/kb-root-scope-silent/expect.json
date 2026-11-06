@@ -1,6 +1,11 @@
 {
   "exit": 0,
-  "args": ["spec/kb"],
+  "args": [
+    "spec/kb/00_bootstrap"
+  ],
   "findings": [],
-  "forbidden": ["severity", "no-todos"]
+  "forbidden": [
+    "severity",
+    "no-todos"
+  ]
 }

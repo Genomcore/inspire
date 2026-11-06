@@ -82,7 +82,7 @@ while IFS= read -r adr; do
   case "$status" in superseded|rejected) continue ;; esac
   surfaces="$(adr_surfaces "$adr")"
   binds_surface "$surfaces" || continue
-  id="$(basename "$adr" .md)"
+  id="$(sdd_artifact_id "$adr")"
   label="${status:-no status}"
   [ -n "$surfaces" ] && [ "$surfaces" != "all" ] && label="${label}; surfaces: ${surfaces// /, }"
   line="- **${id}** (${label}) — $(adr_title "$adr")"
@@ -92,17 +92,17 @@ while IFS= read -r adr; do
 $(decision_text "$adr")
 "
   count=$((count + 1))
-done < <(sdd_find_adrs "$SDD_KB_ROOT/01_adr")
+done < <(sdd_find_adrs "$SDD_SPEC_ROOT")
 
 [ "$count" -eq 0 ] && exit 0
 
 scope=""
 [ -n "$SURFACE" ] && scope=" that bind the \`${SURFACE}\` surface"
-HEAD="INSPIRE decisions — ${count} live ADR(s) in \`inspire_kb/01_adr/\`${scope}. An ADR \
+HEAD="INSPIRE decisions — ${count} live ADR(s) in \`inspire_kb/01_spec/\`${scope}. An ADR \
 listing surfaces binds only those; one listing none binds the whole suite. Follow each \
 one when you specify or build; to change one, use \`/inspire-adr\`. A \`design\` or \
 \`prototyped\` decision can still be refined, an \`implemented\` one only superseded. \
-The reasons are in each ADR's \`.rationale.md\`."
+The reasons are in each ADR's \`.adr.rationale.md\`."
 
 DIGEST="${HEAD}
 

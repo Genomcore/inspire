@@ -121,7 +121,7 @@ SHA_SCREENS="$("$TRUST" skill-sha "$P/.claude/skills/inspire-screens")"
 SHA_REFS="$("$TRUST" skill-sha "$P/.claude/skills/_references")"
 
 # ── a file that already has frontmatter, including an endorsement ──────────
-WITH="$P/inspire_kb/04_domain/auth/user/auth.user.md"
+WITH="$P/inspire_kb/01_spec/_modules/auth/_domain/user/user.entity.md"
 mkdir -p "$(dirname "$WITH")"
 cat > "$WITH" <<'EOF'
 ---
@@ -137,7 +137,7 @@ Body paragraph with `backticks` and a [[wikilink]].
 EOF
 cp "$WITH" "$ROOT/orig-with-fm.md"
 
-rc=0; ( cd "$P" && "$TRUST" stamp inspire_kb/04_domain/auth/user/auth.user.md --skill domain ) >/dev/null || rc=$?
+rc=0; ( cd "$P" && "$TRUST" stamp inspire_kb/01_spec/_modules/auth/_domain/user/user.entity.md --skill domain ) >/dev/null || rc=$?
 eq "stamp: exits 0"                "$rc" "0"
 eq "stamp: produced.skill"         "$(fm "$WITH" '.produced.skill')"     "domain"
 eq "stamp: produced.skill_sha"     "$(fm "$WITH" '.produced.skill_sha')" "$SHA_DOMAIN"
@@ -152,19 +152,19 @@ filesame "stamp: body byte-for-byte" \
 
 # ── re-stamping overwrites the whole block ────────────────────────────────
 yq -i --front-matter=process '.produced.skill_sha = "0000000" | .produced.leftover = "x"' "$WITH"
-( cd "$P" && "$TRUST" stamp inspire_kb/04_domain/auth/user/auth.user.md --skill domain ) >/dev/null
+( cd "$P" && "$TRUST" stamp inspire_kb/01_spec/_modules/auth/_domain/user/user.entity.md --skill domain ) >/dev/null
 eq "re-stamp: exactly one produced block"   "$(grep -c '^produced:' "$WITH")" "1"
 eq "re-stamp: sha back to the real one"     "$(fm "$WITH" '.produced.skill_sha')" "$SHA_DOMAIN"
 eq "re-stamp: a foreign produced key is gone" "$(fm "$WITH" '.produced.leftover')" ""
 eq "re-stamp: endorsement still there"      "$(fm "$WITH" '.endorsed.by')" "@dario"
 
 # ── a file with no frontmatter at all (screens ship this way) ──────────────
-NOFM="$P/inspire_kb/05_screens/login.md"
+NOFM="$P/inspire_kb/01_spec/_faces/app/_screens/login.screen.md"
 mkdir -p "$(dirname "$NOFM")"
 printf '# Login\n\nA screen that ships without frontmatter.\n' > "$NOFM"
 cp "$NOFM" "$ROOT/orig-no-fm.md"
 
-( cd "$P" && "$TRUST" stamp inspire_kb/05_screens/login.md --skill screens ) >/dev/null
+( cd "$P" && "$TRUST" stamp inspire_kb/01_spec/_faces/app/_screens/login.screen.md --skill screens ) >/dev/null
 eq "stamp (no frontmatter): all five keys, in order" \
   "$(yq --front-matter=extract -r '.produced | keys | join(",")' "$NOFM" 2>/dev/null)" \
   "skill,skill_sha,refs_sha,inspire,at"
@@ -175,15 +175,15 @@ filesame "stamp (no frontmatter): body byte-for-byte" \
 # ── --skills override, and a missing lock ─────────────────────────────────
 ALT="$ROOT/altskills"; mkdir -p "$ALT/_references"; mkskill "$ALT/inspire-adr"
 printf 'other refs\n' > "$ALT/_references/r.md"
-NOLOCK="$ROOT/nolock"; mkdir -p "$NOLOCK/inspire_kb/01_adr"
-printf -- '---\nid: adr-x\n---\n\n# ADR\n' > "$NOLOCK/inspire_kb/01_adr/adr-x.md"
-( cd "$NOLOCK" && "$TRUST" stamp inspire_kb/01_adr/adr-x.md --skill adr --skills "$ALT" ) >/dev/null
+NOLOCK="$ROOT/nolock"; mkdir -p "$NOLOCK/inspire_kb/01_spec/_adr"
+printf -- '---\nid: adr-x\n---\n\n# ADR\n' > "$NOLOCK/inspire_kb/01_spec/_adr/x.adr.md"
+( cd "$NOLOCK" && "$TRUST" stamp inspire_kb/01_spec/_adr/x.adr.md --skill adr --skills "$ALT" ) >/dev/null
 eq "stamp: --skills root honoured" \
-  "$(fm "$NOLOCK/inspire_kb/01_adr/adr-x.md" '.produced.skill_sha')" "$("$TRUST" skill-sha "$ALT/inspire-adr")"
+  "$(fm "$NOLOCK/inspire_kb/01_spec/_adr/x.adr.md" '.produced.skill_sha')" "$("$TRUST" skill-sha "$ALT/inspire-adr")"
 eq "stamp: no .inspire.lock means inspire: unknown" \
-  "$(fm "$NOLOCK/inspire_kb/01_adr/adr-x.md" '.produced.inspire')" "unknown"
+  "$(fm "$NOLOCK/inspire_kb/01_spec/_adr/x.adr.md" '.produced.inspire')" "unknown"
 
-rc=0; ( cd "$P" && "$TRUST" stamp inspire_kb/05_screens/login.md --skill ghost ) >/dev/null 2>&1 || rc=$?
+rc=0; ( cd "$P" && "$TRUST" stamp inspire_kb/01_spec/_faces/app/_screens/login.screen.md --skill ghost ) >/dev/null 2>&1 || rc=$?
 ne "stamp: an uninstalled skill is an error, not a fake hash" "$rc" "0"
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -191,7 +191,7 @@ ne "stamp: an uninstalled skill is an error, not a fake hash" "$rc" "0"
 # ═══════════════════════════════════════════════════════════════════════════
 
 grep -A5 '^produced:' "$NOFM" > "$ROOT/produced-before.txt"
-rc=0; ( cd "$P" && "$TRUST" endorse inspire_kb/05_screens/login.md ) >/dev/null || rc=$?
+rc=0; ( cd "$P" && "$TRUST" endorse inspire_kb/01_spec/_faces/app/_screens/login.screen.md ) >/dev/null || rc=$?
 eq "endorse: exits 0"        "$rc" "0"
 eq "endorse: by is @ + the local part of git user.email" "$(fm "$NOFM" '.endorsed.by')" "@tester"
 AT1="$(fm "$NOFM" '.endorsed.at')"
@@ -202,15 +202,15 @@ filesame "endorse: produced block byte-for-byte" \
 
 cp "$NOFM" "$ROOT/endorsed-once.md"
 sleep 1
-( cd "$P" && "$TRUST" endorse inspire_kb/05_screens/login.md ) >/dev/null
+( cd "$P" && "$TRUST" endorse inspire_kb/01_spec/_faces/app/_screens/login.screen.md ) >/dev/null
 ne "endorse: a second endorsement the same day changes the file" \
   "$(sha256sum_of "$NOFM")" "$(sha256sum_of "$ROOT/endorsed-once.md")"
 
 # endorse must also work on a file that has no frontmatter yet
-BARE="$P/inspire_kb/03_features/checkout.md"
+BARE="$P/inspire_kb/01_spec/_modules/shop/_features/checkout.feature.md"
 mkdir -p "$(dirname "$BARE")"
 printf '# Checkout\n\nno frontmatter.\n' > "$BARE"
-( cd "$P" && "$TRUST" endorse inspire_kb/03_features/checkout.md ) >/dev/null
+( cd "$P" && "$TRUST" endorse inspire_kb/01_spec/_modules/shop/_features/checkout.feature.md ) >/dev/null
 eq "endorse (no frontmatter): by written" "$(fm "$BARE" '.endorsed.by')" "@tester"
 eq "endorse (no frontmatter): no produced block invented" "$(grep -c '^produced:' "$BARE")" "0"
 
@@ -225,11 +225,11 @@ eq "endorse: nothing written when the email is unset" "$(grep -c '^endorsed:' "$
 # report — CHANGED SINCE ENDORSED
 # ═══════════════════════════════════════════════════════════════════════════
 
-ADR_REL="inspire_kb/01_adr/adr-a.md"
+ADR_REL="inspire_kb/01_spec/_adr/a.adr.md"
 
 drift_repo(){
   local d="$ROOT/drift-$1"
-  mkdir -p "$d/.claude/skills/_references" "$d/inspire_kb/01_adr"
+  mkdir -p "$d/.claude/skills/_references" "$d/inspire_kb/01_spec/_adr"
   mkskill "$d/.claude/skills/inspire-adr"
   printf 'refs\n' > "$d/.claude/skills/_references/r.md"
   printf -- '---\nid: adr-a\n---\n\n# A\n\nThe decision.\n' > "$d/$ADR_REL"
@@ -246,27 +246,27 @@ drift_of(){ group_block 'CHANGED SINCE ENDORSED' "$(cd "$1" && "$TRUST" report)"
 
 D1="$(drift_repo committed)"
 endorse_in "$D1"; commit_all "$D1" endorse
-hasnt "drift: an endorsement with nothing after it is not flagged" 'adr-a.md' "$(drift_of "$D1")"
+hasnt "drift: an endorsement with nothing after it is not flagged" 'a.adr.md' "$(drift_of "$D1")"
 printf 'An edit.\n' >> "$D1/$ADR_REL"
-has "drift: an uncommitted edit after the endorsement is flagged" 'adr-a.md' "$(drift_of "$D1")"
+has "drift: an uncommitted edit after the endorsement is flagged" 'a.adr.md' "$(drift_of "$D1")"
 commit_all "$D1" edit
 DRIFT1="$(drift_of "$D1")"
-has "drift: a committed edit after the endorsement is flagged" 'adr-a.md' "$DRIFT1"
+has "drift: a committed edit after the endorsement is flagged" 'a.adr.md' "$DRIFT1"
 has "drift: the line names who endorsed and when" \
   "endorsed by @tester at $(fm "$D1/$ADR_REL" '.endorsed.at')" "$DRIFT1"
 has "drift: --summary counts it" '1 changed-since-endorsed' "$(cd "$D1" && "$TRUST" report --summary)"
 sleep 1
 endorse_in "$D1"
-hasnt "drift: re-endorsing clears it before the commit" 'adr-a.md' "$(drift_of "$D1")"
+hasnt "drift: re-endorsing clears it before the commit" 'a.adr.md' "$(drift_of "$D1")"
 commit_all "$D1" reendorse
-hasnt "drift: a commit that only re-endorses does not count as a change" 'adr-a.md' "$(drift_of "$D1")"
+hasnt "drift: a commit that only re-endorses does not count as a change" 'a.adr.md' "$(drift_of "$D1")"
 ( cd "$D1" && "$TRUST" stamp "$ADR_REL" --skill adr ) >/dev/null; commit_all "$D1" restamp
-hasnt "drift: a commit that only re-stamps produced: does not count" 'adr-a.md' "$(drift_of "$D1")"
+hasnt "drift: a commit that only re-stamps produced: does not count" 'a.adr.md' "$(drift_of "$D1")"
 
 D2="$(drift_repo same-commit)"
 printf 'Edited, then endorsed.\n' >> "$D2/$ADR_REL"
 endorse_in "$D2"; commit_all "$D2" "edit and endorse"
-hasnt "drift: the edit inside the endorsing commit is endorsed" 'adr-a.md' "$(drift_of "$D2")"
+hasnt "drift: the edit inside the endorsing commit is endorsed" 'a.adr.md' "$(drift_of "$D2")"
 
 D3="$(drift_repo clockless)"
 printf 'Edited first.\n' >> "$D3/$ADR_REL"
@@ -275,7 +275,7 @@ GIT_COMMITTER_DATE="2030-01-01T00:00:00+00:00" GIT_AUTHOR_DATE="2030-01-01T00:00
   git -C "$D3" commit -qm "edit dated after the endorsement"
 endorse_in "$D3"; commit_all "$D3" endorse
 hasnt "drift: history decides, not clocks — an earlier commit with a later date is endorsed" \
-  'adr-a.md' "$(drift_of "$D3")"
+  'a.adr.md' "$(drift_of "$D3")"
 
 D4="$(drift_repo merged)"
 git -C "$D4" checkout -qb side
@@ -288,21 +288,21 @@ endorse_in "$D4"; commit_all "$D4" endorse
 git -C "$D4" merge -q --no-edit side >/dev/null 2>&1
 eq "fixture: the branch edit merged cleanly" "$(grep -c 'Edited on a branch.' "$D4/$ADR_REL")" "1"
 has "drift: a branch edit merged after the endorsement is flagged, whatever its date" \
-  'adr-a.md' "$(drift_of "$D4")"
+  'a.adr.md' "$(drift_of "$D4")"
 
 D5="$(drift_repo legacy)"
 yq -i --front-matter=process '.endorsed = {"by": "@dario", "at": "2026-08-01"}' "$D5/$ADR_REL"
 commit_all "$D5" "legacy endorsement"
-hasnt "drift: a date-only stamp with nothing after it is not flagged" 'adr-a.md' "$(drift_of "$D5")"
+hasnt "drift: a date-only stamp with nothing after it is not flagged" 'a.adr.md' "$(drift_of "$D5")"
 printf 'A later edit.\n' >> "$D5/$ADR_REL"; commit_all "$D5" edit
-has "drift: a date-only stamp is compared the same way" 'adr-a.md' "$(drift_of "$D5")"
+has "drift: a date-only stamp is compared the same way" 'a.adr.md' "$(drift_of "$D5")"
 
 DRIFT_STUB="$ROOT/trust-drift-stubbed.sh"
 sed 's/^changed_since_endorsed() {$/changed_since_endorsed() { return 1; #/' "$TRUST" > "$DRIFT_STUB"
 chmod +x "$DRIFT_STUB"
 ne "stub-guard: the stub actually replaced the drift check" \
   "$(diff -q "$DRIFT_STUB" "$TRUST" >/dev/null 2>&1; echo $?)" "0"
-hasnt "stub-guard: the stubbed tool cannot see the drift" 'adr-a.md' \
+hasnt "stub-guard: the stubbed tool cannot see the drift" 'a.adr.md' \
   "$(group_block 'CHANGED SINCE ENDORSED' "$(cd "$D5" && "$DRIFT_STUB" report)")"
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -330,13 +330,11 @@ R_REFS="$("$TRUST" skill-sha "$R/.claude/skills/_references")"
 eq "fixture: all six skill dirs hash distinctly" \
   "$(printf '%s\n' "$R_ADR" "$R_MOD" "$R_DOM" "$R_SCR" "$R_BOOT" "$R_REFS" | LC_ALL=C sort -u | grep -c .)" "6"
 
-mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_adr" "$R/inspire_kb/02_modules" \
-         "$R/inspire_kb/03_features" "$R/inspire_kb/04_domain/auth/user" \
-         "$R/inspire_kb/05_screens/patterns" "$R/inspire_kb/05_screens/components" \
-         "$R/inspire_kb/05_screens/auth"
+mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_spec/_adr"
 
 art(){ # art <path> <endorsed:yes|no> [skill sha refs]
   local path="$R/inspire_kb/$1" e="$2" skill="${3:-}" sha="${4:-}" refs="${5:-}"
+  mkdir -p "$(dirname "$path")"
   { printf -- '---\n'
     if [ "$e" = yes ]; then printf 'endorsed:\n  by: "@dario"\n  at: 2026-08-01\n'; fi
     if [ -n "$skill" ]; then
@@ -351,18 +349,18 @@ art 00_bootstrap/project.md   no                                  # UNENDORSED
 art 00_bootstrap/stack.md     yes                                 # clean
 art 00_bootstrap/theme.md     no                                  # skipped by filename
 art 00_bootstrap/surfaces.md  no                                  # never scanned
-art 01_adr/README.md          no                                  # skipped by filename
-art 01_adr/adr-stale.md       yes adr     0000000   "$R_REFS"      # STALE
-art 01_adr/adr-refs.md        yes adr     "$R_ADR"  0000000        # REFS-CHANGED
-art 02_modules/_template.md   no                                  # skipped by filename
-art 05_screens/auth/_index.md no  screens "$R_SCR"  "$R_REFS"      # produced-checked, never UNENDORSED
-art 02_modules/billing.md     yes                                 # PRE-PROVENANCE
-art 03_features/checkout.md   yes feature 0000000   "$R_REFS"      # OWNER NOT INSTALLED, not STALE
-art 04_domain/auth/user/auth.user.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)
-art 05_screens/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — DS is owned by bootstrap
-art 05_screens/login.md       no                                  # UNENDORSED + PRE-PROVENANCE
-art 05_screens/patterns/list.md no screens "$R_SCR" "$R_REFS"      # UNENDORSED — patterns/ became endorsable (T12)
-art 05_screens/components/button.md yes screens "$R_SCR" "$R_REFS" # clean — endorsed AND fresh, the inverse positive
+art 01_spec/_adr/README.md          no                                  # skipped by filename
+art 01_spec/_adr/stale.adr.md       yes adr     0000000   "$R_REFS"      # STALE
+art 01_spec/_adr/refs.adr.md        yes adr     "$R_ADR"  0000000        # REFS-CHANGED
+art 01_spec/_modules/module.template.md   no                                  # skipped by filename
+art 01_spec/_faces/app/_index.md no  screens "$R_SCR"  "$R_REFS"      # produced-checked, never UNENDORSED
+art 01_spec/_modules/billing/billing.module.md     yes                                 # PRE-PROVENANCE
+art 01_spec/_modules/shop/_features/checkout.feature.md   yes feature 0000000   "$R_REFS"      # OWNER NOT INSTALLED, not STALE
+art 01_spec/_modules/auth/_domain/user/user.entity.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)
+art 01_spec/_design-system/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — DS is owned by bootstrap
+art 01_spec/_faces/app/_screens/login.screen.md       no                                  # UNENDORSED + PRE-PROVENANCE
+art 01_spec/_design-system/patterns/list.pattern.md no screens "$R_SCR" "$R_REFS"      # UNENDORSED — patterns/ became endorsable (T12)
+art 01_spec/_design-system/components/button.component.md yes screens "$R_SCR" "$R_REFS" # clean — endorsed AND fresh, the inverse positive
 
 # An artifact with NO frontmatter whose BODY contains `endorsed:` and `produced:`
 # at column 0 — a KB artifact documenting the stamp format is the obvious way to
@@ -370,7 +368,7 @@ art 05_screens/components/button.md yes screens "$R_SCR" "$R_REFS" # clean — e
 # markdown `# Heading` is a valid YAML comment) and hands back a real `by`, so
 # without a frontmatter guard this file is silently counted as human-endorsed and
 # machine-stamped. It must land in UNENDORSED and PRE-PROVENANCE.
-cat > "$R/inspire_kb/01_adr/adr-stamp-format.md" <<'EOF'
+cat > "$R/inspire_kb/01_spec/_adr/stamp-format.adr.md" <<'EOF'
 # ADR — the artifact trust stamp format
 
 endorsed:
@@ -395,28 +393,28 @@ eq "report: OWNER NOT INSTALLED count" "$(group_count 'OWNER NOT INSTALLED' "$FU
 eq "report: MISROUTED count"         "$(group_count MISROUTED "$FULL")"             "1"
 
 has "report: UNENDORSED lists project.md"  'inspire_kb/00_bootstrap/project.md' "$(group_block UNENDORSED "$FULL")"
-has "report: UNENDORSED lists login.md"    'inspire_kb/05_screens/login.md'     "$(group_block UNENDORSED "$FULL")"
+has "report: UNENDORSED lists login.md"    'inspire_kb/01_spec/_faces/app/_screens/login.screen.md'     "$(group_block UNENDORSED "$FULL")"
 hasnt "report: endorsed stack.md is not UNENDORSED" 'stack.md' "$(group_block UNENDORSED "$FULL")"
 hasnt "report: _index.md is never UNENDORSED" '_index.md'   "$(group_block UNENDORSED "$FULL")"
-has "report: patterns/list.md is UNENDORSED (T12: catalog entries became endorsable)" 'patterns/list.md' "$(group_block UNENDORSED "$FULL")"
-hasnt "report: an endorsed AND fresh catalog entry is not UNENDORSED" 'components/button.md' "$(group_block UNENDORSED "$FULL")"
+has "report: patterns/list.md is UNENDORSED (T12: catalog entries became endorsable)" 'list.pattern.md' "$(group_block UNENDORSED "$FULL")"
+hasnt "report: an endorsed AND fresh catalog entry is not UNENDORSED" 'button.component.md' "$(group_block UNENDORSED "$FULL")"
 # Presence guard: the inverse positive lands in no group, so without this line the
 # fixture row could be deleted and every assertion above would still pass.
 eq "fixture: the inverse-positive artifact exists" \
-  "$([ -f "$R/inspire_kb/05_screens/components/button.md" ] && echo yes || echo no)" "yes"
+  "$([ -f "$R/inspire_kb/01_spec/_design-system/components/button.component.md" ] && echo yes || echo no)" "yes"
 
 # A body is not frontmatter: an `endorsed:` line in prose must never be mistaken
 # for a human vouch, nor a `produced:` line for a stamp.
 has "report: a body 'endorsed:' is not an endorsement" \
-  'inspire_kb/01_adr/adr-stamp-format.md' "$(group_block UNENDORSED "$FULL")"
+  'inspire_kb/01_spec/_adr/stamp-format.adr.md' "$(group_block UNENDORSED "$FULL")"
 eq  "report: a body 'produced:' is not a stamp" \
-  "$(printf '%s\n' "$FULL" | grep -c 'adr-stamp-format.md')" "1"
+  "$(printf '%s\n' "$FULL" | grep -c 'stamp-format.adr.md')" "1"
 hasnt "report: the fabricated handle is never read out of a body" '@nobody' "$FULL"
 hasnt "report: the fabricated sha is never read out of a body"    'deadbee' "$FULL"
 
 has "report: STALE keyed by owner and stamped sha" \
   "adr stamped 0000000, now $R_ADR (1)" "$(group_block STALE "$FULL")"
-has "report: STALE lists the artifact"             'inspire_kb/01_adr/adr-stale.md' "$(group_block STALE "$FULL")"
+has "report: STALE lists the artifact"             'inspire_kb/01_spec/_adr/stale.adr.md' "$(group_block STALE "$FULL")"
 hasnt "report: an uninstalled owner is not STALE"  'checkout.md' "$(group_block STALE "$FULL")"
 # Real only because every skill dir hashes distinctly: design-system.md is stamped
 # with inspire-bootstrap's hash, so comparing it against inspire-screens (the
@@ -430,12 +428,12 @@ eq  "report: REFS-CHANGED is one line" \
   "$(group_block REFS-CHANGED "$FULL" | grep -c .)" "1"
 
 has "report: OWNER NOT INSTALLED names the skill dir" 'inspire-feature' "$(group_block 'OWNER NOT INSTALLED' "$FULL")"
-has "report: OWNER NOT INSTALLED lists the artifact"  'inspire_kb/03_features/checkout.md' "$(group_block 'OWNER NOT INSTALLED' "$FULL")"
+has "report: OWNER NOT INSTALLED lists the artifact"  'inspire_kb/01_spec/_modules/shop/_features/checkout.feature.md' "$(group_block 'OWNER NOT INSTALLED' "$FULL")"
 
 # The full phrase, not the bare words: `module` and `domain` both already appear
 # in the artifact's own path on that same line.
 has "report: MISROUTED names the artifact, the stamped skill and the map owner" \
-  "inspire_kb/04_domain/auth/user/auth.user.md — stamped skill 'module', the layer's owner is 'domain'" \
+  "inspire_kb/01_spec/_modules/auth/_domain/user/user.entity.md — stamped skill 'module', the layer's owner is 'domain'" \
   "$(group_block MISROUTED "$FULL")"
 
 hasnt "report: theme.md skipped by filename"     'theme.md'     "$FULL"
@@ -451,7 +449,7 @@ eq "report --summary: counts match the full report" "$SUM" \
   "trust: 4 unendorsed · 1 stale (inspire-adr) · 1 refs-changed · 3 pre-provenance · 1 owner-missing · 1 misrouted — .inspire/bin/trust.sh report for detail"
 
 # ── stamping the stale artifact clears it ─────────────────────────────────
-( cd "$R" && "$TRUST" stamp inspire_kb/01_adr/adr-stale.md --skill adr ) >/dev/null
+( cd "$R" && "$TRUST" stamp inspire_kb/01_spec/_adr/stale.adr.md --skill adr ) >/dev/null
 FRESH="$(cd "$R" && "$TRUST" report)"
 eq "report: STALE is gone after a real re-stamp" "$(group_count STALE "$FRESH")" ""
 hasnt "report --summary: no stale term after a real re-stamp" \
@@ -459,12 +457,12 @@ hasnt "report --summary: no stale term after a real re-stamp" \
 
 # ── a wholly clean vault ─────────────────────────────────────────────────
 C="$ROOT/clean"
-mkdir -p "$C/.claude/skills/_references" "$C/inspire_kb/01_adr"
+mkdir -p "$C/.claude/skills/_references" "$C/inspire_kb/01_spec/_adr"
 mkskill "$C/.claude/skills/inspire-adr"
 printf 'refs\n' > "$C/.claude/skills/_references/r.md"
 printf '{"inspire_version":"0.6.0"}\n' > "$C/.inspire.lock"
-printf -- '---\nendorsed:\n  by: "@dario"\n  at: 2026-08-01\n---\n\n# ADR\n' > "$C/inspire_kb/01_adr/adr-ok.md"
-( cd "$C" && "$TRUST" stamp inspire_kb/01_adr/adr-ok.md --skill adr ) >/dev/null
+printf -- '---\nendorsed:\n  by: "@dario"\n  at: 2026-08-01\n---\n\n# ADR\n' > "$C/inspire_kb/01_spec/_adr/ok.adr.md"
+( cd "$C" && "$TRUST" stamp inspire_kb/01_spec/_adr/ok.adr.md --skill adr ) >/dev/null
 
 rc=0; CLEAN_FULL="$(cd "$C" && "$TRUST" report)" || rc=$?
 eq "report (clean): exits 0" "$rc" "0"
@@ -510,10 +508,10 @@ eq "stub-guard: stubbed hashing answers 0000000" "$("$STUB" skill-sha "$D")" "00
 G="$ROOT/guard"
 cp -R "$R" "$G"
 # restore the stale stamp cleared above
-yq -i --front-matter=process '.produced.skill_sha = "0000000"' "$G/inspire_kb/01_adr/adr-stale.md"
-has "stub-guard: the real tool reports the stale artifact" 'adr-stale.md' \
+yq -i --front-matter=process '.produced.skill_sha = "0000000"' "$G/inspire_kb/01_spec/_adr/stale.adr.md"
+has "stub-guard: the real tool reports the stale artifact" 'stale.adr.md' \
   "$(group_block STALE "$(cd "$G" && "$TRUST" report)")"
-hasnt "stub-guard: the stubbed tool cannot — the freshness assertion fails" 'adr-stale.md' \
+hasnt "stub-guard: the stubbed tool cannot — the freshness assertion fails" 'stale.adr.md' \
   "$(group_block STALE "$(cd "$G" && "$STUB" report)")"
 
 echo ""

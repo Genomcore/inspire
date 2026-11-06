@@ -1,8 +1,15 @@
 {
   "exit": 1,
-  "args": ["spec/sdd/auth/user/auth.user.md"],
-  "findings": [
-    { "rule": "field-coverage", "message_substring": "field-uncovered" }
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain/user/user.entity.md"
   ],
-  "forbidden": ["auth::user.id is declared"]
+  "findings": [
+    {
+      "rule": "field-coverage",
+      "message_substring": "field-uncovered"
+    }
+  ],
+  "forbidden": [
+    "auth::user.id is declared"
+  ]
 }

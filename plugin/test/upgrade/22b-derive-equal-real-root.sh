@@ -92,16 +92,17 @@ eq "the lock stamps the current release" \
    "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")"
 check "the lock's template_sha is real (the shipped manifest names the release commit)" \
   "[ \"\$(jq -r .template_sha '$p/.inspire.lock')\" != 'unknown' ]"
-# The release does not only RETIRE KB files, it adds two: 00_bootstrap/glossary.md
-# and 05_screens/components/.gitkeep, which a v0.6.0 project cannot already have.
+# The release does not only RETIRE KB files, it adds one a v0.6.0 project cannot
+# already have: 00_bootstrap/glossary.md. (The rest of the skeleton now lives in
+# 01_spec/, which a layered KB receives only through /inspire:migrate.)
 # This is the cross-version proof that seed_kb's additive half still runs
 # alongside the hop's deletions — asserted on the REAL root, both files by name.
 check "the release's new KB file arrived (glossary seeded on upgrade)" \
   "[ -f '$p/inspire_kb/00_bootstrap/glossary.md' ]"
 check "the seeded glossary carries the R4-consumable shape, zero data rows" \
   "[ \"\$(grep -c '^|' '$p/inspire_kb/00_bootstrap/glossary.md')\" = 2 ]"
-check "the components .gitkeep arrived (the release's second KB seed)" \
-  "[ -f '$p/inspire_kb/05_screens/components/.gitkeep' ]"
+check "a layered KB is not seeded with 01_spec/ (that is /inspire:migrate's job)" \
+  "[ ! -e '$p/inspire_kb/01_spec' ]"
 rm -f "$h7_plan_log"
 fixture_cleanup "$w"
 
