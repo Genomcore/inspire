@@ -20,7 +20,8 @@
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   move <old> <new> · write <new> <what> · idmap <old-id> <new-id> ·
-#   unplaced <old> <new> · seed <new> · note <text> · ask <key> <question>
+#   unplaced <old> <new> · seed <new> · config <file> <change> · note <text> ·
+#   ask <key> <question>
 # In act mode the same plan is applied and also saved to
 # 01_spec/_migration/plan.tsv.
 #
@@ -204,6 +205,13 @@ if [ -d "$KB/05_screens" ]; then
 fi
 
 all_modules_csv="$(paste -sd, "$MODULES")"
+# A bundle that groups "every module" lists the modules that have an action: a module
+# with none (a hub and use cases only) exposes nothing, and a whole-module entry for it
+# is a derivation refusal in the Factory (DR-N2).
+action_modules_csv="$(
+  [ -d "$KB/04_domain" ] && find "$KB/04_domain" -mindepth 3 -maxdepth 3 -type f -name '*.*.*.md' \
+    | awk -F/ '{ print $(NF-2) }' | sort -u | paste -sd, -
+)"
 
 if [ -s "$ROSTER" ]; then
   awk -F'\t' '$2 == "ui" { printf "%s|%s|%s|%s|%s\n", $1, $3, $4, $5, $6 }' "$ROSTER" > "$FACES"
@@ -212,7 +220,7 @@ if [ -s "$ROSTER" ]; then
     mods="$(bundle_mods "$h")"
     if [ -z "$mods" ]; then
       if [ "$n_headless" -eq 1 ]; then
-        mods="$all_modules_csv"
+        mods="$action_modules_csv"
       else
         ask "bundle-modules:$h" "Which modules does the headless surface '$h' serve? Pass --bundle-modules $h=m1,m2"
         continue
@@ -241,7 +249,7 @@ else
       if [ -z "$BUNDLE" ]; then
         ask "bundle" "Every module is exposed by one bundle. What is its id? (suggested: api) Pass --bundle ID [--bundle-package PATH]"
       else
-        printf '%s|%s||%s\n' "$BUNDLE" "$BUNDLE_PACKAGE" "$all_modules_csv" > "$BUNDLES"
+        printf '%s|%s||%s\n' "$BUNDLE" "$BUNDLE_PACKAGE" "$action_modules_csv" > "$BUNDLES"
       fi
     fi
   fi
@@ -345,6 +353,7 @@ if [ -d "$KB/02_modules" ]; then
   while IFS= read -r f; do
     b="${f##*/}"
     case "$b" in
+      _template.md) plan move "$f" "$SPEC/_modules/module.template.md" ;;
       README.md|_*) unplaced "$f" ;;
       *.md) m="${b%.md}"; plan move "$f" "$SPEC/_modules/$m/$m.module.md" ;;
       *) unplaced "$f" ;;
@@ -540,6 +549,20 @@ done
 
 [ -s "$IDMAP" ] && plan write "$SPEC/_migration/id-map.json" "$(wc -l < "$IDMAP" | tr -d ' ') screen id(s)"
 
+# The INSPIRE Factory's settings may pin spec_root to a layered directory
+# (`inspire_kb/04_domain` was the old default, written out by many projects). It
+# would point at nothing once the layers are gone, so it follows the KB.
+FACTORY_CONFIG="$(dirname "$KB")/.inspire/emanate.json"
+NEW_SPEC_ROOT=""
+if [ -f "$FACTORY_CONFIG" ]; then
+  old_spec_root="$(jq -r '.spec_root // empty' "$FACTORY_CONFIG" 2>/dev/null)"
+  case "$old_spec_root" in
+    */01_adr|*/02_modules|*/03_features|*/04_domain|*/05_screens|*/01_adr/*|*/02_modules/*|*/03_features/*|*/04_domain/*|*/05_screens/*)
+      NEW_SPEC_ROOT="${old_spec_root%/0[1-5]_*}/01_spec"
+      plan config "$FACTORY_CONFIG" "spec_root: $old_spec_root → $NEW_SPEC_ROOT" ;;
+  esac
+fi
+
 # Whatever is left in a layered directory is the operator's and is moved, never dropped.
 moved_list="$WORK/moved.txt"
 awk -F'\t' '$1 == "move" || $1 == "unplaced" { print $2 }' "$PLAN" | sort -u > "$moved_list"
@@ -594,6 +617,11 @@ if [ -s "$IDMAP" ]; then
   jq -Rn '[inputs | split("\t") | {(.[0]): .[1]}] | add | {screens: .}' < "$IDMAP" > "$SPEC/_migration/id-map.json"
 fi
 cp "$PLAN" "$SPEC/_migration/plan.tsv"
+
+if [ -n "$NEW_SPEC_ROOT" ]; then
+  jq --arg r "$NEW_SPEC_ROOT" '.spec_root = $r' "$FACTORY_CONFIG" > "$FACTORY_CONFIG.mig" \
+    && mv "$FACTORY_CONFIG.mig" "$FACTORY_CONFIG"
+fi
 
 # The skeleton the layered layout never had (READMEs, the starter patterns, the
 # default theme): added only where nothing is on disk, exactly like seed_kb.

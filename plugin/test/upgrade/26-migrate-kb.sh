@@ -67,9 +67,12 @@ E
   printf '# ds\n' | mk "$K/05_screens/design-system.md"
   printf '{}\n' | mk "$K/05_screens/design-tokens.json"
   printf 'my own notes\n' | mk "$K/04_domain/auth/NOTES.txt"
+  printf '# mail hub, no actions\n' | mk "$K/02_modules/mail.md"
 }
 
 P="$W/roster"; old_kb "$P"
+mkdir -p "$P/.inspire"
+printf '{ "kb_root": "inspire_kb", "spec_root": "inspire_kb/04_domain", "concurrency": 2 }\n' > "$P/.inspire/emanate.json"
 before="$(cd "$P" && find inspire_kb -type f | LC_ALL=C sort | xargs shasum -a 256)"
 
 out="$(cd "$P" && bash "$MIG" 2>&1)"; rc=$?
@@ -104,10 +107,14 @@ check "a ui surface becomes a face file, with its packaging" \
   "grep -q '^package: apps/portal' '$S/_faces/portal/portal.face.md' && grep -q '^shell: /portal' '$S/_faces/portal/portal.face.md'"
 check "a headless surface becomes a bundle of every module" \
   "grep -q '^package: apps/api' '$S/_bundles/api.bundle.md' && grep -q '^- \[\[auth\]\] (whole module)' '$S/_bundles/api.bundle.md'"
+check "a module with no action is not in the bundle" "! grep -q '\[\[mail\]\]' '$S/_bundles/api.bundle.md'"
 check "the lib chosen as design system makes no bundle" "[ ! -e '$S/_bundles/kit.bundle.md' ]"
 check "the roster is retired, not deleted" "[ -f '$S/_migration/retired/00_bootstrap/surfaces.md' ] && [ ! -e '$P/inspire_kb/00_bootstrap/surfaces.md' ]"
 check "a file it cannot place is kept under _migration/unplaced" "[ -f '$S/_migration/unplaced/04_domain/auth/NOTES.txt' ]"
 check "the skeleton is seeded around it" "[ -f '$S/README.md' ] && [ -f '$S/_processes/README.md' ]"
+
+eq "a Factory spec_root pinned to a layer follows the KB" "$(jq -r .spec_root "$P/.inspire/emanate.json")" "inspire_kb/01_spec"
+eq "and the rest of the Factory settings stay" "$(jq -r .concurrency "$P/.inspire/emanate.json")" "2"
 
 # Ids: nothing but a screen's changes, and every screen change is in the map.
 eq "the entity id is unchanged" "$(yq --front-matter=extract '.id' "$S/_modules/auth/_domain/user/user.entity.md")" "auth::user"
@@ -157,6 +164,7 @@ check "and nothing moved" "[ -d '$D/inspire_kb/05_screens' ] && [ ! -e '$D/inspi
 N="$W/noroster"
 mkdir -p "$N/inspire_kb/04_domain/shop/order" "$N/inspire_kb/05_screens/shop"
 printf -- '---\nid: shop::order\n---\n# o\n' > "$N/inspire_kb/04_domain/shop/order/shop.order.md"
+printf -- '---\nid: shop::order::place\n---\n# p\n' > "$N/inspire_kb/04_domain/shop/order/shop.order.place.md"
 printf -- '---\nid: shop.cart\nmodule: shop\nscreen: cart\n---\n# c\n' > "$N/inspire_kb/05_screens/shop/cart.md"
 out="$(cd "$N" && bash "$MIG" 2>&1)"; rc=$?
 eq "no roster: exit 3 until the face and bundle are named" "$rc" "3"
