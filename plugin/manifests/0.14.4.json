@@ -1,5 +1,5 @@
 {
-  "commit": "d7ad6e555cb4947315fcc5d595c3fa9fdef63ffb",
+  "commit": "54ccb85cc98b0690304a252479f4b58cc4a59575",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "6d0b6425d3213813024f89aaa5d3d623a969921b7df99ac9b4c1c9278e2b3172",
@@ -59,10 +59,10 @@
     ".claude/skills/inspire-code-react/SKILL.md": "bcfabd06db8bfc5dc739ce375aadb970cc3cab71dd5b4e26a3122885d006743f",
     ".claude/skills/inspire-code-react/references/testing.md": "4710e1e472b0554e48643ca2ea272e8d2b40b40bb4a03c91edfdc1765044bf11",
     ".claude/skills/inspire-code-typescript/SKILL.md": "e70a9f08dd9a0b9a197f48742f28412da4740dab48b5aead901599b80a263772",
-    ".claude/skills/inspire-config/SKILL.md": "f5b9b4a90ad591692073f5b4fc1245f62afbdc20d78cfe8b251fce82c14856cc",
-    ".claude/skills/inspire-config/references/derive.md": "9d172fb1d6366343d2242b2a679374c906af32afd832258a90c9aa44e09ca546",
-    ".claude/skills/inspire-config/references/format.md": "db6bc8c8b45d519c931deadb051e248bec8c985c3938ff47ffc1770b4402412d",
-    ".claude/skills/inspire-config/references/validate.md": "596feb660ce90662d91f990b89d8fa17ceee0b5a642784696fccb698b4931f4d",
+    ".claude/skills/inspire-config/SKILL.md": "58cbb0ce0e0ff572929f26cacdceeb937ee6a73270cbedb5e920aa8d2fff2a64",
+    ".claude/skills/inspire-config/references/derive.md": "06f0483241fcb600e0d09b51421377a0605f3e0690b58a9ade2849b562f79d52",
+    ".claude/skills/inspire-config/references/format.md": "20efbda18424ef6913ce0f4fd4dd2df54fb70e007c84deacfdf16262ee4b6992",
+    ".claude/skills/inspire-config/references/validate.md": "e3cff09111694cb99a04c91220dafbad5dc8d50395ae0d9e2efc17ac4d9625cf",
     ".claude/skills/inspire-domain/SKILL.md": "2a56756ef3af109d003cf8458889695ae21a4fb543e0e5b396a9d989e757a4c3",
     ".claude/skills/inspire-domain/examples/canonical-action-meta.md": "ad12024db05d351a686745818e157eb46ca6382ea4af453d35c743fc6a0ef2a7",
     ".claude/skills/inspire-domain/examples/canonical-action.md": "43ae851c5fd6e6cfc01ac59f48723c6c0f556b2ea211d3bcba33bb276c495fb8",
