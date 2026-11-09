@@ -1,5 +1,6 @@
 ---
 name: update
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh)
 description: "Update this project's INSPIRE runtime to the installed plugin's version: report drift, re-materialize unchanged files, and refuse to clobber local edits. Use after /plugin update inspire reports a newer base."
 ---
 
@@ -10,6 +11,16 @@ Brings a project's materialized runtime up to the plugin's current base. This is
 skill rebuilding are specified in
 [`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md)
 D6, and building them is future work — nothing here approximates them in the meantime.
+
+## Factory compatibility
+
+This runs when the skill loads, before anything below:
+
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh"`
+
+Relay what it printed, verbatim. A non-zero exit stops the skill before it loads: the
+Factory is outside the range in `${CLAUDE_PLUGIN_ROOT}/factory-compat.json`, and the
+operator updates the Factory first. Never work around it.
 
 ## Preconditions
 
@@ -271,21 +282,6 @@ category for bash. Say it belongs upstream: open an issue or a PR against INSPIR
 If `.inspire/bin/trust.sh` exists, offer — never run unprompted — `.inspire/bin/trust.sh
 report`. What its groups mean is explained at
 `.claude/skills/_references/trust-stamps.md`; point there rather than restating it.
-
-## Step 8 — Check the Factory
-
-Run, from the project root:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh" \
-  --project-root "$(git rev-parse --show-toplevel)"
-```
-
-No output and exit 0: the project has no `.inspire/emanate.json`, so there is nothing to
-say. Otherwise relay the output verbatim. Exit 1 means the Factory is older than 0.13.0 or
-its version could not be read: tell the operator not to move the keys under `factory`
-(`/inspire-config init` offers that move) until the Factory is 0.13.0 or later. Never
-migrate on the operator's behalf.
 
 ## What this skill is, and what is missing from it
 

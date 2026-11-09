@@ -1,52 +1,77 @@
 #!/usr/bin/env bash
-# factory-check.sh warns before a project's emanate.json is moved under `factory`
-# when the Factory is older than 0.13.0 or its version cannot be read.
+# factory-check.sh checks the Factory's version against the range this INSPIRE
+# version declares in plugin/factory-compat.json, and /inspire:update runs it
+# when the skill loads.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
 SCRIPT="$PLUGIN_ROOT/scripts/factory-check.sh"
+COMPAT="$PLUGIN_ROOT/factory-compat.json"
 . "$HERE/lib/assert.sh"
 
-check "factory-check.sh exists and runs" "[ -x '$SCRIPT' ]"
+check "factory-check.sh exists" "[ -x '$SCRIPT' ]"
+eq "shipped compat file declares min 0.13.0" "$(jq -r .factory.min "$COMPAT")" "0.13.0"
+eq "shipped compat file declares no max" "$(jq -r '.factory.max' "$COMPAT")" "null"
 
 W="$(mktemp -d)"
-mkdir -p "$W/with-json/.inspire" "$W/without-json/.inspire"
-echo '{}' > "$W/with-json/.inspire/emanate.json"
-premise "the project with the old file has it" "[ -f '$W/with-json/.inspire/emanate.json' ]"
-premise "the project without it does not" "[ ! -e '$W/without-json/.inspire/emanate.json' ]"
+mkdir -p "$W/json/.inspire" "$W/yml/.inspire" "$W/none/.inspire"
+echo '{}' > "$W/json/.inspire/emanate.json"
+echo 'image: {}' > "$W/yml/.inspire/emanate.yml"
+premise "json project has the old file" "[ -f '$W/json/.inspire/emanate.json' ]"
+premise "yml project has the new file" "[ -f '$W/yml/.inspire/emanate.yml' ]"
+premise "none project uses neither" "[ ! -e '$W/none/.inspire/emanate.json' ] && [ ! -e '$W/none/.inspire/emanate.yml' ]"
 
-# factory <version> — a Factory checkout carrying that version.
 factory() { mkdir -p "$W/f-$1/orchestrator"; printf '{"version":"%s"}\n' "$1" > "$W/f-$1/orchestrator/package.json"; echo "$W/f-$1"; }
 run() { out="$(INSPIRE_FACTORY_ROOT="$2" bash "$SCRIPT" --project-root "$1" 2>&1)"; rc=$?; }
 
-run "$W/without-json" "$(factory 0.12.3)"
-eq "no emanate.json: exit 0" "$rc" "0"
-eq "no emanate.json: silent, even with an old Factory" "$out" ""
+run "$W/none" "$(factory 0.9.9)"
+eq "project without the Factory: exit 0" "$rc" "0"
+eq "project without the Factory: silent" "$out" ""
 
-run "$W/with-json" "$(factory 0.13.0)"
-eq "Factory 0.13.0: exit 0" "$rc" "0"
-has "Factory 0.13.0: points at the migration" "$out" "/inspire-config init"
+run "$W/yml" "$(factory 0.13.0)"
+eq "0.13.0 on a migrated project: exit 0" "$rc" "0"
+eq "0.13.0 on a migrated project: silent" "$out" ""
 
-run "$W/with-json" "$(factory 0.20.0)"
-eq "Factory 0.20.0 is newer than 0.13.0, not older as a string" "$rc" "0"
+run "$W/json" "$(factory 0.13.0)"
+eq "0.13.0 with the old file: exit 0" "$rc" "0"
+has "0.13.0 with the old file: points at the migration" "$out" "/inspire-config init"
 
-run "$W/with-json" "$(factory 0.12.3)"
-eq "Factory 0.12.3: exit 1" "$rc" "1"
-has "Factory 0.12.3: says not to migrate" "$out" "Do not move its keys"
-has "Factory 0.12.3: names the version" "$out" "Factory 0.12.3 is older than 0.13.0"
+run "$W/json" "$(factory 0.20.0)"
+eq "0.20.0 is newer than 0.13.0, not older as a string" "$rc" "0"
 
-run "$W/with-json" "$(factory 0.9.9)"
-eq "Factory 0.9.9 is older than 0.13.0, not newer as a string" "$rc" "1"
+run "$W/yml" "$(factory 0.12.3)"
+eq "0.12.3: exit 1" "$rc" "1"
+has "0.12.3: names version and minimum" "$out" "Factory 0.12.3 is older than 0.13.0"
 
-run "$W/with-json" "$W/no-such-checkout"
-eq "unreadable version: exit 1" "$rc" "1"
+run "$W/yml" "$(factory 0.9.9)"
+eq "0.9.9 is older than 0.13.0, not newer as a string" "$rc" "1"
+
+run "$W/json" "$W/no-such-checkout"
+eq "unreadable version: exit 0, a warning only" "$rc" "0"
 has "unreadable version: says so" "$out" "cannot be read"
+has "unreadable version: states the range" "$out" "0.13.0 or later"
 
-out="$(env -u INSPIRE_FACTORY_ROOT bash "$SCRIPT" --project-root "$W/with-json" 2>&1)"; rc=$?
-eq "INSPIRE_FACTORY_ROOT unset: exit 1" "$rc" "1"
+out="$(env -u INSPIRE_FACTORY_ROOT bash "$SCRIPT" --project-root "$W/json" 2>&1)"; rc=$?
+eq "INSPIRE_FACTORY_ROOT unset: exit 0" "$rc" "0"
+has "INSPIRE_FACTORY_ROOT unset: warns" "$out" "cannot be read"
+
+echo '{"factory":{"min":"0.13.0","max":"0.14.0"}}' > "$W/capped.json"
+run2() { out="$(INSPIRE_FACTORY_ROOT="$1" bash "$SCRIPT" --project-root "$W/yml" --compat "$W/capped.json" 2>&1)"; rc=$?; }
+run2 "$(factory 0.14.0)"
+eq "max 0.14.0: 0.14.0 is in range" "$rc" "0"
+run2 "$(factory 0.15.0)"
+eq "max 0.14.0: 0.15.0 is out" "$rc" "1"
+has "max 0.14.0: says newer" "$out" "newer than 0.14.0"
+run2 "$(factory 0.100.0)"
+eq "max 0.14.0: 0.100.0 is out, not smaller as a string" "$rc" "1"
+
+echo '{}' > "$W/empty.json"
+out="$(INSPIRE_FACTORY_ROOT="$(factory 0.13.0)" bash "$SCRIPT" --project-root "$W/yml" --compat "$W/empty.json" 2>&1)"; rc=$?
+eq "a compat file without min: exit 2" "$rc" "2"
 
 US="$PLUGIN_ROOT/skills/update/SKILL.md"
-check "update skill runs factory-check.sh" "grep -q 'scripts/factory-check.sh' '$US'"
+check "update skill injects the check when it loads" "grep -q '^!\`\"\${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh\"\`' '$US'"
+check "update skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh)' '$US'"
 
 rm -rf "$W"
 summary

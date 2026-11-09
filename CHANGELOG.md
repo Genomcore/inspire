@@ -23,10 +23,11 @@ nothing in your knowledge base needs to change. Use this version with INSPIRE Fa
 
 ### Added
 
-- **`/inspire:update` checks the Factory.** A project that still has
-  `.inspire/emanate.json` gets `scripts/factory-check.sh`, which reads the Factory's
-  version from `INSPIRE_FACTORY_ROOT` and says not to move the keys under `factory`
-  when it is older than 0.13.0 or cannot be read.
+- **`/inspire:update` checks the Factory before it does anything.** The plugin ships
+  `factory-compat.json`, the range of Factory versions this INSPIRE supports (from 0.13.0,
+  no upper bound). When the skill loads it runs `scripts/factory-check.sh`, which reads the
+  Factory's version from `INSPIRE_FACTORY_ROOT` and stops the update when it is outside
+  the range. A version it cannot read is a warning, not a stop.
 
 ### Changed
 
