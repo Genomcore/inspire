@@ -109,7 +109,9 @@ Factory work.
 - **Follow-ups:** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
   `080-comment-density-cleanup`, `090-actor-head-without-a-role`,
   `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
-  nothing when the KB is not in English; blocked by `B4-section-keys`).
+  nothing when the KB is not in English; blocked by `B4-section-keys`),
+  `0143-factory-settings-in-emanate-yml` (High; `/inspire-config` follows the Factory's
+  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version).
 - **First design review, B1:** `B1-kb-structure` and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE

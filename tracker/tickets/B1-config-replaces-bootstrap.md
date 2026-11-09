@@ -124,8 +124,8 @@ recommends `source_root: .` and `prototype_root: none`.
 ### What the Factory does with it (not tracked here)
 
 Today the Factory scans a target repository for its test roots and worktree setup, and
-writes the result to its own `.inspire/emanate.json`. The spec config replaces that
-scan and that file. The Factory reads the config from the repository and requires it,
+keeps its own settings in the `factory` section of `.inspire/emanate.yml`. The spec config
+replaces that scan. The Factory reads the config from the repository and requires it,
 with a toolchain for every unit kind in a plan, before it lets a run start. That work
 belongs to the Factory codebase.
 
