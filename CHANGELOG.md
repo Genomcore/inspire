@@ -21,6 +21,14 @@ nothing in your knowledge base needs to change. Use this version with INSPIRE Fa
   `.inspire/emanate.yml`, and delete the file, before it runs Factory 0.13.0. The new
   Factory refuses the project otherwise. `/inspire-config init` does the move.
 
+### Added
+
+- **`/inspire:update` checks the Factory before it does anything.** The plugin ships
+  `factory-compat.json`, the range of Factory versions this INSPIRE supports (from 0.13.0,
+  no upper bound). When the skill loads it runs `scripts/factory-check.sh`, which reads the
+  Factory's version from `INSPIRE_FACTORY_ROOT` and stops the update when it is outside
+  the range. A version it cannot read is a warning, not a stop.
+
 ### Changed
 
 - **`/inspire-config` writes and validates the Factory's settings.** `emanate.yml` gains
