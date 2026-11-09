@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # factory-check.sh checks the Factory's version against the range this INSPIRE
-# version declares in plugin/factory-compat.json, and /inspire:update runs it
-# when the skill loads.
+# version declares in factory-compat.json, shipped inside the inspire-config skill.
+# /inspire:update and /inspire-config both run it when the skill loads.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
-SCRIPT="$PLUGIN_ROOT/scripts/factory-check.sh"
-COMPAT="$PLUGIN_ROOT/factory-compat.json"
+SKILL="$PLUGIN_ROOT/base/skills/inspire-config"
+SCRIPT="$SKILL/scripts/factory-check.sh"
+COMPAT="$SKILL/factory-compat.json"
 . "$HERE/lib/assert.sh"
 
 check "factory-check.sh exists" "[ -x '$SCRIPT' ]"
@@ -69,9 +70,23 @@ echo '{}' > "$W/empty.json"
 out="$(INSPIRE_FACTORY_ROOT="$(factory 0.13.0)" bash "$SCRIPT" --project-root "$W/yml" --compat "$W/empty.json" 2>&1)"; rc=$?
 eq "a compat file without min: exit 2" "$rc" "2"
 
+# --always: the config skill checks even a project that has no emanate file yet.
+run3() { out="$(INSPIRE_FACTORY_ROOT="$2" bash "$SCRIPT" --always --project-root "$1" 2>&1)"; rc=$?; }
+run3 "$W/none" "$(factory 0.12.3)"
+eq "--always: a project with neither file is checked, 0.12.3 exit 1" "$rc" "1"
+run3 "$W/none" "$(factory 0.13.0)"
+eq "--always: in range on a project with neither file, exit 0" "$rc" "0"
+eq "--always: in range, silent" "$out" ""
+run3 "$W/none" "$W/no-such-checkout"
+has "--always: unreadable version warns" "$out" "cannot be read"
+
 US="$PLUGIN_ROOT/skills/update/SKILL.md"
-check "update skill injects the check when it loads" "grep -q '^!\`\"\${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh\"\`' '$US'"
-check "update skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh)' '$US'"
+CS="$SKILL/SKILL.md"
+check "update skill injects the check when it loads" "grep -q '^!\`\"\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh\"\`' '$US'"
+check "update skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh)' '$US'"
+check "config skill injects the check with --always when it loads" "grep -q '^!\`\"\${CLAUDE_SKILL_DIR}/scripts/factory-check.sh\" --always\`' '$CS'"
+check "config skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_SKILL_DIR}/scripts/factory-check.sh:\*)' '$CS'"
+check "migration refuses an unconfirmed version" "grep -q 'Without a confirmed version, migrate nothing' '$SKILL/references/derive.md'"
 
 rm -rf "$W"
 summary

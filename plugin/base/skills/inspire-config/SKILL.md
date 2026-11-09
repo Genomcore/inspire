@@ -3,6 +3,7 @@ name: inspire-config
 description: "Write and check the project's .inspire/emanate.yml, the file that tells INSPIRE Factory its settings and which image, services, environment, setup and checks every unit runs with: derive a proposal from stack.md and its profiles, ask what they cannot answer, and validate it with the factory's own reader. Use when preparing a project for its first factory run, after a stack change, or when the factory refuses the file. Operator work only: never part of coding a unit."
 argument-hint: "init|review"
 user-invocable: true
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/factory-check.sh:*)
 ---
 
 # /inspire-config — The factory's project file
@@ -27,6 +28,18 @@ settings (`kb_root`, `spec_root`, `model`, `review_model`, `subagent_models`,
   in them goes to `/inspire-bootstrap stack`, never patched here.
 - Starting services, or any container left running.
 - The commit. The operator commits the file; the skill says where.
+
+## Factory compatibility
+
+This runs when the skill loads, before anything below:
+
+!`"${CLAUDE_SKILL_DIR}/scripts/factory-check.sh" --always`
+
+Relay what it printed, verbatim. A non-zero exit stops the skill before it loads: the
+Factory is outside the range in [`factory-compat.json`](factory-compat.json), and the
+operator updates the Factory first. Never work around it. When it says the version
+cannot be read, ask the operator which Factory version they run, and do not write the
+`factory` section or delete `emanate.json` until they name one inside the range.
 
 ## Invocation
 
@@ -91,6 +104,7 @@ Read the reference before the step it covers. The table is an index, not the flo
    A `review` check needs a factory with review checks (0.11.0 or later); an
    older reader refuses it, so validate before proposing one. The `factory` section
    needs a factory 0.13.0 or later: an older reader refuses it as an unknown key.
+   The check above enforces the range in `factory-compat.json`.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that

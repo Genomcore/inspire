@@ -23,11 +23,13 @@ nothing in your knowledge base needs to change. Use this version with INSPIRE Fa
 
 ### Added
 
-- **`/inspire:update` checks the Factory before it does anything.** The plugin ships
-  `factory-compat.json`, the range of Factory versions this INSPIRE supports (from 0.13.0,
-  no upper bound). When the skill loads it runs `scripts/factory-check.sh`, which reads the
-  Factory's version from `INSPIRE_FACTORY_ROOT` and stops the update when it is outside
-  the range. A version it cannot read is a warning, not a stop.
+- **`/inspire:update` and `/inspire-config` check the Factory before they do anything.**
+  The `inspire-config` skill ships `factory-compat.json`, the range of Factory versions
+  this INSPIRE supports (from 0.13.0, no upper bound). Each skill runs
+  `scripts/factory-check.sh` when it loads. The script reads the Factory's version from
+  `INSPIRE_FACTORY_ROOT` and stops the skill when it is outside the range. A version it
+  cannot read is a warning, not a stop: `/inspire-config` then asks which version you run
+  and migrates nothing until you name one inside the range.
 
 ### Changed
 

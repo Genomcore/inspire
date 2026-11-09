@@ -48,8 +48,10 @@ Today `/inspire-config` says that `emanate.json` is not its file and reads `base
       only `base_branch` is read from the working tree.
 - [ ] The template names `emanate.json` only where `/inspire-config` detects and migrates
       it, in the changelog entry for this change, and in this ticket.
-- [ ] `/inspire:update` stops before it does anything when the Factory is outside the range
-      the plugin declares in `factory-compat.json`, and warns when it cannot read the version.
+- [ ] `/inspire:update` and `/inspire-config` stop before they do anything when the Factory
+      is outside the range `inspire-config` declares in `factory-compat.json`, and warn when
+      they cannot read the version. `/inspire-config` then migrates nothing until the
+      operator names a version inside the range.
 - [ ] The changelog entry for the release says that a project with an `emanate.json` must
       move its keys before it runs the new Factory.
 
