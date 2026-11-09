@@ -109,5 +109,8 @@ defect in it: report the second kind.
 Tell the operator what comes next for code already built: the INSPIRE Factory release
 that goes with INSPIRE 0.15.0 reads `_migration/id-map.json`, rewrites the screen
 ids in the built code and the claim citations that name them, and commits that as a
-branch for review, without running any agent. The only new units it plans are the
+branch for review, without running any agent. It rewrites literals only: code that
+reads a screen id's shape (its first segment was the module, it is now the face) is
+not text it can fix, so its report lists those sites to review by hand. The test
+suite runs on that branch before it is merged. The only new units it plans are the
 grouping bundles, one mount test each. An older Factory refuses this KB and says why.
