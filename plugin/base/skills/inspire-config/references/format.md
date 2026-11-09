@@ -1,7 +1,7 @@
 # Config — the format
 > Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-`.inspire/emanate.yml` has five top-level keys. The factory's reader is the
+`.inspire/emanate.yml` has six top-level keys. The factory's reader is the
 authority, and this page summarizes it: when the two disagree, the reader wins
 and this page is stale. The reader stops at the **first** error, so one run of
 it reports one problem. Any key it does not know is an error, at every level.
@@ -14,12 +14,36 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | (document) | yes | one YAML document, a mapping | `… is not valid YAML: <parser message>` · `… must be a mapping` |
-| (keys) | — | only `image`, `setup`, `services`, `env`, `phases` | `… has unknown key <k>; allowed keys: image, setup, services, env, phases` |
+| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, phases` |
+| `factory` | no | a mapping: the factory's own settings, below. Omit the key to take every default | `… factory must be a mapping` |
 | `image` | yes | the reader accepts it absent; the runner then stops before planning | `the factory runs agents in the project image: add image to .inspire/emanate.yml` |
 | `services` | no | a mapping of name → service. With no services, omit the key: `services:` with nothing after it is null, and null is an error | `… services must be a mapping` |
 | `env` | no | a mapping of variable → string. Omit it rather than leave it empty | `… env must be a mapping` |
 | `setup` | no | one nonempty string | `… setup must be a nonempty string` |
 | `phases` | yes | a nonempty list | `… phases must be a nonempty list` |
+
+## `factory`
+
+The factory's own settings. Every key is optional, and a key that is absent takes its
+default. The reader reads only the keys below. Their old home was a separate settings
+file; [`derive.md`](derive.md) § Migrating `emanate.json` moves it here.
+
+| Key | Rule | Default | Factory error |
+|---|---|---|---|
+| `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
+| `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/04_domain` | `… factory.spec_root must be a nonempty string` |
+| `model` | `anthropic/<model>` or `litellm/<alias>` | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
+| `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
+| `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
+| `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
+| `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
+| `base_branch` | a branch name, or `null` for a local release | `main` | `… factory.base_branch must be a branch name or null` |
+| `viewer_port` | an integer from 0 to 65535 | `4319` | `… factory.viewer_port must be an integer from 0 to 65535` |
+| `sandbox` | a mapping with `memory`, a nonempty string (default `8g`); requires `model` | none | `… factory.sandbox must be an object` · `… factory.sandbox requires model` |
+
+The old file's `schema` key has no place here: nothing writes it and nothing checks
+it. Numbers and `null` are written bare; every string is single-quoted
+([§ Quoting](#quoting)).
 
 ## `image`
 
@@ -162,7 +186,7 @@ How the factory runs a review:
 - After a repair, the review rechecks its earlier findings and judges only what
   the repair added; code an earlier review accepted never fails later.
 - A reviewer that gives no verdict twice fails the unit without a repair.
-- `review_model` in `emanate.json` picks the reviewer's model; without it the
+- `factory.review_model` picks the reviewer's model; without it the
   reviewer uses `model`.
 - Each review costs a model session per round, and its findings cost repairs.
   Narrow it with `focus`, and order it after the cheaper phases.
@@ -186,7 +210,7 @@ or `.venv` makes the scan read all of it. Point at the directories that hold tes
 - Phases run in order. Every check of a phase runs, even after one fails.
 - The first phase with a red check stops the suite. The repair receives all of
   that phase's red checks together.
-- Each new try starts again from the first phase. `max_tries` in `emanate.json`
+- Each new try starts again from the first phase. `factory.max_tries`
   bounds the repairs.
 - The claims check runs only once every run and review check is green.
 - Order phases from cheap to expensive: lint and types, then tests, then claims.
@@ -206,9 +230,10 @@ without a line number. A repeated key keeps the last value, also silently.
 
 So: **single-quote every string value** except phase and check names —
 `image.name`, `image.description`, `setup`, every `run`, every root, every `env`
-and `services.*.env` value, every `healthcheck` and `command` item. A single quote
-inside a value is written `''`. Indent with two spaces; tabs are rejected. Write
-the keys in the order `image`, `services`, `env`, `setup`, `phases`.
+and `services.*.env` value, every `healthcheck` and `command` item, every string
+under `factory`. A single quote inside a value is written `''`. Indent with two
+spaces; tabs are rejected. Write the keys in the order `factory`, `image`,
+`services`, `env`, `setup`, `phases`.
 
 ## Worked example
 
@@ -216,6 +241,13 @@ A worked example, and not a rule: React and NestJS in one npm package under
 `source/`, with PostgreSQL.
 
 ```yaml
+factory:
+  model: 'litellm/claude-opus-5-5'
+  review_model: 'litellm/claude-sonnet-5-5'
+  sandbox:
+    memory: '8g'
+  max_tries: 2
+  base_branch: 'main'
 image:
   name: 'node:24.22.1-trixie'
   description: 'Node.js 24.22.1 with npm and npx on Debian 13, with git.'
