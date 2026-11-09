@@ -21,6 +21,13 @@ nothing in your knowledge base needs to change. Use this version with INSPIRE Fa
   `.inspire/emanate.yml`, and delete the file, before it runs Factory 0.13.0. The new
   Factory refuses the project otherwise. `/inspire-config init` does the move.
 
+### Added
+
+- **`/inspire:update` checks the Factory.** A project that still has
+  `.inspire/emanate.json` gets `scripts/factory-check.sh`, which reads the Factory's
+  version from `INSPIRE_FACTORY_ROOT` and says not to move the keys under `factory`
+  when it is older than 0.13.0 or cannot be read.
+
 ### Changed
 
 - **`/inspire-config` writes and validates the Factory's settings.** `emanate.yml` gains

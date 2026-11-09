@@ -272,6 +272,21 @@ If `.inspire/bin/trust.sh` exists, offer — never run unprompted — `.inspire/
 report`. What its groups mean is explained at
 `.claude/skills/_references/trust-stamps.md`; point there rather than restating it.
 
+## Step 8 — Check the Factory
+
+Run, from the project root:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/factory-check.sh" \
+  --project-root "$(git rev-parse --show-toplevel)"
+```
+
+No output and exit 0: the project has no `.inspire/emanate.json`, so there is nothing to
+say. Otherwise relay the output verbatim. Exit 1 means the Factory is older than 0.13.0 or
+its version could not be read: tell the operator not to move the keys under `factory`
+(`/inspire-config init` offers that move) until the Factory is 0.13.0 or later. Never
+migrate on the operator's behalf.
+
 ## What this skill is, and what is missing from it
 
 Update has two halves, and only one of them can be a script:
