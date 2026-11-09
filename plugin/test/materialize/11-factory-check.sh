@@ -82,10 +82,13 @@ has "--always: unreadable version warns" "$out" "cannot be read"
 
 US="$PLUGIN_ROOT/skills/update/SKILL.md"
 CS="$SKILL/SKILL.md"
+IS="$PLUGIN_ROOT/skills/init/SKILL.md"
 check "update skill injects the check when it loads" "grep -q '^!\`\"\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh\"\`' '$US'"
 check "update skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh)' '$US'"
 check "config skill injects the check with --always when it loads" "grep -q '^!\`\"\${CLAUDE_SKILL_DIR}/scripts/factory-check.sh\" --always\`' '$CS'"
 check "config skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_SKILL_DIR}/scripts/factory-check.sh:\*)' '$CS'"
+check "init skill injects the check with --always when it loads" "grep -q '^!\`\"\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh\" --always\`' '$IS'"
+check "init skill pre-approves exactly that command" "grep -q '^allowed-tools: Bash(\${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh:\*)' '$IS'"
 check "migration refuses an unconfirmed version" "grep -q 'Without a confirmed version, migrate nothing' '$SKILL/references/derive.md'"
 
 rm -rf "$W"
