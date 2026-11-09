@@ -28,8 +28,9 @@ nothing in your knowledge base needs to change. Use this version with INSPIRE Fa
   `concurrency`, `max_tries`, `base_branch`, `viewer_port` and `sandbox`. The skill
   offers to migrate an existing `emanate.json` into it and, once you approve, deletes
   the old file. The `schema` key is gone.
-- The skill says the Factory reads `emanate.yml` from the working tree, not from the
-  base branch's last commit.
+- The format reference says that model names under `factory` must be exact, and that
+  the Factory refuses any key it does not list under `factory` and `sandbox`, `schema`
+  included.
 - Tracker: `0143-factory-settings-in-emanate-yml` is filed.
 
 ## 0.14.3 — 2026-10-30

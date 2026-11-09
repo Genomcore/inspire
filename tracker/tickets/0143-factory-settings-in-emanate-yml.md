@@ -22,19 +22,20 @@ project file `.inspire/emanate.yml` that `/inspire-config` writes. The Factory m
 The settings become a top-level `factory:` section of `emanate.yml`, with the same key names:
 `kb_root`, `spec_root`, `model`, `review_model`, `subagent_models`, `concurrency`,
 `max_tries`, `base_branch`, `viewer_port` and `sandbox` (with `memory`). `emanate.json`
-disappears, and so does its `schema` key: nothing writes it and nothing checks it. The other
+disappears, and so does its `schema` key: the Factory refuses it as an unknown key. The other
 keys of `emanate.yml` (`image`, `services`, `env`, `setup`, `phases`) do not change.
 
 The change is incompatible. A Factory that has the merge refuses a project that still has
-`.inspire/emanate.json` and asks the operator to move its keys under `factory`. It also reads
-`emanate.yml` from the working tree, no longer from the base branch's last commit.
+`.inspire/emanate.json` and asks the operator to move its keys under `factory`. It refuses any
+key under `factory` or `sandbox` that it does not list, and a model name that is not the exact
+name its agent runtime resolves. A run reads `emanate.yml` from its clone of the base branch, so
+the file must be committed there; only `base_branch` is read from the working tree.
 
 **This ships when the Factory publishes its 0.13.0 version.** Until then the Factory in use
 still reads `emanate.json`, and the skill must keep describing what that Factory does.
 
-Today `/inspire-config` says that `emanate.json` is not its file, reads `base_branch` and
-`kb_root` from it, and tells the operator that the Factory reads only the committed file on
-the base branch.
+Today `/inspire-config` says that `emanate.json` is not its file and reads `base_branch` and
+`kb_root` from it.
 
 ## Acceptance criteria
 
@@ -43,7 +44,8 @@ the base branch.
       keys and the Factory's errors for them.
 - [ ] When `/inspire-config init` finds an `emanate.json`, it offers to move its keys under
       `factory`, drops `schema`, and deletes the old file once the operator approves.
-- [ ] The skill no longer says the Factory reads the committed file on the base branch.
+- [ ] The skill says the file must be committed on the base branch before a run, and that
+      only `base_branch` is read from the working tree.
 - [ ] The template names `emanate.json` only where `/inspire-config` detects and migrates
       it, in the changelog entry for this change, and in this ticket.
 - [ ] The changelog entry for the release says that a project with an `emanate.json` must

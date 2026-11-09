@@ -25,24 +25,28 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 ## `factory`
 
 The factory's own settings. Every key is optional, and a key that is absent takes its
-default. The reader reads only the keys below. Their old home was a separate settings
-file; [`derive.md`](derive.md) § Migrating `emanate.json` moves it here.
+default. The reader refuses any key not in the table, under `factory` and under
+`sandbox`. Their old home was a separate settings file; [`derive.md`](derive.md) § Migrating `emanate.json` moves it here.
 
 | Key | Rule | Default | Factory error |
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
 | `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/04_domain` | `… factory.spec_root must be a nonempty string` |
-| `model` | `anthropic/<model>` or `litellm/<alias>` | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
+| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, base_branch, viewer_port, sandbox` |
+| `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
 | `base_branch` | a branch name, or `null` for a local release | `main` | `… factory.base_branch must be a branch name or null` |
 | `viewer_port` | an integer from 0 to 65535 | `4319` | `… factory.viewer_port must be an integer from 0 to 65535` |
-| `sandbox` | a mapping with `memory`, a nonempty string (default `8g`); requires `model` | none | `… factory.sandbox must be an object` · `… factory.sandbox requires model` |
+| `sandbox` | a mapping with only `memory`, a nonempty string (default `8g`); requires `model` | none | `… factory.sandbox must be a mapping` · `… factory.sandbox has unknown key <k>; allowed keys: memory` · `… factory.sandbox requires model` |
 
-The old file's `schema` key has no place here: nothing writes it and nothing checks
-it. Numbers and `null` are written bare; every string is single-quoted
+The old file's `schema` key has no place here: the reader refuses it as an unknown key.
+A model name must be exact: the reader checks only its form, and the run stops when it
+creates the first agent if OMP would run a different model
+(`<model> is not an exact model name: OMP would run <provider>/<id> instead`).
+Numbers and `null` are written bare; every string is single-quoted
 ([§ Quoting](#quoting)).
 
 ## `image`

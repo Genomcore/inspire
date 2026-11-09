@@ -97,9 +97,11 @@ Read the reference before the step it covers. The table is an index, not the flo
    cannot be pulled stops it. Propose, then have the operator confirm.
 5. **Never start a service** and never leave a container behind. The optional
    image probe in `validate.md` runs one throwaway container on an explicit yes.
-6. **The operator commits.** The factory reads the file from the working tree, not
-   from a commit; offer the commit command every time the file is written, and never
-   run it unasked.
+6. **The operator commits.** A run reads `.inspire/emanate.yml` from its clone of
+   `factory.base_branch`, so only the committed file counts: an uncommitted edit never
+   reaches it. Only `base_branch` itself is read from the working tree, because the
+   factory needs it before it clones. Say so every time the file is written, offer
+   the commit command, and never run it unasked.
 7. **No silent overwrite.** An existing file is changed through a shown diff and
    an approval, block by block or change by change.
 

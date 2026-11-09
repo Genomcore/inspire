@@ -168,10 +168,11 @@ under `factory` in `emanate.yml`, with the same names.
 
 1. Read the old file. Carry over `kb_root`, `spec_root`, `model`, `review_model`,
    `subagent_models`, `concurrency`, `max_tries`, `base_branch`, `viewer_port` and
-   `sandbox` as they stand. Drop `schema`. Report any other key and ask; never carry
-   one over silently.
+   `sandbox` as they stand. Drop `schema`. The factory refuses any other key under
+   `factory` and under `sandbox`, so report one and ask; never carry it over silently.
 2. Show the new `factory` section and the deletion of the old file as one diff with the
    rest of the proposal. Write and delete nothing without approval.
 3. On approval, write the section into `emanate.yml` and delete `emanate.json`. Run the
    validation of [`validate.md`](validate.md) before telling the operator it is done.
-4. Remind the operator to commit both changes: the file added and the file removed.
+4. Remind the operator to commit both changes, the file edited and the file removed,
+   on the branch `factory.base_branch` names: a run reads the committed file.
