@@ -9,6 +9,29 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.14.4 — 2026-11-09
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. Use this version with INSPIRE Factory
+0.13.0 or later: an earlier Factory refuses the new `factory` section.
+
+### Breaking for existing vaults
+
+- A project with `.inspire/emanate.json` must move its keys under `factory` in
+  `.inspire/emanate.yml`, and delete the file, before it runs Factory 0.13.0. The new
+  Factory refuses the project otherwise. `/inspire-config init` does the move.
+
+### Changed
+
+- **`/inspire-config` writes and validates the Factory's settings.** `emanate.yml` gains
+  a `factory` section: `kb_root`, `spec_root`, `model`, `review_model`, `subagent_models`,
+  `concurrency`, `max_tries`, `base_branch`, `viewer_port` and `sandbox`. The skill
+  offers to migrate an existing `emanate.json` into it and, once you approve, deletes
+  the old file. The `schema` key is gone.
+- The skill says the Factory reads `emanate.yml` from the working tree, not from the
+  base branch's last commit.
+- Tracker: `0143-factory-settings-in-emanate-yml` is filed.
+
 ## 0.14.3 — 2026-10-30
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
