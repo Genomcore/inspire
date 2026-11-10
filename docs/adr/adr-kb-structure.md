@@ -206,9 +206,11 @@ Reserved, not implemented here: `.navigation.md` (`B3-navigation-map`).
   path from a layer name (`sdd_resolve_entity_id` builds
   `04_domain/{m}/{e}/{m}.{e}.md` today).
 - **A link to something that does not exist yet requires its file,** created from its
-  template with `lifecycle: draft`. A missing target then always means a broken link,
-  never a concept nobody wrote down. Every skill that writes a link creates the draft
-  target when it is missing.
+  template in its type's first state: `lifecycle: draft` for an entity, an action, a
+  screen, a face, a bundle or a process; `**State:** 🟡 Planned` for a feature;
+  `**Status:** design` for an ADR. A module hub has no state, so its file is enough. A
+  missing target then always means a broken link, never a concept nobody wrote down.
+  Every skill that writes a link creates the draft target when it is missing.
 - **Nothing is indexed by hand** if it can be found by its extension. There is no
   roster, no registry and no list of bundles to keep in sync.
 
@@ -458,7 +460,11 @@ detection still fingerprints the project ([[adr-upgrade-path]] **D3**).
 - New checks: user ids never start with `_`; uniqueness per type and scope; extension
   and frontmatter `type` agree; a screen uses no action outside its face's bundles; the
   set of faces and bundles (unique ids and shells, packages present); a process has a
-  trigger and actions; a screen used by another face (warning).
+  trigger and actions.
+- A screen that links another face's screen is checked by `/inspire-face review`, not by
+  a validator. Faces are separate applications, so such a link is either a screen in
+  the wrong face or shared structure that belongs in a layout or a pattern, and telling
+  them apart takes judgement.
 
 **Skeleton and templates**
 

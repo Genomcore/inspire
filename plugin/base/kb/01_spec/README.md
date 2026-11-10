@@ -55,8 +55,10 @@ The typed extension is never part of an id: `list.pattern.md` is the pattern
 `list`. Where the frontmatter has `id:`, it wins.
 
 **A link to something that does not exist yet requires its file,** created from its
-template with `lifecycle: draft`. A missing target then always means a broken link,
-never a concept nobody wrote down.
+template in its type's first state: `lifecycle: draft` for an entity, an action, a
+screen, a face, a bundle or a process; `**State:** 🟡 Planned` for a feature;
+`**Status:** design` for an ADR. A module hub has no state, so its file is enough. A
+missing target then always means a broken link, never a concept nobody wrote down.
 
 ## `_migration/`
 
