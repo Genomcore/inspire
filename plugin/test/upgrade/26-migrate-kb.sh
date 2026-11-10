@@ -73,6 +73,7 @@ E
 P="$W/roster"; old_kb "$P"
 mkdir -p "$P/.inspire"
 printf '{ "kb_root": "inspire_kb", "spec_root": "inspire_kb/04_domain", "concurrency": 2 }\n' > "$P/.inspire/emanate.json"
+printf 'image:\n  name: node:24\nfactory:\n  kb_root: inspire_kb\n  spec_root: inspire_kb/04_domain\n  concurrency: 2\n' > "$P/.inspire/emanate.yml"
 before="$(cd "$P" && find inspire_kb -type f | LC_ALL=C sort | xargs shasum -a 256)"
 
 out="$(cd "$P" && bash "$MIG" 2>&1)"; rc=$?
@@ -119,6 +120,8 @@ check "the skeleton is seeded around it" "[ -f '$S/README.md' ] && [ -f '$S/_pro
 
 eq "a Factory spec_root pinned to a layer follows the KB" "$(jq -r .spec_root "$P/.inspire/emanate.json")" "inspire_kb/01_spec"
 eq "and the rest of the Factory settings stay" "$(jq -r .concurrency "$P/.inspire/emanate.json")" "2"
+eq "a factory.spec_root in emanate.yml pinned to a layer follows the KB" "$(yq -r .factory.spec_root "$P/.inspire/emanate.yml")" "inspire_kb/01_spec"
+eq "and the rest of emanate.yml stays" "$(yq -r '.factory.concurrency + "/" + .image.name' "$P/.inspire/emanate.yml")" "2/node:24"
 
 # Ids: nothing but a screen's changes, and every screen change is in the map.
 eq "the entity id is unchanged" "$(yq --front-matter=extract '.id' "$S/_modules/auth/_domain/user/user.entity.md")" "auth::user"

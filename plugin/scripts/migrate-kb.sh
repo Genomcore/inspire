@@ -551,16 +551,28 @@ done
 
 # The INSPIRE Factory's settings may pin spec_root to a layered directory
 # (`inspire_kb/04_domain` was the old default, written out by many projects). It
-# would point at nothing once the layers are gone, so it follows the KB.
-FACTORY_CONFIG="$(dirname "$KB")/.inspire/emanate.json"
-NEW_SPEC_ROOT=""
-if [ -f "$FACTORY_CONFIG" ]; then
-  old_spec_root="$(jq -r '.spec_root // empty' "$FACTORY_CONFIG" 2>/dev/null)"
-  case "$old_spec_root" in
+# would point at nothing once the layers are gone, so it follows the KB. The
+# settings live under `factory` in `.inspire/emanate.yml`; a project that has not
+# moved them yet still has `.inspire/emanate.json`.
+FACTORY_YML="$(dirname "$KB")/.inspire/emanate.yml"
+FACTORY_JSON="$(dirname "$KB")/.inspire/emanate.json"
+NEW_YML_SPEC_ROOT=""
+NEW_JSON_SPEC_ROOT=""
+layered_spec_root() {
+  case "$1" in
     */01_adr|*/02_modules|*/03_features|*/04_domain|*/05_screens|*/01_adr/*|*/02_modules/*|*/03_features/*|*/04_domain/*|*/05_screens/*)
-      NEW_SPEC_ROOT="${old_spec_root%/0[1-5]_*}/01_spec"
-      plan config "$FACTORY_CONFIG" "spec_root: $old_spec_root → $NEW_SPEC_ROOT" ;;
+      printf '%s/01_spec' "${1%/0[1-5]_*}" ;;
   esac
+}
+if [ -f "$FACTORY_YML" ]; then
+  old_spec_root="$(yq -r '.factory.spec_root // ""' "$FACTORY_YML" 2>/dev/null)"
+  NEW_YML_SPEC_ROOT="$(layered_spec_root "$old_spec_root")"
+  [ -n "$NEW_YML_SPEC_ROOT" ] && plan config "$FACTORY_YML" "factory.spec_root: $old_spec_root → $NEW_YML_SPEC_ROOT"
+fi
+if [ -f "$FACTORY_JSON" ]; then
+  old_spec_root="$(jq -r '.spec_root // empty' "$FACTORY_JSON" 2>/dev/null)"
+  NEW_JSON_SPEC_ROOT="$(layered_spec_root "$old_spec_root")"
+  [ -n "$NEW_JSON_SPEC_ROOT" ] && plan config "$FACTORY_JSON" "spec_root: $old_spec_root → $NEW_JSON_SPEC_ROOT"
 fi
 
 # Whatever is left in a layered directory is the operator's and is moved, never dropped.
@@ -618,9 +630,12 @@ if [ -s "$IDMAP" ]; then
 fi
 cp "$PLAN" "$SPEC/_migration/plan.tsv"
 
-if [ -n "$NEW_SPEC_ROOT" ]; then
-  jq --arg r "$NEW_SPEC_ROOT" '.spec_root = $r' "$FACTORY_CONFIG" > "$FACTORY_CONFIG.mig" \
-    && mv "$FACTORY_CONFIG.mig" "$FACTORY_CONFIG"
+if [ -n "$NEW_YML_SPEC_ROOT" ]; then
+  R="$NEW_YML_SPEC_ROOT" yq -i '.factory.spec_root = strenv(R)' "$FACTORY_YML"
+fi
+if [ -n "$NEW_JSON_SPEC_ROOT" ]; then
+  jq --arg r "$NEW_JSON_SPEC_ROOT" '.spec_root = $r' "$FACTORY_JSON" > "$FACTORY_JSON.mig" \
+    && mv "$FACTORY_JSON.mig" "$FACTORY_JSON"
 fi
 
 # The skeleton the layered layout never had (READMEs, the starter patterns, the
