@@ -1,7 +1,7 @@
 # ADR — The KB by concept: modules, bundles, faces and processes, found by typed extension
 
-- **Status:** Proposed — 2026-11-06 (draft for review by Darío Blasco and Djessy
-  Czaplicki; ticket `B1-kb-structure`)
+- **Status:** Accepted — 2026-11-10 (decided in the 2026-11-04 design session and the
+  2026-11-06 Factory review; ticket `B1-kb-structure`)
 - **Supersedes:** [[adr-suites-and-surfaces]]. The model moves from two concepts
   (module, surface) to four, so that ADR is replaced rather than amended.
 - **Amends:** [[adr-upgrade-path]] **D2** (`inspire_version` in `.inspire.lock` becomes a
