@@ -276,9 +276,9 @@ phases:
   - name: tests
     checks:
       - name: Unit tests
-        run: 'cd source && npx --no-install jest --config jest.config.json --maxWorkers=2'
+        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
       - name: E2E tests
-        run: 'cd source && npx --no-install jest --config test/jest-e2e.json'
+        run: 'cd source && npx --no-install vitest run --config vitest.config.e2e.ts'
   - name: review
     checks:
       - name: Conventions
@@ -292,7 +292,8 @@ phases:
 ```
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
-Postgres is still initializing. The e2e suite takes no `--maxWorkers`: the flag
-overrides the `maxWorkers: 1` its config sets, and the NestJS profile requires 1.
+Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config sets
+`fileParallelism: false`, which already runs one file at a time, as the NestJS profile
+requires.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews.

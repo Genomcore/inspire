@@ -2,8 +2,8 @@
 name: demo
 stack: demo
 gates:
-  - literal: "'complexity'"
-    config: lint.config.js
+  - literal: '"complexity"'
+    config: .oxlintrc.json
     expect: absent
 ---
 

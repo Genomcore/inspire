@@ -100,11 +100,12 @@ export function find(input: FindInput): Promise<Study> {
 ```
 
 Naming them is not decoration — it is what makes the stub legal. **The framework
-profiles' quality gates install `tseslint.configs.strictTypeChecked`, which turns
-on `@typescript-eslint/no-unused-vars` for *parameters*, and they declare no
-`argsIgnorePattern`**, so a parameter a stub never reads is a lint error. Reading
-it in the message is the only escape that costs nothing: an `_` prefix buys
-nothing without that option, and a class method has no per-member escape at all.
+profiles lint with oxlint, whose `no-unused-vars` (in its default `correctness`
+category) reports a parameter a function never reads**, so a stub that ignores its
+input is a lint finding. Reading it in the message is the escape that costs
+nothing and holds under any configuration: oxlint's default lets an `_` prefix
+through, but that renames the parameter the contract declared, and a project that
+sets its own `argsIgnorePattern` takes the prefix away.
 
 **And a stub is never a suppression.** The escape-hatch ratchet holds every
 ceiling at zero, so an inline disable is not available to buy this — which is why
@@ -119,9 +120,12 @@ with — signatures and types present, implementations absent. TypeScript fuses
 signature and body in one file, so the stripping is an emission, not a copy:
 
 1. Type-check the target package with declaration emission only —
-   `tsc --declaration --emitDeclarationOnly --outDir <dest>` (per package, using
+   `tsgo --declaration --emitDeclarationOnly --outDir <dest>` (per package, using
    the package's own `tsconfig`; a project that builds with another tool sets the
-   equivalent flag rather than hand-editing sources).
+   equivalent flag rather than hand-editing sources). tsgo refuses an `outDir`
+   with no `rootDir` when the sources sit below the `tsconfig`'s directory
+   (`TS5011`); pass `--rootDir` set to the package root, which also keeps every
+   emitted path matching its source.
 2. The emitted `.d.ts` files replace the `.ts` sources in the packed tree, path
    for path. Nothing else moves: `package.json`, `tsconfig.json`, fixtures and
    the test directory are copied as they are.

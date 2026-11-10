@@ -80,8 +80,9 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   so one row's `cd` cannot move the next.
 - **Run checks.** Phase `quality` first (lint, types, format, build), then phase
   `tests`. Each command starts `cd <source_root>[/<package>] &&`. No watch mode:
-  `vitest run`, `npx --no-install jest`. Jest unit suites take `--maxWorkers=2`; a
-  suite whose config already sets `maxWorkers` takes no flag. A suite that may
+  `vitest run`, `npx --no-install jest`. Vitest and Jest unit suites take
+  `--maxWorkers=2`; a suite whose config already sets `maxWorkers` (or, in Vitest,
+  `fileParallelism: false`) takes no flag. A suite that may
   still be empty takes `--passWithNoTests`, since every unit runs every check.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always

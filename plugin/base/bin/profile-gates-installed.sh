@@ -33,7 +33,7 @@
 # **What it cannot see, stated rather than implied:** a literal that is present but switched
 # `off`, and a rule whose severity is `warn` where the profile meant `error`. A text match
 # cannot tell those apart. The stronger check is asking the toolchain for its resolved
-# config (`eslint --print-config <file>` and its equivalents), which is stack-specific and
+# config (`oxlint --print-config`, `eslint --print-config <file>` and their equivalents), which is stack-specific and
 # therefore belongs in a profile-declared verification command, not in this generic rule.
 # Today's failure mode was the blunt one — the rule simply was not there — so this catches
 # what actually happens; widen it if a present-but-disabled gate ever ships.
