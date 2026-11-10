@@ -128,7 +128,9 @@ INSPIRE decisions — 4 live ADR(s) in `inspire_kb/01_spec/`. An ADR listing fac
 Their full text is over this digest's budget: read an ADR before you specify or build in its area, or run `.inspire/bin/decisions.sh` for every decision.
 EOF
 HEAD_AND_TAIL="$(cat "$ROOT/head.txt")"
-budget=$(( ${#HEAD_AND_TAIL} + 1 + 46 + 1 + 17 ))
+first_entry='- **adr-action-verbs** (design) — Action verbs'
+none_listed='- … 4 not listed'
+budget=$(( ${#HEAD_AND_TAIL} + 1 + ${#first_entry} + 1 + ${#none_listed} + 1 ))
 eq "over budget: an index, cut with a count" "$("$DECISIONS" --budget "$budget")" "$HEAD_AND_TAIL
 
 - **adr-action-verbs** (design) — Action verbs

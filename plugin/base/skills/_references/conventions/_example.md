@@ -1,5 +1,5 @@
 ---
-kind: surface-convention
+kind: wire-convention
 id: _example                # a real convention's id matches its stack.md `wire_conventions:` entry
 transport: <rest | graphql | cli | mcp | grpc | …>
 ---
@@ -8,13 +8,13 @@ transport: <rest | graphql | cli | mcp | grpc | …>
      skill reads, not prose a human is asked to interpret. If a row cannot be stated
      as "this input → that observable response", it is not a convention yet. -->
 
-## Error taxonomy → surface
+## Error taxonomy → wire
 <!-- The DERIVED half: the mapping any competent engineer would produce identically.
      A descriptor never restates these — that is the point. Cover at minimum:
      malformed request · validation failure · absent credential · invalid credential ·
      permitted-but-forbidden · not found · collision · rate limit · downstream failure ·
      unhandled fault. -->
-| Logical error class | Surface response | Notes |
+| Logical error class | Wire response | Notes |
 |---|---|---|
 | <class> | <what the caller observes> | <why, when it is not obvious> |
 

@@ -85,6 +85,10 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   code and cannot have tests yet. Before, an `accepted` descriptor with an untested
   error failed pre-PR.
 
+- The wire conventions in `_references/conventions/` declare `kind: wire-convention`
+  (was `surface-convention`), and their error table is `## Error taxonomy → wire` with a
+  `Wire response` column. Nothing reads these names; "surface" now means a face.
+
 ### Removed
 
 - **INSPIRE no longer checks the Factory's version.** `/inspire:init`, `/inspire:update`

@@ -202,7 +202,7 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
 - [ ] A core ADR in `docs/adr/` records the new layout and why it was chosen. It also
       covers the alternatives weighed: the current layout, the `--module` selector and
       the read-only module view.
-- [ ] The ADR defines modules, bundles, facets and processes,
+- [ ] The ADR defines modules, bundles, faces and processes,
       one definition each, so that a reader can tell for any artifact which one it
       belongs to. It states what this changes in `adr-suites-and-surfaces.md`, and
       amends or supersedes it.
@@ -211,7 +211,7 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
 - [ ] The ADR lists the validators, `sdd_find_*` helpers, templates and skills that
       change because of the extensions and the new layout.
 - [ ] The ADR names where global ADRs, the design system and the global tokens live, and
-      how links across modules, bundles, facets and processes resolve.
+      how links across modules, bundles, faces and processes resolve.
 - [ ] The ADR states how an existing project reaches the new layout, and how that path
       fits the KB-additive upgrade rule.
 - [ ] INSPIRE ships the new layout: the KB skeleton, the templates, the skills and the
@@ -229,7 +229,7 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
 - [ ] The INSPIRE Factory accepts only INSPIRE 0.15.0 or later. It reads `inspire_version`
       from `.inspire.lock`, refuses a project without it, and asks for `/inspire:migrate`
       when the KB is not migrated.
-- [ ] "Surface" is renamed to "facet" everywhere it reaches: the `surfaces:` frontmatter
+- [ ] "Surface" is renamed to "face" everywhere it reaches: the `surfaces:` frontmatter
       field, `00_bootstrap/surfaces.md`, `/inspire-surface`,
       `_references/surface-scope.md` and `adr-suites-and-surfaces.md`.
 
@@ -254,7 +254,7 @@ the new layout ships in INSPIRE and in the INSPIRE Factory, together with the mi
   layout and the typed extensions break both, so the ADR's list of what changes names
   them, and the implementation tickets it files include one in the Factory's tracker.
 
-**Amended 2026-11-04 (design session): modules, bundles, facets and processes.**
+**Amended 2026-11-04 (design session): modules, bundles, faces and processes.**
 
 Irene González, Darío Blasco and Djessy Czaplicki held a design session on 2026-11-04 on
 part 3 and on the existing projects. It took these decisions.
@@ -270,7 +270,7 @@ inspire_kb/
 │   ├── design-system/   ← the design system and the global tokens
 │   ├── modules/
 │   ├── bundles/
-│   ├── facets/
+│   ├── faces/
 │   └── processes/
 ├── 98_lessons/
 └── 99_tracker/
@@ -280,9 +280,9 @@ inspire_kb/
   not depend on it. It follows the knowledge graph, built from wikilinks and declared
   dependencies, and finds files by their typed extension.
 - ADRs have three scopes: global (`01_spec/adr/`), inside a module, and inside a
-  facet. Bundles and processes hold no ADRs for now; they gain them if the need
+  face. Bundles and processes hold no ADRs for now; they gain them if the need
   appears.
-- Design tokens have two scopes: global, in the design system, and per facet.
+- Design tokens have two scopes: global, in the design system, and per face.
 
 *Part 3: four concepts, not two.*
 
@@ -291,27 +291,27 @@ inspire_kb/
 - **Bundle (new).** A headless grouping of actions from one or more modules. It links to
   modules that are already defined, and can take a whole module. It is an emanable unit:
   an SDK, a library, a backend for frontend, or an "API v1". It has internal versions,
-  so each facet can move to a new version on its own schedule. Which actions go in
+  so each face can move to a new version on its own schedule. Which actions go in
   which bundle is a specification decision, made from the use cases; INSPIRE can
   suggest a grouping, such as one bundle per module, but does not decide it. The bundle
   takes over the exposure meaning that "surface" carried until now. A bundle is kept
-  apart from the facets because one bundle can serve several facets.
-- **Facet (until now "surface").** A visual application a person uses, such as a web
+  apart from the faces because one bundle can serve several faces.
+- **Face (until now "surface").** A visual application a person uses, such as a web
   portal, a back office or a mobile app. It holds its screens and its shell, and
   declares the bundles it uses. That declaration gives a check: a screen that depends
-  on an action outside its facet's bundles is a finding. Domain that only some
-  applications use needs no attribute on the entity: a facet reaches it only through
+  on an action outside its face's bundles is a finding. Domain that only some
+  applications use needs no attribute on the entity: a face reaches it only through
   the bundles it uses.
 - **Process (new).** System behaviour that no actor invokes directly: a scheduled job, a
   token refresh, the initial population of the database. A process file states its
   trigger, the actions it requires, its pre-actions and post-actions, and the domain it
   affects. It is an emanable unit: its trigger and its behaviours are claims, so they
   generate tests. Processes are scoped like ADRs: global, inside a module, or inside a
-  facet. Interceptors can live at facet level. This covers part of what
+  face. Interceptors can live at face level. This covers part of what
   `B3-entry-points` calls entry points with no person behind them; that ticket is not
   changed here.
 
-*Typed extensions.* The extension table gains `.bundle.md`, `.facet.md` and
+*Typed extensions.* The extension table gains `.bundle.md`, `.face.md` and
 `.process.md`. The INSPIRE Factory finds
 emanable units by a recursive search on extensions, so a later change to the KB's
 directory layout does not reach it. The same search lets a converter bring in a project
@@ -330,16 +330,18 @@ backward compatible.
 *Execution.* Irene González makes the change in INSPIRE and in the INSPIRE Factory
 together, as one piece of work.
 
-*Name.* "Surface" becomes "facet". One product, with one domain and one set of
-bundles, shows a different facet to each kind of person on each medium: the back office
+*Name.* "Surface" becomes "face". One product, with one domain and one set of
+bundles, shows a different face to each kind of person on each medium: the back office
 on the web, the end user on a phone. The word pairs with "bundle" (a bundle exposes, a
-facet presents), reads well in paths and prose (`01_spec/facets/`, `portal.facet.md`,
-"the back-office facet"), and is almost unused in INSPIRE's runtime and in the Factory's
-`orchestrator/src`. Its one known overlap is faceted search in UI vocabulary. The choice
+face presents), reads well in paths and prose (`01_spec/_faces/`, `portal.face.md`,
+"the back-office face"), and is almost unused in INSPIRE's runtime and in the Factory's
+`orchestrator/src`. The session first chose "facet"; the ADR settled on "face" because
+genomics-suite's domain already uses "facet" for faceted filtering
+(`adr-kb-structure`, alternatives). The choice
 came after two rounds of 20 candidates each. Ruled out because they clash with an
 existing concept: `platform` (suggests the backend and mixes bundles back in), `space`
-(also a design-token scale, and tokens now live in the facet), `shell` (part of a
-facet), `workspace` (`inspire-workspace`), `frame` (layout geometry), `target` (the
+(also a design-token scale, and tokens now live in the face), `shell` (part of a
+face), `workspace` (`inspire-workspace`), `frame` (layout geometry), `target` (the
 stack skills' targets) and `window` (JavaScript's global).
 
 **Amended 2026-11-06 (Factory review, block 1): the migration keeps built code built, and
