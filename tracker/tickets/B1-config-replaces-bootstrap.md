@@ -2,7 +2,7 @@
 id: B1-config-replaces-bootstrap
 title: "B1 — /inspire:config with a shipped default replaces /inspire-bootstrap"
 created: 2026-10-23
-updated: 2026-10-30
+updated: 2026-11-05
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -124,8 +124,8 @@ recommends `source_root: .` and `prototype_root: none`.
 ### What the Factory does with it (not tracked here)
 
 Today the Factory scans a target repository for its test roots and worktree setup, and
-writes the result to its own `.inspire/emanate.json`. The spec config replaces that
-scan and that file. The Factory reads the config from the repository and requires it,
+keeps its own settings in the `factory` section of `.inspire/emanate.yml`. The spec config
+replaces that scan. The Factory reads the config from the repository and requires it,
 with a toolchain for every unit kind in a plan, before it lets a run start. That work
 belongs to the Factory codebase.
 
@@ -159,6 +159,8 @@ Each needs a home:
       Changing it on a project with artifacts warns about the refactor.
 - [ ] The wizard asks for the target before the stack, and offers the recommended stack
       or "other".
+- [ ] Each shipped seed names its image. With a seed, `/inspire-config` asks no image
+      question. The question stays for "describe your own".
 
 ## Notes
 
@@ -279,3 +281,20 @@ config.**
   built); technology versions as config keys; an OpenAPI starter in the default seed.
 - *Not this ticket:* whether a very large suite needs several spec repositories is a
   question for `B1-kb-structure`.
+
+**Amended 2026-11-05 (Factory review, block 1): a functional operator never chooses an
+image.** Direction stated.
+
+- *Direction:* each kind of product (web, mobile, an API service) has a default, as a
+  predefined project seed: the empty source tree, the profiles, the image and the skills,
+  chosen as the recommended practice for that kind. The operator answers "what do you want
+  to build". Choosing your own stack stays possible, and the generated `emanate.yml` stays
+  editable.
+- *Today:* the ticket already has seeds: "the stack question offers each shipped stack seed
+  by name, plus 'describe your own'". Its 2026-10-26 note puts the target first (web,
+  progressive web app, native mobile, …). No seed names an image. In the shipped skill,
+  `/inspire-config` asks every operator "Which image runs the agents…" (Q1), lists the image
+  as "never deduced", because "no profile names an image", and has no default for each kind
+  of product.
+- *Change:* a new acceptance criterion. Each shipped seed names its image, and with a seed,
+  `/inspire-config` asks no image question. The question stays for "describe your own".

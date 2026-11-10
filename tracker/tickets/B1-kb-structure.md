@@ -2,7 +2,7 @@
 id: B1-kb-structure
 title: "B1 — revamp the KB: one spec directory by module, typed file extensions"
 created: 2026-10-23
-updated: 2026-10-28
+updated: 2026-11-06
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [module, feature, domain, screens, adr, surface]
 status: Open
 blocked_by: []
-related_to: [B1-adr-decision-rationale, B1-spikes-out-of-the-kb]
+related_to: [B1-adr-decision-rationale, B1-spikes-out-of-the-kb, B3-entry-points]
 ---
 
 ## Origin
@@ -167,6 +167,9 @@ The design answers:
   and for `docs/adr/adr-suites-and-surfaces.md`, which may need amending or
   superseding.
 
+The design session of 2026-11-04 answered this part: see the amendment of that date in
+the Notes.
+
 ### Other constraints the design must handle
 
 - **Spec content that belongs to no module.** Cross-module ADRs and the shared component
@@ -188,25 +191,47 @@ to typed extensions breaks that rule. The design chooses one of three options:
 - an amendment to the KB-additive rule;
 - a period during which the runtime reads both layouts.
 
+The design session of 2026-11-04 chose the first option and ruled out the third: see
+the amendment of that date in the Notes.
+
 ## Acceptance criteria
+
+Amended 2026-11-04: this ticket covers the whole change, not only the ADR. It closes when
+the new layout ships in INSPIRE and in the INSPIRE Factory, together with the migration.
 
 - [ ] A core ADR in `docs/adr/` records the new layout and why it was chosen. It also
       covers the alternatives weighed: the current layout, the `--module` selector and
       the read-only module view.
+- [ ] The ADR defines modules, bundles, facets and processes,
+      one definition each, so that a reader can tell for any artifact which one it
+      belongs to. It states what this changes in `adr-suites-and-surfaces.md`, and
+      amends or supersedes it.
 - [ ] The ADR defines the typed extension for every KB artifact type, together with the
       naming rule and the uniqueness rule for each type.
 - [ ] The ADR lists the validators, `sdd_find_*` helpers, templates and skills that
       change because of the extensions and the new layout.
-- [ ] The ADR defines the difference between a surface and a module, and says whether
-      INSPIRE keeps both concepts. "Two independent axes, defined as follows" is a valid
-      answer. The ADR also states what its answer changes in the layout and in
-      `adr-suites-and-surfaces.md`.
-- [ ] The ADR names where cross-module ADRs and the shared catalog live, and how
-      cross-module links resolve.
+- [ ] The ADR names where global ADRs, the design system and the global tokens live, and
+      how links across modules, bundles, facets and processes resolve.
 - [ ] The ADR states how an existing project reaches the new layout, and how that path
       fits the KB-additive upgrade rule.
-- [ ] Implementation tickets are filed for the work the ADR decides. This ticket closes
-      when the ADR is accepted, not when the migration ships.
+- [ ] INSPIRE ships the new layout: the KB skeleton, the templates, the skills and the
+      validators use `01_spec/` and the typed extensions.
+- [ ] The INSPIRE Factory finds its units by a recursive search on the typed extensions,
+      not by layer directory, in a matching change in Genomcore/inspire-factory.
+- [ ] An explicit migration command, `/inspire:migrate`, moves an existing project to the
+      new layout, and `/inspire:update` tells the operator that the migration is mandatory.
+- [ ] The migration never makes a realized unit unrealized. After it, the only new pending
+      units are the grouping bundles, each with one `{bundle}/mount/every-action` claim, and
+      their run changes test files only. If anything else rebuilds, the close note records
+      why, and which units rebuild.
+- [ ] The ADR amends D2 of `docs/adr/adr-upgrade-path.md`: `inspire_version` in
+      `.inspire.lock` is no longer provenance only.
+- [ ] The INSPIRE Factory accepts only INSPIRE 0.15.0 or later. It reads `inspire_version`
+      from `.inspire.lock`, refuses a project without it, and asks for `/inspire:migrate`
+      when the KB is not migrated.
+- [ ] "Surface" is renamed to "facet" everywhere it reaches: the `surfaces:` frontmatter
+      field, `00_bootstrap/surfaces.md`, `/inspire-surface`,
+      `_references/surface-scope.md` and `adr-suites-and-surfaces.md`.
 
 ## Notes
 
@@ -228,3 +253,114 @@ to typed extensions breaks that rule. The design chooses one of three options:
   `05_screens/components/`, `05_screens/patterns/` and `05_screens/layouts/`). The new
   layout and the typed extensions break both, so the ADR's list of what changes names
   them, and the implementation tickets it files include one in the Factory's tracker.
+
+**Amended 2026-11-04 (design session): modules, bundles, facets and processes.**
+
+Irene González, Darío Blasco and Djessy Czaplicki held a design session on 2026-11-04 on
+part 3 and on the existing projects. It took these decisions.
+
+*Layout.* `01_spec/` holds one directory per concept, beside the global ADRs and the
+design system:
+
+```
+inspire_kb/
+├── 00_bootstrap/
+├── 01_spec/
+│   ├── adr/             ← global ADRs
+│   ├── design-system/   ← the design system and the global tokens
+│   ├── modules/
+│   ├── bundles/
+│   ├── facets/
+│   └── processes/
+├── 98_lessons/
+└── 99_tracker/
+```
+
+- The directory layout is for people: what belongs together sits together. Tooling does
+  not depend on it. It follows the knowledge graph, built from wikilinks and declared
+  dependencies, and finds files by their typed extension.
+- ADRs have three scopes: global (`01_spec/adr/`), inside a module, and inside a
+  facet. Bundles and processes hold no ADRs for now; they gain them if the need
+  appears.
+- Design tokens have two scopes: global, in the design system, and per facet.
+
+*Part 3: four concepts, not two.*
+
+- **Module.** A functional package of capabilities: entities, actions and invariants,
+  like one tag group in an API's Swagger page. A module holds no screens.
+- **Bundle (new).** A headless grouping of actions from one or more modules. It links to
+  modules that are already defined, and can take a whole module. It is an emanable unit:
+  an SDK, a library, a backend for frontend, or an "API v1". It has internal versions,
+  so each facet can move to a new version on its own schedule. Which actions go in
+  which bundle is a specification decision, made from the use cases; INSPIRE can
+  suggest a grouping, such as one bundle per module, but does not decide it. The bundle
+  takes over the exposure meaning that "surface" carried until now. A bundle is kept
+  apart from the facets because one bundle can serve several facets.
+- **Facet (until now "surface").** A visual application a person uses, such as a web
+  portal, a back office or a mobile app. It holds its screens and its shell, and
+  declares the bundles it uses. That declaration gives a check: a screen that depends
+  on an action outside its facet's bundles is a finding. Domain that only some
+  applications use needs no attribute on the entity: a facet reaches it only through
+  the bundles it uses.
+- **Process (new).** System behaviour that no actor invokes directly: a scheduled job, a
+  token refresh, the initial population of the database. A process file states its
+  trigger, the actions it requires, its pre-actions and post-actions, and the domain it
+  affects. It is an emanable unit: its trigger and its behaviours are claims, so they
+  generate tests. Processes are scoped like ADRs: global, inside a module, or inside a
+  facet. Interceptors can live at facet level. This covers part of what
+  `B3-entry-points` calls entry points with no person behind them; that ticket is not
+  changed here.
+
+*Typed extensions.* The extension table gains `.bundle.md`, `.facet.md` and
+`.process.md`. The INSPIRE Factory finds
+emanable units by a recursive search on extensions, so a later change to the KB's
+directory layout does not reach it. The same search lets a converter bring in a project
+that was not written with INSPIRE.
+
+*Links.* A link to an artifact that does not exist yet requires its file, created from
+its template in `draft`. A missing target then always means a broken link, never a
+concept that was not written down.
+
+*Existing projects.* The answer to "Existing projects" is an explicit migration command.
+`/inspire:update` tells the operator that it is mandatory, because the new INSPIRE
+Factory finds nothing in the old layout. A period during which both layouts are read is
+ruled out: the old layout has no typed extensions, so the Factory cannot stay
+backward compatible.
+
+*Execution.* Irene González makes the change in INSPIRE and in the INSPIRE Factory
+together, as one piece of work.
+
+*Name.* "Surface" becomes "facet". One product, with one domain and one set of
+bundles, shows a different facet to each kind of person on each medium: the back office
+on the web, the end user on a phone. The word pairs with "bundle" (a bundle exposes, a
+facet presents), reads well in paths and prose (`01_spec/facets/`, `portal.facet.md`,
+"the back-office facet"), and is almost unused in INSPIRE's runtime and in the Factory's
+`orchestrator/src`. Its one known overlap is faceted search in UI vocabulary. The choice
+came after two rounds of 20 candidates each. Ruled out because they clash with an
+existing concept: `platform` (suggests the backend and mixes bundles back in), `space`
+(also a design-token scale, and tokens now live in the facet), `shell` (part of a
+facet), `workspace` (`inspire-workspace`), `frame` (layout geometry), `target` (the
+stack skills' targets) and `window` (JavaScript's global).
+
+**Amended 2026-11-06 (Factory review, block 1): the migration keeps built code built, and
+the INSPIRE Factory checks the INSPIRE version.**
+
+- *Decision:* the folder change must not force a re-emanation when the spec did not change.
+  The migration changes ids, and it is the migration that changes them, so no realized unit
+  becomes unrealized. The new layout adds grouping bundles, and each bundle is a new unit:
+  emanating it is the only new work, and it is small.
+- *Today:* this ticket ships an explicit migration command, and the INSPIRE Factory finds
+  units by a recursive search on the typed extensions. The ticket says nothing about what the
+  migration does to code that is already built. In the Factory, a unit stays built while its
+  claim ids and fingerprints do not change, and the path is not part of them. A screen
+  without `id:` takes its id from its parent folder, so moving it changes its ids.
+- *Change:* a new acceptance criterion. The migration never makes a realized unit
+  unrealized. After it, the only new pending units are the grouping bundles, each with one
+  `{bundle}/mount/every-action` claim, and their run changes test files only. If anything
+  else rebuilds, the close note records why, and which units rebuild.
+- *Version check:* the new INSPIRE Factory supports INSPIRE 0.15.0 or later only. It reads
+  `inspire_version` from `.inspire.lock`, so this ticket's ADR amends D2 of
+  `docs/adr/adr-upgrade-path.md`, which makes that field provenance only today. The Factory
+  refuses a project whose lock has no `inspire_version`, and when the KB is not migrated it
+  asks the operator to run `/inspire:migrate`. The Factory half of this check is part of
+  this ticket's matching change in Genomcore/inspire-factory.
