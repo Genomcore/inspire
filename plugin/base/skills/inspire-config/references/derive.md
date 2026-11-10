@@ -166,10 +166,6 @@ are expected.
 The factory refuses a project that still has `.inspire/emanate.json`. Its keys belong
 under `factory` in `emanate.yml`, with the same names.
 
-0. Confirm the factory is inside the range of `factory-compat.json`. The check that ran
-   when the skill loaded stopped an out-of-range factory; if it could not read the
-   version, the operator named one. Without a confirmed version, migrate nothing: an
-   older reader refuses the `factory` section and the project cannot run.
 1. Read the old file. Carry over `kb_root`, `spec_root`, `model`, `review_model`,
    `subagent_models`, `concurrency`, `max_tries`, `base_branch`, `viewer_port` and
    `sandbox` as they stand. Drop `schema`. The factory refuses any other key under

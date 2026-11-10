@@ -85,6 +85,15 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   code and cannot have tests yet. Before, an `accepted` descriptor with an untested
   error failed pre-PR.
 
+### Removed
+
+- **INSPIRE no longer checks the Factory's version.** `/inspire:init`, `/inspire:update`
+  and `/inspire-config` stop running `factory-check.sh` when they load, and
+  `factory-compat.json` and the script are gone. The Factory declares the oldest INSPIRE
+  it supports and refuses an older project itself, because it is the side that cannot
+  read what it does not know. The `factory` section of `emanate.yml` still needs Factory
+  0.13.0 or later.
+
 ### Fixed
 
 - **A KB written in another language validates.** A heading is a section id, then

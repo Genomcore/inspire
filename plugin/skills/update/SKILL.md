@@ -1,6 +1,5 @@
 ---
 name: update
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh)
 description: "Update this project's INSPIRE runtime to the installed plugin's version: report drift, re-materialize unchanged files, and refuse to clobber local edits. Use after /plugin update inspire reports a newer base."
 ---
 
@@ -11,16 +10,6 @@ Brings a project's materialized runtime up to the plugin's current base. This is
 skill rebuilding are specified in
 [`adr-runtime-lifecycle-and-lessons`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-runtime-lifecycle-and-lessons.md)
 D6, and building them is future work — nothing here approximates them in the meantime.
-
-## Factory compatibility
-
-This runs when the skill loads, before anything below:
-
-!`"${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh"`
-
-Relay what it printed, verbatim. A non-zero exit stops the skill before it loads: the
-Factory is outside the range in `${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/factory-compat.json`, and the
-operator updates the Factory first. Never work around it.
 
 ## Preconditions
 
