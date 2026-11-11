@@ -13,7 +13,8 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
 sets in its lint config the rules that refuse each hatch it does not allow, closed to
-inline disables: from this version nothing counts them.
+inline disables: from this version nothing counts them. `/inspire:update` warns while
+the file is still there, and leaves it as it is.
 
 ### Changed
 
