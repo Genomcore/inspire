@@ -28,65 +28,78 @@ clarity lands in the vault.
 > their own external repos answering *"can we build it as we think?"* →
 > [`/inspire-spike`](../inspire-spike/SKILL.md).
 
-## Multi-surface suites
+## One shell per face
 
-`/prototype` stays **one root, one running artifact** no matter how many
-surfaces the suite declares — it never forks into separate prototype projects.
-What changes is what lives inside it: once the roster carries 2+ `kind: ui`
-entries (see
-[`_references/surface-scope.md`](../_references/surface-scope.md)), the
-prototype holds **one shell per UI surface**, each mounted at that surface's
-roster `Shell` prefix, behind a **suite landing** — a branded entry page that
-presents the suite as one product and routes into each shell.
+`/prototype` stays **one root, one running artifact** no matter how many faces the
+project declares — it never forks into separate prototype projects. Inside it, the
+prototype holds **one shell per face**, mounted at the `shell:` of that face's
+`{face}.face.md` (see
+[`_references/face-scope.md`](../_references/face-scope.md)). The faces are every
+`*.face.md` under `inspire_kb/01_spec/`; nothing else lists them. With two or more
+faces, a **landing** sits in front of the shells: a branded entry page that
+presents the product as one and routes into each shell.
 
-The landing is **prototype chrome by default**: this skill derives it from the
-roster (each UI surface's display name, kind, and shell link) and renders it
-under the suite design system, re-syncing it whenever the roster changes —
-there is no separate spec for it to drift from. If the product genuinely ships
-its own launcher, spec it as a normal screen — typically under
-`05_screens/shared/` — and it replaces the chrome landing; the roster remains
-this skill's source for the chrome fallback either way.
+The landing is **prototype chrome by default**: this skill derives it from the face
+files (each face's display name and shell link) and renders it under the design
+system, re-syncing it whenever a face is added or retired — there is no separate
+spec for it to drift from. If the product ships its own launcher, spec it as a face
+of its own through `/inspire-face add`, with its screens; it then replaces the
+chrome landing.
 
-Mobile UI surfaces mock as **framed web shells** — a phone-frame wrapper
-around the same web stack, not a native build. Still "wide, shallow, mocked":
-adding surfaces widens the prototype, it doesn't deepen it.
+A mobile face mocks as a **framed web shell** — a phone-frame wrapper around the
+same web stack, not a native build. Still "wide, shallow, mocked": adding faces
+widens the prototype, it doesn't deepen it.
+
+A screen's action calls are mocked, but they stay inside its face: each one is an
+action a bundle of the face exposes (its `bundles:`). A screen that needs an action
+outside them is a question for `/inspire-face`, not a mock to add.
 
 ## Building the prototype
 
 Build it **pattern-driven from the KB**. Before writing code, read the layers that
 describe the screen:
 
-1. **Screen spec** — `inspire_kb/05_screens/{module}/{screen}.md` — the source of
-   truth for what to build (features covered, pattern, data, slots, components).
-2. **Pattern** — `inspire_kb/05_screens/patterns/{pattern}.md` — regions, behavior.
-3. **Layout** — `inspire_kb/05_screens/layouts/{layout}.md` — the frame: geometry and
-   what changes at each supported width; `layouts/shell.md` for the chrome.
+1. **Screen spec** — `inspire_kb/01_spec/_faces/{face}/_screens/{slug}.screen.md` —
+   the source of truth for what to build (features covered, pattern, data,
+   bindings, components). Its route is `{shell}/{module}/{screen}` under its face's
+   shell.
+2. **Pattern** — the `{pattern}.pattern.md` the screen names — regions, behavior.
+3. **Layout** — the `{layout}.layout.md` the screen names — the frame: geometry and
+   what changes at each supported width; the face's shell layout for the chrome.
 4. **Render** — the screen's `## Render` table: the component, treatment, glyph and
    narrow-width behaviour of every value it shows.
-5. **Components** — `inspire_kb/05_screens/components/{component}.md` — the shared
-   catalog. Adopt these; don't reinvent.
-6. **Design system** — `inspire_kb/05_screens/design-system.md` and
-   `design-tokens.json` — tokens, type, density, icons, supported viewports. Emit the
-   tokens as CSS custom properties (`{color.primary}` → `--color-primary`) and never
-   redefine one per screen.
-7. **Intent & contract** — the feature in `inspire_kb/03_features/{module}/…`
-   and, where relevant, the specs in `inspire_kb/04_domain/…`.
+5. **Components** — the `{component}.component.md` entries in
+   `inspire_kb/01_spec/_design-system/components/` — the shared catalog. Adopt
+   these; don't reinvent.
+6. **Design system** — `inspire_kb/01_spec/_design-system/design-system.md` and
+   `design-system.tokens.json`, plus the face's own `{face}.tokens.json` when it has
+   one — tokens, type, density, icons, supported viewports. Emit the tokens as CSS
+   custom properties (`{color.primary}` → `--color-primary`) and never redefine one
+   per screen.
+7. **Intent & contract** — the `*.feature.md` in the module's `_features/` and,
+   where relevant, the `*.entity.md` and `*.action.md` in its `_domain/`.
+
+Every link resolves by id, never by path: a catalog entry is linked by its bare
+name (`[[list]]`), a screen by `{face}.{slug}`. Find each file by its typed
+extension under `inspire_kb/01_spec/`.
 
 > **Stack-agnostic.** This skill assumes no framework. The project's own stack,
 > component catalog, conventions and known pitfalls live in its KB
-> (`inspire_kb/00_bootstrap` and `inspire_kb/05_screens`), not here — read those
-> first on a real project.
+> (`inspire_kb/00_bootstrap` and `inspire_kb/01_spec/_design-system`), not here —
+> read those first on a real project.
 
 ## The learnings loop — insights co-evolve the vault, live
 
 This is the heart of the skill. As you build and the **user reacts** ("that's not
 the flow", "this needs a filter", "these two screens should merge"), the insight is
 **applied to the vault in the same session**, through the owning skill — the
-prototype is a discovery surface for the spec, not a place learnings pile up:
+prototype is a discovery tool for the spec, not a place learnings pile up:
 
 - New/changed behavior or use case → [`/inspire-feature create|update`](../inspire-feature/SKILL.md).
 - New/changed screen, or a UI block worth sharing → [`/inspire-screens`](../inspire-screens/SKILL.md)
-  (screen spec, pattern, or component spec).
+  (screen spec, pattern, layout or component spec). A block two faces show
+  becomes a pattern or a layout, and each face keeps its own screen.
+- A new face, or a face that needs another bundle → [`/inspire-face`](../inspire-face/SKILL.md).
 - A behavioral contract the flow implies → [`/inspire-domain define|update`](../inspire-domain/SKILL.md).
 - An architectural decision the exploration forces → [`/inspire-adr create`](../inspire-adr/SKILL.md).
 
@@ -97,10 +110,10 @@ cross-cutting rather than one feature/screen has a higher-level home: a **decisi
 design pattern** → the design system (`/inspire-bootstrap design-system`); a **stack
 pitfall** → `00_bootstrap`; **future work** → a task (`/inspire-task`); a question the
 horizontal **can't resolve** → a spike (`/inspire-spike`). Nothing accumulates in a
-`03_*` file for the horizontal — a running learnings log would fight R6 of the
+feature file for the horizontal — a running learnings log would fight R6 of the
 [writing contract](../_references/writing-style.md) anyway.
 
-**Surface, don't silently edit.** Propose each vault change to the user before
+**Propose, don't silently edit.** Propose each vault change to the user before
 writing shared artifacts (components, ADRs, design tokens); let the interactive
 loop stay the user's.
 
@@ -123,7 +136,8 @@ loop stay the user's.
    screens, tabs, or features "for completeness". If something's missing, evolve the
    spec (via the owning skill), don't invent scope in the prototype.
 2. **Adopt, don't reinvent.** Before writing new UI, check the component catalog
-   (`05_screens/components`) and existing prototype code for something canonical.
+   (every `*.component.md` in `_design-system/components/`) and existing prototype
+   code for something canonical.
 3. **Mocked, not real.** The prototype *visualizes* decisions; it does not implement
    backends, auth, persistence, or tests. That's the coding stage.
 4. **Verify by running, not just building.** A green build is not a working screen —
@@ -144,8 +158,8 @@ loop stay the user's.
 - Every horizontal screen traces to a screen spec (or declares "not implemented yet").
 - No reinvented UI that duplicates the shared component catalog.
 - The affected route **runs**, not just builds.
-- With 2+ UI surfaces, the suite landing exists, lists every UI surface's shell,
-  and stays synced with the roster.
+- Every face has its shell at its `shell:` prefix. With two or more faces, the
+  landing exists, lists every face's shell, and stays synced with the face files.
 - Every insight the session surfaced landed in a real vault artifact
   (feature/screen/component/ADR/design-system/task).
 

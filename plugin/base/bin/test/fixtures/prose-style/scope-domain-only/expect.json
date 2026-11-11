@@ -1,6 +1,8 @@
 {
   "exit": 0,
-  "args": ["spec/sdd"],
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain"
+  ],
   "findings": [
     {
       "rule": "prose-style",
@@ -8,5 +10,8 @@
       "message_substring": "R6 historical language: 'previously'"
     }
   ],
-  "forbidden": ["FEAT-01-login.md", "adr-auth-sessions.md"]
+  "forbidden": [
+    "FEAT-01-login.md",
+    "adr-auth-sessions.md"
+  ]
 }

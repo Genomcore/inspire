@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [ { "rule": "face-exposure", "severity": "error", "message_substring": "binds action billing::invoice::pay, which no bundle of face 'portal' exposes" } ], "forbidden": ["orders::order::list", "invoice::close"] }

@@ -1,6 +1,7 @@
 # Stack / theme elaboration comparison
 
-The bootstrap layer (`00_bootstrap/stack.md`, `00_bootstrap/theme.md`) is **not**
+The foundation — `00_bootstrap/stack.md` and the theme in
+`01_spec/_design-system/theme.md` — is **not**
 seeded blindly from a scanned codebase. A scanned repo is often a **prototype, a
 spike, or a throwaway** — its stack may be less concrete than the one the project
 already defined, and its theme may be rougher than the live design system. Copying
@@ -15,7 +16,7 @@ and it always asks.
 > Recommend migrating a bootstrap artifact **only** when the source is *both* more
 > **elaborated** (more complete, more specific) **and** more **production-real**
 > (an actual product decision, not a scaffold or experiment) than what
-> `00_bootstrap` currently declares. Otherwise, keep the local and say why.
+> the KB currently declares. Otherwise, keep the local and say why.
 
 ## Elaboration signals
 
@@ -49,8 +50,8 @@ finding against it — they enter as the target with a cleanup ticket, per
 | Consistent, named tokens reused across the UI | inline styles, one-off colors per component |
 | Considered typography + layout scale | framework defaults, no design intent |
 
-Remember: the **live** design system is `05_screens/design-system.md` (seeded from
-`theme.md` at install and owned there). Compare against **that**, not the template
+Remember: the **live** design system is `01_spec/_design-system/design-system.md`
+(seeded from `theme.md` beside it, and owned there). Compare against **that**, not the template
 `theme.md`, when judging theme.
 
 ## Recommendation matrix
@@ -67,7 +68,7 @@ Remember: the **live** design system is `05_screens/design-system.md` (seeded fr
 Per `/inspire-bootstrap`'s rules, **replacing a load-bearing choice** — a framework,
 the runtime, the primary database, or the primary color — is an architectural
 decision. If a recommended migration touches one, surface it and offer to chain
-`/inspire-workspace adr create` to record the decision, rather than editing
+`/inspire-adr create` to record the decision, rather than editing
 `stack.md` / `theme.md` silently. Adding an incidental tool is a plain edit.
 
 ## Output
@@ -86,6 +87,6 @@ elaborated — no migration.
 ### design-system.md — recommend: migrate (needs ADR)
 Source carries a full token system (primary/accent/status roles, type scale,
 density) vs the KB's seeded default. More elaborated and production-real. The
-primary color change is load-bearing → chain `/inspire-workspace adr create`
+primary color change is load-bearing → chain `/inspire-adr create`
 before applying via `/inspire-screens design-system`.
 ```

@@ -259,6 +259,18 @@ LOCK_STATUS="unchanged"
 # finally receive the KB layers added since (98_lessons, and whatever a later
 # release adds). There are four rows and no delete row — a layer INSPIRE stopped
 # shipping stays exactly where it is, because by then it is the project's.
+# kb_is_layered — the project's KB is still on the layered layout (01_adr … 05_screens,
+# before adr-kb-structure). It reaches 01_spec/ only through /inspire:migrate, run on
+# purpose: seeding 01_spec/ beside the old layers would leave a half-migrated KB that
+# the migration refuses, and the KB-additive rule forbids moving anything here.
+kb_is_layered() {
+  local l
+  for l in 01_adr 02_modules 03_features 04_domain 05_screens; do
+    [ -d "$PROJECT_ROOT/inspire_kb/$l" ] && return 0
+  done
+  return 1
+}
+
 seed_kb() {
   local src_dir="$PLUGIN_ROOT/base/kb"
   local dest_dir="$PROJECT_ROOT/inspire_kb"
@@ -270,6 +282,12 @@ seed_kb() {
     entry_name="$(basename "$entry")"
     dest_entry="$dest_dir/$entry_name"
     dest_entry_rel="inspire_kb/$entry_name"
+
+    if [ "$entry_name" = "01_spec" ] && kb_is_layered; then
+      WARNINGS+=("inspire_kb/ is still on the layered layout (01_adr … 05_screens). This version reads only inspire_kb/01_spec/: run /inspire:migrate to move it — /inspire:update moves nothing in the KB.")
+      log "  · inspire_kb/ is on the layered layout — 01_spec/ not seeded; run /inspire:migrate"
+      continue
+    fi
 
     if [ ! -e "$dest_entry" ]; then
       CREATED+=("$dest_entry_rel")
@@ -342,37 +360,41 @@ chmod_executables() {
   return 0
 }
 
-# Seed the live design system from the bootstrap theme, once. Never clobbers an
+# Seed the live design system from the default theme, once. Never clobbers an
 # existing design-system.md — that file belongs to the project from here on.
 # It lives under inspire_kb, which is outside the layout dest_map entirely, so
-# it is free to diverge without ever being reported as drift.
+# it is free to diverge without ever being reported as drift. A project still on
+# the layered layout gets nothing here: its design system moves with
+# /inspire:migrate, and seeding a second one would leave two.
 seed_design_system() {
-  local theme_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.md"
-  local tokens_src="$PLUGIN_ROOT/base/kb/00_bootstrap/theme.tokens.json"
-  local design_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-system.md"
-  local tokens_dest="$PROJECT_ROOT/inspire_kb/05_screens/design-tokens.json"
+  local ds="inspire_kb/01_spec/_design-system"
+  local theme_src="$PLUGIN_ROOT/base/kb/01_spec/_design-system/theme.md"
+  local tokens_src="$PLUGIN_ROOT/base/kb/01_spec/_design-system/theme.tokens.json"
+  local design_dest="$PROJECT_ROOT/$ds/design-system.md"
+  local tokens_dest="$PROJECT_ROOT/$ds/design-system.tokens.json"
   [ -f "$theme_src" ] || return 0
+  kb_is_layered && return 0
 
   if [ -f "$design_dest" ]; then
-    log "  · inspire_kb/05_screens/design-system.md already present — left as-is"
+    log "  · $ds/design-system.md already present — left as-is"
     return 0
   fi
 
   local seed_tokens=0
   [ -f "$tokens_src" ] && [ ! -f "$tokens_dest" ] && seed_tokens=1
 
-  CREATED+=("inspire_kb/05_screens/design-system.md")
-  [ "$seed_tokens" = 1 ] && CREATED+=("inspire_kb/05_screens/design-tokens.json")
+  CREATED+=("$ds/design-system.md")
+  [ "$seed_tokens" = 1 ] && CREATED+=("$ds/design-system.tokens.json")
   if [ "$DRY_RUN" = 1 ]; then
-    log "  · [dry-run] would seed inspire_kb/05_screens/design-system.md"
+    log "  · [dry-run] would seed $ds/design-system.md"
     return 0
   fi
   mkdir -p "$(dirname "$design_dest")"
   cp "$theme_src" "$design_dest"
-  log "  · seeded inspire_kb/05_screens/design-system.md from theme.md"
+  log "  · seeded $ds/design-system.md from theme.md"
   if [ "$seed_tokens" = 1 ]; then
     cp "$tokens_src" "$tokens_dest"
-    log "  · seeded inspire_kb/05_screens/design-tokens.json from theme.tokens.json"
+    log "  · seeded $ds/design-system.tokens.json from theme.tokens.json"
   fi
 }
 
@@ -663,8 +685,12 @@ merge_settings() {
     | .hooks.PreToolUse = ((.hooks.PreToolUse // [])
       | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
       | map(select((.hooks | length) > 0)))
+    | .hooks.PostToolUse = ((.hooks.PostToolUse // [])
+      | map(.hooks = ((.hooks // []) | map(select(keep_hook))))
+      | map(select((.hooks | length) > 0)))
     | .hooks.SessionStart += [ { hooks: [ { type: "command", command: $session_cmd } ] } ]
     | .hooks.PreToolUse  += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
+    | .hooks.PostToolUse += [ { matcher: "Bash", hooks: [ { type: "command", command: $dispatch_cmd } ] } ]
     | if $declare_marketplace then
         .extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + { inspire: { source: { source: "github", repo: $repo_slug } } })
         | .enabledPlugins = ((.enabledPlugins // {}) + { "inspire@inspire": true })

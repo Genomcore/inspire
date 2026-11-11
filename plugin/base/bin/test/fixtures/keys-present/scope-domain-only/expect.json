@@ -1,1 +1,10 @@
-{ "exit": 0, "args": ["spec/sdd"], "findings": [], "forbidden": ["OS-F1"] }
+{
+  "exit": 0,
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain"
+  ],
+  "findings": [],
+  "forbidden": [
+    "OS-F1"
+  ]
+}

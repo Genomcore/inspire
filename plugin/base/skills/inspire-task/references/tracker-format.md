@@ -31,7 +31,8 @@ skills: [prototype, screens]            # which layer skills execute the work
 status: Open                       # Open | Done | Cancelled
 blocked_by: []                     # list of ticket / feature / ADR IDs
 related_to: [TASK-xxx]             # list of IDs
-# surfaces: [id-a, id-b]           # optional — list of roster ids or `all`; omit = suite-wide; see enum below
+# faces: [id-a]                    # optional — face ids; omit = the whole project; see enum below
+# bundles: [id-b]                  # optional — bundle ids; omit = the whole project
 ---
 
 ## Description
@@ -41,7 +42,7 @@ related_to: [TASK-xxx]             # list of IDs
 ## Enums
 
 - **`epic`**: a **project-defined** slug — usually a module from
-  `inspire_kb/03_features/`, plus cross-cutting areas. Recommended baseline:
+  `inspire_kb/01_spec/` (a `*.module.md`'s id), plus cross-cutting areas. Recommended baseline:
   `workspace | meta | tooling | docs | skill-feedback`, extended with the
   project's own module slugs.
 - **`size`**: `S | M | L | XL`
@@ -50,13 +51,14 @@ related_to: [TASK-xxx]             # list of IDs
   not yet done, `Done` = completed and verified, `Cancelled` = won't do (reason in
   body).
 - **`skills`** (multi-select, may be empty): `bootstrap | module | feature |
-  domain | screens | prototype | workspace | adr | task | code | surface |
+  domain | process | screens | prototype | workspace | adr | task | code | face |
   config` — which
   skills cover the work. `[]` means the work doesn't map to a skill (tooling, ops,
   packaging).
-- **`surfaces`**: optional — a list of roster ids or `all`; useful for filtering suite
-  work, never required. Semantics per
-  [`_references/surface-scope.md`](../../_references/surface-scope.md).
+- **`faces`** / **`bundles`**: optional — lists of face ids (`*.face.md`) and bundle
+  ids (`*.bundle.md`); useful for filtering work by application or API, never
+  required. Absent means the whole project. Semantics per
+  [`_references/face-scope.md`](../../_references/face-scope.md).
 
 ## ID scheme
 

@@ -68,7 +68,7 @@
 #
 # Usage:
 #   .inspire/bin/constraints-mechanics.sh
-#   .inspire/bin/constraints-mechanics.sh inspire_kb/04_domain/auth
+#   .inspire/bin/constraints-mechanics.sh inspire_kb/01_spec/_modules/auth
 
 set -uo pipefail
 
@@ -102,6 +102,8 @@ cm_read_copy() {
 cm_table_column() {
   sdd_body_section "$1" "$2" \
     | awk -v col="$3" '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       /^\|/ {
         gsub(/^\|[[:space:]]*|[[:space:]]*\|$/, "")
         n = split($0, parts, /[[:space:]]*\|[[:space:]]*/)
@@ -110,7 +112,6 @@ cm_table_column() {
         gsub(/^`|`$/, "", name)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
         if (name == "" || name ~ /^-+$/) next
-        if (name == "Field" || name == "Parameter") next
         cell = (n >= col) ? parts[col] : ""
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
         printf "%s\t%s\n", name, cell

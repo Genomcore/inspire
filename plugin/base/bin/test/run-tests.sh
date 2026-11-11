@@ -14,9 +14,9 @@
 #
 # Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
-#   - spec/sdd/...  the domain tree to scan (exported as SDD_SPEC_ROOT)
-#   - spec/kb/...   the KB tree to scan, for the KB-wide rules that check
-#                   features / ADRs / screens (exported as SDD_KB_ROOT)
+#   - spec/kb/...          the KB to scan (exported as SDD_KB_ROOT)
+#   - spec/kb/01_spec/...  its specification, every artifact under one root
+#                          and found by its typed extension (SDD_SPEC_ROOT)
 #   - expect.json   {
 #                     "exit": N,
 #                     "args":      ["scope", ...],
@@ -164,7 +164,7 @@ for fixture in ${1+"$@"}; do
   fi
 
   pushd "$fixture" >/dev/null
-  SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \
+  SDD_SPEC_ROOT="spec/kb/01_spec" SDD_KB_ROOT="spec/kb" \
     "$script" ${fixture_args[@]+"${fixture_args[@]}"} >/dev/null 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null
@@ -282,6 +282,58 @@ if [ -z "$filter" ]; then
     cat "$trust_out" >&2
   fi
   rm -f "$trust_out"
+fi
+
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  split_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-adr-split.sh" >"$split_out" 2>&1; then
+    echo "PASS adr-split.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL adr-split.sh/behaviour" >&2
+    cat "$split_out" >&2
+  fi
+  rm -f "$split_out"
+fi
+
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  decisions_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-decisions.sh" >"$decisions_out" 2>&1; then
+    echo "PASS decisions.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL decisions.sh/behaviour" >&2
+    cat "$decisions_out" >&2
+  fi
+  rm -f "$decisions_out"
+fi
+
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  heading_keys_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-heading-keys.sh" >"$heading_keys_out" 2>&1; then
+    echo "PASS heading-keys.sh/behaviour"
+  else
+    failed=$((failed + 1))
+    echo "FAIL heading-keys.sh/behaviour" >&2
+    cat "$heading_keys_out" >&2
+  fi
+  rm -f "$heading_keys_out"
+fi
+
+if [ -z "$filter" ]; then
+  total=$((total + 1))
+  translated_kb_out="$(mktemp)"
+  if bash "$SCRIPT_DIR/test-translated-kb.sh" >"$translated_kb_out" 2>&1; then
+    echo "PASS review.sh/translated-kb"
+  else
+    failed=$((failed + 1))
+    echo "FAIL review.sh/translated-kb" >&2
+    cat "$translated_kb_out" >&2
+  fi
+  rm -f "$translated_kb_out"
 fi
 
 echo ""

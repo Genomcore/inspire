@@ -15,14 +15,16 @@ Define or update `stack.md` — the official application stack, including its
       yet**? On *not sure*, record the platform as `undecided`, proceed with the
       leanest reasonable assumption, and flag it to revisit once the prototype
       clarifies — never force the choice.
-   2. **One surface or several?** — does the product deliver a single surface,
-      or several (several UIs, several APIs, shared libs)? Default is one. On
-      *several*, delegate **each** declaration to `/inspire-surface add`: that
-      skill owns the roster and this one never writes it, and its first `add` is
-      the promote ceremony that brings the roster into existence and names the
-      surface that already existed. On *one*, nothing is created — a suite-of-one
-      is the default and has no roster file
-      ([`_references/surface-scope.md`](../../_references/surface-scope.md)).
+   2. **Which faces and bundles?** — which applications do people use (a portal,
+      a back office, a mobile app: each one a **face**), and how are the
+      capabilities exposed (an API, an SDK, a backend for a frontend: each one a
+      **bundle**)? A product with a frontend has at least one face; a product with
+      a backend has at least one bundle. Delegate **each** declaration to
+      `/inspire-face add face` or `add bundle`: that skill writes every
+      `{face}.face.md` and `{bundle}.bundle.md`, with its `package` and `profiles`,
+      and this one never does. Which actions a bundle exposes is decided later,
+      from the use cases — here only the id, package and profiles are needed
+      ([`_references/face-scope.md`](../../_references/face-scope.md)).
    3. **If there is a frontend** — **[1] web-only**, **[2] mobile-only**, or
       **[3] web + mobile**? Mobile adds a mobile UI stack (e.g. React Native /
       Expo); web + mobile means both, ideally sharing types/logic.
@@ -50,8 +52,8 @@ Define or update `stack.md` — the official application stack, including its
 5. **A load-bearing change is an ADR.** Adding a tool is a plain edit here;
    replacing a load-bearing choice (a framework, the runtime, the primary DB) — or
    **changing the shape** (adding a backend, adding mobile, switching from a
-   deployed database to an external one) — must be recorded as an ADR in
-   [`01_adr`](../../../../inspire_kb/01_adr) — surface that and offer to chain
+   deployed database to an external one) — must be recorded as a global ADR in
+   [`01_spec/_adr`](../../../../inspire_kb/01_spec/_adr) — surface that and offer to chain
    `/inspire-adr create`.
 
 ### Stack skills
@@ -81,7 +83,7 @@ confirming the layers:
    (`inspire-code-typescript` ships). A framework skill without one, or a `language:`
    naming an id no skill declares, is worth fixing here rather than later: a missing
    rendering home means the coding stage guesses how a semantic type renders. A
-   language whose only surface is a plain library needs no framework skill; list its
+   language whose only deliverable is a plain library needs no framework skill; list its
    id in `profiles:` directly.
 
 ### Wire conventions (selected with the stack)
@@ -90,7 +92,7 @@ A project's wire behavior is decided **once, here** — not per feature, and nev
 whoever writes the first test. Resolve it right after the layers:
 
 1. **Select the convention set** from the transport the stack declares (an HTTP API →
-   `rest`; a GraphQL surface → `graphql`; a CLI → its own) and write it to `stack.md`'s
+   `rest`; a GraphQL API → `graphql`; a CLI → its own) and write it to `stack.md`'s
    frontmatter as `wire_conventions: [<id>, …]`. The catalogue lives in
    [`_references/conventions/`](../../_references/conventions/README.md); a transport with
    no convention file is an offer to author one, not a reason to proceed on guesses.

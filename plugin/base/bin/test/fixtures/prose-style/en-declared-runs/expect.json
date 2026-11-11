@@ -13,6 +13,6 @@
     }
   ],
   "forbidden": [
-    "en-only"
+    "prose-style skips R1 and R3"
   ]
 }

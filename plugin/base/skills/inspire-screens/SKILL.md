@@ -7,7 +7,7 @@ description: "Create and validate screens (a screen is the UI spec for one view)
 
 ## When to use
 
-- **Creating a new screen** for a module or feature
+- **Creating a new screen** in a face, for a module's feature
 - **Iterating on an existing screen** — its bindings, its layout, its prose — or
   bringing one of an older shape to the current one
 - **Validating existing screens** against their bindings, patterns and components
@@ -19,15 +19,20 @@ description: "Create and validate screens (a screen is the UI spec for one view)
 
 ## Architecture
 
-Three tiers under `inspire_kb/05_screens/`, with a **sibling middle**:
+Three tiers under `inspire_kb/01_spec/`, with a **sibling middle**:
 
-| Tier | Path | Source of truth for | Catalog |
+| Tier | Where it sits | Source of truth for | Found by |
 |------|------|---------------------|---------|
-| 1 | `design-system.md` · `design-tokens.json` | what each token means · its value; supported viewports, icons, the reference | two files |
-| 2a | `patterns/` | reusable screen structures — their **regions** | entry files (`patterns/[!_]*.md`) |
-| 2b | `components/` | shared components — their **props** | entry files (`components/[!_]*.md`) |
-| 2c | `layouts/` | the page frames those structures sit in — their **geometry**, per width | entry files (`layouts/[!_]*.md`) |
-| 3 | `{module}/` | module-specific screens — the **wiring**, and how each value is drawn | `_index.md` per module directory |
+| 1 | `_design-system/design-system.md` · `design-system.tokens.json` | what each token means · its value; supported viewports, icons, the reference | two files |
+| 2a | `_design-system/patterns/` | reusable screen structures — their **regions** | `*.pattern.md` |
+| 2b | `_design-system/components/` | shared components — their **props** | `*.component.md` |
+| 2c | `_design-system/layouts/` | the page frames those structures sit in — their **geometry**, per width | `*.layout.md` |
+| 3 | `_faces/{face}/_screens/` | one face's screens — the **wiring**, and how each value is drawn | `*.screen.md` |
+
+Tools find every one of these by its typed extension and resolve a link by its id,
+never by its directory. The directories are for people. A catalog entry's id is its
+file name without the extension: `list.pattern.md` is the pattern `list`, linked as
+`[[list]]`, never by a relative path.
 
 Patterns, components and layouts are **siblings**: none depends on another by
 construction. A pattern's regions accept injected content, so it never imports leaf
@@ -42,36 +47,41 @@ and its `## Render` table. A pattern region is a hole, never a mirror of some
 component's props, and never a measurement.
 
 A **layout** names the pattern it frames and answers where each region sits, at what
-size, in what order, and what changes at each supported width. The surface **shell**
+size, in what order, and what changes at each supported width. The face **shell**
 — sidebar, bars, every persistent control — is a layout entry of its own, `shell`,
 framing every route though no screen names it. Every row of a layout's
 `## Geometry` and `## Breakpoints` tables carries a `Source` from a closed
-vocabulary (`design-system.md §…` · `design-tokens.json` · `reference` · `generated`
+vocabulary (`design-system.md §…` · `design-system.tokens.json` · `reference` · `generated`
 · `undecided` · `as {layout}`), defined in
-[`layout-entry.md.template`](templates/layout-entry.md.template). A `generated` or
+[`layout.template.md`](templates/layout.template.md). A `generated` or
 `undecided` row is a question for the design system, and a run never silently
 promotes one into a decision.
 
-`design-system.md` and its token file `design-tokens.json` are **seeded at
-install** from the defaults `00_bootstrap/theme.md` and `theme.tokens.json`, and
+`design-system.md` and its token file `design-system.tokens.json` are **seeded at
+install** from the defaults `theme.md` and `theme.tokens.json` beside them in
+`_design-system/`, and
 owned by [`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md) —
 screens **read** the tokens, citing each by its path in braces, and never edit
-them. What every measurement is taken from — the prototype by default — and how it
+them. A face can add tokens of its own in `_faces/{face}/{face}.tokens.json`;
+screens read those the same way. What every measurement is taken from — the prototype by default — and how it
 is read is [`_references/ui-reference.md`](../_references/ui-reference.md).
 
-Tier 3 carries a second dimension: **surface**. Once the suite declares two or
-more UI surfaces, module screens split positionally into
-`05_screens/{surface}/{module}/`, with a reserved `shared/{module}/` for screens
-more than one UI surface uses. Tiers 1, 2a, 2b and 2c do not split —
-`design-system.md`, `design-tokens.json`, `patterns/`, `components/` and `layouts/`
-stay suite-wide, beside the surface trees at top level, never inside one. A surface
-whose chrome differs takes its own `shell` layout entry scoped by `surfaces:`, never
-a copy of the catalog. Which shape applies, what `shared/` means and how a
-surface id resolves are defined in
-[`.claude/skills/_references/surface-scope.md`](../_references/surface-scope.md);
-read it before writing anywhere under `05_screens/`. This skill works with the
-shape the roster implies — the one-time reshaping from flat to split is
-[`/inspire-surface`](../inspire-surface/SKILL.md)'s sweep, not this skill's.
+Tier 3 sits inside a **face**: an application a person uses, declared by its own
+`{face}.face.md` (`id`, `package`, `profiles`, `shell`, `bundles:`). Every screen
+belongs to exactly one face, and its id says which. Tiers 1, 2a, 2b and 2c do not
+split by face — `design-system.md`, `design-system.tokens.json`, `patterns/`,
+`components/` and `layouts/` serve the whole project from `_design-system/`, never
+from inside a face. An entry that serves only some faces says so in its `faces:`
+field. The chrome every face sits in is one layout entry, `shell.layout.md`, shared
+by every face; never copy the catalog into a face. How a write resolves its face is
+[`_references/face-scope.md`](../_references/face-scope.md); read it before writing a
+screen. Creating or retiring a face is [`/inspire-face`](../inspire-face/SKILL.md)'s,
+never this skill's.
+
+**No shared screens.** When two faces show the same thing, what they share is its
+structure, not the screen: the structure becomes a layout or a pattern in
+`_design-system/`, and each face keeps its own screen, with its own id and its own
+bindings.
 
 **Screens are lightweight** — they declare their own bindings, say how each value
 they show is drawn, and describe only what deviates from the pattern and layout they
@@ -83,7 +93,7 @@ The on-disk shape — identity, header lines, `## Purpose`, `## Bindings`, claim
 the route derivation and the old-shape catalogue — is
 [`references/format-screen.md`](references/format-screen.md). Read it before
 writing a screen. Template:
-[`templates/screen.md.template`](templates/screen.md.template) — the template is
+[`templates/screen.template.md`](templates/screen.template.md) — the template is
 the single source of which parts are required (the frontmatter identity block,
 H1, `**Features:**`, `## Purpose`, `## Bindings`) versus optional/presence-free
 (`**Pattern:**`, `**Layout:**`, `**Components:**`, `## Render`,
@@ -92,8 +102,9 @@ H1, `**Features:**`, `## Purpose`, `## Bindings`) versus optional/presence-free
 Four facts about that shape carry the rest of this skill:
 
 - **The `id` is the referent, the path is only where the file sits.** Minted once
-  as `{module}.{screen}`, never re-derived from location. Same id at a new path is
-  a move; a changed id is a new screen.
+  as `{face}.{slug}` from the face and the file's slug, never re-derived from
+  location afterwards. Same id at a new path is a move; a changed id is a new
+  screen.
 - **The screen says what it is for.** `## Purpose` carries one paragraph — who
   comes here, for which task, what they see first. It is what the emanating agent
   would otherwise have to guess from the feature links. It restates no binding
@@ -106,8 +117,8 @@ Four facts about that shape carry the rest of this skill:
   declaration, one claim: a transition a dispatch causes is that dispatch's
   outcome and never also a `### Navigation` row, which declares only the
   transitions no dispatch on this screen causes.
-- **Routes derive** from `module:` + `screen:`, so no screen file authors one.
-  `routes` renders the map.
+- **Routes derive** from `module:` + `screen:` under the face's `shell`, so no
+  screen file authors one. `routes` renders the map, per face.
 - **The screen says how it is drawn.** `## Render` binds every column, field and
   meta value it shows to a field type, a catalogued component, a treatment and an
   alignment, and every table column to what it does at narrow widths. It mints no
@@ -119,11 +130,8 @@ type (`ADR alignment` · `data wiring` · `component adoption` · `gap` · `cosm
 Drift is **informational**: it never blocks a PR unless it contradicts a current ADR
 (one present and not superseded or rejected), and it drives the propagation check
 ([`references/screen-propagation.md`](references/screen-propagation.md)). Omit the
-section only until a prototype target exists. With two or more UI
-surfaces each target carries its
-surface's shell prefix — the route lives inside that surface's shell rather than at
-the prototype root — and a `shared/` screen names one target per shell that serves
-it.
+section only until a prototype target exists. Each target carries its face's
+shell prefix: the route lives inside that face's shell.
 
 ## Granularity rule: one file per screen
 
@@ -137,42 +145,35 @@ screen file ≈ one prototype screen).
 **Not a separate file:** steps inside a wizard, tabs inside a detail page,
 sub-sections of a single settings form.
 
-**File naming:** kebab-case, matching the screen's conceptual name
-(`agents-list.md`, `agent-detail.md`, not `agents.md`). The name is **positional**:
-it never carries identity, and renaming a file is a move that leaves the `id`, the
-route and every claim untouched.
+**File naming:** `{slug}.screen.md`, kebab-case, matching the screen's conceptual
+name (`agents-list.screen.md`, `agent-detail.screen.md`, not `agents.screen.md`).
+The slug is unique within the face, and it mints the id once: `agent-detail` in the
+face `console` is `console.agent-detail`. After that the frontmatter `id:` wins, so
+renaming the file is a move that leaves the `id`, the route and every claim
+untouched.
 
-**Where the file goes:** `05_screens/{module}/{screen}.md` while the suite has at
-most one UI surface; `05_screens/{surface}/{module}/{screen}.md` — or
-`shared/{module}/` for a screen more than one UI surface uses — once the roster
-declares two or more. The shape is deterministic from the roster's `kind: ui`
-count, never from what the tree happens to hold: derive it from
-[`_references/surface-scope.md`](../_references/surface-scope.md) rather than
-copying a neighbouring path. Catalog wikilinks are relative, so their `../` depth
-follows the screen's own: what they must land on is the one suite-wide
-`05_screens/patterns/` or `05_screens/components/`, never a copy inside a surface
-tree.
+**Where the file goes:** `inspire_kb/01_spec/_faces/{face}/_screens/{slug}.screen.md`,
+in the face its id names. Catalog links are bare ids (`[[list]]`, `[[collection]]`,
+`[[data-table]]`), whatever directory the screen sits in.
 
-## Which surface a screen belongs to
+## Which face a screen belongs to
 
-The directory **is** the scope declaration, which is why a screen's frontmatter
-carries identity and lifecycle but no `surfaces:` field. Resolve the surface with
-the algorithm in
-[`_references/surface-scope.md`](../_references/surface-scope.md) and state the
-tree being written to in the turn's output. Surface ids come from the roster at
-`00_bootstrap/surfaces.md`; an id that is not there stops the write rather than
-being invented.
+The id **is** the scope declaration, which is why a screen's frontmatter carries
+identity and lifecycle but no `faces:` field. Resolve the face with the rule in
+[`_references/face-scope.md`](../_references/face-scope.md) and state the face being
+written to in the turn's output. A face exists when a `{face}.face.md` declares it;
+an id that no face file declares stops the write and routes to
+[`/inspire-face add`](../inspire-face/SKILL.md) rather than being invented.
 
-- **`shared/{module}/`** holds screens more than one UI surface uses. These are the
-  only screens that may carry `surfaces:` — an optional list narrowing which UI
-  surfaces they serve; absent means all of them.
-- **Directories are created lazily.** A surface or module directory comes into
+- **The face's bundles expose what its screens bind.** Every action a screen binds
+  under `### Data` or `### Dispatches` belongs to a bundle the face lists in
+  `bundles:`. `.inspire/bin/face-exposure.sh` checks it. An action outside them is
+  a question for `/inspire-face` — add the bundle to the face, or the action to a
+  bundle — never a reason to drop the binding.
+- **Directories are created lazily.** A face's `_screens/` directory comes into
   existence when the first screen lands in it, never ahead of one.
-- **Reshaping the tree is not this skill's work.** The flat→split move belongs to
-  [`/inspire-surface add`](../inspire-surface/SKILL.md), which performs it as a
-  sweep the operator classifies entry by entry. The one reshaping this skill
-  performs is consolidating back to the flat shape after a `retire` — and only when
-  `/inspire-surface` hands it over.
+- **One navigation file per face.** `_faces/{face}/_index.md` carries the face's
+  navigation prose. It lists no screens: a search for `*.screen.md` gives them.
 
 ## Flows in `references/`
 
@@ -183,7 +184,7 @@ index, not the flow.
 | Flow | Read | Invocation |
 |---|---|---|
 | The on-disk shape (every flow) | [`references/format-screen.md`](references/format-screen.md) | — |
-| Create a screen | [`references/screen-create.md`](references/screen-create.md) **and** the format reference | `create {module}/{screen}` |
+| Create a screen | [`references/screen-create.md`](references/screen-create.md) **and** the format reference | `create {face}.{slug}` |
 | Update a screen | [`references/screen-update.md`](references/screen-update.md) **and** the format reference | `update {id}` |
 | Validate / audit | [`references/screen-validate.md`](references/screen-validate.md) **and** [`references/screen-checks.md`](references/screen-checks.md), applying the § Triangulation matrix below; `audit` also reads [`references/screen-catalog.md`](references/screen-catalog.md) for extraction opportunities | `validate` · `audit` |
 | Promote through the lifecycle | [`references/screen-lifecycle.md`](references/screen-lifecycle.md) | `promote {id} {state}` |
@@ -219,8 +220,8 @@ match a stale spec is riskier than updating the spec.
 **Why the skill wins on UI conventions:** patterns, components, design tokens and
 current UX ADRs are project-wide invariants. A prototype that violates them is a
 regression to fix in the prototype, not in the spec. A screen cannot except itself
-from one either: a token is a suite-wide fact, so a local exception to it is still a
-suite-wide change and the token moves instead
+from one either: a token is a project-wide fact, so a local exception to it is still
+a project-wide change and the token moves instead
 ([`_references/authority.md`](../_references/authority.md) § A3).
 
 The matrix is this skill's three pairs, resolved. The general rule behind the
@@ -252,9 +253,9 @@ When uncertain which layer a finding belongs to, ask the user.
 > [`_references/lesson-capture.md`](../_references/lesson-capture.md).
 
 1. **Features are the source of truth for what exists.** Every screen traces to one
-   or more features in `03_features`.
+   or more `*.feature.md` files in its module's `_features/`.
 2. **Each tier owns its truth** — the *Source of truth for* column of the
-   § Architecture table above: `design-system.md` and `design-tokens.json` for
+   § Architecture table above: `design-system.md` and `design-system.tokens.json` for
    tokens, `patterns/` for regions, `layouts/` for geometry and breakpoints,
    `components/` for component props. Screens declare and reference; they never redefine a token,
    nor redescribe a layout or a component's props. Project-specific screen
@@ -267,42 +268,53 @@ When uncertain which layer a finding belongs to, ask the user.
    checks reference it, and
    [`_references/writing-style.md`](../_references/writing-style.md) points here
    rather than restating it.
-5. **Routes derive from the id's inputs — never author one.** The route of a
-   screen is `/{module}/{screen}` from its declared `module:` and `screen:` fields,
-   prefixed by the surface's roster `Shell` value once the suite declares two or
-   more UI surfaces (`/admin` → `/admin/billing/list`). The exact rendering belongs
-   to the framework profile, like every binding convention. Nothing writes a route
-   into a screen file, so a route and an id can never disagree — and a screen that
-   moves between surfaces keeps both. Full rule:
+5. **Routes derive from `module:` and `screen:` — never author one.** The route of
+   a screen is `{shell}/{module}/{screen}`: its declared `module:` and `screen:`
+   fields, prefixed by its face's `shell` (`/admin` → `/admin/billing/list`). The
+   id is not a route input. The exact rendering belongs to the framework profile,
+   like every binding convention. Nothing writes a route into a screen file, so a
+   route and an id can never disagree. Full rule:
    [`references/format-screen.md`](references/format-screen.md) § Routes derive.
-6. **Identity is write-once.** `id:` is minted at creation and never re-derived
-   from location; `module:` must match the path's module directory. A changed id is
-   a new screen, not a moved one.
+6. **Identity is write-once.** `id:` is minted at creation as `{face}.{slug}` and
+   never re-derived from location; `module:` and `screen:` are written once beside
+   it. A changed id is a new screen, not a moved one. A user-chosen slug never starts
+   with `_`.
 7. **The screen declares, the pattern constrains.** Every data source, dispatch,
    navigation target and state is the screen's own declaration, present whether or
    not a pattern is named. Where one is named, its regions are joined against those
    declarations — a required region that accepts data, with no data binding to
    serve it, is a finding.
 8. **Validate before merge** — run `/inspire-module review` before any PR that
-   modifies screen spec files.
-9. **Respect current UX ADRs.** Screens must not contradict a UX decision in
-   `inspire_kb/01_adr/` that is not superseded or rejected; flag any that do.
+   modifies screen spec files, and `.inspire/bin/face-exposure.sh` over the face.
+9. **Respect current UX ADRs.** Screens must not contradict a UX decision that is
+   not superseded or rejected: a global `*.adr.md` under `_adr/` whose `faces:` is
+   absent or names the screen's face, or one in the face's own `_adr/`. Flag any
+   that do.
 10. **Propagation check after spec edits.** Ask the operator before ending the turn
    whether to propagate visible UI changes to the prototype — which edits trigger
    the ask, and what each answer leads to, are
    [`references/screen-propagation.md`](references/screen-propagation.md)'s.
-11. **Stamp every write.** After `create`, `update`, `validate`, or `extract`
-   writes a screen or catalog file, run
+11. **Check and stamp every write.** After `create`, `update`, `validate`, or
+   `extract` writes a screen or catalog file,
+   run `.inspire/bin/review.sh <file>` and fix what it reports on that
+   file: every error, and every warning the operator does not choose to keep
+   ([write-checks](../_references/write-checks.md)). Then run
    `.inspire/bin/trust.sh stamp <file> --skill screens`
    ([trust-stamps](../_references/trust-stamps.md#stamping)); rewriting one
    that carries `endorsed:` is disclosed to the operator first
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
-12. **Name what is drawn.** A component a screen names gets its `components/` entry
-   in the same turn, at `**State:** to-extract`. Every icon a screen, a region or a
+12. **Name what is drawn.** A component a screen names gets its
+   `{name}.component.md` entry in the same turn, at `**State:** to-extract`. Every icon a screen, a region or a
    state implies is named by library and glyph (`lucide-folder`), never "an icon".
    Every hover-only affordance names its touch equivalent. Every table column says
    what it does at narrow widths.
-13. **Measure from the reference, at several widths.** Before a screen or layout
+13. **A link needs its target.** When a screen links a screen, pattern, layout or
+   component that does not exist yet, create the target in the same turn from its
+   template: a screen at `lifecycle: draft`, a catalog entry at
+   `**State:** to-extract`. A missing target is then always a broken link, never a
+   concept nobody wrote down. A missing action goes through
+   [`/inspire-domain`](../inspire-domain/SKILL.md), which creates it at draft.
+14. **Measure from the reference, at several widths.** Before a screen or layout
    says anything responsive, `design-system.md` § Supported viewports names the
    floor. Values come from the reference
    [`_references/ui-reference.md`](../_references/ui-reference.md) resolves — the
@@ -311,11 +323,11 @@ When uncertain which layer a finding belongs to, ask the user.
 
 ## Skill invocations
 
-- `/inspire-screens create {module}/{screen}` — scaffold a new screen: mint its id, declare its bindings, name a layout if one fits
+- `/inspire-screens create {face}.{slug}` — scaffold a new screen in a face: mint its id, declare its bindings, name a layout if one fits
 - `/inspire-screens update {id} [args]` — iterate on an existing screen, or bring an older shape to the current one (blocks on stable — regress it with `promote` first)
-- `/inspire-screens validate {module}/{screen}` — validate a screen, browsing the prototype when it can be run
+- `/inspire-screens validate {id}` — validate a screen, browsing the prototype when it can be run
 - `/inspire-screens promote {id} {state}` — walk a screen through the 4-state lifecycle
-- `/inspire-screens routes` — render the derived route map and the transition graph; writes nothing
+- `/inspire-screens routes [{face}]` — render the derived route map and the transition graph, per face; writes nothing
 - `/inspire-screens extract {pattern|layout|component} {name}` — promote a recurring UI block or frame to a shared artifact
 - `/inspire-screens backfill [{reference}]` — bring every screen, layout and component up to the presentation half of the current shape, measured from the prototype or the named reference
-- `/inspire-screens audit {module}` — scan a module's screens for forward + reverse drift, duplication, extraction opportunities
+- `/inspire-screens audit {face}` — scan a face's screens for forward + reverse drift, duplication, extraction opportunities

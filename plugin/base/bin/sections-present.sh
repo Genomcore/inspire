@@ -7,7 +7,7 @@
 #
 # Every layer below is checked against the format spec that owns it:
 #
-#   Action descriptor — `04_domain`, 3-segment leaf filename (severity: error)
+#   Action descriptor — `*.action.md` (severity: error)
 #     ## Purpose · ## Inputs · ## Outputs · ## Entities · ## Preconditions ·
 #     ## Behavior · ## Postconditions · ## Errors
 #     in that fixed order (inspire-domain/references/format-action.md).
@@ -24,20 +24,26 @@
 #     skips them cleanly, and one that has gained them in the wrong place is
 #     genuinely out of canonical order.
 #
-#   Entity document — `04_domain`, 2-segment leaf filename (severity: error)
+#   Entity document — `*.entity.md` (severity: error)
 #     ## Purpose · ## Rationale · ## Invariants · ## Fields · ## Touched by
 #     in that fixed order (inspire-domain/references/format-entity.md).
 #
-#   Use-case file — `03_features/{module}/{use-case}.md` (severity: warning)
+#   Use-case file — `*.feature.md` (severity: warning)
 #     ## Actor · ## Preconditions · ## Main flow · ## Alternative flows ·
 #     ## Error flows · ## Postconditions · ## Acceptance criteria, plus the
 #     AC-id shape inside the last of those.
 #
-#   ADR — `01_adr/adr-*.md` (severity: warning)
-#     ## Context · ## Decision · ## Consequences · ## Alternatives considered ·
-#     ## Related ADRs, plus `### Breaking changes` under ## Consequences.
+#   ADR — `*.adr.md` (and its `*.adr.rationale.md`) (severity: warning)
+#     A decision `adr-{slug}.md` links its rationale with a
+#     `**Rationale:** [[adr-{slug}.rationale]]` line and holds ## Decision, and
+#     nothing of the rationale. Its `adr-{slug}.rationale.md` holds ## Context ·
+#     ## Consequences · ## Alternatives considered · ## Related ADRs, plus
+#     `### Breaking changes` under ## Consequences, and no ## Decision. Either
+#     file without the other is a finding. A file in the single-file shape
+#     (no `**Rationale:**` line, no rationale beside it) is still checked for
+#     all five sections, and is reported as waiting for `/inspire-adr migrate`.
 #
-#   Screen — `05_screens/**` (severity: lifecycle-progressive)
+#   Screen — `*.screen.md` (severity: lifecycle-progressive)
 #     an H1 title, the `**Features:**` header line, a non-empty ## Purpose and
 #     a non-empty ## Bindings. `**Pattern:**`, `**Components:**`,
 #     `## Module-specific deviations`, `## Current prototype` and `## Notes` are
@@ -45,15 +51,17 @@
 #     ## Instantiation is reported as a retired section — its declarations
 #     belong in keyed ## Bindings rows.
 #
-# `03_features` and `01_adr` carry no `lifecycle:` field, so nothing there can
+# Features and ADRs carry no `lifecycle:` field, so nothing there can
 # ramp: their findings are warnings at every moment of their life. The domain
 # layer's order check and every screen finding ramp with the checked object's own
 # lifecycle — and a screen carrying no frontmatter at all reads as draft, so no
 # file written before the identity block existed starts blocking a commit.
 #
-# A section is "present" when an H2 header with the exact name exists in the
-# body — not inside frontmatter, not inside a fenced code block (a template
-# quoted in a fence documents a section, it does not declare one), and, for the
+# A section is "present" when an H2 header with its id exists in the body —
+# `## ENT4: Campos`, or the legacy bare name `## Fields`, the label after the id
+# being free text in the project's language (sdd_heading_name in _lib.sh) — not
+# inside frontmatter, not inside a fenced code block (a template quoted in a
+# fence documents a section, it does not declare one), and, for the
 # three non-domain layers, not inside an HTML comment (their templates carry
 # guidance comments that name the very sections this rule looks for).
 # A section is "non-empty" when at least one line of body content (other than
@@ -74,16 +82,14 @@
 # sections appearing in a different relative order than the format spec fixes
 # is a violation.
 #
-# Scope: the rule receives one `$1` and checks `$1 ∩ each of its layers` — see
-# `bin/README.md` §Scope. Absent `$1`, every layer scans its own full root:
-# $SDD_SPEC_ROOT for the domain layer, $SDD_KB_ROOT/{03_features,01_adr,
-# 05_screens} for the rest.
+# Scope: the rule receives one `$1` and checks `$1 ∩ 01_spec`, each type by its extension — see
+# `bin/README.md` §Scope. Absent `$1`, it scans the whole spec root.
 #
 # Usage:
 #   .inspire/bin/sections-present.sh                              # every layer
 #   .inspire/bin/sections-present.sh inspire_kb                   # every layer
-#   .inspire/bin/sections-present.sh inspire_kb/04_domain/auth    # domain only
-#   .inspire/bin/sections-present.sh inspire_kb/03_features       # features only
+#   .inspire/bin/sections-present.sh inspire_kb/01_spec/_modules/auth/_domain   # one domain
+#   .inspire/bin/sections-present.sh inspire_kb/01_spec/_modules/auth/_features # its features
 
 set -uo pipefail
 
@@ -106,6 +112,9 @@ FEATURE_SECTIONS=("Actor" "Preconditions" "Main flow" "Alternative flows" \
                   "Error flows" "Postconditions" "Acceptance criteria")
 ADR_SECTIONS=("Context" "Decision" "Consequences" "Alternatives considered" \
               "Related ADRs")
+ADR_DECISION_SECTIONS=("Decision")
+ADR_RATIONALE_SECTIONS=("Context" "Consequences" "Alternatives considered" \
+                        "Related ADRs")
 SCREEN_SECTIONS=("Purpose" "Bindings")
 
 # The canonical orders are the section arrays themselves: the format specs
@@ -174,18 +183,14 @@ strip_html_comments() {
 }
 
 # h2_stream <file>
-#   The file's H2 header names, in document order, read exactly the way
+#   The file's H2 header keys, in document order, read exactly the way
 #   sdd_has_section reads them (outside frontmatter, outside fences). H3s are
 #   not H2s, so per-field `### {field}` sub-sections never enter the stream.
 h2_stream() {
   awk \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      /^## / {
-        h = substr($0, 4)
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
-        print h
-      }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
+      /^## / { print sdd_heading_name($0, "## ") }
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$1"
 }
 
 # has_line_prefix <file> <prefix>
@@ -237,6 +242,29 @@ sections_report() {
       "$kind has empty section(s) (header present but no body content): $empty"
     sdd_count_by_severity "$sev"
   fi
+}
+
+check_foreign_ids() {
+  local file="$1" target="$2" kind="$3" fmt="$4" found
+  found="$(awk -v fmt="$fmt" \
+    "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
+      BEGIN {
+        n = split(ENVIRON["SDD_SECTION_IDS"], rows, "\n")
+        for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); fmt_of[f[2]] = f[1] }
+      }
+      /^###? / {
+        k = sdd_heading_key($0, ($0 ~ /^### /) ? "### " : "## ")
+        if ((k in fmt_of) && fmt_of[k] != fmt && !(k in seen)) {
+          seen[k] = 1
+          out = out (out == "" ? "" : ",") k
+        }
+      }
+      END { print out }
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file")"
+  [ -z "$found" ] && return 0
+  sdd_finding "warning" "sections-present" "$target" \
+    "$kind carries section id(s) of another format: $found"
+  sdd_count_warning
 }
 
 # join_list <item...> — ", "-joined, for the order message.
@@ -302,6 +330,7 @@ check_action() {
   sections_report "$file" "$file" "action descriptor" "error" "" \
     "${ACTION_CORE_SECTIONS[@]}"
   check_order "$file" "action descriptor" "OS-A10" "${ACTION_SECTIONS[@]}"
+  check_foreign_ids "$file" "$file" "action descriptor" action
 }
 
 check_entity() {
@@ -310,6 +339,7 @@ check_entity() {
   sections_report "$file" "$file" "entity document" "error" "Touched by" \
     "${ENTITY_SECTIONS[@]}"
   check_order "$file" "entity document" "-" "${ENTITY_SECTIONS[@]}"
+  check_foreign_ids "$file" "$file" "entity document" entity
 }
 
 # check_acceptance_criteria <read_file> <target>
@@ -390,14 +420,11 @@ check_feature() {
   sections_report "$tmp" "$file" "use-case file" "warning" "" \
     "${FEATURE_SECTIONS[@]}"
   check_acceptance_criteria "$tmp" "$file"
+  check_foreign_ids "$tmp" "$file" "use-case file" feature
 }
 
-check_adr() {
-  local file="$1"
-  sp_strip_to_tmp "$file" || return 0
-  local tmp="$SP_TMP"
-  sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
-
+check_breaking_changes() {
+  local tmp="$1" file="$2"
   # `### Breaking changes` is presence-only — an ADR that breaks nothing still
   # says so — but it must sit under `## Consequences`: a heading that drifted
   # to another parent answers a different question. Reported only when
@@ -413,6 +440,68 @@ check_adr() {
       sdd_count_warning
     fi
   fi
+}
+
+report_misplaced() {
+  local tmp="$1" file="$2" prefix="$3" found="" section
+  shift 3
+  for section in "$@"; do
+    sdd_has_section "$tmp" "$section" && found="${found:+$found,}$section"
+  done
+  [ -z "$found" ] && return 0
+  sdd_finding "warning" "sections-present" "$file" "$prefix: $found"
+  sdd_count_warning
+}
+
+check_adr() {
+  local file="$1" rationale="${1%.md}.rationale.md" links_rationale=0
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
+  has_line_prefix "$tmp" "**Rationale:**" && links_rationale=1
+
+  if [ "$links_rationale" = 0 ] && [ ! -f "$rationale" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR is in the single-file shape — /inspire-adr migrate splits it into a decision and a rationale"
+    sdd_count_warning
+    sections_report "$tmp" "$file" "ADR" "warning" "" "${ADR_SECTIONS[@]}"
+    check_breaking_changes "$tmp" "$file"
+    check_foreign_ids "$tmp" "$file" "ADR" adr
+    return 0
+  fi
+
+  if [ ! -f "$rationale" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR decision names a rationale that does not exist: ${rationale##*/}"
+    sdd_count_warning
+  elif [ "$links_rationale" = 0 ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR decision does not link its rationale: add '**Rationale:** [[$(basename "$rationale" .md)]]'"
+    sdd_count_warning
+  fi
+  sections_report "$tmp" "$file" "ADR decision" "warning" "" \
+    "${ADR_DECISION_SECTIONS[@]}"
+  report_misplaced "$tmp" "$file" \
+    "ADR decision carries rationale section(s), which belong in ${rationale##*/}" \
+    "${ADR_RATIONALE_SECTIONS[@]}"
+  check_foreign_ids "$tmp" "$file" "ADR decision" adr
+}
+
+check_adr_rationale() {
+  local file="$1" decision="${1%.rationale.md}.md"
+  sp_strip_to_tmp "$file" || return 0
+  local tmp="$SP_TMP"
+  if [ ! -f "$decision" ]; then
+    sdd_finding "warning" "sections-present" "$file" \
+      "ADR rationale has no decision beside it: ${decision##*/}"
+    sdd_count_warning
+  fi
+  sections_report "$tmp" "$file" "ADR rationale" "warning" "" \
+    "${ADR_RATIONALE_SECTIONS[@]}"
+  check_breaking_changes "$tmp" "$file"
+  report_misplaced "$tmp" "$file" \
+    "ADR rationale carries the decision, which belongs in ${decision##*/}" \
+    "${ADR_DECISION_SECTIONS[@]}"
+  check_foreign_ids "$tmp" "$file" "ADR rationale" adr
 }
 
 check_screen() {
@@ -463,6 +552,7 @@ check_screen() {
       "screen file carries a retired section: ## Instantiation — its declarations move to keyed ## Bindings rows"
     sdd_count_by_severity "$sev"
   fi
+  check_foreign_ids "$tmp" "$file" "screen file" screen
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -470,9 +560,9 @@ check_screen() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
-FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
-ADR_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/01_adr")"
-SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/05_screens")"
+FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
+ADR_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
+SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 if [ -n "$DOMAIN_SCOPE" ]; then
   while IFS= read -r action; do
@@ -498,6 +588,11 @@ if [ -n "$ADR_SCOPE" ]; then
     [ -z "$adr" ] && continue
     check_adr "$adr"
   done < <(sdd_find_adrs "$ADR_SCOPE")
+
+  while IFS= read -r rationale; do
+    [ -z "$rationale" ] && continue
+    check_adr_rationale "$rationale"
+  done < <(sdd_find_adr_rationales "$ADR_SCOPE")
 fi
 
 if [ -n "$SCREEN_SCOPE" ]; then

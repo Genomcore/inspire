@@ -4,13 +4,15 @@
     {
       "rule": "screen-coherence",
       "severity": "warning",
-      "message_substring": "screen id shape: 'users.roster' is neither 'users.list'"
+      "message_substring": "screen id shape: 'app.users.roster' is not '{face}.{slug}'"
     },
     {
       "rule": "screen-coherence",
       "severity": "warning",
-      "message_substring": "screen module mismatch"
+      "message_substring": "screen id names face 'nowhere', which no face declares"
     }
   ],
-  "forbidden": ["\"severity\":\"error\""]
+  "forbidden": [
+    "\"severity\":\"error\""
+  ]
 }

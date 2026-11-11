@@ -5,7 +5,8 @@
 
 The entry point for SDD-layer work on a module. It surfaces features that lack
 realizing specs and chains authoring into `/inspire-domain`. Scan is **read-only**
-with respect to `inspire_kb/04_domain/`; it never authors descriptors itself.
+with respect to the domain (`*.entity.md`, `*.action.md`); it never authors
+descriptors itself.
 
 ### Phase 1 — Environment setup
 
@@ -24,16 +25,17 @@ stay portable.
 ### Phase 2 — Candidate surfacing + narrowing
 
 Read the module's features:
-- `inspire_kb/02_modules/{module}.md` — the hub's overview and any action
-  declarations.
-- `inspire_kb/03_features/{module}/{use-case}.md` — feature descriptions and the
+- `inspire_kb/01_spec/_modules/{module}/{module}.module.md` — the hub's overview
+  and any action declarations.
+- every `*.feature.md` under the module's directory — feature descriptions and the
   actions they declare.
 
 For each declared action (e.g. `platform::actions::resolve`):
 - **Canonicalize plural → singular** (`platform::actions::resolve` →
   `platform::action::resolve`). This is a known layer-convention shift — apply it
   silently, don't surface it as a decision.
-- Check whether `inspire_kb/04_domain/{module}/{entity}/{action}.md` exists.
+- Check whether an action with that id exists (its descriptor is
+  `_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`).
 - If not, it's a candidate.
 
 Surface candidates and **dialogue** to narrow the set — one focused question at a
@@ -65,4 +67,4 @@ coherence conflicts (via `entity-coherence`). Render via
 [`_references/findings-format.md`](../../_references/findings-format.md).
 
 `scan {module}` batches over one module; `scan` without args batches over every
-module present in `inspire_kb/02_modules/`.
+module: every `*.module.md` under `inspire_kb/01_spec/`.

@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [ { "rule": "process-shape", "severity": "error", "message_substring": "process id 'nightly-close' is not {scope}.{process}" } ] }

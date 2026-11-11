@@ -9,6 +9,159 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.15.0 — 2026-11-11
+
+Upgrade with `/inspire:update`, then run `/inspire:migrate` once to move the knowledge
+base to `inspire_kb/01_spec/`. Use this version with INSPIRE Factory 0.14.0 or later:
+that Factory reads only the new layout and refuses a project on an older INSPIRE.
+
+### Breaking for existing vaults
+
+- **The specification lives in `inspire_kb/01_spec/`, organized by concept**
+  ([`adr-kb-structure`](docs/adr/adr-kb-structure.md)). The layered folders
+  (`01_adr` … `05_screens`) and the surface roster are gone, and every artifact is found
+  by its typed extension (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`,
+  `.adr.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`). A screen id becomes
+  `{face}.{slug}`; its `module:` and `screen:` do not change, so routes do not change.
+  `/inspire:update` moves nothing in `inspire_kb/`: run `/inspire:migrate`.
+- A project the Factory has already built runs the Factory's remap
+  (`orchestrator/src/remap.ts`) after the migration. It renames the citations and the
+  screen ids in the built code from `_migration/id-map.json`, commits that on a local
+  branch, and keeps every realized unit realized, so nothing already emanated is
+  emanated again.
+
+### Added
+
+- **`/inspire:migrate`** moves a layered KB to `01_spec/` in one step. It changes no id
+  but a screen's, records every screen id it changes in
+  `inspire_kb/01_spec/_migration/id-map.json`, and moves a layered `spec_root` to
+  `01_spec` in `emanate.yml` (`factory.spec_root`) or a remaining `emanate.json`.
+- **Faces, bundles and processes.** A face is what a kind of user sees, and holds its
+  screens; a bundle groups the actions a face can call, and a grouping bundle claims
+  them all with one `{bundle}/mount/every-action` claim; a process is a flow across
+  actions and carries claims like an action. `/inspire-surface` becomes
+  `/inspire-face`, which owns faces and bundles, and `/inspire-process` is new.
+- New validators: `spec-identity.sh` (no two artifacts of a type share an id, and no
+  id starts with `_`), `face-exposure.sh` (a screen uses no action outside its face's
+  bundles) and `process-shape.sh` (a process has a trigger, runs at least one action,
+  and affects only what its actions write).
+
+- **Every session starts with the project's live decisions.** The session-start hook
+  injects a digest of every ADR that is neither superseded nor rejected: its id,
+  maturity, faces, title and `## Decision` text, never its rationale.
+  `.inspire/bin/decisions.sh` prints the same digest for anything that runs agents
+  outside a session, and `--face <id>` narrows it to one face. The hook holds it
+  to 6,000 characters; past that it injects an index of the decisions and points to
+  the script. A project with no live ADR gets nothing.
+- **`/inspire-adr migrate`** splits each single-file ADR into its decision and its
+  rationale. `.inspire/bin/adr-split.sh` moves every line verbatim, and the skill then
+  offers to move any reasons left in `## Decision` to the rationale, word for word.
+  `/inspire:update` counts the single-file ADRs at the end of a run and offers the
+  migration; it never runs it.
+- **`CHANGED SINCE ENDORSED`**, a seventh `trust.sh report` group, also counted by
+  `--summary`. An endorsed artifact lands in it when a commit after the one that
+  recorded its current endorsement, or the working tree, changed it outside the
+  `endorsed:` and `produced:` blocks. Re-endorsing clears it. It is decided by git
+  history, never by comparing clocks, so rebases and merged branches don't
+  mislead it, and a date-only `at` written before 0.15.0 is checked the same way.
+- **A KB review after each commit.** After a `git commit` in a Claude Code
+  session, `post-commit.sh` reviews each KB file the commit contains, in every
+  layer, and reports the findings to the agent. It never blocks: the commit has
+  already happened. Before, prose findings and every finding outside `04_domain`
+  first appeared when a pull request was opened. `/inspire:update` registers it:
+  `dispatch.sh` now also runs on PostToolUse for Bash.
+- **The authoring skills check what they write.** `/inspire-domain`,
+  `/inspire-feature`, `/inspire-adr` and `/inspire-screens` run
+  `review.sh <file>` on each file they write, fix what it reports, then stamp it.
+  `_references/write-checks.md` says which findings to fix now and which to hand
+  to the operator.
+
+### Changed
+
+- **An ADR is two files.** `adr-{slug}.md` holds the decision: its status, blast
+  radius, modules and one or a few imperative statements. `adr-{slug}.rationale.md`
+  beside it holds the context, consequences, alternatives and related ADRs. The pair
+  shares one id, and `[[adr-{slug}]]` reaches the decision. At `implemented` both
+  files are immutable. `sections-present` checks each file of the pair, and keeps
+  checking a single-file ADR while reporting it, as a warning, as waiting for
+  `/inspire-adr migrate`. Run the migration once on an existing project to clear
+  those warnings.
+- **Each project models its own action verbs.** The verbs come from the
+  application's domain and are recorded in one ADR with the fixed id
+  `adr-action-verbs`. `/inspire-domain` reads it when it lands an action's verb,
+  falls back to `list` · `get` · `create` · `edit` · `delete` while the ADR does
+  not exist, and adds a new verb to it before the descriptor that uses it lands.
+  `/inspire-adr` documents the ADR as a named pattern. The generic rules stay: one
+  target object per action, plural verbs for reads that return many, singular verbs
+  for reads that return one, and a change the domain names gets its own verb.
+- `_references/conventions/rest.md` keys its success statuses on the default verbs,
+  and maps any other verb by what it does: creates a record → `201`, removes one →
+  `204`, otherwise `200`.
+- **A KB in another language gets the prose checks that don't depend on English.**
+  When `output_language` is not English, `prose-style.sh` runs R2 sentence length, R4
+  glossary synonyms and R5 paragraph length, checks R6 and R7 against the tokens
+  `00_bootstrap/style-tokens.md` declares, and its info note names the two checks it
+  skips: R1 and R3, which are English morphology. Before, it checked nothing.
+  `style-tokens.md` is a new KB file that ships empty and that `/inspire:update`
+  seeds; in English its rows add to the built-in R6 and R7 lists, and
+  `/inspire-bootstrap language` proposes rows in the project's language. R6's
+  `~~strikethrough~~` check runs in every language. R4 still ramps to an error on accepted and stable domain artifacts, so a
+  Spanish or Catalan KB that uses a rejected synonym can now fail a review. Outside
+  English, the sentence splitter uses a shorter abbreviation list without `no`, so
+  `no.` ends a Spanish sentence. In every language, R4, R6 and R7 treat an accented
+  letter as part of a word and match `ORGANIZACIÓN` to `organización`.
+- `trust.sh endorse` writes `at` to the second with its offset
+  (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
+- **An untested declared error blocks at `stable`, not `accepted`.**
+  `declared-errors-tested.sh` warns at `draft` and `accepted` and errors at `stable`.
+  An `accepted` contract is still being implemented, so a spec PR at that stage has no
+  code and cannot have tests yet. Before, an `accepted` descriptor with an untested
+  error failed pre-PR.
+
+- The wire conventions in `_references/conventions/` declare `kind: wire-convention`
+  (was `surface-convention`), and their error table is `## Error taxonomy → wire` with a
+  `Wire response` column. Nothing reads these names; "surface" now means a face.
+
+### Removed
+
+- **INSPIRE no longer checks the Factory's version.** `/inspire:init`, `/inspire:update`
+  and `/inspire-config` stop running `factory-check.sh` when they load, and
+  `factory-compat.json` and the script are gone. The Factory declares the oldest INSPIRE
+  it supports and refuses an older project itself, because it is the side that cannot
+  read what it does not know. The `factory` section of `emanate.yml` still needs Factory
+  0.13.0 or later.
+
+### Fixed
+
+- **A KB written in another language validates.** A heading is a section id, then
+  a label in the project's language: `## ENT4: Campos`. The id is capital letters then
+  digits, one series per format (`ENT` entity, `ACT` action, `UC` use case, `ADR`,
+  `SCR` screen, …), and every validator finds a section by it, never by the label. A
+  Spanish or Catalan KB failed every mandatory-section check before. The templates
+  and the seeded pattern entries ship every heading with its id and an English label
+  (`## ENT4: Fields`), and the authoring skills write that shape in every language.
+  The English name (`## Fields`) still reads as its section, so an existing KB keeps
+  validating, and `/inspire:update` counts those headings and recommends rewriting
+  them: `.inspire/bin/heading-keys.sh` adds the ids, and the skill then translates
+  the labels when `output_language` is not English. It never rewrites unprompted.
+  Translated table headers read correctly too: the domain readers took a Spanish
+  `| Campo | Tipo |` header row for a field named `Campo`, and the render check
+  lost its Component and Narrow columns once their headers were translated.
+- The action interview no longer imposes one platform's vocabulary (`deploy`,
+  `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
+  audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
+  has. Its pagination numbers went too: the wire convention owns pagination.
+- Re-endorsing an artifact the same day it was last endorsed wrote the same
+  bytes, so git recorded nothing and the endorsement looked as if it never
+  happened.
+- **No tests is not a pass.** With no test file at all, `criteria-have-tests.sh`
+  and `declared-errors-tested.sh` emitted one warning and stopped, so a project with
+  🟢 Implemented features or `stable` descriptors and zero tests passed pre-PR. Both
+  now emit one finding for every untested criterion or declared error in scope, an
+  error once a feature is past 🟡 Planned or a descriptor is `stable`. A missing test
+  scope counts as no test file, so a project with `stable` descriptors and no
+  `source/` now fails pre-PR too.
+
 ## 0.14.4 — 2026-11-09
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and

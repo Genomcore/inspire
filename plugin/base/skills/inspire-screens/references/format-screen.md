@@ -5,16 +5,16 @@ The format spec for screen files. SKILL.md owns the flows and the triangulation
 matrix; [`screen-lifecycle.md`](screen-lifecycle.md) owns the state machine; this
 file owns the on-disk shape.
 
-A screen file lives at `inspire_kb/05_screens/{module}/{screen}.md`, or at
-`05_screens/{surface}/{module}/{screen}.md` once the roster declares two or more UI
-surfaces ([`_references/surface-scope.md`](../../_references/surface-scope.md)).
+A screen file lives at `inspire_kb/01_spec/_faces/{face}/_screens/{slug}.screen.md`,
+in the face its id names ([`_references/face-scope.md`](../../_references/face-scope.md)).
+Tools find it by its `.screen.md` extension, never by its directory.
 **The path is where the file sits; the `id` is what the file is.**
 
 ## Canonical shape
 
 ```markdown
 ---
-id: users.list           # minted once, never re-derived from location
+id: admin.users-list     # {face}.{slug}, minted once, never re-derived from location
 module: users
 screen: list
 lifecycle: draft         # draft | accepted | stable | superseded
@@ -23,13 +23,13 @@ lifecycle: draft         # draft | accepted | stable | superseded
 # Users
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[../patterns/list]]
-**Layout:** [[../layouts/collection]]
-**Components:** [[../components/data-table]], [[../components/person-chip]]
+**Pattern:** [[list]]
+**Layout:** [[collection]]
+**Components:** [[data-table]], [[person-chip]]
 
 ## Purpose
 
-An administrator comes here to find one user among many. The roster leads, so
+An administrator comes here to find one user among many. The user list leads, so
 the first thing the reader sees is who exists in the workspace at all;
 everything else on the screen serves that search.
 
@@ -51,14 +51,14 @@ everything else on the screen serves that search.
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] param `id` | state `form-error` |
+| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[admin.user-detail]] param `id` | state `form-error` |
 | `delete` | [[auth.user.delete\|auth::user::delete]] | row action | refresh `main` | state `error` |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] param `id` | clicking a row |
+| `row` | [[admin.user-detail]] param `id` | clicking a row |
 
 ### States
 
@@ -91,45 +91,48 @@ reads them.
 
 ## Identity — the id is the referent
 
-1. **Default mint: `{module}.{screen}`.** The id is minted when the file is
+1. **The mint: `{face}.{slug}`.** The face is the one the screen belongs to; the
+   slug is the file's name without `.screen.md`. The id is minted when the file is
    created and is **write-once**: never re-derived from the file's location, never
-   edited afterwards.
-2. **Ids are unique KB-wide.** When a second surface needs a screen whose default
-   id is taken — `admin` and `portal` both wanting `users.list` — the *newcomer*
-   mints `{surface}.{module}.{screen}`. The screen already holding the id keeps it.
-   A surface split therefore moves files without touching a single id.
-3. **Move versus change.** Same `id`, new path: a **move** — claims and
-   fingerprints are stable and nothing re-emanates. Changed `id`: a **new
-   referent** — the old screen retires through its lifecycle and the new one enters
-   the frontier. There is no third case.
-4. **The module is referent, not position.** Re-homing a screen under another
-   module is a new referent, never a move: `module:` and the path's module
-   directory must agree, and the validator says so when they do not. Only the
-   surface placement is positional.
-5. **`screen:` is not the filename.** Both name the same thing at creation, and
-   they may diverge later without consequence: the file name is positional, and
-   renaming a file is a move. Route derivation reads the field, never the name.
+   edited afterwards. A slug never starts with `_`.
+2. **The slug is unique within the face,** so the id is unique across the KB. Two
+   faces may each hold a `users-list`: `admin.users-list` and
+   `portal.users-list` are two screens.
+3. **Move versus change.** Same `id`, new path or new file name: a **move** —
+   claims and fingerprints are stable and nothing re-emanates. Changed `id`: a
+   **new referent** — the old screen retires through its lifecycle and the new one
+   enters the frontier. There is no third case.
+4. **The face is referent, not position.** A screen belongs to the face its id
+   names, and its file sits in that face's `_screens/`. Taking a screen to another
+   face is a new referent, never a move: `create` it in the other face and
+   supersede the old one. When two faces need the same screen, each keeps its own,
+   and what they share becomes a layout or a pattern in `_design-system/`.
+5. **`module:` and `screen:` are written once too.** They give the route. Re-homing
+   a screen under another module changes its route, so it is a new referent.
+6. **`screen:` is not the slug.** `screen:` is unique within a module in one face
+   and is a route segment. The slug is unique within the face and is an identity.
+   A face with five detail screens has five `screen: detail` and five distinct
+   slugs (`study-detail`, `case-detail` …). Route derivation reads the field, never
+   the slug.
 
 ## Routes derive — nothing authors one
 
 A screen's route derives from its declared `module:` and `screen:` fields, exactly
-as an action id derives its endpoint. The default rendering is
-`/{module}/{screen}`; a UI surface contributes **only its shell prefix**
-(`{shell}/{module}/{screen}`), and every `path` parameter the screen declares
-appends one segment, in the order its `### Parameters` rows are written
-(`/users/detail/{id}`). The exact rendering — the parameter syntax included —
+as an action id derives its endpoint. The rendering is
+`{shell}/{module}/{screen}`, where `shell` is the `shell:` of the face's
+`{face}.face.md`, and every `path` parameter the screen declares appends one
+segment, in the order its `### Parameters` rows are written
+(`/admin/users/detail/{id}`). The exact rendering — the parameter syntax included —
 belongs to the framework profile, like every other binding convention.
 
-The id string is **not** a route input. A collision-minted `admin.users.list`
-(`module: users`, `screen: list`) still renders `/users/list` under the admin
-shell, with no doubled surface segment.
+The id string is **not** a route input. `admin.users-list` (`module: users`,
+`screen: list`) renders `/admin/users/list`: the face appears once, as the shell,
+and the slug never appears.
 
-Consequences worth stating plainly: a route and an id can never disagree, because
-there is no second place to write a route down; and moving or reusing a screen
-across UI surfaces is free and declaration-only — the id, the route and every claim
-survive the move, and the surface list is the only edit. Screen files therefore
-carry **no route text**: not in the H1, not in a section of their own. The derived
-map is rendered on demand by `/inspire-screens routes`.
+A route and an id can never disagree, because there is no second place to write a
+route down. Screen files therefore carry **no route text**: not in the H1, not in a
+section of their own. The derived map is rendered on demand, per face, by
+`/inspire-screens routes`.
 
 ## Lifecycle
 
@@ -144,9 +147,14 @@ the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md)
 | Line | Required | What it declares |
 |---|---|---|
 | `**Features:**` | yes | the feature ids this screen realizes, comma-separated |
-| `**Pattern:**` | no | one repeatable structure, as a wikilink into `patterns/` |
-| `**Layout:**` | no | the page frame it sits in, as a wikilink into `layouts/` — or every frame, outermost first, when one nests inside another |
-| `**Components:**` | no | the shared components this screen instantiates, as wikilinks into `components/` |
+| `**Pattern:**` | no | one repeatable structure: a `*.pattern.md` entry, linked by bare id (`[[list]]`) |
+| `**Layout:**` | no | the page frame it sits in: a `*.layout.md` entry by bare id — or every frame, outermost first, when one nests inside another |
+| `**Components:**` | no | the shared components this screen instantiates: `*.component.md` entries by bare id |
+
+Catalog links are bare ids, never relative paths: the id is what a link means, and
+the directory is for people. A linked entry that does not exist yet is created in
+the same turn from its template, at `**State:** to-extract`
+([`screen-catalog.md`](screen-catalog.md)).
 
 `**Pattern:**` and `**Layout:**` are **peer presentation dependencies**, not the
 screen's definition: they constrain presentation and nothing else, and a screen
@@ -157,8 +165,8 @@ is a rebuild the implementer has to invent. `**Pattern:**`, `**Layout:**` and
 `**Components:**` are **ordering edges** for INSPIRE Factory: a shared pattern,
 layout and component are units it emanates too, so a screen declaring them waits
 for their wave instead of waiting for someone to build them by hand first. The
-surface shell needs no line: it frames every route, so every screen waits for
-`layouts/shell` once that entry exists.
+face shell needs no line: it frames every route, so every screen waits for its
+face's shell layout once that entry exists.
 
 ## `## Purpose` — who comes here, and what for
 
@@ -214,7 +222,12 @@ a screen-local key**:
   duplicate.
 - **Navigation targets name screens by id**, never by route or path. Screen-id
   wikilinks resolve through the id index in `.inspire/bin/wikilinks-resolve.sh`,
-  so a positional file name never has to match one.
+  so a positional file name never has to match one. A target that does not exist
+  yet is created in the same turn from
+  [`screen.template.md`](../templates/screen.template.md), at `lifecycle: draft`.
+- **Every bound action is exposed to the face.** An action a `### Data` or
+  `### Dispatches` row binds belongs to a bundle the face lists in `bundles:`.
+  `.inspire/bin/face-exposure.sh` checks it.
 - **A state's `When` must reference something declared** — a data key, a dispatch
   key, a parameter key, or a deviation. A free-floating state is a finding. The reference anchors
   **only through backticks**: `` `main` returns zero rows `` anchors on the data
@@ -254,7 +267,7 @@ them. One row per input:
   a parameter names it in its cells (`filtered by param \`q\``) and must name one
   this screen declares. A transition that passes one — a `### Navigation`
   target, or a `→ [[{screen-id}]]` dispatch outcome — writes it after the link
-  (`[[users.detail]] param \`id\``), and it must be one the **target** declares.
+  (`[[admin.user-detail]] param \`id\``), and it must be one the **target** declares.
   Write the token once per parameter.
 - **A screen with no URL reads the same table.** On a native target the rows
   are the screen's typed inputs — the arguments its navigation passes —
@@ -283,9 +296,9 @@ Four rules hold it:
 - **Every value the screen shows has a row.** A value named only in prose — a
   column list in a sentence — leaves the implementer to pick a treatment, and the
   one they pick is the generic one.
-- **Every component it names has an entry.** Name a component that
-  `components/` does not hold, and write its entry at `**State:** to-extract` in
-  the same turn ([`screen-catalog.md`](screen-catalog.md)).
+- **Every component it names has an entry.** Name a component that has no
+  `{name}.component.md`, and write its entry at `**State:** to-extract` in the same
+  turn ([`screen-catalog.md`](screen-catalog.md)).
 - **Every glyph is named.** `lucide-folder`, never "a folder icon" or "the resource
   icon".
 - **No measurement of the frame.** A width, a padding or a gap of a region belongs
@@ -342,6 +355,8 @@ handed an empty section:
 | Old shape | New shape |
 |---|---|
 | no frontmatter at all | the identity block — `id` · `module` · `screen` · `lifecycle` |
+| an id shaped `{module}.{screen}` or `{surface}.{module}.{screen}`, from a layered KB | `{face}.{slug}`, written once by `/inspire:migrate`, which records every change in `_migration/id-map.json`; never hand-edited |
+| a path-shaped catalog link (`[[../patterns/list]]`) | the bare id (`[[list]]`) |
 | the route in the H1 (`# Users — \`/users\``) | the H1 is the title alone; the route derives |
 | `**Pattern:** bespoke` | omit the line; a screen with no shared layout declares none |
 | `## Instantiation` prose ("**Data:** the user entity") | `## Bindings`, keyed, one row per declaration |

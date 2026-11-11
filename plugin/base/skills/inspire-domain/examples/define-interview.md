@@ -7,10 +7,10 @@ operator: /inspire-domain define auth::user::create
 
 agent:    [Step 0 — authoring context: fresh authoring of an action.
            Step 1 — reads references/interview-prompts-action.md.
-           Grounds: reads inspire_kb/02_modules/auth.md, finds the feature
-           row; reads adr-auth-01]
+           Grounds: reads the auth module hub (auth.module.md), finds the feature
+           row; reads adr-identity-model]
           "Got it — this is the user-provisioning entry point. Looking at the
-           feature it sources from [[adr-auth-01-identity-model]] and the
+           feature it sources from [[adr-identity-model]] and the
            Account provisioning section. Quick question before I draft anything:
            the action takes an email + password, but should it also accept a
            pre-set role, or is role assignment a separate action?"
@@ -46,14 +46,14 @@ agent:    [updates the descriptor, showing the change as a unified diff]
 
 operator: "Yes, write it."
 
-agent:    [writes inspire_kb/04_domain/auth/user/auth.user.create.md]
+agent:    [writes inspire_kb/01_spec/_modules/auth/_domain/user/user.create.action.md]
           "Done. Now reconciling the auth::user entity document —
            refreshing its Fields + Touched by tables from every action
            that touches it. Show you the diff before writing?"
 
 operator: "Yes."
 
-agent:    [shows the auth.user.md diff, waits for ok, writes]
+agent:    [shows the user.entity.md diff, waits for ok, writes]
           "Consolidated. The descriptor + entity document are staged."
 ```
 
@@ -63,7 +63,7 @@ agent:    [shows the auth.user.md diff, waits for ok, writes]
 - **No decision trees, no numbered options.** Even when the answer could have been a closed set, the agent left it open until the operator's framing made the choice obvious.
 - **Show-then-approve, not propose-then-explain.** The descriptor draft was shown directly. Justification only when the operator pushed back.
 - **Iteration is in-line.** "Add a created_by field" was handled as a small edit, not as a "want me to revise?" gate.
-- **Consolidation runs by default after approval**, with a show-then-approve gate on the reconciled `{module}.{entity}.md` entity document (Fields + Touched by tables refreshed; operator-authored sections preserved) before it lands.
+- **Consolidation runs by default after approval**, with a show-then-approve gate on the reconciled `{entity}.entity.md` entity document (Fields + Touched by tables refreshed; operator-authored sections preserved) before it lands.
 - **The machine-readable parts came out of ordinary dialogue.** The operator said "administrators only" and "12 to 128"; the agent turned those into `P1` — actor(admin) and `Constraints: `len(12, 128)``. Nobody was asked to speak in vocabulary — that translation is the agent's job, and pushing the vocabulary at the operator is its own kind of drift.
 
 ## Cross-document capture in action
@@ -71,10 +71,10 @@ agent:    [shows the auth.user.md diff, waits for ok, writes]
 ```
 operator: "Also track the last successful login on the user."
 
-agent:    [updates inspire_kb/04_domain/auth/user/auth.user.create.md — adds a
+agent:    [updates .../_domain/user/user.create.action.md — adds a
            `last_login_at` row to its ## Entities field-touch table with
            effect: written, mapping `null` (set later by sign-in flow)]
-          [updates inspire_kb/04_domain/auth/user/auth.user.md — adds `last_login_at`
+          [updates .../_domain/user/user.entity.md — adds `last_login_at`
            to ## Fields and surfaces the rationale prompt]
           "Added `last_login_at` (timestamp, nullable) to both files. The
            entity doc's rationale needs a line on why this lives on

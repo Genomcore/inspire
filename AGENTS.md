@@ -14,13 +14,17 @@ repo is both its source and its own marketplace.
 - `plugin/` — the distributable plugin:
   - `plugin/.claude-plugin/plugin.json` — the runtime **release identity**
     (`version` + `released`).
-  - `plugin/skills/{init,update}/` — the only **live** skills, installed with the
-    plugin itself: `/inspire:init` (materialize the runtime into a project, once)
-    and `/inspire:update` (**upgrade from any released version**, in one command —
+  - `plugin/skills/{init,update,migrate}/` — the only **live** skills, installed
+    with the plugin itself: `/inspire:init` (materialize the runtime into a project,
+    once), `/inspire:update` (**upgrade from any released version**, in one command —
     it detects the installed version, replays the layout hops between there and
-    here, and merges content per file, never overwriting a locally-edited one).
-    A pre-0.3 project is the longest chain. The run ends by offering the trust
-    report: an upgrade diverges skills en masse.
+    here, and merges content per file, never overwriting a locally-edited one; a
+    pre-0.3 project is the longest chain, and the run ends by offering the trust
+    report: an upgrade diverges skills en masse) and `/inspire:migrate` (moves a KB
+    written in the layered layout — `01_adr` … `05_screens` and the surface roster —
+    to the concept layout under `inspire_kb/01_spec/`, once and on purpose; the
+    engine is `plugin/scripts/migrate-kb.sh`). An update never moves the KB: a
+    layered KB gets a warning pointing at `/inspire:migrate`, and no `01_spec/`.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
@@ -61,11 +65,12 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 20 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
       judgment half of the runtime, in three families:
-      - **Specification** (7) — capture what the product is and why: `module` ·
-        `feature` · `domain` · `screens` · `prototype` (horizontal mock) · `spike`
-        (external verticals) · `adr`.
+      - **Specification** (8) — capture what the product is and why: `module` ·
+        `feature` · `domain` · `process` (work that runs on a trigger, with nobody
+        behind it) · `screens` · `prototype` (horizontal mock) · `spike` (external
+        verticals) · `adr`.
       - **Codification** (6) — coding itself runs in INSPIRE Factory; what ships
         here is what it reads. Six **stack skills** — `inspire-code-react` ·
         `inspire-code-nestjs` · `inspire-code-angular` · `inspire-code-ios` ·
@@ -89,9 +94,8 @@ repo is both its source and its own marketplace.
         INSPIRE Factory reads to run a project — image, services, env, setup and
         phases of checks — derived from `stack.md` and the stack skills and checked
         with the Factory's own reader; `init` · `review`),
-        `surface` (the suite's surface roster and its lifecycle — `add`
-        greenfield/split/adopt · `retire` · `review`; owns
-        `00_bootstrap/surfaces.md`), `extract` (brownfield onboarding — fan out
+        `face` (faces and bundles — `add` · `retire` · `review`; the only skill
+        that writes `{face}.face.md` and `{bundle}.bundle.md`), `extract` (brownfield onboarding — fan out
         scanners over an existing codebase into KB candidates), `task` (the ticket
         tracker), `workspace` (the pre-PR global review + vault structure; its
         report's `## Signals` section carries the trust report — measurements,
@@ -100,8 +104,8 @@ repo is both its source and its own marketplace.
         instructions that teach the skills how to behave in this project;
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
-        `inspire-*` skill dirs (`surface-scope.md`, `trust-stamps.md`,
-        `keyed-heads.md`, `stack-skills.md`); it is
+        `inspire-*` skill dirs (`face-scope.md`, `trust-stamps.md`,
+        `write-checks.md`, `keyed-heads.md`, `stack-skills.md`); it is
         **not** matched by an `inspire-*` glob.
     - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
       definitions, materialized where Claude Code discovers them and merged with
@@ -120,10 +124,12 @@ repo is both its source and its own marketplace.
       shipped shell an operator never touched and keeps an edited one.
     - `base/bin/` → `.inspire/bin/` — the validators + a README: the mechanical
       half, promoted to a real top-level directory in a materialized project so
-      CI never depends on a path inside `.claude/`. Spec root is configurable via
-      `SDD_SPEC_ROOT` (defaults to `inspire_kb/04_domain`); the rules that check the
-      other KB layers read `SDD_KB_ROOT` instead, `screen-coherence.sh` among them —
-      screen identity, keyed bindings and the screen↔layout join. `trust.sh` is here as a
+      CI never depends on a path inside `.claude/`. Every finder is one recursive
+      search for a typed extension under `SDD_SPEC_ROOT` (defaults to
+      `inspire_kb/01_spec`); no rule reads the directory a file sits in.
+      `screen-coherence.sh` checks screen identity (`{face}.{slug}`), keyed bindings
+      and the screen↔layout join; `spec-identity.sh`, `face-exposure.sh` and
+      `process-shape.sh` check ids, the actions a face's bundles expose, and processes. `trust.sh` is here as a
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
@@ -136,35 +142,44 @@ repo is both its source and its own marketplace.
       correct on its own and in three forms — every rule, one rule
       (`run-tests.sh <rule>`), or named scenarios of one
       (`run-tests.sh <rule> <scenario>…`). `plugin/test/run.sh` drives it one
-      rule at a time plus its two hand-wired siblings, and uses the third form
+      rule at a time plus its six hand-wired siblings, and uses the third form
       to shard the rules with many fixtures across several jobs.
-    - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two are
-      registered in a materialized project's `.claude/settings.json`
-      (`session-start.sh`, `dispatch.sh`), each tagged `# INSPIRE-MANAGED`;
-      `pre-commit.sh` and `pre-pr.sh` still ship as files but are invoked *by*
-      `dispatch.sh` rather than registered directly. `session-start` injects the
-      project's `output_language` — and the runtime version from `.inspire.lock`
-      — into every session.
+    - `base/hooks/` → `.claude/inspire/hooks/` — enforcement hooks. Only two
+      scripts are registered in a materialized project's `.claude/settings.json`,
+      each tagged `# INSPIRE-MANAGED`: `session-start.sh` on SessionStart, and
+      `dispatch.sh` on both PreToolUse and PostToolUse for Bash. `pre-commit.sh`,
+      `pre-pr.sh` and `post-commit.sh` ship as files and are invoked *by*
+      `dispatch.sh`, which routes on the event and the command: the two `pre-`
+      checks can block, and `post-commit.sh` reviews the KB files a commit
+      contains and reports to the agent without blocking. **No INSPIRE hook runs
+      on each file edit**, and none should be added: it slows every write, and
+      fixing a finding is itself an edit, so the hook fires again and can loop.
+      The authoring skills check each file they write instead
+      (`_references/write-checks.md`). `session-start` injects the
+      project's `output_language`, the runtime version from `.inspire.lock` and
+      the decision digest `base/bin/decisions.sh` prints — every live ADR's
+      `## Decision`, held to a budget — into every session.
     - `base/kb/` → `inspire_kb/` — the **knowledge-base skeleton**: the navigable
-      graph a project fills in. One layer per skill (`00_bootstrap`, `01_adr`,
-      `02_modules`, `03_features`, `04_domain`, `05_screens`, `06_spikes`,
-      `98_lessons`, `99_tracker`); each folder carries a README explaining its
-      purpose and layout. The KB has a **second scoping axis besides the module**:
-      a product delivered through several UIs and/or services is a **suite** of
-      **surfaces** (`ui` · `headless` · `lib`), declared in the authored — never
-      seeded — roster `00_bootstrap/surfaces.md`. Artifacts that *span* surfaces
-      (ADRs, features, pattern/component entries, tickets) declare a blast radius
-      in a `surfaces:` frontmatter field, where absent means suite-wide; screens
-      instead scope *positionally*, splitting to
-      `05_screens/{surface}/{module}/{screen}.md` once 2+ UI surfaces exist — while
-      their identity does not move with them: a screen carries a write-once
-      `id`/`module`/`screen`/`lifecycle` block, declares its own keyed `## Bindings`,
-      and derives its route from `module` + `screen`, so a move is free. The
-      `04_domain` tree is never surface-scoped — one domain truth spans the whole
-      suite — and a project that declares no surfaces is a suite-of-one whose KB is
-      byte-identical to one written before surfaces existed. See
-      [docs/adr/adr-suites-and-surfaces.md](docs/adr/adr-suites-and-surfaces.md);
-      the runtime rules live in `base/skills/_references/surface-scope.md`.
+      graph a project fills in. `00_bootstrap` (stack, project, glossary, semantic
+      types, style tokens), **`01_spec`** — the specification, one directory per
+      concept: `_adr/` (global ADRs), `_design-system/` (design system, tokens, theme,
+      components, layouts, patterns), `_modules/{m}/` (hub, `_adr/`, `_features/`,
+      `_domain/`, `_processes/`), `_bundles/`, `_faces/{f}/` (face file, tokens, `_adr/`,
+      `_screens/`, `_processes/`) and `_processes/` — then `06_spikes`, `98_lessons`
+      and `99_tracker`. Every specification file carries a typed extension
+      (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`, `.adr.md`,
+      `.adr.rationale.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`,
+      `.component.md` · `.layout.md` · `.pattern.md`, `{type}.template.md`), is found by
+      it and linked by id; the extension is never part of an id. Four concepts: a
+      **module** is a slice of the domain, a **bundle** is the unit of exposure (which
+      actions a package publishes), a **face** is what a person uses (screens, shell,
+      package, tokens, the bundles it uses), a **process** runs on a trigger. A
+      screen's id is `{face}.{slug}`; its route still derives from `module` +
+      `screen`. Global artifacts declare a blast radius in `faces:` / `bundles:`
+      (absent = the whole project). See
+      [docs/adr/adr-kb-structure.md](docs/adr/adr-kb-structure.md) (it supersedes
+      adr-suites-and-surfaces); the runtime rules live in
+      `base/skills/_references/face-scope.md` and `base/kb/01_spec/README.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
       in afterwards by `/inspire-bootstrap init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.
@@ -225,8 +240,8 @@ project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
 `.claude/inspire/hooks/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
-`05_screens/design-system.md` from `00_bootstrap/theme.md` (and
-`05_screens/design-tokens.json` from `theme.tokens.json` beside it), and writes
+`01_spec/_design-system/design-system.md` from `theme.md` beside it (and
+`design-system.tokens.json` from `theme.tokens.json`), and writes
 `.inspire.lock`. It never deletes or rewrites unrelated content, and it is safe to
 run only once per project — `.inspire.lock`'s presence is the guard; from then on,
 `/inspire:update` upgrades the project to the installed plugin's version, from

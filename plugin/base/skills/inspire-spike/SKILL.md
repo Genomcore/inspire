@@ -27,7 +27,7 @@ asymmetry is central to `capture` below.
 Give the spike an identity in the vault and set up its learnings hygiene.
 
 1. **Identify + reference.** Create `06_spikes/{name}.md` from
-   [`templates/spike.md.template`](templates/spike.md.template) (kebab-case): the
+   [`templates/spike.template.md`](templates/spike.template.md) (kebab-case): the
    **repo link**, the question it probes, its scope, and the feature ids it covers.
 2. **Inspect the spike repo's learnings hygiene.** Look at its `CLAUDE.md` (or
    equivalent) for a **structured way to record learnings**. If there is one, note
@@ -53,8 +53,9 @@ here?
      `register`) → import it.
    - Otherwise → read the external codebase around the **relevant feature** of the
      current project and infer what it demonstrates.
-2. **Diff spike ↔ vault** across the relevant levels — features (`03_features`),
-   contracts (`04_domain`), screens (`05_screens`), decisions (`01_adr`). Where does
+2. **Diff spike ↔ vault** across the relevant levels of `inspire_kb/01_spec/` —
+   features (`*.feature.md`), contracts (`*.entity.md`, `*.action.md`), screens
+   (`*.screen.md`), processes (`*.process.md`), decisions (`*.adr.md`). Where does
    the spike prove, contradict, or extend what our vault says?
 3. **Separate the signal from the roughness.** A vertical spike is built to answer
    **one hard question** and is usually crude on the common concerns — no real
@@ -66,7 +67,9 @@ here?
    even if the external repo disappears — and route the actionable ones to the vault:
    a validated approach → an ADR can advance to `prototyped`
    ([`/inspire-adr promote`](../inspire-adr/SKILL.md)); a proven capability → a
-   feature/contract via `/inspire-feature` / `/inspire-domain`.
+   feature/contract via `/inspire-feature` / `/inspire-domain`. A learning that
+   links a feature, action or screen the vault does not have yet creates that file
+   as a draft from its template, through the skill that owns it.
 5. **Record the outcome:** promote to a spec/ADR, feed the horizontal prototype,
    park it, or mark it archived — keep the learnings either way.
 

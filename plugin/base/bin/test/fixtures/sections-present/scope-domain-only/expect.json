@@ -1,6 +1,8 @@
 {
   "exit": 1,
-  "args": ["spec/sdd"],
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain"
+  ],
   "findings": [
     {
       "rule": "sections-present",
@@ -8,5 +10,9 @@
       "message_substring": "entity document missing required section(s): Touched by"
     }
   ],
-  "forbidden": ["use-case file", "ADR missing", "screen file"]
+  "forbidden": [
+    "use-case file",
+    "ADR missing",
+    "screen file"
+  ]
 }

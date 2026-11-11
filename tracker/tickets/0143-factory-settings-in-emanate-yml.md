@@ -57,6 +57,9 @@ Today `/inspire-config` says that `emanate.json` is not its file and reads `base
 
 ## Notes
 
+- 2026-11-10, with Darío and Quim: the Factory version check this ticket added
+  (`factory-compat.json`, `factory-check.sh`) is removed in 0.15.0. The Factory declares
+  the oldest INSPIRE it supports instead (`B1-kb-structure`).
 - Close this ticket when the plugin version that carries the change is released. The
   Factory's version decides when that is, not the date of the merge.
 - `B1-config-replaces-bootstrap` described the Factory's old settings file in its section on

@@ -92,7 +92,7 @@ observer, keyed by `id` and the date prefix, not inside the fork.
 ## Enums
 
 - **`skill`**: `bootstrap | module | feature | domain | screens | prototype | spike |
-  adr | code | extract | task | workspace | lesson | surface |
+  adr | code | extract | task | workspace | lesson | face | process |
   config`, or `runtime` for
   cross-cutting lessons (install, hooks, validators, the methodology itself).
 - **`category`** — why the lesson exists (descriptive, for the observer's clustering):

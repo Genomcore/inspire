@@ -22,7 +22,7 @@
 #
 # Usage:
 #   .inspire/bin/field-coverage.sh                  # scan whole tree
-#   .inspire/bin/field-coverage.sh inspire_kb/04_domain/auth    # scoped scan
+#   .inspire/bin/field-coverage.sh inspire_kb/01_spec/_modules/auth    # scoped scan
 
 set -uo pipefail
 
