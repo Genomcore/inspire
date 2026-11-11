@@ -14,7 +14,7 @@ served only to the units whose stack includes that id. The id can name anything 
 project declares in `00_bootstrap/stack.md`'s `profiles:` — a framework (`nestjs`,
 `react`), a language (`typescript`), a database (`postgres`) or a single library —
 and the skill's own name does not matter. Stack skills are **data the coding agent
-reads** — they never change the fact that the KB (`00_bootstrap` → `04_domain`) is
+reads** — they never change the fact that the KB (`00_bootstrap` and `01_spec`) is
 the source of truth.
 
 `profiles:` is the only source of a project's stack: nothing is inferred from
@@ -42,11 +42,11 @@ A framework skill names its language in a `language:` frontmatter field
 (`inspire-code-react` and `inspire-code-nestjs` both declare `language: typescript`),
 and **a unit built under a framework skill also gets the language skill it names**.
 A language id may also be declared directly in `stack.md`'s `profiles:` — a library
-surface with no framework has nothing else to name. A skill with no `layer:` (a
+bundle with no framework has nothing else to name. A skill with no `layer:` (a
 database, a library) is served to every unit whose stack names its id.
 
 The axis exists because rendering is a property of the language, not of the
-framework: a React surface and a NestJS service on the same TypeScript stack must
+framework: a React face and a NestJS service on the same TypeScript stack must
 render `timestamp` identically or their wire contract is a lie. It is one third of a
 three-way split, the other two of which live outside the stack skills entirely:
 
@@ -105,18 +105,18 @@ tools and rules only — never an org's server or pipeline.
 ## Build & verify
 The concrete lint / type-check / build / test commands, so nobody has to guess them.
 
-## Bindings                # seed — how an action id becomes an invocable surface
+## Bindings                # seed — how an action id becomes invocable
 The convention that turns `{module}::{entity}::{verb}` into a route / command / tool
 name, and the actor constraint into a guard. Derived, never authored per action.
-A skill whose surface exposes nothing says so.
+A skill whose stack exposes nothing says so.
 
 ## Routes                  # seed — UI skills only
-How a screen's `module:` + `screen:` frontmatter becomes a route, and what a surface
+How a screen's `module:` + `screen:` frontmatter becomes a route, and what the face's
 shell contributes. Never derived from a file path or from the screen's id string.
 
 ## Persistence             # seed — how state is stored, or "not applicable"
 ORM, entity→table and field→column naming, keys, and the append-shaped migration
-rule. A surface that stores nothing states that instead.
+rule. A stack that stores nothing states that instead.
 
 ## Declaration-only tree
 How this stack yields a bodies-stripped tree for the test phase's worktree.
@@ -167,7 +167,7 @@ written until the project edits it. The shipped `react` and `nestjs` skills carr
 defaults — a REST shape, a route shape, an ORM — purely as **seeds**: a starting
 convention so a fresh project is not asked to invent one. Every consumer reads
 whatever the skill declares, so editing a seed changes the emitted code and
-nothing else. An undeclared convention is a readiness refusal for that surface,
+nothing else. An undeclared convention is a readiness refusal for that unit,
 never a fallback to something INSPIRE picked.
 
 **Your edit to a seed survives `/inspire:update`.** These files *are* shipped, so

@@ -2,7 +2,7 @@
 
 The format spec for entity documents. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An entity document lives at `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — one fewer dotted segment than the action filenames sharing the directory. Segment count is what tells the tooling the two object kinds apart.
+An entity document lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md`, in the same directory as the action descriptors of that entity (`{entity}.{action}.action.md`). The typed extension is what tells the tooling the two object kinds apart. The id is the frontmatter `id:` (`auth.user`, read as `auth::user`), and a wikilink names it as `[[auth.user|auth::user]]`.
 
 The entity document is a **design-discipline artefact** — it captures *why* this entity exists as a discrete object and *what motivates* its field shape — not a thin projection of the actions that touch it.
 
@@ -23,7 +23,7 @@ Operator-facing prose stating what this entity is and why it exists as a discret
 feature/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic wikilinks throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
 
 ## Invariants
-- `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [[adr-auth-01-identity-model]] scopes principals to an org.
+- `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [[adr-identity-model]] scopes principals to an org.
 - `I2` — A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.
 
 ## Fields
@@ -50,7 +50,7 @@ Per-field rationale follows the Constraints line, in prose, with inline wikilink
 ### password_hash
 Constraints: `nonnull`
 
-Use the per-field H3 for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline wikilink to [[adr-auth-02-password-hashing]].
+Use the per-field H3 for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline wikilink to [[adr-password-hashing]].
 
 ### created_at
 Constraints: `nonnull, immutable, default(now)`

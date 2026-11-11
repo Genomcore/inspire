@@ -62,6 +62,8 @@ warning explicitly.
 | a review `skills` name with no `.claude/skills/<name>/SKILL.md` committed, and not a factory skill | error | the runner stops before the release |
 | a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
 | a review check without `focus` | warning | the reviewer judges every rule it was given |
+| a `factory.model`, `review_model` or `subagent_models` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
+| `.inspire/emanate.json` still on disk | error | the factory refuses the project until its keys move under `factory` ([`derive.md`](derive.md) § Migrating `emanate.json`) |
 
 ## 3. The image probe (optional)
 
@@ -83,13 +85,13 @@ Never start a service to try its healthcheck: services are the factory's, starte
 fresh for each unit. A wrong healthcheck surfaces in the run's first 60 seconds,
 and its message names it.
 
-## 4. Commit, then hand over
+## 4. Hand over
 
-The factory clones the project's **base branch** and reads the file committed
-there. The working tree never reaches it. The base branch is `base_branch` in
-`.inspire/emanate.json`: `main` when the key or the file is absent, the current
-branch when it is `null`. A file that is not committed passes the launcher and
-then stops the run with
+A run reads `.inspire/emanate.yml` from its clone of `factory.base_branch` (`main`
+when the key is absent), so the file must be **committed on that branch** before the
+run: an uncommitted edit does not reach it. Only `base_branch` is read from the
+working tree, because the factory needs it to choose the branch to clone. A missing
+file stops the run with
 `.inspire/emanate.yml is missing: commit the project configuration (see emanate.example.yml)`.
 
 The operator commits; offer the command, never run it unasked. Then close with:

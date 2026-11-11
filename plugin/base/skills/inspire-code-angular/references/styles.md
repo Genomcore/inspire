@@ -5,7 +5,7 @@ package** (colors, typography, spacing, breakpoints, layout — imported here as
 `<design-system>/styles/...`; substitute the project's actual package) plus
 **app-specific globals** (`src/assets/styles/`). Concrete token values (brand
 colors, exact scales) live in the project's design system —
-`05_screens/design-system.md` is the source of truth; the values shown here
+`inspire_kb/01_spec/_design-system/design-system.md` is the source of truth; the values shown here
 are the token *roles* and naming conventions. Examples use the `app-` BEM
 class prefix — the project declares its own.
 

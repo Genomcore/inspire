@@ -212,7 +212,7 @@ several kinds, and a rule that is right for a `## Purpose` paragraph is wrong fo
 |---|---|---|
 | **Normative prose** | `## Purpose`, `## Rationale`, `## Behavior`, `## Context`, `## Decision`, `## Consequences`, feature descriptions, screen prose | R1 · R2 · R3 · R4 · R5 · R6 · R7 |
 | **Acceptance criteria** | feature `## Acceptance criteria` | R1 · R2 · R3 · R4 · R6 · R7, and each criterion states an observable outcome — see below |
-| **Tabular / structured** | `## Inputs`, `## Outputs`, `## Entities` field tables, `## Fields`, roster and coverage tables | R3 · R4 · R6 · R7 (cells are fragments, so R1, R2 and R5 do not apply) |
+| **Tabular / structured** | `## Inputs`, `## Outputs`, `## Entities` field tables, `## Fields`, inventory and coverage tables | R3 · R4 · R6 · R7 (cells are fragments, so R1, R2 and R5 do not apply) |
 | **Machine-read tokens** | frontmatter keys and enum values, wikilink targets, identifiers, filenames, code fences | nothing — [`output-language.md`](output-language.md) governs these |
 
 **R8 is absent from that table on purpose.** Every other rule reads one sentence,
@@ -237,7 +237,7 @@ points at the owner and does not restate the rule, so there is one place to chan
 
 | Layer | Local rule | Owner |
 |---|---|---|
-| `05_screens` — screens, patterns, components | the no-ASCII-layout rule | [`inspire-screens/SKILL.md`](../inspire-screens/SKILL.md) § Rules |
+| `01_spec/_faces/*/_screens/` and `01_spec/_design-system/` — screens, patterns, components | the no-ASCII-layout rule | [`inspire-screens/SKILL.md`](../inspire-screens/SKILL.md) § Rules |
 | `98_lessons` | one line, atomic | [`inspire-lesson/SKILL.md`](../inspire-lesson/SKILL.md) § Rules |
 
 ## Historical language — the specifics

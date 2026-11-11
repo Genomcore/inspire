@@ -9,9 +9,6 @@ sdd_require_tools || exit 127
 sdd_init_counters
 
 SCOPE="${1:-}"
-SCREENS_ROOT="$SDD_KB_ROOT/05_screens"
-LAYOUTS_DIR="$SCREENS_ROOT/layouts"
-COMPONENTS_DIR="$SCREENS_ROOT/components"
 
 emit() {
   sdd_finding "warning" "screen-presentation" "$1" "$2"
@@ -66,7 +63,7 @@ source_kind() {
   local source
   source="$(printf '%s' "$1" | tr -d '`' | tr '[:upper:]' '[:lower:]')"
   case "$source" in
-    *design-system.md*|*design-tokens.json*) printf 'decided' ;;
+    *design-system.md*|*tokens.json*) printf 'decided' ;;
     reference|prototype) printf 'reference' ;;
     generated) printf 'generated' ;;
     undecided) printf 'undecided' ;;
@@ -90,9 +87,9 @@ check_sourced_table() {
     kind="$(source_kind "$source")"
     case "$kind" in
       missing)
-        emit "$file" "layout $section: row '$label' carries no Source — design-system.md, design-tokens.json, reference, generated, undecided or as {layout}" ;;
+        emit "$file" "layout $section: row '$label' carries no Source — design-system.md, design-system.tokens.json, reference, generated, undecided or as {layout}" ;;
       unknown)
-        emit "$file" "layout $section: row '$label' has Source '$source', outside the closed vocabulary (design-system.md §… | design-tokens.json | reference | generated | undecided | as {layout})" ;;
+        emit "$file" "layout $section: row '$label' has Source '$source', outside the closed vocabulary (design-system.md §… | design-system.tokens.json | reference | generated | undecided | as {layout})" ;;
       generated|undecided)
         open_rows="$open_rows '$label' ($kind)"
         open_n=$((open_n + 1)) ;;
@@ -128,8 +125,8 @@ check_screen_layout() {
     [ -n "$pattern" ] && emit "$file" "screen names pattern $pattern and no '**Layout:**': its frame's geometry is recorded nowhere"
     return 0
   fi
-  layout_file="$LAYOUTS_DIR/$layout.md"
-  [ -f "$layout_file" ] || return 0
+  layout_file="$(sdd_resolve_catalog layout "$layout")"
+  [ -n "$layout_file" ] || return 0
   [ -n "$pattern" ] || return 0
   framed="$(header_targets "$layout_file" '**Pattern:**' | tr '\n' ' ')"
   [ -n "$framed" ] || return 0
@@ -200,7 +197,7 @@ check_screen_render() {
       name="$(printf '%s' "$part" | grep -oE '`[^`]+`' | head -n 1 | tr -d '`')"
       [ -n "$name" ] || continue
       case "$name" in -*|*[![:lower:][:digit:]-]*) continue ;; esac
-      [ -f "$COMPONENTS_DIR/$name.md" ] && continue
+      [ -n "$(sdd_resolve_catalog component "$name")" ] && continue
       emit "$file" "render row '$value' draws with component '$name', which has no components/ entry: write it at to-extract in the same turn"
     done < <(printf '%s\n' "$component" | tr '+' '\n')
   done < <(render_records "$file")
@@ -222,7 +219,7 @@ check_touch() {
   emit "$file" "names a hover affordance and no touch equivalent: give it a tap or long-press path"
 }
 
-SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SCREENS_ROOT")"
+SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 [ -n "$SCOPE_DIR" ] || exit 0
 
 OPEN_COUNT="$(mktemp -t sdd-open-count.XXXXXX)"

@@ -17,10 +17,10 @@ questions it actually answers.
 | rung | what sits there | reaches |
 |---|---|---|
 | **runtime** | the `inspire-*` skills, their `references/`, this `_references/` directory, the stack profiles, the wire conventions | every project on this release |
-| **project** | the root `CLAUDE.md`, `00_bootstrap/` (`stack.md`, `theme.md`, `surfaces.md`, `glossary.md`, `style-tokens.md`), `05_screens/design-system.md`, `98_lessons/` | this project |
-| **decision** | an ADR in `01_adr/` | its declared blast radius — suite-wide, or the surfaces its `surfaces:` field names |
-| **module** | a module hub in `02_modules/{module}.md` | one module |
-| **artifact** | a use case in `03_features/`, an entity or action descriptor in `04_domain/`, a screen in `05_screens/` | the one thing it names |
+| **project** | the root `CLAUDE.md`, `00_bootstrap/` (`stack.md`, `glossary.md`, `style-tokens.md`), the design system in `01_spec/_design-system/` (`design-system.md`, `theme.md`), `98_lessons/` | this project |
+| **decision** | an ADR (`*.adr.md`) | its blast radius — the whole project, the faces and bundles its `faces:` and `bundles:` fields name, or the module or face whose `_adr/` holds it |
+| **module** | a module hub, `{module}.module.md` | one module |
+| **artifact** | a use case (`*.feature.md`), an entity or action descriptor (`*.entity.md`, `*.action.md`), a process (`*.process.md`), a screen (`*.screen.md`) | the one thing it names |
 
 The runtime is the outermost rung, so **every project artifact outranks it** on a
 question the project has decided. That is the intended direction: the runtime
@@ -31,9 +31,9 @@ have.
 
 Scope narrows on two axes, and a comparison resolves only where one artifact's
 scope is **contained** in the other's. Rung depth is the first axis. **Blast
-radius** is the second: a `surfaces:`-scoped ADR is narrower than a suite-wide one,
-and a screen under `05_screens/{surface}/` is narrower than the suite-wide fact it
-specializes ([`surface-scope.md`](surface-scope.md)).
+radius** is the second: an ADR scoped to some faces or bundles, or placed in a face's
+`_adr/`, is narrower than a project-wide one, and a screen in a face is narrower than
+the project-wide fact it specializes ([`face-scope.md`](face-scope.md)).
 
 Where two artifacts narrow on different axes and neither scope contains the other,
 neither wins. That is a question nobody has decided, and the honest move is to say
@@ -82,8 +82,8 @@ it, and it is not evidence about any other artifact.
 
 The corollary is the sharp half: **a question wider than the artifact is not the
 artifact's to answer.** A screen may decide what that screen does; it may not
-decide a design token, because a token is a suite-wide fact and a local exception
-to one is still a suite-wide change. Where the question outruns the artifact, the
+decide a design token, because a token is a project-wide fact and a local exception
+to one is still a project-wide change. Where the question outruns the artifact, the
 decision moves up a rung — which is why `/inspire-screens` enforces the design
 system against a screen and accepts the screen's own behavior.
 

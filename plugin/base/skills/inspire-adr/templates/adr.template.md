@@ -1,0 +1,20 @@
+---
+# faces: [face-a]       # global ADRs only: the face ids this decision affects
+# bundles: [bundle-a]   # global ADRs only: the bundle ids it affects
+# omit both = the whole project; a module or face ADR carries neither (its _adr/ gives the scope)
+# see `.claude/skills/_references/face-scope.md`
+---
+
+# {Title}
+
+**Status:** design
+**Modules affected:** [[module-a]], [[module-b]]
+**Rationale:** [[adr-{slug}.rationale]]
+<!-- Supersedes: [[old-adr-id]] — optional; add only when this ADR supersedes a prior one. -->
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+     design = the design workspace (features + screen spec + horizontal prototype + specs).
+     prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
+       NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->
+
+## ADR2: Decision
+What we decided, as one or a few imperative statements. The reasons go in the rationale.

@@ -67,9 +67,9 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update}/` are the only **live** skills — `/inspire:init` and `/inspire:update`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
+| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update,migrate}/` are the only **live** skills — `/inspire:init`, `/inspire:update` and `/inspire:migrate`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Makes this repo its own plugin marketplace, so `/plugin marketplace add Genomcore/inspire` resolves. |
-| [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_adr/`. |
+| [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_spec/` (`*.adr.md`). |
 
 > `inspire_kb/`, `prototype/` and `source/` don't exist in this template repo —
 > they're materialized into a **governed** project by `/inspire:init` (the KB
@@ -129,7 +129,7 @@ history and never clobbers existing content.
 `/reload-skills` picks up the newly materialized `inspire-*` skills — no restart
 needed. `/inspire-bootstrap init` then sets the project's output language,
 configures the stack + theme and its shape (frontend / backend / monorepo · one
-surface or several · web / mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
+face or several · web / mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
 `README.md`, and optionally wires your git remote. Then start filling in
 `inspire_kb/` — your modules, features, screens and specs. The foundation
 (`00_bootstrap`) and starter screen patterns ship with sensible defaults; the
@@ -140,7 +140,9 @@ project file — pulling a template update means running `/plugin update inspire
 then `/inspire:update` (which reports drift on the runtime — skills, validators,
 hooks — and never overwrites a file INSPIRE shipped without your say-so), not
 re-forking. `inspire_kb/` is out of scope for update entirely: it is seeded once
-at init and is yours from then on.
+at init and is yours from then on. A project whose KB predates INSPIRE 0.15.0 is on
+the layered layout (`01_adr` … `05_screens`); after updating, run `/inspire:migrate`
+once to move it to `inspire_kb/01_spec/`. It rebuilds nothing already built.
 
 > Drift tracking covers the files INSPIRE shipped: each release's manifest holds
 > their hashes, and `.inspire.lock` records only provenance — version, commit,
@@ -149,13 +151,13 @@ at init and is yours from then on.
 > so it classifies as `keep` and survives every update untouched. A pre-0.3 install
 > is the longest hop chain, which `/inspire:update` replays like any other.
 
-> **Suites.** A product delivered through several UIs and/or services is a *suite* of
-> *surfaces* — `ui`, `headless` (any service without a face) and `lib` (shared
-> packages) — sharing **one** domain, one design system and one prototype. Declare them
-> with `/inspire-surface add`; the roster at `inspire_kb/00_bootstrap/surfaces.md` then
-> scopes screens by directory, gives spanning artifacts a `surfaces:` blast radius, and
-> tells the coding stage which package it is emanating into. A project that declares none
-> is a suite of one, and its KB carries no surface scoping at all.
+> **Faces and bundles.** The specification in `inspire_kb/01_spec/` is organised by
+> concept: **modules** (the domain, one slice at a time), **bundles** (which actions a
+> package exposes), **faces** (what a person uses: screens, shell, package, tokens) and
+> **processes** (work that runs on a trigger). Every file carries a typed extension
+> (`.feature.md`, `.entity.md`, `.action.md`, `.screen.md`, `.bundle.md`, `.face.md`…)
+> and is found by it, so the directories are for people. Declare faces and bundles with
+> `/inspire-face add`; each one's file says which package the coding stage emanates it into.
 
 > **Output language.** Every skill authors its artifacts in the project's declared
 > language (`inspire_kb/00_bootstrap/project.md`, default English) —

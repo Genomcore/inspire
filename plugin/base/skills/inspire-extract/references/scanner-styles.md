@@ -44,7 +44,7 @@ the contract; values are the project's.** Keep both.
 ## Elaboration signals (drive the migrate-or-keep verdict)
 
 Record how *elaborated* the design system is — the synthesis step compares it
-against the live `05_screens/design-system.md` per `bootstrap-comparison.md`:
+against the live `01_spec/_design-system/design-system.md` per `bootstrap-comparison.md`:
 
 - A real token system (named roles, scale, density, reused) vs a handful of ad-hoc
   hexes and inline styles.

@@ -10,8 +10,8 @@ export const meta = {
 
 // ---------------------------------------------------------------------------
 // Scope. Phase 1 of the skill (scope identification) runs BEFORE this workflow:
-// the caller enumerates the modules from the hub glob (inspire_kb/02_modules/*.md
-// excluding _*.md and README.md) and passes the in-scope slugs as args.modules.
+// the caller finds every *.module.md under inspire_kb/01_spec/ (the module id is
+// the file name without .module.md) and passes the in-scope ids as args.modules.
 // If omitted, the module fan-out is skipped and only the cross-cutting synthesis
 // runs (over the full repo) — pass args.modules for a complete review.
 // IMPORTANT: scope narrows ONLY this module fan-out — the cross-cutting synthesis

@@ -207,80 +207,109 @@ no  "control: a real unclosed fence does swallow the rest" \
 # ─────────────────────────────────────────────────────────────────────────────
 
 KB="$ROOT/kb"
-mkdir -p "$KB/03_features/auth" "$KB/03_features/auth/nested" \
-         "$KB/01_adr" "$KB/04_domain/auth/user" \
-         "$KB/05_screens/auth" "$KB/05_screens/console/billing" \
-         "$KB/05_screens/patterns" "$KB/05_screens/components"
-: > "$KB/03_features/auth/FEAT-01-login.md"
-: > "$KB/03_features/auth/_index.md"
-: > "$KB/03_features/auth/README.md"
-: > "$KB/03_features/README.md"
-: > "$KB/03_features/auth/nested/too-deep.md"
-: > "$KB/01_adr/adr-auth-sessions.md"
-: > "$KB/01_adr/adr-auth-sessions.rationale.md"
-: > "$KB/01_adr/README.md"
-: > "$KB/01_adr/_index.md"
-: > "$KB/04_domain/auth/user/auth.user.md"
-: > "$KB/05_screens/auth/login.md"
-: > "$KB/05_screens/console/billing/invoices.md"
-: > "$KB/05_screens/patterns/form.md"
-: > "$KB/05_screens/patterns/_index.md"
-: > "$KB/05_screens/patterns/README.md"
-: > "$KB/05_screens/components/table.md"
-: > "$KB/05_screens/auth/_index.md"
-: > "$KB/05_screens/auth/README.md"
-: > "$KB/05_screens/design-system.md"
+SPEC="$KB/01_spec"
+SDD_SPEC_ROOT="$SPEC"
+M="$SPEC/_modules/auth"
+mkdir -p "$M/_features/nested" "$M/_domain/user" "$M/_adr" "$SPEC/_adr" \
+         "$SPEC/_faces/app/_screens" "$SPEC/_faces/console/_screens" \
+         "$SPEC/_design-system/patterns" "$SPEC/_design-system/components" \
+         "$SPEC/_bundles" "$SPEC/_processes" "$KB/00_bootstrap"
+: > "$M/auth.module.md"
+: > "$M/_features/FEAT-01-login.feature.md"
+: > "$M/_features/feature.template.md"
+: > "$M/_features/_index.md"
+: > "$M/_features/README.md"
+: > "$M/_features/nested/FEAT-02-deep.feature.md"
+: > "$SPEC/_adr/auth-sessions.adr.md"
+: > "$SPEC/_adr/auth-sessions.adr.rationale.md"
+: > "$SPEC/_adr/README.md"
+: > "$SPEC/_adr/adr.template.md"
+: > "$M/_adr/auth-local.adr.md"
+: > "$M/_domain/user/user.entity.md"
+: > "$SPEC/_faces/app/app.face.md"
+: > "$SPEC/_faces/app/_screens/login.screen.md"
+: > "$SPEC/_faces/app/_index.md"
+: > "$SPEC/_faces/console/_screens/invoices.screen.md"
+: > "$SPEC/_design-system/patterns/form.pattern.md"
+: > "$SPEC/_design-system/patterns/pattern.template.md"
+: > "$SPEC/_design-system/patterns/README.md"
+: > "$SPEC/_design-system/components/table.component.md"
+: > "$SPEC/_design-system/design-system.md"
+: > "$SPEC/_bundles/api.bundle.md"
+: > "$SPEC/_processes/nightly.process.md"
+: > "$KB/00_bootstrap/stack.md"
 
 feats="$(sdd_find_features "$KB")"
-has   "find_features finds a use-case file"        "FEAT-01-login.md" "$feats"
+has   "find_features finds a use-case file"        "FEAT-01-login.feature.md" "$feats"
+has   "find_features finds one at any depth"       "FEAT-02-deep.feature.md"  "$feats"
+hasnt "find_features excludes its template"        "template"         "$feats"
 hasnt "find_features excludes _index.md"           "_index.md"        "$feats"
 hasnt "find_features excludes README.md"           "README.md"        "$feats"
-hasnt "find_features excludes deeper-than-module"  "too-deep.md"      "$feats"
-hasnt "find_features ignores other layers"         "04_domain"        "$feats"
+hasnt "find_features ignores other types"          "entity"           "$feats"
 
 adrs="$(sdd_find_adrs "$KB")"
-has   "find_adrs finds adr-*.md"                   "adr-auth-sessions.md" "$adrs"
-hasnt "find_adrs excludes README/_index"           "index"                "$adrs"
-hasnt "find_adrs excludes rationale files"         "rationale"            "$adrs"
+has   "find_adrs finds a global {slug}.adr.md"     "_adr/auth-sessions.adr.md" "$adrs"
+has   "find_adrs finds a module-scoped one"        "auth-local.adr.md"         "$adrs"
+hasnt "find_adrs excludes README and template"     "README\|template"          "$adrs"
+hasnt "find_adrs excludes rationale files"         "rationale"                 "$adrs"
 
 rats="$(sdd_find_adr_rationales "$KB")"
-eq    "find_adr_rationales finds only the rationale" "${rats##*/}" "adr-auth-sessions.rationale.md"
-eq    "find_adr_rationales is empty on a domain scope" "$(sdd_find_adr_rationales "$KB/04_domain")" ""
+eq    "find_adr_rationales finds only the rationale" "${rats##*/}" "auth-sessions.adr.rationale.md"
+eq    "find_adr_rationales is empty on a domain scope" "$(sdd_find_adr_rationales "$M/_domain")" ""
 
 screens="$(sdd_find_screens "$KB")"
-has   "find_screens finds the flat shape"          "auth/login.md"      "$screens"
-has   "find_screens finds the surface-first shape" "billing/invoices.md" "$screens"
-hasnt "find_screens excludes patterns/"            "patterns/"          "$screens"
-hasnt "find_screens excludes components/"          "components/"        "$screens"
-hasnt "find_screens excludes _index.md"            "_index.md"          "$screens"
-hasnt "find_screens excludes README.md"            "README.md"          "$screens"
-hasnt "find_screens excludes top-level files"      "design-system.md"   "$screens"
+has   "find_screens finds a screen in one face"     "app/_screens/login.screen.md"        "$screens"
+has   "find_screens finds a screen in another face" "console/_screens/invoices.screen.md" "$screens"
+hasnt "find_screens excludes patterns"              "pattern"            "$screens"
+hasnt "find_screens excludes the face's _index.md"  "_index.md"          "$screens"
+hasnt "find_screens excludes the face file"         "app.face.md"        "$screens"
+hasnt "find_screens excludes the design system"     "design-system.md"   "$screens"
 
-# The intersection half of the contract: a domain-scoped run yields nothing
-# from any of the three, and a layer-scoped run yields only that layer.
-eq "find_features is empty on a domain scope" "$(sdd_find_features "$KB/04_domain")" ""
-eq "find_adrs is empty on a domain scope"     "$(sdd_find_adrs     "$KB/04_domain")" ""
-eq "find_screens is empty on a domain scope"  "$(sdd_find_screens  "$KB/04_domain")" ""
-eq "find_features is empty on the ADR layer"  "$(sdd_find_features "$KB/01_adr")"    ""
-has "find_features narrows to a module scope" "FEAT-01-login.md" \
-    "$(sdd_find_features "$KB/03_features/auth")"
+eq "find_modules finds the module hub" "$(sdd_find_modules "$KB")" "$M/auth.module.md"
+eq "find_bundles finds the bundle"     "$(sdd_find_bundles "$KB")" "$SPEC/_bundles/api.bundle.md"
+eq "find_faces finds the face"         "$(sdd_find_faces "$KB")"   "$SPEC/_faces/app/app.face.md"
+eq "find_processes finds the process"  "$(sdd_find_processes "$KB")" "$SPEC/_processes/nightly.process.md"
 
-# The catalog finder. Each catalog is one directory deep and suite-wide, so the
-# finder accepts exactly that shape.
+# The intersection half of the contract: a scope narrows every finder, and a scope
+# outside the spec root yields nothing at all.
+eq "find_features is empty on a domain scope" "$(sdd_find_features "$M/_domain")" ""
+eq "find_adrs is empty on a domain scope"     "$(sdd_find_adrs     "$M/_domain")" ""
+eq "find_screens is empty on a module scope"  "$(sdd_find_screens  "$M")"         ""
+eq "find_features is empty on 00_bootstrap"   "$(sdd_find_features "$KB/00_bootstrap")" ""
+eq "find_entities is empty on 00_bootstrap"   "$(sdd_find_entities "$KB/00_bootstrap")" ""
+has "find_features narrows to a module scope" "FEAT-01-login.feature.md" \
+    "$(sdd_find_features "$M")"
+eq "find_screens narrows to one face" "$(sdd_find_screens "$SPEC/_faces/console")" \
+   "$SPEC/_faces/console/_screens/invoices.screen.md"
+
+# The catalog finder: one extension per catalog, wherever the entry sits.
 pats="$(sdd_find_catalog "$KB" patterns)"
 comps="$(sdd_find_catalog "$KB" components)"
-has   "find_patterns finds a pattern entry"        "patterns/form.md"  "$pats"
-hasnt "find_patterns excludes _-prefixed names"    "_index.md"         "$pats"
+has   "find_patterns finds a pattern entry"        "form.pattern.md"   "$pats"
+hasnt "find_patterns excludes its template"        "template"          "$pats"
 hasnt "find_patterns excludes README.md"           "README.md"         "$pats"
-hasnt "find_patterns excludes the component catalog" "components/"     "$pats"
-hasnt "find_patterns excludes screens"             "auth/login.md"     "$pats"
-has   "find_components finds a component entry"    "components/table.md" "$comps"
-hasnt "find_components excludes the pattern catalog" "patterns/"       "$comps"
-eq "find_patterns is empty on a domain scope"   "$(sdd_find_catalog "$KB/04_domain" patterns)" ""
-eq "find_components is empty on a domain scope" "$(sdd_find_catalog "$KB/04_domain" components)" ""
+hasnt "find_patterns excludes the component catalog" "component"       "$pats"
+hasnt "find_patterns excludes screens"             "screen"            "$pats"
+has   "find_components finds a component entry"    "table.component.md" "$comps"
+hasnt "find_components excludes the pattern catalog" "pattern"         "$comps"
+eq "find_patterns is empty on a domain scope"   "$(sdd_find_catalog "$M/_domain" patterns)" ""
+eq "resolve_catalog finds an entry by its id"   "$(sdd_resolve_catalog pattern form)" "$SPEC/_design-system/patterns/form.pattern.md"
+eq "resolve_catalog reads a path-shaped target" "$(sdd_resolve_catalog patterns ../patterns/form)" "$SPEC/_design-system/patterns/form.pattern.md"
+eq "resolve_catalog is empty for no such entry" "$(sdd_resolve_catalog pattern nothing)" ""
+
+# The id a file is linked by: frontmatter first, then the name without its type.
+printf -- '---\nid: auth::user\n---\n' > "$M/_domain/user/user.entity.md"
+eq "artifact_id: the frontmatter id wins"        "$(sdd_artifact_id "$M/_domain/user/user.entity.md")" "auth::user"
+eq "artifact_id: a catalog id has no extension"  "$(sdd_artifact_id "$SPEC/_design-system/patterns/form.pattern.md")" "form"
+eq "artifact_id: an ADR adds back its prefix"    "$(sdd_artifact_id "$SPEC/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
+eq "artifact_id: and so does its rationale"      "$(sdd_artifact_id "$SPEC/_adr/auth-sessions.adr.rationale.md")" "adr-auth-sessions.rationale"
+eq "artifact_id: a feature is its use case"      "$(sdd_artifact_id "$M/_features/FEAT-01-login.feature.md")" "FEAT-01-login"
+eq "typed_kind: reads the extension"             "$(sdd_typed_kind "$SPEC/_bundles/api.bundle.md")" "bundle"
+eq "typed_kind: a template has none"             "$(sdd_typed_kind "$SPEC/_adr/adr.template.md")" ""
+eq "resolve_entity_id: by id, either form"       "$(sdd_resolve_entity_id auth.user)" "$M/_domain/user/user.entity.md"
 
 # `**State:**` is a catalog entry's lifecycle line.
-CAT="$KB/05_screens/components"
+CAT="$SPEC/_design-system/components"
 printf '# Component: a\n\n**State:** to-extract\n' > "$CAT/a.md"
 printf '# Component: b\n\n**State:** implemented\n' > "$CAT/b.md"
 printf '# Component: c\n\n**State:** planned\n'     > "$CAT/c.md"
@@ -305,77 +334,71 @@ eq "scope_norm leaves a clean path be"  "$(sdd_scope_norm 'a/b')"       "a/b"
 eq "scope_norm keeps an absolute path"  "$(sdd_scope_norm '/a//b/')"    "/a/b"
 
 eq "intersect: empty scope means the whole layer" \
-   "$(sdd_scope_intersect "" "kb/04_domain")" "kb/04_domain"
+   "$(sdd_scope_intersect "" "kb/01_spec")" "kb/01_spec"
 eq "intersect: scope inside the layer scans the scope" \
-   "$(sdd_scope_intersect "kb/04_domain/auth" "kb/04_domain")" "kb/04_domain/auth"
+   "$(sdd_scope_intersect "kb/01_spec/_modules" "kb/01_spec")" "kb/01_spec/_modules"
 eq "intersect: layer inside the scope scans the layer" \
-   "$(sdd_scope_intersect "kb" "kb/04_domain")" "kb/04_domain"
+   "$(sdd_scope_intersect "kb" "kb/01_spec")" "kb/01_spec"
 eq "intersect: scope equal to the layer" \
-   "$(sdd_scope_intersect "kb/04_domain" "kb/04_domain")" "kb/04_domain"
+   "$(sdd_scope_intersect "kb/01_spec" "kb/01_spec")" "kb/01_spec"
 eq "intersect: disjoint scope yields nothing" \
-   "$(sdd_scope_intersect "kb/03_features" "kb/04_domain")" ""
+   "$(sdd_scope_intersect "kb/00_bootstrap" "kb/01_spec")" ""
 eq "intersect: a nonexistent scope stays silent" \
-   "$(sdd_scope_intersect "no/such/place" "kb/04_domain")" ""
+   "$(sdd_scope_intersect "no/such/place" "kb/01_spec")" ""
 
 # Spelling independence. The first two are lexical; the third needs the
 # physical comparison, since no amount of string work relates an absolute
 # spelling to a relative one.
 eq "intersect: a ./-prefixed scope behaves like the canonical one" \
-   "$(sdd_scope_intersect "./kb/04_domain" "kb/04_domain")" "kb/04_domain"
+   "$(sdd_scope_intersect "./kb/01_spec" "kb/01_spec")" "kb/01_spec"
 eq "intersect: a //-carrying scope behaves like the canonical one" \
-   "$(sdd_scope_intersect "kb//04_domain/" "kb/04_domain")" "kb/04_domain"
+   "$(sdd_scope_intersect "kb//01_spec/" "kb/01_spec")" "kb/01_spec"
 (
   cd "$ROOT" || exit 1
-  abs_in="$(sdd_scope_intersect "$KB/04_domain/auth" "kb/04_domain")"
-  abs_out="$(sdd_scope_intersect "$KB" "kb/04_domain")"
+  abs_in="$(sdd_scope_intersect "$KB/01_spec/_modules" "kb/01_spec")"
+  abs_out="$(sdd_scope_intersect "$KB" "kb/01_spec")"
   printf '%s\n%s\n' "$abs_in" "$abs_out"
 ) > "$ROOT/abs.out"
 eq "intersect: an absolute scope inside a relative layer" \
-   "$(sed -n 1p "$ROOT/abs.out")" "$KB/04_domain/auth"
+   "$(sed -n 1p "$ROOT/abs.out")" "$KB/01_spec/_modules"
 eq "intersect: an absolute scope containing a relative layer" \
-   "$(sed -n 2p "$ROOT/abs.out")" "kb/04_domain"
+   "$(sed -n 2p "$ROOT/abs.out")" "kb/01_spec"
 
-# The gate-integrity case: a screen file that happens to carry a dotted
-# basename is not a domain object, and a KB-wide scope must not make it one.
-mkdir -p "$KB/04_domain/auth/user"
-: > "$KB/05_screens/auth/user.profile.md"
-: > "$KB/05_screens/auth/user.profile.edit.md"
-: > "$KB/04_domain/auth/user/auth.user.md"
-: > "$KB/04_domain/auth/user/auth.user.create.md"
+# The gate-integrity case: a screen whose slug happens to look like a domain id is
+# not a domain object. The extension decides, never the shape of the name.
+: > "$SPEC/_faces/app/_screens/user.profile.screen.md"
+: > "$SPEC/_faces/app/_screens/user.profile.edit.screen.md"
+: > "$M/_domain/user/user.create.action.md"
 (
   cd "$ROOT" || exit 1
-  SDD_SPEC_ROOT="kb/04_domain"
+  SDD_SPEC_ROOT="kb/01_spec"
   printf 'ENT %s\n' $(sdd_find_entities "kb")
   printf 'ACT %s\n' $(sdd_find_actions  "kb")
 ) > "$ROOT/shape.out"
-has   "find_entities keeps its own layer's entity on a KB-wide scope" \
-      "04_domain/auth/user/auth.user.md" "$(cat "$ROOT/shape.out")"
-has   "find_actions keeps its own layer's action on a KB-wide scope" \
-      "04_domain/auth/user/auth.user.create.md" "$(cat "$ROOT/shape.out")"
-hasnt "find_entities ignores a dotted-basename screen file" \
-      "user.profile.md" "$(cat "$ROOT/shape.out")"
-hasnt "find_actions ignores a dotted-basename screen file" \
-      "user.profile.edit.md" "$(cat "$ROOT/shape.out")"
+has   "find_entities keeps the entity on a KB-wide scope" \
+      "ENT kb/01_spec/_modules/auth/_domain/user/user.entity.md" "$(cat "$ROOT/shape.out")"
+has   "find_actions keeps the action on a KB-wide scope" \
+      "ACT kb/01_spec/_modules/auth/_domain/user/user.create.action.md" "$(cat "$ROOT/shape.out")"
+hasnt "find_entities ignores a dotted-slug screen" \
+      "user.profile" "$(cat "$ROOT/shape.out")"
 
-# A multi-word module slug is kebab-case, and both finders read the module out
-# of the filename. Asserted as DISCOVERY rather than as an absence of errors:
-# a finder that cannot see the hyphen skips the file in silence, and every rule,
-# the id index and the emanation frontier are built on these two lists — so "no
-# findings" is what the defect looks like, not what the fix looks like.
-mkdir -p "$KB/04_domain/knowledge-base/entry"
-: > "$KB/04_domain/knowledge-base/entry/knowledge-base.entry.md"
-: > "$KB/04_domain/knowledge-base/entry/knowledge-base.entry.promote.md"
+# A multi-word module slug is kebab-case. Asserted as DISCOVERY rather than as an
+# absence of errors: a finder that cannot see a file skips it in silence, and every
+# rule, the id index and the emanation frontier are built on these lists.
+mkdir -p "$SPEC/_modules/knowledge-base/_domain/entry"
+: > "$SPEC/_modules/knowledge-base/_domain/entry/entry.entity.md"
+: > "$SPEC/_modules/knowledge-base/_domain/entry/entry.promote.action.md"
 (
   cd "$ROOT" || exit 1
-  SDD_SPEC_ROOT="kb/04_domain"
+  SDD_SPEC_ROOT="kb/01_spec"
   printf 'ENT %s\n' $(sdd_find_entities "kb")
   printf 'ACT %s\n' $(sdd_find_actions  "kb")
 ) > "$ROOT/kebab.out"
-has   "find_entities discovers a kebab-case module slug" \
-      "ENT.*knowledge-base.entry.md" "$(cat "$ROOT/kebab.out")"
-has   "find_actions discovers a kebab-case module slug" \
-      "ACT.*knowledge-base.entry.promote.md" "$(cat "$ROOT/kebab.out")"
-hasnt "the segment count still tells the two apart" \
+has   "find_entities discovers a kebab-case module" \
+      "ENT.*knowledge-base/_domain/entry/entry.entity.md" "$(cat "$ROOT/kebab.out")"
+has   "find_actions discovers a kebab-case module" \
+      "ACT.*knowledge-base/_domain/entry/entry.promote.action.md" "$(cat "$ROOT/kebab.out")"
+hasnt "the extension still tells the two apart" \
       "ENT.*promote" "$(cat "$ROOT/kebab.out")"
 
 # ─────────────────────────────────────────────────────────────────────────────

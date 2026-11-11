@@ -80,8 +80,9 @@ fi
 # Gate 2 — the SDD graph review, scoped to staged modules.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Staged SDD spec files.
-staged_files=$(echo "$staged_all" | grep -E '^inspire_kb/04_domain/.+\.md$' || true)
+# Staged domain files: entities and actions, found by their typed extension anywhere
+# under the spec root (adr-kb-structure D4).
+staged_files=$(echo "$staged_all" | grep -E '^inspire_kb/01_spec/.+\.(entity|action)\.md$' || true)
 
 if [ -z "$staged_files" ]; then
   if [ -s "$blockers" ]; then
@@ -95,25 +96,29 @@ if [ -z "$staged_files" ]; then
   exit 0
 fi
 
-# Affected modules — top-level dirs under inspire_kb/04_domain/ that hold a staged file.
-# e.g. inspire_kb/04_domain/auth/user/create.md → inspire_kb/04_domain/auth
-# cut -d/ -f1-3 yields "inspire_kb/04_domain/{module}" for files under inspire_kb/04_domain/.
-modules=$(echo "$staged_files" | cut -d/ -f1-3 | sort -u)
-modules_pattern=$(echo "$modules" | tr '\n' '|' | sed 's/|$//')
+# Affected modules — read from each staged file's id (`auth::user::create` → auth),
+# never from the directory it sits in. Every entity and action of those modules is
+# in the gate's reach; nothing else is.
+in_reach=$(mktemp)
+findings_file=$(mktemp)
+trap 'rm -f "$blockers" "$findings_file" "$in_reach"' EXIT
+module_of() { yq --front-matter=extract '.id // ""' "$1" 2>/dev/null | sed 's/::.*//; s/\..*//'; }
+modules=$(echo "$staged_files" | while IFS= read -r f; do [ -f "$f" ] && module_of "$f"; done | grep -v '^$' | sort -u)
+find inspire_kb/01_spec -type f \( -name '*.entity.md' -o -name '*.action.md' \) 2>/dev/null \
+  | while IFS= read -r f; do
+      m="$(module_of "$f")"
+      printf '%s\n' "$modules" | grep -qxF "$m" && printf '%s\n' "$f"
+    done > "$in_reach"
 
 # Run the review for graph correctness. Resource-coherence is a stricter
 # whole-tree check left to pre-PR; per-commit only enforces the rules that
 # don't depend on cross-resource field aggregation.
-findings_file=$(mktemp)
-trap 'rm -f "$blockers" "$findings_file"' EXIT
 SDD_REVIEW_RULES="acyclic-deps.sh stable-blockers.sh" \
-  "$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb/04_domain 2>"$findings_file" >/dev/null || true
+  "$PROJECT_ROOT/.inspire/bin/review.sh" inspire_kb/01_spec 2>"$findings_file" >/dev/null || true
 
-# Filter to error findings whose target is inside a staged module.
-# Targets are paths under inspire_kb/04_domain/{module}/...; the pattern matches the
-# module prefix extracted above (e.g. "inspire_kb/04_domain/auth").
-jq -c --arg pat "^($modules_pattern)/" '
-  select(.severity == "error" and (.target | test($pat)))
+# Filter to error findings whose target is an entity or action of a staged module.
+jq -c --rawfile reach "$in_reach" '
+  select(.severity == "error" and (.target as $t | ($reach | split("\n") | index($t)) != null))
 ' "$findings_file" 2>/dev/null >> "$blockers"
 
 [ -s "$blockers" ] || exit 0

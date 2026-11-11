@@ -1,12 +1,25 @@
 # Workspace — review (cross-cutting phases)
-> Part of [inspire-workspace](../SKILL.md). Read when the entry's index routes here. Phases 1–2 (scope + module fan-out) are performed by the caller — the entry, or `review.workflow.mjs`.
+> Part of [inspire-workspace](../SKILL.md). Read when the entry's index routes here. Phases 1–2 (scope + module fan-out) are performed by the caller — the entry, or `review.workflow.mjs`. The validators run here, before the cross-cutting phases.
+
+### Validators
+
+Run the mechanical rules over the whole KB, whatever the module scope:
+
+```bash
+.inspire/bin/review.sh inspire_kb
+```
+
+It runs every rule in `review.sh`'s list, `spec-identity.sh`, `face-exposure.sh` and
+`process-shape.sh` among them. Report each error as `critical` and each warning as
+`important`, under the section its file belongs to, and name the rule. The judgment
+phases below never restate a finding a validator already made.
 
 ### Phase 3 — Cross-module consistency
 
 - **Dependency validation:** feature IDs referenced as dependencies in one module
   exist in the target.
-- **ADR references:** all `[[adr-xxx]]` wikilinks resolve to files in
-  `inspire_kb/01_adr/`.
+- **ADR references:** all `[[adr-xxx]]` wikilinks resolve to an `*.adr.md` under
+  `inspire_kb/01_spec/` — global, a module's `_adr/` or a face's `_adr/`.
 - **ADR propagation alignment:** at *every* maturity, an ADR's consequences must
   cohere across the **in-repo design workspace** (features + screen spec + horizontal
   prototype + specs) — a contradiction there is critical. Higher maturities add
@@ -14,63 +27,59 @@
   artifact: `prototyped` needs a `**Prototype:**` pointer; `implemented` a codebase
   reference. A `design` ADR merely lacking external validation is NOT a finding; a
   `design` ADR that contradicts the horizontal prototype IS.
-- **Surface references:** every `surfaces:` value in the vault resolves to an id in
-  the roster, or to `all`. An unknown id is critical — it scopes the artifact to
-  nothing. An **absent** field is never a finding: it means suite-wide. With no roster
-  the check is vacuous, since a suite of one has no ids to resolve against.
-  (`/inspire-surface review` runs the same check roster-side; here it is part of the
-  pre-merge gate, over every artifact in scope.)
+- **Face and bundle references:** every `faces:` and `bundles:` value in the vault
+  names an existing `*.face.md` or `*.bundle.md`. An unknown id is critical — it
+  scopes the artifact to nothing. An **absent** field is never a finding: it means
+  the whole project. (`/inspire-face review` runs the same check on the face and
+  bundle side; here it is part of the pre-merge gate, over every artifact in scope.)
+- **Exposure across faces:** `face-exposure.sh` reports each screen that binds an
+  action its face's bundles do not expose. Here, judge the pattern: many findings on
+  one face usually mean one missing bundle in its `bundles:`, not many wrong screens.
+- **Processes across modules:** a module-scoped process whose `## Requires` reaches
+  into another module is global in fact — route to `/inspire-process`.
 - **No undocumented circular dependencies.**
 
 ### Phase 4 — Vault structure
 
-**Features tree:**
+**Specification tree:**
 - Repo structure matches CLAUDE.md.
 - No scripts, `.py`, `.xlsx`, `.deprecated`, or `.DS_Store` files in `inspire_kb/`.
-- Every module has a hub in `inspire_kb/02_modules/`; its per-layer subfolders
-  (`03_features`, `05_screens`, `04_domain`) stay in sync with it. Under a
-  surface-first screens tree a module's screens live in one or more
-  `{surface}/{module}/` directories: it owes at least one, never one per surface —
-  a module realized on a single surface is normal.
-- ADR files are `inspire_kb/01_adr/adr-*.md`: a decision, and its
-  `adr-*.rationale.md` beside it. Read the decision for what binds.
-- Modules are the module hubs: `inspire_kb/02_modules/*.md` excluding `_*.md`
-  and `README.md`.
+- Every module has one `*.module.md`; its features (`*.feature.md`), entities
+  (`*.entity.md`) and actions (`*.action.md`) sit under its directory. Tools find
+  them by extension, so placement is for people: run the placement checks in
+  [`workspace-structure.md`](workspace-structure.md), never a second set here.
+- A module's screens live in faces, never in the module. A module whose actions no
+  face binds and no bundle exposes is reachable by nobody — `verify`.
+- ADRs are `*.adr.md`, each with its `*.adr.rationale.md` beside it. Read the
+  decision for what binds.
 
-**screen spec tree:**
-- `inspire_kb/05_screens/design-system.md` and `design-tokens.json` exist.
-- `inspire_kb/05_screens/patterns/`, `layouts/` and `components/` exist with entry files,
-  at top level — beside any surface trees, never inside one.
-- **The tree is in the shape the roster implies.** Both shapes are legitimate: flat
-  `{module}/` with no roster or a single `kind: ui` surface, surface-first
-  `{surface}/{module}/` (plus `shared/{module}/`) from two UI surfaces on. Derive
-  which applies from [`_references/surface-scope.md`](../../_references/surface-scope.md)
-  — never from what the tree used to be. Under 2+ UI surfaces, a flat `{module}/`
-  directory is a **pre-split leftover** in either of its instances: the whole tree
-  still flat, or one flat directory sitting beside surface trees. Name the instance
-  and hand the roster-side diagnosis and the corrective sweep to
-  [`/inspire-surface review`](../../inspire-surface/SKILL.md) (its
-  pre-split-leftover check); this phase reports, it does not re-derive the fix.
-  The check lives here because this is the only pass that walks the whole screens
-  tree — a module review sees one module's directory.
+**Design system and screens:**
+- `inspire_kb/01_spec/_design-system/design-system.md` and
+  `design-system.tokens.json` exist.
+- `_design-system/patterns/`, `layouts/` and `components/` hold the catalog entries
+  (`*.pattern.md`, `*.layout.md`, `*.component.md`), never inside a face.
+- **No screen is shared between faces.** A screen that links or embeds another
+  face's screen is shared structure that belongs in a layout or a pattern; hand it to
+  `/inspire-screens`. This check lives here because it is the only pass that sees
+  every face at once — a module review sees one module.
 - Every pattern/component referenced by a screen exists; no orphans (on disk, not
   referenced) — orphan counting respects blast radius, see Phase 6.
 
 ### Phase 5 — Prototype component adoption
 
-- Enumerate the shared components catalogued in `inspire_kb/05_screens/components/`.
+- Enumerate the shared components: every `*.component.md` under
+  `inspire_kb/01_spec/_design-system/`.
 - For each, count adoption in the horizontal prototype at its configured root
   (`/prototype` by default — resolve `prototype_root` per
   [`_references/product-roots.md`](../../_references/product-roots.md); `none` means
   this phase has nothing to count and reports so): pages using the canonical
   component vs pages still inlining an equivalent.
-- **From two UI surfaces on, count per shell.** The prototype holds one shell per UI
-  surface, so report one line per shell rather than a single suite-wide ratio: a
-  component adopted throughout one shell and absent from another is a different
-  problem from a migration progressing evenly everywhere, and a pooled ratio reads the
-  same for both. A
-  component whose `surfaces:` list narrows it is counted only against the shells in
-  that blast radius.
+- **From two faces on, count per shell.** The prototype holds one shell per face, so
+  report one line per shell rather than a single project-wide ratio: a component
+  adopted throughout one shell and absent from another is a different problem from a
+  migration progressing evenly everywhere, and a pooled ratio reads the same for
+  both. A component whose `faces:` list narrows it is counted only against the
+  shells of those faces.
 - Report consolidated drift. High drift is `important` (not critical) — migration
   progresses over time.
 
@@ -79,14 +88,14 @@
 - Patterns catalog: for each pattern file, count references from screens.
 - Components catalog: for each component file, count usages in the prototype.
 - Flag patterns/components with 0 references (unused or not migrated yet).
-- **Judge an entry inside its own blast radius.** A catalog entry carrying `surfaces:`
-  is counted only against the surfaces it names — a `surfaces: [admin]` pattern used
-  across the admin shell and nowhere else is fully adopted, not an orphan. Zero
-  references *within its blast radius* is the finding. An absent field still means
-  suite-wide, so an unscoped entry is judged as before.
+- **Judge an entry inside its own blast radius.** A catalog entry carrying `faces:`
+  is counted only against the faces it names — a `faces: [admin]` pattern used
+  across the admin face and nowhere else is fully adopted, not an orphan. Zero
+  references *within its blast radius* is the finding. An absent field means the
+  whole project.
 - Flag screens claiming a pattern/component that doesn't exist.
-- **Design-system variance signal.** Report how many per-surface variant sections
-  `05_screens/design-system.md` carries and how much of the file they occupy. Those
+- **Design-system variance signal.** Report how many per-face variant sections
+  `01_spec/_design-system/design-system.md` carries and how much of the file they occupy. Those
   sections are defined by
   [`/inspire-bootstrap design-system`](../../inspire-bootstrap/SKILL.md), which allows
   them deliberately and expects them to stay rare; a count that keeps climbing is the

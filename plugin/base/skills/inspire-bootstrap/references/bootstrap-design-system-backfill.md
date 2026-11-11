@@ -2,7 +2,7 @@
 > Part of [inspire-bootstrap](../SKILL.md). Read together with [`_references/ui-reference.md`](../../_references/ui-reference.md).
 
 `/inspire-bootstrap design-system backfill [{reference}]` brings a design system
-written before the token file up to the current shape: `design-tokens.json` beside
+written before the token file up to the current shape: `design-system.tokens.json` beside
 it, and the `## Supported viewports`, `## Icons` and `## Reference` sections in it.
 `/inspire:update` runs it before `/inspire-screens backfill` whenever
 `.inspire/bin/design-system-coherence.sh` reports one of them missing; an operator
@@ -16,14 +16,14 @@ reference does not show either.
 ## The run
 
 1. **List the gaps.** Run `.inspire/bin/design-system-coherence.sh` over
-   `inspire_kb/05_screens`. The missing sections and a missing token file are the
+   `inspire_kb/01_spec/_design-system`. The missing sections and a missing token file are the
    scope; a section already present is left as it stands.
 2. **Resolve the reference** per [`_references/ui-reference.md`](../../_references/ui-reference.md)
    § Which reference — passed by `/inspire:update`, named in the argument, or asked
    once with the prototype as the default.
-3. **Build `design-tokens.json`** in the
+3. **Build `design-system.tokens.json`** in the
    [W3C Design Tokens format](https://www.designtokens.org/tr/drafts/format/), the
-   shape [`00_bootstrap/theme.tokens.json`](../../../../inspire_kb/00_bootstrap/theme.tokens.json)
+   shape [`theme.tokens.json`](../../../../inspire_kb/01_spec/_design-system/theme.tokens.json)
    shows. Three sources, in this order, each filling only what the one before left
    open:
    1. **`design-system.md` itself.** Every colour, font, size, spacing, radius and
@@ -34,7 +34,7 @@ reference does not show either.
       what the design system never named. Mark each
       `"$extensions": { "inspire": { "source": "reference" } }`.
    3. **Common sense**, when neither holds a value a screen will need: the defaults
-      of `00_bootstrap/theme.tokens.json`, adapted to the stack's UI library. Mark
+      of `_design-system/theme.tokens.json`, adapted to the stack's UI library. Mark
       each `"$extensions": { "inspire": { "source": "generated" } }` — the validator
       counts them until someone confirms them.
    Where the reference contradicts a value `design-system.md` states, the design
@@ -56,7 +56,7 @@ reference does not show either.
 7. **Write `## Reference`** as [`_references/ui-reference.md`](../../_references/ui-reference.md)
    shows: what was measured, when, at which widths — or `none — values generated on
    {date}`.
-8. **Stamp and check.** `.inspire/bin/trust.sh stamp inspire_kb/05_screens/design-system.md
+8. **Stamp and check.** `.inspire/bin/trust.sh stamp inspire_kb/01_spec/_design-system/design-system.md
    --skill bootstrap`; the token file carries no frontmatter and is not stamped.
    Re-run `design-system-coherence.sh`: it should report only the counted generated
    tokens.

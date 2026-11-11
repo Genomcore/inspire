@@ -8,8 +8,8 @@ block a unit. Those are proposed and confirmed, every time.
 ## Read the sources
 
 Resolve the roots **as the factory run does**, not as this shell does:
-`SDD_KB_ROOT` from the checkout's `.env`, then `kb_root` from the committed
-`.inspire/emanate.json`, then the default `inspire_kb`. The stack skills are always
+`SDD_KB_ROOT` from the checkout's `.env`, then `kb_root` from `factory` in
+`.inspire/emanate.yml`, then the default `inspire_kb`. The stack skills are always
 the `.claude/skills/*/SKILL.md` whose `stack:` names an id in `stack.md`. Warn when this shell
 carries a different value; the run never sees it.
 
@@ -23,7 +23,7 @@ carries a different value; the run never sees it.
 | `## Test infrastructure` | one service per row; the Component column is its name | `services` |
 | `## Worktree recipe` | the `dependencies` and `generated artifacts` rows; the `environment` row names the variables' file | `setup`, `env` |
 | `## Conventions` (`### Layout`, `### Commands`, when the project wrote them) | real commands and test layout | `run`, `claims` |
-| `surfaces.md`, when present | each surface's `**Package:**` and `**Profiles:**` (which replace the global list) | per-package `cd`, roots |
+| every `*.face.md` and `*.bundle.md` under `01_spec/`, found by extension | each one's `package` and `profiles` frontmatter (`profiles` replaces the global list for that package) | per-package `cd`, roots |
 | each profile's `## Build & verify` | build, lint, types and test commands | `run` |
 | each profile's `## Test conventions` | where tests live | `claims` |
 
@@ -156,6 +156,7 @@ sources leave it open.
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
 | whether to review, and against which rules | a review is a cost the operator chooses |
 | secrets | `env` is committed and shown to every agent |
+| any value under `factory` | the models, the concurrency, the tries and the base branch are the operator's choice. The section is carried over from the old file or answered, never proposed |
 
 ## An empty project
 
@@ -171,9 +172,27 @@ are expected.
 
 - Read the working-tree file and the base branch's committed one; warn when they
   differ.
-- Detect the old shapes: no `image` (written before images), and `tests` with
-  `roots` (a ticket's wording, never the reader's). Propose a migration.
+- Detect the old shapes: no `image` (written before images), `tests` with
+  `roots` (a ticket's wording, never the reader's), and a separate
+  `.inspire/emanate.json`. Propose a migration; the last one follows its own steps
+  below.
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for
   each removal. Write nothing without approval.
+
+## Migrating `emanate.json`
+
+The factory refuses a project that still has `.inspire/emanate.json`. Its keys belong
+under `factory` in `emanate.yml`, with the same names.
+
+1. Read the old file. Carry over `kb_root`, `spec_root`, `model`, `review_model`,
+   `subagent_models`, `concurrency`, `max_tries`, `base_branch`, `viewer_port` and
+   `sandbox` as they stand. Drop `schema`. The factory refuses any other key under
+   `factory` and under `sandbox`, so report one and ask; never carry it over silently.
+2. Show the new `factory` section and the deletion of the old file as one diff with the
+   rest of the proposal. Write and delete nothing without approval.
+3. On approval, write the section into `emanate.yml` and delete `emanate.json`. Run the
+   validation of [`validate.md`](validate.md) before telling the operator it is done.
+4. Remind the operator to commit both changes, the file edited and the file removed,
+   on the branch `factory.base_branch` names: a run reads the committed file.

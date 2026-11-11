@@ -29,11 +29,16 @@ shared thing), and proposes **consolidations**.
 | # | Scanner | Seam of the codebase | Feeds (after consolidation) | Brief |
 |---|---------|----------------------|------------------------------|-------|
 | A | **Stack & infrastructure** | languages, frameworks, runtime, datastore, messaging, build, Docker/CI/IaC, config | `00_bootstrap/stack.md` | [`references/scanner-stack.md`](references/scanner-stack.md) |
-| B | **UI screens** | routes → views/pages/templates, navigation | `05_screens` (+ patterns/components) | [`references/scanner-screens.md`](references/scanner-screens.md) |
-| C | **Business logic · API · DB** | entities (schema/ORM/types), actions (services/handlers/mutations), endpoints | `04_domain` (+ feature signals) | [`references/scanner-logic.md`](references/scanner-logic.md) |
-| D | **Application styles** | design tokens, typography, color/status palette, density, layout | `00_bootstrap/theme.md` → `05_screens/design-system.md` | [`references/scanner-styles.md`](references/scanner-styles.md) |
+| B | **UI screens** | routes → views/pages/templates, navigation | faces' `*.screen.md` (+ `_design-system/` patterns/components) | [`references/scanner-screens.md`](references/scanner-screens.md) |
+| C | **Business logic · API · DB** | entities (schema/ORM/types), actions (services/handlers/mutations), endpoints | modules' `*.entity.md` / `*.action.md` (+ feature signals) | [`references/scanner-logic.md`](references/scanner-logic.md) |
+| D | **Application styles** | design tokens, typography, color/status palette, density, layout | `_design-system/theme.md` → `_design-system/design-system.md` | [`references/scanner-styles.md`](references/scanner-styles.md) |
 
-**Features (`03_features`) are not scanned directly** — they are **derived in
+Every candidate is written for the layout under `inspire_kb/01_spec/`, with its typed
+extension (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`, `.face.md`,
+`.bundle.md`, `.screen.md`, `.pattern.md`, `.component.md`): the extension is what
+every tool finds it by.
+
+**Features (`*.feature.md`) are not scanned directly** — they are **derived in
 consolidation** from the correlation between B and C: a coherent flow across a
 screen, the API it calls, and the entity/fields it reads or writes *is* a use case.
 
@@ -53,7 +58,8 @@ derivation**, **module inference**, the **stack/theme elaboration comparison**, 
 the **handoff** into the authoring skills.
 
 Does NOT own: writing final KB artifacts (it delegates to `/inspire-module`,
-`/inspire-feature`, `/inspire-screens`, `/inspire-domain`, `/inspire-bootstrap`); the
+`/inspire-feature`, `/inspire-screens`, `/inspire-domain`, `/inspire-face`,
+`/inspire-process`, `/inspire-bootstrap`); the
 interview *content* (the authoring skills own that); or **building / running /
 installing** the source (extract never executes the code it reads).
 
@@ -61,7 +67,7 @@ installing** the source (extract never executes the code it reads).
 
 Follow the family cadence: **one focused question at a time**, no decision-tree
 walls, show-then-approve. Reach for `AskUserQuestion` only after dialogue has
-narrowed a choice to 2–4 options. The consolidated manifest is a large surface to
+narrowed a choice to 2–4 options. The consolidated manifest is a large set to
 **cut down** in conversation, never a to-do list to accept wholesale.
 
 ## Safety invariants (hard — never relax, and passed to every scanner subagent)
@@ -86,7 +92,7 @@ narrowed a choice to 2–4 options. The consolidated manifest is a large surface
   → (on "start") chained authoring. `--only` restricts the fan-out to a subset.
 - `/inspire-extract fingerprint {path}` — run only the **stack** and **styles**
   scanners + the elaboration comparison; recommend migrate-or-keep for
-  `00_bootstrap`. Authors nothing.
+  `00_bootstrap/stack.md` and the theme in `01_spec/_design-system/`. Authors nothing.
 - `/inspire-extract review` — re-open the current consolidated manifest for another
   narrowing pass (read-only re-render).
 
@@ -103,8 +109,8 @@ root as this project configures it (`/prototype` and `/source` by default; resol
 declaring `source_root: .` is the one shape where the tree to scan legitimately *is* the
 repo: confirm that with the operator, and there only `inspire_kb/` is off limits.
 
-Read the current KB (module hubs — `02_modules/*.md` excluding
-`_*.md` and `README.md` — screens, domain tree, `00_bootstrap`) so the run
+Read the current KB — every typed artifact under `inspire_kb/01_spec/` (modules,
+faces, bundles, screens, entities, actions) and `00_bootstrap/` — so the run
 **merges, not clobbers**. Confirm the scanner set (`--only`, default all four).
 **Consult the task tracker** so tracked extraction work isn't re-surfaced.
 
@@ -139,23 +145,32 @@ Merge the four slices into one manifest and do the work no single scanner can:
    **traceability graph** `screen → action → entity → field`. This is the
    "*this screen uses this API and these fields*" relation the operator asked for.
 2. **Derive features.** A coherent flow across a screen + its actions + entity is a
-   candidate **feature** (`03_features`). Features are *derived here*, each linking
-   the screen(s) and action(s) that realize it. Backend-only flows (no screen) are
-   features too; infra-only endpoints usually are not.
-3. **Infer modules and surfaces.** Cluster the cross-linked artifacts into modules (source
-   folders, API path prefixes, bounded contexts, monorepo packages); propose slugs +
-   id prefixes.
-   The same boundary signals answer a second, independent question: **which surfaces
-   the source delivers.** A deployable `apps/*` entry, or a package with its own build
-   and entry point, is a **surface candidate** — kind read from what it serves
-   (rendered views → `ui`, an HTTP/worker/consumer entry point → `headless`, a package
-   only other packages import → `lib`), id proposed from the directory name. Record
-   them as `surfaces_inferred`
-   ([`references/manifest-format.md`](references/manifest-format.md)). Surfaces are
-   orthogonal to modules, not a second decomposition of them: one package is usually
-   both a surface and the home of several modules, and those modules stay in the one
-   registry. A candidate is a proposal — nothing here becomes a surface id; the
-   *adopt* arrival of `/inspire-surface add` records one, outside the Phase 4 chain.
+   candidate **feature** (`*.feature.md` in its module's `_features/`). Features are *derived here*, each linking
+   the screen(s) and action(s) that realize it. Backend-only flows (no screen) that
+   someone starts are features too; infra-only endpoints usually are not. A flow
+   nobody starts — a scheduled job, a start-up task, an event handler — is a
+   **process candidate** instead.
+3. **Infer modules, faces and bundles.** Cluster the cross-linked artifacts into
+   modules (source folders, API path prefixes, bounded contexts, monorepo packages);
+   propose slugs + id prefixes.
+   The same boundary signals answer a second, independent question: **how the source
+   reaches people and other systems.** A deployable `apps/*` entry, or a package with
+   its own build and entry point, is a candidate, read from what it serves:
+   - a **scanned UI app** (rendered views) is a **face candidate** — id from the
+     directory name, `package`, `profiles`, and the shell its routes sit under; its
+     screens become that face's screen candidates, with id `{face}.{slug}`;
+   - a **scanned service** (an HTTP, worker or consumer entry point) is a **bundle
+     candidate** — id, `package`, `profiles`, and the actions its endpoints expose
+     (scanner C's correlation), as whole modules where every action of a module is
+     there;
+   - a package only other packages import is a bundle candidate when it has its own
+     artifact (an SDK, a library), or a design-system candidate when it is a UI kit.
+   Record them as `faces_inferred` and `bundles_inferred`
+   ([`references/manifest-format.md`](references/manifest-format.md)), with the
+   `bundles:` each face candidate's screens reach. Faces and bundles are orthogonal to
+   modules, not a second decomposition of them: one package usually exposes several
+   modules, and those modules stay where they are. A candidate is a proposal —
+   nothing here becomes an id; `/inspire-face add` records each one.
 4. **Bootstrap verdicts.** Fold the **A** and **D** elaboration signals into
    migrate-or-keep recommendations via
    [`references/bootstrap-comparison.md`](references/bootstrap-comparison.md) — never
@@ -187,22 +202,30 @@ as read-only reconnaissance.
 Scanning is parallel; **authoring is ordered** so upstream invariants hold:
 
 1. **Bootstrap** (only if the comparison recommends it, on approval) — stack/theme
-   is upstream of everything; a load-bearing change is an ADR
-   (`/inspire-workspace adr create`).
+   is upstream of everything; a load-bearing change is an ADR (`/inspire-adr create`).
 2. **Modules** — scaffold inferred modules via `/inspire-module create`.
-3. **Features** (`03_features`) — the derived use cases; before domain, because
+3. **Features** (`*.feature.md`) — the derived use cases; before domain, because
    **features are upstream of specs**.
-4. **Screens** (`05_screens`) — reference the derived features; adopt the
-   consolidated patterns/components from scanner B.
-5. **Domain** (`04_domain`) — actions wire `## Purpose` to the derived **feature**, never
-   to a source file; entities adopt scanner C's reconciled field set.
+4. **Domain** (`*.entity.md`, `*.action.md`) — actions wire `## Purpose` to the
+   derived **feature**, never to a source file; entities adopt scanner C's
+   reconciled field set.
+5. **Faces and bundles** — `/inspire-face add face` and `add bundle`, one interview
+   per confirmed candidate. A bundle's `## Actions` links the actions authored in
+   step 4.
+6. **Screens** (`*.screen.md`) — in their face's `_screens/`; reference the derived
+   features; adopt the consolidated patterns/components from scanner B.
+7. **Processes** (`*.process.md`) — `/inspire-process create`, once the actions
+   they require exist.
+
+Every link an artifact writes to something not yet authored creates that target as
+a draft from its template, so the order bends without leaving a broken link.
 
 ## Provenance & staging
 
 - **The manifest is transient working state**, staged in the session scratchpad (or
   an operator-named path). It is **never** committed into `inspire_kb/`.
 - **Confirmed candidates leave a durable record via the tracker**: one ticket per
-  authored artifact (`/inspire-workspace task create --epic extract`) — no new KB
+  authored artifact (`/inspire-task create --epic extract`) — no new KB
   structure.
 - **Authored artifacts carry a lightweight, non-authoritative provenance marker** —
   a `> Extracted from: {source-path}` note + `file:line` evidence in `## Notes`, a
@@ -229,10 +252,12 @@ Extract never writes these files — it feeds each authoring skill:
 | Layer | Skill | Extract supplies |
 |-------|-------|------------------|
 | Bootstrap | `/inspire-bootstrap stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
-| Surface | `/inspire-surface add` (*adopt* arrival) | the `surfaces_inferred` candidates: proposed id, kind, evidence — one interview each, confirmed field by field |
+| Face | `/inspire-face add face` | each `faces_inferred` candidate: proposed id, package, profiles, shell, bundles, evidence — one interview each, confirmed field by field |
+| Bundle | `/inspire-face add bundle` | each `bundles_inferred` candidate: proposed id, package, profiles, the actions it exposes, evidence |
 | Module | `/inspire-module create {module}` | inferred slug, id prefix, one-line description, members |
 | Feature | `/inspire-feature create {module}/{id}` | derived flow (screen ↔ action ↔ entity), candidate actor, `file:line` evidence |
-| Screen | `/inspire-screens create {module}/{screen}` | route, covered feature ids, consolidated pattern, data source; evidence |
+| Screen | `/inspire-screens create {face}.{slug}` | route, covered feature ids, consolidated pattern, data source; evidence |
+| Process | `/inspire-process create {scope}/{process}` | each `processes_inferred` candidate: trigger, required actions, affected entities, evidence |
 | Domain | `/inspire-domain define {module::entity[::action]}` | reconciled fields + invariants (entity) or verb + touches + `requires` (action), canonicalized ids, the upstream feature |
 
 ## Rules
@@ -290,9 +315,10 @@ Extract never writes these files — it feeds each authoring skill:
 - `/inspire-module` — scaffolds inferred modules and reviews them.
 - `/inspire-feature` · `/inspire-screens` · `/inspire-domain` — the authoring skills
   extract delegates to; they own the interview and the KB writes.
-- `/inspire-bootstrap` — owns `stack.md` / `theme.md`; the stack + styles scanners
+- `/inspire-bootstrap` — owns `stack.md` and the design system; the stack + styles scanners
   feed its `stack` / `theme` flows when a migration is recommended.
-- `/inspire-surface` — owns the roster; its *adopt* arrival delegates the reading of a
-  joining codebase here and consumes the `surfaces_inferred` candidates back.
-- `/inspire-workspace` — the tracker (durable record of extraction) and the ADR
-  ladder (for load-bearing stack/theme migrations).
+- `/inspire-process` — authors the process candidates.
+- `/inspire-face` — owns faces and bundles; records the `faces_inferred` and
+  `bundles_inferred` candidates, one interview each.
+- `/inspire-task` · `/inspire-adr` — the tracker (durable record of extraction) and
+  the ADR ladder (for load-bearing stack/theme migrations).

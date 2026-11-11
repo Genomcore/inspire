@@ -1,0 +1,49 @@
+---
+# faces: [face-a, face-b]       # blast radius — the faces this entry serves; omit = the whole project; see `.claude/skills/_references/face-scope.md`
+# bundles: [bundle-a]           # the bundles it serves, when one carries it (a lib); omit = the whole project
+---
+
+<!-- `list` and `detail` are the two shipped starters (generic, brand-agnostic) —
+     starting points, not a closed set. Add a new pattern entry whenever a screen's
+     structure doesn't fit either. -->
+# Pattern: {pattern-name}
+
+**Purpose:** {one-line description of what this pattern is for — first body line, greppable}
+**State:** implemented | to-extract
+**Components:** [[{component-name}]]
+
+{One-paragraph description of the pattern.}
+
+## PAT1: Structure
+
+1. {Structural element 1}
+2. {Structural element 2}
+
+A pattern carries no measurement: where its regions sit, at what size and at
+which width belongs to the [`layouts/`](../layouts) entry that frames it.
+
+## PAT2: Regions
+
+<!-- Regions are HOLES, never prop mirrors: a region says what kind of content it
+     accepts, never which fields that content shows. A component's props belong to
+     its own catalog entry, and the screen is where props and regions meet.
+     `Fill`: required | optional. `Accepts`: one or more of `data` · `dispatch` ·
+     `nav` · `static` — the first three name the binding kind a screen must declare
+     for a required region, and `static` means screen-authored content with no
+     binding behind it. The join-check reads these two columns, and both
+     vocabularies are closed: a value outside them is a warning on THIS file. -->
+
+| Region | Fill | Accepts | What it holds |
+|---|---|---|---|
+| `{region}` | required | static | {the content this hole takes} |
+
+## PAT3: Variants
+
+- **{Variant name}** — {when to use it}.
+
+## PAT4: Notes
+
+<!-- Commentary a run never reads: no derivation carries this section, so a
+     requirement written here reaches no persona and is lost. Requirements go
+     in **Structure**, **Variants**, or the table that owns them. -->
+- {caveats, related patterns, navigation rules}

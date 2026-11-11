@@ -6,7 +6,11 @@
 #
 # Usage:
 #   .inspire/bin/decisions.sh                       # every live decision, in full
-#   .inspire/bin/decisions.sh --surface <id>        # only those binding that surface
+#   .inspire/bin/decisions.sh --face <id>           # only those binding that face
+#
+# An ADR binds a face when it lists it under `faces:`, when it sits in that face's
+# `_adr/`, or when it lists neither `faces:` nor `bundles:`. An ADR in a module's
+# `_adr/` binds every face.
 #   .inspire/bin/decisions.sh --budget <chars>      # past the budget, an index instead
 
 set -uo pipefail
@@ -14,11 +18,11 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
 
-SURFACE=""
+FACE=""
 BUDGET=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --surface) SURFACE="${2:-}"; shift 2 ;;
+    --face)    FACE="${2:-}"; shift 2 ;;
     --budget)  BUDGET="${2:-0}"; shift 2 ;;
     *) echo "decisions.sh: unknown argument $1" >&2; exit 2 ;;
   esac
@@ -39,16 +43,32 @@ adr_title() {
   ' "$1"
 }
 
-adr_surfaces() {
+# adr_list <file> <field> — a frontmatter list (`faces:` or `bundles:`), space-joined.
+adr_list() {
   head -1 "$1" | grep -q '^---[[:space:]]*$' || return 0
-  yq --front-matter=extract '(.surfaces // "") | (select(tag == "!!seq") | join(" ")) // .' \
+  yq --front-matter=extract "(.$2 // \"\") | (select(tag == \"!!seq\") | join(\" \")) // ." \
     "$1" 2>/dev/null || true
 }
 
-binds_surface() {
-  local surfaces="$1"
-  [ -z "$SURFACE" ] || [ -z "$surfaces" ] || [ "$surfaces" = "all" ] && return 0
-  case " $surfaces " in *" $SURFACE "*) return 0 ;; esac
+# adr_placement <file> — `face {f}` or `module {m}` when the ADR sits in a face's or a
+# module's `_adr/`; empty for a global one.
+adr_placement() {
+  case "$1" in
+    */_faces/*/_adr/*)   local r="${1#*/_faces/}";   printf 'face %s\n' "${r%%/*}" ;;
+    */_modules/*/_adr/*) local r="${1#*/_modules/}"; printf 'module %s\n' "${r%%/*}" ;;
+  esac
+}
+
+binds_face() {
+  local faces="$1" bundles="$2" placement="$3"
+  [ -z "$FACE" ] && return 0
+  case "$placement" in
+    "face $FACE") return 0 ;;
+    face\ *)      return 1 ;;
+    module\ *)    return 0 ;;
+  esac
+  [ -z "$faces" ] && [ -z "$bundles" ] && return 0
+  case " $faces " in *" $FACE "*) return 0 ;; esac
   return 1
 }
 
@@ -80,11 +100,15 @@ while IFS= read -r adr; do
   [ -z "$adr" ] && continue
   status="$(adr_status "$adr")"
   case "$status" in superseded|rejected) continue ;; esac
-  surfaces="$(adr_surfaces "$adr")"
-  binds_surface "$surfaces" || continue
-  id="$(basename "$adr" .md)"
+  faces="$(adr_list "$adr" faces)"
+  bundles="$(adr_list "$adr" bundles)"
+  placement="$(adr_placement "$adr")"
+  binds_face "$faces" "$bundles" "$placement" || continue
+  id="$(sdd_artifact_id "$adr")"
   label="${status:-no status}"
-  [ -n "$surfaces" ] && [ "$surfaces" != "all" ] && label="${label}; surfaces: ${surfaces// /, }"
+  [ -n "$placement" ] && label="${label}; ${placement% *}: ${placement#* }"
+  [ -n "$faces" ] && label="${label}; faces: ${faces// /, }"
+  [ -n "$bundles" ] && label="${label}; bundles: ${bundles// /, }"
   line="- **${id}** (${label}) — $(adr_title "$adr")"
   INDEX="${INDEX}${line}
 "
@@ -92,17 +116,17 @@ while IFS= read -r adr; do
 $(decision_text "$adr")
 "
   count=$((count + 1))
-done < <(sdd_find_adrs "$SDD_KB_ROOT/01_adr")
+done < <(sdd_find_adrs "$SDD_SPEC_ROOT")
 
 [ "$count" -eq 0 ] && exit 0
 
 scope=""
-[ -n "$SURFACE" ] && scope=" that bind the \`${SURFACE}\` surface"
-HEAD="INSPIRE decisions — ${count} live ADR(s) in \`inspire_kb/01_adr/\`${scope}. An ADR \
-listing surfaces binds only those; one listing none binds the whole suite. Follow each \
+[ -n "$FACE" ] && scope=" that bind the \`${FACE}\` face"
+HEAD="INSPIRE decisions — ${count} live ADR(s) in \`inspire_kb/01_spec/\`${scope}. An ADR \
+listing faces binds only those; one listing none binds the whole project. Follow each \
 one when you specify or build; to change one, use \`/inspire-adr\`. A \`design\` or \
 \`prototyped\` decision can still be refined, an \`implemented\` one only superseded. \
-The reasons are in each ADR's \`.rationale.md\`."
+The reasons are in each ADR's \`.adr.rationale.md\`."
 
 DIGEST="${HEAD}
 

@@ -4,7 +4,7 @@
     {
       "rule": "sections-present",
       "severity": "warning",
-      "message_substring": "ADR rationale has no decision beside it: adr-auth-sessions.md"
+      "message_substring": "ADR rationale has no decision beside it: auth-sessions.adr.md"
     }
   ],
   "forbidden": ["missing required", "carries"]

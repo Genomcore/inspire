@@ -1,8 +1,14 @@
 {
   "exit": 1,
-  "args": ["spec/kb/05_screens"],
+  "args": [
+    "spec/kb/01_spec/_faces"
+  ],
   "findings": [
-    { "rule": "wikilinks-resolve", "severity": "error", "message_substring": "auth.user.archive" }
+    {
+      "rule": "wikilinks-resolve",
+      "severity": "error",
+      "message_substring": "auth.user.archive"
+    }
   ],
   "forbidden": [
     "wikilink does not resolve: [[auth.user.list]]",

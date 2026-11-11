@@ -4,7 +4,7 @@
     {
       "rule": "sections-present",
       "severity": "warning",
-      "message_substring": "ADR rationale carries the decision, which belongs in adr-auth-sessions.md: Decision"
+      "message_substring": "ADR rationale carries the decision, which belongs in auth-sessions.adr.md: Decision"
     }
   ],
   "forbidden": ["missing required"]

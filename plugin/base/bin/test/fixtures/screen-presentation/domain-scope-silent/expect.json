@@ -1,1 +1,10 @@
-{ "exit": 0, "args": ["spec/sdd"], "findings": [], "forbidden": ["screen-presentation"] }
+{
+  "exit": 0,
+  "args": [
+    "spec/kb/01_spec/_modules"
+  ],
+  "findings": [],
+  "forbidden": [
+    "screen-presentation"
+  ]
+}

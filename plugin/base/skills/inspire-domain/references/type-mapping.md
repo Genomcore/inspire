@@ -28,7 +28,7 @@ The **universal semantic vocabulary** used by action descriptors and entity docu
 
 ## Mapping-column tokens
 
-The `Mapping` column of `## Entities` field tables uses small DSL tokens to say where a value comes from. Their **meanings** are universal and fixed here; their expansions are the language profile's. The agent expands them in surface manifests and in the descriptor's behavior section.
+The `Mapping` column of `## Entities` field tables uses small DSL tokens to say where a value comes from. Their **meanings** are universal and fixed here; their expansions are the language profile's. The agent expands them in the action's bindings and in the descriptor's behavior section.
 
 | Token | Means |
 |-------|-------|

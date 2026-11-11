@@ -1,0 +1,1 @@
+{ "exit": 0, "findings": [ { "rule": "face-exposure", "severity": "warning", "message_substring": "binds action billing::invoice::pay" } ] }

@@ -5,7 +5,7 @@
     {
       "rule": "wikilinks-resolve",
       "severity": "error",
-      "message_substring": "knowledge-base.entry.promote.md.*this-target-resolves-nowhere"
+      "message_substring": "entry.promote.action.md.*this-target-resolves-nowhere"
     }
   ]
 }

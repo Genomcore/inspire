@@ -4,44 +4,46 @@
 ## Subcommand: review
 
 Runs all consistency checks for the module. This is the **required gate before any
-PR** that modifies the module's hub (`inspire_kb/02_modules/{module}.md`) or its
-files under `inspire_kb/03_features/{module}/`.
+PR** that modifies the module's hub
+(`inspire_kb/01_spec/_modules/{module}/{module}.module.md`) or any file under the
+module's directory.
 
 ### 1. Module hub + features structure
 
-**Hub (`02_modules/{module}.md`):**
-- Exists — one file per module (the file *is* the module's entry in `02_modules/`).
-- Is a **pure hub**: overview, relationships to other modules, and links to
-  the module's screens, specs, spikes and module-scoped ADRs. Its use cases live
-  in `03_features/{module}/` — the glob is the index. **No full use-case
-  bodies inline.**
-- **Legacy check:** a hand-maintained use-case index block still sitting in the
-  hub is operator-owned; suggest removing it on next touch — never auto-edit it.
+**Hub (`{module}.module.md`):**
+- Exists — exactly one `*.module.md` in the module's directory (the file *is* the
+  module).
+- Is a **pure hub**: overview, relationships to other modules, and links. **No full
+  use-case bodies inline.**
+- **Its links match the module.** `## Use cases` links every `*.feature.md` under
+  the module's directory; `## Domain` every `*.entity.md` and `*.action.md`;
+  `## Module ADRs` every `*.adr.md` in its `_adr/`; `## Screens` every
+  `*.screen.md`, in any face, that declares `module: {module}` or binds one of its
+  actions. A file the hub does not link, or a link to a file that does not exist, is
+  a finding.
 
-**Use-case files (`03_features/{module}/`):**
-- One file per use case (`{use-case}.md`); each carries a back-link to the hub
-  `[[../../02_modules/{module}|ModuleName]]` in its intro.
+**Use-case files (`_features/`):**
+- One file per use case (`{use-case}.feature.md`); each carries a back-link to the
+  hub `[[{module}|ModuleName]]` in its intro.
 - Feature / use-case IDs are unique within the module and use the module's ID
   prefix (declared in the hub / the project's `00_bootstrap` conventions).
 
 ### 2. screen spec structure
 
-- Folder location follows the shape of the screens tree, which
-  [`_references/surface-scope.md`](../../_references/surface-scope.md) keys to the
-  roster: `inspire_kb/05_screens/{module}/` while the suite has at most one UI
-  surface; `05_screens/{surface}/{module}/` plus `05_screens/shared/{module}/`
-  once it has two or more. Each such folder carries `_index.md` + one file per
-  screen.
-- `_index.md` lists the module's screens by id, with their feature coverage;
-  every listed screen exists on disk, and every screen file is listed. Routes are
-  derived, never written into the index.
-- Every screen carries its identity block (`id` · `module` · `screen` ·
-  `lifecycle`), a `**Features:**` line, a non-empty `## Purpose` and a non-empty
-  `## Bindings`. A `**Pattern:**` line is optional; where it is there, it
-  resolves to a file in `inspire_kb/05_screens/patterns/` and that layout's
-  required regions find the bindings they need.
-- No screen redefines design tokens (those live in `design-system.md`); no inline
-  mock data (reference the data source); each screen stays focused (~250 lines).
+The module's screens are the ones its hub links: they live in the faces that show
+them (`_faces/{face}/_screens/{slug}.screen.md`), found by extension, never in the
+module's directory. Each face's `_index.md` is that face's navigation and belongs to
+`/inspire-screens`; routes are derived, never written into it.
+
+- Every screen carries its identity block (`id` (`{face}.{slug}`) · `module` ·
+  `screen` · `lifecycle`), a `**Features:**` line, a non-empty `## Purpose` and a
+  non-empty `## Bindings`. A `**Pattern:**` line is optional; where it is there, it
+  resolves to a `*.pattern.md` in `inspire_kb/01_spec/_design-system/patterns/` and
+  that pattern's required regions find the bindings they need.
+- A screen binds only actions its face's bundles expose (`face-exposure.sh`).
+- No screen redefines design tokens (those live in `_design-system/` and the face's
+  `{face}.tokens.json`); no inline mock data (reference the data source); each screen
+  stays focused (~250 lines).
 
 ### 3. Quality checks
 
@@ -50,14 +52,16 @@ files under `inspire_kb/03_features/{module}/`.
   state, never history) above all. The closed token list and its section-scoped
   exemptions live there.
 - No embedded ADR content (>~10 lines of rationale without an ADR link).
-- All `[[wikilinks]]` resolve (including cross-folder: `patterns/`, `layouts/`, `components/`,
-  `01_adr/`, `design-system.md`).
+- All `[[wikilinks]]` resolve, by id: design-system entries (`*.pattern.md`,
+  `*.layout.md`, `*.component.md`, `design-system.md`), ADRs at every scope, and the
+  screens in every face. A link whose target is missing is fixed by creating the
+  target in draft (rule 3 of [`../SKILL.md`](../SKILL.md)).
 
 ### 4. Cross-layer coverage
 
-- **Features ↔ screen spec:** every feature with UI implications has a screen; every
-  screen's `**Features:**` line references features that exist in `03_features`;
-  the screen spec `_index.md` coverage table aligns with the actual screens.
+- **Features ↔ screen spec:** every feature with UI implications has a screen in
+  each face of its blast radius; every screen's `**Features:**` line references
+  features that exist (`*.feature.md`).
 - **Features ↔ Prototype:** features meant to appear in the horizontal prototype
   are reflected at the prototype root (`/prototype` by default — resolve
   `prototype_root` per
@@ -65,19 +69,19 @@ files under `inspire_kb/03_features/{module}/`.
   `none` as "no prototype to check"), and what building them taught has landed in
   the specs / screens / ADRs (the horizontal keeps no learnings file).
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
-  realizing action descriptor in `inspire_kb/04_domain/{module}/` (flag gaps as
+  realizing action descriptor in the module's `_domain/` (flag gaps as
   `important`); every action's `## Purpose` back-sources to a feature via
   `[[wikilink]]` (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts a **current** ADR — one present
-  and not superseded or rejected — within its maturity's reach (see
-  `inspire_kb/01_adr/`). Flag it whatever the narrower artifact says: a module hub, a
+  and not superseded or rejected — within its maturity's reach: the global ADRs, the
+  module's own `_adr/`, and the `_adr/` of every face whose screens use the module. Flag it whatever the narrower artifact says: a module hub, a
   use case and a descriptor have nowhere to declare an ADR departure, so the
   contradiction is drift and the departure belongs in a superseding or amended ADR
   ([`_references/authority.md`](../../_references/authority.md) § A2).
 
 ### 5. Spec-layer (SDD) checks
 
-Run `.inspire/bin/review.sh inspire_kb/04_domain/{module}/` and incorporate
+Run `.inspire/bin/review.sh inspire_kb/01_spec/_modules/{module}/` and incorporate
 findings. The rule set covers:
 - `acyclic-deps` — no cycles or self-loops in the `requires` graph
 - `stable-blockers` — stable actions don't require non-stable targets
@@ -114,7 +118,7 @@ component adoption > cosmetic.
 
 ## Module hub + features
 - Use-case files: {list}
-- Sub-layer sync: {ok | N drifted}
+- Hub links: {ok | N out of sync}
 
 ## screen spec Structure
 - Pattern usage: {list} | {bespoke count}

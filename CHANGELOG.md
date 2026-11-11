@@ -9,15 +9,72 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.15.0 — unreleased
+## 0.15.1 — unreleased
+
+Upgrade with `/inspire:update`. A project with `.escape-hatches.json` then runs
+`/inspire-config` again, so `emanate.yml` gains the ratchet check, and adds `jq` and
+`yq` to its image.
+
+### Changed
+
+- **INSPIRE Factory runs the escape-hatch ratchet.** When `.escape-hatches.json`
+  exists, `/inspire-config` writes `.inspire/bin/escape-hatch-ratchet.sh` as a check in
+  phase `quality`, and Q6 lists every command the commit hooks run (husky, lefthook,
+  pre-commit, a hand-written hook) that no check covers. A unit could merge a cast the
+  Factory never counted, so the next person's commit failed on code it never touched.
+  `/inspire-config review` reports a ratchet config with no ratchet check as an error.
+  The image needs `jq` and `yq` for the check.
+
+### Fixed
+
+- **The escape-hatch ratchet counts uses, not mentions.** A match wrapped in
+  backticks, such as `` `as any` `` in a comment explaining why the cast was avoided,
+  is no longer counted, and the first hits it reports leave out lines that only
+  mention one. Before, prose naming a hatch broke the ceiling, so no file in scope
+  could say why a hatch was avoided.
+
+## 0.15.0 — 2026-11-11
+
+Upgrade with `/inspire:update`, then run `/inspire:migrate` once to move the knowledge
+base to `inspire_kb/01_spec/`. Use this version with INSPIRE Factory 0.14.0 or later:
+that Factory reads only the new layout and refuses a project on an older INSPIRE.
+
+### Breaking for existing vaults
+
+- **The specification lives in `inspire_kb/01_spec/`, organized by concept**
+  ([`adr-kb-structure`](docs/adr/adr-kb-structure.md)). The layered folders
+  (`01_adr` … `05_screens`) and the surface roster are gone, and every artifact is found
+  by its typed extension (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`,
+  `.adr.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`). A screen id becomes
+  `{face}.{slug}`; its `module:` and `screen:` do not change, so routes do not change.
+  `/inspire:update` moves nothing in `inspire_kb/`: run `/inspire:migrate`.
+- A project the Factory has already built runs the Factory's remap
+  (`orchestrator/src/remap.ts`) after the migration. It renames the citations and the
+  screen ids in the built code from `_migration/id-map.json`, commits that on a local
+  branch, and keeps every realized unit realized, so nothing already emanated is
+  emanated again.
 
 ### Added
 
+- **`/inspire:migrate`** moves a layered KB to `01_spec/` in one step. It changes no id
+  but a screen's, records every screen id it changes in
+  `inspire_kb/01_spec/_migration/id-map.json`, and moves a layered `spec_root` to
+  `01_spec` in `emanate.yml` (`factory.spec_root`) or a remaining `emanate.json`.
+- **Faces, bundles and processes.** A face is what a kind of user sees, and holds its
+  screens; a bundle groups the actions a face can call, and a grouping bundle claims
+  them all with one `{bundle}/mount/every-action` claim; a process is a flow across
+  actions and carries claims like an action. `/inspire-surface` becomes
+  `/inspire-face`, which owns faces and bundles, and `/inspire-process` is new.
+- New validators: `spec-identity.sh` (no two artifacts of a type share an id, and no
+  id starts with `_`), `face-exposure.sh` (a screen uses no action outside its face's
+  bundles) and `process-shape.sh` (a process has a trigger, runs at least one action,
+  and affects only what its actions write).
+
 - **Every session starts with the project's live decisions.** The session-start hook
   injects a digest of every ADR that is neither superseded nor rejected: its id,
-  maturity, surfaces, title and `## Decision` text, never its rationale.
+  maturity, faces, title and `## Decision` text, never its rationale.
   `.inspire/bin/decisions.sh` prints the same digest for anything that runs agents
-  outside a session, and `--surface <id>` narrows it to one surface. The hook holds it
+  outside a session, and `--face <id>` narrows it to one face. The hook holds it
   to 6,000 characters; past that it injects an index of the decisions and points to
   the script. A project with no live ADR gets nothing.
 - **`/inspire-adr migrate`** splits each single-file ADR into its decision and its
@@ -77,15 +134,26 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   English, the sentence splitter uses a shorter abbreviation list without `no`, so
   `no.` ends a Spanish sentence. In every language, R4, R6 and R7 treat an accented
   letter as part of a word and match `ORGANIZACIÓN` to `organización`.
-- **INSPIRE Factory runs the escape-hatch ratchet.** When `.escape-hatches.json`
-  exists, `/inspire-config` writes `.inspire/bin/escape-hatch-ratchet.sh` as a check in
-  phase `quality`, and Q6 lists every command the commit hooks run (husky, lefthook,
-  pre-commit, a hand-written hook) that no check covers. A unit could merge a cast the
-  Factory never counted, so the next person's commit failed on code it never touched.
-  `/inspire-config review` reports a ratchet config with no ratchet check as an error.
-  The image needs `jq` and `yq` for the check.
 - `trust.sh endorse` writes `at` to the second with its offset
   (`2026-10-29T10:45:52+01:00`). Existing date-only stamps stay valid.
+- **An untested declared error blocks at `stable`, not `accepted`.**
+  `declared-errors-tested.sh` warns at `draft` and `accepted` and errors at `stable`.
+  An `accepted` contract is still being implemented, so a spec PR at that stage has no
+  code and cannot have tests yet. Before, an `accepted` descriptor with an untested
+  error failed pre-PR.
+
+- The wire conventions in `_references/conventions/` declare `kind: wire-convention`
+  (was `surface-convention`), and their error table is `## Error taxonomy → wire` with a
+  `Wire response` column. Nothing reads these names; "surface" now means a face.
+
+### Removed
+
+- **INSPIRE no longer checks the Factory's version.** `/inspire:init`, `/inspire:update`
+  and `/inspire-config` stop running `factory-check.sh` when they load, and
+  `factory-compat.json` and the script are gone. The Factory declares the oldest INSPIRE
+  it supports and refuses an older project itself, because it is the side that cannot
+  read what it does not know. The `factory` section of `emanate.yml` still needs Factory
+  0.13.0 or later.
 
 ### Fixed
 
@@ -107,14 +175,51 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
   `move`, `rollback`, `enable`/`disable`, namespace/OU re-parenting, an Event Bus
   audit probe) or cites `[[adr-plt-action-verb-conventions]]`, an ADR no project
   has. Its pagination numbers went too: the wire convention owns pagination.
-- **The escape-hatch ratchet counts uses, not mentions.** A match wrapped in
-  backticks, such as `` `as any` `` in a comment explaining why the cast was avoided,
-  is no longer counted, and the first hits it reports leave out lines that only
-  mention one. Before, prose naming a hatch broke the ceiling, so no file in scope
-  could say why a hatch was avoided.
 - Re-endorsing an artifact the same day it was last endorsed wrote the same
   bytes, so git recorded nothing and the endorsement looked as if it never
   happened.
+- **No tests is not a pass.** With no test file at all, `criteria-have-tests.sh`
+  and `declared-errors-tested.sh` emitted one warning and stopped, so a project with
+  🟢 Implemented features or `stable` descriptors and zero tests passed pre-PR. Both
+  now emit one finding for every untested criterion or declared error in scope, an
+  error once a feature is past 🟡 Planned or a descriptor is `stable`. A missing test
+  scope counts as no test file, so a project with `stable` descriptors and no
+  `source/` now fails pre-PR too.
+
+## 0.14.4 — 2026-11-09
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. Use this version with INSPIRE Factory
+0.13.0 or later: an earlier Factory refuses the new `factory` section.
+
+### Breaking for existing vaults
+
+- A project with `.inspire/emanate.json` must move its keys under `factory` in
+  `.inspire/emanate.yml`, and delete the file, before it runs Factory 0.13.0. The new
+  Factory refuses the project otherwise. `/inspire-config init` does the move.
+
+### Added
+
+- **`/inspire:init`, `/inspire:update` and `/inspire-config` check the Factory before they do anything.**
+  The `inspire-config` skill ships `factory-compat.json`, the range of Factory versions
+  this INSPIRE supports (from 0.13.0, no upper bound). Each skill runs
+  `scripts/factory-check.sh` when it loads, and `init` and `/inspire-config` check even a
+  project that has no `emanate` file yet. The script reads the Factory's version from
+  `INSPIRE_FACTORY_ROOT` and stops the skill when it is outside the range. A version it
+  cannot read is a warning, not a stop: `/inspire-config` then asks which version you run
+  and migrates nothing until you name one inside the range.
+
+### Changed
+
+- **`/inspire-config` writes and validates the Factory's settings.** `emanate.yml` gains
+  a `factory` section: `kb_root`, `spec_root`, `model`, `review_model`, `subagent_models`,
+  `concurrency`, `max_tries`, `base_branch`, `viewer_port` and `sandbox`. The skill
+  offers to migrate an existing `emanate.json` into it and, once you approve, deletes
+  the old file. The `schema` key is gone.
+- The format reference says that model names under `factory` must be exact, and that
+  the Factory refuses any key it does not list under `factory` and `sandbox`, `schema`
+  included.
+- Tracker: `0143-factory-settings-in-emanate-yml` is filed.
 
 ## 0.14.3 — 2026-10-30
 

@@ -1,6 +1,6 @@
 ---
 name: inspire-config
-description: "Write and check the project's .inspire/emanate.yml, the file that tells INSPIRE Factory which image, services, environment, setup and checks every unit runs with: derive a proposal from stack.md and its profiles, ask what they cannot answer, and validate it with the factory's own reader. Use when preparing a project for its first factory run, after a stack change, or when the factory refuses the file. Operator work only: never part of coding a unit."
+description: "Write and check the project's .inspire/emanate.yml, the file that tells INSPIRE Factory its settings and which image, services, environment, setup and checks every unit runs with: derive a proposal from stack.md and its profiles, ask what they cannot answer, and validate it with the factory's own reader. Use when preparing a project for its first factory run, after a stack change, or when the factory refuses the file. Operator work only: never part of coding a unit."
 argument-hint: "init|review"
 user-invocable: true
 ---
@@ -15,12 +15,12 @@ the run without it. This skill owns that file: it explains the format, proposes 
 file from what the knowledge base already declares, asks for what it cannot
 deduce, and validates the result.
 
-**Owns:** `.inspire/emanate.yml`.
+**Owns:** `.inspire/emanate.yml`, its `factory` section included: the Factory's own
+settings (`kb_root`, `spec_root`, `model`, `review_model`, `subagent_models`,
+`concurrency`, `max_tries`, `base_branch`, `viewer_port`, `sandbox`).
 
 **Does NOT own:**
 
-- `.inspire/emanate.json` — the factory's own settings (`model`, `review_model`,
-  `sandbox`, `base_branch`, `max_tries`). Read for `base_branch`, never written.
 - The skills and files a `review` check names. The check points at them; it never
   writes them.
 - `stack.md` and the profiles. They are the source this skill derives from; a gap
@@ -32,8 +32,10 @@ deduce, and validates the result.
 
 - `/inspire-config init` — derive, ask, validate, then write the file on
   approval. On an existing file it proposes a migration, never a rewrite
-  ([`references/derive.md`](references/derive.md) § Updating an existing file).
-- `/inspire-config review` — read-only: validate the committed file and
+  ([`references/derive.md`](references/derive.md) § Updating an existing file). An
+  `.inspire/emanate.json` is moved under `factory` and deleted
+  ([`references/derive.md`](references/derive.md) § Migrating `emanate.json`).
+- `/inspire-config review` — read-only: validate the file and
   list every warning from [`references/validate.md`](references/validate.md).
   Writes nothing.
 
@@ -45,16 +47,18 @@ Read the reference before the step it covers. The table is an index, not the flo
 |---|---|
 | [`format.md`](references/format.md) | Every key, its rule and the factory's exact error; how the factory runs each key; the quoting rule; a worked example |
 | [`derive.md`](references/derive.md) | The `init` flow: from `stack.md` and the profiles to each key, the questions, what is never deduced, an empty project, updating an existing file |
-| [`validate.md`](references/validate.md) | The factory's reader, the checks it cannot make, the optional image probe, and where the file must be committed |
+| [`validate.md`](references/validate.md) | The factory's reader, the checks it cannot make, the optional image probe, and the hand-over |
 
 ## The flow
 
 1. **Preconditions.** A git repository; `<kb_root>/00_bootstrap/stack.md` exists;
    the profiles resolve. `ios` in `profiles` stops the skill: iOS needs macOS and
    the factory's sandbox is Linux.
-2. **Read** `stack.md`, `surfaces.md` when present, and the resolved profiles.
+2. **Read** `stack.md`, every `*.face.md` and `*.bundle.md` under
+   `<kb_root>/01_spec/` (their `package` and `profiles`), and the resolved profiles.
 3. **Inspect** the repository, read-only: lockfiles, `package.json` scripts, runner
-   configs, test directories, the compose file, `.gitignore`.
+   configs, test directories, the compose file, `.gitignore`, and
+   `.inspire/emanate.json` when it exists.
 4. **Propose** the whole draft before the first question. Each key carries one
    line saying where it came from: *derived from X*, or *proposed, confirm*.
 5. **Ask** only what cannot be deduced, one question at a time, the default in
@@ -86,15 +90,19 @@ Read the reference before the step it covers. The table is an index, not the flo
    read fails the whole run, so a key the operator remembers from a ticket
    (`tests`, `roots`, `report`) is never written until validation accepts it.
    A `review` check needs a factory with review checks (0.11.0 or later); an
-   older reader refuses it, so validate before proposing one.
+   older reader refuses it, so validate before proposing one. The `factory` section
+   needs a factory 0.13.0 or later: an older reader refuses it as an unknown key.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that
    cannot be pulled stops it. Propose, then have the operator confirm.
 5. **Never start a service** and never leave a container behind. The optional
    image probe in `validate.md` runs one throwaway container on an explicit yes.
-6. **The operator commits.** The factory reads the committed file on the base
-   branch, never the working tree; say so every time the file is written.
+6. **The operator commits.** A run reads `.inspire/emanate.yml` from its clone of
+   `factory.base_branch`, so only the committed file counts: an uncommitted edit never
+   reaches it. Only `base_branch` itself is read from the working tree, because the
+   factory needs it before it clones. Say so every time the file is written, offer
+   the commit command, and never run it unasked.
 7. **No silent overwrite.** An existing file is changed through a shown diff and
    an approval, block by block or change by change.
 

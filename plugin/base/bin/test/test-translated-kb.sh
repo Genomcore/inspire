@@ -17,10 +17,9 @@ eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1"; diff <(printf '%s\n' "$3"
 has(){ if printf '%s\n' "$3" | grep -qF -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
 
 findings() {
-  local root="$TWINS/$1" scope
-  for scope in sdd kb; do
-    SDD_SPEC_ROOT="$root/sdd" SDD_KB_ROOT="$root/kb" "$REVIEW" "$root/$scope" 2>&1 >/dev/null
-  done | sed "s#$root/##g" | sort
+  local root="$TWINS/$1"
+  SDD_SPEC_ROOT="$root/kb/01_spec" SDD_KB_ROOT="$root/kb" "$REVIEW" "$root/kb" 2>&1 >/dev/null \
+    | sed "s#$root/##g" | sort
 }
 
 EN="$(findings en)"
