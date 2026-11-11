@@ -278,7 +278,7 @@ phases:
       - name: Unit tests
         run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
       - name: E2E tests
-        run: 'cd source && npx --no-install vitest run --config vitest.config.e2e.ts'
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
   - name: review
     checks:
       - name: Conventions

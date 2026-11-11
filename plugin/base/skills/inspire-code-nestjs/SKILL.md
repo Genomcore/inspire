@@ -200,19 +200,27 @@ owns the entity, never to the shared client's config.
   behavior change surfaces in its unit spec, a contract change in the e2e suite, and
   both are re-entered through the same red→green TDD cycle as new code.
 - Run: `npm run test` (unit) · `npm run test:e2e` (e2e). Both run on **Vitest**, unit
-  specs under `vitest.config.ts` and e2e under `vitest.config.e2e.ts`.
+  specs under `vitest.config.ts` and e2e under `vitest.e2e.config.ts`.
 - **Vitest MUST transform through SWC** (`unplugin-swc`, `swc.vite()` in both configs).
   Vitest's default transformer, esbuild, emits no `emitDecoratorMetadata`, and Nest's
   DI resolves constructor parameters from that metadata: without SWC an injected
   dependency arrives `undefined` and the failure looks like a broken provider, not a
   missing transform.
-- **E2E run serially, and that is a correctness requirement, not a performance choice.**
-  `fileParallelism: false` in the e2e Vitest config is load-bearing: the files share one real
-  database, so concurrent runs interfere — and the interference surfaces as flakiness,
-  not as an honest failure. Give each test FILE its own table/collection anyway (derive
-  the name from the test path, never a shared constant, so a new file cannot forget),
-  and make teardown synchronous where the store's drop is asynchronous by default — a
-  drop that returns while the table is still detaching is a race the next run inherits.
+- **Each e2e FILE gets its own database, copied from one migrated template.** The
+  e2e `globalSetup` applies the migrations once, with the project's own migration
+  runner, to a template database, then closes every connection to it (Postgres refuses
+  to copy a database anyone is connected to). Each file's `beforeAll` runs
+  `CREATE DATABASE <file db> TEMPLATE <template db>`, which copies the migrated schema
+  in milliseconds, and its `afterAll` runs `DROP DATABASE <file db> WITH (FORCE)` and
+  awaits it. Derive the file's database name from its test path, never a shared
+  constant, so a new file cannot forget. **Never run the migrations per file:** each
+  run starts the migration tool and replays every migration, which costs seconds per
+  file and turns a suite of a few dozen files into minutes. A store without database
+  templates keeps the same shape: build once, copy per file.
+- **E2E files run one at a time** (`fileParallelism: false` in the e2e Vitest config).
+  The files no longer share tables, so this is a resource choice, not a correctness
+  one: a unit's container gets about one CPU, so parallel files gain little and each
+  extra worker costs its own memory.
 
 ## Test infrastructure
 
