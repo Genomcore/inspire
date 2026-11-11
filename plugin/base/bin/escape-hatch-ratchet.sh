@@ -123,17 +123,20 @@ fi
 lowerable="$(mktemp -t escape-hatch-lower.XXXXXX)"
 trap 'rm -f "$FILE_LIST" "$lowerable"' EXIT
 
+strip_mentions() {
+  printf 's\001`(%s)`\001\001g' "$1"
+}
+
 occurrences() {
   tr '\n' '\0' < "$FILE_LIST" \
-    | xargs -0 grep -Eoh -- "$1" 2>/dev/null | wc -l | tr -d ' '
+    | xargs -0 sed -E "$(strip_mentions "$1")" 2>/dev/null \
+    | grep -Eo -- "$1" | wc -l | tr -d ' '
 }
 
 offending_lines() {
-  local regex="$1" hit content
+  local regex="$1" hit
   while IFS= read -r hit; do
-    content="${hit#*:*:}"
-    [ "$(printf '%s\n' "$content" | grep -Eo -- "$regex" | wc -l)" \
-      -gt "$(printf '%s\n' "$content" | grep -Eo -- "\`($regex)\`" | wc -l)" ] \
+    printf '%s\n' "${hit#*:*:}" | sed -E "$(strip_mentions "$regex")" | grep -Eq -- "$regex" \
       && printf '%s\n' "$hit"
   done < <(tr '\n' '\0' < "$FILE_LIST" | xargs -0 grep -EnH -- "$regex" 2>/dev/null)
 }
@@ -171,10 +174,7 @@ while [ "$i" -lt "$pattern_total" ]; do
 
   count=0
   if [ -s "$FILE_LIST" ]; then
-    matches="$(occurrences "$regex")"
-    mentions="$(occurrences "\`($regex)\`")"
-    count=$((matches - mentions))
-    [ "$count" -lt 0 ] && count=0
+    count="$(occurrences "$regex")"
   fi
 
   printf '%-24s %8s %8s\n' "$id" "$count" "$ceiling"
