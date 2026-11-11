@@ -9,7 +9,7 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.15.1 — unreleased
+## 0.16.0 — unreleased
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` then runs
 `/inspire-config` again, so `emanate.yml` gains the ratchet check, and adds `jq` and
