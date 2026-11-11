@@ -106,9 +106,10 @@ on `@typescript-eslint/no-unused-vars` for *parameters*, and they declare no
 it in the message is the only escape that costs nothing: an `_` prefix buys
 nothing without that option, and a class method has no per-member escape at all.
 
-**And a stub is never a suppression.** The escape-hatch ratchet holds every
-ceiling at zero, so an inline disable is not available to buy this — which is why
-the idiom is the *form of the stub* rather than a relaxation of the gate.
+**And a stub is never a suppression.** An inline disable on a stub would ship a
+suppression into code that is about to be filled in, and the next body would inherit
+it — which is why the idiom is the *form of the stub* rather than a relaxation of
+the gate.
 Interpolate something the parameter carries (an id, a key); where it carries
 nothing nameable, `String(param)` reads it.
 

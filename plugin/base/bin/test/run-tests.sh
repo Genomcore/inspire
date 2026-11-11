@@ -250,23 +250,6 @@ if [ -z "$filter" ]; then
   rm -f "$lib_out"
 fi
 
-# escape-hatch-ratchet's --update mode rewrites its own config, and the fixture
-# loop above is read-only by design — a fixture is a tree a rule scans, never
-# one it rewrites. Its defining guarantee (a ceiling only ever moves DOWN) is
-# asserted by a behavioural script instead, wired in by hand like the others.
-if [ -z "$filter" ]; then
-  total=$((total + 1))
-  ratchet_out="$(mktemp)"
-  if bash "$SCRIPT_DIR/test-ratchet-update.sh" >"$ratchet_out" 2>&1; then
-    echo "PASS escape-hatch-ratchet/--update"
-  else
-    failed=$((failed + 1))
-    echo "FAIL escape-hatch-ratchet/--update" >&2
-    cat "$ratchet_out" >&2
-  fi
-  rm -f "$ratchet_out"
-fi
-
 # trust.sh is a tool, not a review rule: it emits no findings, so it has no
 # fixtures/{rule}/{scenario}/ directory for the loop above to discover and needs
 # its own test script wired in by hand. Guarded on an empty filter so that

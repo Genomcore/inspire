@@ -66,7 +66,7 @@ Rule 2 forbids dressing up as adoption. The rules themselves still bind: a proje
 this stack derives its own `## Quality gates` (and the `gates:` frontmatter that lets
 `.inspire/bin/profile-gates-installed.sh` verify them) from a frontend iteration that
 exercises each rule before writing it down. The shared-toolchain candidates are
-obvious — `strictTypeChecked`, `ban-ts-comment`, the escape-hatch ratchet — and the
+obvious — `strictTypeChecked`, `ban-ts-comment`, the eslint-comments rules — and the
 React-only ground (`eslint-plugin-react-hooks`, `jsx-a11y`, a bundle-size budget) is
 where the measuring has to happen. This section is the deferral, not the answer.
 

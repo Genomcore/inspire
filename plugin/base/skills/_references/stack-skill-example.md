@@ -53,8 +53,9 @@ GIVEN/WHEN/THEN. Run: `<test cmd>` · `<e2e cmd>`.
      only, never an org's server or pipeline. -->
 **Absolute** (linter): `<rule>` · `<rule>` — <what each one refuses>.
 **Ratcheted** (aggregates): <metric> via `<package>` — <why it can't be absolute yet>.
-**Escape hatches**: `<suppression syntax this stack allows>` — the rule that refuses an
-undescribed one, and the counted set whose ceiling may only fall.
+**Escape hatches**: `<suppression syntax this stack allows>` — the lint rule that
+refuses each hatch the project does not allow, and the one that refuses an undescribed
+suppression.
 **Dropped, with the reason**: <rule that does not hold for this stack> — <why, and what
 covers the gap instead>. A rule left out silently reads as a rule nobody thought of.
 

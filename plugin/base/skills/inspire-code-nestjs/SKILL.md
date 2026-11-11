@@ -329,7 +329,7 @@ is written down, never silently missing):
   types and rules with invariants. It tests the code with varied inputs; the drill
   tests the tests. Neither replaces the other.
 
-**Escape hatches** (Rule 4 — named, justified, counted):
+**Escape hatches** (Rule 4 — the linter allows or refuses each one, never a count):
 - `@typescript-eslint/ban-ts-comment` at `allow-with-description` — `@ts-expect-error`
   permitted with a reason, `@ts-ignore` never (expect-error expires by itself when the
   underlying error is fixed).
@@ -341,11 +341,19 @@ is written down, never silently missing):
   `no-unlimited-disable`, `no-unused-enable`) and **neither `require-description` nor
   `no-unused-disable` is among them**. Enabling the preset alone leaves the promise above
   unenforced while looking installed — turn both on explicitly.
-- The repo-wide count of suppressions plus `as any` / `as unknown as` / `x!` is
-  **ratcheted in-repo** — the one baseline Rule 3 allows inside the repository, because a
-  suppression is source text and the ceiling bump shows up in the same diff. Patterns and
-  ceilings go in `.escape-hatches.json`; enforced by `.inspire/bin/escape-hatch-ratchet.sh`
-  from `pre-commit`.
+- `strictTypeChecked` already refuses `as any` (`no-explicit-any`) and `x!`
+  (`no-non-null-assertion`) at `error`. `as unknown as` needs its own rule, because no
+  preset refuses it: `no-restricted-syntax` with the selector
+  `TSAsExpression[expression.type='TSAsExpression'][expression.typeAnnotation.type='TSUnknownKeyword']`.
+  A hatch none of these rules refuses is allowed; there is no count of them.
+- `@eslint-community/eslint-comments/no-restricted-disable` lists
+  `@typescript-eslint/no-explicit-any`, `@typescript-eslint/no-non-null-assertion` and
+  `no-restricted-syntax`, so no inline comment re-allows what the rules above refuse. A
+  refusal a spec file needs (the negative-path cast below) is a config override, never
+  a disable.
+- On existing code, refuse first and baseline with ESLint's bulk suppressions
+  (`eslint --suppress-all`), committed as `eslint-suppressions.json`; a new violation
+  fails, and `--prune-suppressions` removes the entries a fix cleared.
 
 Test-file relaxations are enumerated **per rule with a written reason**. Two legitimate
 cases, and they are different in kind:
@@ -354,9 +362,9 @@ cases, and they are different in kind:
   it shrinks as the boundary gets modelled.
 - **Negative-path construction** — a test that feeds the wrong type to a validator
   (`null as unknown as string`) needs a cast, because the type system preventing it is
-  the whole point of the code under test. **Structural, not debt**: its ratchet ceiling
-  should hold, not drain, and the config should say so — a ceiling that invites a cleanup
-  which cannot happen trains people to ignore it.
+  the whole point of the code under test. **Structural, not debt**: the spec-file
+  override that allows it is permanent, and the config says so — an override that
+  invites a cleanup which cannot happen trains people to ignore it.
 
 Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 
