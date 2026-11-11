@@ -11,13 +11,46 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.15.0 — 2026-11-11
 
+Upgrade with `/inspire:update`, then run `/inspire:migrate` once to move the knowledge
+base to `inspire_kb/01_spec/`. Use this version with INSPIRE Factory 0.14.0 or later:
+that Factory reads only the new layout and refuses a project on an older INSPIRE.
+
+### Breaking for existing vaults
+
+- **The specification lives in `inspire_kb/01_spec/`, organized by concept**
+  ([`adr-kb-structure`](docs/adr/adr-kb-structure.md)). The layered folders
+  (`01_adr` … `05_screens`) and the surface roster are gone, and every artifact is found
+  by its typed extension (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`,
+  `.adr.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`). A screen id becomes
+  `{face}.{slug}`; its `module:` and `screen:` do not change, so routes do not change.
+  `/inspire:update` moves nothing in `inspire_kb/`: run `/inspire:migrate`.
+- A project the Factory has already built runs the Factory's remap
+  (`orchestrator/src/remap.ts`) after the migration. It renames the citations and the
+  screen ids in the built code from `_migration/id-map.json`, commits that on a local
+  branch, and keeps every realized unit realized, so nothing already emanated is
+  emanated again.
+
 ### Added
+
+- **`/inspire:migrate`** moves a layered KB to `01_spec/` in one step. It changes no id
+  but a screen's, records every screen id it changes in
+  `inspire_kb/01_spec/_migration/id-map.json`, and moves a layered `spec_root` to
+  `01_spec` in `emanate.yml` (`factory.spec_root`) or a remaining `emanate.json`.
+- **Faces, bundles and processes.** A face is what a kind of user sees, and holds its
+  screens; a bundle groups the actions a face can call, and a grouping bundle claims
+  them all with one `{bundle}/mount/every-action` claim; a process is a flow across
+  actions and carries claims like an action. `/inspire-surface` becomes
+  `/inspire-face`, which owns faces and bundles, and `/inspire-process` is new.
+- New validators: `spec-identity.sh` (no two artifacts of a type share an id, and no
+  id starts with `_`), `face-exposure.sh` (a screen uses no action outside its face's
+  bundles) and `process-shape.sh` (a process has a trigger, runs at least one action,
+  and affects only what its actions write).
 
 - **Every session starts with the project's live decisions.** The session-start hook
   injects a digest of every ADR that is neither superseded nor rejected: its id,
-  maturity, surfaces, title and `## Decision` text, never its rationale.
+  maturity, faces, title and `## Decision` text, never its rationale.
   `.inspire/bin/decisions.sh` prints the same digest for anything that runs agents
-  outside a session, and `--surface <id>` narrows it to one surface. The hook holds it
+  outside a session, and `--face <id>` narrows it to one face. The hook holds it
   to 6,000 characters; past that it injects an index of the decisions and points to
   the script. A project with no live ADR gets nothing.
 - **`/inspire-adr migrate`** splits each single-file ADR into its decision and its
