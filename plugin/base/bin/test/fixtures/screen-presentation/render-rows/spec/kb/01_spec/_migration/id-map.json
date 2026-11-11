@@ -1,0 +1,5 @@
+{
+  "screens": {
+    "users.list": "app.list"
+  }
+}

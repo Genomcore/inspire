@@ -7,18 +7,18 @@
 #
 # What is checked, per layer:
 #
-#   Entity document — `04_domain`, 2-segment leaf filename
+#   Entity document — `*.entity.md`
 #     `## Invariants` — a declared-none one-liner, or entries keyed `I{n}`
 #     whose heads (when present) come from vocabulary V2.
 #
-#   Action descriptor — `04_domain`, 3-segment leaf filename
+#   Action descriptor — `*.action.md`
 #     `## Preconditions` and `## Postconditions` — present, non-empty, and
 #     either a declared-none one-liner or entries keyed `P{n}` / `Q{n}` whose
 #     heads come from V3 / V4.
 #     `## Behavior` — every numbered step keyed `B{n}`.
 #     `## Errors` — error-code keys unique; heads (when present) from V5.
 #
-#   Use-case file — `03_features/{module}/{use-case}.md`
+#   Use-case file — `*.feature.md`
 #     `## Main flow` — every numbered step keyed `B{n}`.
 #     `## Preconditions` / `## Postconditions` — declared-none or keyed
 #     `P{n}` / `Q{n}`.
@@ -63,7 +63,7 @@
 #
 # Usage:
 #   .inspire/bin/keys-present.sh                              # every layer
-#   .inspire/bin/keys-present.sh inspire_kb/04_domain/auth     # domain only
+#   .inspire/bin/keys-present.sh inspire_kb/01_spec/_modules/auth/_domain     # one domain
 
 set -uo pipefail
 
@@ -341,7 +341,7 @@ check_feature() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 DOMAIN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
-FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/03_features")"
+FEATURE_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 if [ -n "$DOMAIN_SCOPE" ]; then
   while IFS= read -r action; do

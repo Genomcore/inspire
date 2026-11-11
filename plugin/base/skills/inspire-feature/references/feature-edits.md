@@ -6,19 +6,23 @@
 Create a new feature/use-case file in a module. **Required arg:**
 `{module}/{feature-id}` (e.g. `ai-agents/AIA-08`).
 
-1. **Verify** the module exists (`inspire_kb/02_modules/{module}.md`).
+1. **Verify** the module exists: its hub `{module}.module.md`, found by extension
+   under `inspire_kb/01_spec/`.
 2. **Ask** the user: name, description (2–5 sentences), actor/personas,
    dependencies (other feature IDs), priority (Core / Important / Nice-to-have),
    state (🟡 Planned default), ADRs to reference, and the blast radius (the
-   `surfaces:` frontmatter of the use case template ([`../SKILL.md`](../SKILL.md)
-   § Use case template) — resolved, and only ever asked about, per
-   [`_references/surface-scope.md`](../../_references/surface-scope.md)).
+   `faces:` / `bundles:` frontmatter of the use case template
+   ([`../SKILL.md`](../SKILL.md) § Use case template) — resolved, and only ever asked
+   about, per [`_references/face-scope.md`](../../_references/face-scope.md)).
 3. **Run the acceptance-criteria quality gate**
    ([`feature-ac-gate.md`](feature-ac-gate.md)) on the criteria before writing,
    assigning each new criterion the next free `AC-n` id, then **create the
-   use-case file** `inspire_kb/03_features/{module}/{feature-id}.md` from the use
-   case template ([`../SKILL.md`](../SKILL.md) § Use case template).
-4. **Report next steps:**
+   use-case file** `inspire_kb/01_spec/_modules/{module}/_features/{feature-id}.feature.md`
+   from the use case template ([`../SKILL.md`](../SKILL.md) § Use case template).
+4. **Create every missing link target** the file writes — a `**Depends on:**`
+   feature, an ADR, a face or bundle in the frontmatter — from its template in draft,
+   per [`../SKILL.md`](../SKILL.md) § Rules, and name each one in the report.
+5. **Report next steps:**
    - If UI-facing → `/inspire-screens` to add a screen spec.
    - If it describes a behavior/endpoint → `/inspire-domain define
      {module}::{entity}::{verb}` to author the action descriptor.
@@ -39,7 +43,8 @@ rules make the id trustworthy:
   the gate exists to kill.
 - **A test claims it with `@covers`, qualified by the owning feature** — `AC-6` alone
   recurs in every feature, so a bare citation in one feature's tests would silently
-  satisfy every other feature's sixth criterion. The `{feature}/{key}` shape is the
+  satisfy every other feature's sixth criterion. The feature part is the feature id,
+  which carries no extension. The `{feature}/{key}` shape is the
   structural-path id convention (identity = what the claim constrains, prefixed by its
   owner):
 
@@ -70,8 +75,9 @@ dependencies, promoting priority, changing state
    are preserved, a new criterion takes the next free id, never renumbered, never
    reusing a deleted id.
 3. On approval, apply it.
-4. If renamed: grep `inspire_kb/` (and any project code) for references to the
-   old ID and offer fixes.
+4. If renamed: rename the file to `{new-id}.feature.md` in the same `_features/`,
+   then search `inspire_kb/` (and any project code, `@covers` citations included)
+   for references to the old ID and offer fixes.
 5. Run [`review {feature-id}`](feature-review.md) to verify no drift.
 
 **State advances usually arrive from the coding stage.** It offers
@@ -92,14 +98,15 @@ Remove a feature and clean up all references.
 
 1. **Confirm** with the user: list every file touching this feature.
 2. Delete the use-case file
-   (`inspire_kb/03_features/{module}/{feature-id}.md`).
-3. **screen spec:** remove the feature ID from any screen's `**Features:**` line; if a
-   screen's only feature was this one, flag it for removal (that's `/inspire-screens`'s
-   job) and update the screen spec `_index.md` coverage table.
+   (`inspire_kb/01_spec/_modules/{module}/_features/{feature-id}.feature.md`).
+3. **screen spec:** in every face, remove the feature ID from any screen's
+   `**Features:**` line (every `*.screen.md` under `inspire_kb/01_spec/`); if a
+   screen's only feature was this one, flag it for removal (that's
+   `/inspire-screens`'s job).
 4. **Prototype:** remove references in the prototype root (`/prototype` by default —
    resolve `prototype_root` per
    [`_references/product-roots.md`](../../_references/product-roots.md); nothing to do
    when it is `none`); note any
    `inspire_kb/06_spikes/` entry that referenced this feature.
-5. **ADRs:** grep `inspire_kb/01_adr/`; if an ADR mentions this feature, flag it —
-   may need an ADR update.
+5. **ADRs:** search every `*.adr.md` under `inspire_kb/01_spec/` (global, module and
+   face scopes); if an ADR mentions this feature, flag it — may need an ADR update.

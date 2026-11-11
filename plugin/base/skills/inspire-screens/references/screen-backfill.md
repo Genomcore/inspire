@@ -15,7 +15,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
 ## Before it starts
 
 1. **The design system is ready.** `design-system.md` carries `## Supported
-   viewports`, `## Icons` and `## Reference`, and `design-tokens.json` exists. If
+   viewports`, `## Icons` and `## Reference`, and `design-system.tokens.json` exists. If
    `.inspire/bin/design-system-coherence.sh` reports any of them missing, run
    `/inspire-bootstrap design-system backfill` first: every row this flow writes
    cites a token or the reference that file names.
@@ -24,7 +24,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
    operator's answer; otherwise the argument names one, or the flow asks once with
    the prototype as the default.
 3. **The gaps are listed.** Run `.inspire/bin/screen-presentation.sh` over
-   `inspire_kb/05_screens` and group what it reports: frames missing, screens with
+   `inspire_kb/01_spec` and group what it reports: frames missing, screens with
    no `**Layout:**`, screens with no `## Render`, tables with no `Narrow`, components
    named with no entry, hover with no touch path. That list is the whole scope of
    the run; a screen it does not name is left alone.
@@ -37,29 +37,28 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
    lists, sweeping each range for its breakpoints. Without one, skip the capture:
    every value below is then generated, from the tokens first, the framework
    profile next and the stack's UI library defaults last.
-2. **The shell first.** One `layouts/shell.md` per distinct chrome — a surface whose
-   chrome differs takes its own, scoped by `surfaces:`. It frames every route, so
-   every other frame is measured inside it.
+2. **The shell first.** One shell layout entry, `shell.layout.md`, shared by every
+   face. It frames every route, so every other frame is measured inside it.
 3. **Then one frame per distinct geometry.** Group the screens by the pattern they
    name and by what the capture measured: two screens over one `detail`, one with
    tabs and one without, are two frames. Reuse an existing entry wherever its rows
    hold; write a new one from
-   [`layout-entry.md.template`](../templates/layout-entry.md.template) otherwise,
+   [`layout.template.md`](../templates/layout.template.md) otherwise,
    even for a single adopter — the alternative is a measurement in a screen. Name
    each frame for its shape (`collection`, `record-tabbed`), never for a screen.
 4. **Source every row** by the vocabulary the template fixes:
    - a value equal to a token → the token's path in braces, Source
-     `design-tokens.json`;
+     `design-system.tokens.json`;
    - a value `design-system.md` states → its section, Source `design-system.md §…`;
    - any other measured value → Source `reference`;
    - a value no reference held → Source `generated`;
    - clipping, overflow or overlap at a width → a gap in `## Notes` naming the width
      and the elements, and the row proposing what should happen instead → Source
      `undecided`.
-   A row already sourced `design-system.md` or `design-tokens.json` is a decision:
+   A row already sourced `design-system.md` or `design-system.tokens.json` is a decision:
    leave it as it stands.
 5. **Each screen in the gap list:**
-   - add the `**Layout:**` line naming its frame;
+   - add the `**Layout:**` line naming its frame by bare id;
    - write `## Render` — one H3 per region of its pattern, one row per column,
      field, meta value or control the capture shows (or, when generating, per data
      binding and the values the design system's field types imply), with the
@@ -69,7 +68,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
      `## Current prototype`.
 6. **Each component a Render row names and the catalog lacks:** write its entry at
    `**State:** to-extract` from
-   [`component-entry.md.template`](../templates/component-entry.md.template) — props
+   [`component.template.md`](../templates/component.template.md) — props
    from what the screens pass it, its states, every hover state with its touch
    equivalent.
 7. **Each hover finding** on an existing entry or screen: name the tap or
@@ -84,7 +83,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
    for the operator's yes.
 2. **Re-run the mechanical half**: `screen-presentation.sh`,
    `design-system-coherence.sh`, `screen-coherence.sh` and `sections-present.sh`
-   over `inspire_kb/05_screens`. The first two should report only the counted
+   over `inspire_kb/01_spec`. The first two should report only the counted
    `generated` and `undecided` rows; anything else is this run's to fix before it
    ends. The last two must report nothing they did not report before the run.
 3. **Report**, in this order:

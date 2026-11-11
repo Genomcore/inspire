@@ -4,7 +4,7 @@ The canonical example (`canonical-action.md`) shows `auth::user::create` — a d
 
 ## feature source
 
-The platform module's Action Catalog declares (in `inspire_kb/02_modules/platform.md`):
+The platform module's Action Catalog declares (in `inspire_kb/01_spec/_modules/platform/platform.module.md`):
 
 | Action | Description | Priority |
 |---|---|---|
@@ -27,7 +27,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Resolve a registered action's manifest by id. The [[platform-action-catalog|action catalog]] is the runtime source of truth for the capabilities the platform exposes, as [[adr-plt-06-action-catalog]] defines. This verb is its read entry point.
+Resolve a registered action's manifest by id. The [[platform-action-catalog|action catalog]] is the runtime source of truth for the capabilities the platform exposes, as [[adr-action-catalog]] defines. This verb is its read entry point.
 
 ## Inputs
 
@@ -50,10 +50,10 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 | `manifest` | read  | json   | —                  | The descriptor's resolved contract.    |
 
 ## Preconditions
-- `P1` — exists(platform.action) — The id must name a registered action; the catalog in [[adr-plt-06-action-catalog]] is the register.
+- `P1` — exists(platform.action) — The id must name a registered action; the catalog in [[adr-action-catalog]] is the register.
 
 ## Behavior
-1. `B1` — Resolve `id` against the action catalog index defined in [[adr-plt-06-action-catalog]].
+1. `B1` — Resolve `id` against the action catalog index defined in [[adr-action-catalog]].
 2. `B2` — Return the descriptor's frontmatter and resolved manifest as JSON.
 3. `B3` — If the id is unknown → `action_not_found`.
 
@@ -66,11 +66,11 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 
 ## What's notable
 
-- **The `id:` field is singular** (`platform::action::resolve`) even though the feature writes it plural. Both are correct — they're the same action expressed at different layers. The folder layout follows the SDD id: `inspire_kb/04_domain/platform/action/platform.action.resolve.md`.
+- **The `id:` field is singular** (`platform::action::resolve`) even though the feature writes it plural. Both are correct — they're the same action expressed at different layers. The file follows the SDD id: `inspire_kb/01_spec/_modules/platform/_domain/action/action.resolve.action.md`.
 
 - **The entity `platform::action` is meta**, not a data noun. The fields (`id`, `manifest`) are properties of the action manifest itself, not columns of a `platform_action` table. There's no SQL `CREATE TABLE` for this entity — the source of truth is the filesystem (action descriptors and the catalog index).
 
-- **The Outputs section uses the whole-entity 1-liner.** Since `resolve` returns the entire `platform::action` entity, the contract points at the entity document instead of restating its field shape. The SDD descriptor is a logical contract — wire-shape translations live in surface-binding artifacts downstream.
+- **The Outputs section uses the whole-entity 1-liner.** Since `resolve` returns the entire `platform::action` entity, the contract points at the entity document instead of restating its field shape. The SDD descriptor is a logical contract — wire-shape translations live in the action's bindings downstream.
 
 - **`Q1` is prose-only because `returns(...)` has nothing to name.** With no `## Outputs` table there is no field for the head to point at, so the postcondition says what it can in prose and derives a test-oracle claim. This is the honest case for a prose-only entry: a head would have to invent a referent.
 

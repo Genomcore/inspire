@@ -42,23 +42,15 @@
 # Implemented features — there is no earlier lifecycle state to be lenient about. The
 # lifecycle-progressive shape of the other gates does not apply.
 #
-# **Deliberately absent from `review.sh`'s default rule list, and not because it reads
-# `source/` — it does not.** `review.sh` hands every rule its own `$SCOPE`, which is the
-# *spec* root (`inspire_kb/04_domain`). This rule walks the *features* root. Added to the
-# default list it would be handed the domain tree, find no feature files in it, and report
-# nothing — passing for ever while appearing to be enforced, which is worse than being
-# absent. A rule whose scope contract differs from `review.sh`'s belongs where it can be
-# given its own root: `pre-pr.sh`, and direct invocation.
+# **Absent from `review.sh`'s default rule list.** It runs from `pre-pr.sh` and by direct
+# invocation. Features and ADRs are found by their typed extension anywhere under the
+# spec root (`*.feature.md`, `*.adr.md`), so the scope is any path inside it.
 #
-# The three source-touching gates reach the same conclusion for a different reason; do not
-# collapse the two rationales, because this one would still hold if the rule never touched
-# a line of product code.
-#
-# Config (env, all optional): SDD_FEATURES_ROOT · SDD_ADR_ROOT.
+# Config (env, all optional): SDD_SPEC_ROOT.
 #
 # Usage:
 #   .inspire/bin/adr-maturity-matches-features.sh                       # every feature
-#   .inspire/bin/adr-maturity-matches-features.sh inspire_kb/03_features/analytics
+#   .inspire/bin/adr-maturity-matches-features.sh inspire_kb/01_spec/_modules/analytics
 
 set -uo pipefail
 
@@ -68,23 +60,22 @@ source "$SCRIPT_DIR/_lib.sh"
 sdd_require_tools || exit 127
 sdd_init_counters
 
-SCOPE="${1:-$SDD_FEATURES_ROOT}"
+SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 if [ ! -e "$SCOPE" ]; then
   sdd_finding "warning" "adr-maturity-matches-features" "$SCOPE" \
-    "features root does not exist — no ADR claim can be checked"
+    "scope does not exist — no ADR claim can be checked"
   sdd_count_warning
   sdd_exit_with_counters
   exit $?
 fi
 
-# Resolve an ADR wikilink target to a file under the ADR root.
+# Resolve an ADR wikilink target to its decision file, `{slug}.adr.md`, by id.
 #
-# Targets appear in three forms across the layers — path form from features
-# (`[[../../01_adr/adr-x]]`), pipe form from descriptors
-# (`[[../../../01_adr/adr-x|adr-x]]`) and aliased prose form
-# (`[[../../01_adr/adr-x|the audit decision]]`) — so read the target half and match
-# on its **basename** rather than the written path. That also means a link whose
+# Targets appear in several forms — bare (`[[adr-x]]`), path form written before the
+# typed layout (`[[../../01_adr/adr-x]]`), pipe form (`[[adr-x|adr-x]]`) and aliased
+# prose form (`[[adr-x|the audit decision]]`) — so read the target half and match on
+# its last segment rather than the written path. That also means a link whose
 # relative depth is wrong still resolves here: depth is `wikilinks-resolve.sh`'s rule,
 # and this gate must not fail to check a maturity claim because a `../` was miscounted.
 adr_path_for() {
@@ -92,9 +83,12 @@ adr_path_for() {
   base="$(sdd_wikilink_target "$target")"
   base="${base##*/}"
   base="${base%.md}"
+  base="${base%.rationale}"
+  base="${base%.adr}"
+  base="${base#adr-}"
   [ -z "$base" ] && return 1
-  [ -d "$SDD_ADR_ROOT" ] || return 1
-  find "$SDD_ADR_ROOT" -type f -name "${base}.md" 2>/dev/null | head -1
+  [ -d "$SDD_SPEC_ROOT" ] || return 1
+  find "$SDD_SPEC_ROOT" -type f -name "${base}.adr.md" 2>/dev/null | sort | head -1
 }
 
 # The status word from an ADR's `**Status:**` prose line. ADRs carry no frontmatter, by
@@ -117,7 +111,7 @@ adr_status_of() {
 # So: collect claimants first, report
 # once per ADR, and name every feature so the operator can judge the claim.
 #
-# CLAIMS holds one `<adr-path>\t<feature-basename>` row per pair; UNRESOLVED holds the
+# CLAIMS holds one `<adr-path>\t<feature-id>` row per pair; UNRESOLVED holds the
 # links that never reached an ADR file.
 CLAIMS="$(mktemp -t adr-claims.XXXXXX)"
 UNRESOLVED="$(mktemp -t adr-unresolved.XXXXXX)"
@@ -144,21 +138,20 @@ collect_feature() {
       printf '%s\t%s\n' "$file" "$target" >> "$UNRESOLVED"
       continue
     fi
-    printf '%s\t%s\n' "$adr" "${file##*/}" >> "$CLAIMS"
+    printf '%s\t%s\n' "$adr" "$(sdd_artifact_id "$file")" >> "$CLAIMS"
   done < <(grep -oE '\[\[[^]]*adr-[^]]*\]\]' "$file" 2>/dev/null \
              | sed -E 's/^\[\[//; s/\]\]$//' | sort -u)
 }
 
 while IFS= read -r feature; do
   [ -z "$feature" ] && continue
-  case "$(basename "$feature")" in README.md|_*) continue ;; esac
   collect_feature "$feature"
-done < <(find "$SCOPE" -type f -name '*.md' 2>/dev/null | sort)
+done < <(sdd_find_features "$SCOPE")
 
 while IFS=$'\t' read -r file target; do
   [ -z "$file" ] && continue
   sdd_finding "warning" "adr-maturity-matches-features" "$file" \
-    "links ADR \`$target\`, which does not resolve under $SDD_ADR_ROOT — the maturity claim cannot be checked (link resolution itself is wikilinks-resolve's rule)"
+    "links ADR \`$target\`, which resolves to no ADR decision (`*.adr.md`) — the maturity claim cannot be checked (link resolution itself is wikilinks-resolve's rule)"
   sdd_count_warning
 done < <(sort -u "$UNRESOLVED" 2>/dev/null)
 

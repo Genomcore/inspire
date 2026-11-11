@@ -51,7 +51,7 @@ not the answer.
   `dangerouslySetInnerHTML` MUST NOT receive unsanitized input.
 
 ## Review focus
-- **styling**: uses the design-system tokens (`05_screens/design-tokens.json`, meanings in `05_screens/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
+- **styling**: uses the design-system tokens (`01_spec/_design-system/design-system.tokens.json`, plus the face's own `{face}.tokens.json` when it has one; meanings in `01_spec/_design-system/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
   shared component layer; no hardcoded colors/spacing, no ad-hoc one-off styles.
 - **accessibility**: interactive elements MUST be keyboard-navigable with correct roles,
   labels and focus management, and forms MUST announce errors.
@@ -81,11 +81,11 @@ The default toolchain is **oxlint** with `oxlint-tsgolint` for the type-aware ru
 (`@vitejs/plugin-react-swc`). A project whose `stack.md` names other tools uses its own
 commands.
 
-**Monorepo scoping.** In a workspace, scope every command to the target surface's
-package: `pnpm --filter {package} build|lint|test` (or the workspace tool's
+**Monorepo scoping.** In a workspace, scope every command to the target face's or
+bundle's package (its `package` field): `pnpm --filter {package} build|lint|test` (or the workspace tool's
 equivalent — `npm -w {package} …`, `turbo run test --filter={package}`, `nx test
 {package}`). Never run a workspace-wide install or build from a subcommand when a
-filtered form exists; a UI surface is verified by its own package going green.
+filtered form exists; a face is verified by its own package going green.
 
 ## Routes
 
@@ -93,32 +93,31 @@ filtered form exists; a UI surface is verified by its own package going green.
 > The project MAY edit it to match its real routing. See [`stack-skills.md`](../_references/stack-skills.md) § Seeds.
 
 A screen's route is **derived from its `module:` + `screen:` frontmatter**, never
-from its file path and never from its `id` string: a collision-minted
-`admin.users.list` whose frontmatter says `module: users`, `screen: list` still
-routes to `/users/list`, with no doubled surface segment.
+from its file path and never from its `id` string: a screen `admin.user-list`
+whose frontmatter says `module: users`, `screen: list` routes to `/users/list`
+inside its face's shell, with no face segment of its own.
 
 - **Route** = `/{module}/{screen}`, both kebab-cased (`user_profile` →
   `user-profile`).
 - A screen named `index` renders the module's landing route, `/{module}`.
-- **The surface contributes only its shell prefix.** The roster's `**Shell:**`
-  value already carries its own leading slash
-  (`inspire-surface/references/roster-format.md:76`), so the rendering is a plain
-  concatenation, `{shell}{route}`, with no separator in between — a suite-of-one
-  renders `{route}` alone, with no prefix. Example: shell `/admin` + route
-  `/users/list` → `/admin/users/list`. (A12 states the shape as
-  `{shell}/{route}`; that notation reads a slash between the two parts, which is
-  already inside `{shell}` — quote A12 verbatim only when citing it, and use the
-  concatenation above to render an actual route.)
+- **The face contributes only its shell prefix.** The `shell` in `{face}.face.md`
+  already carries its own leading slash
+  (`inspire-face/references/face-format.md`), so the rendering is a plain
+  concatenation, `{shell}{route}`, with no separator in between — a face with no
+  `shell` renders `{route}` alone, with no prefix. Example: shell `/admin` + route
+  `/users/list` → `/admin/users/list`. (The notation `{shell}/{module}/{screen}`
+  reads a slash between shell and route, which is already inside `{shell}` — use
+  the concatenation above to render an actual route.)
 - A screen whose data binding identifies a single entity appends `/:{param}`, named
   after the identifying input (`/users/detail/:userId`).
-- There MUST be **one route table per surface**, generated from the screen set
+- There MUST be **one route table per face**, generated from the face's screens
   (`src/routes.tsx`). No route string is ever authored twice: the screen file's
   frontmatter is the only place a module and screen name live.
 - Code MUST resolve every route through a `routeOf('{screen id}')` helper built from that
   table; a literal path string MUST NOT appear outside the route table.
 - Navigation targets screens **by id** and resolves through this same rule, so a
-  route and a screen can never disagree — and moving a screen between surfaces
-  changes no route.
+  route and a screen can never disagree. Moving a screen to another face changes its
+  id and its shell prefix, and nothing else of its route.
 
 ## Bindings
 
@@ -126,7 +125,7 @@ routes to `/users/list`, with no doubled surface segment.
 
 How a screen's `## Bindings` keys reach an action. There MUST be one client function per
 action, named from the dotted id in camelCase — `auth.user.list` → `authUserList()` —
-living in the surface's `api/` layer (the repository layer of `## Layering`). Its
+living in the face's `api/` layer (the repository layer of `## Layering`). Its
 transport is the backend profile's binding table; the two sections are the two ends
 of one wire.
 
@@ -155,8 +154,8 @@ of one wire.
 
 ## Persistence
 
-**Not applicable.** A UI surface owns no store: every write leaves through a dispatch
-binding to a backend action, and that surface's profile owns the persistence
+**Not applicable.** A face owns no store: every write leaves through a dispatch
+binding to a backend action, and that action's profile owns the persistence
 convention. Browser storage here is UI state — a remembered filter, a draft — never a
 source of truth, and never the home of anything a claim asserts.
 

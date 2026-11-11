@@ -1,7 +1,7 @@
 # Keyed entries and machine-readable heads
 
-The shared grammar behind every *named* claim in the domain (`04_domain`) and
-feature (`03_features`) formats: how an entry is keyed, what a machine-readable
+The shared grammar behind every *named* claim in the domain (`*.entity.md`,
+`*.action.md`) and feature (`*.feature.md`) formats: how an entry is keyed, what a machine-readable
 head may say, which claim id an entry derives, and — at the foot of this file —
 the exhaustive catalogue of **old shapes**, the pre-keying spellings that a
 strict reader refuses rather than silently reads as empty.
@@ -224,7 +224,7 @@ that is the normal case for the interesting ones.
 
 `actor(...)` is where a trust-boundary claim belongs. "Only an administrator may
 suspend a tenant" is true wherever the action runs, so it is a precondition of
-the action and never a surface-side annotation.
+the action and never a face- or bundle-side annotation.
 
 **Writing that rule as prose instead does not make it a weaker claim — it makes
 it no claim at all.** A framework profile derives the route's guard from

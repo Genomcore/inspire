@@ -1,0 +1,5 @@
+{ "exit": 0, "finding_count": 1,
+  "findings": [
+    { "rule": "criteria-have-tests", "severity": "warning", "message_substring": "no test files found" }
+  ],
+  "forbidden": ["is claimed by no test under"] }

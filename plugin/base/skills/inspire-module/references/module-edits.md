@@ -3,32 +3,37 @@
 
 ## Subcommand: create
 
-Scaffold a new module across the layers. The user provides the module name, an ID
-prefix (e.g. `MYM`), and a description.
+Scaffold a new module directory and its hub. The user provides the module name, an
+ID prefix (e.g. `MYM`), and a description.
 
 0. **Name gate — before scaffolding anything.** Reject a module name broad enough to
    describe the whole product (`analytics`, `platform`, `core`): a name every future
    feature could plausibly live under names nothing, and renaming later is a
    whole-vault propagation. Default to the plural of the module's primary resource
    unless the capability genuinely spans several entities, and follow the stack's own
-   naming convention where it has one. Surface the concern and the suggested
+   naming convention where it has one. A module id never starts with `_`
+   (`spec-identity.sh` reports it). Surface the concern and the suggested
    alternative; the operator decides.
-1. **Module hub:** `inspire_kb/02_modules/{module}.md` from the hub template
-   ([`templates/module-hub.md.template`](../templates/module-hub.md.template)) —
-   overview, relationships, the ID prefix, and empty link sections (features,
-   screens, specs, ADRs). This is the module's home; writing it here **is** the
-   registration (module hubs are `inspire_kb/02_modules/*.md` excluding `_*.md`
-   and `README.md` — the glob is the registry).
-2. **Features folder:** `inspire_kb/03_features/{module}/` — empty; use cases are
-   added via `/inspire-feature create`.
-3. **screen spec:** not created here. `inspire_kb/05_screens/{module}/` (flat or
-   surface-first per the roster's UI count — see
-   [`_references/surface-scope.md`](../../_references/surface-scope.md)) is created
-   lazily by [`/inspire-screens`](../../inspire-screens/SKILL.md), per surface, on the
-   module's first screen. `create` never pre-guesses which surfaces the module will
-   reach.
-4. Point the user to `/inspire-feature create` for the first use cases, and
-   `/inspire-prototype` once screens exist.
+1. **Module hub:** `inspire_kb/01_spec/_modules/{module}/{module}.module.md` from
+   the hub template ([`templates/module.template.md`](../templates/module.template.md))
+   — overview, relationships, the ID prefix, and empty link sections (features,
+   screens, domain, ADRs). Writing it **is** the registration: the set of modules is
+   the set of `*.module.md` files under `inspire_kb/01_spec/`, and nothing else
+   lists them.
+2. **The module's subdirectories** (`_features/`, `_domain/`, `_adr/`,
+   `_processes/`) are created by the skill that writes the first file in each:
+   `/inspire-feature create` for the first use case, `/inspire-domain define` for
+   the first entity or action, and so on.
+3. **Screens:** not created here. A screen lives in the face that shows it
+   (`_faces/{face}/_screens/`) and is created by
+   [`/inspire-screens`](../../inspire-screens/SKILL.md) in that face. `create` never
+   pre-guesses which faces the module will reach.
+4. **Exposure:** not created here. Which bundle publishes the module is the bundle's
+   file (`[[{module}]] (whole module)` under its `## Actions`), owned by
+   `/inspire-face`.
+5. Point the user to `/inspire-feature create` for the first use cases,
+   `/inspire-face` for the bundle that exposes the module, and `/inspire-prototype`
+   once screens exist.
 
 Report what was created and the next steps.
 
@@ -38,16 +43,22 @@ Modify an existing module. Use for: adding/removing use cases, renaming a featur
 ID globally, renaming the module itself, restructuring, or realigning after a new ADR.
 
 Operate transactionally:
-1. Read the current state (features + screen spec + specs).
+1. Read the current state: the hub, everything under the module's directory, and
+   the screens (in any face) that use its actions.
 2. Present the diff proposal to the user.
-3. On approval, apply edits across the affected layers.
+3. On approval, apply the edits, update the hub's links to match, and create every
+   missing link target in draft (rule 3 of [`../SKILL.md`](../SKILL.md)).
 4. Run [`review {module}`](module-review.md) to verify no drift was introduced.
 
 **Renaming the module** is an update, and it is atomic across the vault and the
-source: the hub file and its ID prefix, `03_features/{module}/` and every feature ID,
-`04_domain/{module}/` descriptor filenames and their ids, the screens tree, tracker
-epics and wikilinks, ADR references, the source module directory, and every test
-annotation that claims a feature's criteria (`@covers`). Move files with `git mv` so
+source: the module directory `_modules/{module}/` and its hub
+`{module}.module.md`, the ID prefix and every feature ID, every entity and action id
+(`{module}.{entity}`, `{module}::{entity}::{action}`) and the links that carry them,
+the `module:` field of every screen that declares it (in every face; it changes the
+route), every bundle that lists the module or its actions, tracker epics and
+wikilinks, ADR references, the source module directory, and every test annotation
+that claims a feature's criteria (`@covers`). The entity and action file names do not
+carry the module, so they stay as they are. Move files with `git mv` so
 history follows the rename. Leave prose that describes the *product* rather than the
 module untouched — the two share words more often than they share meaning. Verify
 with [`review {module}`](module-review.md) plus the project's traceability gates
@@ -55,23 +66,24 @@ before calling it done.
 
 ## Subcommand: delete
 
-Remove a module across all layers. Use with caution.
+Remove a module and everything it holds. Use with caution.
 
 1. **Confirm** with the user: list every file and feature about to be deleted.
-2. **Hub:** delete `inspire_kb/02_modules/{module}.md`.
-3. **Features:** delete `inspire_kb/03_features/{module}/`.
-4. **screen spec:** sweep every surface tree, not just one — delete
-   `inspire_kb/05_screens/*/{module}/` (every surface directory, including
-   `05_screens/shared/{module}/`) under a surface-first shape, or the flat
-   `inspire_kb/05_screens/{module}/` while the suite is still flat (see
-   [`_references/surface-scope.md`](../../_references/surface-scope.md)). A module
-   reaches the suite as a whole, so its deletion does too.
-5. **Specs:** delete `inspire_kb/04_domain/{module}/`.
-6. **Prototype:** remove the module's screens and routes from every shell that
-   serves it (all shells in a multi-surface suite, the one root otherwise); note
-   any `inspire_kb/06_spikes/` entry that referenced this module.
-7. **Cross-references:**
-   - Grep the whole `inspire_kb/` for `[[{module}]]` or feature-ID references —
-     flag and offer fixes.
-   - Check ADRs under `inspire_kb/01_adr/` for references to this module.
+2. **Module directory:** delete `inspire_kb/01_spec/_modules/{module}/` — the hub,
+   its features, its domain, its ADRs and its processes go together.
+3. **screen spec:** sweep every face, not just one. Every `*.screen.md` under
+   `inspire_kb/01_spec/` with `module: {module}` is deleted; a screen of another
+   module that binds one of this module's actions is flagged for
+   `/inspire-screens`. A module reaches every face as a whole, so its deletion does
+   too.
+4. **Bundles:** every `*.bundle.md` that lists `[[{module}]]` or one of its actions
+   is flagged for `/inspire-face`, which owns the bundle files.
+5. **Prototype:** remove the module's screens and routes from every face's shell;
+   note any `inspire_kb/06_spikes/` entry that referenced this module.
+6. **Cross-references:**
+   - Search the whole `inspire_kb/` for `[[{module}]]`, its feature IDs and its
+     entity and action ids — flag and offer fixes.
+   - Check global and face ADRs (every `*.adr.md` outside the deleted directory)
+     for references to this module.
+   - Check global and face processes (`*.process.md`) that require its actions.
    - Check other modules' relationship sections.

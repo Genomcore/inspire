@@ -56,11 +56,11 @@
 # heads this rule resolves, and a commented-out example must not produce a
 # finding about a name that was never claimed.
 #
-# Scope: the rule receives one `$1` and checks `$1 ∩ its layer` (`04_domain`).
+# Scope: the rule receives one `$1` and checks the entities and actions in `$1 ∩ 01_spec`.
 #
 # Usage:
 #   .inspire/bin/head-referents.sh
-#   .inspire/bin/head-referents.sh inspire_kb/04_domain/auth
+#   .inspire/bin/head-referents.sh inspire_kb/01_spec/_modules/auth
 
 set -uo pipefail
 

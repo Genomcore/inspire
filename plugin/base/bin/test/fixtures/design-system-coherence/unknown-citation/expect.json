@@ -1,7 +1,7 @@
 {
   "exit": 0,
   "findings": [
-    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "cites token {size.sidebar-width}, which design-tokens.json does not define" }
+    { "rule": "design-system-coherence", "severity": "warning", "message_substring": "cites token {size.sidebar-width}, which design-system.tokens.json does not define" }
   ],
   "finding_count": 1,
   "forbidden": ["color.surface"]

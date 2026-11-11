@@ -48,13 +48,19 @@ check "PRE-EXISTING KB: stack.md gains the answered source_root" \
   "grep -q 'source_root' '$pre/inspire_kb/00_bootstrap/stack.md'"
 # Seeding must still fill in what the project lacks, at file granularity.
 check "PRE-EXISTING KB: missing file inside an existing layer is seeded" \
-  "[ -f '$pre/inspire_kb/03_features/README.md' ]"
+  "[ -f '$pre/inspire_kb/00_bootstrap/README.md' ]"
 check "PRE-EXISTING KB: missing sibling in an existing layer is seeded" \
-  "[ -f '$pre/inspire_kb/00_bootstrap/theme.md' ]"
+  "[ -f '$pre/inspire_kb/00_bootstrap/glossary.md' ]"
 check "PRE-EXISTING KB: wholly absent layer is created" \
   "[ -f '$pre/inspire_kb/99_tracker/README.md' ]"
-check "PRE-EXISTING KB: design system still seeded" \
-  "[ -f '$pre/inspire_kb/05_screens/design-system.md' ]"
+# This KB is layered (01_adr, 03_features, 04_domain): it reaches 01_spec/ and its
+# design system only through /inspire:migrate, and the run says so.
+check "PRE-EXISTING KB: a layered KB is not seeded with 01_spec/" \
+  "[ ! -e '$pre/inspire_kb/01_spec' ]"
+check "PRE-EXISTING KB: no second design system beside the layered one" \
+  "[ ! -e '$pre/inspire_kb/01_spec/_design-system/design-system.md' ]"
+check "PRE-EXISTING KB: the run points at /inspire:migrate" \
+  "printf '%s' \"\$preout\" | jq -e '[.warnings[] | select(test(\"inspire:migrate\"))] | length > 0' >/dev/null"
 
 check "PRE-EXISTING KB: reported as an adoption, not a fresh install" \
   "printf '%s' \"\$preout\" | jq -e '.existing_kb == true' >/dev/null"

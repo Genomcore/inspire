@@ -125,7 +125,9 @@ check "guard: real v0.3 lock still drift-checks" "[ '$rc_okdrift' = 0 ]"
 "$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$okp" >/dev/null 2>&1
 rc_okupdate=$?
 check "guard: real v0.3 lock still updates"      "[ '$rc_okupdate' = 0 ]"
-kb_expect="$(find "$PLUGIN_ROOT/base/kb" -type f | wc -l | tr -d ' ')"
+# A v0.3 KB is layered, so it is owed every skeleton file but 01_spec/'s, which
+# only /inspire:migrate brings.
+kb_expect="$(find "$PLUGIN_ROOT/base/kb" -type f ! -path "$PLUGIN_ROOT/base/kb/01_spec/*" | wc -l | tr -d ' ')"
 check "guard: real v0.3 update kept the KB" \
   "[ \"\$(find '$okp/inspire_kb' -type f | wc -l | tr -d ' ')\" -ge '$kb_expect' ]"
 

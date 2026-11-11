@@ -97,6 +97,21 @@ moved since @x read it" is true of most artifacts most of the time and nothing t
 operator does makes the line go away. If attestation proves too weak, adding `sha` later
 is purely additive and old stamps stay valid as attestations.
 
+**Amended 2026-10-29 (0.15.0):** endorsement drift is now detected, without a content
+hash. `at` is a timestamp to the second with its offset, so every re-endorsement writes
+new bytes and leaves a commit — a date wrote the same bytes twice in a day, and the vouch
+left no trace. `trust.sh report` adds a seventh group, `CHANGED SINCE ENDORSED`: the
+commit that recorded the current `endorsed` block is found in the file's history, and
+the artifact is flagged when a later commit in that history (`E..HEAD`, merges
+excluded) or the working tree changed it outside the `endorsed` and `produced` blocks.
+The commit that records the endorsement counts as endorsed, whatever else it changes.
+No clock is compared: rebases move commit dates and branches merge edits dated before
+the endorsement, so only history answers "after". A date-only `at` from before 0.15.0
+stays valid and is compared the same way. The objection above — permanent noise with
+no closing action — no longer holds, because re-endorsing is the closing action and
+clears the line. Reading history only changes what the report says, consistent with
+[[adr-upgrade-path]] **D11**. The original paragraphs are left above as history.
+
 ### D3 — `produced` is sha-anchored, and the two hashes stay separate
 
 A version-only stamp (`skill` + `inspire`) was walked and rejected: it cannot see

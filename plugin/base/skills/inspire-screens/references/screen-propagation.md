@@ -15,7 +15,7 @@ one too.
    cosmetic (mention, don't insist), or no-prototype-yet (skip, note it's ready).
 3. **Ask, don't assume.** Close the turn with a clear question, e.g.:
 
-   > The screen spec for `{module}/{screen}` has changed: {summary}. The prototype is
+   > The screen spec for `{id}` has changed: {summary}. The prototype is
    > now misaligned on: {drift}. Shall I propagate now with `/inspire-prototype`, or
    > in another turn?
 

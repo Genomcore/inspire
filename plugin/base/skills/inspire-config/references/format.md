@@ -31,7 +31,7 @@ default. The reader refuses any key not in the table, under `factory` and under
 | Key | Rule | Default | Factory error |
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
-| `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/04_domain` | `… factory.spec_root must be a nonempty string` |
+| `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/01_spec` | `… factory.spec_root must be a nonempty string` |
 | (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, base_branch, viewer_port, sandbox` |
 | `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |

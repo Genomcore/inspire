@@ -31,6 +31,11 @@ For each screen, note (without following it) the **data it references**: API
 client calls, query hooks, form submit targets, template variables. The synthesis
 step turns these hints into `screen → action → entity` links.
 
+Note also **which UI app each screen belongs to** — the deployable package or
+`apps/*` entry that mounts its route, and the route prefix that app's routes share.
+Each such app becomes a **face candidate** in the synthesis, and its screens that
+face's screen candidates.
+
 ## Analogous artifacts & consolidation (your second job)
 
 - **Pattern consolidation** — views that share a structure (list, detail, form,
@@ -48,9 +53,11 @@ view are **not** separate screens (note them as sections of their host screen).
 
 ## What to return (slice: `screens`)
 
-- `screens` — list of `{proposed_id, route, view_file:line, candidate_pattern,
-  data_refs[], confidence}`. `data_refs` = the raw endpoint/query hints for the
-  synthesis step.
+- `screens` — list of `{proposed_id, app, route, view_file:line, candidate_pattern,
+  data_refs[], confidence}`. `proposed_id` is the screen's slug, unique within its
+  app; the synthesis makes it `{face}.{slug}`. `app` is the package that mounts it.
+  `data_refs` = the raw endpoint/query hints for the synthesis step.
+- `apps` — `{path, route_prefix, framework, evidence}` for each UI app found.
 - `pattern_candidates` — `{name, kind, instances[]}` for consolidated patterns.
 - `component_candidates` — `{name, adopters[]}` for consolidated components.
 - `navigation` — the view hierarchy, if discernible.

@@ -1,0 +1,8 @@
+{
+  "screens": {
+    "auth.login": "app.login",
+    "auth::profile::edit": "app.user.profile.edit",
+    "auth.profile": "app.user.profile",
+    "auth::profile::view": "app.user.profile.view"
+  }
+}

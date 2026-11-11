@@ -409,16 +409,16 @@ kh_prose_hits() {
 #   way `sdd_has_section` reads headers: outside frontmatter, outside fences.
 kh_h3_names() {
   local file="$1" parent="$2"
-  awk -v ph="## $parent" \
+  awk -v ph="$parent" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == ph { inparent = 1; next }
+      sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
       inparent && /^### / {
         h = substr($0, 5)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
         print h
       }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # kh_constraints_raw_lines <file> <parent_h2> <h3_name>
@@ -491,6 +491,8 @@ kh_split_constraints() {
 kh_first_column() {
   sdd_body_section "$1" "$2" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       /^\|/ {
         gsub(/^\|[[:space:]]*|[[:space:]]*\|$/, "")
         n = split($0, parts, /[[:space:]]*\|[[:space:]]*/)
@@ -499,7 +501,6 @@ kh_first_column() {
         gsub(/^`|`$/, "", cell)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
         if (cell == "" || cell ~ /^-+$/) next
-        if (cell == "Parameter" || cell == "Field" || cell == "Action" || cell == "Key") next
         print cell
       }
     '
@@ -524,7 +525,7 @@ kh_dotted() {
 #
 #   The rules built on this file strip comments in EVERY layer, which is a
 #   deliberate divergence from `sections-present.sh` (which strips only outside
-#   `04_domain`). The reason is new: the 0.9 action and entity templates carry
+#   entities and actions). The reason is new: the 0.9 action and entity templates carry
 #   guidance comments that name the very keys and Constraints lines these rules
 #   look for, so a descriptor copied from a template and not yet filled in would
 #   otherwise read as though it declared them.

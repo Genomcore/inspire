@@ -1,0 +1,22 @@
+{
+  "exit": 0,
+  "finding_count": 2,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "info",
+      "message_substring": "output_language: es"
+    },
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R6 historical language: 'anteriormente' in '## Context' .line 8."
+    }
+  ],
+  "forbidden": [
+    "line 7)",
+    "'~~strikethrough~~'",
+    "'## Consequences'",
+    "in '## Related ADRs'"
+  ]
+}

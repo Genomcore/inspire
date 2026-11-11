@@ -23,11 +23,13 @@ Author a new object from scratch — interview-driven first authoring. Objects a
 
 ## What gets written
 
-- `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md` — the descriptor (for actions)
-- `inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md` — the entity document (for entities)
+- `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md` — the descriptor (for actions)
+- `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md` — the entity document (for entities)
+
+Every link the interview writes to an object that does not exist yet creates that object from its template at `lifecycle: draft` (rule 11 of [`SKILL.md`](../../SKILL.md)).
 - Consolidation: the entity document's Fields + Touched by tables reconciled to include this action's field declarations (actions only)
 
 ## Hard rules that apply here
 
 - **feature is upstream; no escape hatch.** `define` refuses an action descriptor with no feature wikilink in `## Purpose`. If the verb has no feature home, the operator runs `/inspire-feature create` first.
-- **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md), with copyable shapes at [`../../templates/action.md.template`](../../templates/action.md.template) / [`../../templates/entity.md.template`](../../templates/entity.md.template). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.
+- **Format details** are in [`format-action.md`](../format-action.md) / [`format-entity.md`](../format-entity.md), with copyable shapes at [`../../templates/action.template.md`](../../templates/action.template.md) / [`../../templates/entity.template.md`](../../templates/entity.template.md). Consult them for the on-disk shape — but the *cadence* (this file + SKILL.md) governs how you get there.

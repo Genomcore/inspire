@@ -1,6 +1,5 @@
 ---
 name: init
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh:*)
 description: "Install the INSPIRE runtime into this repository: materialize the skills, validators, hooks and knowledge-base skeleton, register the hooks, and freeze the runtime version. Run once per project. Use when setting up INSPIRE in a new or existing repo."
 ---
 
@@ -8,17 +7,6 @@ description: "Install the INSPIRE runtime into this repository: materialize the 
 
 Materializes the plugin's inert payload into the repository and registers it. Once
 committed, the runtime travels with the repo: teammates and CI need no plugin.
-
-## Factory compatibility
-
-This runs when the skill loads, before anything below:
-
-!`"${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/scripts/factory-check.sh" --always`
-
-Relay what it printed, verbatim. A non-zero exit stops the skill before it loads: the
-Factory is outside the range in
-`${CLAUDE_PLUGIN_ROOT}/base/skills/inspire-config/factory-compat.json`, and the operator
-updates the Factory first. Never work around it.
 
 ## Preconditions
 

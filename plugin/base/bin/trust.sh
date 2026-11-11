@@ -10,7 +10,7 @@
 #               runtime version. Machine-owned, overwritten wholesale on every
 #               KB write.
 #   endorsed:   who is the last human that put their name on this? — a name and
-#               a date. Attestation, not content-pinning: git history is the
+#               a timestamp. Attestation, not content-pinning: git history is the
 #               byte-level audit trail.
 #
 # Staleness is ecosystem divergence, never age. There are no clocks in any
@@ -170,21 +170,26 @@ lock_version() {
 # not INSPIRE's to rewrite. The stamp's own `skill` is kept as evidence, and
 # when it disagrees with the map that disagreement is a reported finding.
 #
-# Two entries are corrections of the positional rule: `design-system.md` is the
-# one artifact inspire-bootstrap owns outside 00_bootstrap, and `surfaces.md` is
-# inspire-surface's roster.
+# The owner follows the typed extension, never the directory (adr-kb-structure
+# D4). `design-system.md` is the one artifact inspire-bootstrap owns inside
+# 01_spec, and a face's `_index.md` is the screens skill's navigation.
 # ─────────────────────────────────────────────────────────────────────────────
 
 owner_for() {
   case "$1" in
-    05_screens/design-system.md) printf 'bootstrap\n' ;;
-    00_bootstrap/surfaces.md)    printf 'surface\n' ;;
-    01_adr/*)                    printf 'adr\n' ;;
-    02_modules/*)                printf 'module\n' ;;
-    03_features/*)               printf 'feature\n' ;;
-    04_domain/*)                 printf 'domain\n' ;;
-    05_screens/*)                printf 'screens\n' ;;
-    *)                           printf '\n' ;;
+    01_spec/*) ;;
+    *) printf '\n'; return 0 ;;
+  esac
+  case "${1##*/}" in
+    design-system.md)                printf 'bootstrap\n' ;;
+    *.adr.md|*.adr.rationale.md)     printf 'adr\n' ;;
+    *.module.md)                     printf 'module\n' ;;
+    *.feature.md)                    printf 'feature\n' ;;
+    *.entity.md|*.action.md)         printf 'domain\n' ;;
+    *.face.md|*.bundle.md)           printf 'face\n' ;;
+    *.process.md)                    printf 'process\n' ;;
+    *.screen.md|*.pattern.md|*.layout.md|*.component.md|_index.md) printf 'screens\n' ;;
+    *)                               printf '\n' ;;
   esac
 }
 
@@ -194,7 +199,7 @@ owner_for() {
 # excuse a project's real design system from every check here.
 skip_artifact() {
   case "${1##*/}" in
-    README.md|_template.md|theme.md) return 0 ;;
+    README.md|*.template.md|theme.md) return 0 ;;
   esac
   return 1
 }
@@ -203,7 +208,7 @@ skip_artifact() {
 # construction. They still carry provenance. Pattern/component catalog entries
 # are NOT in this exemption: since T2 an entry is an authored layout contract
 # (its regions, what each accepts) rather than rebuilt output, so a human can
-# vouch for it like any other 01_adr–05_screens artifact.
+# vouch for it like any other specification artifact.
 endorsement_checked() {
   case "$1" in
     _index.md|*/_index.md) return 1 ;;
@@ -229,10 +234,8 @@ scan_paths() {
     for rel in 00_bootstrap/project.md 00_bootstrap/stack.md; do
       [ -f "$kb/$rel" ] && printf '%s\n' "$rel"
     done
-    for layer in 01_adr 02_modules 03_features 04_domain 05_screens; do
-      [ -d "$kb/$layer" ] || continue
-      ( cd "$kb" && find "$layer" -name '.?*' -prune -o -type f -name '*.md' -print )
-    done
+    # The migration's own records are not artifacts: nothing a skill writes.
+    [ -d "$kb/01_spec" ] && ( cd "$kb" && find 01_spec -name '.?*' -prune -o -path '01_spec/_migration' -prune -o -type f -name '*.md' -print )
   } 2>/dev/null | LC_ALL=C sort
 }
 
@@ -318,6 +321,12 @@ cmd_stamp() {
 # can prove. Nothing here checks that anyone was asked.
 # ─────────────────────────────────────────────────────────────────────────────
 
+endorse_timestamp() {
+  local tz
+  tz="$(date +%z)"
+  printf '%s%s:%s\n' "$(date +%Y-%m-%dT%H:%M:%S)" "${tz:0:3}" "${tz:3:2}"
+}
+
 cmd_endorse() {
   local file="" email handle
   while [ $# -gt 0 ]; do
@@ -338,7 +347,7 @@ cmd_endorse() {
   [ "$handle" != "@" ] || die "git config user.email has no local part: $email"
 
   ensure_frontmatter "$file"
-  TRUST_BY="$handle" TRUST_AT="$(date +%Y-%m-%d)" \
+  TRUST_BY="$handle" TRUST_AT="$(endorse_timestamp)" \
   yq -i --front-matter=process \
     '.endorsed = {"by": strenv(TRUST_BY), "at": strenv(TRUST_AT)}' "$file" \
     || die "yq could not write the endorsed block into $file"
@@ -370,6 +379,62 @@ owner_sha() {
   printf '%s\n' "$sha"
 }
 
+endorsement_mark() {
+  has_frontmatter "$1" || return 0
+  yq --front-matter=extract -r \
+    '(.endorsed.by // "") + "|" + (.endorsed.at // "")' "$1" 2>/dev/null || true
+}
+
+trust_metadata_stripped() {
+  if has_frontmatter "$1"; then
+    yq --front-matter=process 'del(.endorsed) | del(.produced)' "$1" 2>/dev/null
+  else
+    cat "$1"
+  fi
+}
+
+revision_file() {
+  : > "$4"
+  git -C "$1" cat-file -e "$2:./$3" 2>/dev/null || return 1
+  git -C "$1" show "$2:./$3" > "$4" 2>/dev/null
+}
+
+revision_mark() {
+  revision_file "$1" "$2" "$3" "$REPORT_WORK/rev" || return 0
+  endorsement_mark "$REPORT_WORK/rev"
+}
+
+revision_stripped() {
+  revision_file "$1" "$2" "$3" "$REPORT_WORK/rev" || return 0
+  trust_metadata_stripped "$REPORT_WORK/rev"
+}
+
+changed_since_endorsed() {
+  local file="$1" dir base mark rev endorsing="" commit
+  dir="$(dirname "$file")"
+  base="$(basename "$file")"
+  git -C "$dir" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 1
+  mark="$(endorsement_mark "$file")"
+  [ "$(revision_mark "$dir" HEAD "$base")" = "$mark" ] || return 1
+
+  while IFS= read -r rev; do
+    if [ "$(revision_mark "$dir" "$rev" "$base")" = "$mark" ] \
+      && [ "$(revision_mark "$dir" "$rev^" "$base")" != "$mark" ]; then
+      endorsing="$rev"
+      break
+    fi
+  done < <(git -C "$dir" log --topo-order --no-merges --format=%H -- "$base" 2>/dev/null)
+  [ -n "$endorsing" ] || return 1
+
+  while IFS= read -r commit; do
+    [ "$(revision_stripped "$dir" "$commit" "$base")" = "$(revision_stripped "$dir" "$commit^" "$base")" ] \
+      || return 0
+  done < <(git -C "$dir" rev-list --no-merges "$endorsing..HEAD" -- "$base" 2>/dev/null)
+
+  [ "$(trust_metadata_stripped "$file")" = "$(revision_stripped "$dir" HEAD "$base")" ] || return 0
+  return 1
+}
+
 cmd_report() {
   local kb="$KB_ROOT_DEFAULT" skills_root="$SKILLS_ROOT_DEFAULT" summary=0
   while [ $# -gt 0 ]; do
@@ -392,6 +457,7 @@ cmd_report() {
   local work="$REPORT_WORK"
   OWNER_CACHE="$work/owners"; : > "$OWNER_CACHE"
   local g_unend="$work/unendorsed"   ; : > "$g_unend"
+  local g_drift="$work/changed"       ; : > "$g_drift"
   local g_stale="$work/stale"         ; : > "$g_stale"
   local g_refs="$work/refs"           ; : > "$g_refs"
   local g_prep="$work/preprovenance"  ; : > "$g_prep"
@@ -421,8 +487,13 @@ cmd_report() {
       fm_has_block "$file" produced && produced=1
     fi
 
-    if endorsement_checked "$rel" && [ "$endorsed" = 0 ]; then
-      printf '%s\n' "$disp" >> "$g_unend"
+    if endorsement_checked "$rel"; then
+      if [ "$endorsed" = 0 ]; then
+        printf '%s\n' "$disp" >> "$g_unend"
+      elif changed_since_endorsed "$file"; then
+        printf '%s\t%s\t%s\n' "$disp" "$(fm_value "$file" '.endorsed.by')" \
+          "$(fm_value "$file" '.endorsed.at')" >> "$g_drift"
+      fi
     fi
 
     produced_checked "$rel" || continue
@@ -454,8 +525,9 @@ cmd_report() {
     fi
   done < <(scan_paths "$kb")
 
-  local n_unend n_stale n_refs n_prep n_noown n_misr stale_owners
+  local n_unend n_drift n_stale n_refs n_prep n_noown n_misr stale_owners
   n_unend="$(nlines "$g_unend")"
+  n_drift="$(nlines "$g_drift")"
   n_stale="$(nlines "$g_stale")"
   n_refs="$(nlines "$g_refs")"
   n_prep="$(nlines "$g_prep")"
@@ -465,7 +537,7 @@ cmd_report() {
     | LC_ALL=C sort -u | paste -sd, - | sed 's/,/, /g')"
 
   local clean=0
-  [ "$n_unend" -eq 0 ] && [ "$n_stale" -eq 0 ] && [ "$n_refs" -eq 0 ] \
+  [ "$n_unend" -eq 0 ] && [ "$n_drift" -eq 0 ] && [ "$n_stale" -eq 0 ] && [ "$n_refs" -eq 0 ] \
     && [ "$n_prep" -eq 0 ] && [ "$n_noown" -eq 0 ] && [ "$n_misr" -eq 0 ] && clean=1
 
   if [ "$summary" = 1 ]; then
@@ -477,6 +549,7 @@ cmd_report() {
     else
       local parts=""
       [ "$n_unend" -gt 0 ] && parts="$parts · $n_unend unendorsed"
+      [ "$n_drift" -gt 0 ] && parts="$parts · $n_drift changed-since-endorsed"
       [ "$n_stale" -gt 0 ] && parts="$parts · $n_stale stale ($stale_owners)"
       [ "$n_refs"  -gt 0 ] && parts="$parts · $n_refs refs-changed"
       [ "$n_prep"  -gt 0 ] && parts="$parts · $n_prep pre-provenance"
@@ -494,11 +567,19 @@ cmd_report() {
     return 0
   fi
 
-  local owner st cur n p sk ow
+  local owner st cur n p sk ow by at
   if [ "$n_unend" -gt 0 ]; then
     printf '\nUNENDORSED (%s)\n' "$n_unend"
     sed 's/^/  /' "$g_unend"
     printf '  no human has put a name on these; an owning skill proposes at its promote moments.\n'
+  fi
+
+  if [ "$n_drift" -gt 0 ]; then
+    printf '\nCHANGED SINCE ENDORSED (%s)\n' "$n_drift"
+    while IFS=$'\t' read -r p by at; do
+      printf '  %s — endorsed by %s at %s\n' "$p" "$by" "$at"
+    done < "$g_drift"
+    printf '  fix: read what changed since; re-endorse to vouch for the current content.\n'
   fi
 
   if [ "$n_stale" -gt 0 ]; then

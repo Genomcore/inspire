@@ -1,0 +1,16 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "ADR rationale missing required section(s): Alternatives considered"
+    },
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "ADR missing required subsection: '### Breaking changes' under '## Consequences'"
+    }
+  ],
+  "forbidden": ["ADR decision missing", "carries"]
+}

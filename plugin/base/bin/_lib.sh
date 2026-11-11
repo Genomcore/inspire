@@ -10,16 +10,16 @@ set -uo pipefail
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-# The domain root — the scope of the nine domain-shaped rules. Its meaning is
-# exactly what it has always been: the root of the `04_domain` tree.
-SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-inspire_kb/04_domain}"
+# The KB root, and the specification root inside it (adr-kb-structure D2). Every
+# specification artifact — module, feature, entity, action, ADR, bundle, face,
+# screen, process, design-system entry — lives somewhere under SDD_SPEC_ROOT, and a
+# finder selects it by its typed extension, never by the directory it sits in (D4).
+SDD_KB_ROOT="${SDD_KB_ROOT:-inspire_kb}"
+SDD_SPEC_ROOT="${SDD_SPEC_ROOT:-$SDD_KB_ROOT/01_spec}"
 
-# The parent of the spec root, computed once. Every layer below is a sibling of
-# the spec layer, so `dirname` was called four times at every source of this
-# file — four forks before a rule has read a byte, and derive spawns four rules
-# per unit while plan spawns a derive per unit, which multiplies them by the
-# thousand. `_SDD_PARENT` assigns rather than prints for the same reason: a
-# `$(...)` around a helper is the fork it was meant to remove.
+# The parent of the spec root, computed once: the foundation layer is its sibling.
+# `_SDD_PARENT` assigns rather than prints, because a `$(...)` around a helper is a
+# fork, and derive spawns rules per unit while plan spawns a derive per unit.
 #
 # It answers exactly what `dirname` answered: a trailing slash is stripped
 # first, a path with no slash left has parent `.`, and a path whose only slash
@@ -36,14 +36,6 @@ case "$_SDD_PARENT" in
   */*) _SDD_PARENT="${_SDD_PARENT%/*}"; [ -n "$_SDD_PARENT" ] || _SDD_PARENT="/" ;;
   *)   _SDD_PARENT="." ;;
 esac
-
-# The features layer sits beside the spec layer in the same knowledge base, so it is
-# derived rather than configured twice — a fixture that redirects SDD_SPEC_ROOT gets
-# the matching features root for free. Override explicitly when they are not siblings.
-SDD_FEATURES_ROOT="${SDD_FEATURES_ROOT:-$_SDD_PARENT/03_features}"
-
-# Same derivation, same reason: the decision layer is a sibling of the spec layer.
-SDD_ADR_ROOT="${SDD_ADR_ROOT:-$_SDD_PARENT/01_adr}"
 
 # ...and the foundation layer, where the stack declares which profiles are resolved.
 SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$_SDD_PARENT/00_bootstrap}"
@@ -110,10 +102,6 @@ sdd_stack_skills() {
 SDD_TEST_SCOPE="${SDD_TEST_SCOPE:-$SDD_SOURCE_ROOT}"
 SDD_TEST_GLOBS="${SDD_TEST_GLOBS:-*.spec.* *-spec.* *.test.* *-test.* *_test.* test_*.*}"
 
-# The KB root — the scope of the KB-wide rules (the ones that check features,
-# ADRs and screens as well as domain files). Kept separate from
-# SDD_SPEC_ROOT so that a domain-scoped run stays domain-scoped.
-SDD_KB_ROOT="${SDD_KB_ROOT:-inspire_kb}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dependency checks
@@ -308,7 +296,7 @@ sdd_resolve_id() {
 
 # sdd_scope_norm <path>
 #   Lexical normalization: repeated leading `./` removed, runs of `/` squeezed,
-#   trailing `/` dropped. `./inspire_kb//04_domain/` and `inspire_kb/04_domain`
+#   trailing `/` dropped. `./inspire_kb//01_spec/` and `inspire_kb/01_spec`
 #   name the same directory and must compare equal, or a scope spelled the
 #   second way silently checks nothing.
 sdd_scope_norm() {
@@ -370,78 +358,157 @@ sdd_scope_intersect() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Artifact discovery
+# Artifact discovery (adr-kb-structure D3, D4)
 #
-# Layout: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md
-#         (full-id leaf filename — 3 dotted segments).
-# Per-entity documents sit alongside actions at the same path with one
-# fewer segment: inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md (2
-# dotted segments). Action discovery uses segment count to distinguish them.
+# Every artifact type has a typed extension, and every finder is one recursive
+# search under $SDD_SPEC_ROOT for that extension. The directory a file sits in is
+# for people; no finder reads it. Scoping a finder to a module or a face is the
+# scope argument — a path filter — never a different shape.
 #
-# Both finders intersect their scope with $SDD_SPEC_ROOT first. The dotted-leaf
-# filename shape is a discriminator WITHIN the domain tree, never a claim about
-# the rest of the KB: a screen at `05_screens/auth/user.profile.md` carries the
-# same shape and is not a domain object. Without the intersection, a KB-wide
-# scope would hand that file to every domain rule and its lifecycle-valid error
-# would block the PR — a gate firing on an artifact whose format it does not
-# own.
+# A template carries its own extension (`entity.template.md`), so no finder can
+# mistake one for a unit and none has to skip `_`-prefixed names.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# All action descriptor files under inspire_kb/04_domain/. Actions have 3-segment dotted
-# leaf filenames ({module}.{entity}.{action}.md); entity documents
-# ({module}.{entity}.md) have 2 segments and are excluded.
+# sdd_find_typed <scope> <type> — every `*.<type>.md` in scope ∩ $SDD_SPEC_ROOT.
+#   A scope disjoint from the spec root yields nothing: that is the scope contract
+#   (a rule checks `$1 ∩ its own layers`), and it is what keeps a run scoped to
+#   00_bootstrap or 06_spikes silent.
+sdd_find_typed() {
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
+  [ -n "$scope" ] || return 0
+  [ -e "$scope" ] || return 0
+  find "$scope" -type f -name "*.$2.md" 2>/dev/null | sort
+}
+
+sdd_find_actions()    { sdd_find_typed "${1:-}" action; }
+sdd_find_entities()   { sdd_find_typed "${1:-}" entity; }
+sdd_find_features()   { sdd_find_typed "${1:-}" feature; }
+sdd_find_modules()    { sdd_find_typed "${1:-}" module; }
+sdd_find_bundles()    { sdd_find_typed "${1:-}" bundle; }
+sdd_find_faces()      { sdd_find_typed "${1:-}" face; }
+sdd_find_screens()    { sdd_find_typed "${1:-}" screen; }
+sdd_find_processes()  { sdd_find_typed "${1:-}" process; }
+sdd_find_adr_rationales() { sdd_find_typed "${1:-}" adr.rationale; }
+# `*.adr.md` never matches `*.adr.rationale.md`: the rationale ends in `.rationale.md`.
+sdd_find_adrs()       { sdd_find_typed "${1:-}" adr; }
+
+# Design-system CATALOG entries: `{name}.pattern.md`, `{name}.layout.md`,
+# `{name}.component.md`. The second argument keeps the plural directory name the
+# callers have always passed (`patterns`, `layouts`, `components`); it selects the
+# extension, not a directory.
+sdd_find_catalog() {
+  local scope="$1" dir="$2"
+  sdd_find_typed "$scope" "${dir%s}"
+}
+
+# sdd_resolve_catalog <kind> <name> — the `{name}.{kind}.md` entry for a catalog id
+#   (`pattern`, `layout`, `component`; a plural is accepted), by name anywhere under
+#   the spec root. A name with a path keeps only its last segment, and a typed
+#   extension already on it is dropped: the id never carries one. Prints nothing
+#   when no entry has that name.
+sdd_resolve_catalog() {
+  local kind="${1%s}" name="${2##*/}"
+  name="${name%.md}"; name="${name%.$kind}"
+  [ -n "$name" ] || return 0
+  [ -d "$SDD_SPEC_ROOT" ] || return 0
+  find "$SDD_SPEC_ROOT" -type f -name "$name.$kind.md" 2>/dev/null | sort | head -1
+}
+
+# sdd_artifact_id <file> — the id an artifact is linked by (D3).
+#   The frontmatter `id:` wins where it exists. Otherwise the id is the file name
+#   without its typed extension — `list.pattern.md` is `list`, never `list.pattern`
+#   — and an ADR adds back its `adr-` prefix: `foo.adr.md` is `adr-foo`, and
+#   `foo.adr.rationale.md` is `adr-foo.rationale`.
+sdd_artifact_id() {
+  local file="$1" id base
+  id="$(sdd_fm_value "$file" '.id' 2>/dev/null)"
+  if [ -n "$id" ] && [ "$id" != "null" ]; then printf '%s\n' "$id"; return 0; fi
+  base="${file##*/}"
+  case "$base" in
+    *.adr.rationale.md) printf 'adr-%s.rationale\n' "${base%.adr.rationale.md}" ;;
+    *.adr.md)           printf 'adr-%s\n' "${base%.adr.md}" ;;
+    *.template.md)      printf '%s\n' "${base%.md}" ;;
+    *.*.md)             base="${base%.md}"; printf '%s\n' "${base%.*}" ;;
+    *.md)               printf '%s\n' "${base%.md}" ;;
+    *)                  printf '%s\n' "$base" ;;
+  esac
+}
+
+# sdd_typed_kind <file> — the artifact type its extension declares, or nothing.
+sdd_typed_kind() {
+  case "${1##*/}" in
+    *.template.md)      ;;
+    *.adr.rationale.md) printf 'adr-rationale\n' ;;
+    *.adr.md)           printf 'adr\n' ;;
+    *.module.md)        printf 'module\n' ;;
+    *.feature.md)       printf 'feature\n' ;;
+    *.entity.md)        printf 'entity\n' ;;
+    *.action.md)        printf 'action\n' ;;
+    *.bundle.md)        printf 'bundle\n' ;;
+    *.face.md)          printf 'face\n' ;;
+    *.screen.md)        printf 'screen\n' ;;
+    *.process.md)       printf 'process\n' ;;
+    *.component.md)     printf 'component\n' ;;
+    *.layout.md)        printf 'layout\n' ;;
+    *.pattern.md)       printf 'pattern\n' ;;
+  esac
+}
+
+# The entity index — `{id}<TAB>{path}` for every entity, keyed by the dotted form.
+# Built on first use and kept for the life of the calling script: rules resolve
+# entity ids per action, and one search per lookup would multiply finds by actions.
+SDD_ENTITY_INDEX_FILE=""
+_sdd_entity_index() {
+  [ -n "$SDD_ENTITY_INDEX_FILE" ] && [ -f "$SDD_ENTITY_INDEX_FILE" ] && return 0
+  SDD_ENTITY_INDEX_FILE="$(mktemp -t sdd-entity-index.XXXXXX)"
+  local f id
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    id="$(sdd_fm_value "$f" '.id' 2>/dev/null)"
+    [ -n "$id" ] && [ "$id" != "null" ] || continue
+    printf '%s\t%s\n' "${id//::/.}" "$f" >> "$SDD_ENTITY_INDEX_FILE"
+  done < <(sdd_find_entities "$SDD_SPEC_ROOT")
+}
+
+# Resolve an entity id (colon form "auth::user" or dotted "auth.user") to its
+# entity document, by its `id:` — never by building a path (D4). Prints the path,
+# or nothing and a non-zero exit when no entity carries that id.
 #
-# The hyphen is in the class because a multi-word module slug is kebab-case, and
-# a finder that cannot see one skips the file in silence: no rule reads it, no id
-# indexes it, no frontier reaches it. The class is uniform across all three
-# segments rather than kebab-for-the-module — these finders identify an artifact
-# by its segment COUNT, and validating slug shape is another rule's job.
-sdd_find_actions() {
-  local scope
-  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
-  [ -n "$scope" ] || return 0
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "*.md" 2>/dev/null \
-    | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
-    | sort
+# The usual home of `{module}::{entity}` is tried first, and accepted only when the
+# file's own `id:` says so — a hint, verified, never the answer by itself. It reads
+# the frontmatter in bash, with no process: rules call this inside `$(...)` once per
+# touched entity, and a subshell cannot keep the index, so without the hint every call
+# would rebuild it. Anything elsewhere falls back to the index.
+_sdd_fm_id_is() {  # _sdd_fm_id_is <file> <dotted-id>
+  local line n=0 v
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    if [ "$n" -eq 1 ]; then [ "$line" = "---" ] || return 1; continue; fi
+    [ "$line" = "---" ] && return 1
+    case "$line" in
+      id:*)
+        v="${line#id:}"; v="${v%%#*}"
+        v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+        v="${v#[\"\']}"; v="${v%[\"\']}"
+        [ "${v//::/.}" = "$2" ]; return ;;
+    esac
+  done < "$1"
+  return 1
 }
 
-# All entity document files under inspire_kb/04_domain/. Entity documents have
-# 2-segment dotted leaf filenames ({module}.{entity}.md); action
-# descriptors ({module}.{entity}.{action}.md) have 3 segments and are
-# excluded.
-sdd_find_entities() {
-  local scope
-  scope="$(sdd_scope_intersect "${1:-$SDD_SPEC_ROOT}" "$SDD_SPEC_ROOT")"
-  [ -n "$scope" ] || return 0
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "*.md" 2>/dev/null \
-    | grep -E '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
-    | grep -vE '/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.md$' \
-    | sort
-}
-
-# Resolve an entity id (canonical colon form, e.g. "auth::user") to its
-# entity document file path under $SDD_SPEC_ROOT, by mapping
-# {module}::{entity} → inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md.
-# Prints the path if the file exists; empty string + non-zero exit otherwise.
 sdd_resolve_entity_id() {
-  local rid="$1"
-  # Accept both colon form ("auth::user") and dotted form ("auth.user").
-  local module entity
-  if [[ "$rid" == *"::"* ]]; then
-    module="${rid%%::*}"
-    entity="${rid##*::}"
-  else
-    module="${rid%%.*}"
-    entity="${rid##*.}"
-  fi
-  local path="${SDD_SPEC_ROOT}/${module}/${entity}/${module}.${entity}.md"
-  if [ -f "$path" ]; then
+  local rid="${1//::/.}" path module entity
+  module="${rid%%.*}"; entity="${rid#*.}"
+  path="$SDD_SPEC_ROOT/_modules/$module/_domain/$entity/$entity.entity.md"
+  if [ "$module" != "$rid" ] && [ -f "$path" ] && _sdd_fm_id_is "$path" "$rid"; then
     printf '%s\n' "$path"
     return 0
   fi
-  return 1
+  _sdd_entity_index
+  path="$(awk -F'\t' -v id="$rid" '$1 == id { print $2; exit }' "$SDD_ENTITY_INDEX_FILE")"
+  [ -n "$path" ] || return 1
+  printf '%s\n' "$path"
 }
 
 # Read an entity document's `lifecycle:` frontmatter field, given its
@@ -472,88 +539,14 @@ sdd_entity_population() {
   fi
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# KB layer discovery
-#
-# Every helper below takes a scope and returns the files that lie in both the
-# scope and its own layer — the scope contract from bin/README.md §Scope: a
-# rule receives one `$1` and checks only `$1 ∩ its layers`. Matching is on the
-# layer directory name anywhere in the path, so all three of
-# `inspire_kb`, `inspire_kb/03_features` and `inspire_kb/03_features/auth`
-# behave as expected, and a domain-scoped run (`inspire_kb/04_domain`) yields
-# nothing at all from these helpers.
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Use-case files under 03_features/: 03_features/{module}/{use-case}.md.
-# Layer READMEs and any `_index.md` are excluded — they are navigation, not
-# use cases.
-sdd_find_features() {
-  local scope="${1:-$SDD_KB_ROOT}"
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "*.md" 2>/dev/null \
-    | awk -F'(^|/)03_features/' '
-        NF > 1 {
-          n = split($NF, seg, "/")
-          if (n != 2) next
-          if (seg[n] == "_index.md" || seg[n] == "README.md") next
-          print
-        }
-      ' \
-    | sort
-}
-
-# ADR files under 01_adr/: one `adr-{slug}.md` per decision. The `adr-` prefix
-# is the discriminator, so READMEs and index files never match.
-sdd_find_adrs() {
-  local scope="${1:-$SDD_KB_ROOT}"
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "adr-*.md" 2>/dev/null \
-    | grep -E '(^|/)01_adr/' \
-    | sort
-}
-
-# Screen files under 05_screens/. Discovery is POSITIVE — the two accepted
-# shapes are 05_screens/{module}/{screen}.md (flat / suite-of-one) and
-# 05_screens/{surface}/{module}/{screen}.md (surface-first). `patterns/` and
-# `components/` are excluded by top-level path prefix (they never move: they
-# sit beside the surface trees in both shapes), and `_index.md` / `README.md`
-# basenames are excluded everywhere. Top-level files (`design-system.md`) fall
-# outside both shapes and are therefore not screens.
-sdd_find_screens() {
-  local scope="${1:-$SDD_KB_ROOT}"
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "*.md" 2>/dev/null \
-    | awk -F'(^|/)05_screens/' '
-        NF > 1 {
-          n = split($NF, seg, "/")
-          if (n < 2 || n > 3) next
-          if (seg[1] == "patterns" || seg[1] == "components" || seg[1] == "layouts") next
-          if (seg[n] == "_index.md" || seg[n] == "README.md") next
-          print
-        }
-      ' \
-    | sort
-}
-
-# Design-system CATALOG entries: one file per shared pattern, layout or
-# component, at 05_screens/{patterns,layouts,components}/{name}.md and nowhere
-# deeper. The three catalogs are suite-wide and never move into a surface
-# tree, so there is no second shape to accept. `_`-prefixed names are
-# navigation or templates rather than entries (`inspire-screens` spells this
-# `patterns/[!_]*.md`), and `README.md` is excluded as it is everywhere else.
-sdd_find_catalog() {
-  local scope="$1" dir="$2"
-  [ -e "$scope" ] || return 0
-  find "$scope" -type f -name "*.md" 2>/dev/null \
-    | awk -F'(^|/)05_screens/' -v d="$dir" '
-        NF > 1 {
-          n = split($NF, seg, "/")
-          if (n != 2 || seg[1] != d) next
-          if (seg[2] ~ /^_/ || seg[2] == "README.md") next
-          print
-        }
-      ' \
-    | sort
+# The screen id map the migration wrote (adr-kb-structure D10): old id → new id.
+# A link written before the migration keeps its text — a screen's `## Bindings` is
+# never rewritten — so a resolver reads an old screen id through this map.
+# sdd_screen_id_alias <id> prints the new id, or nothing.
+sdd_screen_id_alias() {
+  local map="$SDD_SPEC_ROOT/_migration/id-map.json"
+  [ -f "$map" ] || return 0
+  jq -r --arg id "$1" '.screens[$id] // empty' "$map" 2>/dev/null
 }
 
 # sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
@@ -652,8 +645,9 @@ sdd_count_by_severity() {
 # ─────────────────────────────────────────────────────────────────────────────
 # Markdown body section extraction
 #
-# Extracts the content under a markdown H2 header (## SectionName) up to the
-# next H2 or EOF. Frontmatter and prose above the first H2 are ignored.
+# Extracts the content under a markdown H2 header, found by its section name
+# (see sdd_heading_name), up to the next H2 or EOF. Frontmatter and prose above the
+# first H2 are ignored.
 #
 # Two structures are read the same way by every helper below, because getting
 # either wrong silently erases the rest of a file from a check:
@@ -734,18 +728,103 @@ SDD_AWK_FENCE_FUNCS='
   function sdd_in_fence() { return sdd_fence_ch != "" }
 '
 
+SDD_SECTION_IDS='entity	ENT1	Purpose	
+entity	ENT2	Rationale	
+entity	ENT3	Invariants	
+entity	ENT4	Fields	
+entity	ENT5	Touched by	
+action	ACT1	Purpose	
+action	ACT2	Inputs	
+action	ACT3	Outputs	
+action	ACT4	Entities	
+action	ACT5	Preconditions	
+action	ACT6	Behavior	
+action	ACT7	Postconditions	
+action	ACT8	Errors	
+feature	UC1	Actor	
+feature	UC2	Preconditions	
+feature	UC3	Main flow	
+feature	UC4	Alternative flows	
+feature	UC5	Error flows	
+feature	UC6	Postconditions	
+feature	UC7	Acceptance criteria	
+adr	ADR1	Context	
+adr	ADR2	Decision	
+adr	ADR3	Consequences	
+adr	ADR4	Breaking changes	Consequences
+adr	ADR5	Alternatives considered	
+adr	ADR6	Related ADRs	
+screen	SCR1	Purpose	
+screen	SCR2	Bindings	
+screen	SCR3	Parameters	Bindings
+screen	SCR4	Data	Bindings
+screen	SCR5	Dispatches	Bindings
+screen	SCR6	Navigation	Bindings
+screen	SCR7	States	Bindings
+screen	SCR8	Render	
+screen	SCR9	Module-specific deviations	
+screen	SCR10	Current prototype	
+screen	SCR11	Notes	
+pattern	PAT1	Structure	
+pattern	PAT2	Regions	
+pattern	PAT3	Variants	
+pattern	PAT4	Notes	
+component	CMP1	Structure	
+component	CMP2	API / Slots	
+component	CMP3	States	
+component	CMP4	Variants	
+component	CMP5	Instances	
+layout	LAY1	Frame	
+layout	LAY2	Geometry	
+layout	LAY3	Breakpoints	
+layout	LAY4	Composition	
+layout	LAY5	Variants	
+layout	LAY6	Adopters	
+layout	LAY7	Notes	
+module	MOD1	Overview	
+module	MOD2	Relationships	
+module	MOD3	Use cases	
+module	MOD4	Screens	
+module	MOD5	Domain	
+module	MOD6	Module ADRs	
+spike	SPK1	Question	
+spike	SPK2	Scope	
+spike	SPK3	Learnings	
+spike	SPK4	Outcome	'
+export SDD_SECTION_IDS
+
+SDD_AWK_HEADING_FUNCS='
+  function sdd_heading_key(line, prefix,   h) {
+    if (index(line, prefix) != 1) return ""
+    h = substr(line, length(prefix) + 1)
+    sub(/:[[:space:]].*$/, "", h)
+    sub(/:$/, "", h)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
+    return h
+  }
+  function sdd_heading_name(line, prefix,   k, n, i, rows, f) {
+    if (!sdd_ids_loaded) {
+      n = split(ENVIRON["SDD_SECTION_IDS"], rows, "\n")
+      for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); sdd_name_of[f[2]] = f[3] }
+      sdd_ids_loaded = 1
+    }
+    k = sdd_heading_key(line, prefix)
+    return (k in sdd_name_of) ? sdd_name_of[k] : k
+  }
+'
+
 # sdd_body_section <file> <header_name>
 #   Prints the body section content to stdout, verbatim (fenced blocks and
 #   tables included). Empty if not found.
 sdd_body_section() {
   local file="$1"
   local header="$2"
-  awk -v header="## $header" \
+  awk -v header="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      $0 == header { capture = 1; next }
+      sdd_heading_name($0, "## ") == header { capture = 1; next }
       /^## / && capture { exit }
       capture { print }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_body_prose <file> <header_name>
@@ -787,11 +866,11 @@ sdd_has_section() {
     3) prefix="### " ;;
     *) echo "error: sdd_has_section: unsupported header level: $level" >&2; return 2 ;;
   esac
-  awk -v hdr="${prefix}${header}" \
+  awk -v pfx="$prefix" -v hdr="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == hdr { found = 1; exit }
+      sdd_heading_name($0, pfx) == hdr { found = 1; exit }
       END { exit !found }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_has_subsection <file> <parent_h2> <header_h3>
@@ -802,13 +881,13 @@ sdd_has_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" \
+  awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      $0 == ph { inparent = 1; next }
+      sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { inparent = 0; next }
-      inparent && $0 == sh { found = 1; exit }
+      inparent && sdd_heading_name($0, "### ") == sh { found = 1; exit }
       END { exit !found }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_body_subsection <file> <parent_h2> <header_h3>
@@ -821,14 +900,14 @@ sdd_body_subsection() {
   local file="$1"
   local parent="$2"
   local header="$3"
-  awk -v ph="## $parent" -v sh="### $header" \
+  awk -v ph="$parent" -v sh="$header" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_KEEP}"'
-      !capture && $0 == ph { inparent = 1; next }
+      !capture && sdd_heading_name($0, "## ") == ph { inparent = 1; next }
       /^## / { if (capture) exit; inparent = 0; next }
-      inparent && $0 == sh { capture = 1; next }
+      inparent && sdd_heading_name($0, "### ") == sh { capture = 1; next }
       /^### / && capture { exit }
       capture { print }
-    '"${SDD_AWK_FENCE_FUNCS}" "$file"
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
 # sdd_entities_touched <file>
@@ -847,6 +926,8 @@ sdd_entities_touched() {
   local file="$1"
   sdd_body_section "$file" "Entities" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       # Entity header: ### [[module.entity|module::entity]] (V3)
       # or:            ### [[module::entity]]                 (bare)
       /^###[[:space:]]+\[\[/ {
@@ -899,8 +980,7 @@ sdd_entities_touched() {
         # Strip surrounding backticks from cells (preserve mid-cell ticks).
         gsub(/^`|`$/, "", field)
         gsub(/^`|`$/, "", type)
-        # Skip header / separator rows
-        if (field == "Field" || field ~ /^-+$/) next
+        if (field ~ /^-+$/) next
         printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", rid, field, touch, type, mapping, notes, as_input, effect
       }
     '
@@ -959,13 +1039,15 @@ sdd_entity_fields() {
   local file="$1"
   sdd_body_section "$file" "Fields" \
     | awk '
+      !/^\|/ { tab = 0 }
+      /^\|/ && !tab { tab = 1; next }
       /^\|[[:space:]]*`?[A-Za-z_][A-Za-z0-9_]*`?[[:space:]]*\|/ {
         gsub(/^\|[[:space:]]*|[[:space:]]*\|$/, "")
         n = split($0, parts, /[[:space:]]*\|[[:space:]]*/)
         if (n < 1) next
         field = parts[1]
         gsub(/^`|`$/, "", field)
-        if (field == "Field" || field ~ /^-+$/) next
+        if (field ~ /^-+$/) next
         print field
       }
     '

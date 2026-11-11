@@ -1,0 +1,64 @@
+---
+id: {{MODULE}}.{{ENTITY}}
+module: {{MODULE}}
+entity: {{ENTITY}}
+lifecycle: draft
+---
+
+## ENT1: Purpose
+{{ONE_TO_THREE_SENTENCES_STATING_WHAT_THIS_ENTITY_IS_AND_WHY_IT_EXISTS_AS_A_DISCRETE_OBJECT}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds the role of this entity in the {{MODULE_SUBSYSTEM_NAME}}.
+
+## ENT2: Rationale
+{{PARAGRAPH_EXPLAINING_WHY_THE_ENTITY_EXISTS_WHY_THESE_FIELDS_AND_WHAT_MOTIVATES_THE_SHAPE}} The design follows the discipline laid out in [[{{ADR_BACK_SOURCE}}|{{ADR_DISPLAY_TEXT}}]], where {{ADR_CLAIM_SUMMARY}}. {{SECOND_CLAIM_WITH_INLINE_WIKILINK}} grounded in [[{{SECOND_PDD_BACK_SOURCE}}|{{SECOND_PDD_DISPLAY_TEXT}}]].
+
+## ENT3: Invariants
+- `I1` — {{OPTIONAL_HEAD_FROM_V2_ELSE_DELETE_THIS_SEGMENT}} — {{INVARIANT_PROSE}}.
+- `I2` — {{INVARIANT_PROSE_WITH_NO_HEAD}}.
+
+<!--
+  Keys are write-once: `I1` stays `I1` for the life of the entry, deleting one leaves a
+  gap, and nothing is ever renumbered or reused. A head is optional and comes from the
+  closed V2 vocabulary in `_references/keyed-heads.md` — unique(f, g) · nonnull(f, g) ·
+  immutable(f, g) · references(module.entity) — for the multi-field and relational rules a
+  single field's own Constraints line cannot express. Everything narrower belongs on that
+  field's line. If nothing extra holds at all, replace both bullets with the single line:
+  `None beyond Fields constraints.` The section must be present either way.
+-->
+
+## ENT4: Fields
+
+| Field           | Type        | Notes                                |
+|-----------------|-------------|--------------------------------------|
+| `id`            | uuid        | Primary key.                         |
+| `{{FIELD_TWO}}` | `{{TYPE}}`  | {{NOTES}}                            |
+| `{{FIELD_THREE}}` | `{{TYPE}}` | {{NOTES}}                            |
+| `created_at`    | timestamp   | The audit-timeline anchor.           |
+
+### id
+Constraints: `nonnull, unique, immutable`
+
+### {{FIELD_TWO}}
+Constraints: `{{CLOSED_VOCABULARY_LIST}}`
+
+{{PER_FIELD_RATIONALE}} [[{{FIELD_BACK_SOURCE}}|{{FIELD_DISPLAY_TEXT}}]] grounds that constraint.
+
+### created_at
+Constraints: `nonnull, immutable, default(now)`
+
+<!--
+  The Constraints line is the FIRST line of the field's H3, a comma-separated list from the
+  closed V1 vocabulary in `_references/keyed-heads.md`: nonnull · unique · immutable ·
+  default(v) · enum(a|b) · min(n) · max(n) · len(n,m) · pattern(/../) ·
+  references(module.entity). Fields are NULLABLE BY DEFAULT — there is no `nullable` word;
+  `nonnull` marks the requirement. Rationale prose follows the line, and is optional.
+  A CONSTRAINED field must carry the H3 even when the Constraints line is all it says; an
+  unconstrained field needs one only when its design needs narrating. Do not restate a
+  constraint in the Notes column — the column says what the constraint means to a reader,
+  never that it exists.
+-->
+
+## ENT5: Touched by
+
+| Action                                                                           | Touch  | Notes                          |
+|----------------------------------------------------------------------------------|--------|--------------------------------|
+| [[{{MODULE}}.{{ENTITY}}.{{ACTION}}|{{MODULE}}::{{ENTITY}}::{{ACTION}}]]          | write  | {{TOUCHED_BY_NOTES}}           |

@@ -1,0 +1,16 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "sections-present",
+      "severity": "warning",
+      "message_substring": "entity document carries section id(s) of another format: ACT4"
+    },
+    {
+      "rule": "sections-present",
+      "severity": "error",
+      "message_substring": "entity document missing required section(s): Fields"
+    }
+  ],
+  "forbidden": []
+}

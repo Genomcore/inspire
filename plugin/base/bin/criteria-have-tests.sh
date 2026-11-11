@@ -57,11 +57,11 @@
 # Reads both the KB and `source/`, so — like the other source-touching rules — it is
 # deliberately absent from `review.sh`'s default list. Wired into `pre-pr.sh`.
 #
-# Config (env, all optional): SDD_FEATURES_ROOT · SDD_TEST_SCOPE · SDD_TEST_GLOBS.
+# Config (env, all optional): SDD_SPEC_ROOT · SDD_TEST_SCOPE · SDD_TEST_GLOBS.
 #
 # Usage:
 #   .inspire/bin/criteria-have-tests.sh                       # every feature
-#   .inspire/bin/criteria-have-tests.sh inspire_kb/03_features/analytics
+#   .inspire/bin/criteria-have-tests.sh inspire_kb/01_spec/_modules/analytics
 
 set -uo pipefail
 
@@ -71,11 +71,11 @@ source "$SCRIPT_DIR/_lib.sh"
 sdd_require_tools || exit 127
 sdd_init_counters
 
-SCOPE="${1:-$SDD_FEATURES_ROOT}"
+SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 if [ ! -e "$SCOPE" ]; then
   sdd_finding "warning" "criteria-have-tests" "$SCOPE" \
-    "features root does not exist — no criterion can be traced"
+    "scope does not exist — no criterion can be traced"
   sdd_count_warning
   sdd_exit_with_counters
   exit $?
@@ -85,13 +85,11 @@ TEST_FILES="$(mktemp -t criteria-tests.XXXXXX)"
 trap 'rm -f "$TEST_FILES"' EXIT
 sdd_find_test_files > "$TEST_FILES"
 
-if [ ! -s "$TEST_FILES" ]; then
-  sdd_finding "warning" "criteria-have-tests" "$SDD_TEST_SCOPE" \
-    "no test files found — every criterion below is untraceable by construction, so the per-criterion findings are suppressed to keep the real signal readable"
-  sdd_count_warning
-  sdd_exit_with_counters
-  exit $?
-fi
+NO_TESTS=0
+[ -s "$TEST_FILES" ] || NO_TESTS=1
+UNTESTED_CRITERIA=0
+UNTESTED_FEATURES=0
+UNTESTED_SEVERITY="warning"
 
 # Map the feature's state marker to a severity tier.
 feature_severity() {
@@ -115,6 +113,13 @@ check_feature() {
 
   [ -z "$criteria" ] && return 0
 
+  if [ "$NO_TESTS" -eq 1 ]; then
+    UNTESTED_CRITERIA=$((UNTESTED_CRITERIA + $(printf '%s\n' "$criteria" | grep -c .)))
+    UNTESTED_FEATURES=$((UNTESTED_FEATURES + 1))
+    [ "$severity" = "error" ] && UNTESTED_SEVERITY="error"
+    return 0
+  fi
+
   local n=0 id qid
   while IFS= read -r line; do
     [ -z "$line" ] && continue
@@ -131,9 +136,10 @@ check_feature() {
       continue
     fi
 
-    # Qualified by the owning feature (the filename stem), because AC-n recurs per feature.
-    qid="${file##*/}"
-    qid="${qid%.md}/$id"
+    # Qualified by the owning feature's id (its file name without `.feature.md`), because
+    # AC-n recurs per feature. The id is what a test cites, so it never carries the
+    # typed extension.
+    qid="$(sdd_artifact_id "$file")/$id"
 
     if ! sdd_covers_in_tests "$qid" "$TEST_FILES"; then
       sdd_finding "$severity" "criteria-have-tests" "$file" \
@@ -145,8 +151,13 @@ check_feature() {
 
 while IFS= read -r feature; do
   [ -z "$feature" ] && continue
-  case "$(basename "$feature")" in README.md|_*) continue ;; esac
   check_feature "$feature"
-done < <(find "$SCOPE" -type f -name '*.md' 2>/dev/null | sort)
+done < <(sdd_find_features "$SCOPE")
+
+if [ "$UNTESTED_CRITERIA" -gt 0 ]; then
+  sdd_finding "$UNTESTED_SEVERITY" "criteria-have-tests" "$SDD_TEST_SCOPE" \
+    "no test files found — $UNTESTED_CRITERIA criteria across $UNTESTED_FEATURES features are claimed by no test (one finding stands for them all; it is an error once any of those features is past 🟡 Planned, because no tests is not a pass)"
+  sdd_count_by_severity "$UNTESTED_SEVERITY"
+fi
 
 sdd_exit_with_counters

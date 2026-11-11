@@ -2,7 +2,7 @@
 
 A complete, annotated entity document. This is the shape every entity doc should mirror — operator-authored `## Purpose` + `## Rationale` + `## Invariants` carry the design discipline; `## Fields` is the field shape (largely emergent from the actions that touch it, but every row exists because a design decision motivated it); per-field H3s carry each field's constraints and, where it needs one, its rationale; `## Touched by` is auto-populated by consolidation.
 
-This is the entity document the canonical action descriptors (`auth::user::create`, `auth::user::find`, `auth::user::signup`) all touch. Annotations live in HTML comments so they survive a copy-paste into a real `inspire_kb/04_domain/auth/user/auth.user.md`.
+This is the entity document the canonical action descriptors (`auth::user::create`, `auth::user::find`, `auth::user::signup`) all touch. Annotations live in HTML comments so they survive a copy-paste into a real `inspire_kb/01_spec/_modules/auth/_domain/user/user.entity.md`.
 
 ---
 
@@ -18,14 +18,14 @@ lifecycle: accepted             # ← symmetric with action lifecycle; promotion
 The `auth::user` entity is the platform's single source of truth for a user account — the row that represents an authenticated principal in the [[auth-user-management|user-management subsystem]]. Every authenticated session, every audit-event actor reference, and every permission-set binding ultimately resolves back to a row in this entity.
 
 ## Rationale
-The identity model in [[adr-auth-01-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple, so the entity exists as a discrete object. The auth subsystem must not delegate that uniqueness invariant to a downstream consumer. One email may hold an account in two scopes and those are two principals, which is why the uniqueness here is a *tuple's* and not a field's.
+The identity model in [[adr-identity-model]] mandates exactly one user-account record per `{scope, email}` tuple, so the entity exists as a discrete object. The auth subsystem must not delegate that uniqueness invariant to a downstream consumer. One email may hold an account in two scopes and those are two principals, which is why the uniqueness here is a *tuple's* and not a field's.
 
-The field shape carries the minimum the auth-provider integration needs, plus the platform's own metadata. `scope` is the tenancy discriminator that identity model calls for, fixed at provisioning because moving an account between scopes is a create plus a retire rather than an edit. `email` is the canonical identity handle that [[auth-identity-model|the identity-model feature]] describes. `password_hash` carries credential material whose algorithm is a system-wide setting (see the field-level rationale below). `created_at` anchors the row to the platform audit timeline that [[adr-audit-01-centralized-logging]] defines.
+The field shape carries the minimum the auth-provider integration needs, plus the platform's own metadata. `scope` is the tenancy discriminator that identity model calls for, fixed at provisioning because moving an account between scopes is a create plus a retire rather than an edit. `email` is the canonical identity handle that [[auth-identity-model|the identity-model feature]] describes. `password_hash` carries credential material whose algorithm is a system-wide setting (see the field-level rationale below). `created_at` anchors the row to the platform audit timeline that [[adr-centralized-logging]] defines.
 
 A new field lands here only after `## Rationale` justifies it. The discussion-forcing discipline keeps the entity shape an act of design rather than a residue of action authoring.
 
 ## Invariants
-- `I1` — unique(scope, email) — One account per `{scope, email}` pair: the [[adr-auth-01-identity-model|identity model]] scopes identity to a tenancy, so the same handle in two scopes is two principals and neither shadows the other.
+- `I1` — unique(scope, email) — One account per `{scope, email}` pair: the [[adr-identity-model|identity model]] scopes identity to a tenancy, so the same handle in two scopes is two principals and neither shadows the other.
 - `I2` — `password_hash` is write-only — no read action returns it. Reads exist only via `auth::password::verify` (constant-time comparison, never raw exposure).
 
 <!-- ← `I1` carries a head because the tuple has no single field to live under: `unique(scope, email)`
@@ -54,14 +54,14 @@ Constraints: `nonnull, immutable`
 ### email
 Constraints: `nonnull, immutable, pattern(/.+@.+/)`
 
-`immutable` is here and not in `## Invariants`: changing an account's email is a new referent rather than an edit — the [[adr-auth-01-identity-model|identity model]] makes the email half of the principal's identity, so a rename is a create plus a retire — but that constrains exactly one field, and a single-field rule lives on the field's own line.
+`immutable` is here and not in `## Invariants`: changing an account's email is a new referent rather than an edit — the [[adr-identity-model|identity model]] makes the email half of the principal's identity, so a rename is a create plus a retire — but that constrains exactly one field, and a single-field rule lives on the field's own line.
 
 The pattern is deliberately permissive: the real rules are the deliverability and allow-list rules in [[auth-email-validation|the email-validation feature]], which change without the schema changing. What belongs here is the shape nothing downstream may violate.
 
 ### password_hash    <!-- ← the Constraints line, then the rationale the Notes column can't carry. -->
 Constraints: `nonnull`
 
-The column stores an opaque hashed credential, never plaintext. The hashing algorithm and cost parameters are a **system-wide** setting — not a per-row column — because rolling the algorithm is a platform migration, not a per-user choice. The decision and the migration mechanism are described in [[adr-auth-02-password-hashing]]. Verification goes through [[auth.password.verify|auth::password::verify]] (constant-time); the field is never returned by any read action.
+The column stores an opaque hashed credential, never plaintext. The hashing algorithm and cost parameters are a **system-wide** setting — not a per-row column — because rolling the algorithm is a platform migration, not a per-user choice. The decision and the migration mechanism are described in [[adr-password-hashing]]. Verification goes through [[auth.password.verify|auth::password::verify]] (constant-time); the field is never returned by any read action.
 
 ### created_at
 Constraints: `nonnull, immutable, default(now)`

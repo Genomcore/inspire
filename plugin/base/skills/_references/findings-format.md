@@ -54,11 +54,11 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `missing required section(s)` | sections-present | One or more mandatory `## Section` headers absent from the body. Error in `04_domain`; the other KB layers emit the warning variants below. `## Touched by` counts as present when the header is there — consolidation owns its body, so an empty one is not a finding. |
-| `empty section(s)` | sections-present | Section header present but body has no non-blank content. Error in `04_domain`; warning elsewhere. |
+| `missing required section(s)` | sections-present | One or more mandatory `## Section` headers absent from the body. Error on entities and actions; every other artifact type emits the warning variants below. `## Touched by` counts as present when the header is there — consolidation owns its body, so an empty one is not a finding. |
+| `empty section(s)` | sections-present | Section header present but body has no non-blank content. Error on entities and actions; warning elsewhere. |
 | `body contains TODO marker` / `FIXME` / `XXX` / `HACK` | no-todos | Outstanding-work marker in body. Move to `inspire_kb/99_tracker/tickets/`. |
 | `the entity document's '## Fields' table does not declare it` | action-fields-in-entity | Action touches a field the entity doc has not declared. |
-| `no entity document found at expected path` | action-fields-in-entity | Action touches an entity id but no `{module}.{entity}.md` exists. |
+| `no entity document found at expected path` | action-fields-in-entity | Action touches an entity id but no `{entity}.entity.md` carries that id. |
 | `field-conflict` | entity-coherence | Same field on same entity declared with differing types across actions. |
 | `field-unsourced` | entity-coherence | Field has at least one `Touch=read` declaration but no `Touch=written` declaration. |
 | `requires target not found` | stable-blockers | A `requires` entry points to an id not present in the SDD tree. |
@@ -69,10 +69,10 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. `04_domain` only. |
+| `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. Entities and actions only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
 | `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
-| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. A path is never resolved relative to the linking file: the name is what the link means, so a `../` depth that shifted with a surface split still names the right file. Screen files are checked alongside `04_domain` objects, so a dangling navigation target is reported here, and both indexes are built vault-wide whatever the scope. |
+| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. A path is never resolved relative to the linking file: the name is what the link means, so a `../` depth that shifted with a move still names the right file. Screen files are checked alongside entities and actions, so a dangling navigation target is reported here, and both indexes are built KB-wide whatever the scope. |
 | `OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6` | keys-present | A keyed entry is there but wrong: a step key that is not `B{n}`, a section holding neither a declared-none body nor keyed entries, a head outside its closed vocabulary or at the wrong arity, a key used twice in one keyspace. |
 | `OS-E2` · `OS-E4` · `OS-E8` · `OS-E9` | constraints-mechanics | A `Constraints:` line is wrong: no `id` row to carry the marker, a word outside vocabulary V1 or at the wrong arity (`nonnull` on an input line included), a line that is not its H3's first content line, or a field sub-section whose field is no row of `## Fields`. |
 | `OS-E7` · `OS-X1` · `OS-X2` · `OS-X3` · `OS-X4` | head-referents | A name a head mentions does not exist: an unresolvable `references(...)`, a written `unique` field with no matching `unique(...)` error head, an invariant head naming a non-field, a `P`/`Q` head naming an untouched entity, `returns(...)` naming a non-output. |
@@ -84,10 +84,14 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
 | `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.9** — the shapes an upgrade inherits, which is all of them, since 0.8.0 shipped none of these classes — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
 | `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |
-| `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `03_features/` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
+| `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `*.feature.md` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |
 | `OS-F5: AC-id format` | sections-present | A top-level bullet inside `## Acceptance criteria` is not of the form `- [ ] AC-N: …`. Indented sub-bullets and wrapped continuation lines are not criteria and are not checked. |
 | `AC-id duplicate` | sections-present | One `AC-N` id is used by two criteria in the same use-case file. Gaps in the numbering are never a finding: ids are stable, never renumbered and never reused. Numbers compare as written, so `AC-01` and `AC-1` are two distinct ids rather than a duplicate. |
-| `ADR missing required section(s)` / `has empty section(s)` | sections-present | An `01_adr/adr-*.md` is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
+| `ADR is in the single-file shape` | sections-present | A `*.adr.md` has no `**Rationale:**` line and no `*.adr.rationale.md` beside it: it predates the decision/rationale pair. `/inspire-adr migrate` splits it. Its five sections are still checked, as the next row describes. |
+| `ADR missing required section(s)` / `has empty section(s)` | sections-present | A single-file ADR is missing one of `## Context` · `## Decision` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`, or has one with no body. |
+| `ADR decision missing required section(s)` / `ADR rationale missing required section(s)` (or `has empty section(s)`) | sections-present | A decision lacks `## Decision`, or a rationale lacks one of `## Context` · `## Consequences` · `## Alternatives considered` · `## Related ADRs`. |
+| `ADR decision carries rationale section(s)` / `ADR rationale carries the decision` | sections-present | A section sits in the wrong file of the pair. Move it; the message names where. |
+| `ADR decision names a rationale that does not exist` / `ADR decision does not link its rationale` / `ADR rationale has no decision beside it` | sections-present | The pair is broken: the `**Rationale:**` line and the `*.adr.rationale.md` file must exist together, and a rationale always has its decision. |
 | `ADR missing required subsection` | sections-present | `### Breaking changes` is nowhere in the ADR. Presence-only: an ADR that breaks nothing still says so. |
 | `ADR subsection … is present but not under …` | sections-present | `### Breaking changes` exists but sits under some other `## Section`, where it answers a different question. Distinct from the type above so the operator is told to move a heading rather than write one. |
 | `pattern entry declares no '## Regions' table` | screen-coherence | A pattern entry some screen names carries no `## Regions`, so the screen-to-layout join cannot be checked at all. |
@@ -104,12 +108,12 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `05_screens/` screen file is missing its H1 title, its `**Features:**` line, `## Purpose` or `## Bindings`, or carries one of those two sections with nothing under it. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
+| `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `*.screen.md` file is missing its H1 title, its `**Features:**` line, `## Purpose` or `## Bindings`, or carries one of those two sections with nothing under it. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
 | `screen file carries a retired section` | sections-present | `## Instantiation` is still there. Its declarations belong in keyed `## Bindings` rows — see `inspire-screens/references/format-screen.md` § Old shape → new shape. |
 | `screen missing frontmatter field` | screen-coherence | One of `id` · `module` · `screen` · `lifecycle` is absent. On a file with no frontmatter at all this is the whole old-shape story, reported once per missing field. |
 | `invalid screen lifecycle value` | screen-coherence | `lifecycle:` is set but is not one of `draft / accepted / stable / superseded`. |
-| `screen id shape` | screen-coherence | `id` is neither `{module}.{screen}` nor `{surface}.{module}.{screen}` for this file's own declared `module:` and `screen:`. |
-| `screen module mismatch` | screen-coherence | `module:` and the module directory in the path name different modules. The module is referent, not position: one of the two is wrong. |
+| `screen id shape` | screen-coherence | `id` is not `{face}.{slug}`: two segments, the face and the screen's slug. |
+| `screen id names face …, which no face declares` | screen-coherence | The first segment of the id names a face no `{face}.face.md` declares. Create the face with `/inspire-face add`, or fix the id. |
 | `screen carries an authored route` | screen-coherence | The H1 holds a path-shaped code span. Routes derive from `module:` + `screen:`, so a written one is a second source of truth. Heuristic, and a **flat warning** at every state. |
 | `screen superseded without superseded_by` / `superseded_by target does not resolve` | screen-coherence | A `superseded` screen must point at the screen id that replaced it, and that id must exist. |
 | `unknown bindings subsection` | screen-coherence | An H3 under `## Bindings` outside the closed set `Data` · `Dispatches` · `Navigation` · `States`. |
@@ -126,8 +130,24 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `duplicate screen id` | screen-coherence | Two screen files declare the same `id`. Ids are unique KB-wide; the newcomer mints `{surface}.{module}.{screen}` instead. |
-| `route collision` | screen-coherence | Two screens derive the same route in the same shell — same `module:` + `screen:` in one surface tree, or one of them under `shared/`. |
+| `duplicate screen id` | screen-coherence | Two screen files declare the same `id`. Ids are unique KB-wide; within a face, the newcomer takes another slug. |
+| `route collision` | screen-coherence | Two screens in the same face declare the same `module:` + `screen:`, so they derive the same route in one shell. |
+
+### Faces, bundles and processes
+
+| Type | Rule | Meaning |
+|---|---|---|
+| `id … starts with '_'` / `file name … starts with '_'` | spec-identity | **Error.** A leading `_` is reserved for INSPIRE structure and navigation. Rename the artifact. |
+| `duplicate {type} id …` | spec-identity | **Error.** Two artifacts of one type share an id within the scope that type is unique in: the project, or the module for a feature. |
+| `frontmatter says this is a …, its extension says …` | spec-identity | **Error.** The frontmatter `type:` and the typed extension disagree. |
+| `shell … is also the shell of …` | spec-identity | **Error.** Two faces share a shell, so their routes would collide. |
+| `face uses bundle …, which no {bundle}.bundle.md declares` | spec-identity | **Error.** A face's `bundles:` names a bundle with no file. Create it from `bundle.template.md` in draft (`/inspire-face add bundle`). |
+| `bundle declares no package:` | spec-identity | Warning. The package that exposes the bundle's actions is recorded nowhere, so the Factory cannot plan its mount test. |
+| `binds action …, which no bundle of face … exposes` | face-exposure | A screen binds an action outside its face's bundles. Lifecycle-progressive by the screen's `lifecycle:`. |
+| `face … lists no bundles: while its screens bind actions` | face-exposure | Warning, once on the face: the exposure is undeclared, not wrong. |
+| `process carries no id:` / `process id … is not {scope}.{process}` | process-shape | The id is two segments: a scope (`global`, a module or a face) and the process slug. Lifecycle-progressive. |
+| `process has no trigger` / `process runs no action` | process-shape | `## Trigger` is empty, or `## Requires` links no action. Lifecycle-progressive. |
+| `process affects …, which none of its required actions touches` | process-shape | An `## Affects` entity is reached by no `## Requires` action. Lifecycle-progressive. |
 
 ### Presentation and design system (warning at every state)
 
@@ -138,10 +158,10 @@ input.
 | Type | Rule | Meaning |
 |---|---|---|
 | `design system carries no '## …' section` | design-system-coherence | `## Supported viewports`, `## Icons` or `## Reference` is absent from `design-system.md`. |
-| `no design-tokens.json beside the design system` | design-system-coherence | The design system cites values with no token file to hold them. |
+| `no design-system.tokens.json beside the design system` | design-system-coherence | The design system cites values with no token file to hold them. |
 | `token … has no $type` / `outside the closed list` / `is not a … value` / `aliases …` / `token name … carries` | design-system-coherence | **Error.** The token file breaks the W3C Design Tokens shape: a type missing or unknown, a value not of its type, an alias naming nothing or looping, a name holding `.`, `{` or `}`. |
 | `N token(s) generated and decided by nobody yet` | design-system-coherence | Tokens whose `$extensions.inspire.source` is `generated`: a backfill proposed them with no reference to measure. Confirming one drops the marker. |
-| `cites token {…}, which design-tokens.json does not define` | design-system-coherence | A backticked `` `{token.path}` `` in a `05_screens` file names neither a token nor a group. |
+| `cites token {…}, which design-system.tokens.json does not define` | design-system-coherence | A backticked `` `{token.path}` `` in a screen or design-system file names neither a token nor a group. |
 | `screen names pattern … and no '**Layout:**'` | screen-presentation | The structure is named and its frame is not, so its geometry is recorded nowhere. |
 | `layout … frames … and this screen names pattern …` | screen-presentation | The layout the screen sits in frames another pattern. |
 | `screen declares data and no '## Render' table` | screen-presentation | No row binds a shown value to its field type, component, treatment and alignment. |
@@ -157,9 +177,9 @@ input.
 
 Every one of these carries the rule id `prose-style`. Each names its contract
 rule, the section it was found in and the line, so the message is enough to act
-on without re-running anything. Only R4 ramps with the object's lifecycle in
-`04_domain`, and it is a warning everywhere else; every other rule is a warning
-at every lifecycle and in every layer, so nothing here gates a commit on style. R1, R3, R4, R6 and R7 read the
+on without re-running anything. Only R4 ramps with the object's lifecycle on
+entities and actions, and it is a warning everywhere else; every other rule is a warning
+at every lifecycle and on every artifact type, so nothing here gates a commit on style. R1, R3, R4, R6 and R7 read the
 line with its `` `code spans` `` blanked out — a token quoted as a token is not a
 claim about the system — while R2 keeps them, because a code span is still a
 word the reader reads.
@@ -176,17 +196,17 @@ places in a document, which no grep sees.
 | `R3 noun cluster` | prose-style | Four or more stacked nouns, where a preposition would name the relationship. Heuristic — warning always. |
 | `R4 glossary synonym` | prose-style | A term the glossary lists as rejected, used in prose. The message names the approved term. Silent when `00_bootstrap/glossary.md` is absent or has no data rows. |
 | `R5 paragraph length` | prose-style | A paragraph over 8 sentences. A list is not a paragraph: each item is measured on its own. Warning always. |
-| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~`. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. The token list reaches the past only, so the future and the negative space are authoring judgment. Warning always. |
-| `R7 figurative language` | prose-style | One of the closed intensifier list — `simply`, `simple matter of`, `merely`, `of course`, `needless to say`, `it goes without saying`, `seamless(ly)`, `elegant(ly)`, `effortless(ly)`, `powerful`. First hit per line only: a line opening "Of course this is simply…" has one problem, not two. The metaphor half of R7 is judgment, so a clean run says nothing about whether the prose is direct. Warning always. |
+| `R6 historical language` | prose-style | One of the closed token list — `previously`, `used to`, `migrated from`, `~~…~~` — or an R6 token `00_bootstrap/style-tokens.md` declares. Outside English only `~~…~~` and the declared tokens are checked. `used to` fires on the historical construction only: a be-verb immediately before it ("the salt **is used to** derive the key") states present behavior and is not flagged, the same reasoning that keeps `replaces` and `removed` off the list. An ADR's `### Breaking changes`, its `## Related ADRs`, a `**Status:**` line and a `Supersedes:` line are exempt — from R6 alone; those lines are ordinary prose for every other check. The token list reaches the past only, so the future and the negative space are authoring judgment. Warning always. |
+| `R7 figurative language` | prose-style | One of the closed intensifier list — `simply`, `simple matter of`, `merely`, `of course`, `needless to say`, `it goes without saying`, `seamless(ly)`, `elegant(ly)`, `effortless(ly)`, `powerful` — or an R7 token `00_bootstrap/style-tokens.md` declares. Outside English only the declared tokens are checked. First hit per line only, within each list: a line opening "Of course this is simply…" has one problem, not two. The metaphor half of R7 is judgment, so a clean run says nothing about whether the prose is direct. Warning always. |
 
 ### Info
 
-One emitter, one message. `prose-style` announces that a project is outside its
-reach and stops:
+One emitter, one message. `prose-style` announces which of its checks a project's
+language puts out of reach:
 
 | Type | Rule | Meaning |
 |---|---|---|
-| `prose-style mechanical checks are en-only; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, no artifact is checked, and the run exits 0. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
+| `prose-style skips R1 and R3, which are English-only, checks R6 and R7 against the tokens 00_bootstrap/style-tokens.md declares, and runs R2, R4 and R5; the writing contract still binds as authoring judgment` | prose-style | `00_bootstrap/project.md` declares an `output_language` other than English — `en`, `en-*`/`en_*` and `english` all count as English, case-insensitively, because the field is authored by hand and takes a code or a plain name. The note is emitted once, and R2, R4, R5, R6 and R7 still check every artifact. It reports a limit of the checker, never a defect in an artifact — so it is rendered as a run note rather than as a finding with a suggested follow-up. |
 
 ## Exit codes
 

@@ -23,7 +23,7 @@ carries a different value; the run never sees it.
 | `## Test infrastructure` | one service per row; the Component column is its name | `services` |
 | `## Worktree recipe` | the `dependencies` and `generated artifacts` rows; the `environment` row names the variables' file | `setup`, `env` |
 | `## Conventions` (`### Layout`, `### Commands`, when the project wrote them) | real commands and test layout | `run`, `claims` |
-| `surfaces.md`, when present | each surface's `**Package:**` and `**Profiles:**` (which replace the global list) | per-package `cd`, roots |
+| every `*.face.md` and `*.bundle.md` under `01_spec/`, found by extension | each one's `package` and `profiles` frontmatter (`profiles` replaces the global list for that package) | per-package `cd`, roots |
 | each profile's `## Build & verify` | build, lint, types and test commands | `run` |
 | each profile's `## Test conventions` | where tests live | `claims` |
 
@@ -167,10 +167,6 @@ are expected.
 The factory refuses a project that still has `.inspire/emanate.json`. Its keys belong
 under `factory` in `emanate.yml`, with the same names.
 
-0. Confirm the factory is inside the range of `factory-compat.json`. The check that ran
-   when the skill loaded stopped an out-of-range factory; if it could not read the
-   version, the operator named one. Without a confirmed version, migrate nothing: an
-   older reader refuses the `factory` section and the project cannot run.
 1. Read the old file. Carry over `kb_root`, `spec_root`, `model`, `review_model`,
    `subagent_models`, `concurrency`, `max_tries`, `base_branch`, `viewer_port` and
    `sandbox` as they stand. Drop `schema`. The factory refuses any other key under

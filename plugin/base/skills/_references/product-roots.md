@@ -9,6 +9,11 @@ frontmatter of
 | `source_root` | the production code INSPIRE realizes | `source` | `inspire-bootstrap` |
 | `prototype_root` | the horizontal, mock-data prototype | `prototype` | `inspire-prototype` |
 
+A face's or a bundle's `package` (in `{face}.face.md` or `{bundle}.bundle.md`) is a path
+**relative to the single `source_root`**: `package: apps/portal` with `source_root: source`
+is `source/apps/portal`. There is one `source_root` per project; a face or a bundle never
+declares a root of its own.
+
 ## The rule
 
 When a skill needs to read, write, run or reference the production code or the

@@ -1,8 +1,15 @@
 {
   "exit": 1,
-  "args": ["spec/sdd/auth/user/auth.user.create.md"],
-  "findings": [
-    { "rule": "stable-blockers", "message_substring": "requires auth::password::hash which is at lifecycle: draft" }
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain/user/user.create.action.md"
   ],
-  "forbidden": ["requires target not found"]
+  "findings": [
+    {
+      "rule": "stable-blockers",
+      "message_substring": "requires auth::password::hash which is at lifecycle: draft"
+    }
+  ],
+  "forbidden": [
+    "requires target not found"
+  ]
 }

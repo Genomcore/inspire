@@ -2,16 +2,16 @@
 # .inspire/bin/screen-coherence.sh
 #
 # Rule: a screen file's identity, its keyed bindings, and its join with the
-# layout it names all hold. Three groups of checks, one pass over `05_screens`:
+# layout it names all hold. Three groups of checks, one pass over every
+# `*.screen.md`:
 #
 #   IDENTITY — the frontmatter block `id` · `module` · `screen` · `lifecycle`:
-#     present; `lifecycle` enum-valid; `id` shaped `{module}.{screen}` or
-#     `{surface}.{module}.{screen}` for this file's OWN declared module/screen;
-#     `module:` agreeing with the module directory in the path; a `superseded`
-#     screen pointing at the screen id that replaced it. Plus the two
-#     contradictions that cannot fire on a pre-0.9 file and are therefore errors
-#     at every state: two screens declaring one `id`, and two screens deriving
-#     one route in one shell.
+#     present; `lifecycle` enum-valid; `id` shaped `{face}.{slug}` (adr-kb-structure
+#     D5), its face one a `*.face.md` declares; a `superseded` screen pointing at
+#     the screen id that replaced it. The face comes from the id, never from the
+#     directory the file sits in (D4). Plus the two contradictions that cannot
+#     fire on a pre-0.9 file and are therefore errors at every state: two screens
+#     declaring one `id`, and two screens deriving one route in one face.
 #
 #   BINDINGS — `## Bindings` carries the screen's own semantics, in five
 #     subsections and no others (`Parameters` · `Data` · `Dispatches` ·
@@ -38,14 +38,14 @@
 # screen written before the identity block existed — reads as draft, so nothing
 # authored before 0.9 starts blocking a commit.
 #
-# Scope: the rule receives one `$1` and checks `$1 ∩ 05_screens` — see
+# Scope: the rule receives one `$1` and checks the screens in `$1 ∩ 01_spec` — see
 # `bin/README.md` §Scope. The duplicate-id and route-collision indexes are built
 # vault-wide whatever the scope, because a collision is not local; findings are
 # still only ever emitted on in-scope files.
 #
 # Usage:
 #   .inspire/bin/screen-coherence.sh                       # every screen
-#   .inspire/bin/screen-coherence.sh inspire_kb/05_screens/portal  # one surface
+#   .inspire/bin/screen-coherence.sh inspire_kb/01_spec/_faces/portal  # one face
 
 set -uo pipefail
 
@@ -69,22 +69,8 @@ LIFECYCLE_STATES="draft accepted stable superseded"
 # Readers
 # ─────────────────────────────────────────────────────────────────────────────
 
-# sc_surface_of <path> — the surface segment a screen sits in, or the empty
-# string in the flat (suite-of-one) shape. `shared` is returned as itself: it is
-# a pseudo-surface serving every shell, which is exactly why it collides with
-# all of them.
-sc_surface_of() {
-  printf '%s\n' "$1" | awk -F'(^|/)05_screens/' '
-    NF > 1 { n = split($NF, seg, "/"); if (n == 3) print seg[1]; else print "" }
-  '
-}
-
-# sc_module_of <path> — the module directory in the path, under either shape.
-sc_module_of() {
-  printf '%s\n' "$1" | awk -F'(^|/)05_screens/' '
-    NF > 1 { n = split($NF, seg, "/"); if (n == 3) print seg[2]; else if (n == 2) print seg[1] }
-  '
-}
+# The declared faces, one id per line: every `*.face.md`, by its id.
+SC_FACES="$(sdd_find_faces "$SDD_SPEC_ROOT" | while IFS= read -r f; do sdd_artifact_id "$f"; done)"
 
 # sc_h1_route <file> — prints the code span of the H1 title when it looks like a
 # path (`# Users — `/users``). Heuristic, and reported as a flat warning.
@@ -131,9 +117,9 @@ sc_parse_bindings() {
     incomment { if ($0 ~ /-->/) incomment = 0; next }
     /^###[ \t]/ {
       h = $0
-      sub(/^###[ \t]+/, "", h)
-      print "SUB\t" trim(h)
-      sect = trim(h)
+      sub(/^###[ \t]+/, "### ", h)
+      sect = sdd_heading_name(h, "### ")
+      print "SUB\t" sect
       hdr = 1
       next
     }
@@ -156,7 +142,7 @@ sc_parse_bindings() {
       next
     }
     END { if (nosub) print "NOSUB" }
-  '
+  '"${SDD_AWK_HEADING_FUNCS}"
 }
 
 # sc_bare <text> — a table cell reduced to its key: backticks and spaces gone.
@@ -190,17 +176,15 @@ sc_resolve_rel() {
   for cand in "$from_dir/$target" "$from_dir/$target.md" "$target" "$target.md"; do
     if [ -f "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
   done
-  # Bare name, or a `../` depth that shifted with a surface split: look in the
-  # two suite-wide catalogs by basename.
-  local base="${target##*/}"
-  for cand in "$SDD_KB_ROOT/05_screens/patterns/$base.md" \
-              "$SDD_KB_ROOT/05_screens/components/$base.md"; do
-    if [ -f "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
+  # Bare name, or a path written for another layout: look the name up in the
+  # pattern and component catalogs, by extension.
+  for cand in "$(sdd_resolve_catalog pattern "$target")" "$(sdd_resolve_catalog component "$target")"; do
+    if [ -n "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
   done
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# The vault-wide identity index: path \t id \t module \t screen \t surface
+# The vault-wide identity index: path \t id \t module \t screen \t face
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Read FIELD BY FIELD through `sdd_fm_value`, never off the extracted block:
@@ -216,8 +200,21 @@ while IFS= read -r f; do
     "$(sdd_fm_value "$f" '.id')" \
     "$(sdd_fm_value "$f" '.module')" \
     "$(sdd_fm_value "$f" '.screen')" \
-    "$(sc_surface_of "$f")" >> "$SC_INDEX"
-done < <(sdd_find_screens "$SDD_KB_ROOT")
+    "$(id="$(sdd_fm_value "$f" '.id')"; printf '%s' "${id%%.*}")" >> "$SC_INDEX"
+done < <(sdd_find_screens "$SDD_SPEC_ROOT")
+
+# sc_screen_file <id> — the screen file declaring <id>, or the one the migration's id
+# map renamed it to: a link inside `## Bindings` keeps the id it was written with.
+sc_screen_file() {
+  local f alias
+  f="$(awk -F'\t' -v k="$1" '$2 == k { print $1; exit }' "$SC_INDEX")"
+  if [ -z "$f" ]; then
+    alias="$(sdd_screen_id_alias "$1")"
+    [ -n "$alias" ] && f="$(awk -F'\t' -v k="$alias" '$2 == k { print $1; exit }' "$SC_INDEX")"
+  fi
+  [ -n "$f" ] && printf '%s\n' "$f"
+  return 0
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Checks
@@ -230,7 +227,7 @@ emit() {
 
 check_identity() {
   local file="$1" sev="$2" id="$3" module="$4" screen="$5" lifecycle="$6"
-  local missing="" path_module other
+  local missing="" other face
 
   [ -n "$id" ]        || missing="${missing:+$missing,}id"
   [ -n "$module" ]    || missing="${missing:+$missing,}module"
@@ -253,26 +250,19 @@ check_identity() {
     esac
   fi
 
-  if [ -n "$id" ] && [ -n "$module" ] && [ -n "$screen" ]; then
+  if [ -n "$id" ]; then
     case "$id" in
-      "$module.$screen") ;;
-      *".$module.$screen")
-        case "${id%".$module.$screen"}" in
-          *.*) emit "$sev" "$file" \
-                 "screen id shape: '$id' has more segments than {surface}.$module.$screen" ;;
-        esac
-        ;;
+      *.*.*|.*|*.) emit "$sev" "$file" \
+             "screen id shape: '$id' is not '{face}.{slug}' — two segments, the face and the screen's slug" ;;
+      *.*)
+        face="${id%%.*}"
+        if ! printf '%s\n' "$SC_FACES" | grep -qxF "$face"; then
+          emit "$sev" "$file" \
+            "screen id names face '$face', which no face declares (no {face}.face.md has that id)"
+        fi ;;
       *) emit "$sev" "$file" \
-           "screen id shape: '$id' is neither '$module.$screen' nor '{surface}.$module.$screen'" ;;
+           "screen id shape: '$id' is not '{face}.{slug}' — two segments, the face and the screen's slug" ;;
     esac
-  fi
-
-  if [ -n "$module" ]; then
-    path_module="$(sc_module_of "$file")"
-    if [ -n "$path_module" ] && [ "$path_module" != "$module" ]; then
-      emit "$sev" "$file" \
-        "screen module mismatch: frontmatter says '$module', the path says '$path_module' — the module is referent, not position"
-    fi
   fi
 
   if [ "$lifecycle" = "superseded" ]; then
@@ -282,7 +272,7 @@ check_identity() {
     if [ -z "$sb" ]; then
       emit "$sev" "$file" \
         "screen superseded without superseded_by: name the screen id that replaced it"
-    elif ! awk -F'\t' -v k="$sb" '$2 == k { f=1; exit } END { exit !f }' "$SC_INDEX"; then
+    elif [ -z "$(sc_screen_file "$sb")" ]; then
       emit "$sev" "$file" \
         "superseded_by target does not resolve to a screen id: '$sb'"
     fi
@@ -306,16 +296,13 @@ check_identity() {
     fi
   fi
 
-  # Two screens, one derived route in one shell. A `shared/` screen serves every
-  # shell, so it collides with all of them.
+  # Two screens, one derived route in one face: the face is the shell.
   if [ -n "$module" ] && [ -n "$screen" ]; then
-    other="$(awk -F'\t' -v m="$module" -v s="$screen" -v surf="$(sc_surface_of "$file")" -v self="$file" '
-        $1 != self && $3 == m && $4 == s {
-          if ($5 == surf || $5 == "shared" || surf == "shared") { print $1; exit }
-        }' "$SC_INDEX")"
+    other="$(awk -F'\t' -v m="$module" -v s="$screen" -v face="${id%%.*}" -v self="$file" '
+        $1 != self && $3 == m && $4 == s && $5 == face { print $1; exit }' "$SC_INDEX")"
     if [ -n "$other" ]; then
       emit "error" "$file" \
-        "route collision: '$module/$screen' is derived by this screen and by $other in the same shell"
+        "route collision: '$module/$screen' is derived by this screen and by $other in the same face"
     fi
   fi
 }
@@ -402,8 +389,7 @@ check_bindings() {
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 
   # Navigation targets are screen ids, written as wikilinks. Brackets alone are
-  # not enough: a screen id is `{module}.{screen}` or `{surface}.{module}.
-  # {screen}` and carries no slash, so a route survives the bracket test and
+  # not enough: a screen id is `{face}.{slug}` and carries no slash, so a route survives the bracket test and
   # fails this one — otherwise the check would accept what its own message
   # forbids.
   while IFS= read -r line; do
@@ -474,7 +460,7 @@ check_param_refs_target() {
   local file="$1" sev="$2" cell="$3" where="$4" target target_file declared ref
   target="$(sc_link_target "$cell")"
   [ -n "$target" ] || return 0
-  target_file="$(awk -F'\t' -v k="$target" '$2 == k { print $1; exit }' "$SC_INDEX")"
+  target_file="$(sc_screen_file "$target")"
   [ -n "$target_file" ] || return 0
   declared=" $(sc_declared_params "$target_file" | tr '\n' ' ') "
   while IFS= read -r ref; do
@@ -569,7 +555,7 @@ sc_pattern_regions() {
 
 # The two region vocabularies are closed — `Fill` is required|optional and
 # `Accepts` is one or more of data|dispatch|nav|static, per format-screen.md and
-# `templates/pattern-entry.md.template`. Closed, and until now enforced nowhere:
+# `templates/pattern.template.md`. Closed, and until now enforced nowhere:
 # the join simply dropped a token it did not recognize, so `| body | required |
 # records |` bought the pattern silence instead of a finding, and a region that
 # should have demanded a data binding demanded nothing.
@@ -668,7 +654,7 @@ check_join() {
           done
           if [ "$kinds" != "SATISFIED" ]; then
             emit "$sev" "$file" \
-              "pattern join: required region '$region' of $(basename "$pattern_file" .md) accepts$(printf '%s' "$kinds") and this screen declares no such binding"
+              "pattern join: required region '$region' of $(sdd_artifact_id "$pattern_file") accepts$(printf '%s' "$kinds") and this screen declares no such binding"
           fi
         done < <(sc_pattern_regions "$pattern_file")
       fi
@@ -686,7 +672,7 @@ check_join() {
     state="$(awk 'index($0, "**State:**") == 1 { s = $0; sub(/^\*\*State:\*\*[ \t]*/, "", s); gsub(/[ \t]+$/, "", s); print s; exit }' "$comp_file")"
     if [ "$state" = "to-extract" ]; then
       emit "error" "$file" \
-        "stable screen declares a to-extract component: $(basename "$comp_file" .md) is not implemented yet"
+        "stable screen declares a to-extract component: $(sdd_artifact_id "$comp_file") is not implemented yet"
     fi
   done < <(sc_header_links "$file" '**Components:**')
 }
@@ -695,7 +681,7 @@ check_join() {
 # Dispatch
 # ─────────────────────────────────────────────────────────────────────────────
 
-SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_KB_ROOT/05_screens")"
+SCREEN_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 if [ -n "$SCREEN_SCOPE" ]; then
   while IFS= read -r screen_file; do

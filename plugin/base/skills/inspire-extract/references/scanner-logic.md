@@ -62,8 +62,12 @@ the synthesis step derives features and wires them.
 
 - `entities` — `{proposed_id, fields[], invariants[], evidence[], aliases[],
   conflicts[], confidence}`.
-- `actions` — `{proposed_id, verb, touches[], requires[], endpoint, evidence[],
-  confidence}`.
+- `actions` — `{proposed_id, verb, touches[], requires[], endpoint, service, evidence[],
+  confidence}`. `service` is the deployable package whose entry point serves the
+  endpoint.
+- `services` — `{path, kind (http | worker | consumer | library), framework,
+  evidence}` for each service found. Each becomes a **bundle candidate** in the
+  synthesis, exposing the actions whose `service` it is.
 - `consolidations` — duplicate-CRUD / repeated-logic / entity-aliasing findings.
 
 Do **not** author domain files; that is `/inspire-domain`'s job after review.

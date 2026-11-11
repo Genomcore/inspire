@@ -4,7 +4,7 @@
     {
       "rule": "screen-coherence",
       "severity": "warning",
-      "message_substring": "screen missing frontmatter field(s): id,module,screen,lifecycle"
+      "message_substring": "screen missing frontmatter field(s): lifecycle"
     },
     {
       "rule": "screen-coherence",
