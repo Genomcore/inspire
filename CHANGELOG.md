@@ -9,7 +9,7 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.15.0 — unreleased
+## 0.15.0 — 2026-11-11
 
 ### Added
 
