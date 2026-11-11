@@ -10,49 +10,41 @@ write-once at **every** lifecycle, `superseded` included
 ([`format-screen.md`](format-screen.md) § Identity — the id is the referent) —
 and `lifecycle:`, which is [`promote`](screen-lifecycle.md)'s. A changed id or a
 new module is a new referent, so it is a `create` plus a supersession, never an
-update. The one identity write this flow performs is not a rewrite: an old-shape
+update. So is taking a screen to another face. The one identity write this flow performs is not a rewrite: an old-shape
 file carries no identity block at all, and step 4 mints that block once,
 `lifecycle: draft` included.
 
-Renaming the file takes no command at all — the name is positional, and a rename
-is a move: the id, the route and every claim survive it
-([`format-screen.md`](format-screen.md) § Identity, move versus change). Moving
-one screen between surface trees that already exist is the same kind of move, and
-the shape of the screens tree is this skill's day to day
-([`_references/surface-scope.md`](../../_references/surface-scope.md) § Who owns
-what). **Reshaping the tree is not.** The `05_screens/` split belongs to the
-`/inspire-surface add` that takes the roster to two UI surfaces — it sweeps every
-screen, has the operator classify each one, and moves with `git mv`
-([`inspire-surface`](../../inspire-surface/SKILL.md) § The screens split). Route
-a split there rather than hand-moving files out of this flow.
+Renaming the file takes no command at all — once minted, the frontmatter `id:`
+wins over the slug, and a rename is a move: the id, the route and every claim
+survive it ([`format-screen.md`](format-screen.md) § Identity, move versus change).
+When a second face needs what a screen shows, the screen stays where it is: the
+shared structure goes to a layout or a pattern
+([`screen-catalog.md`](screen-catalog.md)), and the other face gets its own screen
+through `create`.
 
 ## Which screen
 
-The argument is the **id** — `/inspire-screens update users.list`. Resolve it to
-a path by searching the frontmatter of `inspire_kb/05_screens/**/*.md` for
-`id: {id}`, never by deriving a path from the id: the file name is positional and
-may have diverged from `screen:`, and the leading segment of a collision-minted
-`{surface}.{module}.{screen}` is a mint, not a directory. No tool answers this
-lookup — the screen-id index in `.inspire/bin/wikilinks-resolve.sh` is that
-rule's own, built per run for its own pass — so the frontmatter search is the
-mechanism.
+The argument is the **id** — `/inspire-screens update admin.users-list`. Resolve
+it to a path by finding every `*.screen.md` under `inspire_kb/01_spec/` and
+matching its frontmatter `id: {id}`, never by deriving a path from the id: the file
+may have been renamed since the id was minted. No tool answers this lookup — the
+screen-id index in `.inspire/bin/wikilinks-resolve.sh` is that rule's own, built
+per run for its own pass — so the frontmatter search is the mechanism.
 
-`{module}/{screen}`, the form `create` and `validate` take, resolves too when
-exactly one screen matches it. Once the suite declares two or more UI surfaces,
-two trees can hold the same `{module}/{screen}` while only the newcomer's id
-carries a surface segment — ask for the id rather than pick a file.
+`{face}/{module}/{screen}` resolves too when exactly one screen in that face
+matches it. When several do, ask for the id rather than pick a file.
 
 ## Stable screens block
 
 `update` refuses when the target is at `lifecycle: stable`:
 
 ```
-Cannot update users.list — it is at lifecycle: stable.
+Cannot update admin.users-list — it is at lifecycle: stable.
 A stable screen is a locked contract; editing its bindings in place would shift
 them under the tests covering its claims. To modify it:
-  1. /inspire-screens promote users.list accepted   # stable → accepted
-  2. /inspire-screens update users.list ...         # apply the change
-  3. /inspire-screens promote users.list stable
+  1. /inspire-screens promote admin.users-list accepted   # stable → accepted
+  2. /inspire-screens update admin.users-list ...         # apply the change
+  3. /inspire-screens promote admin.users-list stable
 ```
 
 **The presentation half passes the lock.** `**Layout:**`, `## Render` and the
@@ -89,7 +81,7 @@ before converting it.
 1. **Read the file, show it, and gate on `lifecycle:`.**
    - `stable` → refuse with the message above and stop the turn, unless the change
      touches only the presentation half (§ Stable screens block).
-   - `superseded` → say it, in one line: *"`users.list` is superseded — this turn
+   - `superseded` → say it, in one line: *"`admin.users-list` is superseded — this turn
      can set `superseded_by:` and repair the shape, but not its bindings; new
      behaviour belongs on the screen that replaced it."* The turn continues on
      that narrowed scope, and ends there if the only thing asked for was a
@@ -100,8 +92,8 @@ before converting it.
    anything — presence is the whole test
    ([trust-stamps](../../_references/trust-stamps.md#endorsement)).
 2. **Scope the change.** A natural-language continuation is applied as a patch
-   without re-asking for the id — `/inspire-screens update users.list drop the
-   archive dispatch` is parsed as "update `users.list`, change: remove the
+   without re-asking for the id — `/inspire-screens update admin.users-list drop
+   the archive dispatch` is parsed as "update `admin.users-list`, change: remove the
    `archive` dispatch". Otherwise ask what should change, in one question. Where
    the invocation arrived from a derivation refusal, the refusal's class **is**
    the scope: the shape it names
@@ -112,7 +104,10 @@ before converting it.
    older file never carried — runs the matching step of
    [`screen-create.md`](screen-create.md) rather than arriving pre-written. Key
    every new binding row screen-locally, and drop a subsection left with nothing
-   in it.
+   in it. A new row that links a screen, pattern, layout or component that does
+   not exist yet creates it from its template — a screen at `lifecycle: draft`, a
+   catalog entry at `**State:** to-extract`. A new `### Data` or `### Dispatches`
+   row binds an action the face's bundles expose (`face-exposure.sh`).
 4. **Convert an older shape whole, one screen at a time.** Walk
    [`format-screen.md`](format-screen.md) § Old shape → new shape and resolve
    **every** row of that table. It is the catalogue, and this step deliberately
@@ -125,13 +120,13 @@ before converting it.
    screen refusing derivation on the rows still outstanding.
 5. **Show the diff** (unified ` ```diff ` block). The operator approves or
    iterates. Sections the operator did not touch are not rewritten.
-6. **Write, then reconcile the module's `_index.md`** — the one in the directory
-   the screen sits in. Its row carries the id, the title and the feature
-   coverage, so an edit to the H1 or the `**Features:**` line makes the row
-   stale.
-7. **Re-run the mechanical half.** `.inspire/bin/screen-coherence.sh` and
-   `.inspire/bin/sections-present.sh` over the screen's directory, and report
-   what they say. Both runs are directory-scoped, so they also report on the
+6. **Write.** The face's `_index.md` lists no screens, so an edit to the H1 or the
+   `**Features:**` line leaves it alone. Touch its prose only when the change
+   alters how a person moves through the face.
+7. **Re-run the mechanical half.** `.inspire/bin/screen-coherence.sh`,
+   `.inspire/bin/face-exposure.sh` and `.inspire/bin/sections-present.sh` over
+   the screen's face directory, and report
+   what they say. The runs are directory-scoped, so they also report on the
    target's neighbours: read each finding's `target` path and report the target's
    findings as this turn's, the neighbours' as pre-existing. Never resolve a
    neighbour's finding here — one screen at a time is the whole discipline of

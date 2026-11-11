@@ -14,16 +14,19 @@
 intent is captured in a knowledge base, load-bearing decisions are recorded,
 and code is generated from what is specified.
 
-- **Knowledge base** — [`inspire_kb/`](inspire_kb/), one numbered layer per
-  concern: `00_bootstrap` (stack + design system) · `01_adr` (architecture
-  decisions) · `02_modules` · `03_features` · `04_domain` (the
-  machine-checkable domain model) · `05_screens` · `06_spikes` ·
-  `98_lessons` · `99_tracker`. Each layer folder has its own README.
+- **Knowledge base** — [`inspire_kb/`](inspire_kb/): `00_bootstrap` (project,
+  stack, glossary) · `01_spec` (the specification, one directory per concept:
+  global ADRs, the design system, modules with their features and
+  machine-checkable domain model, bundles, faces with their screens, and
+  processes) · `06_spikes` · `98_lessons` · `99_tracker`. Each folder has its
+  own README. Every artifact has a typed extension (`*.module.md`,
+  `*.entity.md`, `*.screen.md` …), and tools find it by that extension, never by
+  its directory.
 - **Skills** — the `inspire-*` slash commands (`inspire-bootstrap`,
-  `inspire-module`, `inspire-feature`, `inspire-domain`, `inspire-screens`,
-  `inspire-adr`, …) read and write these layers. Operate the
+  `inspire-module`, `inspire-feature`, `inspire-domain`, `inspire-face`,
+  `inspire-screens`, `inspire-process`, `inspire-adr`, …) read and write it. Operate the
   KB through a skill rather than editing it by hand.
-- **Validators** — `.inspire/bin/review.sh` checks the domain layer for
+- **Validators** — `.inspire/bin/review.sh` checks the specification for
   mechanical and coherence errors; it is also callable from CI
   (`.inspire/bin/review.sh [scope]`, exit 0 clean / 1 on any error finding).
 - **Runtime version** — `.inspire.lock` records which INSPIRE release this

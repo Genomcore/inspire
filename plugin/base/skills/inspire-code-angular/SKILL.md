@@ -68,9 +68,10 @@ project's selector and SCSS class prefixes are declared once (per
 - **No derived data stored in state** — compute it in selectors / `computed`.
 
 ## Review focus
-- **styling**: uses the design tokens (`05_screens/design-tokens.json`, a token
+- **styling**: uses the design tokens (`01_spec/_design-system/design-system.tokens.json`,
+  plus the face's own `{face}.tokens.json` when it has one; a token
   `{color.primary}` being `--color-primary`) and BEM naming with the project's class
-  prefix (`05_screens/design-system.md`); no ad-hoc values, no unscoped
+  prefix (`01_spec/_design-system/design-system.md`); no ad-hoc values, no unscoped
   `::ng-deep`.
 - **accessibility**: correct roles, labels, and aria attributes; keyboard
   operability; aria-labels match the values they describe; forms announce
@@ -110,7 +111,7 @@ bundle: `ng build -c production --stats-json` + esbuild-visualizer.
 the target project: `ng build {project}` · `ng test {project}` · `ng serve
 {project}` (or the workspace tool's equivalent — `nx test {project}`, `pnpm
 --filter {package} …`). Never run a workspace-wide build from a subcommand
-when a scoped form exists; a UI surface is verified by its own project going
+when a scoped form exists; a face is verified by its own project going
 green.
 
 ## References

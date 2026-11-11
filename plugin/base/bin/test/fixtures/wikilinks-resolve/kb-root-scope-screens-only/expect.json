@@ -1,6 +1,8 @@
 {
   "exit": 1,
-  "args": ["spec/kb"],
+  "args": [
+    "spec/kb"
+  ],
   "findings": [
     {
       "rule": "wikilinks-resolve",
@@ -10,7 +12,7 @@
     {
       "rule": "wikilinks-resolve",
       "severity": "error",
-      "message_substring": "user.profile.edit.md"
+      "message_substring": "user.profile.edit.screen.md"
     }
   ],
   "forbidden": [

@@ -1,13 +1,13 @@
 ---
 name: inspire-domain
-description: "SDD object lifecycle for both action descriptors (inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md) and entity documents (inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
+description: "SDD object lifecycle for both action descriptors (inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md) and entity documents (inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md). Interview-driven authoring → consolidation; after operator approval the agent reconciles the affected entity document's Fields + Touched by tables. Use for define, show, update, refactor, delete, promote, demote, review, source, graph subcommands."
 argument-hint: "<subcommand> [<id>|<scope>] [args]"
 user-invocable: true
 ---
 
 # /inspire-domain — Domain (SDD object lifecycle)
 
-Every file in the SDD layer is an **object**: either an **action descriptor** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`) or an **entity document** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`, one fewer dotted segment). An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
+Every file in the SDD layer is an **object**: either an **action descriptor** (`inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`) or an **entity document** (`inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md`). Both live in their module's `_domain/`, and the typed extension (`.action.md`, `.entity.md`) tells them apart. An action descriptor is a pure behavioral contract — what an action does, what it consumes and returns, which entities it touches, what invariants it upholds. An entity document is a design-discipline artefact — *why* the entity exists as a discrete object and *what motivates* its field shape. Neither is derived from the other; "object" is the umbrella term.
 
 This skill owns the full lifecycle of both kinds — from first interview through promotion to stable. **Authoring is an interview, not a fill-in-the-blanks.** The single most important thing this skill does is run a socratic per-section walk; the on-disk format is secondary and lives in references.
 
@@ -49,9 +49,9 @@ The full annotated example is in [`examples/define-interview.md`](examples/defin
 ## Anti-patterns to avoid
 
 - ❌ **Proposing a draft field-list / structure before walking the sections.** This is *the* drift. Walk Purpose → … one question at a time; do not emit a populated descriptor after a single probing question.
-- ❌ **Discussing storage, runtime, boot mechanics, or surface bindings** (HTTP route, CLI command, MCP tool, workflow node, agent tool). These are not SDD-layer concerns — the descriptor is a pure contract; exposure and implementation live in other modules' artifacts.
+- ❌ **Discussing storage, runtime, boot mechanics, or exposure** (HTTP route, CLI command, MCP tool, workflow node, agent tool). These are not SDD-layer concerns — the descriptor is a pure contract; the action's bindings come from the stack skill's `## Bindings`, the bundles that publish it list it in their own files, and implementation lives in the code.
 
-  A surface name pushing into a domain file — "admin-console only", "this one is portal-side" — is almost always something missing elsewhere, and naming it in the descriptor buries it. Either an **actor or trust-boundary invariant** is missing: "only an administrator may suspend a tenant" is a claim about who may act, true wherever the action runs, so it belongs in Behavior/invariants — surfaces bind to actors downstream, not the reverse. Or a **module boundary** is missing: when half a module's actions want one surface and half another, the module wants splitting (`/inspire-module`), not tagging. For service exposure — which service serves which modules — the home is the API-partition ADR pattern in [`/inspire-adr`](../inspire-adr/SKILL.md#the-api-partition-adr); no domain file records it.
+  A face or bundle name pushing into a domain file — "admin-console only", "this one is portal-side" — is almost always something missing elsewhere, and naming it in the descriptor buries it. Either an **actor or trust-boundary invariant** is missing: "only an administrator may suspend a tenant" is a claim about who may act, true wherever the action runs, so it belongs in Behavior/invariants — faces and bundles bind to actors downstream, not the reverse. Or a **module boundary** is missing: when half a module's actions want one face or bundle and half another, the module wants splitting (`/inspire-module`), not tagging. Which bundle exposes which modules or actions is the bundle's own file (`{bundle}.bundle.md`, owned by `/inspire-face`; see [`/inspire-adr`](../inspire-adr/SKILL.md#exposure-lives-in-bundles)); no domain file records it.
 - ❌ **Skipping the Authoring-contexts gate** (Step 0). Establish fresh / field-addition / targeted-revision before any design question.
 - ❌ "Before drafting, we need to resolve X, Y, Z." Operators experience this as a wall. Pick the one that blocks progress, ask about it, defer the others.
 - ❌ "I see three options: (1) …, (2) …, (3) …". The brainstorming reflex. Unless the operator asked for options, don't enumerate.
@@ -72,7 +72,7 @@ The interview produces files **incrementally as the dialogue unfolds**, not in a
 
 This skill owns: **action descriptors**, **entity documents**, **consolidation** (rebuilding the entity doc's derived `## Fields` + `## Touched by` tables after a descriptor change), and the **subcommands** below.
 
-This skill does NOT own: **feature authoring** (`/inspire-module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire-feature`); **surface bindings** (HTTP / CLI / MCP / workflow node / agent tool — owned by their respective modules); **implementation** (storage, runtime, SQL/TypeScript shapes).
+This skill does NOT own: **feature authoring** (`/inspire-module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire-feature`); **exposure** (HTTP / CLI / MCP / workflow node / agent tool — the action's bindings come from the stack skill, and the bundles that publish it are `/inspire-face`'s); **implementation** (storage, runtime, SQL/TypeScript shapes).
 
 ## Invocation
 
@@ -117,9 +117,9 @@ After any descriptor change, the agent reconciles the affected entity document �
 On-disk shape specs (consult when authoring; they govern the file, not the cadence):
 
 - Action descriptor → [`references/format-action.md`](references/format-action.md);
-  copyable shape at [`templates/action.md.template`](templates/action.md.template)
+  copyable shape at [`templates/action.template.md`](templates/action.template.md)
 - Entity document → [`references/format-entity.md`](references/format-entity.md);
-  copyable shape at [`templates/entity.md.template`](templates/entity.md.template)
+  copyable shape at [`templates/entity.template.md`](templates/entity.template.md)
 - Semantic types → [`references/type-mapping.md`](references/type-mapping.md) — the
   authority for the `Type` vocabulary and `Mapping` tokens used by both formats,
   and the project's own types in `00_bootstrap/semantic-types.md`.
@@ -167,7 +167,8 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire-task` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
 10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire-feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
-11. **Check and stamp every write.** After a descriptor or entity document is
+11. **A link requires its target.** When a write links to an object that does not exist yet — an entity under `## Entities` or in a head, an action in `requires:` or in prose, an ADR — create the target in the same flow from its template and name it in the output: an entity or action from [`templates/`](templates/) at `lifecycle: draft`, in its module's `_domain/{entity}/`; an ADR from [`inspire-adr`'s template](../inspire-adr/templates/adr.template.md) at `**Status:** design`. A missing feature is rule 10's case: it is created through `/inspire-feature create`, which writes it from its template.
+12. **Check and stamp every write.** After a descriptor or entity document is
     written, run `.inspire/bin/review.sh <file>` and fix what it reports on that
     file: every error, and every warning the operator does not choose to keep
     ([write-checks](../_references/write-checks.md)). Then run

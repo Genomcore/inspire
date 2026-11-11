@@ -1,6 +1,6 @@
 # Lifecycle rules (shared reference)
 
-Every SDD object — **action descriptor** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.{action}.md`), **entity document** (`inspire_kb/04_domain/{module}/{entity}/{module}.{entity}.md`) and **screen file** (`inspire_kb/05_screens/**/{screen}.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The three object kinds share the same 4-state enum and the same state machine; what each state *gates* differs per kind, and each owning skill says so ([`inspire-screens/references/screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) for screens).
+Every SDD object — **action descriptor** (`inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`), **entity document** (`inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md`) and **screen file** (`inspire_kb/01_spec/_faces/{face}/_screens/{slug}.screen.md`) alike — carries a `lifecycle:` field in its frontmatter. The lifecycle controls which quality_lib rules apply and what transitions the agent will offer. The three object kinds share the same 4-state enum and the same state machine; what each state *gates* differs per kind, and each owning skill says so ([`inspire-screens/references/screen-lifecycle.md`](../inspire-screens/references/screen-lifecycle.md) for screens).
 
 ## The 4-state enum
 
@@ -49,7 +49,7 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
 | `sections-present` (mandatory body sections present + non-empty; `## Touched by` presence-only) | error | error | error | error |
-| `sections-present` (canonical section ORDER, `04_domain` only) | warning | error | error | warning |
+| `sections-present` (canonical section ORDER, entities and actions only) | warning | error | error | warning |
 | `no-todos` (no TODO/FIXME markers — D19) | error | error | error | error |
 | `action-fields-in-entity` (action touch declarations match entity Fields table) | error | error | error | error |
 | `entity-coherence` (field-conflict, write-on-external) | error | error | error | error |
@@ -58,13 +58,13 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 
-`sections-present` splits its severity by **layer**, because two of the layers it
-checks carry no `lifecycle:` field at all: a use-case file and an ADR have no
-column to read, so nothing there can ramp, and every finding the rule makes in
-`03_features` or `01_adr` is a **warning** at every moment of that artifact's life.
-The table above is the `04_domain` half. Its second row is the exception within the
-exception: the order check *does* ramp, because what a draft may still be reshaping
-an accepted or stable object has fixed. The `05_screens` half is the § Screens
+`sections-present` splits its severity by **artifact type**, because two of the
+types it checks carry no `lifecycle:` field at all: a use-case file and an ADR have
+no column to read, so nothing there can ramp, and every finding the rule makes on a
+`*.feature.md` or `*.adr.md` is a **warning** at every moment of that artifact's
+life. The table above is the entity-and-action half. Its second row is the exception
+within the exception: the order check *does* ramp, because what a draft may still be
+reshaping an accepted or stable object has fixed. The screen half is the § Screens
 table below.
 
 `entity-coherence` splits by **kind of finding**. A field-conflict or a write on a
@@ -96,7 +96,7 @@ The tier-3 rules ramp severity by the *current object's* lifecycle, not by the l
 
 Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.9, columns and all. "New but unkeyed" and "pre-0.9" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote` — and since 0.8.0 shipped none of these classes, that is every vault there is, not an older tail of them. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.9. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
 
-### Screens — the same columns, read in `05_screens`
+### Screens — the same columns, read on `*.screen.md`
 
 Screen files carry `lifecycle:`, so the columns above are readable there too:
 
@@ -104,7 +104,8 @@ Screen files carry `lifecycle:`, so the columns above are readable there too:
 |---|---|---|---|---|
 | `sections-present` (screen required parts: H1 · `**Features:**` line · non-empty `## Purpose` · non-empty `## Bindings`; and the retired `## Instantiation`) | warning | error | error | warning |
 | `screen-coherence` (identity fields, keyed bindings, internal references, the pattern↔region join) | warning | error | error | warning |
-| `screen-coherence` (duplicate `id`; two screens deriving one route in one shell) | error | error | error | error |
+| `face-exposure` (every action a screen binds is exposed by one of its face's bundles) | warning | error | error | warning |
+| `screen-coherence` (duplicate `id`; two screens deriving one route in one face) | error | error | error | error |
 | `screen-coherence` (a `stable` screen declaring a `**State:** to-extract` component) | exempt | exempt | error | exempt |
 | `wikilinks-resolve` (every `[[wikilink]]` in a screen resolves) | warning | error | error | warning |
 | `screen-presentation` (layout, `## Render`, breakpoints, touch) and `design-system-coherence` (sections, citations) | warning | warning | warning | warning |
@@ -120,7 +121,7 @@ sides need declared frontmatter, and both findings are contradictions rather tha
 incompleteness. A contradiction blocks at every state.
 
 `prose-style` is deliberately absent from this table. Style findings stay flat
-warnings in every layer outside `04_domain`, screens included: a screen ramps on
+warnings on every artifact type except entities and actions, screens included: a screen ramps on
 the rules that describe its contract — its shape, its identity, its bindings —
 never on the ones that read its prose.
 
@@ -133,10 +134,10 @@ never on the ones that read its prose.
 
 `prose-style` checks the greppable half of
 [`writing-style.md`](writing-style.md); the authoring skills carry the whole
-contract as judgment. Only R4 ramps with this table's columns, and only in
-`04_domain` — everywhere else it is a flat warning, because `03_features` and
-`01_adr` have no `lifecycle:` for the columns to read and `05_screens` has one
-these checks deliberately do not read (§ Screens).
+contract as judgment. Only R4 ramps with this table's columns, and only on
+entities and actions — everywhere else it is a flat warning, because features and
+ADRs have no `lifecycle:` for the columns to read and screens have one these
+checks deliberately do not read (§ Screens).
 
 R4 is alone because it reads a **declaration**: the glossary records that a word
 is rejected, so a hit contradicts something the operator wrote down. Every rule in
@@ -147,6 +148,8 @@ ramp — **nothing gates a commit on style.**
 R1 and R3 are **English-only**, and outside English R6 and R7 read only the tokens
 `00_bootstrap/style-tokens.md` declares: a project whose `output_language` is not
 `en` gets one info-level note saying so, and R2, R4 and R5 still run.
+
+A process file (`*.process.md`) carries `lifecycle:` too: every `process-shape` finding ramps with these columns, read from the process's own field.
 
 Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`, `touched-entity-lifecycle`) but the mechanical and coherence tiers apply unconditionally — type drift, broken references, missing sections, and TODO sludge silently break later promotion otherwise.
 
@@ -163,7 +166,7 @@ Each object kind is promoted by the skill that owns it — `/inspire-domain prom
 - `{any} → superseded` — confirm explicitly; require `superseded_by` to point to an existing action; do not rerun other gates (the descriptor is being archived, not promoted).
 - Reverse from `superseded` — refused; create a new descriptor instead.
 
-After a promotion that changes the action's behavior visible to consumers (typically `→ stable` or `→ superseded`), the agent re-runs the consolidation step so the per-entity document (`{module}.{entity}.md`) reflects the new lifecycle state in its writer/reader annotations.
+After a promotion that changes the action's behavior visible to consumers (typically `→ stable` or `→ superseded`), the agent re-runs the consolidation step so the per-entity document (`{entity}.entity.md`) reflects the new lifecycle state in its writer/reader annotations.
 
 ## Regression — when to allow
 

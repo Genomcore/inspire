@@ -1,6 +1,10 @@
 {
   "exit": 0,
-  "args": ["spec/kb"],
+  "args": [
+    "spec/kb"
+  ],
   "findings": [],
-  "forbidden": ["wikilinks-resolve"]
+  "forbidden": [
+    "wikilinks-resolve"
+  ]
 }

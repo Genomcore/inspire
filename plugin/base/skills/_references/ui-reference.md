@@ -2,8 +2,9 @@
 
 > Shared by [`inspire-bootstrap`](../inspire-bootstrap/SKILL.md) and
 > [`inspire-screens`](../inspire-screens/SKILL.md). Read before measuring anything
-> into `design-system.md`, `design-tokens.json`, a `layouts/` entry or a
-> `## Render` table.
+> into `design-system.md`, `design-system.tokens.json`, a `*.layout.md` entry or a
+> `## Render` table. All of them sit under `inspire_kb/01_spec/`: the design system
+> and its catalog in `_design-system/`, screens in `_faces/{face}/_screens/`.
 
 A value in the screen layer is either **decided** — the design system fixes it — or
 **observed** in a reference, or **proposed** because nothing held it. The Source
@@ -40,7 +41,7 @@ Record the choice in `design-system.md` § Reference, the one place every layout
 ```markdown
 ## Reference
 
-- **Reference:** the prototype at `prototype/`, run with `npm run dev`
+- **Reference:** the prototype at `prototype/`, run with `npm run dev`, one shell per face
 - **Captured:** 2026-10-20
 - **Widths:** 1440, 1280, 1024, 768, 390
 ```
@@ -55,7 +56,8 @@ With no reference the section says `none — values generated on {date}`.
    phone in scope or not is a product decision, not a measurement.
 2. **Capture at several widths.** 1440, 1280, 1024, 768 and 390 wide, plus the
    supported floor when it is none of those. A single desktop capture specifies one
-   width and leaves every other to the implementer.
+   width and leaves every other to the implementer. Capture each face under its own
+   shell: a route is `{shell}/{module}/{screen}`.
 3. **Sweep to find the breakpoints.** Resize the viewport across each range and
    record the width at which the computed layout changes. Never infer a breakpoint
    from a `sm:` / `md:` / `lg:` class prefix: the stylesheet decides which rule wins,
@@ -75,11 +77,12 @@ With no reference the section says `none — values generated on {date}`.
 
 | Observation | Lands in | Source |
 |---|---|---|
-| a colour, font, size or spacing the whole product uses | `design-tokens.json`, cited from `design-system.md` | — (it is a token) |
-| where a region sits, and at what size | a `layouts/` entry, `## Geometry` | `reference`, or `design-tokens.json` when the value is a token |
+| a colour, font, size or spacing the whole product uses | `design-system.tokens.json`, cited from `design-system.md` | — (it is a token) |
+| a colour, font, size or spacing only one face uses | that face's `{face}.tokens.json` | — (it is a token) |
+| where a region sits, and at what size | a `*.layout.md` entry, `## Geometry` | `reference`, or `design-system.tokens.json` when the value is a token |
 | what a region does at each range | the same entry, `## Breakpoints` | `reference` or `undecided` |
 | how one value on one screen is drawn | the screen's `## Render` | — |
-| what a reused piece of UI takes and renders | a `components/` entry | — |
+| what a reused piece of UI takes and renders | a `*.component.md` entry | — |
 
 A token observed in the reference becomes a token and its rows cite it. A
 measurement only one frame uses stays a `reference` row until the design system

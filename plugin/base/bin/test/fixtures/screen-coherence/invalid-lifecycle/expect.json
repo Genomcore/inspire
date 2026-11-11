@@ -9,8 +9,10 @@
     {
       "rule": "screen-coherence",
       "severity": "warning",
-      "message_substring": "screen id shape: 'users.roster'"
+      "message_substring": "screen id shape: 'app.users.roster'"
     }
   ],
-  "forbidden": ["missing frontmatter field"]
+  "forbidden": [
+    "missing frontmatter field"
+  ]
 }

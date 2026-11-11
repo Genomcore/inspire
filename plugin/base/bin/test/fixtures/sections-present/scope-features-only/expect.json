@@ -1,6 +1,8 @@
 {
   "exit": 0,
-  "args": ["spec/kb/03_features"],
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_features"
+  ],
   "findings": [
     {
       "rule": "sections-present",
@@ -8,5 +10,10 @@
       "message_substring": "use-case file missing required section(s)"
     }
   ],
-  "forbidden": ["entity document", "action descriptor", "ADR missing", "screen file"]
+  "forbidden": [
+    "entity document",
+    "action descriptor",
+    "ADR missing",
+    "screen file"
+  ]
 }

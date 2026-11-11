@@ -72,7 +72,7 @@ Public-facing signup. Layers domain allow-list enforcement and audit logging on 
 ## Behavior
 1. `B1` — Extract the email domain and look up [[auth.email_allowlist|auth::email_allowlist]] by `domain`, following the rule in [[auth-signup-allowlist|the signup allow-list feature]]. If `allowed = false`, return `domain_not_allowed`.
 2. `B2` — Delegate user-row creation to [[auth.user.create|auth::user::create]], which handles `email_exists`, `password_too_weak`, and `email_invalid`.
-3. `B3` — Append a `user.signup` event to [[audit.event|audit::event]] with the new user's `id` as actor and the request IP in metadata, per the central audit policy in [[adr-audit-01-centralized-logging]].
+3. `B3` — Append a `user.signup` event to [[audit.event|audit::event]] with the new user's `id` as actor and the request IP in metadata, per the central audit policy in [[adr-centralized-logging]].
 4. `B4` — Return the new user's `id` and `email_verification_required: true`. The verification flow is a separate action — [[auth.user.verify_email|auth::user::verify_email]].
 
 ## Postconditions

@@ -14,9 +14,9 @@
 #
 # Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
-#   - spec/sdd/...  the domain tree to scan (exported as SDD_SPEC_ROOT)
-#   - spec/kb/...   the KB tree to scan, for the KB-wide rules that check
-#                   features / ADRs / screens (exported as SDD_KB_ROOT)
+#   - spec/kb/...          the KB to scan (exported as SDD_KB_ROOT)
+#   - spec/kb/01_spec/...  its specification, every artifact under one root
+#                          and found by its typed extension (SDD_SPEC_ROOT)
 #   - expect.json   {
 #                     "exit": N,
 #                     "args":      ["scope", ...],
@@ -164,7 +164,7 @@ for fixture in ${1+"$@"}; do
   fi
 
   pushd "$fixture" >/dev/null
-  SDD_SPEC_ROOT="spec/sdd" SDD_KB_ROOT="spec/kb" \
+  SDD_SPEC_ROOT="spec/kb/01_spec" SDD_KB_ROOT="spec/kb" \
     "$script" ${fixture_args[@]+"${fixture_args[@]}"} >/dev/null 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null

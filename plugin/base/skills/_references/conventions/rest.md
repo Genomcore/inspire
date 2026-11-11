@@ -1,16 +1,16 @@
 ---
-kind: surface-convention
+kind: wire-convention
 id: rest
 transport: rest
 ---
 
-## Error taxonomy → surface
+## Error taxonomy → wire
 
 The logical error classes on the left are the vocabulary an action descriptor's
 `## Errors` uses. A descriptor never writes the right column — this table is the right
 column, once, for every action in the project.
 
-| Logical error class | Surface response | Notes |
+| Logical error class | Wire response | Notes |
 |---|---|---|
 | Malformed request (unparseable body, wrong content type) | `400` | Before validation — nothing was understood, so no field can be named. |
 | Validation failure (missing required field, bad type, value outside an enum, constraint violated) | `400` or `422` — **project policy** | Whichever is chosen, the body **names the offending field**. That part is not optional. |

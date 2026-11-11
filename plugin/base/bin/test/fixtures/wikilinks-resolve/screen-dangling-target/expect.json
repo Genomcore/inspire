@@ -1,6 +1,8 @@
 {
   "exit": 0,
-  "args": ["spec/kb"],
+  "args": [
+    "spec/kb"
+  ],
   "findings": [
     {
       "rule": "wikilinks-resolve",
@@ -8,5 +10,8 @@
       "message_substring": "users.no-such-screen"
     }
   ],
-  "forbidden": ["\"severity\":\"error\"", "users.list]]"]
+  "forbidden": [
+    "\"severity\":\"error\"",
+    "users.list]]"
+  ]
 }

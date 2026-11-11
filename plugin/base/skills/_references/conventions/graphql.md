@@ -1,5 +1,5 @@
 ---
-kind: surface-convention
+kind: wire-convention
 id: graphql
 transport: graphql
 ---
@@ -74,9 +74,9 @@ or the status lifted via `extensions.http = { status: 409 }` (Apollo reads it of
 error, applies it, and strips it from what the client sees). Which one is a policy row,
 not a per-action choice.
 
-## Error taxonomy → surface
+## Error taxonomy → wire
 
-| Logical error class | Surface response | Notes |
+| Logical error class | Wire response | Notes |
 |---|---|---|
 | Malformed query, unknown field, type mismatch in the document | `400`, no `data` | Pre-execution. Apollo's own behavior, not a choice. |
 | Validation failure on input values (missing required field, bad enum, constraint) | `200` + `errors[].extensions.code: BAD_USER_INPUT` | Apollo built-in code. The body names the offending field, same requirement as REST. |

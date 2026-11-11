@@ -37,23 +37,17 @@ reads before working — the base context the rest of the KB assumes.
     always renders — a language profile with no explicit row for it falls back to that
     base type. Like the glossary it ships **empty**: most projects need no type of
     their own, and an empty table says exactly that.
-  - [`theme.md`](theme.md) — the **default design-system template**: fonts, the
-    color palette + status map, density and layout tokens. At install it is copied
-    to [`05_screens/design-system.md`](../05_screens) (the project's live design
-    system, edited via `/inspire-bootstrap design-system`); `theme.md` stays as the
-    reusable default.
-  - [`surfaces.md`](surfaces.md) — the **surface roster**, the one optional file
-    here: absent in a suite-of-one (the default a bare template ships with), it is
-    authored — never seeded — by `/inspire-surface add` the moment a second surface
-    is declared. Owned entirely by `inspire-surface`. See
-    [`.claude/skills/_references/surface-scope.md`](../../.claude/skills/_references/surface-scope.md)
-    for what a surface is and how scope resolves.
+  - The default design-system template, `theme.md` and `theme.tokens.json`, lives
+    with the design system it seeds, in
+    [`01_spec/_design-system/`](../01_spec/_design-system). Faces and bundles
+    declare their own packaging in their own files under `01_spec/`; there is no
+    roster here.
 
-Both `stack.md` and `theme.md` start seeded with a **sensible default** (the stack + theme of the OpenBIMS
+Both `stack.md` and the theme start seeded with a **sensible default** (the stack + theme of the OpenBIMS
 reference implementation). Reconfigure them for your project with
 `/inspire-bootstrap` — every downstream layer (specs, screen specs, the prototype,
 production code) builds on what is declared here.
 
 > Changing a load-bearing choice here (a framework, the primary color) is an
-> architectural decision — record it as an ADR in [`01_adr`](../01_adr) and update
+> architectural decision — record it as an ADR in [`01_spec/_adr`](../01_spec/_adr) and update
 > these files together.

@@ -47,13 +47,26 @@ modules_inferred:
   - slug: billing
     prefix: BIL
     source_roots: [src/billing, apps/web/src/pages/billing]
-surfaces_inferred:
+faces_inferred:
   - id: admin
-    kind: ui
+    package: apps/admin
+    profiles: [react]
+    shell: /admin
+    bundles: [api]
     evidence: [apps/admin/src]
+bundles_inferred:
   - id: api
-    kind: headless
-    evidence: [apps/api/src]
+    package: apps/api
+    profiles: [nestjs]
+    actions: [billing, "billing::customer::merge"]   # a module = the whole module
+    kind: grouping                                    # grouping | own-artifact
+    evidence: [apps/api/src/main.ts:1]
+processes_inferred:
+  - id: billing.overdue-reminders
+    trigger: "every day at 06:00 UTC"
+    requires: [billing::invoice::remind]
+    affects: [billing::invoice]
+    evidence: [apps/api/src/jobs/reminders.cron.ts:12]
 ---
 
 ## Module: billing
@@ -70,7 +83,7 @@ surfaces_inferred:
 
 ### Screens
 - key: c7
-  proposed_id: invoices-list
+  proposed_id: admin.invoices-list       # {face}.{slug}
   route: /billing/invoices
   candidate_pattern: list        # consolidated from pattern:list
   covers_features: [f1]
@@ -139,12 +152,16 @@ surfaces_inferred:
   gap: derive/create the feature first (upstream invariant).
 - **`realized_by`** (features) — the screens + actions the feature was derived from;
   drives the authoring order and the cross-layer links.
-- **`surfaces_inferred`** — surface candidates read off `apps/*` and package
-  boundaries, `kind` being one of the three in
-  [`_references/surface-scope.md`](../../_references/surface-scope.md) (`ui` ·
-  `headless` · `lib`). They hand off to `/inspire-surface add` in its *adopt* arrival,
-  which interviews each candidate into the roster; until that add records one, no
-  surface id exists and nothing in the KB may be scoped to it.
+- **`faces_inferred`** — one per scanned UI app; **`bundles_inferred`** — one per
+  scanned service (and per library with its own build). Their fields are the ones
+  [`inspire-face/references/face-format.md`](../../inspire-face/references/face-format.md)
+  defines. They hand off to `/inspire-face add face` and `add bundle`, which
+  interview each candidate; until that add writes the file, no face or bundle id
+  exists and nothing in the KB may be scoped to it.
+- **`processes_inferred`** — scheduled jobs, start-up tasks and event handlers with
+  no actor. They hand off to `/inspire-process create`.
+- **Screen `proposed_id`** is `{face}.{slug}`: the face candidate the screen's app
+  became, and a slug unique within that face.
 
 ## Provenance in authored artifacts
 
@@ -166,5 +183,5 @@ as the artifact is promoted.
 
 The manifest is transient. The durable record of *what was extracted* is the **task
 tracker**: one ticket per authored artifact via
-`/inspire-workspace task create --epic extract`. No new KB structure — extract reuses
+`/inspire-task create --epic extract`. No new KB structure — extract reuses
 the tracker like the other skills.

@@ -11,7 +11,7 @@
 #
 # Usage:
 #   .inspire/bin/review.sh                # scan whole tree
-#   .inspire/bin/review.sh inspire_kb/04_domain/auth  # scoped scan
+#   .inspire/bin/review.sh inspire_kb/01_spec/_modules/auth  # scoped scan
 
 set -uo pipefail
 
@@ -48,6 +48,9 @@ wikilinks-resolve.sh \
 keys-present.sh \
 constraints-mechanics.sh \
 head-referents.sh \
+spec-identity.sh \
+face-exposure.sh \
+process-shape.sh \
 prose-style.sh"
 read -r -a RULES <<< "${SDD_REVIEW_RULES:-$DEFAULT_RULES}"
 

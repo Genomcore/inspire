@@ -1,6 +1,6 @@
 ---
 name: inspire-bootstrap
-description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system: both the reusable theme.md + theme.tokens.json template in inspire_kb/00_bootstrap and the project's live 05_screens/design-system.md + design-tokens.json — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
+description: "Configure the project's foundation — the output language, tech stack and its shape (frontend / backend / monorepo, web / mobile, database provisioning), and the design system in inspire_kb/01_spec/_design-system/: both the reusable theme.md + theme.tokens.json default and the project's live design-system.md + design-system.tokens.json seeded from it — plus the project's root README. Use when bootstrapping a new project, setting the language, choosing the project shape, changing a stack choice, or defining/updating the theme or the live design system (including abstracting it from a mockup's CSS)."
 ---
 
 # /inspire-bootstrap — Foundation (language + stack + theme)
@@ -17,9 +17,6 @@ This skill owns the **bootstrap layer** —
   **product roots** (`source_root` / `prototype_root` — where the code and the
   prototype live; see
   [`_references/product-roots.md`](../_references/product-roots.md)).
-- `theme.md` + `theme.tokens.json` — the **design-system default** (fonts, color
-  palette + status map, density, layout, icons, supported viewports) — the
-  reusable template, its meaning in markdown and its values as W3C Design Tokens.
 - `style-tokens.md` — the project's **own R6 and R7 tokens**: words that narrate
   history and intensifiers, in the project's `output_language`. Outside English they
   are the only words `prose-style.sh` checks for R6 and R7. The `language` flow
@@ -30,14 +27,24 @@ This skill owns the **bootstrap layer** —
   ([`type-mapping.md`](../inspire-domain/references/type-mapping.md)) has no type for.
   What this skill owes it is the **language profile** that renders those types — see
   the `stack` flow.
-- `05_screens/design-system.md` + `05_screens/design-tokens.json` (the one artifact
-  pair this skill owns **outside** `00_bootstrap`) — the project's **live design
-  system**, seeded from `theme.md` + `theme.tokens.json` at install and edited here
-  via the `design-system` subcommand. The defaults are the template; these are the
-  working copy.
 
-These are the foundation every other layer reads: specs ([`04_domain`](../../../inspire_kb/04_domain)),
-screen specs ([`05_screens`](../../../inspire_kb/05_screens)), the prototype ([`/prototype`](../../../prototype))
+It also owns the **design system** in
+[`inspire_kb/01_spec/_design-system/`](../../../inspire_kb/01_spec/_design-system):
+
+- `theme.md` + `theme.tokens.json` — the **design-system default** (fonts, color
+  palette + status map, density, layout, icons, supported viewports) — the
+  reusable template, its meaning in markdown and its values as W3C Design Tokens.
+- `design-system.md` + `design-system.tokens.json` beside them — the project's
+  **live design system**, seeded from `theme.md` + `theme.tokens.json` at install
+  and edited here via the `design-system` subcommand. The defaults are the
+  template; these are the working copy.
+
+The components, layouts and patterns in the same directory belong to
+`/inspire-screens`.
+
+These are the foundation everything else reads: the specification
+([`01_spec`](../../../inspire_kb/01_spec)) — modules, their domain, faces and their
+screens — the prototype ([`/prototype`](../../../prototype))
 and production code ([`/source`](../../../source)) all build on what is declared here —
 those last two named at their defaults, the operative roots being the
 `prototype_root` / `source_root` this skill records above.
@@ -58,8 +65,8 @@ stub with the project name, purpose and stack marked as placeholders; this skill
   `stack.md` + `theme.md`, and create the project's root `README.md`
 - `/inspire-bootstrap language` — set the output language artifacts are written in
 - `/inspire-bootstrap stack` — define / update the tech stack
-- `/inspire-bootstrap theme` — define / update the design-system default (`theme.md`)
-- `/inspire-bootstrap design-system` — view / edit the project's live design system (`05_screens/design-system.md` + `design-tokens.json`)
+- `/inspire-bootstrap theme` — define / update the design-system default (`_design-system/theme.md`)
+- `/inspire-bootstrap design-system` — view / edit the project's live design system (`_design-system/design-system.md` + `design-system.tokens.json`)
 - `/inspire-bootstrap design-system backfill [{reference}]` — give a design system written before the token file its tokens, supported viewports, icons and reference
 - `/inspire-bootstrap readme` — create / update the project's root `README.md`
 - `/inspire-bootstrap review` — check the artifacts exist and stay coherent
@@ -116,10 +123,11 @@ index, not the flow.
 
 ## Subcommand: design-system
 
-Own `05_screens/design-system.md` and `05_screens/design-tokens.json` — the
+Own `inspire_kb/01_spec/_design-system/design-system.md` and
+`design-system.tokens.json` — the
 project's **live design system** (typography, color + status map, density, global
 layout, icons, supported viewports, the reference), seeded at install from the
-default `theme.md` and `theme.tokens.json`. The markdown says what each token means
+default `theme.md` and `theme.tokens.json` beside them. The markdown says what each token means
 and cites it by its path in braces; the JSON, in the
 [W3C Design Tokens format](https://www.designtokens.org/tr/drafts/format/), holds
 every value once. A value written in both is a value that will drift. Distinct from the `theme` flow
@@ -127,7 +135,7 @@ every value once. A value written in both is a value that will drift. Distinct f
 `theme.md` is the reusable default, `design-system.md` is the project's working
 copy — they may diverge.
 
-1. Read the current `design-system.md` and `design-tokens.json`. If the markdown is
+1. Read the current `design-system.md` and `design-system.tokens.json`. If the markdown is
    missing, seed both from the defaults (this is what install does) and say so. If
    only the token file is missing, or `## Supported viewports`, `## Icons` or
    `## Reference` is, run the `backfill` flow first
@@ -141,31 +149,35 @@ copy — they may diverge.
 3. **Propagate.** A token change ripples to every screen and to the prototype —
    surface it (offer `/inspire-prototype`); screens must not hard-code values that
    belong here.
-4. **One design system for the whole suite.** There is exactly one
-   `design-system.md`, sitting above the surface trees, whatever the roster says.
-   Four things a surface might want from it, and what each gets:
-   - **Extension** — vocabulary only one surface uses (a data grid only the admin
-     console has): a `patterns/` or `components/` entry scoped with `surfaces:`.
+4. **One design system for every face.** There is exactly one `design-system.md`,
+   in `_design-system/`, however many faces the project has. Five things a face
+   might want from it, and what each gets:
+   - **Extension** — vocabulary only one face uses (a data grid only the admin
+     console has): a `patterns/` or `components/` entry scoped with `faces:`.
      Welcome and cheap; nothing shared is redefined, so nothing has to be
      reconciled later.
    - **Variance** — platform or context fit (mobile density, touch targets):
-     **named variant axes this file defines and a surface selects**, written as
-     clearly-marked per-surface sections *inside* it (e.g. `## Density — mobile`),
+     **named variant axes this file defines and a face selects**, written as
+     clearly-marked per-face sections *inside* it (e.g. `## Density — mobile`),
      the way mature systems handle density and dark mode. Rare, visible and
      countable — `/inspire-workspace` reports how many there are as a drift signal.
-   - **Override** — a surface redefining, from its own side, what a shared token or
+   - **Face tokens** — tokens that exist for one face only (its own illustration
+     palette, its own chart series), in `_faces/{face}/{face}.tokens.json`, same
+     format. They add tokens; they never redefine one `design-system.tokens.json`
+     already defines.
+   - **Override** — a face redefining, from its own side, what a shared token or
      component means: **no channel exists, deliberately.** Never create a
-     per-surface design-system file under any name. Per-consumer overrides invert
+     per-face design-system file under any name. Per-consumer overrides invert
      in practice: every change becomes a design-system change *plus* an override in
      each consumer, and the agents that emanate code would have to answer "which
-     spec wins?" once per surface.
-   - **Divergence** — a surface that is genuinely its own brand: the honest form is
-     a declared fork that consumes no suite design system at all, out of scope
+     spec wins?" once per face.
+   - **Divergence** — a face that is genuinely its own brand: the honest form is
+     a declared fork that consumes no shared design system at all, out of scope
      today; name it as such rather than approximating it with variant sections.
 5. Keep token **roles** stable (primary, accent, status keys) even when values
    change — downstream skills (screens, prototype) depend on the roles, not the
-   hexes. Roles are never overridden per surface either: a variant axis may give a
-   role a different value for one surface, never a different meaning.
+   hexes. Roles are never overridden per face either: a variant axis may give a
+   role a different value for one face, never a different meaning.
 
 ## Subcommand: language
 
@@ -204,7 +216,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 > **Writing contract.** `project.md`, `stack.md`, `theme.md`, `glossary.md`, `style-tokens.md` and the
 > project README follow
 > [`_references/writing-style.md`](../_references/writing-style.md). Their prose
-> sections are normative (R1–R6); token, shape and roster tables are structured
+> sections are normative (R1–R6); token and shape tables are structured
 > sections (R3, R4, R6). `glossary.md` is R4's own term list and sits in this layer, so
 > this skill owns writes to it: a row lands when an interview settles a naming
 > question, carrying the operator's own word. Every other skill reads it.
@@ -221,7 +233,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
    screen specs, the prototype and production code — surface the propagation; don't edit
    those layers silently.
 3. **Load-bearing choices are ADRs.** Replacing a framework or the primary color is
-   an architectural decision recorded in `01_adr` (update to add, supersede to
+   an architectural decision recorded as a global ADR (`/inspire-adr`; update to add, supersede to
    replace), kept in sync with `stack.md` / `theme.md`.
 4. **Consult the task tracker** (`/inspire-task list`) for tracked
    bootstrap work.
@@ -248,3 +260,5 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 - `/inspire-screens` — instantiates the theme's tokens into patterns/components.
 - `/inspire-prototype` — builds the horizontal prototype on this stack + theme.
 - `/inspire-adr create` — record load-bearing stack/theme decisions.
+- `/inspire-face` — declares each face and bundle the shape interview names, with its
+  `package` and `profiles`.

@@ -4,13 +4,16 @@
     {
       "rule": "screen-coherence",
       "severity": "error",
-      "message_substring": "screen id shape: 'users.roster' is neither 'users.list'"
+      "message_substring": "screen id shape: 'app.users.roster' is not '{face}.{slug}'"
     },
     {
       "rule": "screen-coherence",
       "severity": "error",
-      "message_substring": "screen module mismatch: frontmatter says 'users', the path says 'people'"
+      "message_substring": "screen id names face 'nowhere', which no face declares"
     }
   ],
-  "forbidden": ["missing frontmatter field", "invalid screen lifecycle"]
+  "forbidden": [
+    "missing frontmatter field",
+    "invalid screen lifecycle"
+  ]
 }

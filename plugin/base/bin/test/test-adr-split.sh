@@ -24,11 +24,11 @@ fi
 
 ROOT="$(mktemp -d -t inspire-adr-split-test.XXXXXX)" || exit 1
 trap 'rm -rf "$ROOT"' EXIT
-export SDD_KB_ROOT="$ROOT/kb" SDD_SPEC_ROOT="$ROOT/kb/04_domain"
-ADR="$SDD_KB_ROOT/01_adr"
+export SDD_KB_ROOT="$ROOT/kb" SDD_SPEC_ROOT="$ROOT/kb/01_spec"
+ADR="$SDD_SPEC_ROOT/_adr"
 mkdir -p "$ADR"
 
-cat > "$ADR/adr-auth-sessions.md" <<'MD'
+cat > "$ADR/auth-sessions.adr.md" <<'MD'
 ---
 surfaces: [console]
 ---
@@ -67,24 +67,24 @@ Clients cannot introspect a token.
 ## Notes
 An extra section travels with the rationale.
 MD
-printf '# No decision yet\n\n**Status:** design\n\n## Context\nOpen.\n' > "$ADR/adr-open.md"
+printf '# No decision yet\n\n**Status:** design\n\n## Context\nOpen.\n' > "$ADR/open.adr.md"
 printf '# README\n' > "$ADR/README.md"
-ORIGINAL="$(cat "$ADR/adr-auth-sessions.md")"
+ORIGINAL="$(cat "$ADR/auth-sessions.adr.md")"
 
 listed="$("$SPLIT" --list)"; rc=$?
 eq    "--list exits 0"                          "$rc" "0"
-has   "--list names a single-file ADR"          "adr-auth-sessions.md" "$listed"
+has   "--list names a single-file ADR"          "auth-sessions.adr.md" "$listed"
 hasnt "--list ignores the README"               "README.md" "$listed"
 eq    "--list writes nothing"                   "$(ls "$ADR" | wc -l | tr -d ' ')" "3"
 
 out="$("$SPLIT")"; rc=$?
 eq    "a file it cannot split makes the run exit 1" "$rc" "1"
-has   "the split is reported"                   "split	$ADR/adr-auth-sessions.md	$ADR/adr-auth-sessions.rationale.md" "$out"
-has   "an ADR with no ## Decision is skipped"   "skipped	$ADR/adr-open.md" "$out"
-eq    "the skipped ADR is left untouched"       "$(cat "$ADR/adr-open.md")" "$(printf '# No decision yet\n\n**Status:** design\n\n## Context\nOpen.')"
+has   "the split is reported"                   "split	$ADR/auth-sessions.adr.md	$ADR/auth-sessions.adr.rationale.md" "$out"
+has   "an ADR with no ## Decision is skipped"   "skipped	$ADR/open.adr.md" "$out"
+eq    "the skipped ADR is left untouched"       "$(cat "$ADR/open.adr.md")" "$(printf '# No decision yet\n\n**Status:** design\n\n## Context\nOpen.')"
 
-DEC="$(cat "$ADR/adr-auth-sessions.md")"
-RAT="$(cat "$ADR/adr-auth-sessions.rationale.md")"
+DEC="$(cat "$ADR/auth-sessions.adr.md")"
+RAT="$(cat "$ADR/auth-sessions.adr.rationale.md")"
 eq "the decision keeps its frontmatter, header and ## Decision" "$DEC" "$(cat <<'MD'
 ---
 surfaces: [console]
@@ -142,19 +142,19 @@ eq "no line is lost or reworded" "$moved" "$(printf '%s\n' "$ORIGINAL" | grep -v
 findings="$("$SECTIONS" "$SDD_KB_ROOT" 2>&1 >/dev/null)"
 hasnt "the split pair passes sections-present" "adr-auth-sessions" "$findings"
 
-again="$("$SPLIT" "$ADR/adr-auth-sessions.md")"; rc=$?
+again="$("$SPLIT" "$ADR/auth-sessions.adr.md")"; rc=$?
 eq "a second run on a split ADR does nothing" "$again" ""
 eq "and exits 0"                              "$rc" "0"
-eq "and leaves the decision as it was"        "$(cat "$ADR/adr-auth-sessions.md")" "$DEC"
+eq "and leaves the decision as it was"        "$(cat "$ADR/auth-sessions.adr.md")" "$DEC"
 
-printf '# Bare\n\n## Decision\nUse it.\n\n## Context\nWhy.\n' > "$ADR/adr-bare.md"
-"$SPLIT" "$ADR/adr-bare.md" >/dev/null
-eq "with no header lines, the link goes under the H1" "$(cat "$ADR/adr-bare.md")" \
+printf '# Bare\n\n## Decision\nUse it.\n\n## Context\nWhy.\n' > "$ADR/bare.adr.md"
+"$SPLIT" "$ADR/bare.adr.md" >/dev/null
+eq "with no header lines, the link goes under the H1" "$(cat "$ADR/bare.adr.md")" \
   "$(printf '# Bare\n\n**Rationale:** [[adr-bare.rationale]]\n\n## Decision\nUse it.')"
 
-printf '# Opacos\n\n## ADR1: Contexto\nPor qué.\n\n## ADR2: Decisión\nUsarlo.\n' > "$ADR/adr-es.md"
-"$SPLIT" "$ADR/adr-es.md" >/dev/null
-eq "a section id still keys the decision" "$(cat "$ADR/adr-es.md")" \
+printf '# Opacos\n\n## ADR1: Contexto\nPor qué.\n\n## ADR2: Decisión\nUsarlo.\n' > "$ADR/es.adr.md"
+"$SPLIT" "$ADR/es.adr.md" >/dev/null
+eq "a section id still keys the decision" "$(cat "$ADR/es.adr.md")" \
   "$(printf '# Opacos\n\n**Rationale:** [[adr-es.rationale]]\n\n## ADR2: Decisión\nUsarlo.')"
 
 echo ""

@@ -63,10 +63,10 @@ covers the gap instead>. A rule left out silently reads as a rule nobody thought
 build: `<cmd>` · lint: `<cmd>` · types: `<cmd>`
 
 ## Bindings
-<!-- SEED — project-owned, freely edited. How `{module}::{entity}::{verb}` becomes an
-     invocable surface, derived from the id alone: no per-action authoring. Say what
+<!-- SEED — project-owned, freely edited. How `{module}::{entity}::{verb}` becomes
+     invocable, derived from the id alone: no per-action authoring. Say what
      the five CRUD verbs map to and what any other verb maps to, plus how the
-     `actor({role})` precondition becomes a guard. A surface exposing nothing says so.
+     `actor({role})` precondition becomes a guard. A stack exposing nothing says so.
      On a `layer: backend` profile this section derives three claims per action
      (`{action}/binding/route|dispatch|guard`), see derived-contract.md. -->
 `{module}::{entity}::{verb}` → <shape>. Other verbs → <shape>.
@@ -74,16 +74,16 @@ Guard: `actor({role})` → <guard>; no actor precondition → <public>.
 
 ## Routes
 <!-- SEED — UI profiles only; delete otherwise. Screen `module:` + `screen:` → route.
-     Never the file path, never the id string. Say what the surface shell contributes.
-     The roster's `**Shell:**` value already carries its own leading slash, so the
+     Never the file path, never the id string. Say what the face's shell contributes.
+     The face's `shell:` value already carries its own leading slash, so the
      shell and route concatenate with no separator: `{shell}{route}`, e.g. `/admin` +
-     `/users/list` → `/admin/users/list`; a suite-of-one renders `<route>` alone. -->
-`{module}` + `{screen}` → `<route>`; surface shell prefix → `{shell}<route>` (no
+     `/users/list` → `/admin/users/list`. -->
+`{module}` + `{screen}` → `<route>`; face shell prefix → `{shell}<route>` (no
 separator — the shell's leading slash is already there).
 
 ## Persistence
 <!-- SEED — the ORM, entity→table and field→column naming, keys, and the migration
-     rule (append-shaped: re-emanation appends, never edits history). A surface that
+     rule (append-shaped: re-emanation appends, never edits history). A stack that
      stores nothing writes "Not applicable" and why. -->
 ORM <name>. Entity → `<table>`; field → `<column>`; column types from the language
 profile. Migrations in `<dir>`, append-only.

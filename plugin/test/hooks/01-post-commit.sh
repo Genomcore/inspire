@@ -29,13 +29,13 @@ commit_file() {
   ( cd "$proj" && git add "$dest" && git commit -q -m "add $dest" )
 }
 
-prose_feature="inspire_kb/03_features/auth/FEAT-01-login.md"
-broken_feature="inspire_kb/03_features/billing/FEAT-02-pay.md"
+prose_feature="inspire_kb/01_spec/_modules/auth/_features/FEAT-01-login.feature.md"
+broken_feature="inspire_kb/01_spec/_modules/billing/_features/FEAT-02-pay.feature.md"
 
 premise "the broken feature fixture still lacks required sections" \
-  "! grep -q '^## Postconditions' '$FIXTURES/sections-present/feature-missing-section/spec/kb/03_features/auth/FEAT-01-login.md'"
+  "! grep -q '^## Postconditions' '$FIXTURES/sections-present/feature-missing-section/spec/kb/01_spec/_modules/auth/_features/FEAT-01-login.feature.md'"
 
-commit_file "$FIXTURES/sections-present/feature-missing-section/spec/kb/03_features/auth/FEAT-01-login.md" "$broken_feature"
+commit_file "$FIXTURES/sections-present/feature-missing-section/spec/kb/01_spec/_modules/auth/_features/FEAT-01-login.feature.md" "$broken_feature"
 hook PostToolUse "git commit -m 'add billing'" 2>/dev/null >/dev/null
 eq "a committed feature with errors is reported (exit 2)" "$?" "2"
 err="$(hook PostToolUse "git commit -m 'add billing'" 2>&1 >/dev/null)"
@@ -43,10 +43,10 @@ has "the report names the committed file" "$err" "$broken_feature"
 has "the report carries the rule" "$err" "sections-present"
 has "the report says the commit went through" "$err" "the commit went through"
 
-commit_file "$FIXTURES/prose-style/feature-flat-warning/spec/kb/03_features/auth/FEAT-01-login.md" "$prose_feature"
+commit_file "$FIXTURES/prose-style/feature-flat-warning/spec/kb/01_spec/_modules/auth/_features/FEAT-01-login.feature.md" "$prose_feature"
 err="$(hook PostToolUse "git commit -m 'add login'" 2>&1 >/dev/null)"
 code="$(hook PostToolUse "git commit -m 'add login'" >/dev/null 2>&1; echo $?)"
-eq "prose warnings outside 04_domain reach the agent (exit 2)" "$code" "2"
+eq "prose warnings outside the domain reach the agent (exit 2)" "$code" "2"
 has "the R2 warning is reported" "$err" "R2 sentence length"
 has "the R6 warning is reported" "$err" "R6 historical language"
 hasnt "a file the commit does not contain is not reported" "$err" "$broken_feature"

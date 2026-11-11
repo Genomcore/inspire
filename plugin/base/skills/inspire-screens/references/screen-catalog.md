@@ -6,7 +6,7 @@
 New shared artifacts require evidence:
 
 - **Pattern:** appears in ≥2 actual or planned screens.
-- **Layout:** frames ≥2 screens, or is the surface `shell`, which frames every route
+- **Layout:** frames ≥2 screens, or is a face `shell`, which frames every route
   and so needs no second adopter. A screen whose frame no entry holds still gets one,
   with a single adopter: the alternative is a measurement in the screen.
 - **Component:** appears in ≥2 pages (≥3 if trivial) — when the block is being
@@ -15,25 +15,38 @@ New shared artifacts require evidence:
   `to-extract`, because a named component with no entry is rebuilt from the tokens
   by whoever implements it.
 
-In a suite with two or more UI surfaces that evidence is also **structural** —
-where the instances sit is what the promoted artifact is scoped to, and nothing
-else needs to be inferred. The same screen present in two or more surface trees, or
-sitting in `shared/`, is cross-surface evidence: promote with `surfaces: all`.
-Evidence confined to one surface tree promotes with `surfaces: [{that-surface}]`,
-and widens only when a second tree earns it. Pattern and component entries carry
-the field per [`_references/surface-scope.md`](../../_references/surface-scope.md);
-the catalogs holding them stay suite-wide however their entries are scoped.
+With two or more faces that evidence is also **structural** — the faces the
+instances sit in are what the promoted entry is scoped to, and nothing else needs
+to be inferred. Instances in every face promote with no `faces:` field: absent
+means the whole project. Instances confined to some faces promote with
+`faces: [{face}, …]`, and widen only when another face earns it. Pattern, layout
+and component entries carry the field per
+[`_references/face-scope.md`](../../_references/face-scope.md); the catalog stays
+one, in `_design-system/`, however its entries are scoped.
 
-Process: draft the file in `patterns/`, `layouts/` or `components/` — copy
-[`pattern-entry.md.template`](../templates/pattern-entry.md.template) for a pattern,
-[`layout-entry.md.template`](../templates/layout-entry.md.template) for a layout,
-[`component-entry.md.template`](../templates/component-entry.md.template) for a
+**Two faces showing the same thing is the main case.** There are no shared
+screens: what the faces share is the structure, so it becomes a pattern or a
+layout here, and each face keeps its own screen naming it.
+
+Process: write `{name}.pattern.md` in `_design-system/patterns/`,
+`{name}.layout.md` in `_design-system/layouts/` or `{name}.component.md` in
+`_design-system/components/`. The name is the entry's id, and screens link it bare
+(`[[{name}]]`). Copy
+[`pattern.template.md`](../templates/pattern.template.md) for a pattern,
+[`layout.template.md`](../templates/layout.template.md) for a layout,
+[`component.template.md`](../templates/component.template.md) for a
 component; document purpose, structure (textual), variants and instances; measure a
 layout's geometry and breakpoints from the reference
 ([`_references/ui-reference.md`](../../_references/ui-reference.md)); if the
 underlying prototype component doesn't exist yet, set the entry's
 `**State:** to-extract` and list adopters. Prefer adding a variant to an existing
 pattern over creating a new one.
+
+**A link creates its entry.** Whenever a screen, a layout or a pattern links a
+pattern, layout or component no `*.pattern.md`, `*.layout.md` or `*.component.md`
+declares, the entry is created in the same turn from its template at
+`**State:** to-extract`. A missing target is then always a broken link, never a
+concept nobody wrote down.
 
 **What each entry declares is not the same thing.** A pattern declares
 `## Regions`: named holes, each with a `Fill` (`required` | `optional`) and an

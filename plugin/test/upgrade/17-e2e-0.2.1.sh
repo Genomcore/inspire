@@ -35,7 +35,7 @@ mine_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 # whole layer and one file inside a layer that stays, so only a seed can put
 # them back.
 rm -rf "$p/.inspire_kb/98_lessons"
-rm -f "$p/.inspire_kb/00_bootstrap/theme.md"
+rm -f "$p/.inspire_kb/00_bootstrap/stack.md"
 kb_before="$(find "$p/.inspire_kb" -type f | wc -l | tr -d ' ')"
 
 bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" >/dev/null 2>&1
@@ -59,7 +59,7 @@ check "KB gained no losses" \
 check "seed_kb ran on upgrade: a wholly missing layer came back" \
       "[ -f '$p/inspire_kb/98_lessons/README.md' ]"
 check "seed_kb ran on upgrade: a missing file inside a kept layer came back" \
-      "[ -f '$p/inspire_kb/00_bootstrap/theme.md' ]"
+      "[ -f '$p/inspire_kb/00_bootstrap/stack.md' ]"
 
 # Every file in the plugin's KB skeleton must now exist in the project. Asserting
 # on inspire_kb/README.md alone would pass trivially: the hop MOVES the 0.2
@@ -67,8 +67,10 @@ check "seed_kb ran on upgrade: a missing file inside a kept layer came back" \
 missing_kb=0
 while IFS= read -r f; do
   [ -f "$p/inspire_kb/${f#"$PLUGIN_ROOT/base/kb/"}" ] || missing_kb=$((missing_kb+1))
-done < <(find "$PLUGIN_ROOT/base/kb" -type f)
-eq "KB received every file of the newer skeleton" "$missing_kb" "0"
+done < <(find "$PLUGIN_ROOT/base/kb" -type f ! -path "$PLUGIN_ROOT/base/kb/01_spec/*")
+eq "KB received every file of the newer skeleton outside 01_spec/" "$missing_kb" "0"
+# A 0.2 KB is layered: 01_spec/ arrives with /inspire:migrate, never with an update.
+check "a layered KB is not seeded with 01_spec/" "[ ! -e '$p/inspire_kb/01_spec' ]"
 
 # settings.json: exactly the three marked registrations, and none of the three old ones.
 eq "three INSPIRE-MANAGED hooks registered" \

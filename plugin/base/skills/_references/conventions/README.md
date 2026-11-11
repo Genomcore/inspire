@@ -57,16 +57,16 @@ the whole point: it is what lets a project specify only what is genuinely its ow
 
 ```markdown
 ---
-kind: surface-convention
+kind: wire-convention
 id: <slug>                  # matches the id in stack.md `wire_conventions:`
 transport: <rest | graphql | cli | …>
 ---
 
-## Error taxonomy → surface
+## Error taxonomy → wire
 <!-- The derived half. One row per logical error class. The Logical column is the
-     vocabulary a descriptor's `## Errors` uses; the Surface column is what the test
+     vocabulary a descriptor's `## Errors` uses; the Wire column is what the test
      asserts. -->
-| Logical error class | Surface response | Notes |
+| Logical error class | Wire response | Notes |
 
 ## Project policy — asked once, recorded in stack.md
 <!-- Closed questions only, each with its options and what choosing costs. An open
@@ -89,7 +89,7 @@ transport: <rest | graphql | cli | …>
 ## Deviations are declared, never assumed
 
 An action that does not follow the resolved convention says so in its descriptor,
-under `## Errors`, as an explicit surface note per the convention's `## Deviation`
+under `## Errors`, as an explicit wire note per the convention's `## Deviation`
 section. This is the place the descriptor's format provides for a declared override
 ([`authority.md`](../authority.md) § A2). Silence means the convention holds — which is what makes the convention
 restrictive rather than decorative, and what makes a missing status code a **finding**

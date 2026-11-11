@@ -57,11 +57,11 @@
 # Reads both the KB and `source/`, so — like the other source-touching rules — it is
 # deliberately absent from `review.sh`'s default list. Wired into `pre-pr.sh`.
 #
-# Config (env, all optional): SDD_FEATURES_ROOT · SDD_TEST_SCOPE · SDD_TEST_GLOBS.
+# Config (env, all optional): SDD_SPEC_ROOT · SDD_TEST_SCOPE · SDD_TEST_GLOBS.
 #
 # Usage:
 #   .inspire/bin/criteria-have-tests.sh                       # every feature
-#   .inspire/bin/criteria-have-tests.sh inspire_kb/03_features/analytics
+#   .inspire/bin/criteria-have-tests.sh inspire_kb/01_spec/_modules/analytics
 
 set -uo pipefail
 
@@ -71,11 +71,11 @@ source "$SCRIPT_DIR/_lib.sh"
 sdd_require_tools || exit 127
 sdd_init_counters
 
-SCOPE="${1:-$SDD_FEATURES_ROOT}"
+SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 if [ ! -e "$SCOPE" ]; then
   sdd_finding "warning" "criteria-have-tests" "$SCOPE" \
-    "features root does not exist — no criterion can be traced"
+    "scope does not exist — no criterion can be traced"
   sdd_count_warning
   sdd_exit_with_counters
   exit $?
@@ -136,9 +136,10 @@ check_feature() {
       continue
     fi
 
-    # Qualified by the owning feature (the filename stem), because AC-n recurs per feature.
-    qid="${file##*/}"
-    qid="${qid%.md}/$id"
+    # Qualified by the owning feature's id (its file name without `.feature.md`), because
+    # AC-n recurs per feature. The id is what a test cites, so it never carries the
+    # typed extension.
+    qid="$(sdd_artifact_id "$file")/$id"
 
     if ! sdd_covers_in_tests "$qid" "$TEST_FILES"; then
       sdd_finding "$severity" "criteria-have-tests" "$file" \
@@ -150,9 +151,8 @@ check_feature() {
 
 while IFS= read -r feature; do
   [ -z "$feature" ] && continue
-  case "$(basename "$feature")" in README.md|_*) continue ;; esac
   check_feature "$feature"
-done < <(find "$SCOPE" -type f -name '*.md' 2>/dev/null | sort)
+done < <(sdd_find_features "$SCOPE")
 
 if [ "$UNTESTED_CRITERIA" -gt 0 ]; then
   sdd_finding "$UNTESTED_SEVERITY" "criteria-have-tests" "$SDD_TEST_SCOPE" \

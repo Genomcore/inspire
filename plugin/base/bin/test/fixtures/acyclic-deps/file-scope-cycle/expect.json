@@ -1,7 +1,16 @@
 {
   "exit": 1,
-  "args": ["spec/sdd/auth/user/auth.user.create.md"],
-  "findings": [{ "rule": "acyclic-deps", "message_substring": "auth::user::create participates in cycle" }],
+  "args": [
+    "spec/kb/01_spec/_modules/auth/_domain/user/user.create.action.md"
+  ],
+  "findings": [
+    {
+      "rule": "acyclic-deps",
+      "message_substring": "auth::user::create participates in cycle"
+    }
+  ],
   "finding_count": 1,
-  "forbidden": ["auth::user::read participates"]
+  "forbidden": [
+    "auth::user::read participates"
+  ]
 }

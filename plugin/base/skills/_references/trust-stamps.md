@@ -49,14 +49,14 @@ by machinery: nothing checks that anyone was asked, so the discipline lives in p
 
 | Where | `endorsed` | `produced` |
 |---|---|---|
-| `01_adr` – `05_screens` artifacts, `design-system.md` included | yes | yes |
-| Screens `patterns/` + `components/` entries | yes — an authored layout contract since T2, not rebuilt output | yes |
-| An `_index.md` hub at any path — screens' and the catalog's own `patterns/_index.md` / `components/_index.md` among them | no — rebuilt nav content, so endorsing it is drift by construction | yes |
+| `01_spec/` artifacts, `design-system.md` included | yes | yes |
+| Design-system `*.pattern.md`, `*.layout.md` and `*.component.md` entries | yes — an authored layout contract, not rebuilt output | yes |
+| An `_index.md` hub at any path — a face's `_index.md` and the catalog's own `_index.md` files among them | no — rebuilt nav content, so endorsing it is drift by construction | yes |
 | `00_bootstrap/project.md`, `stack.md` | yes | no — the operator interview generated them, not a skill run |
-| `theme.md`, `_template.md`, `README.md` | no | no |
+| `theme.md`, `*.template.md`, `README.md` | no | no |
 | `06_spikes`, `98_lessons`, `99_tracker` | no | no — meta layers; lessons keep their own version stamping |
 
-An ADR's decision `adr-{slug}.md` and its rationale `adr-{slug}.rationale.md` are two
+An ADR's decision `{slug}.adr.md` and its rationale `{slug}.adr.rationale.md` are two
 artifacts: each carries its own blocks, and endorsing one says nothing about the other.
 
 Exclusions go **by path and filename, never by frontmatter**: the live `design-system.md`
@@ -64,20 +64,30 @@ inherits `status: template` from the copy of `theme.md` that seeded it, so a fro
 predicate would excuse a project's real design system. Where a file has no frontmatter at
 all — screens by design, most ADRs and features in practice — `stamp` creates the block.
 
-**What `report` walks is narrower than the table**: every `*.md` under `01_adr` –
-`05_screens`, plus `00_bootstrap/project.md` and `00_bootstrap/stack.md` by name and
-nothing else from that layer. So a file elsewhere in `00_bootstrap` is neither counted nor
-reported whatever it carries in frontmatter — `surfaces.md` included, though the Ownership
-map below still names its owner. The table says which blocks a path may carry; it does not
-promise the report measures every path.
+**What `report` walks is narrower than the table**: every `*.md` under `01_spec/`
+(`_migration/` excepted), plus `00_bootstrap/project.md` and `00_bootstrap/stack.md` by
+name and nothing else from that layer. So a file elsewhere in `00_bootstrap` is neither
+counted nor reported whatever it carries in frontmatter. The table says which blocks a
+path may carry; it does not promise the report measures every path.
 
 ## Ownership
 
-Position decides the owning skill — `01_adr` → adr, `02_modules` → module, `03_features`
-→ feature, `04_domain` → domain, `05_screens` → screens; short names, exactly what
-`--skill` takes. Two paths override position: `05_screens/design-system.md` → bootstrap
-(its one artifact outside `00_bootstrap`), `00_bootstrap/surfaces.md` → surface. Hence:
-**A skill writing outside its owned layer is misbehaviour — route the write to the owner.**
+The typed extension decides the owning skill, never the directory. Short names, exactly
+what `--skill` takes:
+
+| File under `01_spec/` | Owner |
+|---|---|
+| `*.adr.md`, `*.adr.rationale.md` | adr |
+| `*.module.md` | module |
+| `*.feature.md` | feature |
+| `*.entity.md`, `*.action.md` | domain |
+| `*.face.md`, `*.bundle.md` | face |
+| `*.process.md` | process |
+| `*.screen.md`, `*.pattern.md`, `*.layout.md`, `*.component.md`, `_index.md` | screens |
+| `design-system.md` | bootstrap (its one artifact outside `00_bootstrap`) |
+
+Hence: **a skill writing a type it does not own is misbehaviour — route the write to the
+owner.**
 
 ## Report
 
@@ -91,7 +101,7 @@ one judgment and not 23:
 | `UNENDORSED` | no `endorsed:` block |
 | `CHANGED SINCE ENDORSED` | the artifact changed after the commit that recorded its current endorsement — committed later in that commit's history, or edited in the working tree. Changes to the `endorsed:` and `produced:` blocks alone never count. Decided by history, not clocks, so a date-only `at` from before 0.15.0 works unchanged; outside a git repository the check is skipped |
 | `STALE` | the stamped skill hash differs from the map owner's installed hash |
-| `REFS-CHANGED` | the shared references moved — one vault-wide line |
+| `REFS-CHANGED` | the shared references moved — one KB-wide line |
 | `PRE-PROVENANCE` | no `produced:` block; a shrinking cohort, never backfilled |
 | `OWNER NOT INSTALLED` | the owning skill directory is absent, so provenance is unresolvable — never stale, deleting a skill being legitimate use |
 | `MISROUTED` | the stamped skill is not the map owner |

@@ -85,6 +85,14 @@ Three reasons, and the first alone is sufficient:
 `template_sha` stops being the dead literal `"unknown"` and carries the release commit,
 which `inspire-lesson` stamps onto every lesson.
 
+**Amended 2026-11-06 ([[adr-kb-structure]] D11):** `inspire_version` is no longer only a
+hint. The INSPIRE Factory reads it before planning and refuses a project whose version is
+missing or outside the range it supports. The three reasons above still hold for what the
+lock says about files, and upgrade detection still fingerprints the project (D3). They do
+not stop the version from being read as a contract: an edited version only hurts the
+operator who edited it, and a missing one is refused. The rest of the lock stays
+provenance. The original paragraph is left above as history rather than rewritten.
+
 ### D3 — Detection fingerprints the project against every manifest, and refuses rather than guesses
 
 The source version is established by hashing the project and scoring it against every

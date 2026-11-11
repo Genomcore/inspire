@@ -2,7 +2,8 @@
 > Part of [inspire-screens](../SKILL.md). Read when the entry's index routes here.
 
 The mechanical half of these checks is
-`.inspire/bin/screen-coherence.sh`, `.inspire/bin/screen-presentation.sh`,
+`.inspire/bin/screen-coherence.sh`, `.inspire/bin/face-exposure.sh`,
+`.inspire/bin/screen-presentation.sh`,
 `.inspire/bin/design-system-coherence.sh` and the screen block of
 `.inspire/bin/sections-present.sh` — run them rather than re-deriving them by eye.
 The presentation checks (8, 13–16) are warnings at every lifecycle and never refuse
@@ -12,9 +13,8 @@ What follows is the whole list, mechanical and judgment alike.
 ## Checks
 
 1. **Identity holds.** `id` · `module` · `screen` · `lifecycle` are present; the
-   id is unique KB-wide and shaped `{module}.{screen}` or
-   `{surface}.{module}.{screen}`; `module:` matches the path's module directory.
-   *(mechanical)*
+   id is unique and shaped `{face}.{slug}`, its face one a `*.face.md` declares; no
+   two screens in one face derive the same route. *(mechanical)*
 2. **The purpose is stated.** `## Purpose` is there and carries one paragraph of
    prose: who comes to this screen, for which task, what they see first.
    Presence and emptiness are mechanical; whether the paragraph tells a reader
@@ -30,21 +30,25 @@ What follows is the whole list, mechanical and judgment alike.
    one is required; every `param \`{key}\`` a data row relies on is declared by
    this screen, and every one a transition passes is declared by its target.
    *(mechanical)*
-5. **Bindings resolve outward.** Every action wikilink resolves to a descriptor in
-   `04_domain`; every navigation target resolves to a screen id.
+5. **Bindings resolve outward.** Every action wikilink resolves to a
+   `*.action.md` descriptor; every navigation target resolves to a screen id. A
+   missing target is created from its template at draft, never left dangling.
    *(mechanical, via `wikilinks-resolve`)*
+5b. **The face exposes what the screen binds.** Every action a `### Data` or
+   `### Dispatches` row binds belongs to a bundle the face lists in `bundles:`.
+   *(mechanical, via `face-exposure.sh`)*
 6. **The pattern join holds.** Where `**Pattern:**` is named, every required
    region that accepts a binding kind finds one — a `list` layout with no data
    binding is a finding. *(mechanical)*
-7. **Feature IDs exist.** All referenced features exist in the module's
-   `03_features`.
+7. **Feature IDs exist.** All referenced features exist as `*.feature.md` in the
+   module's `_features/`.
 8. **The layout join holds.** Where `**Layout:**` is named, its `**Pattern:**`
    agrees with the screen's own. A screen naming a pattern and no layout is a
    finding. Every `## Geometry` and `## Breakpoints` row of the layout carries a
    `Source` from the closed vocabulary; `generated` and `undecided` rows are
    counted on the layout, never on the screen that names it. *(mechanical, warning)*
-9. **Component references resolve.** Every component wikilink resolves to a file in
-   `05_screens/components/`, whatever its `../` depth — and a screen at
+9. **Component references resolve.** Every component wikilink is a bare id that
+   resolves to a `*.component.md` entry — and a screen at
    `lifecycle: stable` declares no component still at `**State:** to-extract`.
    *(mechanical)*
 10. **No redundant structure.** The screen doesn't redescribe what the pattern or
@@ -56,7 +60,7 @@ What follows is the whole list, mechanical and judgment alike.
 12. **No inline mock data.**
 13. **Every shown value is rendered.** A screen declaring `### Data` carries
     `## Render`, and every column, field and meta value it shows has a row there,
-    not a mention in prose. Each component a row names has a `components/` entry.
+    not a mention in prose. Each component a row names has a `*.component.md` entry.
     *(mechanical for the section and the entries, judgment for completeness)*
 14. **Every table column says what it does when narrow.** A Render table of
     columns carries `Narrow`: `always` · `sticky` · `scroll` ·
@@ -67,7 +71,8 @@ What follows is the whole list, mechanical and judgment alike.
     *(mechanical heuristic for hover, judgment for glyphs)*
 16. **Tokens are cited, never restated.** A colour, size or spacing the design
     system holds appears as its token path in braces, and every cited path exists
-    in `design-tokens.json`. *(mechanical for the paths, judgment for raw values)*
+    in `design-system.tokens.json` or the face's `{face}.tokens.json`.
+    *(mechanical for the paths, judgment for raw values)*
 17. **The writing contract holds** — R1–R6 of
     [`_references/writing-style.md`](../../_references/writing-style.md), R6 (historical
     language) first among them. `## Purpose` is normative prose for
@@ -89,4 +94,5 @@ old-shape file carries no sentence to convert into one), set `lifecycle: draft`.
 `update` is where that conversion runs, step by step
 ([`screen-update.md`](screen-update.md)). The old-shape catalogue
 is [`format-screen.md`](format-screen.md) § Old shape → new shape; until the file
-carries an id, every finding on it stays a warning.
+carries an id, every finding on it stays a warning. A screen still in a layered KB
+(`05_screens/`) is `/inspire:migrate`'s to move, never this skill's.

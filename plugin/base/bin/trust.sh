@@ -170,21 +170,26 @@ lock_version() {
 # not INSPIRE's to rewrite. The stamp's own `skill` is kept as evidence, and
 # when it disagrees with the map that disagreement is a reported finding.
 #
-# Two entries are corrections of the positional rule: `design-system.md` is the
-# one artifact inspire-bootstrap owns outside 00_bootstrap, and `surfaces.md` is
-# inspire-surface's roster.
+# The owner follows the typed extension, never the directory (adr-kb-structure
+# D4). `design-system.md` is the one artifact inspire-bootstrap owns inside
+# 01_spec, and a face's `_index.md` is the screens skill's navigation.
 # ─────────────────────────────────────────────────────────────────────────────
 
 owner_for() {
   case "$1" in
-    05_screens/design-system.md) printf 'bootstrap\n' ;;
-    00_bootstrap/surfaces.md)    printf 'surface\n' ;;
-    01_adr/*)                    printf 'adr\n' ;;
-    02_modules/*)                printf 'module\n' ;;
-    03_features/*)               printf 'feature\n' ;;
-    04_domain/*)                 printf 'domain\n' ;;
-    05_screens/*)                printf 'screens\n' ;;
-    *)                           printf '\n' ;;
+    01_spec/*) ;;
+    *) printf '\n'; return 0 ;;
+  esac
+  case "${1##*/}" in
+    design-system.md)                printf 'bootstrap\n' ;;
+    *.adr.md|*.adr.rationale.md)     printf 'adr\n' ;;
+    *.module.md)                     printf 'module\n' ;;
+    *.feature.md)                    printf 'feature\n' ;;
+    *.entity.md|*.action.md)         printf 'domain\n' ;;
+    *.face.md|*.bundle.md)           printf 'face\n' ;;
+    *.process.md)                    printf 'process\n' ;;
+    *.screen.md|*.pattern.md|*.layout.md|*.component.md|_index.md) printf 'screens\n' ;;
+    *)                               printf '\n' ;;
   esac
 }
 
@@ -194,7 +199,7 @@ owner_for() {
 # excuse a project's real design system from every check here.
 skip_artifact() {
   case "${1##*/}" in
-    README.md|_template.md|theme.md) return 0 ;;
+    README.md|*.template.md|theme.md) return 0 ;;
   esac
   return 1
 }
@@ -203,7 +208,7 @@ skip_artifact() {
 # construction. They still carry provenance. Pattern/component catalog entries
 # are NOT in this exemption: since T2 an entry is an authored layout contract
 # (its regions, what each accepts) rather than rebuilt output, so a human can
-# vouch for it like any other 01_adr–05_screens artifact.
+# vouch for it like any other specification artifact.
 endorsement_checked() {
   case "$1" in
     _index.md|*/_index.md) return 1 ;;
@@ -229,10 +234,8 @@ scan_paths() {
     for rel in 00_bootstrap/project.md 00_bootstrap/stack.md; do
       [ -f "$kb/$rel" ] && printf '%s\n' "$rel"
     done
-    for layer in 01_adr 02_modules 03_features 04_domain 05_screens; do
-      [ -d "$kb/$layer" ] || continue
-      ( cd "$kb" && find "$layer" -name '.?*' -prune -o -type f -name '*.md' -print )
-    done
+    # The migration's own records are not artifacts: nothing a skill writes.
+    [ -d "$kb/01_spec" ] && ( cd "$kb" && find 01_spec -name '.?*' -prune -o -path '01_spec/_migration' -prune -o -type f -name '*.md' -print )
   } 2>/dev/null | LC_ALL=C sort
 }
 

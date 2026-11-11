@@ -12,26 +12,26 @@ don't belong to a single module or feature:
 
 - **Global review** — the pre-merge gate, orchestrating module-level and
   cross-module checks.
-- **Vault structure** — module hubs and ADR files, folder conventions, and the
-  tracker's on-disk invariants.
+- **Vault structure** — the `01_spec/` layout, typed extensions, and the tracker's
+  on-disk invariants.
 
 It does **not** own the artifacts it validates the coherence of: **ADR lifecycle**
 is [`/inspire-adr`](../inspire-adr/SKILL.md) and the **task tracker** is
 [`/inspire-task`](../inspire-task/SKILL.md). This skill reads ADRs and tickets to
 judge coherence; it never authors them.
 
-When the project declares a **surface roster** (`inspire_kb/00_bootstrap/surfaces.md`),
-several checks in `review` and `structure` read against it. The rules — the three kinds,
-what `surfaces:` means on an artifact, and the two shapes the screens tree takes — are
-defined once in [`_references/surface-scope.md`](../_references/surface-scope.md); read
-it before judging anything surface-scoped. A project with no roster is a **suite of
-one**, and every check reads exactly as it did before surfaces existed.
+Several checks in `review` and `structure` read against the project's **faces**
+(`*.face.md`) and **bundles** (`*.bundle.md`). What `faces:` and `bundles:` mean on an
+artifact, and how scope resolves, are defined once in
+[`_references/face-scope.md`](../_references/face-scope.md); read it before judging
+anything face- or bundle-scoped. A project without screens has no face, and the
+face-scoped checks have nothing to read.
 
 ## Invocation
 
 - `/inspire-workspace review` — full vault review
 - `/inspire-workspace review {module1} {module2}` — scoped to selected modules + cross-module checks
-- `/inspire-workspace structure` — validate module hubs, ADR files, task tracker, vault conventions
+- `/inspire-workspace structure` — validate the `01_spec/` layout, typed extensions, task tracker, vault conventions
 
 ## Subcommands in `references/`
 
@@ -41,7 +41,7 @@ below is an index, not the flow.
 
 | Subcommand | What its reference holds |
 |---|---|
-| [`review`](references/workspace-review.md) | Phases 3–6 + Signals — the cross-cutting checks; the Execution mode, Phases 1–2, the Output format skeleton and the `### Review rules` stay in this file; Phase 2 additionally reads [`inspire-module/references/module-review.md`](../inspire-module/references/module-review.md) |
+| [`review`](references/workspace-review.md) | the validators, Phases 3–6 + Signals — the cross-cutting checks; the Execution mode, Phases 1–2, the Output format skeleton and the `### Review rules` stay in this file; Phase 2 additionally reads [`inspire-module/references/module-review.md`](../inspire-module/references/module-review.md) |
 | [`structure`](references/workspace-structure.md) | The full top-level vault checks + their output skeleton |
 
 ## Subcommand: review (global)
@@ -55,7 +55,7 @@ The **checks, severity model, and output are identical** in both modes — only 
 scheduling differs.
 
 - **Sequential (default).** Execute the phases top-to-bottom in this agent — Phases
-  1–2 below, then Phases 3–6 + Signals in
+  1–2 below, then the validators, Phases 3–6 + Signals in
   [`references/workspace-review.md`](references/workspace-review.md).
 - **Workflow (opt-in, when the user enables ultracode / multi-agent).** After
   Phase 1 (scope), run the bundled workflow at
@@ -77,9 +77,9 @@ and the output uses the exact skeleton in **Output format** below.
 
 ### Phase 1 — Identify scope
 
-- If modules are specified, use those. Otherwise, enumerate module hubs:
-  `inspire_kb/02_modules/*.md` excluding `_*.md` and `README.md` — the glob is
-  the index.
+- If modules are specified, use those. Otherwise, find every `*.module.md` under
+  `inspire_kb/01_spec/`: each one is a module, and its id is the file name without
+  `.module.md`.
 - For each module in scope, delegate to `/inspire-module review {module}`.
 
 ### Phase 2 — Module reviews
@@ -95,6 +95,7 @@ For each module in scope, the module review performs the checks in
 
 ## Scope
 - Modules reviewed: {list}
+- Validators: `review.sh inspire_kb` — {PASS | N errors, M warnings}
 
 ## Summary
 {X} issues: {critical} critical, {important} important, {minor} minor
@@ -110,7 +111,7 @@ Drift items pending: {N}
 ## Vault Structure
 ## Prototype Component Adoption
 - {Component}: {adopted}/{total} pages
-- {Component} — {shell}: {adopted}/{total} pages   (one line per shell, from 2+ UI surfaces)
+- {Component} — {shell}: {adopted}/{total} pages   (one line per shell, from 2+ faces)
 ## Catalog Coherence
 - Patterns: {total} defined, {used}, {orphan}
 - Components: {total} defined, {used}, {orphan}
@@ -118,7 +119,7 @@ Drift items pending: {N}
 
 ## Signals
 {`.inspire/bin/trust.sh report` output, verbatim}
-- Design system: {N} per-surface variant section(s), {L} lines
+- Design system: {N} per-face variant section(s), {L} lines
 
 ## OK
 ```
@@ -163,7 +164,8 @@ Drift items pending: {N}
    - screen spec drift → `/inspire-screens`
    - Feature drift → `/inspire-module update` or `/inspire-feature update`
    - ADR misalignment → `/inspire-adr update`
-   - Screens tree out of shape, or an unresolved `surfaces:` id → `/inspire-surface review`
+   - A face or bundle finding, or an unresolved `faces:` / `bundles:` id → `/inspire-face review`
+   - A process finding → `/inspire-process review`
 
 ## Subcommand: structure
 
@@ -205,6 +207,8 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
   `/inspire-task` operates the tickets.
 - `/inspire-module`, `/inspire-feature` — the module/feature reviews this
   orchestrates and delegates deep dives to.
-- `/inspire-surface` — owns the roster and is the diagnostic for its coherence.
-  Review flags a screens tree out of shape and `surfaces:` values that don't resolve;
-  diagnosing the roster and running the corrective sweep are that skill's.
+- `/inspire-face` — owns faces and bundles and is the diagnostic for their
+  coherence. Review flags `faces:` and `bundles:` values that don't resolve and
+  screens that bind actions their face does not reach; the fix is that skill's.
+- `/inspire-process` — owns processes; review reports `process-shape` findings and
+  routes them there.

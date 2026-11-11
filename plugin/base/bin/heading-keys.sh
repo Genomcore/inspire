@@ -46,7 +46,7 @@ files_of_kind() {
     pattern) sdd_find_catalog "$scope" patterns ;;
     component) sdd_find_catalog "$scope" components ;;
     layout) sdd_find_catalog "$scope" layouts ;;
-    module) find_flat "$scope" 02_modules ;;
+    module) sdd_find_modules "$scope" ;;
     spike) find_flat "$scope" 06_spikes ;;
   esac
 }

@@ -11,28 +11,43 @@ copied here, because two catalogues of one class is one catalogue too many.
 
 ## What a unit is
 
-Six kinds, and the kind is always given explicitly:
+Eight kinds, and the kind is always given explicitly. Each kind is found by its
+typed extension, by a recursive search under `$SDD_SPEC_ROOT`, never by its
+directory:
 
 | kind | artifact | id |
 |---|---|---|
-| `entity` | `04_domain/{module}/{entity}/{module}.{entity}.md` | `auth.user` |
-| `action` | `04_domain/{module}/{entity}/{module}.{entity}.{action}.md` | `auth.user.create` |
-| `screen` | `05_screens/[{surface}/]{module}/{screen}.md` | `users.list` · `admin.users.list` |
-| `component` | `05_screens/components/{name}.md` | `data-table` |
-| `pattern` | `05_screens/patterns/{name}.md` | `filtered-list` |
-| `layout` | `05_screens/layouts/{name}.md` | `collection` · `shell` |
+| `entity` | `{entity}.entity.md` | `auth.user` |
+| `action` | `{entity}.{action}.action.md` | `auth.user.create` |
+| `screen` | `{slug}.screen.md` | `portal.user-list` (`{face}.{slug}`) |
+| `component` | `{name}.component.md` | `data-table` |
+| `pattern` | `{name}.pattern.md` | `filtered-list` |
+| `layout` | `{name}.layout.md` | `collection` · `shell` |
+| `bundle` | `{bundle}.bundle.md` | `api` |
+| `process` | `{process}.process.md` | `auth.refresh-tokens` (`{scope}.{process}`) |
 
-The kind is positional rather than inferred because a 2-segment id is an entity
-*or* a screen, a 3-segment id an action *or* a collision-minted screen, and a
-bare word a component, a pattern *or* a layout.
+The kind is given rather than inferred from the id because a 2-segment id is an
+entity, a screen *or* a process, and a bare word a component, a pattern, a layout
+*or* a bundle. With `--file`, the file's typed extension must name the given kind;
+a mismatch is a usage error.
 
-**A catalog entry's id is its filename stem** — the opposite of a screen, whose
-id is minted write-once and never re-derived from location. An entry carries no
-identity block at all, and the three catalogs are suite-wide and never move
-into a surface tree, so there is exactly one place to look and nothing
-positional to lose. A catalog entry has no `module` either: a shared pattern,
-layout or component belongs to every module that instantiates it, so the key is
-absent rather than guessed.
+**The typed extension is never part of an id.** Where the frontmatter has `id:`
+(entities, actions, screens, processes) it wins. Otherwise the id is the file name
+without its typed extension: `filtered-list.pattern.md` is the pattern
+`filtered-list`, never `filtered-list.pattern`.
+
+**A catalog entry's id is its file name without the extension**, the opposite of
+a screen, whose id is minted write-once and never re-derived from its file. An
+entry carries no identity block at all, and the three catalogs are global, in
+`_design-system/`, so there is nothing positional to lose. A catalog entry has
+no `module` either: a shared pattern, layout or component belongs to every
+module that instantiates it, so the key is absent rather than guessed.
+
+**A bundle carries no version.** Its id is `api`, never `api@v1`: publishing a
+new version of a bundle changes nothing in the specification.
+
+**A face is not a unit.** It has no claims of its own; its screens do. A face's
+file gives its screens their shell and the bundles they may bind.
 
 **A catalog entry's lifecycle is its `**State:**` line**, over a closed
 vocabulary: `to-extract` (authored, no code behind it yet) is the analogue of
@@ -48,13 +63,13 @@ emanates from a use case directly.
 ## CLI
 
 ```
-derive <entity|action|screen|component|pattern|layout> <id>
-derive <entity|action|screen|component|pattern|layout> --file <path>
+derive <entity|action|screen|component|pattern|layout|bundle|process> <id>
+derive <entity|action|screen|component|pattern|layout|bundle|process> --file <path>
 ```
 
 The current working directory is the repo root; `SDD_SPEC_ROOT` (default
-`inspire_kb/04_domain`) and `SDD_KB_ROOT` (default `inspire_kb`) name the two
-layers, as everywhere in `.inspire/bin/`. INSPIRE Factory exposes this as
+`inspire_kb/01_spec`) names the specification and `SDD_KB_ROOT` (default
+`inspire_kb`) the knowledge base, as everywhere in `.inspire/bin/`. INSPIRE Factory exposes this as
 `bun run derive`.
 
 **It writes nothing** — no file, no log, no KB edit. Stdout is JSON, stderr is
@@ -63,17 +78,18 @@ the grouped human report.
 | exit | meaning |
 |---|---|
 | `0` | derived; the contract is on stdout |
-| `2` | usage — bad kind, missing id, unknown flag, an id *and* `--file` |
-| `3` | unit not found. A screen deeper than `05_screens/{surface}/{module}/{screen}.md` lands here: the screen finders do not reach past that depth, so nothing in the vault can see it |
+| `2` | usage — bad kind, missing id, unknown flag, an id *and* `--file`, a `--file` whose typed extension names another kind |
+| `3` | unit not found: no file with that kind's typed extension under `$SDD_SPEC_ROOT` carries that id |
 | `4` | **refused** — see below |
-| `5` | roots missing: `$SDD_KB_ROOT`, or `$SDD_SPEC_ROOT` for a domain kind, is not a directory |
+| `5` | roots missing: `$SDD_KB_ROOT` or `$SDD_SPEC_ROOT` is not a directory |
 
 ## The contract
 
 ```json
 { "schema": "inspire.derived-contract/1",
   "unit": { "kind", "id", "path", "lifecycle", "module"?,
-            "entity"? , "action"?, "screen"?, "state"?, "population"? },
+            "entity"? , "action"?, "face"?, "screen"?, "state"?, "population"?,
+            "package"? },
   "purpose": "…",
   "requires": [ { "kind", "id", "ordering" } … ],
   … kind-specific sections …
@@ -82,7 +98,9 @@ the grouped human report.
 
 - **`unit`** carries the identity as declared, never as inferred from location.
   A screen with no identity block is refused, not renamed. `module` is absent
-  for the three catalog kinds, and `state` is theirs alone.
+  for the three catalog kinds and for a bundle, and `state` is the catalog
+  kinds' alone. `face` is a screen's: the first segment of its id. `package` is
+  a bundle's, relative to `source_root`.
 - **`unit.population`** is an entity's alone — `internal` (the default a missing
   `population:` field means) or `external`, the marker
   [`inspire-domain/references/format-entity.md`](../inspire-domain/references/format-entity.md)
@@ -99,10 +117,12 @@ the grouped human report.
   action's frontmatter `requires:` plus every entity it touches; an entity's
   `references(…)` targets; a screen's data and dispatch actions, its navigation
   targets (including a dispatch outcome that navigates), its pattern, every
-  layout its `**Layout:**` line names and its components — plus the surface
-  shell, `layouts/shell`, whenever that entry exists, since it frames every
-  route and no screen names it; a pattern's own `**Components:**` line; a
-  layout's `**Pattern:**` line. A component declares none — A17's rule is that
+  layout its `**Layout:**` line names and its components — plus the shell
+  layout, `shell`, whenever that entry exists, since it frames every route and
+  no screen names it; a pattern's own `**Components:**` line; a layout's
+  `**Pattern:**` line; a bundle's member actions, a whole-module entry expanded
+  to every action of that module; a process's `## Requires` actions and every
+  action its `## Before` and `## After` entries link. A component declares none — A17's rule is that
   catalog entries order only by a *declared* edge between them, never by an
   assumed tier. Whether a required id exists is
   the planner's question — derive records the edge.
@@ -127,7 +147,9 @@ the grouped human report.
   in the order the file writes them; for a
   component its props then its states; for a pattern its regions; for a layout
   its geometry rows, then its breakpoint rows, then — for the shell alone — its
-  mount claim.
+  mount claim; for a bundle its one mount claim; for a process its trigger, its
+  `## Before` entries, its behaviour steps, then its `## After` entries, in the
+  order the file writes them.
 
 ### Shared shapes
 
@@ -180,6 +202,8 @@ vocabulary.
 | `component` | `structure` · `variants` · `props` (each `{name, carries}`) · `states` (each `{key, when, presentation}`) |
 | `pattern` | `structure` · `variants` · `regions` (each `{region, fill, accepts, holds}`) |
 | `layout` | `frame` · `geometry` (each `{element, property, value, source}`) · `breakpoints` (each `{range, region, change, source}`) · `composition` · `variants` |
+| `bundle` | `members` (sorted action ids) |
+| `process` | `trigger` · `before` · `behavior` · `after` (each `before` / `after` item `{action, prose}`) · `affects` (entity ids) |
 
 - **`outputs`** is `{ "entity", "fields" }`. The whole-entity one-liner
   (`An array of [[auth.user|auth::user]] entities.`) sets `entity` and leaves
@@ -203,11 +227,12 @@ vocabulary.
   `state:{key}` · `refresh:{key}` · `none`; a navigate outcome that passes
   parameters appends them, `nav:{screen-id}({key},{key})`.
 - **`route`** is `{module, screen, default, path}`. The inputs are the declared
-  `module:` and `screen:` fields, never the id string, so a collision-minted
-  `admin.users.list` still renders `/users/list`. `path` lists the `path`
-  parameters in row order, and `default` is the stack-agnostic rendering
-  `/{module}/{screen}` with one `/{key}` segment per entry of `path`; the shell
-  prefix and the exact rendering belong to the framework profile.
+  `module:` and `screen:` fields, never the id string, so `portal.user-list`
+  (`module: users`, `screen: list`) renders `/users/list`. `path` lists the
+  `path` parameters in row order, and `default` is the stack-agnostic rendering
+  `/{module}/{screen}` with one `/{key}` segment per entry of `path`; the
+  prefix, the face's `shell`, and the exact rendering belong to the framework
+  profile.
 - **`structure`**, **`frame`**, **`composition`** and **`variants`** are the
   list items of `## Structure`, `## Frame`, `## Composition` and `## Variants`,
   ordinals stripped. Both are **carried and never claimed**: a
@@ -233,9 +258,16 @@ vocabulary.
 - **`geometry`** and **`breakpoints`** carry a layout's two tables row by row,
   cells whitespace-collapsed and nothing else. `source` is carried so the
   unit's agent can tell a decided value (`design-system.md §…`,
-  `design-tokens.json`) from a proposal (`reference`, `generated`, `undecided`);
+  `design-system.tokens.json`) from a proposal (`reference`, `generated`, `undecided`);
   it is never part of a claim, because promoting a row's source without
   changing its value changes nothing the code renders.
+- **`members`** is every action the bundle's `## Actions` names, a whole-module
+  entry (`[[orders]] (whole module)`) expanded to every `*.action.md` of that
+  module, deduplicated and sorted bytewise.
+- **`affects`** is carried and never claimed: `process-shape.sh` checks it
+  against what the required actions touch, so no test covers it. A
+  `## Requires` action is a `requires` edge, never a claim: each action is
+  already tested as its own unit.
 
 ## Claim ids
 
@@ -258,6 +290,9 @@ declared key, the way every other kind's are:
 {layout-id}/geometry/{element}/{property}
 {layout-id}/breakpoint/{range}/{region}
 shell/mount/every-route
+{bundle-id}/mount/every-action
+{process-id}/trigger                     {process-id}/step/B{n}
+{process-id}/before/{action-id}          {process-id}/after/{action-id}
 ```
 
 `{op}` is the constraint word itself, one claim per word, so changing a
@@ -279,6 +314,22 @@ entry named `shell` — makes one more claim, that the application mounts it
 around every route: its geometry claims hold on the frame, this one on the
 application, and without it a shell can be built, tested and still frame
 nothing.
+
+**A grouping bundle makes exactly one claim**, `{bundle-id}/mount/every-action`:
+the bundle's package exposes every one of its member actions. It is the
+aggregate claim the shell's mount claim models, cited by a test that starts the
+bundle's application and checks each member is exposed by it. An action's own
+`binding/route` proves the action is exposed somewhere; this claim proves this
+package exposes it. Adding a member makes this one claim stale, and nothing
+else: the bundle requires its members, so its run comes after the new action's,
+and **that run changes test files only**. A bundle that produces an artifact of
+its own (an SDK, a library, a backend for a frontend) makes further claims about
+that code; this contract does not define them yet.
+
+**A process makes one claim per keyed entry**, on the action's model: one for its
+trigger, one per behaviour step `B{n}`, and one per `## Before` and `## After`
+entry, keyed by the action the entry links, so their order is tested. Its
+`## Requires` actions make no claim, and neither does `## Affects`.
 
 ## The fingerprint
 
@@ -308,6 +359,10 @@ whitespace-collapsed and trimmed:
 | layout geometry | value |
 | layout breakpoint | every change for that range and region, in table order |
 | shell mount | `every route` |
+| bundle mount | the member action ids, sorted and comma-joined · the bundle's `package` |
+| process trigger | the `## Trigger` prose |
+| process behaviour step | the canonical head text (always empty) · the prose |
+| process before · after | the action id · the action ids of the entries before it in that section, in order, comma-joined · the prose |
 
 The **canonical head text** is `word` or `word(a1,a2)` with each argument
 trimmed, so `len(3, 64)` and `len(3,64)` are one claim. A dispatch's outcomes
@@ -321,7 +376,7 @@ fingerprint; they are told apart by their ids, which is what ids are for.
 
 ### Binding claims
 
-An action is reachable only through the surface its backend profile renders, so
+An action is reachable only through the application its backend profile renders, so
 the profile's `## Bindings` section ([`stack-skills.md`](stack-skills.md)) derives
 three claims per action with no authoring: **the route exists** · **it
 dispatches to this action's service method** · **its guard matches the
@@ -332,12 +387,13 @@ The claims are identities only: the contract carries no binding section, and an
 implementer reads the profile and the action's preconditions itself. They are
 derived by INSPIRE Factory's deriver.
 
-- **The profile set** is the suite-wide one: `stack.md`'s frontmatter
+- **The profile set** is the project-wide one: `stack.md`'s frontmatter
   `profiles:` list, plus the language each declared skill names in `language:`.
   Nothing is inferred from `stack.md`'s headings: no `profiles:`, no stack
   skills. Each id reads the skill whose frontmatter `stack:` is that id; an id
   no skill declares is skipped.
-  A surface's own `**Profiles:**` list is not consulted.
+  A face's or bundle's own `profiles:` list is not consulted: exposure stays
+  on the action, whichever bundle publishes it.
 - **The binding profile** is the one profile in that set whose frontmatter says
   `layer: backend` and whose `## Bindings` section is not blank. None: the action
   carries no binding claims. More than one: `DR-B1`.
@@ -368,7 +424,7 @@ D7). On exit `4` stdout carries every class found, not the first, and no
 
 `remedy` names the owning skill's touch command — `/inspire-domain update {id}`,
 `/inspire-screens update {id}`, or `/inspire-screens extract {kind} {id}` for a
-catalog entry. Nothing machine-edits the knowledge base: naming an invariant is
+catalog entry, `/inspire-face` for a bundle, `/inspire-process` for a process. Nothing machine-edits the knowledge base: naming an invariant is
 judgment, and judgment happens inside the touch interview.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the
@@ -390,6 +446,8 @@ second copy of a check to drift. The rules consulted, and nothing else:
 |---|---|
 | `entity` · `action` | `keys-present` · `constraints-mechanics` · `head-referents` · `sections-present` |
 | `screen` | `screen-coherence` · `sections-present` |
+| `bundle` | `spec-identity` |
+| `process` | `process-shape` |
 | `component` · `pattern` · `layout` | none |
 
 Nothing a consulted rule reports against the unit is ignored. A message carrying
@@ -406,7 +464,7 @@ not half of it.
 
 ### `DR-*` — the classes derive names itself
 
-`DR-T*`, `DR-R*`, `DR-B*` and `DR-C*` are derive-only: no rule owns them, because they
+`DR-T*`, `DR-R*`, `DR-B*`, `DR-C*`, `DR-N*` and `DR-P*` are derive-only: no rule owns them, because they
 are questions only a reader that has to *render* the unit needs answered — and
 for `DR-C*`, because no rule owns a catalog entry's shape at all. `DR-S*`
 and `DR-D1` are shapes the screen and section rules already report and no
@@ -424,7 +482,7 @@ this table name the same thing.
 | `DR-R3` | a transition target — a `### Navigation` row, or a `→ [[…]]` dispatch outcome — resolves to no screen id | touch the screen |
 | `DR-R4` | a `**Pattern:**`, `**Layout:**` or `**Components:**` link resolves to no catalog entry | touch the screen |
 | `DR-S1` | the screen identity block is absent or incomplete — the pre-0.9 screen | touch the screen |
-| `DR-S2` | the identity contradicts itself or the vault: lifecycle enum, id shape, module-versus-path, `superseded_by`, a duplicate id, a route collision | touch the screen |
+| `DR-S2` | the identity contradicts itself or the vault: lifecycle enum, an id not shaped `{face}.{slug}` or naming a face no `*.face.md` declares, `superseded_by`, a duplicate id, a route collision | touch the screen |
 | `DR-S3` | a route authored into the H1 | touch the screen |
 | `DR-S4` | a required screen part absent or empty — the H1, `**Features:**`, `## Purpose`, `## Bindings` | touch the screen |
 | `DR-S5` | `## Instantiation`, retired, still present | touch the screen |
@@ -443,6 +501,10 @@ this table name the same thing.
 | `DR-C4` | a keyed row in a catalog table carries no key — for a layout, either of its two key cells is empty — or repeats one already taken in that table; a layout's `## Breakpoints` rows may share one, and make one claim | touch the entry |
 | `DR-C5` | a region's `Fill` or `Accepts` value falls outside the closed vocabularies `screen-coherence.sh` reads for the join | touch the entry |
 | `DR-C6` | a layout entry declares no `## Geometry` table, or one with no rows: its measurements are the whole of what it owns | touch the entry |
+| `DR-N1` | a bundle declares no `package`, so its mount claim names no application | touch the bundle |
+| `DR-N2` | a bundle's `## Actions` entry resolves to no module or action, or the bundle names no action at all | touch the bundle |
+| `DR-P1` | a process's `## Trigger` is absent or empty | touch the process |
+| `DR-P2` | a `## Before` or `## After` entry links no action, or links one already linked in that section | touch the process |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
