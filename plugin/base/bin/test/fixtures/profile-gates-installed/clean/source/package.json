@@ -1,1 +1,0 @@
-{ "jest": { "coverageThreshold": { "global": { "lines": 1 } } } }

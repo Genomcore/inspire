@@ -77,7 +77,8 @@ conditions, each of them mechanical, not a habit:
 
 - **Named** — one greppable syntax, never a wholesale one. `@ts-expect-error`, not
   `@ts-ignore`: expect-error *fails once the underlying error is fixed*, so it expires
-  by itself. `eslint-disable-next-line <rule>`, never a bare file-wide `eslint-disable`.
+  by itself. `oxlint-disable-next-line <rule>` (or `eslint-disable-next-line <rule>`),
+  never a bare file-wide disable.
 - **Justified in place** — a suppression without a written reason is a lint error, not
   a review comment (Rule 1: local and binary, so the linter owns it). Where the reason
   is "later", it carries the tracker id that owns the cleanup.

@@ -9,6 +9,48 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.16.0 — 2026-11-11
+
+Upgrade with `/inspire:update`. Nothing in your knowledge base changes. Use this version
+with INSPIRE Factory 0.15.0 or later: that Factory scaffolds TypeScript projects on the
+new toolchain and refuses a project on an older INSPIRE.
+
+### Breaking for existing vaults
+
+- **TypeScript projects on ESLint and Jest fail their quality gates after the update.**
+  The `inspire-code-nestjs` skill now declares its gates in `.oxlintrc.json` (oxlint rule
+  names) and `vitest.config.ts`, and `profile-gates-installed.sh` reads them from the
+  skill, not from `stack.md`. A project that still has `eslint.config.mjs` and Jest
+  reports every gate as `config-missing`, `pre-pr.sh` blocks, and agents write Vitest
+  tests. Before the next emanation, either:
+  - **move the project to the new toolchain**: Vitest with SWC (`unplugin-swc`),
+    type-aware oxlint carrying the gate rules, oxfmt and tsgo. The Factory's
+    `react-nestjs-npm` template is a working reference. Update the checks in
+    `.inspire/emanate.yml` to match (`/inspire-config` derives them again); or
+  - **keep ESLint and Jest** by keeping the 0.15.0 `inspire-code-nestjs`, `-react` and
+    `-typescript` skills: after `/inspire:update`, restore them from git before you
+    commit (`git checkout HEAD -- .claude/skills/inspire-code-nestjs
+    .claude/skills/inspire-code-react .claude/skills/inspire-code-typescript`). Later
+    updates see them as local edits and leave them alone. There is no setting for this
+    yet.
+- A project that edited those skills (its own gates or test rules) gets a local-edit
+  conflict on them. `/inspire:update` never overwrites it: merge the new toolchain
+  sections by hand, or keep your version as above.
+
+### Changed
+
+- **TypeScript stacks default to Vitest + SWC, oxlint, oxfmt and tsgo** instead of Jest +
+  ts-jest, ESLint, Prettier and tsc, to cut the memory and time a suite takes. The
+  `typescript`, `nestjs` and `react` profiles, the bootstrap `stack.md` and
+  `/inspire-config`'s derived checks follow. Rules oxlint cannot express are stated in
+  the skill prose. The e2e suite runs from `vitest.e2e.config.ts`, one file at a time,
+  and each e2e file gets its own database, copied from one template the global setup
+  migrates once.
+- **`/inspire-config` knows the Factory's memory settings.** `factory.sandbox.memory`
+  defaults to `1536m` and must be a Docker size, and a service accepts `memory`
+  (default `512m`). The Factory admits only as many units at once as fit in Docker's
+  memory, so the worked example no longer sets `8g`.
+
 ## 0.15.0 — 2026-11-11
 
 Upgrade with `/inspire:update`, then run `/inspire:migrate` once to move the knowledge

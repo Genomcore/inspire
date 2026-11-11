@@ -2,10 +2,10 @@
 name: demo
 stack: demo
 gates:
-  - literal: strictTypeChecked
-    config: lint.config.js
-  - literal: coverageThreshold
-    config: package.json
+  - literal: typescript/no-explicit-any
+    config: .oxlintrc.json
+  - literal: thresholds
+    config: vitest.config.ts
 ---
 
 ## Quality gates
