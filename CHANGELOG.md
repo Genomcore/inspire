@@ -9,6 +9,27 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.16.0 — unreleased
+
+Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
+sets in its lint config the rules that refuse each hatch it does not allow, closed to
+inline disables: from this version nothing counts them.
+
+### Changed
+
+- **The linter allows or refuses each escape hatch, and nothing counts them.**
+  `escape-hatch-ratchet.sh` is removed, with its gate in the pre-commit and pre-PR
+  hooks. Whether code may use `as any`, `@ts-ignore` or an `eslint-disable` is a lint
+  rule, so a refused hatch fails at the line, in the agent's loop and in INSPIRE
+  Factory's lint check, before it merges. `quality-gates.md` Rule 4 says so, and the
+  NestJS skill names the rules: `strictTypeChecked` refuses `as any` and `x!`, and a
+  `no-restricted-syntax` selector refuses `as unknown as`, and
+  `eslint-comments/no-restricted-disable` keeps an inline comment from re-allowing
+  any of them. On existing code, ESLint's bulk suppressions record what is already
+  there and fail anything new. The ratchet counted a
+  mention in a comment as a use, and the Factory never ran it, so code a unit merged
+  could fail the next person's commit.
+
 ## 0.15.0 — 2026-11-11
 
 Upgrade with `/inspire:update`, then run `/inspire:migrate` once to move the knowledge
