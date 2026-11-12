@@ -1,0 +1,23 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "md",
+      "target": "a.md",
+      "text": "a"
+    },
+    {
+      "line": 1,
+      "form": "md",
+      "target": "b c.md",
+      "text": "b"
+    },
+    {
+      "line": 1,
+      "form": "md",
+      "target": "c.md",
+      "text": "c"
+    }
+  ],
+  "code": []
+}

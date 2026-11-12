@@ -58,7 +58,7 @@ sdd_link_in_text() {
 }
 
 # sdd_fm_link_refs <file> <key> — one line per value of a frontmatter key (a scalar
-# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form md or bare (an id
+# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form md, embed or bare (an id
 # written without a link). The id is empty for a broken link; the path is empty
 # unless the link resolves.
 sdd_fm_link_refs() {

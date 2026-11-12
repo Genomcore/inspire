@@ -178,8 +178,8 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- `links-resolve` errors for each link in a typed file that Step 4 listed as broken,
-  until the operator points it at a file.
+- `links-resolve` errors for each link that Step 4 listed as broken outside templates
+  and `_migration/`, until the operator points it at a file.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.

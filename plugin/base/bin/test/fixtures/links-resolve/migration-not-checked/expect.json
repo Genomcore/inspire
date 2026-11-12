@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "01_spec/README.md.*wikilink ..adr-audit.. at line 3" }
+  ],
+  "forbidden": ["_migration", "01_adr"]
+}

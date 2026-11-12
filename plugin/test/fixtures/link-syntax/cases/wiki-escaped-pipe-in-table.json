@@ -1,0 +1,11 @@
+{
+  "links": [
+    {
+      "line": 3,
+      "form": "wiki",
+      "target": "a.b",
+      "text": "a::b"
+    }
+  ],
+  "code": []
+}
