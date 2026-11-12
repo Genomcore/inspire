@@ -31,7 +31,7 @@ eq "no ADR layer: nothing printed" "$out" ""
 eq "and exit 0"                    "$rc"  "0"
 
 mkdir -p "$ADR"
-printf '# Old\n\n**Status:** superseded by [[adr-auth-sessions]]\n\n## Decision\nCookies.\n' \
+printf '# Old\n\n**Status:** superseded by [adr-auth-sessions](auth-sessions.adr.md)\n\n## Decision\nCookies.\n' \
   > "$ADR/auth-cookies.adr.md"
 printf '# Gone\n\n**Status:** Rejected\n\n## Decision\nNothing.\n' > "$ADR/gone.adr.md"
 eq "only superseded and rejected ADRs: nothing printed" "$("$DECISIONS")" ""
@@ -47,8 +47,8 @@ endorsed:
 # Session tokens are opaque
 
 **Status:** implemented
-**Modules affected:** [[auth]]
-**Rationale:** [[adr-auth-sessions.rationale]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
+**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 <!-- Status maturity ladder: design | prototyped | implemented -->
 
 ## Decision
@@ -60,7 +60,7 @@ MD
 cat > "$ADR/auth-sessions.adr.rationale.md" <<'MD'
 # Session tokens are opaque — rationale
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## Context
 The rationale never reaches the digest.
@@ -85,7 +85,7 @@ cat > "$SDD_SPEC_ROOT/_modules/core/_adr/everywhere.adr.md" <<'MD'
 # One clock
 
 **Status:** prototyped
-**Rationale:** [[adr-everywhere.rationale]]
+**Rationale:** [adr-everywhere.rationale](everywhere.adr.rationale.md)
 
 ## Decision
 Every timestamp is UTC.

@@ -5,7 +5,7 @@
 ## Context
 
 **Status:** the route used to serve a cookie, and the header is written by the gateway.
-Supersedes: [[adr-auth-cookies]] — the token used to live there.
+Supersedes: [adr-auth-cookies](auth-cookies.adr.md) — the token used to live there.
 The identifier migrated from the query string, and this line is not exempt.
 
 ## Consequences
@@ -23,4 +23,4 @@ A client cannot read a token.
 
 ## Related ADRs
 
-- [[adr-auth-password-hashing]] — this used to live there, and it previously did.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — this used to live there, and it previously did.

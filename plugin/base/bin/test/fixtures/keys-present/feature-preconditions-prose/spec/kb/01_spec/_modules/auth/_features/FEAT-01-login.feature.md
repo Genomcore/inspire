@@ -1,6 +1,6 @@
 # FEAT-01: Login
 
-> Source: [[../../02_modules/auth]]
+> Source: [auth](../auth.module.md)
 
 A registered user signs in.
 

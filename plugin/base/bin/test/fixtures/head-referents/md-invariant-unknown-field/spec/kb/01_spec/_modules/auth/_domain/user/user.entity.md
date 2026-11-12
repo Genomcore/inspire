@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## Purpose
-The user account entity, grounded in [[auth-user-management]].
+The user account entity, grounded in [auth-user-management](../../_features/user-management.feature.md).
 
 ## Rationale
-Identity model rationale, per [[adr-auth-01-identity-model]].
+Identity model rationale, per [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
 
 ## Invariants
 - `I1` — unique(tenant_id, email) — Email is unique per organisation.

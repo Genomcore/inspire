@@ -4,5 +4,5 @@ package: apps/api
 ---
 # Bundle: api
 ## Actions
-- [orders](../_faces/portal/_screens/orders.screen.md) (whole module)
-- [[billing.invoice.close|billing::invoice::close]]
+- [orders](../_modules/orders/orders.module.md) (whole module)
+- [billing::invoice::close](../_modules/billing/_domain/invoice/invoice.close.action.md)

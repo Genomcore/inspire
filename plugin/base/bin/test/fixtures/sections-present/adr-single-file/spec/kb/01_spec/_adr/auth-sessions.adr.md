@@ -5,8 +5,8 @@
 # Session tokens are opaque
 
 **Status:** design
-**Modules affected:** [[auth]]
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [x](x.adr.md) | rejected.
      design = the design workspace.
      ## Consequences is named here on purpose: a guidance comment is not a section. -->
 
@@ -26,4 +26,4 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.

@@ -28,13 +28,13 @@ on.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed, filtered by param `q` |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed, filtered by param `q` |
 
 ### Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [users.detail](detail.screen.md) param `id` | state `form-error` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | primary action | → [users.detail](detail.screen.md) param `id` | state `form-error` |
 
 ### Navigation
 

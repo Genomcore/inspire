@@ -211,7 +211,8 @@ eq "domain only: nothing to ask" "$rc" "0"
 check "no face and no bundle are invented" "[ ! -e '$M/inspire_kb/01_spec/_faces' ] && [ ! -e '$M/inspire_kb/01_spec/_bundles' ]"
 
 # A KB that was valid before the migration is valid after: the released golden
-# fixtures, in their layered form, through the migration and the validators.
+# fixtures, in their layered form, through the moves, the link conversion and the
+# validators, which read no wikilink.
 V="$W/valid"; mkdir -p "$V/old"
 if git -C "$REPO" rev-parse -q --verify 'origin/release/0.15.0^{commit}' >/dev/null 2>&1; then
   git -C "$REPO" archive origin/release/0.15.0 plugin/base/bin/test/fixtures/entity-coherence/coherent \
@@ -221,10 +222,15 @@ if git -C "$REPO" rev-parse -q --verify 'origin/release/0.15.0^{commit}' >/dev/n
     d="$V/${case%%/*}"; mkdir -p "$d/inspire_kb"
     [ -d "$FX/$case/spec/kb" ] && cp -R "$FX/$case/spec/kb/." "$d/inspire_kb/"
     [ -d "$FX/$case/spec/sdd" ] && { mkdir -p "$d/inspire_kb/04_domain"; cp -R "$FX/$case/spec/sdd/." "$d/inspire_kb/04_domain/"; }
-    ( cd "$d" && bash "$MIG" --face app --bundle api ) >/dev/null 2>&1
+    # The screen fixture navigates to a detail screen it never held; a link converts
+    # only to a file that exists.
+    [ -d "$d/inspire_kb/05_screens/users" ] \
+      && printf -- '---\nid: users.detail\nmodule: users\nscreen: detail\nlifecycle: draft\n---\n# Detail\n' > "$d/inspire_kb/05_screens/users/detail.md"
+    ( cd "$d" && bash "$MIG" --face app --bundle api && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" ) >/dev/null 2>&1
     rule="${case%%/*}"
     ( cd "$d" && "$PLUGIN_ROOT/base/bin/$rule.sh" ) >/dev/null 2>"$d/findings"; rc=$?
     eq "$case: valid before the migration, valid after" "$rc" "0"
+    [ "$rc" -eq 0 ] || sed 's/^/    /' "$d/findings"
   done
 else
   skipped 2 "origin/release/0.15.0 is not fetched: no layered golden fixtures to migrate"

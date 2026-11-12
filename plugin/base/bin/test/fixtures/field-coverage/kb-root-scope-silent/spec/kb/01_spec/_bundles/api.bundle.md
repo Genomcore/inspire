@@ -6,4 +6,4 @@ id: api
 
 ## Actions
 
-- [[auth]] (whole module)
+- [auth](../_modules/auth/auth.module.md) (whole module)

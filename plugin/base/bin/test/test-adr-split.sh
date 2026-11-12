@@ -36,7 +36,7 @@ surfaces: [console]
 # Session tokens are opaque
 
 **Status:** implemented
-**Modules affected:** [[auth]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
 <!--
 ## Decision is named here on purpose: a comment is not a section.
 -->
@@ -62,7 +62,7 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.
 
 ## Notes
 An extra section travels with the rationale.
@@ -93,7 +93,7 @@ surfaces: [console]
 # Session tokens are opaque
 
 **Status:** implemented
-**Modules affected:** [[auth]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
 **Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 <!--
 ## Decision is named here on purpose: a comment is not a section.
@@ -126,7 +126,7 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.
 
 ## Notes
 An extra section travels with the rationale.

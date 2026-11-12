@@ -16,7 +16,7 @@ unchanged, but its parser input is not, and an accepted entity whose back-source
 is merely *below* a `---` used to be reported as having none.
 
 ## Rationale
-Grounded in [[adr-plt-01-identity-model]] and [[pdd-auth-identity-system]].
+Grounded in [adr-plt-01-identity-model](../../../../_adr/plt-01-identity-model.adr.md) and [pdd-auth-identity-system](../../pdd-auth-identity-system.md).
 
 ## Invariants
 None beyond Fields constraints.

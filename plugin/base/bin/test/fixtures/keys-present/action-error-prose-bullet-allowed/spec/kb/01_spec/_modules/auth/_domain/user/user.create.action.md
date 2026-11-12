@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Create a user account, per [[auth-user-management]].
+Create a user account, per [auth-user-management](../../_features/user-management.feature.md).
 
 ## Inputs
 
@@ -51,4 +51,4 @@ Constraints: `len(3, 254)`
 
 ## Errors
 - `email_exists` — unique(email) — operator-facing message: "Taken."
-- (Inherits errors from [[auth.password.hash|auth::password::hash]] — propagated as-is.)
+- (Inherits errors from [auth::password::hash](../password/password.hash.action.md) — propagated as-is.)

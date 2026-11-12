@@ -20,7 +20,7 @@ for an email and a password, and nothing else competes for attention.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.session.read\|auth::session::read]] | the current session |
+| `main` | [auth::session::read](../../../_modules/auth/_domain/session/session.read.action.md) | the current session |
 
 ## Instantiation
 

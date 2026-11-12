@@ -24,4 +24,4 @@ None beyond Fields constraints.
 
 | Action                                  | Touch   | Notes            |
 |-----------------------------------------|---------|------------------|
-| [[auth.user.create|auth::user::create]] | write   | Inserta la fila. |
+| [auth::user::create](user.create.action.md) | write   | Inserta la fila. |

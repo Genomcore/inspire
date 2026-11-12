@@ -1,6 +1,0 @@
-{
-  "screens": {
-    "users.detail": "app.detail",
-    "users.list": "app.list"
-  }
-}

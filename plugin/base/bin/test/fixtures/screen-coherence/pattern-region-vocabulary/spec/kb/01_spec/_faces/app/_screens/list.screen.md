@@ -22,13 +22,13 @@ on.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] | clicking a row |
+| `row` | [users.detail](../../users/_screens/detail.screen.md) | clicking a row |
 
 ### States
 

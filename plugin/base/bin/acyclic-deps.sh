@@ -7,8 +7,8 @@
 #   - cycles (action A → B → ... → A)
 #
 # Implementation: reads `.requires` lists from each action descriptor,
-# reads each link (wikilink or Markdown) as the id it refers to, and pipes
-# (predecessor, successor) pairs through `tsort`. A broken Markdown link names no
+# reads each link as the id of the file it names, and pipes
+# (predecessor, successor) pairs through `tsort`. A broken link names no
 # id and adds no edge. BSD macOS tsort silently elides self-loops, so those are
 # detected directly before the tsort call.
 #
@@ -35,12 +35,11 @@ SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 # Build the id → path index up front so we can resolve names for findings.
 sdd_build_id_index "$SDD_SPEC_ROOT"
-sdd_link_index
 
 EDGES_FILE="$(mktemp -t sdd-edges.XXXXXX)"
 STDERR_FILE="$(mktemp -t sdd-tsort-stderr.XXXXXX)"
 IN_SCOPE_FILE="$(mktemp -t sdd-in-scope.XXXXXX)"
-trap 'rm -f "$EDGES_FILE" "$STDERR_FILE" "$IN_SCOPE_FILE" "${SDD_ID_INDEX_FILE:-}" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "$EDGES_FILE" "$STDERR_FILE" "$IN_SCOPE_FILE" "${SDD_ID_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r action; do
   [ -z "$action" ] && continue

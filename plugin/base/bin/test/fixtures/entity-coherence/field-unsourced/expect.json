@@ -1,7 +1,0 @@
-{
-  "exit": 0,
-  "findings": [
-    { "rule": "entity-coherence", "severity": "warning", "message_substring": "field-unsourced: auth::user.last_seen" }
-  ],
-  "forbidden": ["\"severity\":\"error\""]
-}

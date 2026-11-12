@@ -2,19 +2,13 @@
 # .inspire/bin/_link-reads.sh — sourced by the validators that read the links of
 # one frontmatter key, one `## Section` or one line, after _lib.sh.
 #
-# Both forms come out of `sdd_links`. A wikilink keeps the id it declares (right of
-# the pipe); a Markdown link takes the id of the file its path names (D2), and a
-# broken one names none — links-resolve.sh reports it. The caller runs
-# `sdd_link_index` once in its own shell and removes `$SDD_LINK_INDEX_FILE` and
-# `$SDD_ENTITY_INDEX_FILE` in its trap.
+# The links come out of `sdd_links`. A link takes the id of the file its path names
+# (D2), and a broken one names none — links-resolve.sh reports it.
 
-# sdd_link_id <form> <text> <path> — the id a link refers to; fails for a broken link
-# and for a link to a directory, which names no id (D2).
+# sdd_link_id <path> — the id a link refers to; fails for a broken link and for a
+# link to a directory, which names no id (D2).
 sdd_link_id() {
-  if [ "$1" = "wiki" ]; then printf '%s\n' "$2"
-  elif [ -f "$3" ]; then sdd_artifact_id "$3"
-  else return 1
-  fi
+  [ -f "$1" ] && sdd_artifact_id "$1"
 }
 
 # sdd_line_links <file> <from> <to> — the `sdd_links` rows between two lines.
@@ -41,7 +35,7 @@ sdd_section_links() {
 sdd_section_link_ids() {
   local ln form target text path
   sdd_section_links "$1" "$2" | while IFS=$'\t' read -r ln form target text path; do
-    sdd_link_id "$form" "$text" "$path" || true
+    sdd_link_id "$path" || true
   done
 }
 
@@ -51,11 +45,8 @@ sdd_link_in_text() {
   local rows="$1" text="$2" ln form target t path best="" bestpos=-1 head
   while IFS=$'\t' read -r ln form target t path; do
     [ -n "$form" ] || continue
-    case "$form" in
-      wiki) head="${text%%"[[$target"*}" ;;
-      *)    head="${text%%"]($target"*}"
-            [ "$head" != "$text" ] || head="${text%%"](<$target"*}" ;;
-    esac
+    head="${text%%"]($target"*}"
+    [ "$head" != "$text" ] || head="${text%%"](<$target"*}"
     [ "$head" != "$text" ] || continue
     if [ "$bestpos" -lt 0 ] || [ "${#head}" -lt "$bestpos" ]; then
       bestpos="${#head}"
@@ -67,9 +58,9 @@ sdd_link_in_text() {
 }
 
 # sdd_fm_link_refs <file> <key> — one line per value of a frontmatter key (a scalar
-# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form wiki, md or bare (an id
-# written without a link). The id is empty for a broken Markdown link; the path is
-# empty unless a Markdown link resolves.
+# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form md or bare (an id
+# written without a link). The id is empty for a broken link; the path is empty
+# unless the link resolves.
 sdd_fm_link_refs() {
   local file="$1" rows value row ln form target text path id
   rows="$(sdd_links "$file")"
@@ -81,7 +72,7 @@ sdd_fm_link_refs() {
       continue
     fi
     IFS=$'\t' read -r ln form target text path <<< "$row"
-    id="$(sdd_link_id "$form" "$text" "$path")" || id=""
+    id="$(sdd_link_id "$path")" || id=""
     printf '%s\t%s\t%s\t%s\n' "$form" "$target" "$id" "$path"
   done < <(yq --front-matter=extract \
     ".$2 | select(. != null) | ((select(tag == \"!!seq\") | .[]), select(tag != \"!!seq\"))" \

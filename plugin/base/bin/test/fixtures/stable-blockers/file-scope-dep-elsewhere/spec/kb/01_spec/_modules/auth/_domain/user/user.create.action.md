@@ -27,7 +27,7 @@ Stable action with non-stable dep — should fail.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** shape · **Effect:** create
 
 | Field | Touch   | Type  | Mapping       | Notes |

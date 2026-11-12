@@ -362,11 +362,10 @@ sdd_find_catalog() {
 
 # sdd_resolve_catalog <kind> <name> — the `{name}.{kind}.md` entry for a catalog id
 #   (`pattern`, `layout`, `component`; a plural is accepted), by name anywhere under
-#   the spec root. A name with a path keeps only its last segment, and a typed
-#   extension already on it is dropped: the id never carries one. Prints nothing
-#   when no entry has that name.
+#   the spec root. A typed extension already on the name is dropped: the id never
+#   carries one. Prints nothing when no entry has that name.
 sdd_resolve_catalog() {
-  local kind="${1%s}" name="${2##*/}"
+  local kind="${1%s}" name="$2"
   name="${name%.md}"; name="${name%.$kind}"
   [ -n "$name" ] || return 0
   [ -d "$SDD_SPEC_ROOT" ] || return 0
@@ -497,16 +496,6 @@ sdd_entity_population() {
   fi
 }
 
-# The screen id map the migration wrote (adr-kb-structure D10): old id → new id.
-# A link written before the migration keeps its text — a screen's `## Bindings` is
-# never rewritten — so a resolver reads an old screen id through this map.
-# sdd_screen_id_alias <id> prints the new id, or nothing.
-sdd_screen_id_alias() {
-  local map="$SDD_SPEC_ROOT/_migration/id-map.json"
-  [ -f "$map" ] || return 0
-  jq -r --arg id "$1" '.screens[$id] // empty' "$map" 2>/dev/null
-}
-
 # sdd_catalog_state <file> — the `**State:**` header line of a catalog entry,
 # or empty when it declares none.
 sdd_catalog_state() {
@@ -525,101 +514,36 @@ sdd_catalog_state() {
 # KB links (adr-markdown-links)
 #
 # A link is a relative Markdown link, `[text](path)`, resolved by joining its
-# path to the linking file's directory (D2). A wikilink, `[[target|text]]`, is the
-# form before 0.16.1 and still resolves by id (D5). A link inside a code span or a
-# fenced block is an example and is never read (D4). The id of a resolved file is
-# `sdd_artifact_id`.
+# path to the linking file's directory (D2). A link inside a code span or a fenced
+# block is an example and is never read (D4). The id of a resolved file is
+# `sdd_artifact_id`. A wikilink, `[[target|text]]`, is plain text to every reader
+# but links-resolve.sh, which reports it (D5).
 # ─────────────────────────────────────────────────────────────────────────────
 
-# sdd_link_index — builds the wikilink index once, KB-wide whatever the scope:
-#   `{kind}<TAB>{key}<TAB>{path}`, kind A action id · E entity id (dotted) ·
-#   S screen id · M old screen id (path holds the new one) · N file id ·
-#   F file name id a declared id displaces, never a screen's.
-#   Call it in the calling script's own shell, which removes
-#   `$SDD_LINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
-SDD_LINK_INDEX_FILE=""
-sdd_link_index() {
-  [ -n "$SDD_LINK_INDEX_FILE" ] && [ -f "$SDD_LINK_INDEX_FILE" ] && return 0
-  SDD_LINK_INDEX_FILE="$(mktemp -t sdd-link-index.XXXXXX)"
-  local f id map="$SDD_SPEC_ROOT/_migration/id-map.json"
-  {
-    while IFS= read -r f; do
-      id="$(sdd_fm_value "$f" '.id')"
-      [ -n "$id" ] && printf 'A\t%s\t%s\n' "$id" "$f"
-    done < <(sdd_find_actions "$SDD_SPEC_ROOT")
-    _sdd_entity_index
-    awk '{ print "E\t" $0 }' "$SDD_ENTITY_INDEX_FILE"
-    while IFS= read -r f; do
-      id="$(sdd_fm_value "$f" '.id')"
-      [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
-    done < <(sdd_find_screens "$SDD_SPEC_ROOT")
-    [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
-    # A typed file is named by its frontmatter id where it declares one (adr-kb-structure
-    # D3), else by the id its name gives. A name the declared id displaces is kept as
-    # F, read only when nothing else answers, so `[[nightly-close]]` still reaches
-    # `billing.nightly-close`. A screen keeps none: its slug repeats its module's name,
-    # and `[[orders]]` never names `orders.screen.md` (`id: portal.orders`).
-    find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
-      | awk '
-          function fm_id(f,   l, n, v) {
-            v = ""; n = 0
-            while ((getline l < f) > 0) {
-              sub(/\r$/, "", l)
-              if (++n == 1) { if (l != "---") break; continue }
-              if (l == "---") break
-              if (l ~ /^id:/) {
-                v = l; sub(/^id:[ \t]*/, "", v); sub(/[ \t]+(#.*)?$/, "", v)
-                gsub(/^["\047]|["\047]$/, "", v); break
-              }
-            }
-            close(f)
-            return v == "null" ? "" : v
-          }
-          {
-            n = split($0, seg, "/"); base = seg[n]; sub(/\.md$/, "", base)
-            print "N\t" base "\t" $0
-            if (base ~ /\.adr\.rationale$/) { sub(/\.adr\.rationale$/, "", base); id = "adr-" base ".rationale" }
-            else if (base ~ /\.adr$/) { sub(/\.adr$/, "", base); id = "adr-" base }
-            else if (base ~ /\.(module|feature|entity|action|bundle|face|screen|process|component|layout|pattern)$/) {
-              sub(/\.[a-z]+$/, "", base); id = base
-            }
-            else next
-            fm = fm_id($0)
-            if (fm == "") { print "N\t" id "\t" $0; next }
-            print "N\t" fm "\t" $0
-            alt = fm; if (index(alt, "::")) gsub(/::/, ".", alt); else gsub(/\./, "::", alt)
-            if (alt != fm) print "N\t" alt "\t" $0
-            if (fm != id && $0 !~ /\.screen\.md$/) print "F\t" id "\t" $0
-          }'
-  } > "$SDD_LINK_INDEX_FILE"
-}
-
-# sdd_links <file> — every link in the file, frontmatter included, one per line:
+# sdd_links <file> [wiki] — every link in the file, frontmatter included, one per line:
 #   `{line}<TAB>{md|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
 #   The path is empty when the link resolves to nothing; a path to a directory
 #   resolves and names no id (D2). Text and target are never
 #   empty, so `IFS=$'\t' read` keeps the five fields apart: a link that shows no
 #   text reports its target as text. An image whose target is a `.md` file is an
 #   embed and reads as a link; other images and external URLs are not links here.
+#   With `wiki`, each wikilink is listed too, form `wiki`, with an empty path.
 sdd_links() {
-  local file="$1" dir ln form target text path
-  sdd_link_index
+  local file="$1" wiki="" dir ln form target text path
+  [ "${2:-}" = wiki ] && wiki=1
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
   # Byte semantics, so a percent-escape decodes to the byte it names.
-  LC_ALL=C awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" \
-    "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_WIKI_RESOLVE$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
-    "$SDD_LINK_INDEX_FILE" "$file" \
+  LC_ALL=C awk -v dir="$dir" -v wiki="$wiki" \
+    "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
       [ -n "$path" ] && { [ -f "$path" ] || [ -d "$path" ]; } || path=""
       printf '%s\t%s\t%s\t%s\t%s\n' "$ln" "$form" "$target" "$text" "$path"
     done
 }
 
-# The reader's awk program. The index file is read first; every later line is the
-# linking file. A Markdown path is joined and normalized here and tested for
-# existence by the caller.
+# The reader's awk program. A Markdown path is joined and normalized here and tested
+# for existence by the caller.
 SDD_AWK_LINKS='
-  FILENAME == idx { sdd_ix_add($0); next }
   FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
   fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan($0, FNR); next }
   sdd_fence($0) { next }
@@ -627,7 +551,9 @@ SDD_AWK_LINKS='
   { sdd_scan($0, FNR) }
 
   # Links are found in the line with its code spans blanked in place; a Markdown
-  # link takes its text from the raw line, so a span in the text still shows.
+  # link takes its text from the raw line, so a span in the text still shows. A
+  # wikilink is consumed whether or not it is listed, so its brackets never start a
+  # Markdown link.
   function sdd_scan(raw, ln,   s, w, ws, wl, tok) {
     s = sdd_unspan(raw, 1)
     while (1) {
@@ -652,11 +578,12 @@ SDD_AWK_LINKS='
   # `[[target|text]]`: the target is the left half, and a pipe escaped for a
   # table cell leaves its backslash on it.
   function sdd_wiki(inner, ln,   p, t, text) {
+    if (!wiki) return
     p = index(inner, "|")
     if (p) { t = substr(inner, 1, p - 1); sub(/\\$/, "", t); text = substr(inner, p + 1) }
     else { t = inner; text = inner }
     if (t == "") return
-    sdd_emit(ln, "wiki", t, text, sdd_wres(t))
+    sdd_emit(ln, "wiki", t, text, "")
   }
 
   function sdd_md(tok, p, ln, rtok,   text, dest) {
@@ -748,38 +675,6 @@ SDD_AWK_MD_FUNCS='
     out = ""
     for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") st[i]
     return (abs ? "/" : "") out
-  }
-'
-
-# How a wikilink target resolves (D5), as awk source: each index line goes through
-# sdd_ix_add, and the first path a key names wins. migrate-links.sh composes the same
-# fragment, so a converted link names the file the validators resolved (D6).
-SDD_AWK_WIKI_RESOLVE='
-  function sdd_ix_add(line,   r) {
-    if (split(line, r, "\t") < 3) return
-    if (!((r[1], r[2]) in ix)) ix[r[1], r[2]] = r[3]
-  }
-
-  function sdd_wres(t,   c) {
-    sub(/#.*/, "", t)
-    if (t == "") return ""
-    # A path-shaped target means its last segment (adr-kb-structure D4).
-    if (index(t, "/")) { sub(/.*\//, "", t); sub(/\.md$/, "", t); if (t == "") return "" }
-    if (index(t, "::")) {
-      if (("A", t) in ix) return ix["A", t]
-      c = t; gsub(/::/, ".", c)
-      if (("E", c) in ix) return ix["E", c]
-    } else if (index(t, ".")) {
-      c = t; gsub(/\./, "::", c)
-      if (("A", c) in ix) return ix["A", c]
-      if (("E", t) in ix) return ix["E", t]
-      if (("N", t) in ix) return ix["N", t]
-    }
-    if (("S", t) in ix) return ix["S", t]
-    if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
-    if (("N", t) in ix) return ix["N", t]
-    if (("F", t) in ix) return ix["F", t]
-    return ""
   }
 '
 
@@ -1077,14 +972,11 @@ sdd_body_section() {
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
-# sdd_unwrap_links — stdin to stdout, line by line: a wikilink reads as its display
-#   text (the right of the pipe, so `[[auth.user|auth::user]]` reads as
-#   `auth::user` and `[[adr-x]]` as `adr-x`) and a Markdown link as its text. The
-#   path is a machine-read token, never prose. An image keeps its `!` and is left
-#   alone; the second Markdown pass catches a link right after another.
+# sdd_unwrap_links — stdin to stdout, line by line: a Markdown link reads as its
+#   text. The path is a machine-read token, never prose. An image keeps its `!` and
+#   is left alone; the second pass catches a link right after another.
 sdd_unwrap_links() {
-  sed -E -e 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g' -e 's/\[\[([^]]*)\]\]/\1/g' \
-    -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g' -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g'
+  sed -E -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g' -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g'
 }
 
 # sdd_body_prose <file> <header_name>
@@ -1172,16 +1064,14 @@ sdd_body_subsection() {
 #   Parses the `## Entities` body section's per-entity h3 sub-sections.
 #   Each sub-section has a metadata line and a per-field table with 5 cols:
 #     Field | Touch | Type | Mapping | Notes
-#   The H3 header is a link. A wikilink declares the id on the right of its pipe
-#     ### [[module.entity|module::entity]]
-#   and a Markdown link takes the id of the file it points at (a broken one names
-#   none, so its rows are skipped):
+#   The H3 header is a link, and takes the id of the file it points at (a broken
+#   one names none, so its rows are skipped):
 #     ### [module::entity](../entity/entity.entity.md)
-#   Either way the id comes out in the colon form, `module::entity`, whatever form
-#   the heading or the entity's `id:` writes, so the rules compare one form.
+#   The id comes out in the colon form, `module::entity`, whatever form the
+#   entity's `id:` writes, so the rules compare one form.
 #   <links_file> (default <file>) is the file the links are read and resolved
 #   from, for a caller that passes a line-preserving copy of its comments-stripped
-#   text; the caller ran `sdd_link_index` in its own shell.
+#   text.
 #   The Field column may wrap names in backticks (`field_name`); the parser
 #   strips them so callers see bare field names.
 #   Outputs TSV:
@@ -1189,7 +1079,7 @@ sdd_body_subsection() {
 #   one row per declared field. `as_input` and `effect` are repeated on every
 #   row of the same entity (denormalized for downstream awk-friendliness).
 sdd_entities_touched() {
-  local file="$1" links_file="${2:-$1}" heads ids="" form text path id
+  local file="$1" links_file="${2:-$1}" heads ids="" path id
   # The file lines of the headings, fenced ones too: sdd_body_section passes
   # fenced lines through, so the awk below counts them as well.
   heads="$(awk "${SDD_AWK_FM_READER}"'
@@ -1199,24 +1089,20 @@ sdd_entities_touched() {
       capture && /^###[[:space:]]+\[/ { print NR }
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file")"
   if [ -n "$heads" ]; then
-    while IFS=$'\t' read -r form text path; do
-      case "$form" in
-        wiki) id="$text" ;;
-        md)   id="$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
-        *)    id="" ;;
-      esac
+    while IFS= read -r path; do
+      id="$([ -n "$path" ] && sdd_artifact_id "$path")"
       ids="$ids|${id//./::}"
     done < <(sdd_links "$links_file" | awk -F'\t' -v heads="$(printf '%s,' $heads)" '
       BEGIN { n = split(heads, h, ","); for (i = 1; i < n; i++) want[h[i]] = 1 }
-      ($1 in want) && !($1 in seen) { seen[$1] = 1; f[$1] = $2; t[$1] = $4; p[$1] = $5 }
-      END { for (i = 1; i < n; i++) print f[h[i]] "\t" t[h[i]] "\t" p[h[i]] }')
+      ($1 in want) && !($1 in seen) { seen[$1] = 1; p[$1] = $5 }
+      END { for (i = 1; i < n; i++) print p[h[i]] }')
   fi
   sdd_body_section "$file" "Entities" \
     | awk -v ids="$ids" '
       BEGIN { nid = split(ids, idv, "|") }
       !/^\|/ { tab = 0 }
       /^\|/ && !tab { tab = 1; next }
-      # Entity header: a link, in either form; its id is the nth of `ids`
+      # Entity header: a link; its id is the nth of `ids`
       # (idv[1] is the empty text left of the first separator).
       /^###[[:space:]]+\[/ {
         rid = idv[++hn + 1]

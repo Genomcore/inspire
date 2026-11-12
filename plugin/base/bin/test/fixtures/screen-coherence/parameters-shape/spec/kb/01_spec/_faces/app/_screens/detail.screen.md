@@ -27,7 +27,7 @@ of the roster.
 
 | Key | Action | Notes |
 |---|---|---|
-| `record` | [[auth.user.get\|auth::user::get]] | the account named by param `id` |
+| `record` | [auth::user::get](../../../_modules/auth/_domain/user/user.get.action.md) | the account named by param `id` |
 
 ### States
 

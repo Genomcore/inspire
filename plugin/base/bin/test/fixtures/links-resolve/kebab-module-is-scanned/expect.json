@@ -5,12 +5,12 @@
     {
       "rule": "links-resolve",
       "severity": "error",
-      "message_substring": "entry.promote.action.md.*does not resolve: ..this-target-resolves-nowhere"
+      "message_substring": "entry.promote.action.md.*wikilink ..this-target-resolves-nowhere.. at line 13"
     },
     {
       "rule": "links-resolve",
       "severity": "error",
-      "message_substring": "entry.promote.action.md.*knowledge-base.entry.*resolves to"
+      "message_substring": "entry.promote.action.md.*wikilink ..knowledge-base.entry.. at line 31"
     }
   ]
 }

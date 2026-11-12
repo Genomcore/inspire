@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## Purpose
-The organisation entity, grounded in [[auth-tenancy]].
+The organisation entity, grounded in [auth-tenancy](../../_features/tenancy.feature.md).
 
 ## Rationale
-Tenancy rationale, per [[adr-auth-03-tenancy]].
+Tenancy rationale, per [adr-auth-03-tenancy](../../../../_adr/auth-03-tenancy.adr.md).
 
 ## Invariants
 None beyond Fields constraints.

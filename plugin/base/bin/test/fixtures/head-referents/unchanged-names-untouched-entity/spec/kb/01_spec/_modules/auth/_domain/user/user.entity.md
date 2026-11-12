@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## Purpose
-The user entity, grounded in [[auth-user-management]].
+The user entity, grounded in [auth-user-management](../../_features/user-management.feature.md).
 
 ## Rationale
-Rationale, per [[adr-auth-01-identity-model]].
+Rationale, per [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
 
 ## Invariants
 None beyond Fields constraints.

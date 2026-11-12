@@ -7,11 +7,10 @@
     {
       "rule": "links-resolve",
       "severity": "error",
-      "message_substring": "does not resolve: ..users.no-such-screen"
+      "message_substring": "link does not resolve: .users.no-such-screen.(no-such-screen.screen.md) at line 24"
     }
   ],
   "forbidden": [
-    "\"severity\":\"warning\"",
-    "users.list]]"
+    "\"severity\":\"warning\""
   ]
 }

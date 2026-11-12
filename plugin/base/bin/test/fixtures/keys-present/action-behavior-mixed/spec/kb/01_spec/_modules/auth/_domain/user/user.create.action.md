@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Create a user account, per [[auth-user-management]].
+Create a user account, per [auth-user-management](../../_features/user-management.feature.md).
 
 ## Inputs
 

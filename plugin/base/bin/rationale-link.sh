@@ -11,8 +11,8 @@
 #   - Action descriptor: ## Purpose OR ## Behavior (either is acceptable —
 #                        prosaic back-sourcing can land in either section).
 #
-# A Markdown link (`[text](path)`) or a wikilink (`[[anything]]`) counts; this
-# rule does not verify resolution (that is `links-resolve`'s job).
+# A Markdown link (`[text](path)`) counts; this rule does not verify resolution
+# (that is `links-resolve`'s job).
 #
 # Severity: lifecycle-progressive.
 #   - object at lifecycle: draft or superseded → warning
@@ -33,10 +33,7 @@ sdd_init_counters
 
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
-sdd_link_index
-trap 'rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
-
-# Returns 0 if the file's named section contains ≥1 link of either form.
+# Returns 0 if the file's named section contains ≥1 link.
 section_has_link() {
   [ -n "$(sdd_section_links "$1" "$2")" ]
 }

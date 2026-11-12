@@ -1,8 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "links-resolve", "message_substring": "knowledge-base::entry::promote.*resolves to .*entry.promote.action.md" },
-    { "rule": "links-resolve", "message_substring": "knowledge-base::entry\\]\\].*resolves to .*entry.entity.md" }
-  ],
-  "forbidden": ["does not resolve"]
-}

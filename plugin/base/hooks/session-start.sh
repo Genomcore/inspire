@@ -67,7 +67,7 @@ learnings), author the **prose** in \`${LANG_VALUE}\`. This holds regardless of 
 language of this conversation and regardless of the product's own UI i18n: reply \
 to the operator in their language, but write the *files* in the project language. \
 Machine-read tokens stay verbatim — frontmatter keys and enum values (\`kind\`, \
-\`status\`, \`maturity\`, lifecycle states), wikilink target slugs, file/directory \
+\`status\`, \`maturity\`, lifecycle states), link paths, file/directory \
 names, IDs and status-map keys are never translated. See \
 \`.claude/skills/_references/output-language.md\` for the full rule.
 

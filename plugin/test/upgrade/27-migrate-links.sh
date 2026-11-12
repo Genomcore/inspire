@@ -3,7 +3,7 @@
 # (plugin/scripts/migrate-links.sh, adr-markdown-links D6).
 #
 # What it must hold: each resolution source resolves what only it can, an id resolves
-# to the file the validators resolve it to, a pre-move name two files had resolves
+# to the file the id index (scripts/lib/wikilinks.sh) resolves it to, a pre-move name two files had resolves
 # nothing, aliases, escaped table pipes and frontmatter convert, code and embeds stay,
 # unresolved links are listed and left, a dry run writes nothing, a second run changes
 # nothing, git is only read, and a layered KB is refused.
@@ -65,9 +65,16 @@ printf '# T-1\nTouches [[a]].\n' | mk "$K/99_tracker/tickets/T-1.md"
 
 eq "it counts the wikilinks outside code" "$(cd "$P" && bash "$LINKS" --count)" "13"
 # path_read <dir> <file> <line> — the file the validators' reader resolves that line's link to.
-path_read() { (cd "$1" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && SDD_ENTITY_INDEX_FILE="" && sdd_links "$2" | awk -F'\t' -v l="$3" '$1 == l { print $5 }'; rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"); }
-shared_before="$(path_read "$P" inspire_kb/01_spec/_modules/a/a.module.md 8)"
-premise "the reader resolves the key two features share" "[ -n '$shared_before' ]"
+path_read() { (cd "$1" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && sdd_links "$2" | awk -F'\t' -v l="$3" '$1 == l { print $5 }'); }
+# index_read <dir> <target> — the file the converter's id index resolves a wikilink target to.
+index_read() {
+  (cd "$1" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && . "$PLUGIN_ROOT/scripts/lib/wikilinks.sh" || exit 1
+   wikilink_index
+   awk -v t="$2" "$WIKILINK_AWK_RESOLVE"'{ wiki_ix_add($0) } END { print wiki_resolve(t) }' "$WIKILINK_INDEX_FILE"
+   rm -f "${WIKILINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}")
+}
+shared_before="$(index_read "$P" create)"
+premise "the index resolves the key two features share" "[ -n '$shared_before' ]"
 
 before="$(tree_hash "$P")"
 out="$(cd "$P" && bash "$LINKS" --dry-run 2>&1)"; rc=$?
@@ -86,7 +93,7 @@ has "an old screen id resolves through the id map"           "$A" "- id map: [a.
 has "an alias becomes the text"                              "$A" "- alias: [the detail screen](../../_faces/portal/_screens/detail.screen.md)"
 has "an escaped table pipe splits target from alias"         "$A" "| x | [module b](../b/b.module.md) |"
 has "a key two files share converts"                         "$A" "- shared: [create]("
-eq  "to the file the validators resolve it to" \
+eq  "to the file the index resolves it to" \
     "$(path_read "$P" inspire_kb/01_spec/_modules/a/a.module.md 8)" "$shared_before"
 has "a pre-move name two files had resolves nothing"         "$A" "- ambiguous old name: [[legacy]]"
 has "a link to nothing stays as written"                     "$A" "- nowhere: [[nowhere]]"
@@ -216,7 +223,7 @@ quoted: '[[b]]'
 anchor [[b#context]] and [[b#context|ctx]] and [[#local]]
 space [[my file (v2)]] crlf id [[zed.custom]]
 E
-reader() { (cd "$E" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && SDD_ENTITY_INDEX_FILE="" && sdd_links "$1"; rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"); }
+reader() { (cd "$E" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && sdd_links "$1" wiki); }
 wikis_read=0
 while IFS= read -r f; do
   wikis_read=$((wikis_read + $(reader "$f" | awk -F'\t' '$2 == "wiki"' | wc -l)))
@@ -263,7 +270,7 @@ hasnt "the reader finds no unresolved link" "$(printf '%s\n' "$R1" | awk -F'\t' 
 X="$W/screen-name"; XS="$X/inspire_kb/01_spec"
 printf -- '---\nid: portal.orders\n---\n# Orders\n' | mk "$XS/_faces/portal/_screens/orders.screen.md"
 printf '# Bundle: api\n## Actions\n- [[orders]] (whole module)\n- [[orders.screen]]\n' | mk "$XS/_bundles/api.bundle.md"
-eq "the reader resolves no module from a screen's file name" "$(path_read "$X" inspire_kb/01_spec/_bundles/api.bundle.md 3)" ""
+eq "the index resolves no module from a screen's file name" "$(index_read "$X" orders)" ""
 out="$(cd "$X" && bash "$LINKS" 2>&1)"
 B="$(cat "$XS/_bundles/api.bundle.md")"
 has "so the converter leaves it as written and lists it" "$out" "unresolved${TAB}inspire_kb/01_spec/_bundles/api.bundle.md${TAB}3${TAB}[[orders]]"
@@ -330,6 +337,38 @@ after="$(tree_hash "$Z")"
 out="$(cd "$Z" && bash "$LINKS" 2>&1)"
 eq "a second rebase run changes nothing" "$(tree_hash "$Z")" "$after"
 has "and lists the broken links again" "$out" "Markdown links: 0 rebased through the move record, 2 broken and left as written"
+
+# A link to a layered directory, or to its README, names the concept directory that
+# took its contents, or that directory's README; no link is rebased into _migration/ (D7).
+Y="$W/layered-dirs"; YK="$Y/inspire_kb"; YD="$YK/01_spec"
+mk "$YD/_migration/plan.tsv" <<E
+move${TAB}inspire_kb/01_adr/README.md${TAB}inspire_kb/01_spec/_adr/README.md
+move${TAB}inspire_kb/01_adr/adr-b.md${TAB}inspire_kb/01_spec/_modules/m/_adr/b.adr.md
+move${TAB}inspire_kb/03_features/README.md${TAB}inspire_kb/01_spec/_migration/unplaced/03_features/README.md
+unplaced${TAB}inspire_kb/04_domain/notes.md${TAB}inspire_kb/01_spec/_migration/unplaced/04_domain/notes.md
+E
+printf '# ADRs\n' | mk "$YD/_adr/README.md"
+printf '# m\n' | mk "$YD/_modules/m/m.module.md"
+printf '# B\n' | mk "$YD/_modules/m/_adr/b.adr.md"
+printf '# app\n' | mk "$YD/_faces/app/app.face.md"
+printf '# features\n' | mk "$YD/_migration/unplaced/03_features/README.md"
+printf '# notes\n' | mk "$YD/_migration/unplaced/04_domain/notes.md"
+mk "$YK/06_spikes/README.md" <<'E'
+Decisions: [adr](../01_adr) and [its readme](../01_adr/README.md).
+Features: [features](../03_features/) and [their readme](../03_features/README.md).
+Screens: [screens](../05_screens). Notes: [notes](../04_domain/notes.md).
+E
+out="$(cd "$Y" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the layered-directory run exits 0" "$rc" "0"
+R="$(cat "$YK/06_spikes/README.md")"
+has "a layered directory link names the concept directory" "$R" "Decisions: [adr](../01_spec/_adr) and"
+has "a layered README link names the concept directory's README" "$R" "[its readme](../01_spec/_adr/README.md)."
+has "a trailing slash names the directory too" "$R" "Features: [features](../01_spec/_modules) and"
+has "a README the concept directory lacks names the directory, not _migration/" "$R" "[their readme](../01_spec/_modules)."
+has "every layered directory has its concept directory" "$R" "Screens: [screens](../01_spec/_faces)."
+has "a link whose move took its target into _migration/ is left" "$R" "Notes: [notes](../04_domain/notes.md)."
+has "and listed as broken" "$out" "broken${TAB}inspire_kb/06_spikes/README.md${TAB}3${TAB}[notes](../04_domain/notes.md)"
+hasnt "no link is rebased into _migration/" "$out" "_migration/unplaced"
 
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"

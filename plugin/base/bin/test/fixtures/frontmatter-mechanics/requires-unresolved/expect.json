@@ -1,6 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "requires-resolves", "message_substring": "requires target does not resolve" }
-  ]
-}

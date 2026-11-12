@@ -1,4 +1,0 @@
----
-id: billing::invoice
----
-# invoice

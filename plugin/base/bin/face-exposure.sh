@@ -40,21 +40,18 @@ emit() {
   sdd_count_by_severity "$1"
 }
 
-# Every link in a file's `## <section>`, as the id it refers to (a wikilink's declared
-# id, a Markdown link's target file id), dots folded to `::` so `orders.order.close`
-# and `orders::order::close` agree.
+# Every link in a file's `## <section>`, as the id of the file it names, dots folded
+# to `::` so `orders.order.close` and `orders::order::close` agree.
 links_in() {
   sdd_section_link_ids "$1" "$2" \
     | while IFS= read -r l; do
-        l="${l%%#*}"
         printf '%s\n' "${l//./::}"
       done
 }
 
 # face id → its bundles' exposure, one entry per line: `module` or `m::e::a`.
 FACE_FILES="$(mktemp -t sdd-face-files.XXXXXX)"
-sdd_link_index
-trap 'rm -f "$FACE_FILES" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "$FACE_FILES"' EXIT
 while IFS= read -r f; do
   [ -n "$f" ] && printf '%s\t%s\n' "$(sdd_artifact_id "$f")" "$f" >> "$FACE_FILES"
 done < <(sdd_find_faces "$SDD_SPEC_ROOT")
