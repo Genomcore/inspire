@@ -200,48 +200,6 @@ sdd_fm_value() {
   yq --front-matter=extract "$path // \"\"" "$file" 2>/dev/null || true
 }
 
-# Strip [[ and ]] wikilink wrappers and unwrap pipe-syntax to the canonical id.
-# Prints the unwrapped id (colon::form) to stdout. No-op on already-bare strings.
-#
-# Pipe-syntax wikilinks (V3 convention) carry the dotted on-disk name on the
-# left of `|` and the colon-form canonical id on the right:
-#   "[[auth.password.hash|auth::password::hash]]" → "auth::password::hash"
-# Bare wikilinks (no pipe) are returned as-is after stripping the brackets:
-#   "[[auth::user::create]]" → "auth::user::create"
-sdd_unwrap_wikilink() {
-  local s="$1"
-  s="${s#\[\[}"
-  s="${s%\]\]}"
-  # If there's a `|`, the right-hand side is the canonical id.
-  if [[ "$s" == *"|"* ]]; then
-    s="${s#*|}"
-  fi
-  printf '%s\n' "$s"
-}
-
-# Strip [[ and ]] wrappers and read the LINK TARGET — the left of `|`.
-# Prints the target to stdout. No-op on already-bare strings.
-#
-# The counterpart of sdd_unwrap_wikilink above, and the contrast is the whole
-# point: that one answers "what id does this link DECLARE?", which the V3
-# convention writes on the right; this one answers "what file does this link
-# POINT AT?", which is always the left — `[[adr-x|the audit decision]]` points
-# at `adr-x`. Reading the right side for a target reports every aliased prose
-# link as dangling, which is the defect this pair exists to keep apart.
-#
-# A pipe escaped for a markdown table cell (`[[a.b\|a::b]]`) leaves its
-# backslash at the end of the target, so it is stripped.
-sdd_wikilink_target() {
-  local s="$1"
-  s="${s#\[\[}"
-  s="${s%\]\]}"
-  if [[ "$s" == *"|"* ]]; then
-    s="${s%%|*}"
-    s="${s%\\}"
-  fi
-  printf '%s\n' "$s"
-}
-
 # Extract a frontmatter list value by path expression (e.g. ".depends_on").
 # Prints one item per line on stdout. Empty output if the list is missing or
 # the value isn't a list. The trailing "?" suppresses errors on missing keys.
@@ -808,7 +766,7 @@ sdd_exit_with_counters() {
 
 # sdd_progressive_severity <lifecycle>
 #   Maps an object's lifecycle to the severity tier for lifecycle-
-#   progressive rules. Used by field-coverage, rationale-wikilink,
+#   progressive rules. Used by field-coverage, rationale-link,
 #   sections-present (its order check) and prose-style (its four
 #   non-heuristic checks).
 #     draft (and empty / unknown) → warning
@@ -1022,7 +980,7 @@ sdd_body_section() {
 # sdd_body_prose <file> <header_name>
 #   sdd_body_section reduced to prose: fenced code blocks, table rows and bare
 #   thematic breaks are dropped, and wikilinks are unwrapped to their display
-#   text (the same right-of-the-pipe reading sdd_unwrap_wikilink applies, so
+#   text (the right of the pipe, so
 #   `[[auth.user|auth::user]]` reads as `auth::user` and `[[adr-x]]` as
 #   `adr-x`). What is left is the text a human reads, which is what the
 #   prose-style checks measure.

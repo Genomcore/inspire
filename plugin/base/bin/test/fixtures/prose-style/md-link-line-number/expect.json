@@ -1,0 +1,13 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "prose-style",
+      "severity": "warning",
+      "message_substring": "R2 sentence length: 37 words in '## Purpose' .line 12."
+    }
+  ],
+  "forbidden": [
+    "(line 8)"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "error",
+      "message_substring": "stable screen declares a to-extract component: bulk-bar"
+    }
+  ],
+  "forbidden": ["data-table"]
+}

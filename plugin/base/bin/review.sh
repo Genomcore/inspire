@@ -44,7 +44,7 @@ screen-coherence.sh \
 screen-presentation.sh \
 design-system-coherence.sh \
 field-coverage.sh \
-rationale-wikilink.sh \
+rationale-link.sh \
 keys-present.sh \
 constraints-mechanics.sh \
 head-referents.sh \

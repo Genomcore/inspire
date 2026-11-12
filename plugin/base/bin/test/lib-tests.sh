@@ -402,20 +402,34 @@ hasnt "the extension still tells the two apart" \
       "ENT.*promote" "$(cat "$ROOT/kebab.out")"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# The two wikilink readers — one link, two questions, opposite answers
+# The two halves of a wikilink, as `sdd_links` reads them — one link, two
+# questions, opposite answers
 #
-# `[[target|display]]` declares an id on the right and points at a file on the
-# left. Each reader is pinned against the other here, because a rule that asked
-# the wrong one reported every aliased prose link in a vault as dangling.
+# `[[target|display]]` declares an id on the right (the text field) and points at
+# a file on the left (the target field). A rule that asked the wrong half
+# reported every aliased prose link in a vault as dangling.
 # ─────────────────────────────────────────────────────────────────────────────
 
-eq "unwrap reads the declared id"           "$(sdd_unwrap_wikilink '[[auth.user|auth::user]]')" "auth::user"
-eq "target reads the file it points at"     "$(sdd_wikilink_target '[[auth.user|auth::user]]')" "auth.user"
-eq "an alias is never the target"           "$(sdd_wikilink_target '[[adr-x|the audit decision]]')" "adr-x"
-eq "a path target survives whole"           "$(sdd_wikilink_target '[[../../01_adr/adr-x|the audit decision]]')" "../../01_adr/adr-x"
-eq "the table-cell escape is not the target" "$(sdd_wikilink_target '[[a.b\|a::b]]')" "a.b"
-eq "a bare link is its own target"          "$(sdd_wikilink_target '[[adr-x]]')" "adr-x"
-eq "only the first pipe divides"            "$(sdd_wikilink_target '[[adr-x|a|b]]')" "adr-x"
+# wl <link> <field> — one field (3 target, 4 text) of the only link in a one-line file.
+wl() {
+  printf '%s\n' "$1" > "$ROOT/wl.md"
+  (
+    SDD_KB_ROOT="$ROOT/wl-kb"; SDD_SPEC_ROOT="$SDD_KB_ROOT/01_spec"
+    SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+    mkdir -p "$SDD_SPEC_ROOT"
+    sdd_link_index
+    sdd_links "$ROOT/wl.md" | cut -f"$2"
+    rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+  )
+}
+
+eq "unwrap reads the declared id"           "$(wl '[[auth.user|auth::user]]' 4)" "auth::user"
+eq "target reads the file it points at"     "$(wl '[[auth.user|auth::user]]' 3)" "auth.user"
+eq "an alias is never the target"           "$(wl '[[adr-x|the audit decision]]' 3)" "adr-x"
+eq "a path target survives whole"           "$(wl '[[../../01_adr/adr-x|the audit decision]]' 3)" "../../01_adr/adr-x"
+eq "the table-cell escape is not the target" "$(wl '[[a.b\|a::b]]' 3)" "a.b"
+eq "a bare link is its own target"          "$(wl '[[adr-x]]' 3)" "adr-x"
+eq "only the first pipe divides"            "$(wl '[[adr-x|a|b]]' 3)" "adr-x"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # sdd_links — every link in a file, both forms, with the file each one names

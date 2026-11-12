@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "rationale-link", "message_substring": "has no link" }
+  ]
+}

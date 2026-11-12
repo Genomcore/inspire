@@ -4,6 +4,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -15,24 +16,22 @@ emit() {
   sdd_count_warning
 }
 
+# header_targets <file> <marker> — the name each link on the `**Marker:**` line
+# targets: a wikilink's last path segment, a Markdown link's file id (a broken one
+# names none).
 header_targets() {
-  awk -v pfx="$2" '
+  local ln form target text path t
+  ln="$(awk -v pfx="$2" '
     /^---[ \t]*$/ && NR == 1 { fm = 1; next }
     fm { if ($0 ~ /^---[ \t]*$/) fm = 0; next }
-    index($0, pfx) == 1 {
-      s = $0
-      while (match(s, /\[\[[^]]+\]\]/)) {
-        t = substr(s, RSTART + 2, RLENGTH - 4)
-        p = index(t, "|")
-        if (p > 0) t = substr(t, 1, p - 1)
-        sub(/#.*/, "", t)
-        n = split(t, seg, "/")
-        print seg[n]
-        s = substr(s, RSTART + RLENGTH)
-      }
-      exit
-    }
-  ' "$1"
+    index($0, pfx) == 1 { print NR; exit }
+  ' "$1")"
+  [ -n "$ln" ] || return 0
+  sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
+    if [ "$form" = "wiki" ]; then t="${target%%#*}"; printf '%s\n' "${t##*/}"
+    elif [ -n "$path" ]; then sdd_artifact_id "$path"
+    fi
+  done
 }
 
 table_rows() {
@@ -223,7 +222,8 @@ SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 [ -n "$SCOPE_DIR" ] || exit 0
 
 OPEN_COUNT="$(mktemp -t sdd-open-count.XXXXXX)"
-trap 'rm -f "$OPEN_COUNT"' EXIT
+sdd_link_index
+trap 'rm -f "$OPEN_COUNT" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r screen_file; do
   [ -z "$screen_file" ] && continue
