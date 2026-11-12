@@ -113,12 +113,19 @@ for this commit.
 ```
 
 It prints one `link` line per link it converts (file, line, the source that resolved
-it, the wikilink, the Markdown link) and one `unresolved` line per link it cannot
-resolve, and writes nothing. A link resolves through, in order: its path, mapped
+it, the wikilink, the Markdown link), one `draft` or `unlinked` line per link it
+settles, and writes nothing. A link resolves through, in order: its path, mapped
 through the move record; its path against the current files; the id index, which
 resolves a wikilink the way the validators did before 0.16.1 and reads the screen id
-map, so the link names the file they read; its target as a pre-move file name, mapped through the move
-record. A pre-move name two files had resolves nothing. The move record is `_migration/plan.tsv`, or,
+map, so the link names the file they read; its target as a pre-move file name, mapped
+through the move record. A pre-move name two files had resolves nothing.
+
+A wikilink none of these resolves is settled without a person, because a wikilink left
+in the KB stops the Factory. An ADR id (`adr-{slug}`), an entity id whose module
+exists, an action id whose entity exists or a screen id whose face exists gets that
+artifact's draft, from its template and in its first state, with one `drafted` line
+per file; the link names it. Any other link becomes its text, one `unlinked` line each
+with why: a retired file, a placeholder, or an id that names no artifact type. The move record is `_migration/plan.tsv`, or,
 when there is none, the renames git holds since the commit before the layered
 directories left, read and never written; when the history does not show that
 commit, ask the operator for it and pass `--since REV`.
@@ -129,7 +136,11 @@ and a target that moved, or a directory whose files all moved to one directory, 
 followed through the move record. A link to a layered directory, or to its README,
 names the concept directory that took its contents (`01_adr` → `_adr`, `02_modules`,
 `03_features` and `04_domain` → `_modules`, `05_screens` → `_faces`), or that
-directory's README. No link is converted or rebased into `_migration/`. A Markdown link
+directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
+`_modules/{m}`, `03_features/{m}` → `_modules/{m}/_features`, `04_domain/{m}` →
+`_modules/{m}/_domain`, `05_screens/{f}/{m}` → `_faces/{f}/_screens`, a screen index →
+`_faces/{f}/_index.md`). A link to a retired file, or a placeholder outside a template,
+becomes its text. No link is converted or rebased into `_migration/`. A Markdown link
 that still names nothing, anywhere under the KB, gets a `broken` line and stays as
 written.
 
@@ -139,10 +150,9 @@ so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
 holding a space or a parenthesis is written in `<…>`, and a link in frontmatter is a
 quoted string. Links inside code spans and fenced blocks stay as written.
 
-**Relay the count per source, the rebased count, and every `unresolved` and `broken`
-line**: an unresolved one stays a wikilink, and `links-resolve` reports it until it
-points at a file. Ask the operator which file each one means, and edit each link they
-name to that file's id or path before the act run, which then converts it. Then run it without `--dry-run`;
+**Relay the count per source, the rebased count, and every `drafted`, `unlinked` and
+`broken` line**: a draft is a file to fill in, and `links-resolve` reports a broken link
+in a typed file until it points at a file. Then run it without `--dry-run`;
 it refuses while git lists uncommitted moves, additions or deletions under the KB
 (Step 3 comes first). The link plan is saved to
 `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
@@ -165,8 +175,8 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- `links-resolve` errors for each link in a typed file that Step 4 listed as
-  unresolved or broken, until the operator points it at a file.
+- `links-resolve` errors for each link in a typed file that Step 4 listed as broken,
+  until the operator points it at a file.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.

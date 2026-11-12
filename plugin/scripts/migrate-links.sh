@@ -19,26 +19,34 @@
 # its target as a pre-move file name, mapped through the move record, where a name
 # two files had resolves nothing.
 #
+# A wikilink none of them resolves is settled without a person (D6): an ADR id, an
+# entity id whose module exists, an action id whose entity exists or a screen id whose
+# face exists gets that artifact's draft from its shipped template, and the link
+# names it; anything else, a retired file or a placeholder included, becomes its text.
+#
 # A Markdown link that names nothing where it stands is rebased (D7): its path is
 # read from the file's pre-move location, and a target that moved, or a directory
 # whose files all moved to one directory, is followed through the move record. A link
 # to a layered directory, or to its README, names the concept directory that took its
-# contents, or that directory's README. A Markdown link that still names nothing is
-# listed as broken and left as written. No link is converted or rebased into
-# 01_spec/_migration/.
+# contents, or that directory's README; a subdirectory follows the layout, keeping a
+# deeper path where it exists. A link to a retired file, or a placeholder outside a
+# template, becomes its text. A Markdown link that still names nothing is listed as
+# broken and left as written. No link is converted or rebased into 01_spec/_migration/.
 #
 # Output (stdout): the plan, one tab-separated line per step —
-#   link <file> <line> <source> <wikilink> <markdown> · unresolved <file> <line> <wikilink> ·
+#   link <file> <line> <source> <wikilink> <markdown> ·
+#   draft <file> <line> draft <wikilink> <markdown> · drafted <new file> <kind> ·
+#   unlinked <file> <line> <link> <text> <why> ·
 #   link <file> <line> rebased <old link> <new link> · broken <file> <line> <link> ·
 #   note <text>
-# In act mode the files are rewritten and the plan is saved to
+# In act mode the files are rewritten, the drafts written, and the plan is saved to
 # 01_spec/_migration/links.tsv, when it changed anything.
 #
 # Exit: 0 converted (or nothing to do) · 1 refused (a layered KB, or moves git has not
 # committed) · 2 usage.
 #
-# It leaves a link inside a code span or a fenced block, and a link it cannot resolve,
-# as written. It reads git and never writes to it. bash 3.2 compatible.
+# It leaves a link inside a code span or a fenced block as written, and no wikilink
+# outside one. It reads git and never writes to it. bash 3.2 compatible.
 
 set -uo pipefail
 
@@ -47,7 +55,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -204,19 +212,65 @@ ALLF="$WORK/all-files.txt"; ALLD="$WORK/all-dirs.txt"
 find "$KB" -type f | awk -v p="$KB/" '{ print substr($0, length(p) + 1) }' > "$ALLF"
 find "$KB" -type d | awk -v p="$KB/" '{ print ($0 == substr(p, 1, length(p) - 1)) ? "." : substr($0, length(p) + 1) }' > "$ALLD"
 
+# draft_file <kind> <path> <id parts…> — an artifact's draft from its shipped template
+# (adr-kb-structure D4), in its first state. Each identity placeholder is filled, and a
+# link whose target does not exist (a placeholder, a sample) becomes its text, so the
+# draft links nothing that is not there.
+TEMPLATES="$HERE/../base/skills"
+draft_file() {
+  local kind="$1" dest="$2" a="$3" b="$4" c="$5" tpl
+  case "$kind" in
+    adr) tpl="$TEMPLATES/inspire-adr/templates/adr.template.md" ;;
+    adr.rationale) tpl="$TEMPLATES/inspire-adr/templates/adr.rationale.template.md" ;;
+    entity|action) tpl="$TEMPLATES/inspire-domain/templates/$kind.template.md" ;;
+    screen) tpl="$TEMPLATES/inspire-screens/templates/screen.template.md" ;;
+  esac
+  LC_ALL=C awk -v kind="$kind" -v a="$a" -v b="$b" -v c="$c" -v dir="$(dirname "$dest")" "$AWK_LIB"'
+    function fill(s, from, to,   i, o) {
+      o = ""; while ((i = index(s, from)) > 0) { o = o substr(s, 1, i - 1) to; s = substr(s, i + length(from)) }
+      return o s
+    }
+    function there(p,   q) {
+      q = (substr(p, 1, 1) == "/") ? p : dir "/" p; gsub(/\047/, "\047\\\047\047", q)
+      return system("test -e \047" q "\047") == 0
+    }
+    function unlink(line,   masked, res, off, st, tok, d) {
+      masked = sdd_unspan(line, 1); res = ""; off = 0
+      while (sdd_next_md(substr(masked, off + 1))) {
+        st = off + MS; tok = substr(line, st, ML)
+        d = sdd_md_dest(substr(masked, st, ML), MT)
+        if (d != "" && (MDPATH ~ /[{}]/ || !there(MDPATH))) tok = substr(tok, (substr(tok, 1, 1) == "!") + 2, MT - 2 - (substr(tok, 1, 1) == "!"))
+        res = res substr(line, off + 1, st - off - 1) tok; off = st + ML - 1
+      }
+      return res substr(line, off + 1)
+    }
+    {
+      l = $0
+      if (kind ~ /^adr/) { title = a; gsub(/-/, " ", title); l = fill(fill(l, "{Title}", title), "{slug}", a) }
+      else if (kind == "screen") {
+        title = b; gsub(/-/, " ", title)
+        l = fill(fill(fill(fill(fill(l, "{Screen Title}", title), "{face}", a), "{slug}", b), "{screen}", b), "{module}", "")
+      }
+      else l = fill(fill(fill(l, "{{MODULE}}", a), "{{ENTITY}}", b), "{{ACTION}}", c)
+      if (sdd_fence(l) || sdd_in_fence()) print l; else print unlink(l)
+    }' "$tpl" > "$dest"
+}
+
 # ── convert ──────────────────────────────────────────────────────────────────
 OUT="$WORK/out"; mkdir -p "$OUT"
 PLAN="$WORK/links.tsv"
 CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
+DRAFTS="$WORK/drafts.tsv"; : > "$DRAFTS"
 # Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
 LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKILINK_INDEX_FILE" \
     -v ALLF="$ALLF" -v ALLD="$ALLD" \
-    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB$WIKILINK_AWK_RESOLVE"'
+    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" -v DRAFTS="$DRAFTS" "$AWK_LIB$WIKILINK_AWK_RESOLVE"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
-  # A path outside the KB, or absolute, is asked of the file system once.
+  # A path outside the KB, or absolute, is asked of the file system once. A draft this
+  # run makes is there.
   function present(p,   q) {
-    if ((p in FSET) || (p in DSET)) return 1
+    if ((p in FSET) || (p in DSET) || (p in DRAFTED)) return 1
     if (substr(p, 1, 1) != "/" && p !~ /^\.\.(\/|$)/) return 0
     if (!(p in OUTSIDE)) {
       q = (substr(p, 1, 1) == "/") ? p : KB "/" p; gsub(/\047/, "\047\\\047\047", q)
@@ -247,44 +301,77 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
         w = (substr(inner, lead + 1, 1) == "<") ? "<" d0 ">" : d0
         ntok = substr(rtok, 1, MT + 1) substr(inner, 1, lead) nd substr(inner, lead + length(w) + 1) ")"
         printf "link\t%s/%s\t%d\trebased\t%s\t%s\n", KB, f, ln, flat(rtok), flat(ntok)
+      } else if (UNLINK != "") {
+        ntok = md_text(rtok, MT)
+        printf "unlinked\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, flat(rtok), flat(ntok), UNLINK
       }
       res = res substr(line, off + 1, s - off - 1) ntok; off = s + ML - 1
     }
     return res substr(line, off + 1)
   }
+  # The text of the link token rtok, whose `](` is at p.
+  function md_text(rtok, p) {
+    if (substr(rtok, 1, 1) == "!") { rtok = substr(rtok, 2); p-- }
+    return substr(rtok, 2, p - 2)
+  }
   # No link points into _migration/ (D7): what the migration could not place stays there.
   function placed(p) { return p !~ /^01_spec\/_migration(\/|$)/ }
-  # layered(p) — the concept directory that took the contents of the layered directory
-  # p names, or its README when p names the layered README and that one exists (D7).
-  function layered(p,   top, rest, d) {
-    top = p; sub(/\/.*/, "", top); rest = substr(p, length(top) + 1)
-    if (top == "01_adr") d = "01_spec/_adr"
-    else if (top == "02_modules" || top == "03_features" || top == "04_domain") d = "01_spec/_modules"
-    else if (top == "05_screens") d = "01_spec/_faces"
+  # layered(p) — where the layout puts what the layered path p named (D7): a layered
+  # directory goes to the concept directory that took its contents, its README to the README of
+  # that directory when there is one, a subdirectory to the directory of its module or
+  # face with any deeper path kept, and a screen index to the _index.md of its face.
+  function layered(p,   n, s, d, i) {
+    n = split(p, s, "/")
+    if (s[1] == "01_adr") d = "01_spec/_adr"
+    else if (s[1] == "02_modules" || s[1] == "03_features" || s[1] == "04_domain") d = "01_spec/_modules"
+    else if (s[1] == "05_screens") d = "01_spec/_faces"
     else return ""
-    if (rest == "") return d
-    if (rest == "/README.md") return present(d "/README.md") ? d "/README.md" : d
-    return ""
+    if (n == 1) return d
+    if (n == 2 && s[2] == "README.md") return present(d "/README.md") ? d "/README.md" : d
+    if (s[1] == "01_adr") return ""
+    d = d "/" s[2]; i = 3
+    if (s[1] == "03_features") d = d "/_features"
+    else if (s[1] == "04_domain") d = d "/_domain"
+    else if (s[1] == "05_screens" && n == 4 && s[4] == "_index.md") return d "/_index.md"
+    else if (s[1] == "05_screens" && n >= 3) { d = d "/_screens"; i = 4 }
+    for (; i <= n; i++) d = d "/" s[i]
+    return d
   }
+  # retired(old) — a file the migration retired: its move record took it to
+  # _migration/retired/, or it is the surface roster or a layered theme file (D6).
+  function retired(old,   b) {
+    if ((old in REN) && REN[old] ~ /^01_spec\/_migration\/retired\//) return 1
+    b = old; sub(/.*\//, "", b)
+    return b == "surfaces.md" || b == "theme.md" || b == "theme.tokens.json"
+  }
+  # A template placeholder: braces or an ellipsis where a name belongs.
+  function placeholder(t) { return t ~ /[{}]/ || index(t, "…") }
+  function is_template(f) { return f ~ /(^|\/)(_template|[^\/]*\.template)\.md$/ }
   # rebased(f, written, path) — the new destination of a link that names nothing
   # where it stands, or "" (the link is listed as broken unless it resolves).
-  function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, anchor) {
+  # A link to a retired file, or a placeholder outside a template, becomes its text:
+  # UNLINK then holds the reason.
+  function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, c, anchor) {
+    UNLINK = ""
     abs = (substr(path, 1, 1) == "/")
     cur = abs ? path : normpath(join_path(dir_of(f), path))
     if (present(cur)) return ""
     if (!abs) {
       src = (f in BACK) ? BACK[f] : f
       old = normpath(join_path(dir_of(src), path)); nt = ""
-      if ((nt = layered(old)) != "") ;
-      else if (old in REN) nt = REN[old]
-      else if (old != cur && present(old)) nt = old
-      else if ((old in DMAP) && !(old in DCLASH)) nt = DMAP[old]
-      if (nt != "" && placed(nt) && present(nt)) {
+      if ((old in REN) && placed(REN[old]) && present(REN[old])) nt = REN[old]
+      else if ((c = layered(old)) != "" && present(c)) nt = c
+      else if (old != cur && placed(old) && present(old)) nt = old
+      else if ((old in DMAP) && !(old in DCLASH) && placed(DMAP[old]) && present(DMAP[old])) nt = DMAP[old]
+      if (nt != "") {
         anchor = (match(written, /[#?]/)) ? substr(written, RSTART) : ""
         st["rebased"]++
         return angle(relpath(nt, dir_of(f)) anchor)
       }
+      if (retired(old)) UNLINK = "retired"
     }
+    if (UNLINK == "" && placeholder(written) && !is_template(f)) UNLINK = "placeholder"
+    if (UNLINK != "") { st["unlinked"]++; return "" }
     st["broken"]++
     printf "broken\t%s/%s\t%d\t%s\n", KB, f, ln, flat(rtok)
     return ""
@@ -300,8 +387,8 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     if (index(target, "/")) {
       cand = normpath(join_path(dir_of((src in BACK) ? BACK[src] : src), target))
       if (cand !~ /\.md$/) cand = cand ".md"
-      if ((p = layered(cand)) != "" && exists(p)) { HOW = "moved-path"; return p }
       if ((cand in REN) && placed(REN[cand]) && exists(REN[cand])) { HOW = "moved-path"; return REN[cand] }
+      if ((p = layered(cand)) != "" && exists(p)) { HOW = "moved-path"; return p }
       cand = normpath(join_path(dir_of(src), target))
       if (cand !~ /\.md$/) cand = cand ".md"
       if (placed(cand) && exists(cand)) { HOW = "path"; return cand }
@@ -310,6 +397,47 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     seg = target; sub(/.*\//, "", seg); seg = tolower(seg); sub(/\.md$/, "", seg)
     if ((seg in STEM) && !(seg in STEMCLASH) && placed(STEM[seg]) && exists(STEM[seg])) { HOW = "moved-stem"; return STEM[seg] }
     return ""
+  }
+  # settle(src, target) — a wikilink no route resolves, settled without a person (D6).
+  # An id that names an artifact type gets its draft: DRAFT is its path, recorded in
+  # DRAFTS for the act run to create from the template. Anything else becomes its
+  # text: DRAFT is "" and WHY says why.
+  function settle(src, target,   t, c, n, s, m, f2, cand) {
+    DRAFT = ""; WHY = ""; t = target
+    if (placeholder(t)) { WHY = "placeholder"; return }
+    cand = normpath(join_path(dir_of((src in BACK) ? BACK[src] : src), t))
+    if (cand !~ /\.md$/) cand = cand ".md"
+    if (retired(cand)) { WHY = "retired"; return }
+    if (t ~ /^adr-[a-z0-9][a-z0-9-]*(\.rationale)?$/) {
+      m = substr(t, 5); c = (m ~ /\.rationale$/); sub(/\.rationale$/, "", m)
+      draft("adr", "01_spec/_adr/" m ".adr.md", m)
+      draft("adr.rationale", "01_spec/_adr/" m ".adr.rationale.md", m)
+      DRAFT = "01_spec/_adr/" m (c ? ".adr.rationale.md" : ".adr.md"); return
+    }
+    c = t; gsub(/::/, ".", c)
+    if (c !~ /^[a-z0-9][a-z0-9_-]*(\.[a-z0-9][a-z0-9_-]*)+$/) { WHY = "no artifact type"; return }
+    n = split(c, s, ".")
+    if (n == 3 && exists("01_spec/_modules/" s[1] "/_domain/" s[2] "/" s[2] ".entity.md")) {
+      DRAFT = "01_spec/_modules/" s[1] "/_domain/" s[2] "/" s[2] "." s[3] ".action.md"
+      draft("action", DRAFT, s[1] "\t" s[2] "\t" s[3]); return
+    }
+    if (n != 2) { WHY = "no artifact type"; return }
+    m = (("01_spec/_modules/" s[1]) in DSET); f2 = (("01_spec/_faces/" s[1]) in DSET)
+    if (m && (index(t, "::") || !f2)) {
+      DRAFT = "01_spec/_modules/" s[1] "/_domain/" s[2] "/" s[2] ".entity.md"
+      draft("entity", DRAFT, s[1] "\t" s[2]); return
+    }
+    if (f2 && !index(t, "::") && !m) {
+      DRAFT = "01_spec/_faces/" s[1] "/_screens/" s[2] ".screen.md"
+      draft("screen", DRAFT, s[1] "\t" s[2]); return
+    }
+    WHY = (m && f2) ? "a module and a face share the name" : "no artifact type"
+  }
+  # One line per draft file, once, unless the file is already there.
+  function draft(kind, p, ids) {
+    if ((p in DRAFTED) || exists(p)) return
+    DRAFTED[p] = 1; st["drafts"]++
+    printf "%s\t%s\t%s\n", kind, p, ids > DRAFTS
   }
   function flat(s) { gsub(/[\t\n]/, " ", s); return s }
   function trim(s) { sub(/^[ \t\n\r]+/, "", s); sub(/[ \t\n\r]+$/, "", s); return s }
@@ -358,9 +486,16 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
         if (target == "" && anchor != "") { HOW = "path"; rel = "" }
         else if ((path = resolve(f, raw, target)) != "") rel = relpath(path, dir_of(f))
         else {
-          st["unresolved"]++
-          printf "unresolved\t%s/%s\t%d\t%s\n", KB, f, ln, flat("[[" inner "]]")
-          continue
+          settle(f, target)
+          if (DRAFT != "") { HOW = "draft"; path = DRAFT; rel = relpath(path, dir_of(f)) }
+          else {
+            md = (alias != "") ? trim(alias) : target anchor
+            if (LFM[w]) md = yaml(md, LPRE[w])
+            out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
+            st["unlinked"]++
+            printf "unlinked\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, flat("[[" inner "]]"), flat(md), WHY
+            continue
+          }
         }
         if (alias != "") text = trim(alias)
         else if (target == "") text = substr(anchor, 2)
@@ -368,8 +503,8 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
         md = "[" text "](" angle(rel anchor) ")"
         if (LFM[w]) md = yaml(md, LPRE[w])
         out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
-        st[HOW]++; st["converted"]++
-        printf "link\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, HOW, flat("[[" inner "]]"), flat(md)
+        st[HOW]++; if (HOW != "draft") st["converted"]++
+        printf "%s\t%s/%s\t%d\t%s\t%s\t%s\n", (HOW == "draft" ? "draft" : "link"), KB, f, ln, HOW, flat("[[" inner "]]"), flat(md)
       }
       out = changed ? out substr(t, pos) : t
       if (changed) nchanged++
@@ -378,22 +513,24 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
       printf "%s", out > (OUT "/" n); close(OUT "/" n)
       printf "%s\t%s\n", f, OUT "/" n > CHANGED
     }
-    close(CHANGED)
+    close(CHANGED); close(DRAFTS)
     printf "files\t%d\n", nchanged > STATS
     for (k in st) printf "%s\t%d\n", k, st[k] > STATS
   }' > "$PLAN"
 
+awk -F'\t' -v kb="$KB" '{ print "drafted\t" kb "/" $2 "\t" $1 }' "$DRAFTS" >> "$PLAN"
 tally() { awk -F'\t' -v k="$1" '$1 == k { print $2; f = 1 } END { if (!f) print 0 }' "$STATS"; }
 converted="$(tally converted)"
 {
   printf 'note\tmove record: %s (%s renames)\n' "$record" "$(wc -l < "$RENAMES" | tr -d ' ')"
   [ -n "$git_note" ] && printf 'note\t%s\n' "$git_note"
   [ -n "$uncommitted" ] && printf 'note\tthe act run refuses until the moves are committed: git lists %s uncommitted move(s), addition(s) or deletion(s)\n' "$(printf '%s\n' "$uncommitted" | wc -l | tr -d ' ')"
-  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s unresolved and left as written, %s in code left as written\n' \
+  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s to %s new draft(s), %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
-    "$(tally unresolved)" "$(tally code)"
+    "$(tally draft)" "$(tally drafts)" "$(tally code)"
   printf 'note\tMarkdown links: %s rebased through the move record, %s broken and left as written\n' \
     "$(tally rebased)" "$(tally broken)"
+  printf 'note\tunlinked: %s link(s) became their text\n' "$(tally unlinked)"
 } >> "$PLAN"
 
 if [ "$DRY" -eq 1 ]; then
@@ -405,6 +542,13 @@ fi
 while IFS="$(printf '\t')" read -r rel src; do
   cat "$src" > "$KB/$rel"
 done < "$CHANGED"
+# Every draft is on disk before any is filled, so an ADR and its rationale link each other.
+while IFS="$(printf '\t')" read -r kind rel _; do
+  mkdir -p "$(dirname "$KB/$rel")" && : > "$KB/$rel"
+done < "$DRAFTS"
+while IFS="$(printf '\t')" read -r kind rel a b c; do
+  draft_file "$kind" "$KB/$rel" "$a" "$b" "$c"
+done < "$DRAFTS"
 if [ -s "$CHANGED" ] && [ -d "$SPEC" ]; then
   mkdir -p "$SPEC/_migration"
   cp "$PLAN" "$SPEC/_migration/links.tsv"
