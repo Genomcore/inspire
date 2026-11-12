@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "superseded-by-resolves", "message_substring": "superseded_by target does not resolve to an existing action: auth.user" }
+  ],
+  "finding_count": 1
+}

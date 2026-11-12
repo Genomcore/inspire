@@ -9,7 +9,9 @@
 #   2. requires-resolves  — every entry in `requires:` resolves to an existing
 #                           action descriptor under $SDD_SPEC_ROOT.
 #   3. superseded-by-resolves — when `superseded_by:` is set (non-empty, not
-#                           null), it resolves to an existing action descriptor.
+#                           null), it resolves to an existing object of the
+#                           file's own kind. A wikilink resolves through the
+#                           action index only, so an entity's never does.
 #
 # All findings are severity: error. These checks gate every commit regardless
 # of the primitive's lifecycle (mechanical correctness). Lifecycle-progressive
@@ -85,11 +87,13 @@ check_file() {
   # ---------- Check 3: superseded-by-resolves ----------
   local sb_form sb_written sb_id sb_path sb_target
   while IFS=$'\t' read -r sb_form sb_written sb_id sb_path; do
-    if [ "$sb_form" = "md" ]; then sb_target="$sb_path"; sb_id="${sb_id:-$sb_written}"
+    if [ "$sb_form" = "md" ]; then
+      sb_target="$sb_path"; sb_id="${sb_id:-$sb_written}"
+      [ -n "$sb_target" ] && [ "$(sdd_typed_kind "$sb_target")" != "$kind" ] && sb_target=""
     else sb_target="$(sdd_resolve_id "$sb_id")"; fi
     if [ -z "$sb_target" ]; then
       sdd_finding "error" "superseded-by-resolves" "$file" \
-        "superseded_by target does not resolve to an existing object: $sb_id"
+        "superseded_by target does not resolve to an existing $kind: $sb_id"
       sdd_count_error
     fi
   done < <(sdd_fm_link_refs "$file" superseded_by)
