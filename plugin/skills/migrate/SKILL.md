@@ -123,16 +123,22 @@ when there is none, the renames git holds since the commit before the layered
 directories left, read and never written; when the history does not show that
 commit, ask the operator for it and pass `--since REV`.
 
+A Markdown link already in the KB that names nothing where it stands is rebased, one
+`link … rebased` line each: its path is read from the file's location before the move,
+and a target that moved, or a directory whose files all moved to one directory, is
+followed through the move record. A Markdown link that still names nothing, anywhere
+under the KB, gets a `broken` line and stays as written.
+
 The new link's text is the wikilink's alias, else the last segment of its target,
 so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
 (`[[b#context]]`) stays on the new path, an embed (`![[b]]`) keeps its `!`, a path
 holding a space or a parenthesis is written in `<…>`, and a link in frontmatter is a
 quoted string. Links inside code spans and fenced blocks stay as written.
 
-**Relay the count per source and every `unresolved` line**: each one stays a
-wikilink, and `links-resolve` reports it until it points at a file. Ask the operator
-which file each one means, and edit each wikilink they name to that file's id or
-path before the act run, which then converts it. Then run it without `--dry-run`;
+**Relay the count per source, the rebased count, and every `unresolved` and `broken`
+line**: an unresolved one stays a wikilink, and `links-resolve` reports it until it
+points at a file. Ask the operator which file each one means, and edit each link they
+name to that file's id or path before the act run, which then converts it. Then run it without `--dry-run`;
 it refuses while git lists uncommitted moves, additions or deletions under the KB
 (Step 3 comes first). The link plan is saved to
 `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
@@ -155,8 +161,8 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- `links-resolve` errors for each link Step 4 listed as unresolved, until the operator
-  points it at a file.
+- `links-resolve` errors for each link in a typed file that Step 4 listed as
+  unresolved or broken, until the operator points it at a file.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.
