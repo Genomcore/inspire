@@ -553,17 +553,36 @@ sdd_link_index() {
       [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
     done < <(sdd_find_screens "$SDD_SPEC_ROOT")
     [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
-    # A file is named both by its plain name and by the id its typed name gives.
+    # A file is named by its plain name and by the id its typed name gives, unless its
+    # frontmatter declares another id: then that id is the file's (adr-kb-structure
+    # D3), and `orders.screen.md` with `id: portal.orders` is never `orders`.
     find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
       | awk '
+          function fm_id(f,   l, n, v) {
+            v = ""; n = 0
+            while ((getline l < f) > 0) {
+              sub(/\r$/, "", l)
+              if (++n == 1) { if (l != "---") break; continue }
+              if (l == "---") break
+              if (l ~ /^id:/) {
+                v = l; sub(/^id:[ \t]*/, "", v); sub(/[ \t]+(#.*)?$/, "", v)
+                gsub(/^["\047]|["\047]$/, "", v); break
+              }
+            }
+            close(f)
+            return v == "null" ? "" : v
+          }
           {
             n = split($0, seg, "/"); base = seg[n]; sub(/\.md$/, "", base)
             print "N\t" base "\t" $0
-            if (base ~ /\.adr\.rationale$/) { sub(/\.adr\.rationale$/, "", base); print "N\tadr-" base ".rationale\t" $0 }
-            else if (base ~ /\.adr$/) { sub(/\.adr$/, "", base); print "N\tadr-" base "\t" $0 }
+            if (base ~ /\.adr\.rationale$/) { sub(/\.adr\.rationale$/, "", base); id = "adr-" base ".rationale" }
+            else if (base ~ /\.adr$/) { sub(/\.adr$/, "", base); id = "adr-" base }
             else if (base ~ /\.(module|feature|entity|action|bundle|face|screen|process|component|layout|pattern)$/) {
-              sub(/\.[a-z]+$/, "", base); print "N\t" base "\t" $0
+              sub(/\.[a-z]+$/, "", base); id = base
             }
+            else next
+            fm = fm_id($0)
+            if (fm == "" || fm == id) print "N\t" id "\t" $0
           }'
   } > "$SDD_LINK_INDEX_FILE"
 }
@@ -580,7 +599,7 @@ sdd_links() {
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
   # Byte semantics, so a percent-escape decodes to the byte it names.
   LC_ALL=C awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" \
-    "$SDD_AWK_LINKS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
+    "$SDD_AWK_LINKS$SDD_AWK_WIKI_RESOLVE$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
     "$SDD_LINK_INDEX_FILE" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
       [ -n "$path" ] && [ -f "$path" ] || path=""
@@ -589,16 +608,10 @@ sdd_links() {
 }
 
 # The reader's awk program. The index file is read first; every later line is the
-# linking file. A wikilink resolves through the routes it always took (D5), in
-# order; a Markdown path is joined and normalized here and tested for existence by
-# the caller.
+# linking file. A Markdown path is joined and normalized here and tested for
+# existence by the caller.
 SDD_AWK_LINKS='
-  FILENAME == idx {
-    if ($0 !~ /\t/) next
-    split($0, r, "\t")
-    if (!((r[1], r[2]) in ix)) ix[r[1], r[2]] = r[3]
-    next
-  }
+  FILENAME == idx { sdd_ix_add($0); next }
   FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
   fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan(sdd_unspan($0), FNR); next }
   sdd_fence($0) { next }
@@ -670,27 +683,6 @@ SDD_AWK_LINKS='
     sdd_emit(ln, "wiki", t, text, sdd_wres(t))
   }
 
-  function sdd_wres(t,   c) {
-    sub(/#.*/, "", t)
-    if (t == "") return ""
-    # A path-shaped target means its last segment (adr-kb-structure D4).
-    if (index(t, "/")) { sub(/.*\//, "", t); sub(/\.md$/, "", t); if (t == "") return "" }
-    if (index(t, "::")) {
-      if (("A", t) in ix) return ix["A", t]
-      c = t; gsub(/::/, ".", c)
-      if (("E", c) in ix) return ix["E", c]
-    } else if (index(t, ".")) {
-      c = t; gsub(/\./, "::", c)
-      if (("A", c) in ix) return ix["A", c]
-      if (("E", t) in ix) return ix["E", t]
-      if (("N", t) in ix) return ix["N", t]
-    }
-    if (("S", t) in ix) return ix["S", t]
-    if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
-    if (("N", t) in ix) return ix["N", t]
-    return ""
-  }
-
   # An image is a link only when it embeds a KB file, a `.md` target (D1).
   function sdd_md(tok, p, ln,   img, text, dest, path) {
     if ((img = (substr(tok, 1, 1) == "!"))) { tok = substr(tok, 2); p-- }
@@ -733,6 +725,37 @@ SDD_AWK_LINKS='
     out = ""
     for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") st[i]
     return (abs ? "/" : "") out
+  }
+'
+
+# How a wikilink target resolves (D5), as awk source: each index line goes through
+# sdd_ix_add, and the first path a key names wins. migrate-links.sh composes the same
+# fragment, so a converted link names the file the validators resolved (D6).
+SDD_AWK_WIKI_RESOLVE='
+  function sdd_ix_add(line,   r) {
+    if (split(line, r, "\t") < 3) return
+    if (!((r[1], r[2]) in ix)) ix[r[1], r[2]] = r[3]
+  }
+
+  function sdd_wres(t,   c) {
+    sub(/#.*/, "", t)
+    if (t == "") return ""
+    # A path-shaped target means its last segment (adr-kb-structure D4).
+    if (index(t, "/")) { sub(/.*\//, "", t); sub(/\.md$/, "", t); if (t == "") return "" }
+    if (index(t, "::")) {
+      if (("A", t) in ix) return ix["A", t]
+      c = t; gsub(/::/, ".", c)
+      if (("E", c) in ix) return ix["E", c]
+    } else if (index(t, ".")) {
+      c = t; gsub(/\./, "::", c)
+      if (("A", c) in ix) return ix["A", c]
+      if (("E", t) in ix) return ix["E", t]
+      if (("N", t) in ix) return ix["N", t]
+    }
+    if (("S", t) in ix) return ix["S", t]
+    if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
+    if (("N", t) in ix) return ix["N", t]
+    return ""
   }
 '
 
@@ -1130,6 +1153,8 @@ sdd_body_subsection() {
 #   and a Markdown link takes the id of the file it points at (a broken one names
 #   none, so its rows are skipped):
 #     ### [module::entity](../entity/entity.entity.md)
+#   Either way the id comes out in the colon form, `module::entity`, whatever form
+#   the heading or the entity's `id:` writes, so the rules compare one form.
 #   <links_file> (default <file>) is the file the links are read and resolved
 #   from, for a caller that passes a line-preserving copy of its comments-stripped
 #   text; the caller ran `sdd_link_index` in its own shell.
@@ -1140,7 +1165,7 @@ sdd_body_subsection() {
 #   one row per declared field. `as_input` and `effect` are repeated on every
 #   row of the same entity (denormalized for downstream awk-friendliness).
 sdd_entities_touched() {
-  local file="$1" links_file="${2:-$1}" heads ids="" form text path
+  local file="$1" links_file="${2:-$1}" heads ids="" form text path id
   # The file lines of the headings, fenced ones too: sdd_body_section passes
   # fenced lines through, so the awk below counts them as well.
   heads="$(awk "${SDD_AWK_FM_READER}"'
@@ -1152,10 +1177,11 @@ sdd_entities_touched() {
   if [ -n "$heads" ]; then
     while IFS=$'\t' read -r form text path; do
       case "$form" in
-        wiki) ids="$ids|$text" ;;
-        md)   ids="$ids|$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
-        *)    ids="$ids|" ;;
+        wiki) id="$text" ;;
+        md)   id="$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
+        *)    id="" ;;
       esac
+      ids="$ids|${id//./::}"
     done < <(sdd_links "$links_file" | awk -F'\t' -v heads="$(printf '%s,' $heads)" '
       BEGIN { n = split(heads, h, ","); for (i = 1; i < n; i++) want[h[i]] = 1 }
       ($1 in want) && !($1 in seen) { seen[$1] = 1; f[$1] = $2; t[$1] = $4; p[$1] = $5 }

@@ -431,6 +431,23 @@ eq "the table-cell escape is not the target" "$(wl '[[a.b\|a::b]]' 3)" "a.b"
 eq "a bare link is its own target"          "$(wl '[[adr-x]]' 3)" "adr-x"
 eq "only the first pipe divides"            "$(wl '[[adr-x|a|b]]' 3)" "adr-x"
 
+# Both heading forms name a touched entity in one form, whatever form the entity's
+# `id:` or the wikilink writes: the rules compare it with the colon form.
+E="$ROOT/touched/kb/01_spec/_modules/auth/_domain/user"
+mkdir -p "$E"
+printf -- '---\nid: auth.user\n---\n' > "$E/user.entity.md"
+printf '%s\n' '## Entities' '### [auth.user](user.entity.md)' '| Field | Touch | Type |' '|---|---|---|' '| `id` | written | uuid |' \
+  '### [[auth.user]]' '| Field | Touch | Type |' '|---|---|---|' '| `email` | read | email |' > "$E/user.create.action.md"
+touched="$(
+  cd "$ROOT/touched" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_entities_touched "kb/01_spec/_modules/auth/_domain/user/user.create.action.md" | cut -f1,2
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+)"
+eq "entities_touched: a Markdown head and a dotted wikilink both give the colon id" \
+   "$touched" "$(printf 'auth::user\tid\nauth::user\temail')"
+
 eq "unwrap_links: a wikilink reads as its right half" \
    "$(printf 'see [[auth.user|auth::user]] and [[adr-x]]\n' | sdd_unwrap_links)" "see auth::user and adr-x"
 eq "unwrap_links: a Markdown link reads as its text, adjacent ones too" \

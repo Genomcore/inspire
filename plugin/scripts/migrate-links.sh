@@ -13,9 +13,10 @@
 #
 # A link resolves through, in order: its path, mapped through the move record
 # (01_spec/_migration/plan.tsv, else the renames `git diff -M` finds since the move);
-# its path against the current files; the id index; its target as a pre-move file
-# name, mapped through the move record; the screen id map
-# (01_spec/_migration/id-map.json). An ambiguous key resolves nothing.
+# its path against the current files; the id index the validators resolve wikilinks
+# with, the screen id map (01_spec/_migration/id-map.json) included, so the link names
+# the file they read; its target as a pre-move file name, mapped through the move
+# record, where a name two files had resolves nothing.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> · unresolved <file> <line> <wikilink> ·
@@ -49,12 +50,17 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-KB="${KB%/}"
+# The reader's span, fence and frontmatter rules, and its wikilink index, come from the
+# runtime library itself, pointed at this KB. The index names files by the normalized
+# KB path, so the KB is normalized the same way.
+. "$(cd -P "$(dirname "$0")" && pwd -P)/../base/bin/_lib.sh" || { printf 'migrate-links: cannot read the plugin library\n' >&2; exit 1; }
+KB="$(sdd_scope_norm "$KB")"
 SPEC="$KB/01_spec"
+SDD_KB_ROOT="$KB"; SDD_SPEC_ROOT="$SPEC"
 [ -d "$KB" ] || { printf 'migrate-links: no knowledge base at %s\n' "$KB" >&2; exit 1; }
 
 WORK="$(mktemp -d -t inspire-links.XXXXXX)"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 FILES="$WORK/files.txt"
 find "$KB" -type f -name '*.md' | awk -v p="$KB/" '{ print substr($0, length(p) + 1) }' | LC_ALL=C sort > "$FILES"
 
@@ -112,8 +118,6 @@ function wiki_scan(s, raw, base, ln, fm,   c, off, m) {
   return c
 }
 AWK
-# The reader's span, fence and frontmatter rules come from the runtime library itself.
-. "$(cd -P "$(dirname "$0")" && pwd -P)/../base/bin/_lib.sh" || { printf 'migrate-links: cannot read the plugin library\n' >&2; exit 1; }
 AWK_LIB="$AWK_LIB$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS"
 
 if [ "$COUNT" -eq 1 ]; then
@@ -181,48 +185,7 @@ else
   record="none: no plan.tsv, and the KB is not in a git work tree"
 fi
 
-# ── the id index: key <TAB> path, ambiguous keys dropped ─────────────────────
-INDEX="$WORK/index.tsv"
-LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
-  function add(k, p) {
-    k = tolower(k); if (k == "") return
-    if ((k in idx) && idx[k] != p) clash[k] = 1
-    idx[k] = p
-  }
-  BEGIN {
-    while ((getline f < LIST) > 0) files[++nf] = f
-    close(LIST)
-    T = "\\.(adr\\.rationale|module|feature|entity|action|adr|bundle|face|screen|process|component|layout|pattern|template)$"
-    for (n = 1; n <= nf; n++) {
-      f = files[n]; b = f; sub(/.*\//, "", b); b = substr(b, 1, length(b) - 3)
-      if (b == "README" || b == "_index") continue
-      add(b, f)
-      if (match(b, T)) {
-        s = substr(b, 1, RSTART - 1); ty = substr(b, RSTART + 1)
-        add(ty == "adr" ? "adr-" s : ty == "adr.rationale" ? "adr-" s ".rationale" : s, f)
-      }
-      t = slurp(KB "/" f)
-      h = substr(t, 1, 4) == "---\n" ? 5 : substr(t, 1, 5) == "---\r\n" ? 6 : 0
-      if (!h || !(k = index(substr(t, h), "\n---"))) continue
-      m = split(substr(t, h, k - 1), line, "\n")
-      for (i = 1; i <= m; i++) {
-        if (substr(line[i], 1, 3) != "id:") continue
-        v = substr(line[i], 4)
-        sub(/^[ \t\r]+/, "", v); sub(/^"/, "", v); sub(/[ \t\r]+$/, "", v); sub(/"$/, "", v)
-        if (v == "" || index(v, "\"")) continue
-        add(v, f); gsub(/::/, ".", v); add(v, f)
-        break
-      }
-    }
-    for (k in idx) if (!(k in clash)) printf "%s\t%s\n", k, idx[k]
-  }' > "$INDEX"
-
-IDMAP="$WORK/idmap.tsv"; : > "$IDMAP"
-if [ -f "$SPEC/_migration/id-map.json" ]; then
-  jq -r '(if type == "object" then (.screens // .) else {} end) | to_entries[]
-         | select(.value | type == "string") | [.key, .value] | @tsv' \
-    "$SPEC/_migration/id-map.json" > "$IDMAP" 2>/dev/null || : > "$IDMAP"
-fi
+sdd_link_index
 
 # ── convert ──────────────────────────────────────────────────────────────────
 OUT="$WORK/out"; mkdir -p "$OUT"
@@ -230,10 +193,17 @@ PLAN="$WORK/links.tsv"
 CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
 # Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
-LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX" -v IDMAP="$IDMAP" \
-    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB"'
+LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_LINK_INDEX_FILE" \
+    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB$SDD_AWK_WIKI_RESOLVE"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
-  function resolve(src, target,   cand, seg, k) {
+  # The validators index files outside the KB too; a KB link converts only to a KB file.
+  function in_kb(p) {
+    if (p == "" || index(p, KB "/") != 1) return ""
+    p = substr(p, length(KB) + 2)
+    return exists(p) ? p : ""
+  }
+  # raw is the target as the reader takes it: untrimmed, anchor included.
+  function resolve(src, raw, target,   cand, seg, p) {
     if (index(target, "/")) {
       cand = normpath(join_path(dir_of((src in BACK) ? BACK[src] : src), target))
       if (cand !~ /\.md$/) cand = cand ".md"
@@ -242,12 +212,9 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX
       if (cand !~ /\.md$/) cand = cand ".md"
       if (exists(cand)) { HOW = "path"; return cand }
     }
+    if ((p = in_kb(sdd_wres(raw))) != "") { HOW = "id"; return p }
     seg = target; sub(/.*\//, "", seg); seg = tolower(seg); sub(/\.md$/, "", seg)
-    if (seg in IDX) { HOW = "id"; return IDX[seg] }
-    k = seg; gsub(/::/, ".", k)
-    if (k in IDX) { HOW = "id"; return IDX[k] }
     if ((seg in STEM) && !(seg in STEMCLASH) && exists(STEM[seg])) { HOW = "moved-stem"; return STEM[seg] }
-    if ((seg in IDM) && (IDM[seg] in IDX)) { HOW = "id-map"; return IDX[IDM[seg]] }
     return ""
   }
   function flat(s) { gsub(/[\t\n]/, " ", s); return s }
@@ -271,8 +238,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX
       if ((s in STEM) && STEM[s] != a[2]) STEMCLASH[s] = 1
       STEM[s] = a[2]
     }
-    while ((getline l < INDEX) > 0) { split(l, a, "\t"); IDX[a[1]] = a[2] }
-    while ((getline l < IDMAP) > 0) { split(l, a, "\t"); IDM[tolower(a[1])] = tolower(a[2]) }
+    while ((getline l < INDEX) > 0) sdd_ix_add(l)
     while ((getline f < LIST) > 0) files[++nf] = f
     close(LIST)
     for (n = 1; n <= nf; n++) {
@@ -284,10 +250,10 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX
           alias = substr(inner, p + 1)
           target = substr(inner, 1, p - ((p > 1 && substr(inner, p - 1, 1) == "\\") ? 2 : 1))
         }
-        target = trim(target); anchor = ""
+        raw = target; target = trim(target); anchor = ""
         if ((p = index(target, "#"))) { anchor = substr(target, p); target = trim(substr(target, 1, p - 1)) }
         if (target == "" && anchor != "") { HOW = "path"; rel = "" }
-        else if ((path = resolve(f, target)) != "") rel = relpath(path, dir_of(f))
+        else if ((path = resolve(f, raw, target)) != "") rel = relpath(path, dir_of(f))
         else {
           st["unresolved"]++
           printf "unresolved\t%s/%s\t%d\t%s\n", KB, f, ln, flat("[[" inner "]]")
@@ -320,8 +286,8 @@ converted="$(tally converted)"
   printf 'note\tmove record: %s (%s renames)\n' "$record" "$(wc -l < "$RENAMES" | tr -d ' ')"
   [ -n "$git_note" ] && printf 'note\t%s\n' "$git_note"
   [ -n "$uncommitted" ] && printf 'note\tthe act run refuses until the moves are committed: git lists %s uncommitted move(s), addition(s) or deletion(s)\n' "$(printf '%s\n' "$uncommitted" | wc -l | tr -d ' ')"
-  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s, id-map %s), %s unresolved and left as written, %s in code left as written\n' \
-    "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" "$(tally id-map)" \
+  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s unresolved and left as written, %s in code left as written\n' \
+    "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
     "$(tally unresolved)" "$(tally code)"
 } >> "$PLAN"
 

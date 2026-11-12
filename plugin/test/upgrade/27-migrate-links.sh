@@ -2,10 +2,11 @@
 # plugin/test/upgrade/27-migrate-links.sh — wikilinks become relative Markdown links
 # (plugin/scripts/migrate-links.sh, adr-markdown-links D6).
 #
-# What it must hold: each resolution source resolves what only it can, an ambiguous
-# key resolves nothing, aliases, escaped table pipes and frontmatter convert, code and
-# embeds stay, unresolved links are listed and left, a dry run writes nothing, a
-# second run changes nothing, git is only read, and a layered KB is refused.
+# What it must hold: each resolution source resolves what only it can, an id resolves
+# to the file the validators resolve it to, a pre-move name two files had resolves
+# nothing, aliases, escaped table pipes and frontmatter convert, code and embeds stay,
+# unresolved links are listed and left, a dry run writes nothing, a second run changes
+# nothing, git is only read, and a layered KB is refused.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
@@ -28,6 +29,8 @@ move${TAB}inspire_kb/02_modules/b.md${TAB}inspire_kb/01_spec/_modules/b/b.module
 move${TAB}inspire_kb/03_features/a/create.md${TAB}inspire_kb/01_spec/_modules/a/_features/create.feature.md
 move${TAB}inspire_kb/03_features/b/create.md${TAB}inspire_kb/01_spec/_modules/b/_features/create.feature.md
 move${TAB}inspire_kb/04_domain/a/order/a.order.md${TAB}inspire_kb/01_spec/_modules/a/_domain/order/order.entity.md
+move${TAB}inspire_kb/03_features/a/legacy.md${TAB}inspire_kb/01_spec/_modules/a/_features/create.feature.md
+move${TAB}inspire_kb/03_features/b/legacy.md${TAB}inspire_kb/01_spec/_modules/b/_features/create.feature.md
 idmap${TAB}a.detail${TAB}portal.detail
 E
 printf '{"screens":{"a.detail":"portal.detail"}}\n' | mk "$S/_migration/id-map.json"
@@ -39,8 +42,9 @@ mk "$S/_modules/a/a.module.md" <<'E'
 - moved stem: [[a.order]]
 - id map: [[a.detail]]
 - alias: [[a.detail|the detail screen]]
-- ambiguous: [[create]]
+- shared: [[create]]
 - nowhere: [[nowhere]]
+- ambiguous old name: [[legacy]]
 - embed: ![[b]]
 - code: `[[b]]`
 
@@ -59,7 +63,11 @@ printf '# order, with no id: in its frontmatter\n' | mk "$S/_modules/a/_domain/o
 printf -- '---\nid: portal.detail\n---\n# detail\n' | mk "$S/_faces/portal/_screens/detail.screen.md"
 printf '# T-1\nTouches [[a]].\n' | mk "$K/99_tracker/tickets/T-1.md"
 
-eq "it counts the wikilinks outside code" "$(cd "$P" && bash "$LINKS" --count)" "12"
+eq "it counts the wikilinks outside code" "$(cd "$P" && bash "$LINKS" --count)" "13"
+# path_read <dir> <file> <line> — the file the validators' reader resolves that line's link to.
+path_read() { (cd "$1" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && SDD_ENTITY_INDEX_FILE="" && sdd_links "$2" | awk -F'\t' -v l="$3" '$1 == l { print $5 }'; rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"); }
+shared_before="$(path_read "$P" inspire_kb/01_spec/_modules/a/a.module.md 8)"
+premise "the reader resolves the key two features share" "[ -n '$shared_before' ]"
 
 before="$(tree_hash "$P")"
 out="$(cd "$P" && bash "$LINKS" --dry-run 2>&1)"; rc=$?
@@ -77,7 +85,10 @@ has "a pre-move file name resolves through the move plan"    "$A" "- moved stem:
 has "an old screen id resolves through the id map"           "$A" "- id map: [a.detail](../../_faces/portal/_screens/detail.screen.md)"
 has "an alias becomes the text"                              "$A" "- alias: [the detail screen](../../_faces/portal/_screens/detail.screen.md)"
 has "an escaped table pipe splits target from alias"         "$A" "| x | [module b](../b/b.module.md) |"
-has "an ambiguous key resolves nothing"                      "$A" "- ambiguous: [[create]]"
+has "a key two files share converts"                         "$A" "- shared: [create]("
+eq  "to the file the validators resolve it to" \
+    "$(path_read "$P" inspire_kb/01_spec/_modules/a/a.module.md 8)" "$shared_before"
+has "a pre-move name two files had resolves nothing"         "$A" "- ambiguous old name: [[legacy]]"
 has "a link to nothing stays as written"                     "$A" "- nowhere: [[nowhere]]"
 has "an embed converts and keeps its !"                      "$A" "- embed: ![b](../b/b.module.md)"
 has "a link in a code span stays"                            "$A" '- code: `[[b]]`'
@@ -87,8 +98,8 @@ has "a link in a fenced block stays"                         "$A" '```
 check "a frontmatter link converts and stays quoted" \
   "grep -qxF 'requires: [\"[a](../../a/a.module.md)\"]' '$S/_modules/b/_features/create.feature.md'"
 check "a link outside 01_spec converts too" "grep -qxF 'Touches [a](../../01_spec/_modules/a/a.module.md).' '$K/99_tracker/tickets/T-1.md'"
-has "the run lists each unresolved link with its line" "$out" "unresolved${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}8${TAB}[[create]]"
-has "and sums up by source" "$out" "links: 10 converted in 3 file(s) (moved-path 1, path 1, id 5, moved-stem 1, id-map 2), 2 unresolved and left as written, 2 in code left as written"
+has "the run lists each unresolved link with its line" "$out" "unresolved${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}9${TAB}[[nowhere]]"
+has "and sums up by source" "$out" "links: 11 converted in 3 file(s) (moved-path 1, path 1, id 8, moved-stem 1), 2 unresolved and left as written, 2 in code left as written"
 check "the link plan is saved" "grep -q '^link${TAB}' '$S/_migration/links.tsv' && grep -q '^unresolved${TAB}' '$S/_migration/links.tsv'"
 eq "only the unresolved links are left" "$(cd "$P" && bash "$LINKS" --count)" "2"
 
@@ -246,6 +257,24 @@ R1="$(reader inspire_kb/01_spec/_modules/a/a.module.md)"
 has "the reader resolves the anchored path" "$R1" "../b/b.module.md#context${TAB}ctx${TAB}inspire_kb/01_spec/_modules/b/b.module.md"
 has "the reader resolves the path in <>"    "$R1" "my file (v2)${TAB}inspire_kb/01_spec/_modules/b/my file (v2).md"
 hasnt "the reader finds no unresolved link" "$(printf '%s\n' "$R1" | awk -F'\t' '$5 == ""')" "md"
+
+# A typed file whose frontmatter declares an id is not named by its file name's id:
+# `[[orders]]` never becomes a link to `orders.screen.md`, whose id is portal.orders.
+X="$W/screen-name"; XS="$X/inspire_kb/01_spec"
+printf -- '---\nid: portal.orders\n---\n# Orders\n' | mk "$XS/_faces/portal/_screens/orders.screen.md"
+printf '# Bundle: api\n## Actions\n- [[orders]] (whole module)\n- [[orders.screen]]\n' | mk "$XS/_bundles/api.bundle.md"
+eq "the reader resolves no module from a screen's file name" "$(path_read "$X" inspire_kb/01_spec/_bundles/api.bundle.md 3)" ""
+out="$(cd "$X" && bash "$LINKS" 2>&1)"
+B="$(cat "$XS/_bundles/api.bundle.md")"
+has "so the converter leaves it as written and lists it" "$out" "unresolved${TAB}inspire_kb/01_spec/_bundles/api.bundle.md${TAB}3${TAB}[[orders]]"
+has "and keeps the whole-module line"                    "$B" "- [[orders]] (whole module)"
+has "the screen's plain file name still converts"        "$B" "- [orders.screen](../_faces/portal/_screens/orders.screen.md)"
+printf '# orders\n' | mk "$XS/_modules/orders/orders.module.md"
+out="$(cd "$X" && bash "$LINKS" 2>&1)"
+has "once the module exists, the link names it"          "$(cat "$XS/_bundles/api.bundle.md")" "- [orders](../_modules/orders/orders.module.md) (whole module)"
+printf 'See [[portal.orders]].\n' | mk "$XS/_modules/orders/see.md"
+out="$(cd "$X" && bash "$LINKS" --kb ./inspire_kb/ 2>&1)"
+has "a KB spelled ./inspire_kb/ resolves a screen id all the same" "$(cat "$XS/_modules/orders/see.md")" "See [portal.orders](../../_faces/portal/_screens/orders.screen.md)."
 
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
