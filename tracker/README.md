@@ -83,12 +83,14 @@ filed in the Factory's tracker when the change here lands, never before. The not
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
 
-## Where things stand (2026-11-06)
+## Where things stand (2026-11-12)
 
 Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
 `0143-prose-checks-in-any-language` was filed, the first block of the INSPIRE Factory's
-follow-up review filed two, and the second block filed `FB2-kb-contradiction-check`.
+follow-up review filed two, the second block filed `FB2-kb-contradiction-check`, and
+the fifth block filed `FB5-audit-events-kept`, `FB5-exists-precondition-error` and
+`FB5-errors-mapped-above-controller`.
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -145,6 +147,13 @@ Factory work.
   contradict each other, the stack, the spec or a tracker ticket, and `authority.md` says that
   tickets are not authority). When the Factory ships its command that checks a branch as it
   checks a unit, INSPIRE's hooks get a ticket to call it.
+- **INSPIRE Factory follow-up review, block 5, FB5:** errors and observability in the code the
+  Factory builds. `FB5-audit-events-kept` (the NestJS profile's audit events reach an output
+  that the default configuration keeps), `FB5-exists-precondition-error` (an `exists`
+  precondition requires an error with the same head; when it ships, the Factory's deriver gets
+  a ticket to refuse the same shape), `FB5-errors-mapped-above-controller` (the NestJS profile
+  maps domain errors for the whole app, so an error raised before the handler keeps its
+  status).
 
 A question that can be answered in a sitting should be answered, not filed: tracking it
 converts a decision into a queue entry, and queue entries outlive the thing that
