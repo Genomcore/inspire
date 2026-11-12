@@ -17,9 +17,9 @@ emit() {
 }
 
 # header_targets <file> <marker> — the name each link on the `**Marker:**` line
-# targets: a wikilink's last path segment, a Markdown link's file id. A broken
-# Markdown link gives its file name without the typed extension, so it fails the
-# catalog lookup as a broken wikilink does.
+# targets: a wikilink's last path segment, a Markdown link's file id. A Markdown
+# link that names no file gives its last segment without the typed extension, so it
+# fails the catalog lookup as a broken wikilink does.
 header_targets() {
   local ln form target text path t
   ln="$(awk -v pfx="$2" '
@@ -31,7 +31,7 @@ header_targets() {
   sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
     t="${target%%#*}"; t="${t##*/}"
     if [ "$form" = "wiki" ]; then printf '%s\n' "$t"
-    elif [ -n "$path" ]; then sdd_artifact_id "$path"
+    elif [ -f "$path" ]; then sdd_artifact_id "$path"
     else
       t="${t%.md}"
       case "$t" in *.layout|*.pattern|*.component) t="${t%.*}" ;; esac

@@ -31,7 +31,7 @@ while IFS= read -r action; do
   [ "$lifecycle" != "stable" ] && continue
 
   while IFS=$'\t' read -r form target to_id path; do
-    if [ "$form" = "md" ]; then target_file="$path"; to_id="${to_id:-$target}"
+    if [ "$form" = "md" ]; then target_file=""; [ -f "$path" ] && target_file="$path"; to_id="${to_id:-$target}"
     else target_file="$(sdd_resolve_id "$to_id")"; fi
     if [ -z "$target_file" ]; then
       sdd_finding "error" "stable-blockers" "$action" "requires target not found: $to_id"

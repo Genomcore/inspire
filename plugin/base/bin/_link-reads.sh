@@ -8,10 +8,11 @@
 # `sdd_link_index` once in its own shell and removes `$SDD_LINK_INDEX_FILE` and
 # `$SDD_ENTITY_INDEX_FILE` in its trap.
 
-# sdd_link_id <form> <text> <path> — the id a link refers to; fails for a broken link.
+# sdd_link_id <form> <text> <path> — the id a link refers to; fails for a broken link
+# and for a link to a directory, which names no id (D2).
 sdd_link_id() {
   if [ "$1" = "wiki" ]; then printf '%s\n' "$2"
-  elif [ -n "$3" ]; then sdd_artifact_id "$3"
+  elif [ -f "$3" ]; then sdd_artifact_id "$3"
   else return 1
   fi
 }
