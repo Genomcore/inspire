@@ -47,6 +47,11 @@ file name. A path to a file that does not exist is a broken link: it names no id
 tool reports it instead of deriving an id from the path. A path to a directory that exists
 resolves and names no id.
 
+Every Markdown file under the KB is checked, wherever its target lies; templates
+(`*.template.md`) and `_migration/` are the only exceptions. A path that leaves the KB
+resolves from the linking file like any other, and a path that starts with `/` resolves
+from the repository root.
+
 The text is for the reader. It is the target's id unless the sentence needs prose
 (`[the audit decision](../../_adr/audit.adr.md)`). No tool reads an id from the text.
 
