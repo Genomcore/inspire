@@ -25,7 +25,7 @@ Create a user account, per [[auth-user-management]].
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

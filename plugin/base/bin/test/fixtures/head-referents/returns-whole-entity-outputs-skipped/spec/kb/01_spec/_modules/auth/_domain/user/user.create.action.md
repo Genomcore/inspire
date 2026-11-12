@@ -22,11 +22,11 @@ Constraints: `len(3, 254)`
 
 ## Outputs
 
-A single [[auth.user|auth::user]] entity.
+A single [auth::user](user.entity.md) entity.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field    | Touch   | Type  | Mapping         | Notes |

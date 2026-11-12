@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## ENT1: Propósito
-La entidad de cuenta de usuario, fundamentada en [[adr-auth-sessions]].
+La entidad de cuenta de usuario, fundamentada en [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ENT2: Justificación
-El modelo de identidad sigue [[adr-auth-sessions]].
+El modelo de identidad sigue [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ENT3: Invariantes
 - `I1` — unique(org_id, email) — Un correo es único por organización.
@@ -39,5 +39,5 @@ Constraints: `nonnull`
 
 | Acción | Contacto | Notas |
 |---|---|---|
-| [[auth.user.create|auth::user::create]] | write | Inserta la fila. |
-| [[auth.user.get|auth::user::get]] | read | Lee una fila. |
+| [auth::user::create](user.create.action.md) | write | Inserta la fila. |
+| [auth::user::get](user.get.action.md) | read | Lee una fila. |

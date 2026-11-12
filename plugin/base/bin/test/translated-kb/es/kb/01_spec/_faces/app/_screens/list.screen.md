@@ -26,19 +26,19 @@ Un administrador llega aquí para encontrar a un miembro del espacio entre mucho
 
 | Clave | Acción | Notas |
 |---|---|---|
-| `main` | [[auth.user.get\|auth::user::get]] | el listado, filtrado por param `q` |
+| `main` | [auth::user::get](../../../_modules/auth/_domain/user/user.get.action.md) | el listado, filtrado por param `q` |
 
 ### SCR5: Envíos
 
 | Clave | Acción | Disparador | Si tiene éxito | Si falla |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | acción principal | → [[users.detail]] param `id` | state `gone` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | acción principal | → [users.detail](detail.screen.md) param `id` | state `gone` |
 
 ### SCR6: Navegación
 
 | Clave | Destino | Disparador |
 |---|---|---|
-| `row` | [[users.detail]] param `id`, param `tab` | pulsar una fila |
+| `row` | [users.detail](detail.screen.md) param `id`, param `tab` | pulsar una fila |
 
 ### SCR7: Estados
 

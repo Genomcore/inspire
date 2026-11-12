@@ -8,9 +8,9 @@ lifecycle: accepted
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
-**Layout:** [[../layouts/collection]]
-**Components:** [[../components/person-chip]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
+**Layout:** [collection](../../../_design-system/layouts/collection.layout.md)
+**Components:** [person-chip](../../../_design-system/components/person-chip.component.md)
 
 ## Purpose
 

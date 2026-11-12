@@ -4,7 +4,7 @@ module: auth
 entity: session
 action: rotate
 lifecycle: stable
-requires: ["[[auth.session.create|auth::session::create]]"]
+requires: ["[auth::session::create](../_modules/auth/_features/FEAT-01-login.feature.md)"]
 ---
 
 # Session rotation

@@ -8,8 +8,8 @@ lifecycle: accepted
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
-**Layout:** [[../layouts/collection]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
+**Layout:** [collection](../../../_design-system/layouts/collection.layout.md)
 
 ## Purpose
 

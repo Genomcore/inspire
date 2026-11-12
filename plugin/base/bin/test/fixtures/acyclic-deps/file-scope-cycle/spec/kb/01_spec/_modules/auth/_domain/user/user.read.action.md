@@ -5,7 +5,7 @@ entity: user
 action: read
 lifecycle: draft
 requires:
-  - "[[auth.user.create|auth::user::create]]"
+  - "[auth::user::create](user.create.action.md)"
 superseded_by: null
 ---
 

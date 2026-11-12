@@ -26,19 +26,19 @@ An administrator comes here to find one member of the workspace among many.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.get\|auth::user::get]] | the feed, filtered by param `q` |
+| `main` | [auth::user::get](../../../_modules/auth/_domain/user/user.get.action.md) | the feed, filtered by param `q` |
 
 ### SCR5: Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] param `id` | state `gone` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | primary action | → [users.detail](detail.screen.md) param `id` | state `gone` |
 
 ### SCR6: Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] param `id`, param `tab` | clicking a row |
+| `row` | [users.detail](detail.screen.md) param `id`, param `tab` | clicking a row |
 
 ### SCR7: States
 

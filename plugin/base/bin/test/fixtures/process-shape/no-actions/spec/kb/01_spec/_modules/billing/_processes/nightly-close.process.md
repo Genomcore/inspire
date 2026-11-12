@@ -12,4 +12,4 @@ Every night at 02:00 UTC.
 - B1: close every overdue invoice.
 
 ## Affects
-- [[billing.invoice|billing::invoice]]
+- [billing::invoice](../_domain/invoice/invoice.entity.md)
