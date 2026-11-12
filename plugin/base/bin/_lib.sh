@@ -339,6 +339,16 @@ sdd_find_typed() {
   find "$scope" -type f -name "*.$2.md" 2>/dev/null | sort
 }
 
+# sdd_find_linking <scope> — every Markdown file in scope ∩ $SDD_KB_ROOT whose links
+#   are checked (adr-markdown-links D2): all but templates and `_migration/`.
+sdd_find_linking() {
+  local scope
+  scope="$(sdd_scope_intersect "${1:-$SDD_KB_ROOT}" "$SDD_KB_ROOT")"
+  [ -n "$scope" ] && [ -e "$scope" ] || return 0
+  find "$scope" -type f -name '*.md' ! -name '*.template.md' 2>/dev/null \
+    | grep -v '/_migration/' | LC_ALL=C sort
+}
+
 sdd_find_actions()    { sdd_find_typed "${1:-}" action; }
 sdd_find_entities()   { sdd_find_typed "${1:-}" entity; }
 sdd_find_features()   { sdd_find_typed "${1:-}" feature; }
@@ -521,76 +531,161 @@ sdd_catalog_state() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 # sdd_links <file> [wiki] — every link in the file, frontmatter included, one per line:
-#   `{line}<TAB>{md|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
-#   The path is empty when the link resolves to nothing; a path to a directory
-#   resolves and names no id (D2). Text and target are never
-#   empty, so `IFS=$'\t' read` keeps the five fields apart: a link that shows no
-#   text reports its target as text. An image whose target is a `.md` file is an
-#   embed and reads as a link; other images and external URLs are not links here.
-#   With `wiki`, each wikilink is listed too, form `wiki`, with an empty path.
+#   `{line}<TAB>{md|embed|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
+#   Text and target are never empty, because `IFS=$'\t' read` collapses empty
+#   fields; the format and its forms are in bin/README.md.
 sdd_links() {
-  local file="$1" wiki="" dir ln form target text path
+  local file="$1" wiki="" dir ln form target text path root=""
   [ "${2:-}" = wiki ] && wiki=1
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
   # Byte semantics, so a percent-escape decodes to the byte it names.
   LC_ALL=C awk -v dir="$dir" -v wiki="$wiki" \
     "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
+      # A path from the repository root costs a git call, so only one that holds one pays it.
+      case "$path" in $'\035'*)
+        [ -n "$root" ] || root="$(sdd_repo_root)"
+        path="${path#?}"; [ "$root" = . ] && path="${path#/}" || path="${root%/}$path" ;;
+      esac
       [ -n "$path" ] && { [ -f "$path" ] || [ -d "$path" ]; } || path=""
       printf '%s\t%s\t%s\t%s\t%s\n' "$ln" "$form" "$target" "$text" "$path"
     done
 }
 
+# sdd_repo_root — the directory a link path that starts with `/` resolves from
+# (D2): SDD_REPO_ROOT when set, else the git work tree that holds the KB, else the
+# directory above the KB.
+sdd_repo_root() {
+  local r="${SDD_KB_ROOT%/}" up
+  [ -n "${SDD_REPO_ROOT:-}" ] && { printf '%s\n' "$SDD_REPO_ROOT"; return 0; }
+  up="$(git -C "$r" rev-parse --show-cdup 2>/dev/null)" || up="../"
+  while [ "${up#../}" != "$up" ]; do
+    up="${up#../}"
+    case "$r" in
+      .) r=".." ;;
+      ..|*/..) r="$r/.." ;;
+      */*) r="${r%/*}"; [ -n "$r" ] || r="/" ;;
+      *) r="." ;;
+    esac
+  done
+  printf '%s\n' "$r"
+}
+
 # The reader's awk program. A Markdown path is joined and normalized here and tested
-# for existence by the caller.
+# for existence by the caller; one from the repository root is marked with \035,
+# because only the caller knows that root. With `codes` set it prints the code
+# ranges it skips instead of the links, for the shared link-syntax corpus.
 SDD_AWK_LINKS='
   FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
-  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan($0, FNR); next }
-  sdd_fence($0) { next }
+  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_text($0, FNR); next }
+  sdd_fence($0) {
+    sdd_flush()
+    if (sdd_in_fence()) fence_at = FNR; else sdd_code("fence", fence_at, FNR, "")
+    next
+  }
   sdd_in_fence() { next }
-  { sdd_scan($0, FNR) }
+  { sdd_para($0, FNR) }
+  END { sdd_flush(); if (sdd_in_fence()) sdd_code("fence", fence_at, FNR, "") }
 
-  # Links are found in the line with its code spans blanked in place; a Markdown
-  # link takes its text from the raw line, so a span in the text still shows. A
-  # wikilink is consumed whether or not it is listed, so its brackets never start a
-  # Markdown link.
-  function sdd_scan(raw, ln,   s, w, ws, wl, tok) {
-    s = sdd_unspan(raw, 1)
+  # A code span pairs backticks across the lines of one paragraph (CommonMark), so
+  # lines gather in PL until a blank line or another block ends the paragraph. PI
+  # marks a paragraph a list item opened, PQ one a block quote opened.
+  function sdd_para(line, ln,   t) {
+    if (line ~ /^[ \t]*\r?$/ || line ~ /^ ? ? ?>[ \t>]*\r?$/) { sdd_flush(); return }
+    t = line; gsub(/[ \t\r]/, "", t)
+    if (line ~ /^ ? ? ?(#|##|###|####|#####|######)([ \t]|\r?$)/ ||
+        (line ~ /^ ? ? ?[-*_=]/ && t ~ /^(\*\*\*+|___+|-+|=+)$/)) { sdd_flush(); sdd_text(line, ln); return }
+    if (line ~ /^ ? ? ?>/) { if (!PQ) sdd_flush(); PQ = 1 }
+    else if (line ~ /^[ \t]*([-+*]|[0-9]+[.)])([ \t]|\r?$)/ &&
+             (!PN || PI || line ~ /^ ? ? ?([-+*]|0*1[.)])[ \t]+[^ \t\r]/)) { sdd_flush(); PI = 1 }
+    PL[++PN] = line; PLN[PN] = ln
+  }
+
+  # A GFM table starts at the line above its delimiter row, and each row is a block
+  # of its own.
+  function sdd_flush(   k, d) {
+    d = 0
+    for (k = 2; k <= PN && !d; k++)
+      if (index(PL[k], "|") && index(PL[k - 1], "|") &&
+          PL[k] ~ /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*\r?$/) d = k
+    if (!d) sdd_lines(1, PN)
+    else { sdd_lines(1, d - 2); for (k = d - 1; k <= PN; k++) sdd_lines(k, k) }
+    PN = 0; PI = 0; PQ = 0
+  }
+
+  function sdd_lines(a, b,   k, s) {
+    if (a > b) return
+    s = PL[a]; for (k = a + 1; k <= b; k++) s = s "\n" PL[k]
+    sdd_text(s, PLN[a])
+  }
+
+  # s holds whole lines, the first at line ln. Each line is scanned with its code
+  # spans blanked in place.
+  function sdd_text(s, ln,   m, n, raw, msk, k, a) {
+    m = sdd_unspan(s, 1)
+    for (k = 1; codes && k <= SDD_SPN; k++) {
+      a = SDD_SPS[k]
+      sdd_code("span", ln + sdd_nl(substr(s, 1, a - 1)), ln + sdd_nl(substr(s, 1, a + length(SDD_SPT[k]) - 1)), SDD_SPT[k])
+    }
+    n = split(s, raw, "\n"); split(m, msk, "\n")
+    for (k = 1; k <= n; k++) sdd_scan(raw[k], msk[k], ln + k - 1)
+  }
+
+  function sdd_nl(s) { return gsub(/\n/, "", s) }
+
+  # A Markdown link takes its text from the raw line, so a span in the text still
+  # shows. A wikilink is consumed before a Markdown link that starts with it; one
+  # inside a Markdown link text is read after that link, as is an embed there.
+  function sdd_scan(raw, s, ln,   w, ws, wl, ms, ml, mt) {
     while (1) {
       w = match(s, /\[\[[^][]+\]\]/); ws = RSTART; wl = RLENGTH
       if (!sdd_next_md(s)) MS = 0
       if (!w && !MS) return
       if (w && (!MS || ws <= MS)) {
-        sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl); raw = substr(raw, ws + wl)
+        sdd_wiki(substr(raw, ws + 2, wl - 4), ln); s = substr(s, ws + wl); raw = substr(raw, ws + wl)
       } else {
-        tok = substr(s, MS, ML)
-        sdd_md(tok, MT, ln, substr(raw, MS, ML)); s = substr(s, MS + ML); raw = substr(raw, MS + ML)
+        ms = MS; ml = ML; mt = MT
+        sdd_md(substr(s, ms, ml), mt, ln, substr(raw, ms, ml))
+        sdd_scan(substr(raw, ms, mt), substr(s, ms, mt), ln)
+        s = substr(s, ms + ml); raw = substr(raw, ms + ml)
       }
     }
   }
 
   function sdd_emit(ln, form, target, text, path) {
+    if (codes) return
     gsub(/\t/, " ", target); gsub(/\t/, " ", text)
     if (text == "") text = target
     print ln "\t" form "\t" target "\t" text "\t" path
   }
 
+  function sdd_code(kind, from, to, text) {
+    if (!codes) return
+    if (text == "") { print kind "\t" from "\t" to; return }
+    gsub(/\\/, "\\\\", text); gsub(/"/, "\\\"", text)
+    gsub(/\t/, "\\t", text); gsub(/\r/, "\\r", text); gsub(/\n/, "\\n", text)
+    print kind "\t" from "\t" to "\t\"" text "\""
+  }
+
   # `[[target|text]]`: the target is the left half, and a pipe escaped for a
-  # table cell leaves its backslash on it.
+  # table cell leaves its backslash on it. An empty target lists the inner text,
+  # so the wikilink is still reported (D5).
   function sdd_wiki(inner, ln,   p, t, text) {
     if (!wiki) return
     p = index(inner, "|")
     if (p) { t = substr(inner, 1, p - 1); sub(/\\$/, "", t); text = substr(inner, p + 1) }
     else { t = inner; text = inner }
-    if (t == "") return
-    sdd_emit(ln, "wiki", t, text, "")
+    sdd_emit(ln, "wiki", t == "" ? inner : t, text, "")
   }
 
-  function sdd_md(tok, p, ln, rtok,   text, dest) {
+  function sdd_md(tok, p, ln, rtok,   text, dest, form, path) {
     if ((dest = sdd_md_dest(tok, p)) == "") return
-    if (substr(rtok, 1, 1) == "!") { rtok = substr(rtok, 2); p-- }
+    form = "md"
+    if (substr(rtok, 1, 1) == "!") { rtok = substr(rtok, 2); p--; form = "embed" }
     text = substr(rtok, 2, p - 2); gsub(/\\\|/, "|", text)
-    sdd_emit(ln, "md", dest, text, sdd_join(dir, MDPATH))
+    path = sdd_join(dir, MDPATH)
+    if (substr(MDPATH, 1, 1) == "/") path = "\035" path
+    sdd_emit(ln, form, dest, text, path)
   }
 '
 
@@ -599,11 +694,13 @@ SDD_AWK_LINKS='
 SDD_AWK_MD_FUNCS='
   # The next `[text](dest)` or image in s: MS its start, ML its length, MT the
   # offset of its `](`. Brackets nest in the text; parentheses balance in a bare
-  # destination, and a destination in `<…>` holds any of them (CommonMark).
+  # destination, and a destination in `<…>` holds any of them. A link holds no
+  # link, so of two nested ones the inner is read (CommonMark).
   function sdd_next_md(s,   L, from, i, j, d, c, k, e) {
     L = length(s); from = 1
     while ((i = index(substr(s, from), "[")) > 0) {
       i += from - 1; from = i + 1; d = 0
+      if (sdd_esc(s, i)) continue
       for (j = i; j <= L; j++) {
         c = substr(s, j, 1)
         if (c == "\\") j++
@@ -625,11 +722,34 @@ SDD_AWK_MD_FUNCS='
         }
         if (e > L) continue
       }
-      MS = (i > 1 && substr(s, i - 1, 1) == "!") ? i - 1 : i
+      if (!sdd_md_tail(substr(s, k, e - k))) continue
+      c = (i > 1 && substr(s, i - 1, 1) == "!" && !sdd_esc(s, i - 1))
+      if (!c && sdd_holds_link(substr(s, i + 1, j - i - 1))) continue
+      MS = c ? i - 1 : i
       ML = e - MS + 1; MT = j - MS + 1
       return 1
     }
     return 0
+  }
+
+  function sdd_holds_link(t) {
+    while (sdd_next_md(t)) { if (substr(t, MS, 1) != "!") return 1; t = substr(t, MS + ML) }
+    return 0
+  }
+
+  # What a link holds between its parentheses: a destination, then at most a
+  # quoted or parenthesized title after white space. A bare destination with a
+  # space in it is no link.
+  function sdd_md_tail(d,   e, q) {
+    gsub(/^[ \t]+|[ \t]+$/, "", d)
+    if (substr(d, 1, 1) == "<") {
+      d = substr(d, index(d, ">") + 1)
+      if (d == "") return 1
+      if (d !~ /^[ \t]/) return 0
+    } else if (match(d, /[ \t]/)) d = substr(d, RSTART)
+    else return 1
+    gsub(/^[ \t]+/, "", d); q = sprintf("%c", 39)
+    return d ~ /^"[^"]*"$/ || d ~ ("^" q "[^" q "]*" q "$") || d ~ /^\([^()]*\)$/
   }
 
   # sdd_md_dest(tok, p) — the destination of the link token tok (`](` at p) as
@@ -640,7 +760,7 @@ SDD_AWK_MD_FUNCS='
     dest = substr(tok, p + 2, length(tok) - p - 2)
     gsub(/^[ ]+|[ ]+$/, "", dest)
     if (substr(dest, 1, 1) == "<") { sub(/^</, "", dest); sub(/>.*$/, "", dest) }
-    else sub(/[ ].*$/, "", dest)
+    else sub(/[ \t].*$/, "", dest)
     if (dest == "" || dest ~ /^#/ || dest ~ /^[A-Za-z][A-Za-z0-9+.-]*:\/\// || dest ~ /^(mailto|tel|data):/) return ""
     MDPATH = dest; sub(/[#?].*$/, "", MDPATH); MDPATH = sdd_unescape(MDPATH)
     if (img && MDPATH !~ /\.md$/) return ""
@@ -648,9 +768,15 @@ SDD_AWK_MD_FUNCS='
   }
 
   # Each `%XX` decodes to its byte, so `a%C3%B1o.md`, as some editors write it,
-  # names `año.md`. A `%` not followed by two hex digits stays as written.
-  function sdd_unescape(s,   out, i, hi, lo) {
-    out = ""
+  # names `año.md`. A `%` not followed by two hex digits stays as written. A
+  # backslash before ASCII punctuation escapes it (CommonMark): `r\(3.md` names `r(3.md`.
+  function sdd_unescape(s,   out, i, hi, lo, p) {
+    out = ""; p = "!\"#$%&()*+,-./:;<=>?@[\\]^_`{|}~" sprintf("%c", 39)
+    while ((i = index(s, "\\")) > 0) {
+      if (index(p, substr(s, i + 1, 1))) { out = out substr(s, 1, i - 1) substr(s, i + 1, 1); s = substr(s, i + 2) }
+      else { out = out substr(s, 1, i); s = substr(s, i + 1) }
+    }
+    s = out s; out = ""
     while ((i = index(s, "%")) > 0) {
       hi = index("0123456789abcdef", tolower(substr(s, i + 1, 1)))
       lo = index("0123456789abcdef", tolower(substr(s, i + 2, 1)))
@@ -684,12 +810,20 @@ SDD_AWK_MD_FUNCS='
 SDD_AWK_SPAN_FUNCS='
   function sdd_fm_delim(line) { return line == "---" || line == "---\r" }
 
-  # A code span is a run of n backticks closed by the next run of exactly n. It
-  # becomes one space, or, with keep set, spaces of its own length, so that
-  # positions in the result are positions in the line.
-  function sdd_unspan(s, keep,   out, i, n, run, rest, pos, k, m, found, fill) {
-    out = ""
+  # Whether the character at i is backslash-escaped.
+  function sdd_esc(s, i,   b) {
+    b = 0; while (i - b > 1 && substr(s, i - b - 1, 1) == "\\") b++
+    return b % 2
+  }
+
+  # A code span is a run of n backticks closed by the next run of exactly n, and an
+  # escaped backtick opens none (CommonMark). It becomes one space, or, with keep
+  # set, spaces of its own length with its newlines kept, so positions in the result
+  # are positions in s. SDD_SPS and SDD_SPT hold the offset and text of each span.
+  function sdd_unspan(s, keep,   out, i, n, run, rest, pos, k, m, found, fill, at) {
+    out = ""; at = 0; SDD_SPN = 0
     while ((i = index(s, "`")) > 0) {
+      if (sdd_esc(s, i)) { out = out substr(s, 1, i); s = substr(s, i + 1); at += i; continue }
       n = 0; while (substr(s, i + n, 1) == "`") n++
       run = substr(s, i, n); rest = substr(s, i + n); pos = 1; found = 0
       while ((k = index(substr(rest, pos), run)) > 0) {
@@ -699,10 +833,11 @@ SDD_AWK_SPAN_FUNCS='
         pos = k + m
       }
       if (found) {
-        fill = " "; if (keep) { fill = substr(s, i, n + found + n - 1); gsub(/./, " ", fill) }
-        out = out substr(s, 1, i - 1) fill; s = substr(rest, found + n)
+        SDD_SPS[++SDD_SPN] = at + i; SDD_SPT[SDD_SPN] = substr(s, i, n + found + n - 1)
+        fill = " "; if (keep) { fill = SDD_SPT[SDD_SPN]; gsub(/[^\n]/, " ", fill) }
+        out = out substr(s, 1, i - 1) fill; at += i - 1 + length(SDD_SPT[SDD_SPN]); s = substr(rest, found + n)
       }
-      else { out = out substr(s, 1, i + n - 1); s = rest }
+      else { out = out substr(s, 1, i + n - 1); at += i + n - 1; s = rest }
     }
     return out s
   }
@@ -1060,24 +1195,11 @@ sdd_body_subsection() {
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
-# sdd_entities_touched <file>
-#   Parses the `## Entities` body section's per-entity h3 sub-sections.
-#   Each sub-section has a metadata line and a per-field table with 5 cols:
-#     Field | Touch | Type | Mapping | Notes
-#   The H3 header is a link, and takes the id of the file it points at (a broken
-#   one names none, so its rows are skipped):
-#     ### [module::entity](../entity/entity.entity.md)
-#   The id comes out in the colon form, `module::entity`, whatever form the
-#   entity's `id:` writes, so the rules compare one form.
-#   <links_file> (default <file>) is the file the links are read and resolved
-#   from, for a caller that passes a line-preserving copy of its comments-stripped
-#   text.
-#   The Field column may wrap names in backticks (`field_name`); the parser
-#   strips them so callers see bare field names.
-#   Outputs TSV:
-#     entity_id<TAB>field<TAB>touch<TAB>type<TAB>mapping<TAB>notes<TAB>as_input<TAB>effect
-#   one row per declared field. `as_input` and `effect` are repeated on every
-#   row of the same entity (denormalized for downstream awk-friendliness).
+# sdd_entities_touched <file> [links_file] — one row per field of each `### [entity](path)`
+#   under `## Entities`: `entity_id field touch type mapping notes as_input effect`.
+#   The id is the linked file's, in the colon form, so the rules compare one form; a
+#   broken head names none and its rows are skipped. links_file is a line-preserving
+#   copy to read the links from, for a caller that strips comments.
 sdd_entities_touched() {
   local file="$1" links_file="${2:-$1}" heads ids="" path id
   # The file lines of the headings, fenced ones too: sdd_body_section passes

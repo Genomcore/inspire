@@ -1,0 +1,17 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "x#sec",
+      "text": "the section"
+    },
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "../m/y.adr",
+      "text": "../m/y.adr"
+    }
+  ],
+  "code": []
+}

@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "_modules/README.md.*(gone.md)" }
+  ],
+  "forbidden": ["entity.template.md", "{{"]
+}

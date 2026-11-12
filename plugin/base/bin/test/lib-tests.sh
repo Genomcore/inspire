@@ -539,7 +539,7 @@ has   "links: a link to a missing directory is broken"    "^2${T}md${T}nodir/${T
 has   "links: a code span in the text shows in the text"  "^2${T}md${T}gone2.md${T}\`g\`${T}\$" "$shapes"
 eq    "links: a directory names no id" \
       "$(. "$HERE/../_link-reads.sh"; sdd_link_id "$ROOT/links/$S/sub" || echo none)" "none"
-has   "links: an image of a .md file is an embed, read as a link" "^2${T}md${T}año.md${T}embed${T}$S/año.md\$" "$shapes"
+has   "links: an image of a .md file is an embed, read as a link" "^2${T}embed${T}año.md${T}embed${T}$S/año.md\$" "$shapes"
 hasnt "links: any other image is not"                     "diagram" "$shapes"
 has   "links: a CRLF frontmatter is read as frontmatter"  "^2${T}md${T}gone-fm.md${T}x${T}\$" "$shapes"
 hasnt "links: and the fence after it is code"             "fenced" "$shapes"

@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 # .inspire/bin/links-resolve.sh
 #
-# Rule: every link in a typed specification file (every kind but a template)
-# is a relative Markdown link to a file that exists (adr-markdown-links D1, D2).
-# Frontmatter is read; a link in a code span or a fenced block is an example and
-# is skipped (D4).
+# Rule: every link in a Markdown file under the KB is a relative Markdown link to a
+# file or directory that exists (adr-markdown-links D1, D2). Templates
+# (`*.template.md`) and `_migration/` are not checked. Frontmatter is read; a link in
+# a code span or a fenced block is an example and is skipped (D4).
 #
-#   - A Markdown link whose path, joined to the linking file's directory, names
-#     no file and no directory → error.
+#   - A Markdown link whose path names no file and no directory → error. The path
+#     joins the linking file's directory, out of the KB too; one that starts with
+#     `/` joins the repository root (`sdd_repo_root`).
 #   - A wikilink → error naming `/inspire:migrate`, which converts it (D5, D6).
 #
 # Severity: error at every lifecycle. A skill that writes a link creates its
 # target first (D7), so a broken link is never work in progress.
 #
 # A link to one target is one finding per file, at the line where it first
-# appears. The rule receives one `$1` and checks the files in `$1 ∩ 01_spec`; a
-# link out of the scope still resolves, since its path names the file.
+# appears. The rule receives one `$1` and checks the files in `$1 ∩ the KB`.
 #
 # Usage:
-#   .inspire/bin/links-resolve.sh                                     # every layer
+#   .inspire/bin/links-resolve.sh                                     # the whole KB
 #   .inspire/bin/links-resolve.sh inspire_kb/01_spec/_modules/auth    # one module
-#   .inspire/bin/links-resolve.sh inspire_kb/01_spec/_faces           # every face
+#   .inspire/bin/links-resolve.sh inspire_kb/99_tracker               # the tracker
 
 set -uo pipefail
 
@@ -50,14 +50,8 @@ check_file() {
   done < <(sdd_links "$file" wiki)
 }
 
-SPEC_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
-[ -n "$SPEC_SCOPE" ] || exit 0
-
 while IFS= read -r file; do
   [ -n "$file" ] && check_file "$file"
-done < <(for kind in action entity feature module bundle face screen process adr adr.rationale \
-                     component layout pattern; do
-           sdd_find_typed "$SPEC_SCOPE" "$kind"
-         done)
+done < <(sdd_find_linking "$SCOPE")
 
 sdd_exit_with_counters
