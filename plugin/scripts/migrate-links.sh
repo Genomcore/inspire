@@ -21,8 +21,11 @@
 #
 # A Markdown link that names nothing where it stands is rebased (D7): its path is
 # read from the file's pre-move location, and a target that moved, or a directory
-# whose files all moved to one directory, is followed through the move record. A
-# Markdown link that still names nothing is listed as broken and left as written.
+# whose files all moved to one directory, is followed through the move record. A link
+# to a layered directory, or to its README, names the concept directory that took its
+# contents, or that directory's README. A Markdown link that still names nothing is
+# listed as broken and left as written. No link is converted or rebased into
+# 01_spec/_migration/.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> · unresolved <file> <line> <wikilink> ·
@@ -44,7 +47,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -249,6 +252,20 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     }
     return res substr(line, off + 1)
   }
+  # No link points into _migration/ (D7): what the migration could not place stays there.
+  function placed(p) { return p !~ /^01_spec\/_migration(\/|$)/ }
+  # layered(p) — the concept directory that took the contents of the layered directory
+  # p names, or its README when p names the layered README and that one exists (D7).
+  function layered(p,   top, rest, d) {
+    top = p; sub(/\/.*/, "", top); rest = substr(p, length(top) + 1)
+    if (top == "01_adr") d = "01_spec/_adr"
+    else if (top == "02_modules" || top == "03_features" || top == "04_domain") d = "01_spec/_modules"
+    else if (top == "05_screens") d = "01_spec/_faces"
+    else return ""
+    if (rest == "") return d
+    if (rest == "/README.md") return present(d "/README.md") ? d "/README.md" : d
+    return ""
+  }
   # rebased(f, written, path) — the new destination of a link that names nothing
   # where it stands, or "" (the link is listed as broken unless it resolves).
   function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, anchor) {
@@ -258,10 +275,11 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     if (!abs) {
       src = (f in BACK) ? BACK[f] : f
       old = normpath(join_path(dir_of(src), path)); nt = ""
-      if (old in REN) nt = REN[old]
+      if ((nt = layered(old)) != "") ;
+      else if (old in REN) nt = REN[old]
       else if (old != cur && present(old)) nt = old
       else if ((old in DMAP) && !(old in DCLASH)) nt = DMAP[old]
-      if (nt != "" && present(nt)) {
+      if (nt != "" && placed(nt) && present(nt)) {
         anchor = (match(written, /[#?]/)) ? substr(written, RSTART) : ""
         st["rebased"]++
         return angle(relpath(nt, dir_of(f)) anchor)
@@ -282,14 +300,15 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     if (index(target, "/")) {
       cand = normpath(join_path(dir_of((src in BACK) ? BACK[src] : src), target))
       if (cand !~ /\.md$/) cand = cand ".md"
-      if ((cand in REN) && exists(REN[cand])) { HOW = "moved-path"; return REN[cand] }
+      if ((p = layered(cand)) != "" && exists(p)) { HOW = "moved-path"; return p }
+      if ((cand in REN) && placed(REN[cand]) && exists(REN[cand])) { HOW = "moved-path"; return REN[cand] }
       cand = normpath(join_path(dir_of(src), target))
       if (cand !~ /\.md$/) cand = cand ".md"
-      if (exists(cand)) { HOW = "path"; return cand }
+      if (placed(cand) && exists(cand)) { HOW = "path"; return cand }
     }
-    if ((p = in_kb(wiki_resolve(raw))) != "") { HOW = "id"; return p }
+    if ((p = in_kb(wiki_resolve(raw))) != "" && placed(p)) { HOW = "id"; return p }
     seg = target; sub(/.*\//, "", seg); seg = tolower(seg); sub(/\.md$/, "", seg)
-    if ((seg in STEM) && !(seg in STEMCLASH) && exists(STEM[seg])) { HOW = "moved-stem"; return STEM[seg] }
+    if ((seg in STEM) && !(seg in STEMCLASH) && placed(STEM[seg]) && exists(STEM[seg])) { HOW = "moved-stem"; return STEM[seg] }
     return ""
   }
   function flat(s) { gsub(/[\t\n]/, " ", s); return s }
