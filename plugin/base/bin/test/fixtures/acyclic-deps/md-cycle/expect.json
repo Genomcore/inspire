@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [{ "rule": "acyclic-deps", "message_substring": "cycle" }] }

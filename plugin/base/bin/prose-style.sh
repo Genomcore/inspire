@@ -98,7 +98,7 @@
 #
 # Every check reads `sdd_body_prose` (_lib.sh), which is `sdd_body_section`
 # minus fenced blocks, minus table rows, minus bare `---` thematic breaks, with
-# wikilinks unwrapped to their display text. That reader draws the boundary, and
+# links unwrapped to their display text. That reader draws the boundary, and
 # the boundary is narrower than the contract:
 #
 #   - TABLE CELLS ARE NEVER READ. The prose reader drops table rows, so R3, R4,
@@ -654,8 +654,7 @@ ramp_sev() {
 #   normative prose. Without this the common case silently degraded to the
 #   section header's line number.
 flatten_copy() {
-  strip_html_comments "$1" \
-    | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g' > "$2"
+  strip_html_comments "$1" | sdd_unwrap_links > "$2"
 }
 
 # locate_line <read_file> <section> <anchor text>

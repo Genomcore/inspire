@@ -7,14 +7,15 @@
 # A screen's face is the first segment of its id (`{face}.{slug}`, D5). That face's
 # `{face}.face.md` lists the bundles it uses (`bundles: [api]`), and each
 # `{bundle}.bundle.md` lists its actions under `## Actions` — a whole module
-# (`[[orders]]`) or one action (`[[orders::order::close]]`). Every action a screen
+# (`[orders](../../_modules/orders/orders.module.md)`) or one action
+# (`[orders::order::close](...)`). Every action a screen
 # binds in its `## Bindings` (a `Data` or `Dispatches` row) must be one of them.
 #
 # Severity: lifecycle-progressive by the screen's own `lifecycle:`. A face that
 # lists no bundles while its screens bind actions is one warning on the face: the
 # exposure is undeclared, not wrong.
 #
-# Ownership: whether an action link resolves is wikilinks-resolve's rule, and
+# Ownership: whether an action link resolves is links-resolve's rule, and
 # whether the screen's face exists is screen-coherence's. This rule reads only
 # links that already look like action ids.
 #
@@ -26,6 +27,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -38,20 +40,21 @@ emit() {
   sdd_count_by_severity "$1"
 }
 
-# Every wikilink in a file's `## <section>`, as the id it DECLARES (right of `|`),
-# dots folded to `::` so `orders.order.close` and `orders::order::close` agree.
+# Every link in a file's `## <section>`, as the id it refers to (a wikilink's declared
+# id, a Markdown link's target file id), dots folded to `::` so `orders.order.close`
+# and `orders::order::close` agree.
 links_in() {
-  sdd_body_section "$1" "$2" \
-    | grep -oE '\[\[[^]]+\]\]' \
+  sdd_section_link_ids "$1" "$2" \
     | while IFS= read -r l; do
-        l="$(sdd_unwrap_wikilink "$l")"; l="${l%%#*}"; l="${l%\\}"
+        l="${l%%#*}"; l="${l%\\}"
         printf '%s\n' "${l//./::}"
       done
 }
 
 # face id → its bundles' exposure, one entry per line: `module` or `m::e::a`.
 FACE_FILES="$(mktemp -t sdd-face-files.XXXXXX)"
-trap 'rm -f "$FACE_FILES"' EXIT
+sdd_link_index
+trap 'rm -f "$FACE_FILES" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 while IFS= read -r f; do
   [ -n "$f" ] && printf '%s\t%s\n' "$(sdd_artifact_id "$f")" "$f" >> "$FACE_FILES"
 done < <(sdd_find_faces "$SDD_SPEC_ROOT")

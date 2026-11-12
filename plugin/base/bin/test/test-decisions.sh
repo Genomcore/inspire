@@ -168,6 +168,13 @@ has   "without --face, every live ADR"           "6 live ADR(s)" "$("$DECISIONS"
 "$DECISIONS" --budget many >/dev/null 2>&1; eq "a non-numeric budget exits 2" "$?" "2"
 "$DECISIONS" --bogus >/dev/null 2>&1;       eq "an unknown argument exits 2"  "$?" "2"
 
+printf '# Linked\n\n**Status:** design\n**Rationale:** [adr-md-linked.rationale](md-linked.adr.rationale.md)\n\n## Decision\nLinks are Markdown.\n' > "$ADR/md-linked.adr.md"
+printf '# Old\n\n**Status:** superseded by [adr-md-linked](md-linked.adr.md)\n\n## Decision\nGone.\n' > "$ADR/md-old.adr.md"
+out="$("$DECISIONS")"
+has   "a Markdown rationale link leaves the decision in the digest" "adr-md-linked" "$out"
+hasnt "and the link line never reaches it"      "md-linked.adr.rationale.md" "$out"
+hasnt "a status superseded by a Markdown link is retired" "adr-md-old" "$out"
+
 echo ""
 echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
