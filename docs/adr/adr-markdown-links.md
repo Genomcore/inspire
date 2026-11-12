@@ -44,7 +44,8 @@ resolves and checks it like a link.
 A tool resolves a link by joining its path to the linking file's directory. The id is the
 target's id under adr-kb-structure D3: its frontmatter `id:`, or the derivation from its
 file name. A path to a file that does not exist is a broken link: it names no id, and a
-tool reports it instead of deriving an id from the path.
+tool reports it instead of deriving an id from the path. A path to a directory that exists
+resolves and names no id.
 
 The text is for the reader. It is the target's id unless the sentence needs prose
 (`[the audit decision](../../_adr/audit.adr.md)`). No tool reads an id from the text.
@@ -86,7 +87,8 @@ and each Markdown link whose target does not exist.
 ### D7 — Moving a file rewrites the links to it
 
 A path names a location, so a file that moves has every link to it rewritten in the same
-change. `/inspire:migrate` does this for the moves it makes. A skill that writes a link
+change. `/inspire:migrate` does this for the moves it makes, Markdown links written before
+the migration included, and lists every link in the KB it leaves broken. A skill that writes a link
 computes the path from the linking file. When the target is missing, the skill first
 creates it from its template (adr-kb-structure D4).
 
