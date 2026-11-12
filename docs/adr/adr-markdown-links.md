@@ -74,6 +74,8 @@ and each Markdown link whose target does not exist.
   (`_migration/plan.tsv`, or git rename history read without writing); its path against
   the current files; the id index; its target as a pre-move file name, mapped through
   the move record; the screen id map (`_migration/id-map.json`).
+- The id index is the one the validators resolve wikilinks with, so a converted link
+  names the same file the validators read before the conversion.
 - A link that resolves through none of them stays as written, and the run lists it.
 - A link in a screen's `## Bindings` is converted like any other. Its text keeps the id
   it named, so the citations the Factory's remap reads do not change.
