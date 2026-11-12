@@ -57,7 +57,10 @@ to the file that holds the frontmatter.
 
 ### D4 — A link inside a code span or a fenced block is an example
 
-Tools skip it, and the conversion leaves it as written.
+Tools skip it, and the conversion leaves it as written. Code spans and fenced blocks follow
+CommonMark. The reader the validators and the converter share is the reference: every
+other tool that finds links, the Factory included, agrees with it on a shared corpus of
+cases, so a KB one tool accepts is never refused by another.
 
 ### D5 — Only migration reads wikilinks
 
