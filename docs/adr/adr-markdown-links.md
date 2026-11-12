@@ -59,12 +59,15 @@ to the file that holds the frontmatter.
 
 Tools skip it, and the conversion leaves it as written.
 
-### D5 — Tools read both forms, and a wikilink is a finding
+### D5 — Only migration reads wikilinks
 
-A project on this version may not have converted yet, so the validators resolve a
-wikilink as before and a Markdown link by D2. `links-resolve.sh`, which replaces
-`wikilinks-resolve.sh`, reports each wikilink as an error that names `/inspire:migrate`,
-and each Markdown link whose target does not exist.
+From this version no KB holds a wikilink. Two tools read them, because they turn an old KB
+into a new one: `/inspire:migrate`'s converter and the Factory's remap of a conversion.
+Every other tool reads Markdown links only. `links-resolve.sh`, which replaces
+`wikilinks-resolve.sh`, reports each wikilink outside code as an error that names
+`/inspire:migrate`, and each Markdown link whose target does not exist. The other
+validators resolve nothing through a wikilink, and the Factory refuses to plan a KB that
+holds one.
 
 ### D6 — `/inspire:migrate` converts the links
 
@@ -75,8 +78,9 @@ and each Markdown link whose target does not exist.
   (`_migration/plan.tsv`, or git rename history read without writing); its path against
   the current files; the id index; its target as a pre-move file name, mapped through
   the move record; the screen id map (`_migration/id-map.json`).
-- The id index is the one the validators resolve wikilinks with, so a converted link
-  names the same file the validators read before the conversion.
+- The id index resolves a wikilink the way the validators did before this version
+  (adr-kb-structure D3, with a file's name as the last resort), so a converted link names
+  the file the validators read before the conversion.
 - A link that resolves through none of them stays as written, and the run lists it.
 - A link in a screen's `## Bindings` is converted like any other. Its text keeps the id
   it named, so the citations the Factory's remap reads do not change.
@@ -97,12 +101,12 @@ creates it from its template (adr-kb-structure D4).
 A claim whose payload quotes a link changes its fingerprint when the link is converted,
 though it states the same thing. After a conversion, the Factory's remap rewrites, in the
 built code, each fingerprint whose claim payload differs only in link syntax, as it
-rewrites screen ids after a move (adr-kb-structure D10). A project that has not converted
-keeps every fingerprint it has.
+rewrites screen ids after a move (adr-kb-structure D10).
 
-The plain text a fingerprint covers reduces a wikilink exactly as before this decision, and
-a Markdown link to a specification file to its text, so moving a file (D7) changes no
-fingerprint. A Markdown link inside a code span, or to anything else, stays as written.
+The plain text a fingerprint covers reduces a Markdown link to a specification file to its
+text, so moving a file (D7) changes no fingerprint. A Markdown link inside a code span, or
+to anything else, stays as written. On the remap's pre-conversion side, a wikilink reduces
+to the text the conversion writes for it.
 A claim counts as changed only in link syntax when its links resolve to the same ids
 before and after.
 
@@ -118,7 +122,7 @@ those references are mostly commands to run.
 ## Consequences
 
 - The INSPIRE Factory reads the KB's links to derive dependencies and bundle membership.
-  It needs a release that reads Markdown links and applies D8 before a converted project
-  is built.
+  It ships with this version: it reads Markdown links only, refuses a KB that holds a
+  wikilink, and applies D8. A project runs `/inspire:migrate` before its next build.
 - `wikilinks-resolve.sh` is removed. An upgrade deletes the shipped copy and keeps an
   edited one.
