@@ -533,7 +533,8 @@ sdd_catalog_state() {
 
 # sdd_link_index — builds the wikilink index once, KB-wide whatever the scope:
 #   `{kind}<TAB>{key}<TAB>{path}`, kind A action id · E entity id (dotted) ·
-#   S screen id · M old screen id (path holds the new one) · N file name id.
+#   S screen id · M old screen id (path holds the new one) · N file id ·
+#   F file name id a declared id displaces, never a screen's.
 #   Call it in the calling script's own shell, which removes
 #   `$SDD_LINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
 SDD_LINK_INDEX_FILE=""
@@ -553,9 +554,11 @@ sdd_link_index() {
       [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
     done < <(sdd_find_screens "$SDD_SPEC_ROOT")
     [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
-    # A file is named by its plain name and by the id its typed name gives, unless its
-    # frontmatter declares another id: then that id is the file's (adr-kb-structure
-    # D3), and `orders.screen.md` with `id: portal.orders` is never `orders`.
+    # A typed file is named by its frontmatter id where it declares one (adr-kb-structure
+    # D3), else by the id its name gives. A name the declared id displaces is kept as
+    # F, read only when nothing else answers, so `[[nightly-close]]` still reaches
+    # `billing.nightly-close`. A screen keeps none: its slug repeats its module's name,
+    # and `[[orders]]` never names `orders.screen.md` (`id: portal.orders`).
     find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
       | awk '
           function fm_id(f,   l, n, v) {
@@ -582,14 +585,19 @@ sdd_link_index() {
             }
             else next
             fm = fm_id($0)
-            if (fm == "" || fm == id) print "N\t" id "\t" $0
+            if (fm == "") { print "N\t" id "\t" $0; next }
+            print "N\t" fm "\t" $0
+            alt = fm; if (index(alt, "::")) gsub(/::/, ".", alt); else gsub(/\./, "::", alt)
+            if (alt != fm) print "N\t" alt "\t" $0
+            if (fm != id && $0 !~ /\.screen\.md$/) print "F\t" id "\t" $0
           }'
   } > "$SDD_LINK_INDEX_FILE"
 }
 
 # sdd_links <file> — every link in the file, frontmatter included, one per line:
 #   `{line}<TAB>{md|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
-#   The path is empty when the link resolves to no file. Text and target are never
+#   The path is empty when the link resolves to nothing; a path to a directory
+#   resolves and names no id (D2). Text and target are never
 #   empty, so `IFS=$'\t' read` keeps the five fields apart: a link that shows no
 #   text reports its target as text. An image whose target is a `.md` file is an
 #   embed and reads as a link; other images and external URLs are not links here.
@@ -599,10 +607,10 @@ sdd_links() {
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
   # Byte semantics, so a percent-escape decodes to the byte it names.
   LC_ALL=C awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" \
-    "$SDD_AWK_LINKS$SDD_AWK_WIKI_RESOLVE$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
+    "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_WIKI_RESOLVE$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
     "$SDD_LINK_INDEX_FILE" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
-      [ -n "$path" ] && [ -f "$path" ] || path=""
+      [ -n "$path" ] && { [ -f "$path" ] || [ -d "$path" ]; } || path=""
       printf '%s\t%s\t%s\t%s\t%s\n' "$ln" "$form" "$target" "$text" "$path"
     done
 }
@@ -613,25 +621,55 @@ sdd_links() {
 SDD_AWK_LINKS='
   FILENAME == idx { sdd_ix_add($0); next }
   FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
-  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan(sdd_unspan($0), FNR); next }
+  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan($0, FNR); next }
   sdd_fence($0) { next }
   sdd_in_fence() { next }
-  { sdd_scan(sdd_unspan($0), FNR) }
+  { sdd_scan($0, FNR) }
 
-  function sdd_scan(s, ln,   w, ws, wl, tok) {
+  # Links are found in the line with its code spans blanked in place; a Markdown
+  # link takes its text from the raw line, so a span in the text still shows.
+  function sdd_scan(raw, ln,   s, w, ws, wl, tok) {
+    s = sdd_unspan(raw, 1)
     while (1) {
       w = match(s, /\[\[[^][]+\]\]/); ws = RSTART; wl = RLENGTH
       if (!sdd_next_md(s)) MS = 0
       if (!w && !MS) return
       if (w && (!MS || ws <= MS)) {
-        sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl)
+        sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl); raw = substr(raw, ws + wl)
       } else {
-        tok = substr(s, MS, ML); s = substr(s, MS + ML)
-        sdd_md(tok, MT, ln)
+        tok = substr(s, MS, ML)
+        sdd_md(tok, MT, ln, substr(raw, MS, ML)); s = substr(s, MS + ML); raw = substr(raw, MS + ML)
       }
     }
   }
 
+  function sdd_emit(ln, form, target, text, path) {
+    gsub(/\t/, " ", target); gsub(/\t/, " ", text)
+    if (text == "") text = target
+    print ln "\t" form "\t" target "\t" text "\t" path
+  }
+
+  # `[[target|text]]`: the target is the left half, and a pipe escaped for a
+  # table cell leaves its backslash on it.
+  function sdd_wiki(inner, ln,   p, t, text) {
+    p = index(inner, "|")
+    if (p) { t = substr(inner, 1, p - 1); sub(/\\$/, "", t); text = substr(inner, p + 1) }
+    else { t = inner; text = inner }
+    if (t == "") return
+    sdd_emit(ln, "wiki", t, text, sdd_wres(t))
+  }
+
+  function sdd_md(tok, p, ln, rtok,   text, dest) {
+    if ((dest = sdd_md_dest(tok, p)) == "") return
+    if (substr(rtok, 1, 1) == "!") { rtok = substr(rtok, 2); p-- }
+    text = substr(rtok, 2, p - 2); gsub(/\\\|/, "|", text)
+    sdd_emit(ln, "md", dest, text, sdd_join(dir, MDPATH))
+  }
+'
+
+# The Markdown link grammar, as awk source. migrate-links.sh composes the same
+# fragment, so it rebases exactly the links the reader reads.
+SDD_AWK_MD_FUNCS='
   # The next `[text](dest)` or image in s: MS its start, ML its length, MT the
   # offset of its `](`. Brackets nest in the text; parentheses balance in a bare
   # destination, and a destination in `<…>` holds any of them (CommonMark).
@@ -667,34 +705,19 @@ SDD_AWK_LINKS='
     return 0
   }
 
-  function sdd_emit(ln, form, target, text, path) {
-    gsub(/\t/, " ", target); gsub(/\t/, " ", text)
-    if (text == "") text = target
-    print ln "\t" form "\t" target "\t" text "\t" path
-  }
-
-  # `[[target|text]]`: the target is the left half, and a pipe escaped for a
-  # table cell leaves its backslash on it.
-  function sdd_wiki(inner, ln,   p, t, text) {
-    p = index(inner, "|")
-    if (p) { t = substr(inner, 1, p - 1); sub(/\\$/, "", t); text = substr(inner, p + 1) }
-    else { t = inner; text = inner }
-    if (t == "") return
-    sdd_emit(ln, "wiki", t, text, sdd_wres(t))
-  }
-
-  # An image is a link only when it embeds a KB file, a `.md` target (D1).
-  function sdd_md(tok, p, ln,   img, text, dest, path) {
+  # sdd_md_dest(tok, p) — the destination of the link token tok (`](` at p) as
+  # written, or "" when it is no KB link: an external URL, an in-file anchor, or an
+  # image of anything but a `.md` file (D1). MDPATH gets its decoded path.
+  function sdd_md_dest(tok, p,   img, dest) {
     if ((img = (substr(tok, 1, 1) == "!"))) { tok = substr(tok, 2); p-- }
-    text = substr(tok, 2, p - 2); gsub(/\\\|/, "|", text)
     dest = substr(tok, p + 2, length(tok) - p - 2)
     gsub(/^[ ]+|[ ]+$/, "", dest)
     if (substr(dest, 1, 1) == "<") { sub(/^</, "", dest); sub(/>.*$/, "", dest) }
     else sub(/[ ].*$/, "", dest)
-    if (dest == "" || dest ~ /^#/ || dest ~ /^[A-Za-z][A-Za-z0-9+.-]*:\/\// || dest ~ /^(mailto|tel|data):/) return
-    path = dest; sub(/[#?].*$/, "", path); path = sdd_unescape(path)
-    if (img && path !~ /\.md$/) return
-    sdd_emit(ln, "md", dest, text, sdd_join(dir, path))
+    if (dest == "" || dest ~ /^#/ || dest ~ /^[A-Za-z][A-Za-z0-9+.-]*:\/\// || dest ~ /^(mailto|tel|data):/) return ""
+    MDPATH = dest; sub(/[#?].*$/, "", MDPATH); MDPATH = sdd_unescape(MDPATH)
+    if (img && MDPATH !~ /\.md$/) return ""
+    return dest
   }
 
   # Each `%XX` decodes to its byte, so `a%C3%B1o.md`, as some editors write it,
@@ -755,6 +778,7 @@ SDD_AWK_WIKI_RESOLVE='
     if (("S", t) in ix) return ix["S", t]
     if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
     if (("N", t) in ix) return ix["N", t]
+    if (("F", t) in ix) return ix["F", t]
     return ""
   }
 '

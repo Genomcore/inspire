@@ -521,6 +521,63 @@ eq    "links: one row per link" "$(printf '%s\n' "$links" | grep -c .)" "11"
 eq    "links: the target's id comes from the file it resolves to" \
       "$(sdd_artifact_id "$ROOT/links/kb/01_spec/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
 
+# Every typed kind that declares an `id:` is reached by that id in both forms, and
+# still by its file name id when no file owns that name outright.
+I="$ROOT/ids/kb/01_spec"
+mkdir -p "$I/_modules/billing/_processes" "$I/_modules/orders" "$I/_modules/auth/_domain/user" \
+  "$I/_faces/portal/_screens" "$I/_faces/admin" "$I/_bundles"
+printf -- '---\nid: billing.nightly-close\n---\n' > "$I/_modules/billing/_processes/nightly-close.process.md"
+: > "$I/_modules/orders/orders.module.md"
+printf -- '---\nid: portal.orders\n---\n' > "$I/_faces/portal/_screens/orders.screen.md"
+printf -- '---\nid: portal.detail\n---\n' > "$I/_faces/portal/_screens/detail.screen.md"
+printf -- '---\nid: admin\n---\n' > "$I/_faces/admin/backoffice.face.md"
+printf -- '---\nid: public-api\n---\n' > "$I/_bundles/api.bundle.md"
+printf -- '---\nid: auth.user\n---\n' > "$I/_modules/auth/_domain/user/user.entity.md"
+printf -- '---\nid: auth::user::create\n---\n' > "$I/_modules/auth/_domain/user/user.create.action.md"
+printf '%s\n' '[[billing.nightly-close]] [[billing::nightly-close]] [[nightly-close]]' \
+  '[[orders]] [[portal.orders]] [[detail]] [[admin]] [[backoffice]] [[public-api]] [[api]]' \
+  '[[auth.user]] [[auth::user]] [[user]] [[auth::user::create]] [[auth.user.create]]' > "$I/ids.md"
+ids="$(
+  cd "$ROOT/ids" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_links "kb/01_spec/ids.md" | cut -f3,5
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+)"
+P="kb/01_spec/_modules/billing/_processes/nightly-close.process.md"
+has "ids: a process by its dotted id"            "^billing.nightly-close${T}$P\$" "$ids"
+has "ids: a process by its colon id"             "^billing::nightly-close${T}$P\$" "$ids"
+has "ids: a process by its file name id"         "^nightly-close${T}$P\$" "$ids"
+has "ids: a name a module owns is the module's"  "^orders${T}kb/01_spec/_modules/orders/orders.module.md\$" "$ids"
+has "ids: a screen by its id"                    "^portal.orders${T}kb/01_spec/_faces/portal/_screens/orders.screen.md\$" "$ids"
+has "ids: a screen never by its file name id"    "^detail${T}\$" "$ids"
+has "ids: a face by its declared id"             "^admin${T}kb/01_spec/_faces/admin/backoffice.face.md\$" "$ids"
+has "ids: a face by its file name id"            "^backoffice${T}kb/01_spec/_faces/admin/backoffice.face.md\$" "$ids"
+has "ids: a bundle by its declared id"           "^public-api${T}kb/01_spec/_bundles/api.bundle.md\$" "$ids"
+has "ids: a bundle by its file name id"          "^api${T}kb/01_spec/_bundles/api.bundle.md\$" "$ids"
+has "ids: an entity by its dotted id"            "^auth.user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an entity by its colon id"             "^auth::user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an entity by its file name id"         "^user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an action by its colon id"             "^auth::user::create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
+has "ids: an action by its dotted id"            "^auth.user.create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
+
+# A frontmatter value whose path is written in <…>, as the converter writes a path
+# holding a space or a parenthesis, still reads as a link.
+A="$ROOT/angle/kb/01_spec/_modules/a/_domain/e"
+mkdir -p "$A"
+printf -- '---\nid: a::e::y\n---\n' > "$A/e.y.action.md"
+printf -- '---\nid: a::e::x\nrequires: ["[a::e::y](<e.y.action.md>)"]\n---\n' > "$A/e.x.action.md"
+angle="$(
+  cd "$ROOT/angle" || exit 1
+  . "$HERE/../_link-reads.sh"
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_fm_link_refs "kb/01_spec/_modules/a/_domain/e/e.x.action.md" requires
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+)"
+eq "fm_link_refs: a path in <> is a Markdown link" \
+   "$angle" "$(printf 'md\te.y.action.md\ta::e::y\tkb/01_spec/_modules/a/_domain/e/e.y.action.md')"
+
 # The CommonMark shapes the converter writes or an editor leaves.
 D="$L/_modules/shapes"
 mkdir -p "$D/sub"
@@ -528,7 +585,7 @@ mkdir -p "$D/sub"
 printf -- '---\r\nlinks: ["[x](gone-fm.md)"]\r\n---\r\n```\r\n[f](fenced.md)\r\n```\r\n' > "$D/crlf.md"
 cat > "$D/shapes.md" <<'EOF'
 [a [x] c](gone.md) [p](p(1).md) [n](a%C3%B1o.md) [s](<my file (v2).md#top>) [d](sub)
-![embed](año.md) ![picture](diagram.png)
+![embed](año.md) ![picture](diagram.png) [nd](nodir/) [`g`](gone2.md)
 EOF
 (
   cd "$ROOT/links" || exit 1
@@ -544,7 +601,11 @@ has   "links: brackets nest in the text, so the broken link is read" "^1${T}md${
 has   "links: parentheses balance in the path"            "^1${T}md${T}p(1).md${T}p${T}$S/p(1).md\$" "$shapes"
 has   "links: a percent-escaped non-ASCII byte decodes"   "^1${T}md${T}a%C3%B1o.md${T}n${T}$S/año.md\$" "$shapes"
 has   "links: a path in <> holds spaces and parentheses"  "^1${T}md${T}my file (v2).md#top${T}s${T}$S/my file (v2).md\$" "$shapes"
-has   "links: a link to a directory is broken"            "^1${T}md${T}sub${T}d${T}\$" "$shapes"
+has   "links: a link to a directory resolves to it"       "^1${T}md${T}sub${T}d${T}$S/sub\$" "$shapes"
+has   "links: a link to a missing directory is broken"    "^2${T}md${T}nodir/${T}nd${T}\$" "$shapes"
+has   "links: a code span in the text shows in the text"  "^2${T}md${T}gone2.md${T}\`g\`${T}\$" "$shapes"
+eq    "links: a directory names no id" \
+      "$(. "$HERE/../_link-reads.sh"; sdd_link_id md d "$ROOT/links/$S/sub" || echo none)" "none"
 has   "links: an image of a .md file is an embed, read as a link" "^2${T}md${T}año.md${T}embed${T}$S/año.md\$" "$shapes"
 hasnt "links: any other image is not"                     "diagram" "$shapes"
 has   "links: a CRLF frontmatter is read as frontmatter"  "^2${T}md${T}gone-fm.md${T}x${T}\$" "$shapes"

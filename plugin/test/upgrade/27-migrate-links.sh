@@ -276,6 +276,61 @@ printf 'See [[portal.orders]].\n' | mk "$XS/_modules/orders/see.md"
 out="$(cd "$X" && bash "$LINKS" --kb ./inspire_kb/ 2>&1)"
 has "a KB spelled ./inspire_kb/ resolves a screen id all the same" "$(cat "$XS/_modules/orders/see.md")" "See [portal.orders](../../_faces/portal/_screens/orders.screen.md)."
 
+# A process's scoped id is its id in either form, and its file name still names it.
+Y="$W/process"; YS="$Y/inspire_kb/01_spec"
+printf -- '---\nid: billing.nightly-close\n---\n# Nightly close\n' | mk "$YS/_modules/billing/_processes/nightly-close.process.md"
+printf '# billing\n- [[nightly-close]]\n- [[billing.nightly-close]]\n- [[billing::nightly-close]]\n' | mk "$YS/_modules/billing/billing.module.md"
+out="$(cd "$Y" && bash "$LINKS" 2>&1)"
+BM="$(cat "$YS/_modules/billing/billing.module.md")"
+has "a process link by file name converts"  "$BM" "- [nightly-close](_processes/nightly-close.process.md)"
+has "a process link by dotted id converts"  "$BM" "- [billing.nightly-close](_processes/nightly-close.process.md)"
+has "a process link by colon id converts"   "$BM" "- [billing::nightly-close](_processes/nightly-close.process.md)"
+hasnt "and none is left unresolved"         "$out" "unresolved${TAB}"
+
+# Markdown links written before the move are rebased through the move record (D7),
+# and every Markdown link left broken, anywhere in the KB, is listed.
+Z="$W/rebase"; ZK="$Z/inspire_kb"; ZS="$ZK/01_spec"
+mk "$ZS/_migration/plan.tsv" <<E
+move${TAB}inspire_kb/01_adr/adr-a.md${TAB}inspire_kb/01_spec/_adr/a.adr.md
+move${TAB}inspire_kb/02_modules/m.md${TAB}inspire_kb/01_spec/_modules/m/m.module.md
+move${TAB}inspire_kb/03_features/m/x.md${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md
+move${TAB}inspire_kb/03_features/m/y.md${TAB}inspire_kb/01_spec/_modules/m/_features/y.feature.md
+E
+printf -- '---\nid: adr-a\n---\n# A\n' | mk "$ZS/_adr/a.adr.md"
+printf '# x\n' | mk "$ZS/_modules/m/_features/x.feature.md"
+printf '# y\nSee [x](x.md).\n' | mk "$ZS/_modules/m/_features/y.feature.md"
+mk "$ZS/_modules/m/m.module.md" <<'E'
+---
+links: ["[A](../01_adr/adr-a.md)"]
+---
+# m
+See [the A decision](../01_adr/adr-a.md#context) and [[adr-a]].
+Features: [features](../03_features/m) · stack: [stack](../00_bootstrap/stack.md) · self: [m](m.module.md)
+Retired: [roster](../surfaces.md) · code: `[c](../01_adr/adr-a.md)`
+E
+printf 'Stack. See [adr a](../01_adr/adr-a.md) and [gone](../02_modules/gone.md).\n' | mk "$ZK/00_bootstrap/stack.md"
+out="$(cd "$Z" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the rebase run exits 0" "$rc" "0"
+M="$(cat "$ZS/_modules/m/m.module.md")"
+has "a link from a moved file to a moved file follows both"    "$M" "See [the A decision](../../_adr/a.adr.md#context) and [adr-a](../../_adr/a.adr.md)."
+has "a frontmatter link is rebased in its quotes"              "$M" 'links: ["[A](../../_adr/a.adr.md)"]'
+has "a directory whose files moved together follows them"      "$M" "Features: [features](_features)"
+has "a link from a moved file to a file that stayed follows it" "$M" "stack: [stack](../../../00_bootstrap/stack.md)"
+has "a link that resolves where it stands is left"             "$M" "self: [m](m.module.md)"
+has "a link to a retired file stays as written"                "$M" "Retired: [roster](../surfaces.md)"
+has "a link in a code span stays"                              "$M" '`[c](../01_adr/adr-a.md)`'
+check "a moved file's link to its moved sibling follows it" "grep -qxF 'See [x](x.feature.md).' '$ZS/_modules/m/_features/y.feature.md'"
+check "a file that stayed has its link to a moved file rebased" \
+  "grep -qF 'See [adr a](../01_spec/_adr/a.adr.md)' '$ZK/00_bootstrap/stack.md'"
+has "the plan lists each rebased link" "$out" "link${TAB}inspire_kb/00_bootstrap/stack.md${TAB}1${TAB}rebased${TAB}[adr a](../01_adr/adr-a.md)${TAB}[adr a](../01_spec/_adr/a.adr.md)"
+has "and each broken link, in 01_spec"  "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/m.module.md${TAB}7${TAB}[roster](../surfaces.md)"
+has "and outside it"                    "$out" "broken${TAB}inspire_kb/00_bootstrap/stack.md${TAB}1${TAB}[gone](../02_modules/gone.md)"
+has "and sums them up" "$out" "Markdown links: 6 rebased through the move record, 2 broken and left as written"
+after="$(tree_hash "$Z")"
+out="$(cd "$Z" && bash "$LINKS" 2>&1)"
+eq "a second rebase run changes nothing" "$(tree_hash "$Z")" "$after"
+has "and lists the broken links again" "$out" "Markdown links: 0 rebased through the move record, 2 broken and left as written"
+
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
 

@@ -66,3 +66,7 @@ exists" passes whether or not the code under test ran, and seven assertions in
 this repo have been vacuous for exactly that reason. Assert the source side too,
 or pick a path the old installer cannot have staged. When unsure, stub the
 function to a no-op *on a copy* and confirm the assertion fails.
+
+A golden fixture keeps a wikilink whose target it does not hold, since a Markdown
+link must name a file; each check that reads a link has an `md-*` twin with its
+targets present.

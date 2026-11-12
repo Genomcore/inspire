@@ -98,7 +98,7 @@ sc_header_links() {
   [ -n "$ln" ] || return 0
   sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
     if [ "$form" = "wiki" ]; then printf '%s\n' "$text"
-    elif [ -n "$path" ]; then printf '%s\n' "$path"
+    elif [ -f "$path" ]; then printf '%s\n' "$path"
     fi
   done
 }
@@ -170,7 +170,7 @@ sc_link_target() {
     t="${text%%#*}"
     t="${t#"${t%%[![:space:]]*}"}"; t="${t%"${t##*[![:space:]]}"}"
     printf '%s\n' "$t"
-  elif [ -n "$path" ]; then
+  elif [ -f "$path" ]; then
     sdd_artifact_id "$path"
   else
     case "${target%%#*}" in *.md) ;; *) printf '%s\n' "${target%%#*}" ;; esac

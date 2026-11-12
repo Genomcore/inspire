@@ -1,0 +1,3 @@
+{ "exit": 1,
+  "findings": [{"rule":"head-referents","severity":"error","message_substring":"OS-E7: `org_id` references(`auth.org`) resolves to no entity document"}],
+  "forbidden": [] }

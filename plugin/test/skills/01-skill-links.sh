@@ -4,7 +4,7 @@
 # (plugin/base/skills) and in a project (.claude/skills), so a relative link holds in both.
 #
 # Two rules, one assertion per file each:
-#   - every relative Markdown link names a file that exists;
+#   - every relative Markdown link names a file that exists inside the tree;
 #   - no backtick path names a file inside the tree: it is written as a link instead.
 #
 # Skipped, because the text is not a reference between runtime files:
@@ -57,11 +57,16 @@ names_tree_file() {
 
 # violations <root> <file> <kind> — the violations of one rule in one file, as text.
 violations() {
-  local root="$1" file="$2" kind="$3" k ln arg
+  local root="$1" file="$2" kind="$3" k ln arg p d rr
+  rr="$(cd -P "$root" && pwd -P)"
   scan "$file" | while IFS=$'\t' read -r k ln arg; do
     [ "$k" = "$kind" ] || continue
     if [ "$kind" = link ]; then
-      [ -e "$(dirname "$file")/$arg" ] || echo "line $ln: $arg"
+      p="$(dirname "$file")/$arg"
+      if [ ! -e "$p" ]; then echo "line $ln: $arg"; continue; fi
+      # A link out of the tree resolves here and names nothing in a project (D9).
+      if [ -d "$p" ]; then d="$(cd -P "$p" && pwd -P)"; else d="$(cd -P "$(dirname "$p")" && pwd -P)"; fi
+      case "$d/" in "$rr"/*) ;; *) echo "line $ln: $arg leaves the skills tree" ;; esac
     elif names_tree_file "$root" "$file" "$arg"; then
       echo "line $ln: \`$arg\`"
     fi
@@ -81,6 +86,11 @@ eq "premise: a backtick path to a tree file is reported" \
   "$(violations "$T" "$T/inspire-x/SKILL.md" span)" 'line 1: `_references/a.md`'
 eq "premise: a broken link is reported, a resolving one is not" \
   "$(violations "$T" "$T/inspire-x/SKILL.md" link)" 'line 2: missing.md'
+mkdir -p "$T/outer/skills/inspire-y" "$T/outer/bin"
+: > "$T/outer/bin/review.sh"
+printf '%s\n' '[review](../../bin/review.sh) and [tree](..)' > "$T/outer/skills/inspire-y/SKILL.md"
+eq "premise: a link that leaves the tree is reported, though its file exists" \
+  "$(violations "$T/outer/skills" "$T/outer/skills/inspire-y/SKILL.md" link)" 'line 1: ../../bin/review.sh leaves the skills tree'
 
 premise "the skills tree exists" "[ -d '$SKILLS/_references' ]"
 n=0

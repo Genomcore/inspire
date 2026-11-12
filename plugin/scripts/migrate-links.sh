@@ -18,11 +18,17 @@
 # the file they read; its target as a pre-move file name, mapped through the move
 # record, where a name two files had resolves nothing.
 #
+# A Markdown link that names nothing where it stands is rebased (D7): its path is
+# read from the file's pre-move location, and a target that moved, or a directory
+# whose files all moved to one directory, is followed through the move record. A
+# Markdown link that still names nothing is listed as broken and left as written.
+#
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> · unresolved <file> <line> <wikilink> ·
+#   link <file> <line> rebased <old link> <new link> · broken <file> <line> <link> ·
 #   note <text>
 # In act mode the files are rewritten and the plan is saved to
-# 01_spec/_migration/links.tsv, when it converted anything.
+# 01_spec/_migration/links.tsv, when it changed anything.
 #
 # Exit: 0 converted (or nothing to do) · 1 refused (a layered KB, or moves git has not
 # committed) · 2 usage.
@@ -118,7 +124,7 @@ function wiki_scan(s, raw, base, ln, fm,   c, off, m) {
   return c
 }
 AWK
-AWK_LIB="$AWK_LIB$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS"
+AWK_LIB="$AWK_LIB$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS$SDD_AWK_MD_FUNCS"
 
 if [ "$COUNT" -eq 1 ]; then
   LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
@@ -187,6 +193,12 @@ fi
 
 sdd_link_index
 
+# Every path under the KB, so a Markdown link is checked without reading a directory,
+# which awk cannot open.
+ALLF="$WORK/all-files.txt"; ALLD="$WORK/all-dirs.txt"
+find "$KB" -type f | awk -v p="$KB/" '{ print substr($0, length(p) + 1) }' > "$ALLF"
+find "$KB" -type d | awk -v p="$KB/" '{ print ($0 == substr(p, 1, length(p) - 1)) ? "." : substr($0, length(p) + 1) }' > "$ALLD"
+
 # ── convert ──────────────────────────────────────────────────────────────────
 OUT="$WORK/out"; mkdir -p "$OUT"
 PLAN="$WORK/links.tsv"
@@ -194,8 +206,69 @@ CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
 # Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
 LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_LINK_INDEX_FILE" \
+    -v ALLF="$ALLF" -v ALLD="$ALLD" \
     -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB$SDD_AWK_WIKI_RESOLVE"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
+  # A path outside the KB, or absolute, is asked of the file system once.
+  function present(p,   q) {
+    if ((p in FSET) || (p in DSET)) return 1
+    if (substr(p, 1, 1) != "/" && p !~ /^\.\.(\/|$)/) return 0
+    if (!(p in OUTSIDE)) {
+      q = (substr(p, 1, 1) == "/") ? p : KB "/" p; gsub(/\047/, "\047\\\047\047", q)
+      OUTSIDE[p] = (system("test -e \047" q "\047") == 0)
+    }
+    return OUTSIDE[p]
+  }
+  # rebase(f, t) — t with each Markdown link that names nothing rebased (D7), read
+  # line by line with the reader rules: frontmatter is read, code is not.
+  function rebase(f, t,   n, lines, k, line, fm, out) {
+    n = split(t, lines, "\n"); fm = 0; sdd_fence_ch = ""; sdd_fence_len = 0; out = ""
+    for (k = 1; k <= n; k++) {
+      line = lines[k]
+      if (k == 1 && sdd_fm_delim(line)) fm = 1
+      else if (fm && sdd_fm_delim(line)) fm = 0
+      else if (fm || !(sdd_fence(line) || sdd_in_fence())) line = rebase_line(f, line, k)
+      out = out (k > 1 ? "\n" : "") line
+    }
+    return out
+  }
+  # Tokens are found with code spans blanked in place and copied from the raw line.
+  function rebase_line(f, line, ln,   masked, res, off, s, tok, d0, nd, rtok, inner, lead, w, ntok) {
+    masked = sdd_unspan(line, 1); res = ""; off = 0
+    while (sdd_next_md(substr(masked, off + 1))) {
+      s = off + MS; tok = substr(masked, s, ML); rtok = substr(line, s, ML); ntok = rtok
+      if ((d0 = sdd_md_dest(tok, MT)) != "" && (nd = rebased(f, d0, MDPATH, ln, rtok)) != "") {
+        inner = substr(rtok, MT + 2, ML - MT - 2); lead = match(inner, /[^ ]/) - 1
+        w = (substr(inner, lead + 1, 1) == "<") ? "<" d0 ">" : d0
+        ntok = substr(rtok, 1, MT + 1) substr(inner, 1, lead) nd substr(inner, lead + length(w) + 1) ")"
+        printf "link\t%s/%s\t%d\trebased\t%s\t%s\n", KB, f, ln, flat(rtok), flat(ntok)
+      }
+      res = res substr(line, off + 1, s - off - 1) ntok; off = s + ML - 1
+    }
+    return res substr(line, off + 1)
+  }
+  # rebased(f, written, path) — the new destination of a link that names nothing
+  # where it stands, or "" (the link is listed as broken unless it resolves).
+  function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, anchor) {
+    abs = (substr(path, 1, 1) == "/")
+    cur = abs ? path : normpath(join_path(dir_of(f), path))
+    if (present(cur)) return ""
+    if (!abs) {
+      src = (f in BACK) ? BACK[f] : f
+      old = normpath(join_path(dir_of(src), path)); nt = ""
+      if (old in REN) nt = REN[old]
+      else if (old != cur && present(old)) nt = old
+      else if ((old in DMAP) && !(old in DCLASH)) nt = DMAP[old]
+      if (nt != "" && present(nt)) {
+        anchor = (match(written, /[#?]/)) ? substr(written, RSTART) : ""
+        st["rebased"]++
+        return angle(relpath(nt, dir_of(f)) anchor)
+      }
+    }
+    st["broken"]++
+    printf "broken\t%s/%s\t%d\t%s\n", KB, f, ln, flat(rtok)
+    return ""
+  }
   # The validators index files outside the KB too; a KB link converts only to a KB file.
   function in_kb(p) {
     if (p == "" || index(p, KB "/") != 1) return ""
@@ -220,7 +293,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
   function flat(s) { gsub(/[\t\n]/, " ", s); return s }
   function trim(s) { sub(/^[ \t\n\r]+/, "", s); sub(/[ \t\n\r]+$/, "", s); return s }
   # A destination with a space or a parenthesis goes in <…>, the CommonMark form.
-  function dest(p) { return p ~ /[ ()]/ ? "<" p ">" : p }
+  function angle(p) { return p ~ /[ ()]/ ? "<" p ">" : p }
   # A frontmatter link is a quoted YAML string (D3): inside quotes it is escaped for
   # them, and where it starts a value unquoted it gets double quotes of its own.
   function yaml(md, pre,   dq, sq, s) {
@@ -238,6 +311,15 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
       if ((s in STEM) && STEM[s] != a[2]) STEMCLASH[s] = 1
       STEM[s] = a[2]
     }
+    # A directory whose moved files all went to one directory moved there.
+    for (o in REN) {
+      od = dir_of(o); nd = dir_of(REN[o])
+      if (od == "") continue
+      if ((od in DMAP) && DMAP[od] != nd) DCLASH[od] = 1
+      DMAP[od] = nd
+    }
+    while ((getline l < ALLF) > 0) FSET[l] = 1
+    while ((getline l < ALLD) > 0) DSET[l] = 1
     while ((getline l < INDEX) > 0) sdd_ix_add(l)
     while ((getline f < LIST) > 0) files[++nf] = f
     close(LIST)
@@ -262,16 +344,16 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
         if (alias != "") text = trim(alias)
         else if (target == "") text = substr(anchor, 2)
         else { text = target; sub(/.*\//, "", text) }
-        md = "[" text "](" dest(rel anchor) ")"
+        md = "[" text "](" angle(rel anchor) ")"
         if (LFM[w]) md = yaml(md, LPRE[w])
         out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
         st[HOW]++; st["converted"]++
         printf "link\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, HOW, flat("[[" inner "]]"), flat(md)
       }
-      if (!changed) continue
-      out = out substr(t, pos)
+      out = changed ? out substr(t, pos) : t
+      if (changed) nchanged++
+      out = rebase(f, out)
       if (out == t) continue
-      nchanged++
       printf "%s", out > (OUT "/" n); close(OUT "/" n)
       printf "%s\t%s\n", f, OUT "/" n > CHANGED
     }
@@ -289,6 +371,8 @@ converted="$(tally converted)"
   printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s unresolved and left as written, %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
     "$(tally unresolved)" "$(tally code)"
+  printf 'note\tMarkdown links: %s rebased through the move record, %s broken and left as written\n' \
+    "$(tally rebased)" "$(tally broken)"
 } >> "$PLAN"
 
 if [ "$DRY" -eq 1 ]; then
@@ -300,7 +384,7 @@ fi
 while IFS="$(printf '\t')" read -r rel src; do
   cat "$src" > "$KB/$rel"
 done < "$CHANGED"
-if [ "$converted" -gt 0 ] && [ -d "$SPEC" ]; then
+if [ -s "$CHANGED" ] && [ -d "$SPEC" ]; then
   mkdir -p "$SPEC/_migration"
   cp "$PLAN" "$SPEC/_migration/links.tsv"
 fi

@@ -7,10 +7,10 @@
 # is skipped (D4).
 #
 #   - A Markdown link whose path, joined to the linking file's directory, names
-#     no file → error.
+#     no file and no directory → error.
 #   - A wikilink → error naming `/inspire:migrate`, which converts it (D5, D6).
-#     The finding says whether it resolves, through the routes `sdd_links`
-#     documents: `/inspire:migrate` converts only a wikilink that resolves.
+#     The finding says whether it resolves through the routes `sdd_links`
+#     documents; `/inspire:migrate` also resolves through the move record.
 #
 # Severity: error at every lifecycle. A skill that writes a link creates its
 # target first (D7), so a broken link is never work in progress.
@@ -48,10 +48,10 @@ check_file() {
         "wikilink [[$target]] at line $ln: convert it to a Markdown link with /inspire:migrate (it resolves to $path)"
     elif [ "$form" = wiki ]; then
       sdd_finding error links-resolve "$file" \
-        "wikilink does not resolve: [[$target]] at line $ln: /inspire:migrate converts the wikilinks that resolve and lists this one"
+        "wikilink does not resolve: [[$target]] at line $ln: /inspire:migrate converts every link it can resolve, through the move record too, and lists the rest"
     elif [ -z "$path" ]; then
       sdd_finding error links-resolve "$file" \
-        "link does not resolve: [$text]($target) at line $ln: no such file relative to this one"
+        "link does not resolve: [$text]($target) at line $ln: no such file or directory relative to this one"
     else
       continue
     fi

@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .`_features/`.(_features) at line 3" }
+  ]
+}
