@@ -84,8 +84,9 @@ holds one.
 - A link that resolves through none of them is settled without a person, because a
   wikilink left in the KB stops the Factory (D5). A link whose id names an artifact type
   gets that artifact's draft file from its template and points to it (adr-kb-structure
-  D4). A link to a file the migration retired, or whose target is a template placeholder,
-  becomes its text. The run lists each one.
+  D4). Any other link becomes its text: one to a file the migration retired, one whose
+  target is a template placeholder, and one whose id names no artifact type. The run lists
+  each one.
 - A link in a screen's `## Bindings` is converted like any other. Its text keeps the id
   it named, so the citations the Factory's remap reads do not change.
 
@@ -103,7 +104,8 @@ contents (adr-kb-structure D2: `01_adr` to `_adr`, `02_modules`, `03_features` a
 subdirectories follow the same layout: `02_modules/{m}` to `_modules/{m}`,
 `03_features/{m}` to `_modules/{m}/_features`, `04_domain/{m}` to `_modules/{m}/_domain`,
 `05_screens/{f}/{m}` to `_faces/{f}/_screens`, and a layered screen index to its face's
-`_index.md`. No link points into `_migration/`. A skill that writes a link
+`_index.md`. When the directory a link maps to does not exist, the link points to the
+nearest directory on that path that does. No link points into `_migration/`. A skill that writes a link
 computes the path from the linking file. When the target is missing, the skill first
 creates it from its template (adr-kb-structure D4).
 
