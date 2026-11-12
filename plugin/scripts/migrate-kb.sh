@@ -23,13 +23,15 @@
 #   unplaced <old> <new> · seed <new> · config <file> <change> · note <text> ·
 #   ask <key> <question>
 # In act mode the same plan is applied and also saved to
-# 01_spec/_migration/plan.tsv.
+# 01_spec/_migration/plan.tsv. Then migrate-links.sh converts the KB's wikilinks
+# from that plan (adr-markdown-links D6) and its plan lines follow. On a concept KB
+# that still holds wikilinks, migrate-links.sh is the whole run.
 #
 # Exit: 0 migrated (or nothing to do) · 1 refused · 2 usage · 3 an answer is missing.
 #
 # What it never does (adr-kb-structure D10): rename a module, entity or action;
-# change any id but a screen's; rewrite a link inside a screen's `## Bindings`;
-# extract a shared screen; create a process or an artifact bundle; run git.
+# change any id but a screen's; point a link at a different file; extract a shared
+# screen; create a process or an artifact bundle; write to git.
 #
 # bash 3.2 compatible: no associative arrays, everything keyed goes through files.
 
@@ -45,7 +47,9 @@ SKELETON=""
 BUNDLE_MODULES=""   # newline list of id=m1,m2
 LIBS=""             # newline list of id=bundle|design-system
 
-usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+LINKS="$(dirname "$0")/migrate-links.sh"
+
+usage() { sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -78,6 +82,10 @@ if [ "$has_old" -eq 0 ]; then
     printf 'note\talready migrated: %s exists and no layered directory is left\n' "$SPEC"
   else
     printf 'note\tnothing to migrate: %s has no layered directory\n' "$KB"
+  fi
+  if [ "$(bash "$LINKS" --count --kb "$KB")" -gt 0 ]; then
+    dry_flag=""; [ "$DRY" -eq 1 ] && dry_flag="--dry-run"
+    exec bash "$LINKS" --kb "$KB" $dry_flag
   fi
   exit 0
 fi
@@ -535,7 +543,7 @@ while IFS='|' read -r id pkg prof mods; do
     printf -- '---\n\n# Bundle: %s\n\n## Actions\n\n' "$id"
     if [ -n "$mods" ]; then
       printf '%s\n' "$mods" | tr ',' '\n' | grep -v '^$' | while IFS= read -r m; do
-        printf -- '- [[%s]] (whole module)\n' "$m"
+        printf -- '- [%s](../_modules/%s/%s.module.md) (whole module)\n' "$m" "$m" "$m"
       done
     fi
   } > "$out"
@@ -588,7 +596,9 @@ done
 # ── apply ────────────────────────────────────────────────────────────────────
 if [ "$DRY" -eq 1 ]; then
   cat "$PLAN"
-  printf 'note\tdry run: nothing was written. Commit the moves on their own, before any edit, so git sees them as renames.\n'
+  printf 'note\t%s wikilink(s) become relative Markdown links after the moves; the act run lists any it cannot resolve\n' \
+    "$(bash "$LINKS" --count --kb "$KB")"
+  printf 'note\tdry run: nothing was written. Commit the migration on its own, before any other edit, so git sees the moves as renames.\n'
   exit 0
 fi
 
@@ -670,4 +680,4 @@ for l in $OLD_LAYERS; do
 done
 
 cat "$PLAN"
-exit 0
+bash "$LINKS" --kb "$KB"

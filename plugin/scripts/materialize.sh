@@ -271,6 +271,20 @@ kb_is_layered() {
   return 1
 }
 
+# warn_wikilinks — an update changes no link (adr-markdown-links D6): it counts the
+# wikilinks a concept KB still holds and points at /inspire:migrate. A layered KB
+# already has its warning, and the migration converts its links with the moves.
+warn_wikilinks() {
+  local n
+  [ "$MODE" = "update" ] && [ -d "$PROJECT_ROOT/inspire_kb" ] || return 0
+  [ -f "$PLUGIN_ROOT/scripts/migrate-links.sh" ] || return 0
+  kb_is_layered && return 0
+  n="$(bash "$PLUGIN_ROOT/scripts/migrate-links.sh" --count --kb "$PROJECT_ROOT/inspire_kb" 2>/dev/null)" || return 0
+  [ "${n:-0}" -gt 0 ] || return 0
+  WARNINGS+=("inspire_kb/ holds $n wikilink(s). This version links KB files with relative Markdown links: run /inspire:migrate to convert them — /inspire:update changes no link.")
+  log "  · inspire_kb/ holds $n wikilink(s) — none changed; run /inspire:migrate"
+}
+
 seed_kb() {
   local src_dir="$PLUGIN_ROOT/base/kb"
   local dest_dir="$PROJECT_ROOT/inspire_kb"
@@ -1078,6 +1092,7 @@ run_materialize() {
              "$PLUGIN_ROOT/base" "$src_map" "$tgt_map" "$DRY_RUN" || exit 2
 
   seed_kb                       # additive in BOTH modes now
+  warn_wikilinks
   chmod_executables
   seed_design_system
   seed_claude_md
