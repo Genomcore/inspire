@@ -113,7 +113,7 @@ Factory work.
   nothing when the KB is not in English; blocked by `B4-section-keys`),
   `0143-factory-settings-in-emanate-yml` (High; `/inspire-config` follows the Factory's
   settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version).
-- **First design review, B1:** `B1-kb-structure` and `B1-config-replaces-bootstrap`
+- **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
   Factory's control-plane design, ready for approval, takes the original description.
