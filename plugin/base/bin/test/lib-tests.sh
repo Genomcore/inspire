@@ -561,6 +561,23 @@ has "ids: an entity by its file name id"         "^user${T}kb/01_spec/_modules/a
 has "ids: an action by its colon id"             "^auth::user::create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
 has "ids: an action by its dotted id"            "^auth.user.create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
 
+# A frontmatter value whose path is written in <…>, as the converter writes a path
+# holding a space or a parenthesis, still reads as a link.
+A="$ROOT/angle/kb/01_spec/_modules/a/_domain/e"
+mkdir -p "$A"
+printf -- '---\nid: a::e::y\n---\n' > "$A/e.y.action.md"
+printf -- '---\nid: a::e::x\nrequires: ["[a::e::y](<e.y.action.md>)"]\n---\n' > "$A/e.x.action.md"
+angle="$(
+  cd "$ROOT/angle" || exit 1
+  . "$HERE/../_link-reads.sh"
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_fm_link_refs "kb/01_spec/_modules/a/_domain/e/e.x.action.md" requires
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+)"
+eq "fm_link_refs: a path in <> is a Markdown link" \
+   "$angle" "$(printf 'md\te.y.action.md\ta::e::y\tkb/01_spec/_modules/a/_domain/e/e.y.action.md')"
+
 # The CommonMark shapes the converter writes or an editor leaves.
 D="$L/_modules/shapes"
 mkdir -p "$D/sub"

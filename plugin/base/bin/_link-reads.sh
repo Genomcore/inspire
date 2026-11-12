@@ -53,7 +53,8 @@ sdd_link_in_text() {
     [ -n "$form" ] || continue
     case "$form" in
       wiki) head="${text%%"[[$target"*}" ;;
-      *)    head="${text%%"]($target"*}" ;;
+      *)    head="${text%%"]($target"*}"
+            [ "$head" != "$text" ] || head="${text%%"](<$target"*}" ;;
     esac
     [ "$head" != "$text" ] || continue
     if [ "$bestpos" -lt 0 ] || [ "${#head}" -lt "$bestpos" ]; then
