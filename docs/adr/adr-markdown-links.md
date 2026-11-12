@@ -81,7 +81,11 @@ holds one.
 - The id index resolves a wikilink the way the validators did before this version
   (adr-kb-structure D3, with a file's name as the last resort), so a converted link names
   the file the validators read before the conversion.
-- A link that resolves through none of them stays as written, and the run lists it.
+- A link that resolves through none of them is settled without a person, because a
+  wikilink left in the KB stops the Factory (D5). A link whose id names an artifact type
+  gets that artifact's draft file from its template and points to it (adr-kb-structure
+  D4). A link to a file the migration retired, or whose target is a template placeholder,
+  becomes its text. The run lists each one.
 - A link in a screen's `## Bindings` is converted like any other. Its text keeps the id
   it named, so the citations the Factory's remap reads do not change.
 
@@ -95,8 +99,11 @@ change. `/inspire:migrate` does this for the moves it makes, Markdown links writ
 the migration included, and lists every link in the KB it leaves broken. A link to a
 layered directory, or to its README, points to the concept directory that took its
 contents (adr-kb-structure D2: `01_adr` to `_adr`, `02_modules`, `03_features` and
-`04_domain` to `_modules`, `05_screens` to `_faces`), or to that directory's README. No link
-points into `_migration/`. A skill that writes a link
+`04_domain` to `_modules`, `05_screens` to `_faces`), or to that directory's README. Their
+subdirectories follow the same layout: `02_modules/{m}` to `_modules/{m}`,
+`03_features/{m}` to `_modules/{m}/_features`, `04_domain/{m}` to `_modules/{m}/_domain`,
+`05_screens/{f}/{m}` to `_faces/{f}/_screens`, and a layered screen index to its face's
+`_index.md`. No link points into `_migration/`. A skill that writes a link
 computes the path from the linking file. When the target is missing, the skill first
 creates it from its template (adr-kb-structure D4).
 
