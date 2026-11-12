@@ -164,9 +164,10 @@ check "an id link becomes a path from the linking file" \
   "grep -qF '**Modules affected:** [auth](../auth.module.md)' '$S/_modules/auth/_adr/auth-local.adr.md'"
 check "a link inside ## Bindings keeps the old screen id as its text and points at the screen" \
   "grep -q -- '- nav: \[auth.detail\](detail.screen.md)' '$S/_faces/portal/_screens/list.screen.md'"
-check "a link to nothing stays as written" "grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
-has "and the run lists it" "$out" "unresolved	inspire_kb/01_spec/_adr/global.adr.md"
+check "a link to nothing becomes its text" "grep -q 'billing' '$S/_adr/global.adr.md' && ! grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
+has "and the run lists it" "$out" "unlinked	inspire_kb/01_spec/_adr/global.adr.md"
 check "the link plan is saved beside the move plan" "grep -q '^link	' '$S/_migration/links.tsv'"
+eq "after the full run no wikilink is left outside code" "$(cd "$P" && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" --count)" "0"
 
 # A half-migrated KB is refused, never merged into.
 H="$W/half"; old_kb "$H"; mkdir -p "$H/inspire_kb/01_spec"

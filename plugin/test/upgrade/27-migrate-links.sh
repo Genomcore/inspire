@@ -3,10 +3,11 @@
 # (plugin/scripts/migrate-links.sh, adr-markdown-links D6).
 #
 # What it must hold: each resolution source resolves what only it can, an id resolves
-# to the file the id index (scripts/lib/wikilinks.sh) resolves it to, a pre-move name two files had resolves
-# nothing, aliases, escaped table pipes and frontmatter convert, code and embeds stay,
-# unresolved links are listed and left, a dry run writes nothing, a second run changes
-# nothing, git is only read, and a layered KB is refused.
+# to the file the id index (scripts/lib/wikilinks.sh) resolves it to, a pre-move name
+# two files had resolves nothing, aliases, escaped table pipes and frontmatter convert,
+# code and embeds stay, a link nothing resolves gets a draft or becomes its text and no
+# wikilink is left outside code, a dry run writes nothing, a second run changes nothing,
+# git is only read, and a layered KB is refused.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
@@ -95,8 +96,8 @@ has "an escaped table pipe splits target from alias"         "$A" "| x | [module
 has "a key two files share converts"                         "$A" "- shared: [create]("
 eq  "to the file the index resolves it to" \
     "$(path_read "$P" inspire_kb/01_spec/_modules/a/a.module.md 8)" "$shared_before"
-has "a pre-move name two files had resolves nothing"         "$A" "- ambiguous old name: [[legacy]]"
-has "a link to nothing stays as written"                     "$A" "- nowhere: [[nowhere]]"
+has "a pre-move name two files had resolves nothing, so it becomes its text" "$A" "- ambiguous old name: legacy"
+has "a link to nothing becomes its text"                     "$A" "- nowhere: nowhere"
 has "an embed converts and keeps its !"                      "$A" "- embed: ![b](../b/b.module.md)"
 has "a link in a code span stays"                            "$A" '- code: `[[b]]`'
 has "a link in a fenced block stays"                         "$A" '```
@@ -105,10 +106,11 @@ has "a link in a fenced block stays"                         "$A" '```
 check "a frontmatter link converts and stays quoted" \
   "grep -qxF 'requires: [\"[a](../../a/a.module.md)\"]' '$S/_modules/b/_features/create.feature.md'"
 check "a link outside 01_spec converts too" "grep -qxF 'Touches [a](../../01_spec/_modules/a/a.module.md).' '$K/99_tracker/tickets/T-1.md'"
-has "the run lists each unresolved link with its line" "$out" "unresolved${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}9${TAB}[[nowhere]]"
-has "and sums up by source" "$out" "links: 11 converted in 3 file(s) (moved-path 1, path 1, id 8, moved-stem 1), 2 unresolved and left as written, 2 in code left as written"
-check "the link plan is saved" "grep -q '^link${TAB}' '$S/_migration/links.tsv' && grep -q '^unresolved${TAB}' '$S/_migration/links.tsv'"
-eq "only the unresolved links are left" "$(cd "$P" && bash "$LINKS" --count)" "2"
+has "the run lists each link it unlinks, with its line and why" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}9${TAB}[[nowhere]]${TAB}nowhere${TAB}no artifact type"
+has "and sums up by source" "$out" "links: 11 converted in 3 file(s) (moved-path 1, path 1, id 8, moved-stem 1), 0 to 0 new draft(s), 2 in code left as written"
+has "and the links that became their text" "$out" "unlinked: 2 link(s) became their text"
+check "the link plan is saved" "grep -q '^link${TAB}' '$S/_migration/links.tsv' && grep -q '^unlinked${TAB}' '$S/_migration/links.tsv'"
+eq "no wikilink is left outside code" "$(cd "$P" && bash "$LINKS" --count)" "0"
 
 after="$(tree_hash "$P")"
 out="$(cd "$P" && bash "$LINKS" 2>&1)"; rc=$?
@@ -271,11 +273,9 @@ X="$W/screen-name"; XS="$X/inspire_kb/01_spec"
 printf -- '---\nid: portal.orders\n---\n# Orders\n' | mk "$XS/_faces/portal/_screens/orders.screen.md"
 printf '# Bundle: api\n## Actions\n- [[orders]] (whole module)\n- [[orders.screen]]\n' | mk "$XS/_bundles/api.bundle.md"
 eq "the index resolves no module from a screen's file name" "$(index_read "$X" orders)" ""
-out="$(cd "$X" && bash "$LINKS" 2>&1)"
-B="$(cat "$XS/_bundles/api.bundle.md")"
-has "so the converter leaves it as written and lists it" "$out" "unresolved${TAB}inspire_kb/01_spec/_bundles/api.bundle.md${TAB}3${TAB}[[orders]]"
-has "and keeps the whole-module line"                    "$B" "- [[orders]] (whole module)"
-has "the screen's plain file name still converts"        "$B" "- [orders.screen](../_faces/portal/_screens/orders.screen.md)"
+out="$(cd "$X" && bash "$LINKS" --dry-run 2>&1)"
+has "so the converter would make it its text"            "$out" "unlinked${TAB}inspire_kb/01_spec/_bundles/api.bundle.md${TAB}3${TAB}[[orders]]${TAB}orders${TAB}no artifact type"
+has "the screen's plain file name still converts"        "$out" "${TAB}[[orders.screen]]${TAB}[orders.screen](../_faces/portal/_screens/orders.screen.md)"
 printf '# orders\n' | mk "$XS/_modules/orders/orders.module.md"
 out="$(cd "$X" && bash "$LINKS" 2>&1)"
 has "once the module exists, the link names it"          "$(cat "$XS/_bundles/api.bundle.md")" "- [orders](../_modules/orders/orders.module.md) (whole module)"
@@ -324,19 +324,19 @@ has "a frontmatter link is rebased in its quotes"              "$M" 'links: ["[A
 has "a directory whose files moved together follows them"      "$M" "Features: [features](_features)"
 has "a link from a moved file to a file that stayed follows it" "$M" "stack: [stack](../../../00_bootstrap/stack.md)"
 has "a link that resolves where it stands is left"             "$M" "self: [m](m.module.md)"
-has "a link to a retired file stays as written"                "$M" "Retired: [roster](../surfaces.md)"
+has "a link to a retired file becomes its text"                "$M" "Retired: roster"
 has "a link in a code span stays"                              "$M" '`[c](../01_adr/adr-a.md)`'
 check "a moved file's link to its moved sibling follows it" "grep -qxF 'See [x](x.feature.md).' '$ZS/_modules/m/_features/y.feature.md'"
 check "a file that stayed has its link to a moved file rebased" \
   "grep -qF 'See [adr a](../01_spec/_adr/a.adr.md)' '$ZK/00_bootstrap/stack.md'"
 has "the plan lists each rebased link" "$out" "link${TAB}inspire_kb/00_bootstrap/stack.md${TAB}1${TAB}rebased${TAB}[adr a](../01_adr/adr-a.md)${TAB}[adr a](../01_spec/_adr/a.adr.md)"
-has "and each broken link, in 01_spec"  "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/m.module.md${TAB}7${TAB}[roster](../surfaces.md)"
-has "and outside it"                    "$out" "broken${TAB}inspire_kb/00_bootstrap/stack.md${TAB}1${TAB}[gone](../02_modules/gone.md)"
-has "and sums them up" "$out" "Markdown links: 6 rebased through the move record, 2 broken and left as written"
+has "and the run lists it as unlinked, retired" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/m/m.module.md${TAB}7${TAB}[roster](../surfaces.md)${TAB}roster${TAB}retired"
+has "and each broken link"                    "$out" "broken${TAB}inspire_kb/00_bootstrap/stack.md${TAB}1${TAB}[gone](../02_modules/gone.md)"
+has "and sums them up" "$out" "Markdown links: 6 rebased through the move record, 1 broken and left as written"
 after="$(tree_hash "$Z")"
 out="$(cd "$Z" && bash "$LINKS" 2>&1)"
 eq "a second rebase run changes nothing" "$(tree_hash "$Z")" "$after"
-has "and lists the broken links again" "$out" "Markdown links: 0 rebased through the move record, 2 broken and left as written"
+has "and lists the broken links again" "$out" "Markdown links: 0 rebased through the move record, 1 broken and left as written"
 
 # A link to a layered directory, or to its README, names the concept directory that
 # took its contents, or that directory's README; no link is rebased into _migration/ (D7).
@@ -369,6 +369,112 @@ has "every layered directory has its concept directory" "$R" "Screens: [screens]
 has "a link whose move took its target into _migration/ is left" "$R" "Notes: [notes](../04_domain/notes.md)."
 has "and listed as broken" "$out" "broken${TAB}inspire_kb/06_spikes/README.md${TAB}3${TAB}[notes](../04_domain/notes.md)"
 hasnt "no link is rebased into _migration/" "$out" "_migration/unplaced"
+
+# Subdirectories of the layered directories follow the layout (D7): a module's own
+# directory, its features and its domain, a face's screens, and a screen index merged
+# into its face's _index.md.
+U="$W/layered-subdirs"; UK="$U/inspire_kb"; UD="$UK/01_spec"
+mk "$UD/_migration/plan.tsv" <<E
+move${TAB}inspire_kb/04_domain/m/m.a.md${TAB}inspire_kb/01_spec/_modules/m/_domain/a/a.entity.md
+move${TAB}inspire_kb/04_domain/m/m.b.md${TAB}inspire_kb/01_spec/_modules/m/_domain/b/b.entity.md
+move${TAB}inspire_kb/05_screens/f/m/list.md${TAB}inspire_kb/01_spec/_faces/f/_screens/list.screen.md
+unplaced${TAB}inspire_kb/05_screens/f/m/_index.md${TAB}inspire_kb/01_spec/_migration/merged/05_screens/f/m/_index.md
+E
+printf '# a\n' | mk "$UD/_modules/m/_domain/a/a.entity.md"
+printf '# b\n' | mk "$UD/_modules/m/_domain/b/b.entity.md"
+printf '# m\n' | mk "$UD/_modules/m/m.module.md"
+printf '# features\n' | mk "$UD/_modules/m/_features/README.md"
+printf -- '---\nid: f.list\n---\n# list\n' | mk "$UD/_faces/f/_screens/list.screen.md"
+printf '# f navigation\n' | mk "$UD/_faces/f/_index.md"
+printf '# old index\n' | mk "$UD/_migration/merged/05_screens/f/m/_index.md"
+printf '# n\n' | mk "$UD/_modules/n/n.module.md"
+mk "$UK/06_spikes/README.md" <<'E'
+Module: [m](../02_modules/m/). Features: [f](../03_features/m) and [readme](../03_features/m/README.md).
+Domain: [d](../04_domain/m/). Screens: [s](../05_screens/f/m/). Index: [i](../05_screens/f/m/_index.md).
+Wiki index: [[../05_screens/f/m/_index]].
+No features: [nf](../03_features/n/). One segment: [sv](../05_screens/saved-views). Gone: [g](../03_features/m/gone.md).
+E
+out="$(cd "$U" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the layered-subdirectory run exits 0" "$rc" "0"
+R="$(cat "$UK/06_spikes/README.md")"
+has "a module directory names the module's"           "$R" "Module: [m](../01_spec/_modules/m)."
+has "a features directory names the module's features" "$R" "Features: [f](../01_spec/_modules/m/_features) and"
+has "a deeper path keeps its tail where it exists"     "$R" "[readme](../01_spec/_modules/m/_features/README.md)."
+has "a domain directory names the module's domain"     "$R" "Domain: [d](../01_spec/_modules/m/_domain)."
+has "a face's module screens name the face's screens"  "$R" "Screens: [s](../01_spec/_faces/f/_screens)."
+has "a layered screen index names its face's _index.md" "$R" "Index: [i](../01_spec/_faces/f/_index.md)."
+has "and a wikilink to it converts the same way"       "$R" "Wiki index: [_index](../01_spec/_faces/f/_index.md)."
+has "a mapped directory that does not exist falls back to its nearest parent" "$R" "No features: [nf](../01_spec/_modules/n)."
+has "so does a one-segment screens directory"           "$R" "One segment: [sv](../01_spec/_faces)."
+has "a missing file gets no stand-in"                   "$R" "Gone: [g](../03_features/m/gone.md)."
+has "and is listed as broken" "$out" "broken${TAB}inspire_kb/06_spikes/README.md${TAB}4${TAB}[g](../03_features/m/gone.md)"
+
+# A wikilink nothing resolves is settled without a person (D6): an id that names an
+# artifact type gets its draft from the shipped template, anything retired or a
+# placeholder becomes its text, and so does an id that names no type.
+V="$W/residue"; VK="$V/inspire_kb"; VD="$VK/01_spec"
+mk "$VD/_migration/plan.tsv" <<E
+unplaced${TAB}inspire_kb/00_bootstrap/surfaces.md${TAB}inspire_kb/01_spec/_migration/retired/00_bootstrap/surfaces.md
+E
+printf '# roster\n' | mk "$VD/_migration/retired/00_bootstrap/surfaces.md"
+printf -- '---\nid: m.user\n---\n# user\n' | mk "$VD/_modules/m/_domain/user/user.entity.md"
+printf '# m\n' | mk "$VD/_modules/m/m.module.md"
+printf -- '---\nid: f\n---\n# f\n' | mk "$VD/_faces/f/f.face.md"
+mk "$VD/_modules/m/_features/x.feature.md" <<'E'
+---
+requires: [[[m::user::archive]]]
+also: "[[adr-{slug}]]"
+---
+# x
+- adr: [[adr-new-thing]]
+- rationale: [[adr-other.rationale|why]]
+- entity: [[m::account]]
+- action: [[m::user::archive]]
+- screen: [[f.home]]
+- no entity: [[m::ghost::create]]
+- no module: [[nomod::thing]]
+- retired: [[../../../../00_bootstrap/surfaces]] and [roster](../../../../00_bootstrap/surfaces.md)
+- placeholder: [[03_features/{module}/{use-case}|{USE-CASE-ID}]] and [[04_domain/…]] and [p]({path}.md)
+E
+printf '# T\n[p]({path}.md)\n[f](../../../../03_features/{module}/)\n' | mk "$VD/_modules/m/_features/feature.template.md"
+out="$(cd "$V" && bash "$LINKS" --dry-run 2>&1)"
+eq "a dry run drafts nothing" "$(find "$VD/_adr" -type f 2>/dev/null | wc -l | tr -d ' ')" "0"
+has "and lists each draft it would make" "$out" "drafted${TAB}inspire_kb/01_spec/_adr/new-thing.adr.md${TAB}adr"
+out="$(cd "$V" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the residue run exits 0" "$rc" "0"
+X1="$(cat "$VD/_modules/m/_features/x.feature.md")"
+has "an ADR id gets its draft and the link names it" "$X1" "- adr: [adr-new-thing](../../../_adr/new-thing.adr.md)"
+check "the ADR draft is at design, from the template" "grep -qxF '**Status:** design' '$VD/_adr/new-thing.adr.md' && grep -qxF '# new thing' '$VD/_adr/new-thing.adr.md'"
+check "and links its rationale" "grep -qF '**Rationale:** [adr-new-thing.rationale](new-thing.adr.rationale.md)' '$VD/_adr/new-thing.adr.md'"
+check "with its rationale beside it" "grep -qF '**Decision:** [adr-new-thing](new-thing.adr.md)' '$VD/_adr/new-thing.adr.rationale.md'"
+has "a rationale id names the drafted rationale"     "$X1" "- rationale: [why](../../../_adr/other.adr.rationale.md)"
+has "an entity id whose module exists gets its draft" "$X1" "- entity: [m::account](../_domain/account/account.entity.md)"
+check "the entity draft carries its id at draft" "grep -qx 'id: m.account' '$VD/_modules/m/_domain/account/account.entity.md' && grep -qx 'lifecycle: draft' '$VD/_modules/m/_domain/account/account.entity.md'"
+has "an action id whose entity exists gets its draft" "$X1" "- action: [m::user::archive](../_domain/user/user.archive.action.md)"
+check "the action draft carries its id" "grep -qx 'id: m::user::archive' '$VD/_modules/m/_domain/user/user.archive.action.md'"
+has "a frontmatter link to the same draft names it, quoted" "$X1" 'requires: ["[m::user::archive](../_domain/user/user.archive.action.md)"]'
+has "a screen id whose face exists gets its draft"   "$X1" "- screen: [f.home](../../../_faces/f/_screens/home.screen.md)"
+check "the screen draft carries its id" "grep -qx 'id: f.home' '$VD/_faces/f/_screens/home.screen.md'"
+has "an action whose entity is missing becomes its text" "$X1" "- no entity: m::ghost::create"
+has "an entity whose module is missing becomes its text" "$X1" "- no module: nomod::thing"
+has "a link to a retired file becomes its text, either form" "$X1" "- retired: ../../../../00_bootstrap/surfaces and roster"
+has "a placeholder becomes its text" "$X1" "- placeholder: {USE-CASE-ID} and 04_domain/… and p"
+has "a frontmatter placeholder becomes its text, still quoted" "$X1" 'also: "adr-{slug}"'
+check "a template keeps its placeholder link" "grep -qxF '[p]({path}.md)' '$VD/_modules/m/_features/feature.template.md'"
+hasnt "and lists no template placeholder as broken" "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/_features/feature.template.md"
+check "and a layered placeholder path takes the layout, placeholder kept" "grep -qxF '[f](../../{module}/_features)' '$VD/_modules/m/_features/feature.template.md'"
+has "the run lists each draft link" "$out" "draft${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}6${TAB}draft${TAB}[[adr-new-thing]]"
+has "each unlinked one with why" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}12${TAB}[[nomod::thing]]${TAB}nomod::thing${TAB}no artifact type"
+has "and each file it drafted" "$out" "drafted${TAB}inspire_kb/01_spec/_modules/m/_domain/user/user.archive.action.md${TAB}action"
+has "and sums them up" "$out" "6 to 7 new draft(s)"
+hasnt "and lists no draft link as broken" "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md"
+eq "no wikilink is left outside code" "$(cd "$V" && bash "$LINKS" --count)" "0"
+lr="$(cd "$V" && SDD_KB_ROOT=inspire_kb SDD_SPEC_ROOT=inspire_kb/01_spec "$PLUGIN_ROOT/base/bin/links-resolve.sh" 2>&1)"
+hasnt "a draft links nothing that is not there" "$lr" "new-thing.adr"
+hasnt "and no wikilink is reported" "$lr" "wikilink"
+after="$(tree_hash "$V")"
+out="$(cd "$V" && bash "$LINKS" 2>&1)"
+eq "a second residue run changes nothing" "$(tree_hash "$V")" "$after"
 
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
