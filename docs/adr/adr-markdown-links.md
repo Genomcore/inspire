@@ -42,7 +42,8 @@ templates write no wikilinks.
 
 A tool resolves a link by joining its path to the linking file's directory. The id is the
 target's id under adr-kb-structure D3: its frontmatter `id:`, or the derivation from its
-file name. A path to a file that does not exist is a broken link.
+file name. A path to a file that does not exist is a broken link: it names no id, and a
+tool reports it instead of deriving an id from the path.
 
 The text is for the reader. It is the target's id unless the sentence needs prose
 (`[the audit decision](../../_adr/audit.adr.md)`). No tool reads an id from the text.
@@ -86,9 +87,18 @@ change. `/inspire:migrate` does this for the moves it makes. A skill that writes
 computes the path from the linking file. When the target is missing, the skill first
 creates it from its template (adr-kb-structure D4).
 
+### D8 — A conversion rebuilds nothing that is built
+
+A claim whose payload quotes a link changes its fingerprint when the link is converted,
+though it states the same thing. After a conversion, the Factory's remap rewrites, in the
+built code, each fingerprint whose claim payload differs only in link syntax, as it
+rewrites screen ids after a move (adr-kb-structure D10). A project that has not converted
+keeps every fingerprint it has.
+
 ## Consequences
 
 - The INSPIRE Factory reads the KB's links to derive dependencies and bundle membership.
-  It needs a release that reads Markdown links before a converted project is built.
+  It needs a release that reads Markdown links and applies D8 before a converted project
+  is built.
 - `wikilinks-resolve.sh` is removed. An upgrade deletes the shipped copy and keeps an
   edited one.
