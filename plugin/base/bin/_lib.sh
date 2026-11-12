@@ -1130,6 +1130,8 @@ sdd_body_subsection() {
 #   and a Markdown link takes the id of the file it points at (a broken one names
 #   none, so its rows are skipped):
 #     ### [module::entity](../entity/entity.entity.md)
+#   Either way the id comes out in the colon form, `module::entity`, whatever form
+#   the heading or the entity's `id:` writes, so the rules compare one form.
 #   <links_file> (default <file>) is the file the links are read and resolved
 #   from, for a caller that passes a line-preserving copy of its comments-stripped
 #   text; the caller ran `sdd_link_index` in its own shell.
@@ -1140,7 +1142,7 @@ sdd_body_subsection() {
 #   one row per declared field. `as_input` and `effect` are repeated on every
 #   row of the same entity (denormalized for downstream awk-friendliness).
 sdd_entities_touched() {
-  local file="$1" links_file="${2:-$1}" heads ids="" form text path
+  local file="$1" links_file="${2:-$1}" heads ids="" form text path id
   # The file lines of the headings, fenced ones too: sdd_body_section passes
   # fenced lines through, so the awk below counts them as well.
   heads="$(awk "${SDD_AWK_FM_READER}"'
@@ -1152,10 +1154,11 @@ sdd_entities_touched() {
   if [ -n "$heads" ]; then
     while IFS=$'\t' read -r form text path; do
       case "$form" in
-        wiki) ids="$ids|$text" ;;
-        md)   ids="$ids|$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
-        *)    ids="$ids|" ;;
+        wiki) id="$text" ;;
+        md)   id="$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
+        *)    id="" ;;
       esac
+      ids="$ids|${id//./::}"
     done < <(sdd_links "$links_file" | awk -F'\t' -v heads="$(printf '%s,' $heads)" '
       BEGIN { n = split(heads, h, ","); for (i = 1; i < n; i++) want[h[i]] = 1 }
       ($1 in want) && !($1 in seen) { seen[$1] = 1; f[$1] = $2; t[$1] = $4; p[$1] = $5 }
