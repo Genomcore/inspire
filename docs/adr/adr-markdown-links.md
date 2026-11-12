@@ -95,6 +95,15 @@ built code, each fingerprint whose claim payload differs only in link syntax, as
 rewrites screen ids after a move (adr-kb-structure D10). A project that has not converted
 keeps every fingerprint it has.
 
+### D9 — The runtime's own files follow D1 within a payload class
+
+A skill, its `references/` and the shared `_references/` link to one another with relative
+Markdown links, because that tree has the same shape in this repository
+(`plugin/base/skills/`) and in a project (`.claude/skills/`). A test resolves every one of
+them. A reference from a skill to another class (`.inspire/bin/`, `inspire_kb/`) is
+written as the deployed path in a code span: no relative path is valid in both places, and
+those references are mostly commands to run.
+
 ## Consequences
 
 - The INSPIRE Factory reads the KB's links to derive dependencies and bundle membership.
