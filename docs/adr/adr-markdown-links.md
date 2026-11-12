@@ -36,7 +36,8 @@ A relative Markdown link names the file itself. Every reader follows it.
 
 `[text](path)`, where `path` is the target file's path relative to the linking file,
 extension included: `[adr-user-pools](../../_adr/user-pools.adr.md)`. Skills and
-templates write no wikilinks.
+templates write no wikilinks. An embed takes the image form, `![text](path)`, and a tool
+resolves and checks it like a link.
 
 ### D2 — The path resolves the link, and the target file gives the id
 
