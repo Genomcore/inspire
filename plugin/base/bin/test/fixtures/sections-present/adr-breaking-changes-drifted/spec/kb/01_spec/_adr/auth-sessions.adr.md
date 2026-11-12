@@ -18,4 +18,4 @@ Clients cannot introspect a token.
 - drifted under the wrong parent, where it answers a different question
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.

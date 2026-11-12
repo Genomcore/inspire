@@ -25,7 +25,7 @@ superseded_by points to an entity, not an action — should fail.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

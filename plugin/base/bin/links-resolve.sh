@@ -9,16 +9,13 @@
 #   - A Markdown link whose path, joined to the linking file's directory, names
 #     no file and no directory → error.
 #   - A wikilink → error naming `/inspire:migrate`, which converts it (D5, D6).
-#     The finding says whether it resolves through the routes `sdd_links`
-#     documents; `/inspire:migrate` also resolves through the move record.
 #
 # Severity: error at every lifecycle. A skill that writes a link creates its
 # target first (D7), so a broken link is never work in progress.
 #
 # A link to one target is one finding per file, at the line where it first
-# appears. The rule receives one `$1` and checks the files in `$1 ∩ 01_spec`;
-# the wikilink index is always built KB-wide, so a scoped run still resolves a
-# link that points outside its scope.
+# appears. The rule receives one `$1` and checks the files in `$1 ∩ 01_spec`; a
+# link out of the scope still resolves, since its path names the file.
 #
 # Usage:
 #   .inspire/bin/links-resolve.sh                                     # every layer
@@ -35,20 +32,14 @@ sdd_init_counters
 
 SCOPE="${1:-}"
 
-trap 'rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
-sdd_link_index
-
 check_file() {
   local file="$1" seen=" " ln form target text path
   while IFS=$'\t' read -r ln form target text path; do
     case "$seen" in *" $form:$target "*) continue ;; esac
     seen="$seen$form:$target "
-    if [ "$form" = wiki ] && [ -n "$path" ]; then
+    if [ "$form" = wiki ]; then
       sdd_finding error links-resolve "$file" \
-        "wikilink [[$target]] at line $ln: convert it to a Markdown link with /inspire:migrate (it resolves to $path)"
-    elif [ "$form" = wiki ]; then
-      sdd_finding error links-resolve "$file" \
-        "wikilink does not resolve: [[$target]] at line $ln: /inspire:migrate converts every link it can resolve, through the move record too, and lists the rest"
+        "wikilink [[$target]] at line $ln: convert it to a Markdown link with /inspire:migrate"
     elif [ -z "$path" ]; then
       sdd_finding error links-resolve "$file" \
         "link does not resolve: [$text]($target) at line $ln: no such file or directory relative to this one"
@@ -56,7 +47,7 @@ check_file() {
       continue
     fi
     sdd_count_error
-  done < <(sdd_links "$file")
+  done < <(sdd_links "$file" wiki)
 }
 
 SPEC_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"

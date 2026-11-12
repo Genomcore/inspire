@@ -115,9 +115,9 @@ for this commit.
 It prints one `link` line per link it converts (file, line, the source that resolved
 it, the wikilink, the Markdown link) and one `unresolved` line per link it cannot
 resolve, and writes nothing. A link resolves through, in order: its path, mapped
-through the move record; its path against the current files; the id index the
-validators resolve wikilinks with, which reads the screen id map, so the link names
-the file they read; its target as a pre-move file name, mapped through the move
+through the move record; its path against the current files; the id index, which
+resolves a wikilink the way the validators did before 0.16.1 and reads the screen id
+map, so the link names the file they read; its target as a pre-move file name, mapped through the move
 record. A pre-move name two files had resolves nothing. The move record is `_migration/plan.tsv`, or,
 when there is none, the renames git holds since the commit before the layered
 directories left, read and never written; when the history does not show that

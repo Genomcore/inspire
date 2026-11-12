@@ -143,8 +143,8 @@
 #
 #   - an ADR's `### Breaking changes` content — naming what breaks IS its job;
 #   - an ADR's `## Related ADRs` section;
-#   - a `**Status:**` line, including `superseded by [[…]]`;
-#   - a `Supersedes: [[…]]` header line.
+#   - a `**Status:**` line, including `superseded by [x](x.adr.md)`;
+#   - a `Supersedes: [x](x.adr.md)` header line.
 #
 # The last two are checked line-wise wherever they appear, not only in the
 # preamble the reader never sees, so the exemption holds if such a line is
@@ -160,7 +160,7 @@
 # R4's glossary synonyms and R6's and R7's declared tokens share one scan. It
 # runs on the PR gate, so it never spawns a process per file
 # per glossary row. Every prose line of every checked file is appended to ONE
-# stream (inline-code spans and wikilink-remnant ids removed), with a parallel
+# stream (inline-code spans and the ids unwrapped link text leaves removed), with a parallel
 # index carrying `file / section / layer / R6-exempt / original line`. One
 # `grep -inE -f` over that stream finds the hits; one awk attributes each hit to
 # its file, its check and, for R4, the approved term. `00_bootstrap/` is not in
@@ -245,7 +245,7 @@ fold_latin() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 PS_TMP=""        # comment-stripped copy of the file being read
-PS_FLAT=""       # the same copy with wikilinks unwrapped — the locator's source
+PS_FLAT=""       # the same copy with links unwrapped — the locator's source
 TOKEN_STREAM=""     # concatenated prose, cleaned, one line per collected line
 TOKEN_INDEX=""      # parallel index: file<TAB>section<TAB>layer<TAB>R6-exempt<TAB>original line
 
@@ -497,7 +497,7 @@ prose_scan() {
       gsub(/\t/, " ", raw)
 
       # R4 collection — every prose line, whatever its kind, minus inline-code
-      # spans and minus the id-shaped remnants a wikilink leaves behind once
+      # spans and minus the id-shaped text a link leaves behind once
       # `sdd_body_prose` has unwrapped it (`auth::user`, `auth.user.create`,
       # `adr-some-slug`). Those are machine-read tokens, which the contract
       # exempts; matching a synonym inside one would be a finding about a link.
@@ -550,8 +550,8 @@ prose_scan() {
       }
 
       # Inline code is not prose. R1 and R6 measure the line with its code spans
-      # blanked, so a `previously` quoted as a token — or a wikilink that
-      # unwrapped into one — is not read as a claim about the system. R3 blanks
+      # blanked, so a `previously` quoted as a token is not read as a claim about
+      # the system. R3 blanks
       # them itself, with a placeholder that also breaks the noun run. R2 keeps
       # them: a code span is still a word the reader reads.
       nocode = line
@@ -643,14 +643,14 @@ ramp_sev() {
 }
 
 # flatten_copy <file> <dest>
-#   The locator's source: the file with HTML comments blanked and wikilinks
+#   The locator's source: the file with HTML comments blanked and links
 #   unwrapped exactly the way `sdd_body_prose` unwraps them. Both passes are
 #   line-preserving — comments become blank lines, the unwrap is a per-line
 #   substitution — so line N of this copy is line N of the artifact.
 #
 #   It exists because the anchor a finding carries has ALREADY been unwrapped:
-#   looking `auth::user` up in a file that says `[[auth.user|auth::user]]` fails
-#   on every wikilink-bearing line, which in a back-sourced KB is most of the
+#   looking `auth::user` up in a file that says `[auth::user](../user/user.entity.md)`
+#   fails on every line that holds a link, which in a back-sourced KB is most of the
 #   normative prose. Without this the common case silently degraded to the
 #   section header's line number.
 flatten_copy() {
@@ -868,7 +868,7 @@ check_file() {
     PS_FLAT="$(mktemp -t sdd-prose-flat.XXXXXX)" || return 0
   fi
   strip_html_comments "$file" > "$PS_TMP" || return 0
-  # The parsed copy keeps its wikilinks (the body readers unwrap their own); the
+  # The parsed copy keeps its links (the body readers unwrap their own); the
   # locator's copy does not. Same line numbering, two different jobs.
   flatten_copy "$file" "$PS_FLAT" || return 0
   CUR_READ="$PS_FLAT"

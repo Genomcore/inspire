@@ -1,6 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "superseded-by-resolves", "message_substring": "superseded_by target does not resolve" }
-  ]
-}

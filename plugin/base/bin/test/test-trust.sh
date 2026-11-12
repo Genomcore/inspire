@@ -133,7 +133,7 @@ endorsed:
 
 # auth::user
 
-Body paragraph with `backticks` and a [[wikilink]].
+Body paragraph with `backticks` and a [link](user.create.action.md).
 EOF
 cp "$WITH" "$ROOT/orig-with-fm.md"
 

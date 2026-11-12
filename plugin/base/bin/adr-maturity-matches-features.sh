@@ -70,26 +70,7 @@ if [ ! -e "$SCOPE" ]; then
   exit $?
 fi
 
-# Resolve an ADR wikilink target to its decision file, `{slug}.adr.md`, by id.
-#
-# Targets appear in several forms — bare (`[[adr-x]]`), path form written before the
-# typed layout (`[[../../01_adr/adr-x]]`), pipe form (`[[adr-x|adr-x]]`) and aliased
-# prose form (`[[adr-x|the audit decision]]`) — so read the target half and match on
-# its last segment rather than the written path. That also means a link whose
-# relative depth is wrong still resolves here: depth is `links-resolve.sh`'s rule,
-# and this gate must not fail to check a maturity claim because a `../` was miscounted.
-adr_path_for() {
-  local base="${1##*/}"
-  base="${base%.md}"
-  base="${base%.rationale}"
-  base="${base%.adr}"
-  base="${base#adr-}"
-  [ -z "$base" ] && return 1
-  [ -d "$SDD_SPEC_ROOT" ] || return 1
-  find "$SDD_SPEC_ROOT" -type f -name "${base}.adr.md" 2>/dev/null | sort | head -1
-}
-
-# The decision file a resolved Markdown link points at: the decision itself, or the
+# The decision file a resolved link points at: the decision itself, or the
 # decision beside the rationale it links. Empty for a broken link or another file.
 md_adr_path() {
   local p="$1"
@@ -126,8 +107,7 @@ adr_status_of() {
 # links that never reached an ADR file.
 CLAIMS="$(mktemp -t adr-claims.XXXXXX)"
 UNRESOLVED="$(mktemp -t adr-unresolved.XXXXXX)"
-sdd_link_index
-trap 'rm -f "$CLAIMS" "$UNRESOLVED" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "$CLAIMS" "$UNRESOLVED"' EXIT
 
 collect_feature() {
   local file="$1" state
@@ -139,20 +119,13 @@ collect_feature() {
 
   local ln form target text path adr seen=""
   while IFS=$'\t' read -r ln form target text path; do
-    case "$form" in
-      wiki) case "$target|$text" in *adr-*) ;; *) continue ;; esac ;;
-      *)    case "$target" in *.adr.md*|*.adr.rationale.md*) ;; *) continue ;; esac ;;
-    esac
+    case "$target" in *.adr.md*|*.adr.rationale.md*) ;; *) continue ;; esac
 
     # A feature may cite the same ADR in several sections; count it once.
-    case "$seen" in *"|$form:$target|"*) continue ;; esac
-    seen="$seen|$form:$target|"
+    case "$seen" in *"|$target|"*) continue ;; esac
+    seen="$seen|$target|"
 
-    if [ "$form" = "wiki" ]; then
-      adr="$(adr_path_for "$target" || true)"
-    else
-      adr="$(md_adr_path "$path")"
-    fi
+    adr="$(md_adr_path "$path")"
     if [ -z "$adr" ]; then
       printf '%s\t%s\n' "$file" "$target" >> "$UNRESOLVED"
       continue

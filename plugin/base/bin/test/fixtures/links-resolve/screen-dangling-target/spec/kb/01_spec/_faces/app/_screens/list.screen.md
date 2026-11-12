@@ -21,4 +21,4 @@ on.
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.no-such-screen]] | clicking a row |
+| `row` | [users.no-such-screen](no-such-screen.screen.md) | clicking a row |

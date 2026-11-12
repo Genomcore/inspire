@@ -8,7 +8,7 @@ lifecycle: draft
 # Sign in
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/form]]
+**Pattern:** [form](../../../_design-system/patterns/form.pattern.md)
 
 ## Purpose
 
@@ -21,7 +21,7 @@ for an email and a password, and nothing else competes for attention.
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `sign-in` | [[auth.session.create\|auth::session::create]] | primary action | → [[auth.home]] | state `denied` |
+| `sign-in` | [auth::session::create](../../../_modules/auth/_domain/session/session.create.action.md) | primary action | → [auth.home](../../auth/_screens/home.screen.md) | state `denied` |
 
 ### States
 

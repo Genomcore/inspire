@@ -10,8 +10,9 @@
 #                           action descriptor under $SDD_SPEC_ROOT.
 #   3. superseded-by-resolves — when `superseded_by:` is set (non-empty, not
 #                           null), it resolves to an existing object of the
-#                           file's own kind. A wikilink resolves through the
-#                           action index only, so an entity's never does.
+#                           file's own kind. An id written without a link
+#                           resolves through the action index only, so an
+#                           entity's never does.
 #
 # All findings are severity: error. These checks gate every commit regardless
 # of the primitive's lifecycle (mechanical correctness). Lifecycle-progressive
@@ -35,8 +36,7 @@ sdd_init_counters
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 sdd_build_id_index "$SCOPE"
-sdd_link_index
-trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "${SDD_ID_INDEX_FILE:-}"' EXIT
 
 # Valid lifecycle enum values.
 is_valid_lifecycle() {

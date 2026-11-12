@@ -45,8 +45,8 @@ declared_ids() {
 }
 
 sdd_build_id_index "$SDD_SPEC_ROOT"
-sdd_link_index
-trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+_sdd_entity_index
+trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r p; do
   [ -n "$p" ] || continue

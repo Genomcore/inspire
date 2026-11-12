@@ -5,7 +5,7 @@
     {
       "rule": "links-resolve",
       "severity": "error",
-      "message_substring": "user.entity.md.*wikilink ..auth.user.create.. at line 13: convert it to a Markdown link with /inspire:migrate (it resolves to .*user.create.action.md)"
+      "message_substring": "user.entity.md.*wikilink ..auth.user.create.. at line 13: convert it to a Markdown link with /inspire:migrate"
     }
   ],
   "forbidden": ["does not resolve", "user.create.action.md\",\"message\""]

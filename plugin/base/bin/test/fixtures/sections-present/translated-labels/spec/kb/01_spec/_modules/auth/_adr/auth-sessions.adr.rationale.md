@@ -15,4 +15,4 @@ Los clientes no pueden inspeccionar un token.
 1. **JWT firmados.** Descartado: la revocación es más difícil.
 
 ## ADR6: ADR relacionados
-- [[adr-auth-password-hashing]] — decisión hermana.
+- [adr-auth-password-hashing](../../../_adr/auth-password-hashing.adr.md) — decisión hermana.

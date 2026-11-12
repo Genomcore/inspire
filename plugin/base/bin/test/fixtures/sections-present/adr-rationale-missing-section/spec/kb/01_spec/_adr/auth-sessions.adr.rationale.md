@@ -10,4 +10,4 @@ Clients cannot introspect a token.
 
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.

@@ -5,9 +5,9 @@
 # Session tokens are opaque
 
 **Status:** design
-**Modules affected:** [[auth]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
 **Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [x](x.adr.md) | rejected.
      ## Context is named here on purpose: a guidance comment is not a section. -->
 
 ## Decision

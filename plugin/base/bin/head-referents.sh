@@ -70,7 +70,7 @@ source "$SCRIPT_DIR/_keyed-heads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
-sdd_link_index
+_sdd_entity_index
 
 SCOPE="${1:-}"
 
@@ -83,7 +83,7 @@ hr_cleanup() {
   local rc=$?
   [ -n "$HR_TMP1" ] && rm -f "$HR_TMP1"
   [ -n "$HR_TMP2" ] && rm -f "$HR_TMP2"
-  rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"
+  rm -f "${SDD_ENTITY_INDEX_FILE:-}"
   return $rc
 }
 trap hr_cleanup EXIT

@@ -13,10 +13,11 @@
 #
 # A link resolves through, in order: its path, mapped through the move record
 # (01_spec/_migration/plan.tsv, else the renames `git diff -M` finds since the move);
-# its path against the current files; the id index the validators resolve wikilinks
-# with, the screen id map (01_spec/_migration/id-map.json) included, so the link names
-# the file they read; its target as a pre-move file name, mapped through the move
-# record, where a name two files had resolves nothing.
+# its path against the current files; the id index (lib/wikilinks.sh), which resolves
+# a wikilink the way the validators did before 0.16.1, the screen id map
+# (01_spec/_migration/id-map.json) included, so the link names the file they read;
+# its target as a pre-move file name, mapped through the move record, where a name
+# two files had resolves nothing.
 #
 # A Markdown link that names nothing where it stands is rebased (D7): its path is
 # read from the file's pre-move location, and a target that moved, or a directory
@@ -56,17 +57,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# The reader's span, fence and frontmatter rules, and its wikilink index, come from the
-# runtime library itself, pointed at this KB. The index names files by the normalized
-# KB path, so the KB is normalized the same way.
-. "$(cd -P "$(dirname "$0")" && pwd -P)/../base/bin/_lib.sh" || { printf 'migrate-links: cannot read the plugin library\n' >&2; exit 1; }
+# The reader's span, fence and frontmatter rules come from the runtime library itself,
+# pointed at this KB. The wikilink index names files by the normalized KB path, so the
+# KB is normalized the same way.
+HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
+{ . "$HERE/../base/bin/_lib.sh" && . "$HERE/lib/wikilinks.sh"; } || { printf 'migrate-links: cannot read the plugin library\n' >&2; exit 1; }
 KB="$(sdd_scope_norm "$KB")"
 SPEC="$KB/01_spec"
 SDD_KB_ROOT="$KB"; SDD_SPEC_ROOT="$SPEC"
 [ -d "$KB" ] || { printf 'migrate-links: no knowledge base at %s\n' "$KB" >&2; exit 1; }
 
 WORK="$(mktemp -d -t inspire-links.XXXXXX)"
-trap 'rm -rf "$WORK" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -rf "$WORK" "${WIKILINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 FILES="$WORK/files.txt"
 find "$KB" -type f -name '*.md' | awk -v p="$KB/" '{ print substr($0, length(p) + 1) }' | LC_ALL=C sort > "$FILES"
 
@@ -191,7 +193,7 @@ else
   record="none: no plan.tsv, and the KB is not in a git work tree"
 fi
 
-sdd_link_index
+wikilink_index
 
 # Every path under the KB, so a Markdown link is checked without reading a directory,
 # which awk cannot open.
@@ -205,9 +207,9 @@ PLAN="$WORK/links.tsv"
 CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
 # Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
-LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_LINK_INDEX_FILE" \
+LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKILINK_INDEX_FILE" \
     -v ALLF="$ALLF" -v ALLD="$ALLD" \
-    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB$SDD_AWK_WIKI_RESOLVE"'
+    -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB$WIKILINK_AWK_RESOLVE"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
   # A path outside the KB, or absolute, is asked of the file system once.
   function present(p,   q) {
@@ -269,7 +271,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
     printf "broken\t%s/%s\t%d\t%s\n", KB, f, ln, flat(rtok)
     return ""
   }
-  # The validators index files outside the KB too; a KB link converts only to a KB file.
+  # The index holds files outside the KB too; a KB link converts only to a KB file.
   function in_kb(p) {
     if (p == "" || index(p, KB "/") != 1) return ""
     p = substr(p, length(KB) + 2)
@@ -285,7 +287,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
       if (cand !~ /\.md$/) cand = cand ".md"
       if (exists(cand)) { HOW = "path"; return cand }
     }
-    if ((p = in_kb(sdd_wres(raw))) != "") { HOW = "id"; return p }
+    if ((p = in_kb(wiki_resolve(raw))) != "") { HOW = "id"; return p }
     seg = target; sub(/.*\//, "", seg); seg = tolower(seg); sub(/\.md$/, "", seg)
     if ((seg in STEM) && !(seg in STEMCLASH) && exists(STEM[seg])) { HOW = "moved-stem"; return STEM[seg] }
     return ""
@@ -320,7 +322,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$SDD_L
     }
     while ((getline l < ALLF) > 0) FSET[l] = 1
     while ((getline l < ALLD) > 0) DSET[l] = 1
-    while ((getline l < INDEX) > 0) sdd_ix_add(l)
+    while ((getline l < INDEX) > 0) wiki_ix_add(l)
     while ((getline f < LIST) > 0) files[++nf] = f
     close(LIST)
     for (n = 1; n <= nf; n++) {

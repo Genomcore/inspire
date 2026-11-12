@@ -1,6 +1,6 @@
 # Los tokens de sesión son opacos
 
-**Status:** superseded by [[adr-auth-sessions-v2]]
+**Status:** superseded by [adr-auth-sessions-v2](auth-sessions-v2.adr.md)
 
 ## ADR1: Contexto
 
@@ -22,4 +22,4 @@ Un cliente no puede leer el token.
 
 ## ADR6: ADRs relacionados
 
-- [[adr-auth-password-hashing]] — esto vivía anteriormente allí.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — esto vivía anteriormente allí.

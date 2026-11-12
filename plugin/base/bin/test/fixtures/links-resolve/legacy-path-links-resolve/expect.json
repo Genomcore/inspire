@@ -1,1 +1,0 @@
-{ "exit": 1, "findings": [ { "rule": "links-resolve", "severity": "error", "message_substring": "does not resolve: .*users/user/users.nobody" } ], "forbidden": ["does not resolve: [[../../users/user/users.user]]", "does not resolve: [[../../../04_domain/users/user/users.user.me]]"] }

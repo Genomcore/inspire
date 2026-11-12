@@ -5,7 +5,7 @@
     {
       "rule": "links-resolve",
       "severity": "error",
-      "message_substring": "does not resolve: ..auth.user.ghost"
+      "message_substring": "wikilink ..auth.user.ghost.. at line 12: convert it to a Markdown link with /inspire:migrate"
     }
   ],
   "forbidden": ["a phrase a human reads"]

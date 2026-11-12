@@ -61,9 +61,8 @@ SCOPE="${1:-}"
 SC_INDEX="$(mktemp -t sdd-screen-index.XXXXXX)"
 SC_ROWS="$(mktemp -t sdd-screen-rows.XXXXXX)"
 SC_SEEN="$(mktemp -t sdd-screen-seen.XXXXXX)"
-sdd_link_index
 SC_LINK_ROWS=""   # `sdd_links` of the screen being checked
-trap 'rm -f "$SC_INDEX" "$SC_ROWS" "$SC_SEEN" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "$SC_INDEX" "$SC_ROWS" "$SC_SEEN"' EXIT
 
 BINDING_SUBSECTIONS="Parameters Data Dispatches Navigation States"
 LIFECYCLE_STATES="draft accepted stable superseded"
@@ -86,9 +85,8 @@ sc_h1_route() {
     '"${SDD_AWK_FENCE_FUNCS}" "$1"
 }
 
-# sc_header_links <file> <marker> — every link on a `**Marker:**` body line, one per
-# line: a wikilink as the right side of its pipe, a Markdown link as the path it
-# resolves to (a broken one is links-resolve's finding, not listed here).
+# sc_header_links <file> <marker> — the file each link on a `**Marker:**` body line
+# resolves to, one per line (a broken one is links-resolve's finding, not listed here).
 sc_header_links() {
   local ln form target text path
   ln="$(awk -v pfx="$2" \
@@ -97,9 +95,7 @@ sc_header_links() {
     '"${SDD_AWK_FENCE_FUNCS}" "$1")"
   [ -n "$ln" ] || return 0
   sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
-    if [ "$form" = "wiki" ]; then printf '%s\n' "$text"
-    elif [ -f "$path" ]; then printf '%s\n' "$path"
-    fi
+    [ -f "$path" ] && printf '%s\n' "$path"
   done
 }
 
@@ -108,7 +104,7 @@ sc_header_links() {
 #   ROW<TAB>{subsection}<TAB>{cell}...   one per data row, cells trimmed
 #   NOSUB                                a table sits under no H3 at all
 # A pipe escaped for a table cell (`\|`) is protected before the split and
-# restored after, so a pipe-syntax wikilink does not end its cell. HTML comments
+# restored after, so a link whose text holds a pipe does not end its cell. HTML comments
 # are dropped whole-line: the templates carry guidance comments, and no binding
 # row ever carries one.
 sc_parse_bindings() {
@@ -151,46 +147,26 @@ sc_bare() {
   printf '%s\n' "$1" | tr -d '`' | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }'
 }
 
-# sc_linked <cell> — `link` when the cell carries a link (either form).
+# sc_linked <cell> — `link` when the cell carries a link.
 sc_linked() {
   [ -z "$(sdd_link_in_text "$SC_LINK_ROWS" "$1")" ] || printf 'link\n'
 }
 
 # sc_link_target <cell> — the canonical target of the first link in a table cell,
-# or nothing when the cell carries none: a wikilink's right side, anchor dropped; a
-# Markdown link's file id; a broken Markdown link that is not a file path
-# (`/users`) as written, so its route shape can be judged. Existence is
+# or nothing when the cell carries none: the id of the file it names, or, for a
+# broken link that is not a file path (`/users`), the path as written, so its route
+# shape can be judged. Existence is
 # `links-resolve.sh`'s question; this reader serves the FORM check, this rule's half.
 sc_link_target() {
-  local row ln form target text path t
+  local row ln form target text path
   row="$(sdd_link_in_text "$SC_LINK_ROWS" "$1")"
   [ -n "$row" ] || return 0
   IFS=$'\t' read -r ln form target text path <<< "$row"
-  if [ "$form" = "wiki" ]; then
-    t="${text%%#*}"
-    t="${t#"${t%%[![:space:]]*}"}"; t="${t%"${t##*[![:space:]]}"}"
-    printf '%s\n' "$t"
-  elif [ -f "$path" ]; then
+  if [ -f "$path" ]; then
     sdd_artifact_id "$path"
   else
     case "${target%%#*}" in *.md) ;; *) printf '%s\n' "${target%%#*}" ;; esac
   fi
-}
-
-# sc_resolve_rel <from_dir> <target> — prints the file a path-shaped or bare
-# wikilink target names inside the catalogs, or nothing.
-sc_resolve_rel() {
-  local from_dir="$1" target="$2" cand
-  target="${target%%#*}"
-  [ -n "$target" ] || return 0
-  for cand in "$from_dir/$target" "$from_dir/$target.md" "$target" "$target.md"; do
-    if [ -f "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
-  done
-  # Bare name, or a path written for another layout: look the name up in the
-  # pattern and component catalogs, by extension.
-  for cand in "$(sdd_resolve_catalog pattern "$target")" "$(sdd_resolve_catalog component "$target")"; do
-    if [ -n "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
-  done
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -213,17 +189,9 @@ while IFS= read -r f; do
     "$(id="$(sdd_fm_value "$f" '.id')"; printf '%s' "${id%%.*}")" >> "$SC_INDEX"
 done < <(sdd_find_screens "$SDD_SPEC_ROOT")
 
-# sc_screen_file <id> — the screen file declaring <id>, or the one the migration's id
-# map renamed it to: a link inside `## Bindings` keeps the id it was written with.
+# sc_screen_file <id> — the screen file declaring <id>.
 sc_screen_file() {
-  local f alias
-  f="$(awk -F'\t' -v k="$1" '$2 == k { print $1; exit }' "$SC_INDEX")"
-  if [ -z "$f" ]; then
-    alias="$(sdd_screen_id_alias "$1")"
-    [ -n "$alias" ] && f="$(awk -F'\t' -v k="$alias" '$2 == k { print $1; exit }' "$SC_INDEX")"
-  fi
-  [ -n "$f" ] && printf '%s\n' "$f"
-  return 0
+  awk -F'\t' -v k="$1" '$2 == k { print $1; exit }' "$SC_INDEX"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -613,8 +581,7 @@ check_pattern_vocab() {
 #   normalized rows already say. The dispatch below keeps the order.
 check_join() {
   local file="$1" sev="$2" lifecycle="$3"
-  local dir target pattern_file kinds have region fill accepts tok
-  dir="$(dirname "$file")"
+  local pattern_file kinds have region fill accepts tok
 
   # An old-shape screen has no `## Bindings` at all. sections-present already
   # says so; joining a layout against a section that is not there would only
@@ -627,54 +594,49 @@ check_join() {
   awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { f=1 } END { exit !f }' "$SC_ROWS" && have="$have dispatch"
   awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { f=1 } END { exit !f }' "$SC_ROWS" && have="$have nav"
 
-  target="$(sc_header_links "$file" '**Pattern:**' | head -n 1)"
-  if [ -n "$target" ]; then
-    pattern_file="$(sc_resolve_rel "$dir" "$target")"
-    if [ -n "$pattern_file" ]; then
-      if ! sdd_has_section "$pattern_file" "Regions"; then
-        case " $SC_PATTERNS_REPORTED " in
-          *" $pattern_file "*) ;;
-          *)
-            SC_PATTERNS_REPORTED="$SC_PATTERNS_REPORTED $pattern_file"
-            # Reported on the pattern, because that is the file to change: an
-            # entry with no `## Regions` cannot be joined to anything.
-            emit "warning" "$pattern_file" \
-              "pattern entry declares no '## Regions' table: the screen-to-layout join cannot be checked"
-            ;;
-        esac
-      else
-        check_pattern_vocab "$pattern_file"
-        while IFS=$'\t' read -r region fill accepts; do
-          [ -z "$region" ] && continue
-          [ "$fill" = "required" ] || continue
-          kinds=""
-          for tok in $(printf '%s\n' "$accepts" | tr ',|' '  '); do
-            case "$tok" in
-              data|dispatch|nav) kinds="$kinds $tok" ;;
-            esac
-          done
-          [ -n "$kinds" ] || continue
-          for tok in $kinds; do
-            case " $have " in
-              *" $tok "*) kinds="SATISFIED"; break ;;
-            esac
-          done
-          if [ "$kinds" != "SATISFIED" ]; then
-            emit "$sev" "$file" \
-              "pattern join: required region '$region' of $(sdd_artifact_id "$pattern_file") accepts$(printf '%s' "$kinds") and this screen declares no such binding"
-          fi
-        done < <(sc_pattern_regions "$pattern_file")
-      fi
+  pattern_file="$(sc_header_links "$file" '**Pattern:**' | head -n 1)"
+  if [ -n "$pattern_file" ]; then
+    if ! sdd_has_section "$pattern_file" "Regions"; then
+      case " $SC_PATTERNS_REPORTED " in
+        *" $pattern_file "*) ;;
+        *)
+          SC_PATTERNS_REPORTED="$SC_PATTERNS_REPORTED $pattern_file"
+          # Reported on the pattern, because that is the file to change: an
+          # entry with no `## Regions` cannot be joined to anything.
+          emit "warning" "$pattern_file" \
+            "pattern entry declares no '## Regions' table: the screen-to-layout join cannot be checked"
+          ;;
+      esac
+    else
+      check_pattern_vocab "$pattern_file"
+      while IFS=$'\t' read -r region fill accepts; do
+        [ -z "$region" ] && continue
+        [ "$fill" = "required" ] || continue
+        kinds=""
+        for tok in $(printf '%s\n' "$accepts" | tr ',|' '  '); do
+          case "$tok" in
+            data|dispatch|nav) kinds="$kinds $tok" ;;
+          esac
+        done
+        [ -n "$kinds" ] || continue
+        for tok in $kinds; do
+          case " $have " in
+            *" $tok "*) kinds="SATISFIED"; break ;;
+          esac
+        done
+        if [ "$kinds" != "SATISFIED" ]; then
+          emit "$sev" "$file" \
+            "pattern join: required region '$region' of $(sdd_artifact_id "$pattern_file") accepts$(printf '%s' "$kinds") and this screen declares no such binding"
+        fi
+      done < <(sc_pattern_regions "$pattern_file")
     fi
   fi
 
   # A component still to extract is a promise, not a dependency: it blocks
   # `stable` and nothing else.
   [ "$lifecycle" = "stable" ] || return 0
-  local comp comp_file state
-  while IFS= read -r comp; do
-    [ -z "$comp" ] && continue
-    comp_file="$(sc_resolve_rel "$dir" "$comp")"
+  local comp_file state
+  while IFS= read -r comp_file; do
     [ -n "$comp_file" ] || continue
     state="$(awk 'index($0, "**State:**") == 1 { s = $0; sub(/^\*\*State:\*\*[ \t]*/, "", s); gsub(/[ \t]+$/, "", s); print s; exit }' "$comp_file")"
     if [ "$state" = "to-extract" ]; then

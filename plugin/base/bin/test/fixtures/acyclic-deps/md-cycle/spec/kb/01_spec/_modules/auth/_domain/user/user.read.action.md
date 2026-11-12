@@ -26,7 +26,7 @@ Cycle test (read depends on create which depends on read).
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** id · **Effect:** read
 
 | Field | Touch | Type | Mapping | Notes |

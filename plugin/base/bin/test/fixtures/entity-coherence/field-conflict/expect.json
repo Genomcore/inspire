@@ -1,7 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "entity-coherence", "message_substring": "field-conflict" },
-    { "rule": "entity-coherence", "message_substring": "id" }
-  ]
-}

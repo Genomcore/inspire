@@ -5,7 +5,7 @@ entity: user
 action: create
 lifecycle: superseded
 requires: []
-superseded_by: "[[auth.user.register|auth::user::register]]"
+superseded_by: "[auth::user::register](user.register.action.md)"
 ---
 
 ## Purpose
@@ -25,7 +25,7 @@ Create a user.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

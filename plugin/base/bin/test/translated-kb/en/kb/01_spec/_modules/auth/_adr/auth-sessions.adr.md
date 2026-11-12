@@ -1,7 +1,7 @@
 # Session tokens are opaque
 
 **Status:** design
-**Modules affected:** [[auth]]
+**Modules affected:** [auth](../../auth.module.md)
 **Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 
 ## ADR2: Decision

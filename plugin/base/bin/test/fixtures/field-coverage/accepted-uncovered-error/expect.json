@@ -1,7 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "field-coverage", "message_substring": "field-uncovered: auth::user.email" }
-  ],
-  "forbidden": ["auth::user.id is declared", "auth.user"]
-}

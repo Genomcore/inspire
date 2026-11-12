@@ -1,1 +1,0 @@
-{ "exit": 1, "findings": [ { "rule": "adr-maturity-matches-features", "message_substring": "is at .design. while" } ] }

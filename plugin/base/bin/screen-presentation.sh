@@ -16,10 +16,9 @@ emit() {
   sdd_count_warning
 }
 
-# header_targets <file> <marker> — the name each link on the `**Marker:**` line
-# targets: a wikilink's last path segment, a Markdown link's file id. A Markdown
-# link that names no file gives its last segment without the typed extension, so it
-# fails the catalog lookup as a broken wikilink does.
+# header_targets <file> <marker> — the id of the file each link on the `**Marker:**`
+# line names. A link that names no file gives its last segment without the typed
+# extension, so the catalog lookup fails for it.
 header_targets() {
   local ln form target text path t
   ln="$(awk -v pfx="$2" '
@@ -30,8 +29,7 @@ header_targets() {
   [ -n "$ln" ] || return 0
   sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
     t="${target%%#*}"; t="${t##*/}"
-    if [ "$form" = "wiki" ]; then printf '%s\n' "$t"
-    elif [ -f "$path" ]; then sdd_artifact_id "$path"
+    if [ -f "$path" ]; then sdd_artifact_id "$path"
     else
       t="${t%.md}"
       case "$t" in *.layout|*.pattern|*.component) t="${t%.*}" ;; esac
@@ -228,8 +226,7 @@ SCOPE_DIR="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 [ -n "$SCOPE_DIR" ] || exit 0
 
 OPEN_COUNT="$(mktemp -t sdd-open-count.XXXXXX)"
-sdd_link_index
-trap 'rm -f "$OPEN_COUNT" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
+trap 'rm -f "$OPEN_COUNT"' EXIT
 
 while IFS= read -r screen_file; do
   [ -z "$screen_file" ] && continue

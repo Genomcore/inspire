@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Touches auth::user but no entity doc exists for it.
+Touches auth::user, whose file is no entity document (it has no `.entity.md` extension).
 
 ## Inputs
 
@@ -25,7 +25,7 @@ Touches auth::user but no entity doc exists for it.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |
