@@ -1,1 +1,1 @@
-{ "exit": 0, "findings": [ { "rule": "adr-maturity-matches-features", "message_substring": "resolves to no ADR decision" } ] }
+{ "exit": 0, "findings": [ { "rule": "adr-maturity-matches-features", "message_substring": "resolves to no ADR decision (.[*].adr.md.) — the maturity claim" } ], "forbidden": ["command not found"] }

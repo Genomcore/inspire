@@ -169,7 +169,7 @@ done < <(sdd_find_features "$SCOPE")
 while IFS=$'\t' read -r file target; do
   [ -z "$file" ] && continue
   sdd_finding "warning" "adr-maturity-matches-features" "$file" \
-    "links ADR \`$target\`, which resolves to no ADR decision (`*.adr.md`) — the maturity claim cannot be checked (link resolution itself is links-resolve's rule)"
+    "links ADR \`$target\`, which resolves to no ADR decision (\`*.adr.md\`) — the maturity claim cannot be checked (link resolution itself is links-resolve's rule)"
   sdd_count_warning
 done < <(sort -u "$UNRESOLVED" 2>/dev/null)
 
