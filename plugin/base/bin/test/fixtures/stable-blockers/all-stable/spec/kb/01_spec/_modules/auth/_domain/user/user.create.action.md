@@ -5,7 +5,7 @@ entity: user
 action: create
 lifecycle: stable
 requires:
-  - "[[auth.password.hash|auth::password::hash]]"
+  - "[auth::password::hash](../password/password.hash.action.md)"
 superseded_by: null
 ---
 

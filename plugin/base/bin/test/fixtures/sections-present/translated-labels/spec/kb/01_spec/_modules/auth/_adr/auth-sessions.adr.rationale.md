@@ -1,6 +1,6 @@
 # Los tokens de sesión son opacos — justificación
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## ADR1: Contexto
 Las sesiones necesitan un identificador seguro en tránsito.

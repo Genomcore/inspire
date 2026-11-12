@@ -6,7 +6,7 @@
 
 **Status:** design
 **Modules affected:** [[auth]]
-**Rationale:** [[adr-auth-sessions.rationale]]
+**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 <!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
      ## Context is named here on purpose: a guidance comment is not a section. -->
 

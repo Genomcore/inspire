@@ -8,7 +8,7 @@ lifecycle: accepted      # draft | accepted | stable | superseded
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
 
 ## Purpose
 

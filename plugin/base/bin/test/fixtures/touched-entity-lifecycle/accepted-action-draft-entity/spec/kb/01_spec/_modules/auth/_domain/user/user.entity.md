@@ -24,4 +24,4 @@ None beyond Fields constraints.
 
 | Action                                  | Touch | Notes |
 |-----------------------------------------|-------|-------|
-| [[auth.user.create|auth::user::create]] | write | Insert. |
+| [auth::user::create](user.create.action.md) | write | Insert. |

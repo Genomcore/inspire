@@ -9,5 +9,5 @@
 
 ## Decisions it realizes
 
-The transport comes from [[../../01_adr/adr-x|adr-x]], written in pipe form the way a
+The transport comes from [adr-x](../../../_adr/x.adr.md), written in pipe form the way a
 descriptor cites an ADR — the left side is the on-disk path, the right the canonical id.

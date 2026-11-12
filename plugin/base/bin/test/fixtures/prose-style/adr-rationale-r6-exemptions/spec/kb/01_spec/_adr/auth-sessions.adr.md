@@ -2,7 +2,7 @@
 
 **Status:** superseded by [[adr-auth-sessions-v2]]
 Supersedes: [[adr-auth-cookies]]
-**Rationale:** [[adr-auth-sessions.rationale]]
+**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 
 ## Decision
 

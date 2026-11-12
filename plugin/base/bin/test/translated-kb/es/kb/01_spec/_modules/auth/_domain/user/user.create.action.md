@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## ACT1: Propósito
-Crear una cuenta de usuario, según [[adr-auth-sessions]].
+Crear una cuenta de usuario, según [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ACT2: Entradas
 
@@ -28,7 +28,7 @@ Constraints: `len(3, 254)`
 
 ## ACT4: Entidades
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Campo    | Contacto | Tipo  | Correspondencia | Notas |

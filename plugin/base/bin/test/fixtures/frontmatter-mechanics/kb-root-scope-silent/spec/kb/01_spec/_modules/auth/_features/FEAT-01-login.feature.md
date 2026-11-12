@@ -4,7 +4,7 @@ module: auth
 entity: session
 action: create
 lifecycle: totally-bogus
-requires: ["[[auth.session.rotate|auth::session::rotate]]"]
+requires: ["[auth::session::rotate](../../../_adr/auth-sessions.adr.md)"]
 superseded_by: "[[also.missing.here|also::missing::here]]"
 ---
 

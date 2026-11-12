@@ -1,6 +1,6 @@
 # Session tokens are opaque — rationale
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## Context
 

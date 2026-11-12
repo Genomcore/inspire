@@ -19,7 +19,7 @@ XXX: describe what this screen shows.
 
 ## Entities
 
-### [[auth.profile|auth::profile]]
+### [auth::profile](user.profile.screen.md)
 **Effect:** read
 
 | Field   | Touch | Type    | Mapping | Notes |

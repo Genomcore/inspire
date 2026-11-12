@@ -2,7 +2,7 @@
 
 **Purpose:** the frame a collection sits in.
 **State:** to-extract
-**Pattern:** [[../patterns/list]]
+**Pattern:** [list](../patterns/list.pattern.md)
 
 ## Geometry
 

@@ -33,4 +33,4 @@ Constraints: `nonnull, unique, pattern(/.+@.+/)`
 
 | Action | Touch | Notes |
 |---|---|---|
-| [[auth.user.create|auth::user::create]] | write | Inserts the row. |
+| [auth::user::create](user.create.action.md) | write | Inserts the row. |

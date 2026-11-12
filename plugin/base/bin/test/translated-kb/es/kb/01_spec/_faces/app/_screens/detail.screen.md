@@ -25,7 +25,7 @@ Un administrador llega aquí para leer una cuenta completa.
 
 | Clave | Acción | Notas |
 |---|---|---|
-| `record` | [[auth.user.get\|auth::user::get]] | la cuenta indicada por param `id` |
+| `record` | [auth::user::get](../../../_modules/auth/_domain/user/user.get.action.md) | la cuenta indicada por param `id` |
 
 ### SCR7: Estados
 

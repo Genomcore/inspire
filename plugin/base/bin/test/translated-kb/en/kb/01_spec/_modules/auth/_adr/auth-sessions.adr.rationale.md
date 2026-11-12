@@ -1,6 +1,6 @@
 # Session tokens are opaque — rationale
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## ADR1: Context
 A session needs an identifier that travels safely over a network.

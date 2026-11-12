@@ -8,8 +8,8 @@ lifecycle: accepted
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
-**Components:** [[../components/person-chip]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
+**Components:** [person-chip](../../../_design-system/components/person-chip.component.md)
 
 ## Purpose
 

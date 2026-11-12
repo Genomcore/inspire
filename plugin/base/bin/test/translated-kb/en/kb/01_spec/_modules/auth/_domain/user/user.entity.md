@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## ENT1: Purpose
-The user account entity, grounded in [[adr-auth-sessions]].
+The user account entity, grounded in [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ENT2: Rationale
-The identity model follows [[adr-auth-sessions]].
+The identity model follows [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ENT3: Invariants
 - `I1` — unique(org_id, email) — An email is unique per organisation.
@@ -39,5 +39,5 @@ Constraints: `nonnull`
 
 | Action | Touch | Notes |
 |---|---|---|
-| [[auth.user.create|auth::user::create]] | write | It inserts the row. |
-| [[auth.user.get|auth::user::get]] | read | It reads one row. |
+| [auth::user::create](user.create.action.md) | write | It inserts the row. |
+| [auth::user::get](user.get.action.md) | read | It reads one row. |

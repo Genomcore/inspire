@@ -21,7 +21,7 @@ FIXME: describe what this screen edits.
 
 ## Entities
 
-### [[auth.profile|auth::profile]]
+### [auth::profile](user.profile.screen.md)
 **Effect:** update
 
 | Field   | Touch   | Type   | Mapping | Notes |
