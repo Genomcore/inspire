@@ -30,6 +30,7 @@ while IFS= read -r action; do
   [ "$lifecycle" != "stable" ] && continue
 
   while IFS=$'\t' read -r form target to_id path; do
+    [ "$form" = wiki ] && continue
     if [ "$form" != bare ]; then target_file=""; [ -f "$path" ] && target_file="$path"; to_id="${to_id:-$target}"
     else target_file="$(sdd_resolve_id "$to_id")"; fi
     if [ -z "$target_file" ]; then

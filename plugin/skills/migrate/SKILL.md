@@ -144,8 +144,9 @@ directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
 the nearest directory on that path that does. No link is converted or rebased into
 `_migration/`. A Markdown link it can neither rebase nor resolve, hand-written ones
 included, becomes its text, with an `unlinked` line and why (retired, placeholder,
-broken), so the migrated KB holds no broken link. Templates and `_migration/` are left
-as they are.
+broken), so the migrated KB holds no broken link. A template (`*.template.md`) is
+converted like any other file, a placeholder path mapped through the layout, and its
+links are never unlinked or listed as broken.
 
 The new link's text is the wikilink's alias, else the last segment of its target,
 so a link in a screen's `## Bindings` keeps the screen id it named. An anchor

@@ -25,7 +25,9 @@
 #
 # A Markdown link that names nothing where it stands is rebased through the move record
 # and the layout (D7); one it can neither rebase nor resolve becomes its text, so a
-# migrated KB holds no broken link. Templates and 01_spec/_migration/ are not touched.
+# migrated KB holds no broken link. A template is converted like any file, its
+# placeholders mapped through the layout, and its links are never unlinked or listed
+# as broken; nothing under 01_spec/_migration/ is touched.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> ·
@@ -48,7 +50,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
