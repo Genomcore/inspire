@@ -31,13 +31,14 @@ source "$SCRIPT_DIR/_lib.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
+sdd_link_index
 
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 # Build a flat table of every (entity_id, field) touched by any action.
 # entity_id<TAB>field
 touches="$(mktemp -t sdd-touches.XXXXXX)"
-trap 'rm -f "$touches"' EXIT
+trap 'rm -f "$touches" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r action; do
   [ -z "$action" ] && continue

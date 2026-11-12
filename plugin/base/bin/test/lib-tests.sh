@@ -431,6 +431,11 @@ eq "the table-cell escape is not the target" "$(wl '[[a.b\|a::b]]' 3)" "a.b"
 eq "a bare link is its own target"          "$(wl '[[adr-x]]' 3)" "adr-x"
 eq "only the first pipe divides"            "$(wl '[[adr-x|a|b]]' 3)" "adr-x"
 
+eq "unwrap_links: a wikilink reads as its right half" \
+   "$(printf 'see [[auth.user|auth::user]] and [[adr-x]]\n' | sdd_unwrap_links)" "see auth::user and adr-x"
+eq "unwrap_links: a Markdown link reads as its text, adjacent ones too" \
+   "$(printf 'see [the ADR](../a.adr.md)[b](c.md) ![img](p.png)\n' | sdd_unwrap_links)" "see the ADRb ![img](p.png)"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # sdd_links — every link in a file, both forms, with the file each one names
 # ─────────────────────────────────────────────────────────────────────────────

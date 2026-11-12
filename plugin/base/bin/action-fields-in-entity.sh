@@ -28,6 +28,8 @@ source "$SCRIPT_DIR/_lib.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
+sdd_link_index
+trap 'rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 

@@ -98,8 +98,7 @@
 #
 # Every check reads `sdd_body_prose` (_lib.sh), which is `sdd_body_section`
 # minus fenced blocks, minus table rows, minus bare `---` thematic breaks, with
-# links unwrapped to their display text (a Markdown link by `unwrap_md_links`
-# below). That reader draws the boundary, and
+# links unwrapped to their display text. That reader draws the boundary, and
 # the boundary is narrower than the contract:
 #
 #   - TABLE CELLS ARE NEVER READ. The prose reader drops table rows, so R3, R4,
@@ -655,16 +654,7 @@ ramp_sev() {
 #   normative prose. Without this the common case silently degraded to the
 #   section header's line number.
 flatten_copy() {
-  strip_html_comments "$1" \
-    | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g' \
-    | unwrap_md_links > "$2"
-}
-
-# unwrap_md_links — a Markdown link reads as its text, the way `sdd_body_prose`
-# reads a wikilink: the path is a machine-read token, never prose. An image keeps
-# its `!`, so it is left alone.
-unwrap_md_links() {
-  sed -E -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g' -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g'
+  strip_html_comments "$1" | sdd_unwrap_links > "$2"
 }
 
 # locate_line <read_file> <section> <anchor text>
@@ -896,7 +886,7 @@ check_file() {
       [ "$header" = "Related ADRs" ] && exempt6=1
     fi
 
-    prose="$(sdd_body_prose "$PS_TMP" "$header" | unwrap_md_links)"
+    prose="$(sdd_body_prose "$PS_TMP" "$header")"
     [ -z "$prose" ] && continue
 
     while IFS=$'\t' read -r check anchor detail; do
