@@ -4,7 +4,7 @@
 **State:** to-extract
 
 A **single-record view** — everything about one entity instance, on its own route.
-Reached by clicking a row in a [`list`](list.md).
+Reached by clicking a row in a [`list`](list.pattern.md).
 
 ## PAT1: Structure
 

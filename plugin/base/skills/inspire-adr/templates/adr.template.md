@@ -8,7 +8,7 @@
 # {Title}
 
 **Status:** design
-**Modules affected:** [module-a]({path from this ADR to module-a.module.md}), [module-b]({path from this ADR to module-b.module.md})
+**Modules affected:** [module-a]({path-to-module-a}.module.md), [module-b]({path-to-module-b}.module.md)
 **Rationale:** [adr-{slug}.rationale]({slug}.adr.rationale.md)
 <!-- Supersedes: [adr-{old-slug}]({old-slug}.adr.md) — optional; add only when this ADR supersedes a prior one.
      Links are relative Markdown links, per .claude/skills/_references/kb-links.md. -->

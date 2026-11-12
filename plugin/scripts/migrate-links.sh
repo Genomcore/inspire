@@ -24,16 +24,14 @@
 # shipped template, and anything else becomes its text.
 #
 # A Markdown link that names nothing where it stands is rebased through the move record
-# and the layout (D7). One to a retired file, or a placeholder outside a template,
-# becomes its text; the rest is listed as broken. No link is converted or rebased into
-# 01_spec/_migration/.
+# and the layout (D7); one it can neither rebase nor resolve becomes its text, so a
+# migrated KB holds no broken link. Templates and 01_spec/_migration/ are not touched.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> ·
 #   draft <file> <line> draft <wikilink> <markdown> · drafted <new file> <kind> ·
 #   unlinked <file> <line> <link> <text> <why> ·
-#   link <file> <line> rebased <old link> <new link> · broken <file> <line> <link> ·
-#   note <text>
+#   link <file> <line> rebased <old link> <new link> · note <text>
 # In act mode the files are rewritten, the drafts written, and the plan is saved to
 # 01_spec/_migration/links.tsv, when it changed anything.
 #
@@ -50,7 +48,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -76,7 +74,10 @@ SDD_KB_ROOT="$KB"; SDD_SPEC_ROOT="$SPEC"
 WORK="$(mktemp -d -t inspire-links.XXXXXX)"
 trap 'rm -rf "$WORK" "${WIKILINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 FILES="$WORK/files.txt"
-find "$KB" -type f -name '*.md' | awk -v p="$KB/" '{ print substr($0, length(p) + 1) }' | LC_ALL=C sort > "$FILES"
+# _migration/ holds what the migration could not place; no link there is converted,
+# rebased or listed (D2).
+find "$KB" -type f -name '*.md' | awk -v p="$KB/" '{ r = substr($0, length(p) + 1) } r !~ /(^|\/)_migration\// { print r }' \
+  | LC_ALL=C sort > "$FILES"
 
 # Shared by the count and the conversion. Each file is read whole (RS is set to a byte
 # a Markdown file never holds), so its bytes, the last newline included, survive.
@@ -103,19 +104,27 @@ function relpath(p, start,   na, nb, a, b, i, c, r) {
   return r == "" ? "." : r
 }
 function slurp(f,   t) { t = ""; RS = "\001"; getline t < f; close(f); return t }
-# wikilinks(t) — the wikilinks in t that the reader reads, line by line with its
-# frontmatter, fence and span rules: NL of them, each at LS (start) to LE (end,
-# exclusive) on line LLN, inner text LIN; LFM marks frontmatter. NCODE counts those
-# the reader takes for code.
-function wikilinks(t,   n, lines, k, base, line, fm) {
-  NL = 0; NCODE = 0; sdd_fence_ch = ""; sdd_fence_len = 0
-  n = split(t, lines, "\n"); base = 0; fm = 0
+# blocks(t) — t read with the reader's own block model (D4): BL[k] is line k, and
+# MASK[k] the same line with its code spans blanked in place, for each line the reader
+# scans (none in a fence); MFM[k] marks frontmatter.
+function blocks(t,   n, k) {
+  split("", MASK); split("", MFM)
+  n = split(t, BL, "\n")
+  for (k = 1; k <= n; k++) sdd_block(BL[k], k)
+  sdd_block_end(n)
+  return n
+}
+function sdd_line(raw, s, ln) { MASK[ln] = s; MFM[ln] = fm }
+function sdd_code(kind, from, to, text) { }
+# wikilinks(t) — the wikilinks in t that the reader reads: NL of them, each at LS
+# (start) to LE (end, exclusive) on line LLN, inner text LIN; LFM marks frontmatter.
+# NCODE counts those the reader takes for code.
+function wikilinks(t,   n, k, base, line) {
+  NL = 0; NCODE = 0; n = blocks(t); base = 0
   for (k = 1; k <= n; k++) {
-    line = lines[k]
-    if (k == 1 && sdd_fm_delim(line)) fm = 1
-    else if (fm && sdd_fm_delim(line)) fm = 0
-    else if (!fm && (sdd_fence(line) || sdd_in_fence())) NCODE += wiki_scan(line)
-    else NCODE += wiki_scan(line) - wiki_scan(sdd_unspan(line, 1), line, base, k, fm)
+    line = BL[k]
+    if (k in MASK) NCODE += wiki_scan(line) - wiki_scan(MASK[k], line, base, k, MFM[k])
+    else NCODE += wiki_scan(line)
     base += length(line) + 1
   }
 }
@@ -132,7 +141,7 @@ function wiki_scan(s, raw, base, ln, fm,   c, off, m) {
   return c
 }
 AWK
-AWK_LIB="$AWK_LIB$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS$SDD_AWK_MD_FUNCS"
+AWK_LIB="$AWK_LIB$SDD_AWK_BLOCKS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS$SDD_AWK_MD_FUNCS"
 
 if [ "$COUNT" -eq 1 ]; then
   LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
@@ -235,8 +244,8 @@ draft_file() {
       q = (substr(p, 1, 1) == "/") ? p : dir "/" p; gsub(/\047/, "\047\\\047\047", q)
       return system("test -e \047" q "\047") == 0
     }
-    function unlink(line,   masked, res, off, st, tok, d) {
-      masked = sdd_unspan(line, 1); res = ""; off = 0
+    function unlink(line, masked,   res, off, st, tok, d) {
+      res = ""; off = 0
       while (sdd_next_md(substr(masked, off + 1))) {
         st = off + MS; tok = substr(line, st, ML)
         d = sdd_md_dest(substr(masked, st, ML), MT)
@@ -253,8 +262,9 @@ draft_file() {
         l = fill(fill(fill(fill(fill(l, "{Screen Title}", title), "{face}", a), "{slug}", b), "{screen}", b), "{module}", "")
       }
       else l = fill(fill(fill(l, "{{MODULE}}", a), "{{ENTITY}}", b), "{{ACTION}}", c)
-      if (sdd_fence(l) || sdd_in_fence()) print l; else print unlink(l)
-    }' "$tpl" > "$dest"
+      text = text (NR > 1 ? "\n" : "") l
+    }
+    END { n = blocks(text); for (k = 1; k <= n; k++) print (k in MASK) ? unlink(BL[k], MASK[k]) : BL[k] }' "$tpl" > "$dest"
 }
 
 # ── convert ──────────────────────────────────────────────────────────────────
@@ -264,8 +274,11 @@ CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
 DRAFTS="$WORK/drafts.tsv"; : > "$DRAFTS"
 # Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
+# A path that starts with `/` resolves from the repository root (D2), passed to awk
+# relative to the KB.
+KB_ABS="$(cd "$KB" && pwd -P)"; ROOT_ABS="$(cd "$(sdd_repo_root)" && pwd -P)"
 LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKILINK_INDEX_FILE" \
-    -v ALLF="$ALLF" -v ALLD="$ALLD" \
+    -v ALLF="$ALLF" -v ALLD="$ALLD" -v KB_ABS="$KB_ABS" -v ROOT_ABS="$ROOT_ABS" \
     -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" -v DRAFTS="$DRAFTS" "$AWK_LIB$WIKILINK_AWK_RESOLVE"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
   # A path outside the KB, or absolute, is asked of the file system once. A draft this
@@ -281,20 +294,14 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
   }
   # rebase(f, t) — t with each Markdown link that names nothing rebased (D7), read
   # line by line with the reader rules: frontmatter is read, code is not.
-  function rebase(f, t,   n, lines, k, line, fm, out) {
-    n = split(t, lines, "\n"); fm = 0; sdd_fence_ch = ""; sdd_fence_len = 0; out = ""
-    for (k = 1; k <= n; k++) {
-      line = lines[k]
-      if (k == 1 && sdd_fm_delim(line)) fm = 1
-      else if (fm && sdd_fm_delim(line)) fm = 0
-      else if (fm || !(sdd_fence(line) || sdd_in_fence())) line = rebase_line(f, line, k)
-      out = out (k > 1 ? "\n" : "") line
-    }
+  function rebase(f, t,   n, k, out) {
+    n = blocks(t); out = ""
+    for (k = 1; k <= n; k++) out = out (k > 1 ? "\n" : "") ((k in MASK) ? rebase_line(f, BL[k], k, MASK[k]) : BL[k])
     return out
   }
-  # Tokens are found with code spans blanked in place and copied from the raw line.
-  function rebase_line(f, line, ln,   masked, res, off, s, tok, d0, nd, rtok, inner, lead, w, ntok) {
-    masked = sdd_unspan(line, 1); res = ""; off = 0
+  # Tokens are found in the masked line and copied from the raw one.
+  function rebase_line(f, line, ln, masked,   res, off, s, tok, d0, nd, rtok, inner, lead, w, ntok) {
+    res = ""; off = 0
     while (sdd_next_md(substr(masked, off + 1))) {
       s = off + MS; tok = substr(masked, s, ML); rtok = substr(line, s, ML); ntok = rtok
       # A token that is no KB link (a URL, an anchor, an image) is never rebased or unlinked.
@@ -363,13 +370,12 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
   function placeholder(t) { return t ~ /[{}]/ || index(t, "…") }
   function is_template(f) { return f ~ /(^|\/)(_template|[^\/]*\.template)\.md$/ }
   # rebased(f, written, path) — the new destination of a link that names nothing
-  # where it stands, or "" (the link is listed as broken unless it resolves).
-  # A link to a retired file, or a placeholder outside a template, becomes its text:
-  # UNLINK then holds the reason.
+  # where it stands, or "": then UNLINK holds why it becomes its text (retired,
+  # placeholder, broken), or nothing when it stands as written.
   function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, c, anchor) {
     UNLINK = ""
     abs = (substr(path, 1, 1) == "/")
-    cur = abs ? path : normpath(join_path(dir_of(f), path))
+    cur = normpath(abs ? ROOT "/" substr(path, 2) : join_path(dir_of(f), path))
     if (present(cur)) return ""
     if (!abs) {
       src = (f in BACK) ? BACK[f] : f
@@ -390,10 +396,11 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
       }
       if (retired(old)) UNLINK = "retired"
     }
-    if (UNLINK == "" && placeholder(written) && !is_template(f)) UNLINK = "placeholder"
-    if (UNLINK != "") { st["unlinked"]++; return "" }
-    st["broken"]++
-    printf "broken\t%s/%s\t%d\t%s\n", KB, f, ln, flat(rtok)
+    # A template is not checked (D2): its placeholders name nothing yet. Anywhere else
+    # a link that still names nothing becomes its text, so no broken link is left (D7).
+    if (is_template(f)) return ""
+    if (UNLINK == "") UNLINK = placeholder(written) ? "placeholder" : "broken"
+    st["unlinked"]++; st["unlinked:" UNLINK]++
     return ""
   }
   # The index holds files outside the KB too; a KB link converts only to a KB file.
@@ -473,6 +480,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     return dq ? s md : "\"" s md "\""
   }
   BEGIN {
+    ROOT = relpath(ROOT_ABS, KB_ABS)
     while ((getline l < RENAMES) > 0) {
       split(l, a, "\t"); REN[a[1]] = a[2]; BACK[a[2]] = a[1]
       if (a[1] !~ /\.md$/) continue
@@ -512,7 +520,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
             md = (alias != "") ? alias : target anchor
             if (LFM[w]) md = yaml(md, LPRE[w])
             out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
-            st["unlinked"]++
+            st["unlinked"]++; st["unlinked:" WHY]++
             printf "unlinked\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, flat("[[" inner "]]"), flat(md), WHY
             continue
           }
@@ -548,9 +556,10 @@ converted="$(tally converted)"
   printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s draft link(s), %s new draft(s), %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
     "$(tally draft)" "$(tally drafts)" "$(tally code)"
-  printf 'note\tMarkdown links: %s rebased through the move record, %s broken and left as written\n' \
-    "$(tally rebased)" "$(tally broken)"
-  printf 'note\tunlinked: %s link(s) became their text\n' "$(tally unlinked)"
+  printf 'note\tMarkdown links: %s rebased through the move record\n' "$(tally rebased)"
+  printf 'note\tunlinked: %s link(s) became their text%s\n' "$(tally unlinked)" \
+    "$(LC_ALL=C sort "$STATS" | awk -F'\t' 'index($1, "unlinked:") == 1 { o = o (o == "" ? "" : ", ") substr($1, 10) " " $2 }
+                    END { if (o != "") print " (" o ")" }')"
 } >> "$PLAN"
 
 if [ "$DRY" -eq 1 ]; then

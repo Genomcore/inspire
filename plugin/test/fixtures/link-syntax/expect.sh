@@ -32,7 +32,7 @@ fi
 
 f="$1"
 code="$(LC_ALL=C awk -v codes=1 \
-    "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$f" \
+    "$SDD_AWK_LINKS$SDD_AWK_BLOCKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$f" \
   | jq -R -s -c '
   split("\n") | map(select(. != "") | split("\t")
   | {kind: .[0], from: (.[1] | tonumber), to: (.[2] | tonumber)}

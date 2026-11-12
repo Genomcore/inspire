@@ -7,11 +7,9 @@
 # converted link names the file they read. It lives here, not in base/bin/, because
 # only migration reads wikilinks (D5) and base/bin/ materializes into projects.
 
-# wikilink_index — builds the index once, KB-wide:
-#   `{kind}<TAB>{key}<TAB>{path}`, kind A action id · E entity id (dotted) ·
-#   S screen id · M old screen id (path holds the new one) · N file id ·
-#   F file name id a declared id displaces, never a screen's.
-#   The caller removes `$WIKILINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
+# wikilink_index — `{kind}<TAB>{key}<TAB>{path}`, once: A action, E entity, S screen,
+# M old screen id, N file id, F a file name a declared id displaces. The caller
+# removes `$WIKILINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
 WIKILINK_INDEX_FILE=""
 wikilink_index() {
   [ -n "$WIKILINK_INDEX_FILE" ] && [ -f "$WIKILINK_INDEX_FILE" ] && return 0
@@ -29,11 +27,8 @@ wikilink_index() {
       [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
     done < <(sdd_find_screens "$SDD_SPEC_ROOT")
     [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
-    # A typed file is named by its frontmatter id where it declares one (adr-kb-structure
-    # D3), else by the id its name gives. A name the declared id displaces is kept as
-    # F, read only when nothing else answers, so `[[nightly-close]]` still reaches
-    # `billing.nightly-close`. A screen keeps none: its slug repeats its module's name,
-    # and `[[orders]]` never names `orders.screen.md` (`id: portal.orders`).
+    # F keeps `[[nightly-close]]` reaching `billing.nightly-close`; a screen has no F,
+    # since its slug repeats a module name (`[[orders]]` is not `portal.orders`).
     find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
       | awk '
           function fm_id(f,   l, n, v) {

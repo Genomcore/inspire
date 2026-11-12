@@ -5,7 +5,7 @@ the product is, why it's shaped the way it is, and what "correct" means — the
 source of truth the agents read from and write to.
 
 Each numbered folder is a part of the graph, operated by matching skills in
-[`.claude/skills/`](../.claude/skills):
+`.claude/skills/`:
 
 | Folder | Holds | Skill |
 |--------|-------|-------|
@@ -21,8 +21,7 @@ artifact by its typed extension, and a link is a relative Markdown link to the f
 reaches it with `/inspire:migrate`.
 
 Coherence across the specification is protected mechanically by the validators in
-[`.inspire/bin/`](../.inspire/bin) and the git-time hooks in
-[`.inspire/hooks/`](../.inspire/hooks).
+`.inspire/bin/` and the git-time hooks in `.claude/inspire/hooks/`.
 
 > This is a **template skeleton**. On a new project the folders start empty
 > (each keeps a `README.md` and, where needed, a `.gitkeep`); the skills fill

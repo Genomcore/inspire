@@ -2,6 +2,7 @@
 # The skills tree links to itself with relative Markdown links, and each resolves
 # (adr-markdown-links D9). The tree has the same shape in this repository
 # (plugin/base/skills) and in a project (.claude/skills), so a relative link holds in both.
+# The KB skeleton (plugin/base/kb) follows the same rule: its links stay in the KB.
 #
 # Two rules, one assertion per file each:
 #   - every relative Markdown link names a file that exists inside the tree;
@@ -66,7 +67,7 @@ violations() {
       if [ ! -e "$p" ]; then echo "line $ln: $arg"; continue; fi
       # A link out of the tree resolves here and names nothing in a project (D9).
       if [ -d "$p" ]; then d="$(cd -P "$p" && pwd -P)"; else d="$(cd -P "$(dirname "$p")" && pwd -P)"; fi
-      case "$d/" in "$rr"/*) ;; *) echo "line $ln: $arg leaves the skills tree" ;; esac
+      case "$d/" in "$rr"/*) ;; *) echo "line $ln: $arg leaves the tree" ;; esac
     elif names_tree_file "$root" "$file" "$arg"; then
       echo "line $ln: \`$arg\`"
     fi
@@ -90,7 +91,7 @@ mkdir -p "$T/outer/skills/inspire-y" "$T/outer/bin"
 : > "$T/outer/bin/review.sh"
 printf '%s\n' '[review](../../bin/review.sh) and [tree](..)' > "$T/outer/skills/inspire-y/SKILL.md"
 eq "premise: a link that leaves the tree is reported, though its file exists" \
-  "$(violations "$T/outer/skills" "$T/outer/skills/inspire-y/SKILL.md" link)" 'line 1: ../../bin/review.sh leaves the skills tree'
+  "$(violations "$T/outer/skills" "$T/outer/skills/inspire-y/SKILL.md" link)" 'line 1: ../../bin/review.sh leaves the tree'
 
 premise "the skills tree exists" "[ -d '$SKILLS/_references' ]"
 n=0
@@ -104,5 +105,17 @@ while IFS= read -r f; do
   [ -z "$out" ] && ok "no backtick path to a tree file: $rel" || bad "no backtick path to a tree file: $rel ($out)"
 done < <(find "$SKILLS" -type f -name '*.md' | LC_ALL=C sort)
 premise "the scan covered the tree" "[ $n -gt 100 ]"
+
+# The KB skeleton names product roots and runtime directories in code spans and links
+# only within the KB. Init seeds design-system.md from theme.md, so the copy holds it.
+KB="$T/kb"; cp -R "$HERE/../base/kb" "$KB"
+cp "$KB/01_spec/_design-system/theme.md" "$KB/01_spec/_design-system/design-system.md"
+n=0
+while IFS= read -r f; do
+  n=$((n + 1)); rel="${f#$KB/}"
+  out="$(violations "$KB" "$f" link)"
+  [ -z "$out" ] && ok "seed links stay in the KB: $rel" || bad "seed links stay in the KB: $rel ($out)"
+done < <(find "$KB" -type f -name '*.md' ! -name '*.template.md' ! -path "$KB/01_spec/_design-system/design-system.md" | LC_ALL=C sort)
+premise "the scan covered the skeleton" "[ $n -gt 20 ]"
 
 summary

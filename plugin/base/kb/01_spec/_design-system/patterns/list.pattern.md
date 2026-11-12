@@ -41,5 +41,5 @@ content shows. Which columns a table renders belongs to the component filling
 
 ## PAT4: Notes
 
-Detail screens are their own route (see [`detail`](detail.md)); clicking a row
+Detail screens are their own route (see [`detail`](detail.pattern.md)); clicking a row
 navigates there rather than opening an overlay, unless a screen explicitly opts in.
