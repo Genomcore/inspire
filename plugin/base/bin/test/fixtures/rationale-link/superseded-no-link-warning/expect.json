@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "rationale-link",
+      "severity": "warning",
+      "message_substring": "has no link"
+    }
+  ],
+  "forbidden": ["\"severity\":\"error\""]
+}

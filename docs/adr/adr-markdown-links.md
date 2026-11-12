@@ -36,7 +36,8 @@ A relative Markdown link names the file itself. Every reader follows it.
 
 `[text](path)`, where `path` is the target file's path relative to the linking file,
 extension included: `[adr-user-pools](../../_adr/user-pools.adr.md)`. Skills and
-templates write no wikilinks.
+templates write no wikilinks. An embed takes the image form, `![text](path)`, and a tool
+resolves and checks it like a link.
 
 ### D2 — The path resolves the link, and the target file gives the id
 
@@ -94,6 +95,21 @@ though it states the same thing. After a conversion, the Factory's remap rewrite
 built code, each fingerprint whose claim payload differs only in link syntax, as it
 rewrites screen ids after a move (adr-kb-structure D10). A project that has not converted
 keeps every fingerprint it has.
+
+The plain text a fingerprint covers reduces a wikilink exactly as before this decision, and
+a Markdown link to a specification file to its text, so moving a file (D7) changes no
+fingerprint. A Markdown link inside a code span, or to anything else, stays as written.
+A claim counts as changed only in link syntax when its links resolve to the same ids
+before and after.
+
+### D9 — The runtime's own files follow D1 within a payload class
+
+A skill, its `references/` and the shared `_references/` link to one another with relative
+Markdown links, because that tree has the same shape in this repository
+(`plugin/base/skills/`) and in a project (`.claude/skills/`). A test resolves every one of
+them. A reference from a skill to another class (`.inspire/bin/`, `inspire_kb/`) is
+written as the deployed path in a code span: no relative path is valid in both places, and
+those references are mostly commands to run.
 
 ## Consequences
 

@@ -200,48 +200,6 @@ sdd_fm_value() {
   yq --front-matter=extract "$path // \"\"" "$file" 2>/dev/null || true
 }
 
-# Strip [[ and ]] wikilink wrappers and unwrap pipe-syntax to the canonical id.
-# Prints the unwrapped id (colon::form) to stdout. No-op on already-bare strings.
-#
-# Pipe-syntax wikilinks (V3 convention) carry the dotted on-disk name on the
-# left of `|` and the colon-form canonical id on the right:
-#   "[[auth.password.hash|auth::password::hash]]" → "auth::password::hash"
-# Bare wikilinks (no pipe) are returned as-is after stripping the brackets:
-#   "[[auth::user::create]]" → "auth::user::create"
-sdd_unwrap_wikilink() {
-  local s="$1"
-  s="${s#\[\[}"
-  s="${s%\]\]}"
-  # If there's a `|`, the right-hand side is the canonical id.
-  if [[ "$s" == *"|"* ]]; then
-    s="${s#*|}"
-  fi
-  printf '%s\n' "$s"
-}
-
-# Strip [[ and ]] wrappers and read the LINK TARGET — the left of `|`.
-# Prints the target to stdout. No-op on already-bare strings.
-#
-# The counterpart of sdd_unwrap_wikilink above, and the contrast is the whole
-# point: that one answers "what id does this link DECLARE?", which the V3
-# convention writes on the right; this one answers "what file does this link
-# POINT AT?", which is always the left — `[[adr-x|the audit decision]]` points
-# at `adr-x`. Reading the right side for a target reports every aliased prose
-# link as dangling, which is the defect this pair exists to keep apart.
-#
-# A pipe escaped for a markdown table cell (`[[a.b\|a::b]]`) leaves its
-# backslash at the end of the target, so it is stripped.
-sdd_wikilink_target() {
-  local s="$1"
-  s="${s#\[\[}"
-  s="${s%\]\]}"
-  if [[ "$s" == *"|"* ]]; then
-    s="${s%%|*}"
-    s="${s%\\}"
-  fi
-  printf '%s\n' "$s"
-}
-
 # Extract a frontmatter list value by path expression (e.g. ".depends_on").
 # Prints one item per line on stdout. Empty output if the list is missing or
 # the value isn't a list. The trailing "?" suppresses errors on missing keys.
@@ -857,7 +815,7 @@ sdd_exit_with_counters() {
 
 # sdd_progressive_severity <lifecycle>
 #   Maps an object's lifecycle to the severity tier for lifecycle-
-#   progressive rules. Used by field-coverage, rationale-wikilink,
+#   progressive rules. Used by field-coverage, rationale-link,
 #   sections-present (its order check) and prose-style (its four
 #   non-heuristic checks).
 #     draft (and empty / unknown) → warning
@@ -1068,12 +1026,20 @@ sdd_body_section() {
     '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file"
 }
 
+# sdd_unwrap_links — stdin to stdout, line by line: a wikilink reads as its display
+#   text (the right of the pipe, so `[[auth.user|auth::user]]` reads as
+#   `auth::user` and `[[adr-x]]` as `adr-x`) and a Markdown link as its text. The
+#   path is a machine-read token, never prose. An image keeps its `!` and is left
+#   alone; the second Markdown pass catches a link right after another.
+sdd_unwrap_links() {
+  sed -E -e 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g' -e 's/\[\[([^]]*)\]\]/\1/g' \
+    -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g' -e 's/(^|[^!])\[([^]]*)\]\([^)]*\)/\1\2/g'
+}
+
 # sdd_body_prose <file> <header_name>
 #   sdd_body_section reduced to prose: fenced code blocks, table rows and bare
-#   thematic breaks are dropped, and wikilinks are unwrapped to their display
-#   text (the same right-of-the-pipe reading sdd_unwrap_wikilink applies, so
-#   `[[auth.user|auth::user]]` reads as `auth::user` and `[[adr-x]]` as
-#   `adr-x`). What is left is the text a human reads, which is what the
+#   thematic breaks are dropped, and links are unwrapped to their text
+#   (sdd_unwrap_links). What is left is the text a human reads, which is what the
 #   prose-style checks measure.
 sdd_body_prose() {
   local file="$1"
@@ -1090,7 +1056,7 @@ sdd_body_prose() {
         /^[[:space:]]*---+[[:space:]]*$/ { next }
         { print }
       '"${SDD_AWK_FENCE_FUNCS}" \
-    | sed -E 's/\[\[([^]|]*)\|([^]]*)\]\]/\2/g; s/\[\[([^]]*)\]\]/\1/g'
+    | sdd_unwrap_links
 }
 
 # sdd_has_section <file> <header_name> [level]
@@ -1155,8 +1121,14 @@ sdd_body_subsection() {
 #   Parses the `## Entities` body section's per-entity h3 sub-sections.
 #   Each sub-section has a metadata line and a per-field table with 5 cols:
 #     Field | Touch | Type | Mapping | Notes
-#   The H3 header uses pipe-syntax wikilinks:
+#   The H3 header is a link. A wikilink declares the id on the right of its pipe
 #     ### [[module.entity|module::entity]]
+#   and a Markdown link takes the id of the file it points at (a broken one names
+#   none, so its rows are skipped):
+#     ### [module::entity](../entity/entity.entity.md)
+#   <links_file> (default <file>) is the file the links are read and resolved
+#   from, for a caller that passes a line-preserving copy of its comments-stripped
+#   text; the caller ran `sdd_link_index` in its own shell.
 #   The Field column may wrap names in backticks (`field_name`); the parser
 #   strips them so callers see bare field names.
 #   Outputs TSV:
@@ -1164,19 +1136,36 @@ sdd_body_subsection() {
 #   one row per declared field. `as_input` and `effect` are repeated on every
 #   row of the same entity (denormalized for downstream awk-friendliness).
 sdd_entities_touched() {
-  local file="$1"
+  local file="$1" links_file="${2:-$1}" heads ids="" form text path
+  # The file lines of the headings, fenced ones too: sdd_body_section passes
+  # fenced lines through, so the awk below counts them as well.
+  heads="$(awk "${SDD_AWK_FM_READER}"'
+      sdd_fence($0) || sdd_in_fence() { if (capture && /^###[[:space:]]+\[/) print NR; next }
+      sdd_heading_name($0, "## ") == "Entities" { capture = 1; next }
+      /^## / && capture { exit }
+      capture && /^###[[:space:]]+\[/ { print NR }
+    '"${SDD_AWK_FENCE_FUNCS}${SDD_AWK_HEADING_FUNCS}" "$file")"
+  if [ -n "$heads" ]; then
+    while IFS=$'\t' read -r form text path; do
+      case "$form" in
+        wiki) ids="$ids|$text" ;;
+        md)   ids="$ids|$([ -n "$path" ] && sdd_artifact_id "$path")" ;;
+        *)    ids="$ids|" ;;
+      esac
+    done < <(sdd_links "$links_file" | awk -F'\t' -v heads="$(printf '%s,' $heads)" '
+      BEGIN { n = split(heads, h, ","); for (i = 1; i < n; i++) want[h[i]] = 1 }
+      ($1 in want) && !($1 in seen) { seen[$1] = 1; f[$1] = $2; t[$1] = $4; p[$1] = $5 }
+      END { for (i = 1; i < n; i++) print f[h[i]] "\t" t[h[i]] "\t" p[h[i]] }')
+  fi
   sdd_body_section "$file" "Entities" \
-    | awk '
+    | awk -v ids="$ids" '
+      BEGIN { nid = split(ids, idv, "|") }
       !/^\|/ { tab = 0 }
       /^\|/ && !tab { tab = 1; next }
-      # Entity header: ### [[module.entity|module::entity]] (V3)
-      # or:            ### [[module::entity]]                 (bare)
-      /^###[[:space:]]+\[\[/ {
-        match($0, /\[\[[^\]]+\]\]/)
-        rid = substr($0, RSTART+2, RLENGTH-4)
-        # If pipe-syntax, take the canonical id (right of the `|`).
-        pipe = index(rid, "|")
-        if (pipe > 0) rid = substr(rid, pipe + 1)
+      # Entity header: a link, in either form; its id is the nth of `ids`
+      # (idv[1] is the empty text left of the first separator).
+      /^###[[:space:]]+\[/ {
+        rid = idv[++hn + 1]
         as_input = ""; effect = ""
         next
       }
@@ -1231,7 +1220,7 @@ sdd_entities_touched() {
 #   Convenience: outputs only the per-entity metadata, deduplicated.
 #   TSV: entity_id<TAB>as_input<TAB>effect (one row per touched entity).
 sdd_entities_touched_meta() {
-  sdd_entities_touched "$1" \
+  sdd_entities_touched "$@" \
     | awk -F'\t' '{ print $1 "\t" $7 "\t" $8 }' \
     | sort -u
 }

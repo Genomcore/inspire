@@ -25,6 +25,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -32,7 +33,8 @@ sdd_init_counters
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 sdd_build_id_index "$SCOPE"
-trap 'rm -f "${SDD_ID_INDEX_FILE:-}"' EXIT
+sdd_link_index
+trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 # Valid lifecycle enum values.
 is_valid_lifecycle() {
@@ -63,35 +65,34 @@ check_file() {
   # ---------- Check 2: requires-resolves ----------
   # Only action descriptors carry `requires:`. Entity documents do not.
   if [ "$kind" = "action" ]; then
-    while IFS= read -r req; do
-      [ -z "$req" ] && continue
-      local to_id
-      to_id="$(sdd_unwrap_wikilink "$req")"
-      local target_file
-      target_file="$(sdd_resolve_id "$to_id")"
+    local form target to_id path target_file
+    while IFS=$'\t' read -r form target to_id path; do
+      if [ "$form" = "md" ]; then
+        target_file=""
+        [ -n "$to_id" ] && target_file="$(sdd_resolve_id "$to_id")"
+        to_id="${to_id:-$target}"
+      else
+        target_file="$(sdd_resolve_id "$to_id")"
+      fi
       if [ -z "$target_file" ]; then
         sdd_finding "error" "requires-resolves" "$file" \
           "requires target does not resolve to an existing action descriptor: $to_id"
         sdd_count_error
       fi
-    done < <(sdd_fm_list "$file" '.requires')
+    done < <(sdd_fm_link_refs "$file" requires)
   fi
 
   # ---------- Check 3: superseded-by-resolves ----------
-  local sb
-  sb="$(sdd_fm_value "$file" '.superseded_by')"
-  # yq returns empty string for null / missing. Skip when empty.
-  if [ -n "$sb" ] && [ "$sb" != "null" ]; then
-    local sb_id
-    sb_id="$(sdd_unwrap_wikilink "$sb")"
-    local sb_target
-    sb_target="$(sdd_resolve_id "$sb_id")"
+  local sb_form sb_written sb_id sb_path sb_target
+  while IFS=$'\t' read -r sb_form sb_written sb_id sb_path; do
+    if [ "$sb_form" = "md" ]; then sb_target="$sb_path"; sb_id="${sb_id:-$sb_written}"
+    else sb_target="$(sdd_resolve_id "$sb_id")"; fi
     if [ -z "$sb_target" ]; then
       sdd_finding "error" "superseded-by-resolves" "$file" \
         "superseded_by target does not resolve to an existing object: $sb_id"
       sdd_count_error
     fi
-  fi
+  done < <(sdd_fm_link_refs "$file" superseded_by)
 }
 
 while IFS= read -r action; do

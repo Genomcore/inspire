@@ -35,7 +35,7 @@
 #                        cannot be checked either way. Reported rather than passed over —
 #                        a gate that silently skips what it cannot read is decoration.
 #
-# An unresolvable ADR wikilink is a warning here and nothing more: `wikilinks-resolve.sh`
+# An unresolvable ADR link is a warning here and nothing more: `links-resolve.sh`
 # already owns that rule, and two rules reporting one defect trains people to filter both.
 #
 # Severity is `error` for every finding it emits, because it only ever looks at 🟢
@@ -76,12 +76,10 @@ fi
 # typed layout (`[[../../01_adr/adr-x]]`), pipe form (`[[adr-x|adr-x]]`) and aliased
 # prose form (`[[adr-x|the audit decision]]`) — so read the target half and match on
 # its last segment rather than the written path. That also means a link whose
-# relative depth is wrong still resolves here: depth is `wikilinks-resolve.sh`'s rule,
+# relative depth is wrong still resolves here: depth is `links-resolve.sh`'s rule,
 # and this gate must not fail to check a maturity claim because a `../` was miscounted.
 adr_path_for() {
-  local target="$1" base
-  base="$(sdd_wikilink_target "$target")"
-  base="${base##*/}"
+  local base="${1##*/}"
   base="${base%.md}"
   base="${base%.rationale}"
   base="${base%.adr}"
@@ -91,10 +89,23 @@ adr_path_for() {
   find "$SDD_SPEC_ROOT" -type f -name "${base}.adr.md" 2>/dev/null | sort | head -1
 }
 
+# The decision file a resolved Markdown link points at: the decision itself, or the
+# decision beside the rationale it links. Empty for a broken link or another file.
+md_adr_path() {
+  local p="$1"
+  case "$p" in
+    *.adr.rationale.md) p="${p%.rationale.md}.md" ;;
+    *.adr.md) ;;
+    *) return 0 ;;
+  esac
+  [ -f "$p" ] && printf '%s\n' "$p"
+  return 0
+}
+
 # The status word from an ADR's `**Status:**` prose line. ADRs carry no frontmatter, by
 # their own format: the line is authored for a human reader first.
 #
-# Lowercased, and only the first word is kept — `superseded by [[x]]` must classify as
+# Lowercased, and only the first word is kept — `superseded by [x](x.adr.md)` must classify as
 # `superseded`, and a trailing date or parenthetical must not defeat the match.
 adr_status_of() {
   local file="$1"
@@ -115,7 +126,8 @@ adr_status_of() {
 # links that never reached an ADR file.
 CLAIMS="$(mktemp -t adr-claims.XXXXXX)"
 UNRESOLVED="$(mktemp -t adr-unresolved.XXXXXX)"
-trap 'rm -f "$CLAIMS" "$UNRESOLVED"' EXIT
+sdd_link_index
+trap 'rm -f "$CLAIMS" "$UNRESOLVED" "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 collect_feature() {
   local file="$1" state
@@ -125,22 +137,28 @@ collect_feature() {
   # design-stage ADRs, and reporting that would be reporting the ladder working.
   case "$state" in *"Implemented"*) ;; *) return 0 ;; esac
 
-  local target adr seen=""
-  while IFS= read -r target; do
-    [ -z "$target" ] && continue
+  local ln form target text path adr seen=""
+  while IFS=$'\t' read -r ln form target text path; do
+    case "$form" in
+      wiki) case "$target|$text" in *adr-*) ;; *) continue ;; esac ;;
+      *)    case "$target" in *.adr.md*|*.adr.rationale.md*) ;; *) continue ;; esac ;;
+    esac
 
     # A feature may cite the same ADR in several sections; count it once.
-    case "$seen" in *"|$target|"*) continue ;; esac
-    seen="$seen|$target|"
+    case "$seen" in *"|$form:$target|"*) continue ;; esac
+    seen="$seen|$form:$target|"
 
-    adr="$(adr_path_for "$target" || true)"
+    if [ "$form" = "wiki" ]; then
+      adr="$(adr_path_for "$target" || true)"
+    else
+      adr="$(md_adr_path "$path")"
+    fi
     if [ -z "$adr" ]; then
       printf '%s\t%s\n' "$file" "$target" >> "$UNRESOLVED"
       continue
     fi
     printf '%s\t%s\n' "$adr" "$(sdd_artifact_id "$file")" >> "$CLAIMS"
-  done < <(grep -oE '\[\[[^]]*adr-[^]]*\]\]' "$file" 2>/dev/null \
-             | sed -E 's/^\[\[//; s/\]\]$//' | sort -u)
+  done < <(sdd_links "$file")
 }
 
 while IFS= read -r feature; do
@@ -151,7 +169,7 @@ done < <(sdd_find_features "$SCOPE")
 while IFS=$'\t' read -r file target; do
   [ -z "$file" ] && continue
   sdd_finding "warning" "adr-maturity-matches-features" "$file" \
-    "links ADR \`$target\`, which resolves to no ADR decision (`*.adr.md`) — the maturity claim cannot be checked (link resolution itself is wikilinks-resolve's rule)"
+    "links ADR \`$target\`, which resolves to no ADR decision (`*.adr.md`) — the maturity claim cannot be checked (link resolution itself is links-resolve's rule)"
   sdd_count_warning
 done < <(sort -u "$UNRESOLVED" 2>/dev/null)
 
@@ -174,7 +192,7 @@ while IFS= read -r adr; do
       ;;
     *)
       sdd_finding "error" "adr-maturity-matches-features" "$adr" \
-        "carries no parseable \`**Status:**\` line, so the maturity claimed by 🟢 $claimants cannot be checked — add one from the ladder (design | prototyped | implemented | superseded by [[x]] | rejected)"
+        "carries no parseable \`**Status:**\` line, so the maturity claimed by 🟢 $claimants cannot be checked — add one from the ladder (design | prototyped | implemented | superseded by [x](x.adr.md) | rejected)"
       sdd_count_error
       ;;
   esac

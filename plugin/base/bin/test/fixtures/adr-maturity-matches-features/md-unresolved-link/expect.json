@@ -1,0 +1,1 @@
+{ "exit": 0, "findings": [ { "rule": "adr-maturity-matches-features", "message_substring": "resolves to no ADR decision" } ] }
