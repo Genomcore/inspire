@@ -147,9 +147,12 @@ sc_bare() {
   printf '%s\n' "$1" | tr -d '`' | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }'
 }
 
-# sc_linked <cell> — `link` when the cell carries a link.
+# sc_linked <cell> — `link` when the cell carries a link, `wiki` when that link is a
+# wikilink, which only links-resolve reports (D5).
 sc_linked() {
-  [ -z "$(sdd_link_in_text "$SC_LINK_ROWS" "$1")" ] || printf 'link\n'
+  local row
+  row="$(sdd_link_in_text "$SC_LINK_ROWS" "$1")"
+  case "$row" in "") ;; *$'\t'wiki$'\t'*) printf 'wiki\n' ;; *) printf 'link\n' ;; esac
 }
 
 # sc_link_target <cell> — the canonical target of the first link in a table cell,
@@ -162,7 +165,8 @@ sc_link_target() {
   row="$(sdd_link_in_text "$SC_LINK_ROWS" "$1")"
   [ -n "$row" ] || return 0
   IFS=$'\t' read -r ln form target text path <<< "$row"
-  if [ -f "$path" ]; then
+  if [ "$form" = wiki ]; then return 0
+  elif [ -f "$path" ]; then
     sdd_artifact_id "$path"
   else
     case "${target%%#*}" in *.md) ;; *) printf '%s\n' "${target%%#*}" ;; esac
@@ -246,7 +250,8 @@ check_identity() {
   if [ "$lifecycle" = "superseded" ]; then
     local sb_form sb_written sb sb_path
     IFS=$'\t' read -r sb_form sb_written sb sb_path < <(sdd_fm_link_refs "$file" superseded_by)
-    if [ -z "$sb_form" ]; then
+    if [ "$sb_form" = wiki ]; then :
+    elif [ -z "$sb_form" ]; then
       emit "$sev" "$file" \
         "screen superseded without superseded_by: name the screen id that replaced it"
     elif [ -z "$sb" ] || [ -z "$(sc_screen_file "$sb")" ]; then
@@ -343,6 +348,7 @@ check_bindings() {
                    "navigate outcome is route-shaped: '$navtarget' — an outcome names a screen id, never a route" ;;
           esac
           continue ;;
+        wiki:*) continue ;;
         *:"state "*|*:"→ state "*)
           key="$(sc_bare "${outcome##*state }")"
           if ! awk -F'\t' -v k="$key" '$1 == "States" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
@@ -379,6 +385,7 @@ check_bindings() {
                  "navigation target is route-shaped: '$navtarget' — targets are linked screen ids, never routes" ;;
         esac
         ;;
+      wiki) ;;
       *) emit "$sev" "$file" \
            "navigation target is not a screen id: '$key' — targets are linked ids, never routes" ;;
     esac
@@ -494,7 +501,7 @@ check_parameters() {
     key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
     for col in 6 7; do
       cell="$(printf '%s\n' "$line" | cut -f$col)"
-      [ -z "$(sc_linked "$cell")" ] || check_param_refs_target "$file" "$sev" "$cell" "dispatch '$key'"
+      [ "$(sc_linked "$cell")" != link ] || check_param_refs_target "$file" "$sev" "$cell" "dispatch '$key'"
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 }
@@ -661,7 +668,7 @@ if [ -n "$SCREEN_SCOPE" ]; then
     s_screen="$(printf '%s\n' "$row" | cut -f4)"
     s_lifecycle="$(sdd_fm_value "$screen_file" '.lifecycle')"
     s_sev="$(sdd_progressive_severity "$s_lifecycle")"
-    SC_LINK_ROWS="$(sdd_links "$screen_file")"
+    SC_LINK_ROWS="$(sdd_links "$screen_file" wiki)"
 
     check_identity "$screen_file" "$s_sev" "$s_id" "$s_module" "$s_screen" "$s_lifecycle"
     check_bindings "$screen_file" "$s_sev"

@@ -69,6 +69,7 @@ check_file() {
   if [ "$kind" = "action" ]; then
     local form target to_id path target_file
     while IFS=$'\t' read -r form target to_id path; do
+      [ "$form" = wiki ] && continue
       if [ "$form" != bare ]; then
         target_file=""
         [ -n "$to_id" ] && target_file="$(sdd_resolve_id "$to_id")"
@@ -87,6 +88,7 @@ check_file() {
   # ---------- Check 3: superseded-by-resolves ----------
   local sb_form sb_written sb_id sb_path sb_target
   while IFS=$'\t' read -r sb_form sb_written sb_id sb_path; do
+    [ "$sb_form" = wiki ] && continue
     if [ "$sb_form" != bare ]; then
       sb_target="$sb_path"; sb_id="${sb_id:-$sb_written}"
       [ -n "$sb_target" ] && [ "$(sdd_typed_kind "$sb_target")" != "$kind" ] && sb_target=""

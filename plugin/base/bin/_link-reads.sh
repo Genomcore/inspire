@@ -40,13 +40,17 @@ sdd_section_link_ids() {
 }
 
 # sdd_link_in_text <rows> <text> — the first row of <rows> (`sdd_links` output)
-# whose link is written in <text>, a frontmatter value or a table cell.
+# whose link is written in <text>, a frontmatter value or a table cell. A wikilink
+# row (`sdd_links <file> wiki`) is found too, so a caller can pass over it (D5).
 sdd_link_in_text() {
   local rows="$1" text="$2" ln form target t path best="" bestpos=-1 head
   while IFS=$'\t' read -r ln form target t path; do
     [ -n "$form" ] || continue
-    head="${text%%"]($target"*}"
-    [ "$head" != "$text" ] || head="${text%%"](<$target"*}"
+    if [ "$form" = wiki ]; then head="${text%%"[[$target"*}"
+    else
+      head="${text%%"]($target"*}"
+      [ "$head" != "$text" ] || head="${text%%"](<$target"*}"
+    fi
     [ "$head" != "$text" ] || continue
     if [ "$bestpos" -lt 0 ] || [ "${#head}" -lt "$bestpos" ]; then
       bestpos="${#head}"
@@ -58,12 +62,13 @@ sdd_link_in_text() {
 }
 
 # sdd_fm_link_refs <file> <key> — one line per value of a frontmatter key (a scalar
-# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form md, embed or bare (an id
-# written without a link). The id is empty for a broken link; the path is empty
-# unless the link resolves.
+# or a list): `{form}<TAB>{target}<TAB>{id}<TAB>{path}`, form md, embed, bare (an id
+# written without a link) or wiki. The id is empty for a broken link and a wikilink;
+# the path is empty unless the link resolves. Only links-resolve reports a wikilink, so
+# every caller passes over a wiki row (D5).
 sdd_fm_link_refs() {
   local file="$1" rows value row ln form target text path id
-  rows="$(sdd_links "$file")"
+  rows="$(sdd_links "$file" wiki)"
   while IFS= read -r value; do
     [ -n "$value" ] || continue
     row="$(sdd_link_in_text "$rows" "$value")"
