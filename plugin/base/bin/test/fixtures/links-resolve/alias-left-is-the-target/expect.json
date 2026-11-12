@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..auth.user.create.. .*resolves to .*user.create.action.md" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..auth.user.. .*resolves to .*user.entity.md" }
+  ],
+  "forbidden": ["does not resolve", "the action that mints one", "the user document"]
+}

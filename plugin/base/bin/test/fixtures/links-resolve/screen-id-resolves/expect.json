@@ -1,0 +1,14 @@
+{
+  "exit": 1,
+  "args": [
+    "spec/kb"
+  ],
+  "findings": [
+    { "rule": "links-resolve", "message_substring": "../patterns/list.*resolves to .*list.pattern.md" },
+    { "rule": "links-resolve", "message_substring": "users.detail.*resolves to .*record.screen.md" },
+    { "rule": "links-resolve", "message_substring": "users.list.*resolves to .*list.screen.md" }
+  ],
+  "forbidden": [
+    "does not resolve"
+  ]
+}

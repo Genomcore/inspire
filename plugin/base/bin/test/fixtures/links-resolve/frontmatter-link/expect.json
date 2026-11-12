@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "finding_count": 2,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "user.update.action.md.*link does not resolve: .auth::user::replace.(user.replace.action.md) at line 9" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "user.create.action.md.*wikilink ..auth.user.update.. at line 7: .*resolves to .*user.update.action.md" }
+  ],
+  "forbidden": ["(user.create.action.md)"]
+}

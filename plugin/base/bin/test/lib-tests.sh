@@ -417,6 +417,74 @@ eq "the table-cell escape is not the target" "$(sdd_wikilink_target '[[a.b\|a::b
 eq "a bare link is its own target"          "$(sdd_wikilink_target '[[adr-x]]')" "adr-x"
 eq "only the first pipe divides"            "$(sdd_wikilink_target '[[adr-x|a|b]]')" "adr-x"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# sdd_links — every link in a file, both forms, with the file each one names
+# ─────────────────────────────────────────────────────────────────────────────
+
+L="$ROOT/links/kb/01_spec"
+mkdir -p "$L/_modules/auth/_domain/user" "$L/_adr" "$L/_faces/app/_screens" "$L/_design-system/patterns" "$L/_migration"
+printf -- '---\nid: auth::user::create\n---\n' > "$L/_modules/auth/_domain/user/user.create.action.md"
+printf -- '---\nid: app.users.list\n---\n' > "$L/_faces/app/_screens/list.screen.md"
+printf '{"screens":{"users.list":"app.users.list"}}\n' > "$L/_migration/id-map.json"
+: > "$L/_adr/auth-sessions.adr.md"
+: > "$L/_design-system/patterns/list.pattern.md"
+cat > "$L/_modules/auth/_domain/user/user.entity.md" <<'EOF'
+---
+id: auth.user
+requires: ["[[auth.user.create|auth::user::create]]"]
+links:
+  - "[create](user.create.action.md)"
+---
+Prose [the decision](../../../../_adr/auth-sessions.adr.md#context) and [gone](./gone.md).
+Spans `[[adr-span]]` and ``a `[s](s.md)` b`` are examples; ![img](p.png), [web](https://x.org/a.md) and [top](#top) are not KB links.
+| [[auth.user.create\|auth::user::create]] | [x\|y](<user.create.action.md> "title") | [](user%2Ecreate.action.md) |
+```
+[[fenced]] [f](f.md)
+```
+[[../../01_adr/adr-auth-sessions]] [[users.list]] [[../patterns/list]] [[nowhere]]
+EOF
+(
+  cd "$ROOT/links" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_links "kb/01_spec/_modules/auth/_domain/user/user.entity.md"
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+) > "$ROOT/links.out"
+links="$(cat "$ROOT/links.out")"
+U="kb/01_spec/_modules/auth/_domain/user"
+T="$(printf '\t')"
+
+has   "links: a frontmatter wikilink, resolved by id" \
+      "^3${T}wiki${T}auth.user.create${T}auth::user::create${T}$U/user.create.action.md\$" "$links"
+has   "links: a quoted frontmatter list item" \
+      "^5${T}md${T}user.create.action.md${T}create${T}$U/user.create.action.md\$" "$links"
+has   "links: a path joins the linking file's directory and keeps its anchor as written" \
+      "^7${T}md${T}../../../../_adr/auth-sessions.adr.md#context${T}the decision${T}kb/01_spec/_adr/auth-sessions.adr.md\$" "$links"
+has   "links: a missing file resolves to nothing" \
+      "^7${T}md${T}./gone.md${T}gone${T}\$" "$links"
+hasnt "links: a code span is skipped"          "adr-span" "$links"
+hasnt "links: a span holding backticks is one" "${T}s\.md" "$links"
+hasnt "links: an image is not a link"          "p\.png"   "$links"
+hasnt "links: an external URL is skipped"      "x\.org"   "$links"
+hasnt "links: an in-file anchor is skipped"    "#top"     "$links"
+has   "links: a table-escaped pipe is not part of a wikilink target" \
+      "^9${T}wiki${T}auth.user.create${T}auth::user::create${T}$U/user.create.action.md\$" "$links"
+has   "links: angle brackets and a title wrap the path; the escaped pipe reads as text" \
+      "^9${T}md${T}user.create.action.md${T}x|y${T}$U/user.create.action.md\$" "$links"
+has   "links: a link with no text reports its target; percent-escapes decode" \
+      "^9${T}md${T}user%2Ecreate.action.md${T}user%2Ecreate.action.md${T}$U/user.create.action.md\$" "$links"
+hasnt "links: a fenced block is skipped" "fenced" "$links"
+has   "links: a path-shaped wikilink means its last segment" \
+      "^13${T}wiki${T}../../01_adr/adr-auth-sessions${T}.*${T}kb/01_spec/_adr/auth-sessions.adr.md\$" "$links"
+has   "links: an old screen id resolves through the migration's id map" \
+      "^13${T}wiki${T}users.list${T}users.list${T}kb/01_spec/_faces/app/_screens/list.screen.md\$" "$links"
+has   "links: a catalog wikilink resolves by name" \
+      "^13${T}wiki${T}../patterns/list${T}.*list.pattern.md\$" "$links"
+has   "links: an unresolved wikilink has no path" "^13${T}wiki${T}nowhere${T}nowhere${T}\$" "$links"
+eq    "links: one row per link" "$(printf '%s\n' "$links" | grep -c .)" "11"
+eq    "links: the target's id comes from the file it resolves to" \
+      "$(sdd_artifact_id "$ROOT/links/kb/01_spec/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
+
 echo ""
 echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]
