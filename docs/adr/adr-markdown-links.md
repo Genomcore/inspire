@@ -105,7 +105,8 @@ holds one.
 
 A path names a location, so a file that moves has every link to it rewritten in the same
 change. `/inspire:migrate` does this for the moves it makes, Markdown links written before
-the migration included, and lists every link in the KB it leaves broken. A link to a
+the migration included. A Markdown link it can neither rebase nor resolve becomes its
+text, and the run lists it, so a migrated KB holds no broken link. A link to a
 layered directory, or to its README, points to the concept directory that took its
 contents (adr-kb-structure D2: `01_adr` to `_adr`, `02_modules`, `03_features` and
 `04_domain` to `_modules`, `05_screens` to `_faces`), or to that directory's README. Their
@@ -138,7 +139,9 @@ Markdown links, because that tree has the same shape in this repository
 (`plugin/base/skills/`) and in a project (`.claude/skills/`). A test resolves every one of
 them. A reference from a skill to another class (`.inspire/bin/`, `inspire_kb/`) is
 written as the deployed path in a code span: no relative path is valid in both places, and
-those references are mostly commands to run.
+those references are mostly commands to run. The KB skeleton follows the same rule: its
+files link only within the KB, and name the product roots (`source/`, `prototype/`, both
+configurable) and the runtime's directories in code spans.
 
 ## Consequences
 
