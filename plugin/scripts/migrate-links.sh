@@ -3,8 +3,8 @@
 # plugin/scripts/migrate-links.sh — rewrite every [[wikilink]] in a concept-layout
 # knowledge base as a relative Markdown link to the target file (adr-markdown-links).
 #
-# The link engine behind /inspire:migrate: migrate-kb.sh runs it after the moves of a
-# layered KB, and on a concept KB that still holds wikilinks it is the whole run.
+# The link step of /inspire:migrate: its own run, once migrate-kb.sh's moves are
+# committed, so git records every move as a rename (adr-markdown-links D6).
 #
 # Usage:
 #   migrate-links.sh [--kb DIR] [--dry-run] [--since REV] [--count]
@@ -12,9 +12,10 @@
 #     --count       print how many wikilinks the KB holds outside code, and nothing else
 #
 # A link resolves through, in order: its path, mapped through the move record
-# (01_spec/_migration/plan.tsv, else the renames `git diff -M` finds since the move)
-# or as it stands; the id index; the pre-move file names of the move record; the
-# screen id map (01_spec/_migration/id-map.json). An ambiguous key resolves nothing.
+# (01_spec/_migration/plan.tsv, else the renames `git diff -M` finds since the move);
+# its path against the current files; the id index; its target as a pre-move file
+# name, mapped through the move record; the screen id map
+# (01_spec/_migration/id-map.json). An ambiguous key resolves nothing.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> · unresolved <file> <line> <wikilink> ·
@@ -34,7 +35,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -136,7 +137,7 @@ fi
 
 for l in 01_adr 02_modules 03_features 04_domain 05_screens; do
   if [ -d "$KB/$l" ]; then
-    printf 'migrate-links: %s is on the layered layout. Run migrate-kb.sh, which moves it and converts its links.\n' "$KB" >&2
+    printf 'migrate-links: %s is on the layered layout. Run migrate-kb.sh and commit the moves first.\n' "$KB" >&2
     exit 1
   fi
 done

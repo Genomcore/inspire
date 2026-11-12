@@ -273,7 +273,7 @@ kb_is_layered() {
 
 # warn_wikilinks — an update changes no link (adr-markdown-links D6): it counts the
 # wikilinks a concept KB still holds and points at /inspire:migrate. A layered KB
-# already has its warning, and the migration converts its links with the moves.
+# already has its warning, and the migration converts its links after the moves.
 warn_wikilinks() {
   local n
   [ "$MODE" = "update" ] && [ -d "$PROJECT_ROOT/inspire_kb" ] || return 0

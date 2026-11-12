@@ -131,17 +131,8 @@ eq "module: and screen: stay, so the route does not change" \
   "$(yq --front-matter=extract '.module + "/" + .screen' "$S/_faces/portal/_screens/list.screen.md")" "auth/list"
 eq "the id map lists every screen id that changed" \
   "$(jq -c '.screens' "$S/_migration/id-map.json")" '{"admin.auth.list":"admin.list","auth.detail":"portal.detail","auth.list":"portal.list"}'
-check "a link inside ## Bindings keeps the old screen id as its text and points at the screen" \
-  "grep -q -- '- nav: \[auth.detail\](detail.screen.md)' '$S/_faces/portal/_screens/list.screen.md'"
-
-# The links are converted in the same run, from its own move plan (adr-markdown-links D6).
-check "a path link follows its target through the move plan" \
-  "grep -qF 'See [auth](../auth.module.md).' '$S/_modules/auth/_features/login.feature.md'"
-check "an id link becomes a path from the linking file" \
-  "grep -qF '**Modules affected:** [auth](../auth.module.md)' '$S/_modules/auth/_adr/auth-local.adr.md'"
-check "a link to nothing stays as written" "grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
-has "and the run lists it" "$out" "unresolved	inspire_kb/01_spec/_adr/global.adr.md"
-check "the link plan is saved beside the move plan" "grep -q '^link	' '$S/_migration/links.tsv'"
+check "a link inside ## Bindings is not rewritten" "grep -q -- '- nav: \[\[auth.detail\]\]' '$S/_faces/portal/_screens/list.screen.md'"
+check "the moves rewrite no link" "grep -qF 'See [[../../02_modules/auth]].' '$S/_modules/auth/_features/login.feature.md'"
 
 # surfaces: becomes faces: / bundles:, and goes where placement already says it.
 eq "a feature's surfaces: splits by kind" \
@@ -163,6 +154,19 @@ eq "every original body survives somewhere under 01_spec" "$lost" "0"
 out="$(cd "$P" && bash "$MIG" --lib kit=design-system 2>&1)"; rc=$?
 eq "a second run is a no-op" "$rc" "0"
 has "and says so" "$out" "already migrated"
+
+# Once the moves are committed, migrate-links.sh converts the links from the saved
+# move plan (adr-markdown-links D6).
+out="$(cd "$P" && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" 2>&1)"
+check "a path link follows its target through the move plan" \
+  "grep -qF 'See [auth](../auth.module.md).' '$S/_modules/auth/_features/login.feature.md'"
+check "an id link becomes a path from the linking file" \
+  "grep -qF '**Modules affected:** [auth](../auth.module.md)' '$S/_modules/auth/_adr/auth-local.adr.md'"
+check "a link inside ## Bindings keeps the old screen id as its text and points at the screen" \
+  "grep -q -- '- nav: \[auth.detail\](detail.screen.md)' '$S/_faces/portal/_screens/list.screen.md'"
+check "a link to nothing stays as written" "grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
+has "and the run lists it" "$out" "unresolved	inspire_kb/01_spec/_adr/global.adr.md"
+check "the link plan is saved beside the move plan" "grep -q '^link	' '$S/_migration/links.tsv'"
 
 # A half-migrated KB is refused, never merged into.
 H="$W/half"; old_kb "$H"; mkdir -p "$H/inspire_kb/01_spec"

@@ -98,16 +98,15 @@ eq "a second run exits 0" "$rc" "0"
 eq "a second run changes nothing" "$(tree_hash "$P")" "$after"
 has "and says it converted nothing" "$out" "links: 0 converted"
 
-# migrate-kb.sh on a concept KB that still holds wikilinks is a conversion-only run.
+# migrate-kb.sh moves files and rewrites no link, so on a concept KB it does nothing.
 Q="$W/via-migrate"; mkdir -p "$Q"; cp -R "$W/concept/inspire_kb" "$Q/"
-( cd "$Q" && bash "$LINKS" ) >/dev/null 2>&1
 printf '# c\nSee [[b]].\n' | mk "$Q/inspire_kb/01_spec/_modules/a/c.md"
 out="$(cd "$Q" && bash "$MIG" 2>&1)"; rc=$?
 eq "migrate-kb on a concept KB with wikilinks exits 0" "$rc" "0"
 has "it says the layout is migrated" "$out" "already migrated"
-check "and converts the links" "grep -qxF 'See [b](../b/b.module.md).' '$Q/inspire_kb/01_spec/_modules/a/c.md'"
+check "and leaves the links to migrate-links.sh" "grep -qxF 'See [[b]].' '$Q/inspire_kb/01_spec/_modules/a/c.md'"
 
-# A layered KB is refused: migrate-kb.sh moves it and converts its links in one run.
+# A layered KB is refused: its moves come first, committed on their own.
 L="$W/layered"; printf '# a\n[[b]]\n' | mk "$L/inspire_kb/02_modules/a.md"
 out="$(cd "$L" && bash "$LINKS" 2>&1)"; rc=$?
 eq "a layered KB: refused" "$rc" "1"
