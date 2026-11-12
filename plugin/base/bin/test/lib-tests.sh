@@ -485,6 +485,32 @@ eq    "links: one row per link" "$(printf '%s\n' "$links" | grep -c .)" "11"
 eq    "links: the target's id comes from the file it resolves to" \
       "$(sdd_artifact_id "$ROOT/links/kb/01_spec/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
 
+# The CommonMark shapes the converter writes or an editor leaves.
+D="$L/_modules/shapes"
+mkdir -p "$D/sub"
+: > "$D/p(1).md"; : > "$D/año.md"; : > "$D/my file (v2).md"
+printf -- '---\r\nlinks: ["[x](gone-fm.md)"]\r\n---\r\n```\r\n[f](fenced.md)\r\n```\r\n' > "$D/crlf.md"
+cat > "$D/shapes.md" <<'EOF'
+[a [x] c](gone.md) [p](p(1).md) [n](a%C3%B1o.md) [s](<my file (v2).md#top>) [d](sub)
+EOF
+(
+  cd "$ROOT/links" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_ENTITY_INDEX_FILE=""
+  sdd_links "kb/01_spec/_modules/shapes/shapes.md"
+  printf 'CRLF\n'
+  sdd_links "kb/01_spec/_modules/shapes/crlf.md"
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+) > "$ROOT/shapes.out"
+shapes="$(cat "$ROOT/shapes.out")"
+S="kb/01_spec/_modules/shapes"
+has   "links: brackets nest in the text, so the broken link is read" "^1${T}md${T}gone.md${T}a \[x\] c${T}\$" "$shapes"
+has   "links: parentheses balance in the path"            "^1${T}md${T}p(1).md${T}p${T}$S/p(1).md\$" "$shapes"
+has   "links: a percent-escaped non-ASCII byte decodes"   "^1${T}md${T}a%C3%B1o.md${T}n${T}$S/año.md\$" "$shapes"
+has   "links: a path in <> holds spaces and parentheses"  "^1${T}md${T}my file (v2).md#top${T}s${T}$S/my file (v2).md\$" "$shapes"
+has   "links: a link to a directory is broken"            "^1${T}md${T}sub${T}d${T}\$" "$shapes"
+has   "links: a CRLF frontmatter is read as frontmatter"  "^2${T}md${T}gone-fm.md${T}x${T}\$" "$shapes"
+hasnt "links: and the fence after it is code"             "fenced" "$shapes"
+
 echo ""
 echo "Passed: $pass · Failed: $fail"
 [ "$fail" -eq 0 ]

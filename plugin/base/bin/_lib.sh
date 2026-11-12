@@ -619,7 +619,9 @@ sdd_links() {
   local file="$1" dir ln form target text path
   sdd_link_index
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
-  awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" "$SDD_AWK_LINKS$SDD_AWK_FENCE_FUNCS" \
+  # Byte semantics, so a percent-escape decodes to the byte it names.
+  LC_ALL=C awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" \
+    "$SDD_AWK_LINKS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" \
     "$SDD_LINK_INDEX_FILE" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
       [ -n "$path" ] && [ -f "$path" ] || path=""
@@ -638,42 +640,59 @@ SDD_AWK_LINKS='
     if (!((r[1], r[2]) in ix)) ix[r[1], r[2]] = r[3]
     next
   }
-  FNR == 1 && $0 == "---" { fm = 1; next }
-  fm { if ($0 == "---") fm = 0; else sdd_scan(sdd_unspan($0), FNR); next }
+  FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
+  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_scan(sdd_unspan($0), FNR); next }
   sdd_fence($0) { next }
   sdd_in_fence() { next }
   { sdd_scan(sdd_unspan($0), FNR) }
 
-  # A code span is a run of n backticks closed by the next run of exactly n.
-  function sdd_unspan(s,   out, i, n, run, rest, pos, k, m, found) {
-    out = ""
-    while ((i = index(s, "`")) > 0) {
-      n = 0; while (substr(s, i + n, 1) == "`") n++
-      run = substr(s, i, n); rest = substr(s, i + n); pos = 1; found = 0
-      while ((k = index(substr(rest, pos), run)) > 0) {
-        k += pos - 1; m = 0
-        while (substr(rest, k + m, 1) == "`") m++
-        if (m == n) { found = k; break }
-        pos = k + m
-      }
-      if (found) { out = out substr(s, 1, i - 1) " "; s = substr(rest, found + n) }
-      else { out = out substr(s, 1, i + n - 1); s = rest }
-    }
-    return out s
-  }
-
-  function sdd_scan(s, ln,   w, ws, wl, ms, ml, tok) {
+  function sdd_scan(s, ln,   w, ws, wl, tok) {
     while (1) {
-      w = match(s, /\[\[[^]]+\]\]/); ws = RSTART; wl = RLENGTH
-      ms = match(s, /!?\[[^]]*\]\([^)]*\)/); ml = RLENGTH
-      if (!w && !ms) return
-      if (w && (!ms || ws <= ms)) {
+      w = match(s, /\[\[[^][]+\]\]/); ws = RSTART; wl = RLENGTH
+      if (!sdd_next_md(s)) MS = 0
+      if (!w && !MS) return
+      if (w && (!MS || ws <= MS)) {
         sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl)
       } else {
-        tok = substr(s, ms, ml); s = substr(s, ms + ml)
-        if (substr(tok, 1, 1) != "!") sdd_md(tok, ln)
+        tok = substr(s, MS, ML); s = substr(s, MS + ML)
+        if (substr(tok, 1, 1) != "!") sdd_md(tok, MT, ln)
       }
     }
+  }
+
+  # The next `[text](dest)` or image in s: MS its start, ML its length, MT the
+  # offset of its `](`. Brackets nest in the text; parentheses balance in a bare
+  # destination, and a destination in `<…>` holds any of them (CommonMark).
+  function sdd_next_md(s,   L, from, i, j, d, c, k, e) {
+    L = length(s); from = 1
+    while ((i = index(substr(s, from), "[")) > 0) {
+      i += from - 1; from = i + 1; d = 0
+      for (j = i; j <= L; j++) {
+        c = substr(s, j, 1)
+        if (c == "\\") j++
+        else if (c == "[") d++
+        else if (c == "]" && --d == 0) break
+      }
+      if (j > L || substr(s, j + 1, 1) != "(") continue
+      k = j + 2
+      if (substr(s, k, 1) == "<") {
+        if (!(e = index(substr(s, k), ">")) || !(c = index(substr(s, k + e), ")"))) continue
+        e = k + e + c - 1
+      } else {
+        d = 0
+        for (e = k; e <= L; e++) {
+          c = substr(s, e, 1)
+          if (c == "\\") e++
+          else if (c == "(") d++
+          else if (c == ")" && d-- == 0) break
+        }
+        if (e > L) continue
+      }
+      MS = (i > 1 && substr(s, i - 1, 1) == "!") ? i - 1 : i
+      ML = e - MS + 1; MT = j - MS + 1
+      return 1
+    }
+    return 0
   }
 
   function sdd_emit(ln, form, target, text, path) {
@@ -713,8 +732,7 @@ SDD_AWK_LINKS='
     return ""
   }
 
-  function sdd_md(tok, ln,   p, text, dest, path) {
-    p = index(tok, "](")
+  function sdd_md(tok, p, ln,   text, dest, path) {
     text = substr(tok, 2, p - 2); gsub(/\\\|/, "|", text)
     dest = substr(tok, p + 2, length(tok) - p - 2)
     gsub(/^[ ]+|[ ]+$/, "", dest)
@@ -725,13 +743,14 @@ SDD_AWK_LINKS='
     sdd_emit(ln, "md", dest, text, sdd_join(dir, sdd_unescape(path)))
   }
 
-  # Percent-decoding of printable ASCII; any other `%` stays as written.
+  # Each `%XX` decodes to its byte, so `a%C3%B1o.md`, as some editors write it,
+  # names `año.md`. A `%` not followed by two hex digits stays as written.
   function sdd_unescape(s,   out, i, hi, lo) {
     out = ""
     while ((i = index(s, "%")) > 0) {
       hi = index("0123456789abcdef", tolower(substr(s, i + 1, 1)))
       lo = index("0123456789abcdef", tolower(substr(s, i + 2, 1)))
-      if (hi < 3 || hi > 8 || lo == 0) { out = out substr(s, 1, i); s = substr(s, i + 1); continue }
+      if (hi == 0 || lo == 0) { out = out substr(s, 1, i); s = substr(s, i + 1); continue }
       out = out substr(s, 1, i - 1) sprintf("%c", (hi - 1) * 16 + lo - 1); s = substr(s, i + 3)
     }
     return out s
@@ -752,6 +771,36 @@ SDD_AWK_LINKS='
     out = ""
     for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") st[i]
     return (abs ? "/" : "") out
+  }
+'
+
+# What the reader takes for code and for a frontmatter delimiter, as awk source.
+# migrate-links.sh composes the same fragment with SDD_AWK_FENCE_FUNCS, so the
+# conversion leaves as written exactly the links the reader skips (D4).
+SDD_AWK_SPAN_FUNCS='
+  function sdd_fm_delim(line) { return line == "---" || line == "---\r" }
+
+  # A code span is a run of n backticks closed by the next run of exactly n. It
+  # becomes one space, or, with keep set, spaces of its own length, so that
+  # positions in the result are positions in the line.
+  function sdd_unspan(s, keep,   out, i, n, run, rest, pos, k, m, found, fill) {
+    out = ""
+    while ((i = index(s, "`")) > 0) {
+      n = 0; while (substr(s, i + n, 1) == "`") n++
+      run = substr(s, i, n); rest = substr(s, i + n); pos = 1; found = 0
+      while ((k = index(substr(rest, pos), run)) > 0) {
+        k += pos - 1; m = 0
+        while (substr(rest, k + m, 1) == "`") m++
+        if (m == n) { found = k; break }
+        pos = k + m
+      }
+      if (found) {
+        fill = " "; if (keep) { fill = substr(s, i, n + found + n - 1); gsub(/./, " ", fill) }
+        out = out substr(s, 1, i - 1) fill; s = substr(rest, found + n)
+      }
+      else { out = out substr(s, 1, i + n - 1); s = rest }
+    }
+    return out s
   }
 '
 

@@ -197,6 +197,10 @@ eq "its id names the face" "$(yq --front-matter=extract '.id' "$N/inspire_kb/01_
 check "the one bundle groups every module, with its package" \
   "grep -q '^package: apps/api' '$N/inspire_kb/01_spec/_bundles/api.bundle.md' && grep -qF '[shop](../_modules/shop/shop.module.md)' '$N/inspire_kb/01_spec/_bundles/api.bundle.md'"
 check "the face uses the bundle" "grep -q '^bundles: \[api\]' '$N/inspire_kb/01_spec/_faces/shop-web/shop-web.face.md'"
+premise "the layered KB gave shop no hub" "[ ! -e '$N/inspire_kb/02_modules' ]"
+check "a module the bundle links gets a hub with the template's sections (D7)" \
+  "grep -q '^kind: module-hub' '$N/inspire_kb/01_spec/_modules/shop/shop.module.md' && grep -q '^## MOD1: Overview' '$N/inspire_kb/01_spec/_modules/shop/shop.module.md'"
+check "a module with its own hub gets none" "[ \"\$(cat '$S/_modules/auth/auth.module.md')\" = '# hub' ]"
 
 # No screens, no roster: modules and domain only — no face, no bundle.
 M="$W/domainonly"
