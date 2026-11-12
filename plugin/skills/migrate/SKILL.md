@@ -24,8 +24,8 @@ Step 4: its links are converted and nothing moves.
 screen's; point a link at a different file; extract a shared screen into a pattern;
 create a process, or a bundle with an artifact of its own; write to git.
 Every screen id it changes goes into `inspire_kb/01_spec/_migration/id-map.json`,
-which the INSPIRE Factory release that goes with 0.15.0 reads to rewrite the built
-code instead of rebuilding it.
+which INSPIRE Factory 0.16.0 or later reads to rewrite the built code instead of
+rebuilding it.
 
 ## Preconditions
 
@@ -186,8 +186,8 @@ defect in it: report the second kind.
 
 ## Step 6 — The INSPIRE Factory
 
-Tell the operator what comes next for code already built: the INSPIRE Factory release
-that goes with INSPIRE 0.15.0 reads `_migration/id-map.json`, rewrites the screen
+Tell the operator what comes next for code already built: INSPIRE Factory 0.16.0 or
+later reads `_migration/id-map.json`, rewrites the screen
 ids in the built code and the claim citations that name them, and commits that as a
 branch for review, without running any agent. It rewrites literals only: code that
 reads a screen id's shape (its first segment was the module, it is now the face) is
@@ -195,7 +195,7 @@ not text it can fix, so its report lists those sites to review by hand. The test
 suite runs on that branch before it is merged. The only new units it plans are the
 grouping bundles, one mount test each. An older Factory refuses this KB and says why.
 
-A KB whose links Step 4 converted needs the Factory release that reads Markdown
-links and rewrites the fingerprint of each built claim whose payload differs only in
-link syntax (adr-markdown-links D8). An older release rebuilds every claim that
-quotes a link.
+The same run rewrites the fingerprint of each built claim whose payload differs only
+in link syntax (adr-markdown-links D8), so the converted links rebuild nothing. That
+Factory reads Markdown links only and refuses a KB that still holds a wikilink; an
+older Factory does not read Markdown links.
