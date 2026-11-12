@@ -1,7 +1,7 @@
 # ADR catalog — INSPIRE core
 
 Core-level decisions about INSPIRE itself. Project-level ADRs live in a fork's
-`inspire_kb/01_adr/` and are authored with `/inspire-adr`.
+`inspire_kb/01_spec/_adr/` and are authored with `/inspire-adr`.
 
 Ids are slug-only (`adr-{slug}.md`) — see
 [adr-decision-record-ids](adr-decision-record-ids.md) for why. This index carries the
@@ -9,8 +9,8 @@ chronology, which the ids do not. Newest first.
 
 | Date | ADR | Status |
 |------|-----|--------|
-| 2026-11-12 | [adr-markdown-links](adr-markdown-links.md) | Accepted — 2026-11-12 |
-| 2026-11-06 | [adr-kb-structure](adr-kb-structure.md) | Accepted — 2026-11-10; D4 amended by `adr-markdown-links` |
+| 2026-11-12 | [adr-markdown-links](adr-markdown-links.md) | Accepted — shipped in 0.17.0 |
+| 2026-11-06 | [adr-kb-structure](adr-kb-structure.md) | Accepted — 2026-11-10; D4 and D10 amended by `adr-markdown-links` |
 | 2026-09-15 | [adr-specification-authority](adr-specification-authority.md) | Accepted — shipped in 0.9.10 |
 | 2026-08-11 | [adr-artifact-trust](adr-artifact-trust.md) | Accepted — shipped in 0.6.0 |
 | 2026-08-05 | [adr-suites-and-surfaces](adr-suites-and-surfaces.md) | Superseded by `adr-kb-structure`; shipped in 0.5.0 |

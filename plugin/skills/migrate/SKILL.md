@@ -13,7 +13,7 @@ step that moves anything in `inspire_kb/`: `/inspire:update` never does
 ([`adr-kb-structure`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-kb-structure.md)
 D10).
 
-From 0.16.1 a KB link is a relative Markdown link to the target file,
+From 0.17.0 a KB link is a relative Markdown link to the target file,
 `[adr-audit](../../_adr/audit.adr.md)`. The skill converts every `[[wikilink]]` in
 its own step
 ([`adr-markdown-links`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-markdown-links.md)
@@ -116,7 +116,7 @@ It prints one `link` line per link it converts (file, line, the source that reso
 it, the wikilink, the Markdown link), one `draft` or `unlinked` line per link it
 settles, and writes nothing. A link resolves through, in order: its path, mapped
 through the move record; its path against the current files; the id index, which
-resolves a wikilink the way the validators did before 0.16.1 and reads the screen id
+resolves a wikilink the way the validators did before 0.17.0 and reads the screen id
 map, so the link names the file they read; its target as a pre-move file name, mapped
 through the move record. A pre-move name two files had resolves nothing. The move
 record is `_migration/plan.tsv`, or, when there is none, the renames git holds since

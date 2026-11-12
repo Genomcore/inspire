@@ -3,7 +3,7 @@
 # migrate-links.sh after base/bin/_lib.sh, with SDD_KB_ROOT and SDD_SPEC_ROOT
 # pointed at the KB.
 #
-# It resolves a wikilink by id the way the validators did before 0.16.1, so a
+# It resolves a wikilink by id the way the validators did before 0.17.0, so a
 # converted link names the file they read. It lives here, not in base/bin/, because
 # only migration reads wikilinks (D5) and base/bin/ materializes into projects.
 

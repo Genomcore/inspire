@@ -14,7 +14,7 @@
 # A link resolves through, in order: its path, mapped through the move record
 # (01_spec/_migration/plan.tsv, else the renames `git diff -M` finds since the move);
 # its path against the current files; the id index (lib/wikilinks.sh), which resolves
-# a wikilink the way the validators did before 0.16.1, the screen id map
+# a wikilink the way the validators did before 0.17.0, the screen id map
 # (01_spec/_migration/id-map.json) included, so the link names the file they read;
 # its target as a pre-move file name, mapped through the move record, where a name
 # two files had resolves nothing.

@@ -22,9 +22,13 @@ repo is both its source and its own marketplace.
     pre-0.3 project is the longest chain, and the run ends by offering the trust
     report: an upgrade diverges skills en masse) and `/inspire:migrate` (moves a KB
     written in the layered layout — `01_adr` … `05_screens` and the surface roster —
-    to the concept layout under `inspire_kb/01_spec/`, once and on purpose; the
-    engine is `plugin/scripts/migrate-kb.sh`). An update never moves the KB: a
-    layered KB gets a warning pointing at `/inspire:migrate`, and no `01_spec/`.
+    to the concept layout under `inspire_kb/01_spec/`, then, in a second run after
+    the moves are committed, converts every `[[wikilink]]` to a relative Markdown
+    link, once and on purpose; the engines are `plugin/scripts/migrate-kb.sh` and
+    `plugin/scripts/migrate-links.sh`, and they alone read wikilinks). An update
+    never moves the KB and changes no link: a layered KB gets a warning pointing at
+    `/inspire:migrate`, and no `01_spec/`; a KB that holds wikilinks gets their count
+    and the same pointer.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
@@ -105,7 +109,7 @@ repo is both its source and its own marketplace.
         relevant locally, distilled upstream by the observer). `base/skills/`
         also ships `_references/` — a shared reference directory alongside the
         `inspire-*` skill dirs (`face-scope.md`, `trust-stamps.md`,
-        `write-checks.md`, `keyed-heads.md`, `stack-skills.md`); it is
+        `write-checks.md`, `keyed-heads.md`, `stack-skills.md`, `kb-links.md`); it is
         **not** matched by an `inspire-*` glob.
     - `base/agents/` → `.claude/agents/` — the **agents payload class**: agent
       definitions, materialized where Claude Code discovers them and merged with
@@ -129,7 +133,12 @@ repo is both its source and its own marketplace.
       `inspire_kb/01_spec`); no rule reads the directory a file sits in.
       `screen-coherence.sh` checks screen identity (`{face}.{slug}`), keyed bindings
       and the screen↔layout join; `spec-identity.sh`, `face-exposure.sh` and
-      `process-shape.sh` check ids, the actions a face's bundles expose, and processes. `trust.sh` is here as a
+      `process-shape.sh` check ids, the actions a face's bundles expose, and processes.
+      `links-resolve.sh` checks that every link in a Markdown file under the KB names
+      a file or directory that exists, and reports each wikilink with
+      `/inspire:migrate`; every validator reads links through `sdd_links` in `_lib.sh`,
+      the reader [the link-syntax corpus](plugin/test/fixtures/link-syntax/README.md)
+      holds the spec and the Factory to. `trust.sh` is here as a
       **tool, not a review rule** — all of artifact trust's mechanics (hashing, both
       stamp blocks, the report), outside `review.sh`'s rule list, never a gate; see
       [docs/adr/adr-artifact-trust.md](docs/adr/adr-artifact-trust.md).
@@ -170,7 +179,8 @@ repo is both its source and its own marketplace.
       (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`, `.adr.md`,
       `.adr.rationale.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`,
       `.component.md` · `.layout.md` · `.pattern.md`, `{type}.template.md`), is found by
-      it and linked by id; the extension is never part of an id. Four concepts: a
+      it, and is linked to by a relative Markdown link to the file
+      (`[adr-audit](../../_adr/audit.adr.md)`); the extension is never part of an id. Four concepts: a
       **module** is a slice of the domain, a **bundle** is the unit of exposure (which
       actions a package publishes), a **face** is what a person uses (screens, shell,
       package, tokens, the bundles it uses), a **process** runs on a trigger. A
@@ -178,8 +188,10 @@ repo is both its source and its own marketplace.
       `screen`. Global artifacts declare a blast radius in `faces:` / `bundles:`
       (absent = the whole project). See
       [docs/adr/adr-kb-structure.md](docs/adr/adr-kb-structure.md) (it supersedes
-      adr-suites-and-surfaces); the runtime rules live in
-      `base/skills/_references/face-scope.md` and `base/kb/01_spec/README.md`.
+      adr-suites-and-surfaces) and
+      [docs/adr/adr-markdown-links.md](docs/adr/adr-markdown-links.md) (the link
+      form); the runtime rules live in `base/skills/_references/face-scope.md`,
+      `base/skills/_references/kb-links.md` and `base/kb/01_spec/README.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
       in afterwards by `/inspire-bootstrap init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.
