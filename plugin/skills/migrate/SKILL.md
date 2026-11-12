@@ -43,7 +43,10 @@ code instead of rebuilding it.
 ```
 
 It prints the plan, one tab-separated line per step (`move`, `write`, `idmap`,
-`unplaced`, `note`), and writes nothing. When it needs an answer it prints `ask` lines
+`unplaced`, `config`, `note`), and writes nothing. A `config` line names a file outside
+the KB, `.inspire/emanate.yml` or `.inspire/emanate.json`, and the change to its spec
+root, which moves to `inspire_kb/01_spec`. Step 2 also prints a `seed` line for each
+skeleton file `--skeleton` adds. When it needs an answer it prints `ask` lines
 instead and exits 3. Ask the operator each one, in their words, then run the dry run
 again with the answers as flags:
 
@@ -59,7 +62,7 @@ Never answer a question yourself: these are specification decisions.
 
 **Relay the plan grouped:** how many files move per kind, every screen id that changes
 (the `idmap` lines, old → new), every file it cannot place (`unplaced`: moved under
-`_migration/unplaced/`, never dropped) and every `note`. Add how many wikilinks
+`_migration/unplaced/`, never dropped), every `config` change and every `note`. Add how many wikilinks
 the KB holds outside code:
 
 ```bash
@@ -95,10 +98,13 @@ A second run on a migrated KB is a no-op.
 Tell the operator to commit now, before any edit:
 
 ```bash
-git add -A inspire_kb && git commit -m "chore(kb): move the KB to 01_spec (/inspire:migrate)"
+git add -A && git commit -m "chore(kb): move the KB to 01_spec (/inspire:migrate)"
 ```
 
-Do not commit for them unless they ask you to. Step 4 waits for this commit.
+The tree was clean before Step 2, so every change is the run's: the KB, and the file of
+each `config` line. `git status --porcelain` is empty afterwards; the Factory's remap
+refuses a dirty checkout. Do not commit for them unless they ask you to. Step 4 waits
+for this commit.
 
 ## Step 4 — Convert the links
 
