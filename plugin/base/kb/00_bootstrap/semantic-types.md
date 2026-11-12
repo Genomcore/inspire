@@ -2,7 +2,7 @@
 
 _The types this project adds to the universal semantic vocabulary. The universal
 vocabulary itself — what `email`, `uuid`, `timestamp` and the rest mean — lives in
-[type-mapping](../../.claude/skills/inspire-domain/references/type-mapping.md) and is
+`.claude/skills/inspire-domain/references/type-mapping.md` and is
 not edited here. This file ships **empty**: a project that has needed no type of its
 own declares none, which is the honest state of most projects._
 

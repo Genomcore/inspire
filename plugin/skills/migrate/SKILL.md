@@ -141,10 +141,11 @@ directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
 `_modules/{m}`, `03_features/{m}` → `_modules/{m}/_features`, `04_domain/{m}` →
 `_modules/{m}/_domain`, `05_screens/{f}/{m}` → `_faces/{f}/_screens`, a screen index →
 `_faces/{f}/_index.md`); when the directory a link maps to does not exist, it names
-the nearest directory on that path that does. A Markdown link to a retired file, or a
-placeholder outside a template, becomes its text. No link is converted or rebased
-into `_migration/`. A Markdown link that still names nothing, anywhere under the KB,
-gets a `broken` line and stays as written.
+the nearest directory on that path that does. No link is converted or rebased into
+`_migration/`. A Markdown link it can neither rebase nor resolve, hand-written ones
+included, becomes its text, with an `unlinked` line and why (retired, placeholder,
+broken), so the migrated KB holds no broken link. Templates and `_migration/` are left
+as they are.
 
 The new link's text is the wikilink's alias, else the last segment of its target,
 so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
@@ -152,9 +153,9 @@ so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
 holding a space or a parenthesis is written in `<…>`, and a link in frontmatter is a
 quoted string. Links inside code spans and fenced blocks stay as written.
 
-**Relay the count per source, the rebased count, and every `drafted`, `unlinked` and
-`broken` line**: a draft is a file to fill in, and `links-resolve` reports a broken link
-in a typed file until it points at a file. Then run it without `--dry-run`;
+**Relay the count per source, the rebased count, and every `drafted` and `unlinked`
+line**: a draft is a file to fill in, and an unlinked one is text the operator may want
+to link again. Then run it without `--dry-run`;
 it refuses while git lists uncommitted moves, additions or deletions under the KB
 (Step 3 comes first), but not for the drafts an earlier conversion wrote. The link plan
 is saved to `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes
@@ -178,8 +179,6 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- `links-resolve` errors for each link that Step 4 listed as broken outside templates
-  and `_migration/`, until the operator points it at a file.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.

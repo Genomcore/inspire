@@ -29,5 +29,5 @@ Machine-read tokens are never translated — frontmatter keys and enum values
 (`kind`, `status`, `maturity`, lifecycle states), link paths, file and
 directory names, code identifiers, status-map keys. Only prose is written in
 `output_language`. See
-[`.claude/skills/_references/output-language.md`](../../.claude/skills/_references/output-language.md)
+`.claude/skills/_references/output-language.md`
 for the full rule the skills follow.

@@ -24,16 +24,14 @@
 # shipped template, and anything else becomes its text.
 #
 # A Markdown link that names nothing where it stands is rebased through the move record
-# and the layout (D7). One to a retired file, or a placeholder outside a template,
-# becomes its text; the rest is listed as broken. No link is converted or rebased into
-# 01_spec/_migration/.
+# and the layout (D7); one it can neither rebase nor resolve becomes its text, so a
+# migrated KB holds no broken link. Templates and 01_spec/_migration/ are not touched.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> ·
 #   draft <file> <line> draft <wikilink> <markdown> · drafted <new file> <kind> ·
 #   unlinked <file> <line> <link> <text> <why> ·
-#   link <file> <line> rebased <old link> <new link> · broken <file> <line> <link> ·
-#   note <text>
+#   link <file> <line> rebased <old link> <new link> · note <text>
 # In act mode the files are rewritten, the drafts written, and the plan is saved to
 # 01_spec/_migration/links.tsv, when it changed anything.
 #
@@ -50,7 +48,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -372,9 +370,8 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
   function placeholder(t) { return t ~ /[{}]/ || index(t, "…") }
   function is_template(f) { return f ~ /(^|\/)(_template|[^\/]*\.template)\.md$/ }
   # rebased(f, written, path) — the new destination of a link that names nothing
-  # where it stands, or "" (the link is listed as broken unless it resolves).
-  # A link to a retired file, or a placeholder outside a template, becomes its text:
-  # UNLINK then holds the reason.
+  # where it stands, or "": then UNLINK holds why it becomes its text (retired,
+  # placeholder, broken), or nothing when it stands as written.
   function rebased(f, written, path, ln, rtok,   abs, cur, src, old, nt, c, anchor) {
     UNLINK = ""
     abs = (substr(path, 1, 1) == "/")
@@ -399,12 +396,11 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
       }
       if (retired(old)) UNLINK = "retired"
     }
-    if (UNLINK == "" && placeholder(written) && !is_template(f)) UNLINK = "placeholder"
-    if (UNLINK != "") { st["unlinked"]++; return "" }
-    # A template is not checked (D2): its placeholders name nothing yet.
+    # A template is not checked (D2): its placeholders name nothing yet. Anywhere else
+    # a link that still names nothing becomes its text, so no broken link is left (D7).
     if (is_template(f)) return ""
-    st["broken"]++
-    printf "broken\t%s/%s\t%d\t%s\n", KB, f, ln, flat(rtok)
+    if (UNLINK == "") UNLINK = placeholder(written) ? "placeholder" : "broken"
+    st["unlinked"]++; st["unlinked:" UNLINK]++
     return ""
   }
   # The index holds files outside the KB too; a KB link converts only to a KB file.
@@ -524,7 +520,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
             md = (alias != "") ? alias : target anchor
             if (LFM[w]) md = yaml(md, LPRE[w])
             out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
-            st["unlinked"]++
+            st["unlinked"]++; st["unlinked:" WHY]++
             printf "unlinked\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, flat("[[" inner "]]"), flat(md), WHY
             continue
           }
@@ -560,9 +556,10 @@ converted="$(tally converted)"
   printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s draft link(s), %s new draft(s), %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
     "$(tally draft)" "$(tally drafts)" "$(tally code)"
-  printf 'note\tMarkdown links: %s rebased through the move record, %s broken and left as written\n' \
-    "$(tally rebased)" "$(tally broken)"
-  printf 'note\tunlinked: %s link(s) became their text\n' "$(tally unlinked)"
+  printf 'note\tMarkdown links: %s rebased through the move record\n' "$(tally rebased)"
+  printf 'note\tunlinked: %s link(s) became their text%s\n' "$(tally unlinked)" \
+    "$(LC_ALL=C sort "$STATS" | awk -F'\t' 'index($1, "unlinked:") == 1 { o = o (o == "" ? "" : ", ") substr($1, 10) " " $2 }
+                    END { if (o != "") print " (" o ")" }')"
 } >> "$PLAN"
 
 if [ "$DRY" -eq 1 ]; then

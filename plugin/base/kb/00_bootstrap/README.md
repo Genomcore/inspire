@@ -22,7 +22,7 @@ reads before working — the base context the rest of the KB assumes.
     agent's taxonomy. It ships **empty**, meaning header + separator and zero data
     rows; an empty list binds nothing, which is the honest state of a project that
     has settled no naming question yet. R4 of
-    [`.claude/skills/_references/writing-style.md`](../../.claude/skills/_references/writing-style.md)
+    `.claude/skills/_references/writing-style.md`
     binds every layer's prose to it.
   - [`style-tokens.md`](style-tokens.md) — the project's own **R6 and R7 tokens**:
     words that narrate history and intensifiers, in the project's `output_language`.
@@ -32,7 +32,7 @@ reads before working — the base context the rest of the KB assumes.
     **empty**, like the glossary.
   - [`semantic-types.md`](semantic-types.md) — the **project's own semantic types**:
     the types this project adds to the universal vocabulary defined in
-    [`.claude/skills/inspire-domain/references/type-mapping.md`](../../.claude/skills/inspire-domain/references/type-mapping.md).
+    `.claude/skills/inspire-domain/references/type-mapping.md`.
     Every row carries a mandatory **universal base type**, so a type declared here
     always renders — a language profile with no explicit row for it falls back to that
     base type. Like the glossary it ships **empty**: most projects need no type of
