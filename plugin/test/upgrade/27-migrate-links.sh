@@ -553,6 +553,40 @@ eq "a file the operator added is still refused" "$rc" "1"
 has "and named" "$out" "stray.md"
 hasnt "the drafts are not" "$out" "fresh.adr"
 
+# The converter reads code with the reader's own block model (D4): a code span that
+# runs across the lines of a paragraph holds its wikilink and its Markdown link.
+K2="$W/span-paragraph"; K2S="$K2/inspire_kb/01_spec"
+printf '# b\n' | mk "$K2S/_modules/m/b.md"
+printf 'A span `starts here\nand [[b]] with [x](gone.md) ends` here.\nOutside: [[b]].\n' | mk "$K2S/_modules/m/a.md"
+eq "a span across lines hides its wikilink from the count" "$(cd "$K2" && bash "$LINKS" --count)" "1"
+out="$(cd "$K2" && bash "$LINKS" 2>&1)"
+check "and from the conversion, which converts the one outside" \
+  "grep -qxF 'and [[b]] with [x](gone.md) ends\` here.' '$K2S/_modules/m/a.md' && grep -qxF 'Outside: [b](b.md).' '$K2S/_modules/m/a.md'"
+hasnt "and lists no link inside it as broken" "$out" "gone.md"
+
+# A path that starts with / resolves from the repository root (D2): the directory above
+# the KB outside git, the work tree root under git. _migration/ and templates are not
+# checked: nothing there is converted or listed.
+K3="$W/root-paths"; K3S="$K3/inspire_kb/01_spec"
+printf 'x\n' | mk "$K3/source/app.ts"
+printf 'Code: [app](/source/app.ts) and [gone](/source/gone.ts).\n' | mk "$K3S/_modules/m/m.module.md"
+printf 'See [[nowhere]] and [g](gone.md).\n' | mk "$K3S/_migration/unplaced/04_domain/README.md"
+printf '# T\n[x](gone.md)\n' | mk "$K3S/_modules/m/x.template.md"
+eq "_migration/ is not counted" "$(cd "$K3" && bash "$LINKS" --count)" "0"
+out="$(cd "$K3" && bash "$LINKS" 2>&1)"
+hasnt "outside git, a / path resolves from the directory above the KB" "$out" "/source/app.ts"
+has "and one that names nothing there is listed" "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/m.module.md${TAB}1${TAB}[gone](/source/gone.ts)"
+hasnt "nothing under _migration/ is listed" "$out" "_migration/unplaced"
+check "or converted" "grep -qxF 'See [[nowhere]] and [g](gone.md).' '$K3S/_migration/unplaced/04_domain/README.md'"
+hasnt "a template's link is not listed as broken" "$out" "x.template.md"
+K4="$W/root-git"; K4S="$K4/docs/inspire_kb/01_spec"
+printf 'x\n' | mk "$K4/source/app.ts"
+printf 'Code: [app](/source/app.ts).\n' | mk "$K4S/_modules/m/m.module.md"
+git -C "$K4" init -q
+out="$(cd "$K4/docs" && bash "$LINKS" --dry-run 2>&1)"
+premise "the KB's parent holds no source/" "[ ! -e '$K4/docs/source' ]"
+hasnt "under git, a / path resolves from the work tree root" "$out" "broken${TAB}"
+
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
 

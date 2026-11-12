@@ -540,7 +540,7 @@ sdd_links() {
   case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
   # Byte semantics, so a percent-escape decodes to the byte it names.
   LC_ALL=C awk -v dir="$dir" -v wiki="$wiki" \
-    "$SDD_AWK_LINKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$file" \
+    "$SDD_AWK_LINKS$SDD_AWK_BLOCKS$SDD_AWK_MD_FUNCS$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS" "$file" \
   | while IFS=$'\t' read -r ln form target text path; do
       # A path from the repository root costs a git call, so only one that holds one pays it.
       case "$path" in $'\035'*)
@@ -576,62 +576,10 @@ sdd_repo_root() {
 # because only the caller knows that root. With `codes` set it prints the code
 # ranges it skips instead of the links, for the shared link-syntax corpus.
 SDD_AWK_LINKS='
-  FNR == 1 && sdd_fm_delim($0) { fm = 1; next }
-  fm { if (sdd_fm_delim($0)) fm = 0; else sdd_text($0, FNR); next }
-  sdd_fence($0) {
-    sdd_flush()
-    if (sdd_in_fence()) fence_at = FNR; else sdd_code("fence", fence_at, FNR, "")
-    next
-  }
-  sdd_in_fence() { next }
-  { sdd_para($0, FNR) }
-  END { sdd_flush(); if (sdd_in_fence()) sdd_code("fence", fence_at, FNR, "") }
+  { sdd_block($0, FNR) }
+  END { sdd_block_end(FNR) }
 
-  # A code span pairs backticks across the lines of one paragraph (CommonMark), so
-  # lines gather in PL until a blank line or another block ends the paragraph. PI
-  # marks a paragraph a list item opened, PQ one a block quote opened.
-  function sdd_para(line, ln,   t) {
-    if (line ~ /^[ \t]*\r?$/ || line ~ /^ ? ? ?>[ \t>]*\r?$/) { sdd_flush(); return }
-    t = line; gsub(/[ \t\r]/, "", t)
-    if (line ~ /^ ? ? ?(#|##|###|####|#####|######)([ \t]|\r?$)/ ||
-        (line ~ /^ ? ? ?[-*_=]/ && t ~ /^(\*\*\*+|___+|-+|=+)$/)) { sdd_flush(); sdd_text(line, ln); return }
-    if (line ~ /^ ? ? ?>/) { if (!PQ) sdd_flush(); PQ = 1 }
-    else if (line ~ /^[ \t]*([-+*]|[0-9]+[.)])([ \t]|\r?$)/ &&
-             (!PN || PI || line ~ /^ ? ? ?([-+*]|0*1[.)])[ \t]+[^ \t\r]/)) { sdd_flush(); PI = 1 }
-    PL[++PN] = line; PLN[PN] = ln
-  }
-
-  # A GFM table starts at the line above its delimiter row, and each row is a block
-  # of its own.
-  function sdd_flush(   k, d) {
-    d = 0
-    for (k = 2; k <= PN && !d; k++)
-      if (index(PL[k], "|") && index(PL[k - 1], "|") &&
-          PL[k] ~ /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*\r?$/) d = k
-    if (!d) sdd_lines(1, PN)
-    else { sdd_lines(1, d - 2); for (k = d - 1; k <= PN; k++) sdd_lines(k, k) }
-    PN = 0; PI = 0; PQ = 0
-  }
-
-  function sdd_lines(a, b,   k, s) {
-    if (a > b) return
-    s = PL[a]; for (k = a + 1; k <= b; k++) s = s "\n" PL[k]
-    sdd_text(s, PLN[a])
-  }
-
-  # s holds whole lines, the first at line ln. Each line is scanned with its code
-  # spans blanked in place.
-  function sdd_text(s, ln,   m, n, raw, msk, k, a) {
-    m = sdd_unspan(s, 1)
-    for (k = 1; codes && k <= SDD_SPN; k++) {
-      a = SDD_SPS[k]
-      sdd_code("span", ln + sdd_nl(substr(s, 1, a - 1)), ln + sdd_nl(substr(s, 1, a + length(SDD_SPT[k]) - 1)), SDD_SPT[k])
-    }
-    n = split(s, raw, "\n"); split(m, msk, "\n")
-    for (k = 1; k <= n; k++) sdd_scan(raw[k], msk[k], ln + k - 1)
-  }
-
-  function sdd_nl(s) { return gsub(/\n/, "", s) }
+  function sdd_line(raw, s, ln) { sdd_scan(raw, s, ln) }
 
   # A Markdown link takes its text from the raw line, so a span in the text still
   # shows. A wikilink is consumed before a Markdown link that starts with it; one
@@ -687,6 +635,77 @@ SDD_AWK_LINKS='
     if (substr(MDPATH, 1, 1) == "/") path = "\035" path
     sdd_emit(ln, form, dest, text, path)
   }
+'
+
+# The reader's block model, as awk source: which lines are frontmatter, fenced code or
+# paragraph text, and where code spans run. The composing program feeds each line of
+# a file to sdd_block, in order, then calls sdd_block_end, and defines sdd_line(raw,
+# masked, ln), which gets every line outside a fence with its spans blanked in place,
+# and sdd_code. migrate-links.sh composes it, so the converter skips what the reader
+# skips (D4).
+SDD_AWK_BLOCKS='
+  function sdd_block_reset() { fm = 0; PN = 0; PI = 0; PQ = 0; sdd_fence_ch = ""; sdd_fence_len = 0 }
+
+  function sdd_block(line, ln) {
+    if (ln == 1) sdd_block_reset()
+    if (ln == 1 && sdd_fm_delim(line)) { fm = 1; return }
+    if (fm) { if (sdd_fm_delim(line)) fm = 0; else sdd_text(line, ln); return }
+    if (sdd_fence(line)) {
+      sdd_flush()
+      if (sdd_in_fence()) fence_at = ln; else sdd_code("fence", fence_at, ln, "")
+      return
+    }
+    if (!sdd_in_fence()) sdd_para(line, ln)
+  }
+
+  function sdd_block_end(ln) { sdd_flush(); if (sdd_in_fence()) sdd_code("fence", fence_at, ln, "") }
+
+  # A code span pairs backticks across the lines of one paragraph (CommonMark), so
+  # lines gather in PL until a blank line or another block ends the paragraph. PI
+  # marks a paragraph a list item opened, PQ one a block quote opened.
+  function sdd_para(line, ln,   t) {
+    if (line ~ /^[ \t]*\r?$/ || line ~ /^ ? ? ?>[ \t>]*\r?$/) { sdd_flush(); return }
+    t = line; gsub(/[ \t\r]/, "", t)
+    if (line ~ /^ ? ? ?(#|##|###|####|#####|######)([ \t]|\r?$)/ ||
+        (line ~ /^ ? ? ?[-*_=]/ && t ~ /^(\*\*\*+|___+|-+|=+)$/)) { sdd_flush(); sdd_text(line, ln); return }
+    if (line ~ /^ ? ? ?>/) { if (!PQ) sdd_flush(); PQ = 1 }
+    else if (line ~ /^[ \t]*([-+*]|[0-9]+[.)])([ \t]|\r?$)/ &&
+             (!PN || PI || line ~ /^ ? ? ?([-+*]|0*1[.)])[ \t]+[^ \t\r]/)) { sdd_flush(); PI = 1 }
+    PL[++PN] = line; PLN[PN] = ln
+  }
+
+  # A GFM table starts at the line above its delimiter row, and each row is a block
+  # of its own.
+  function sdd_flush(   k, d) {
+    d = 0
+    for (k = 2; k <= PN && !d; k++)
+      if (index(PL[k], "|") && index(PL[k - 1], "|") &&
+          PL[k] ~ /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*\r?$/) d = k
+    if (!d) sdd_lines(1, PN)
+    else { sdd_lines(1, d - 2); for (k = d - 1; k <= PN; k++) sdd_lines(k, k) }
+    PN = 0; PI = 0; PQ = 0
+  }
+
+  function sdd_lines(a, b,   k, s) {
+    if (a > b) return
+    s = PL[a]; for (k = a + 1; k <= b; k++) s = s "\n" PL[k]
+    sdd_text(s, PLN[a])
+  }
+
+  # s holds whole lines, the first at line ln. Each goes to sdd_line with its code
+  # spans blanked in place.
+  function sdd_text(s, ln,   m, n, raw, msk, k, a) {
+    m = sdd_unspan(s, 1)
+    for (k = 1; codes && k <= SDD_SPN; k++) {
+      a = SDD_SPS[k]
+      sdd_code("span", ln + sdd_nl(substr(s, 1, a - 1)), ln + sdd_nl(substr(s, 1, a + length(SDD_SPT[k]) - 1)), SDD_SPT[k])
+    }
+    n = split(s, raw, "\n"); split(m, msk, "\n")
+    for (k = 1; k <= n; k++) sdd_line(raw[k], msk[k], ln + k - 1)
+  }
+
+  function sdd_nl(s) { return gsub(/\n/, "", s) }
+
 '
 
 # The Markdown link grammar, as awk source. migrate-links.sh composes the same

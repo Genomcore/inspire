@@ -9,11 +9,6 @@ C="$HERE/fixtures/link-syntax"
 RESOLVE="$PLUGIN_ROOT/base/bin/links-resolve.sh"
 . "$HERE/lib/assert.sh"
 
-# Cases where the converter's count is known to differ from the reader, until the
-# converter reads code spans by paragraph. A listed case that starts agreeing fails,
-# so the list only shrinks.
-CONVERTER_PENDING=" span-across-lines span-lone-backtick-earlier-line span-blockquote-lazy-line span-across-list-continuation "
-
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 
 # The wikilinks a file names, one finding per target at its first line, as
@@ -40,10 +35,7 @@ for md in "$C"/cases/*.md; do
   mkdir -p "$T/$n/inspire_kb"; cp "$md" "$T/$n/inspire_kb/"
   got="$(bash "$PLUGIN_ROOT/scripts/migrate-links.sh" --count --kb "$T/$n/inspire_kb")"
   wikis="$(jq '[.links[] | select(.form == "wiki")] | length' "$want")"
-  case "$CONVERTER_PENDING" in
-    *" $n "*) check "corpus $n: the converter still miscounts (pending; drop it from the list)" "[ '$got' != '$wikis' ]" ;;
-    *) eq "corpus $n: the converter counts the wikilinks the reader finds" "$got" "$wikis" ;;
-  esac
+  eq "corpus $n: the converter counts the wikilinks the reader finds" "$got" "$wikis"
 done
 premise "the corpus holds at least the cases its README promises" "[ $n_cases -ge 50 ]"
 
