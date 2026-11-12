@@ -572,7 +572,8 @@ sdd_link_index() {
 #   `{line}<TAB>{md|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
 #   The path is empty when the link resolves to no file. Text and target are never
 #   empty, so `IFS=$'\t' read` keeps the five fields apart: a link that shows no
-#   text reports its target as text. Images and external URLs are not links here.
+#   text reports its target as text. An image whose target is a `.md` file is an
+#   embed and reads as a link; other images and external URLs are not links here.
 sdd_links() {
   local file="$1" dir ln form target text path
   sdd_link_index
@@ -613,7 +614,7 @@ SDD_AWK_LINKS='
         sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl)
       } else {
         tok = substr(s, MS, ML); s = substr(s, MS + ML)
-        if (substr(tok, 1, 1) != "!") sdd_md(tok, MT, ln)
+        sdd_md(tok, MT, ln)
       }
     }
   }
@@ -690,15 +691,18 @@ SDD_AWK_LINKS='
     return ""
   }
 
-  function sdd_md(tok, p, ln,   text, dest, path) {
+  # An image is a link only when it embeds a KB file, a `.md` target (D1).
+  function sdd_md(tok, p, ln,   img, text, dest, path) {
+    if ((img = (substr(tok, 1, 1) == "!"))) { tok = substr(tok, 2); p-- }
     text = substr(tok, 2, p - 2); gsub(/\\\|/, "|", text)
     dest = substr(tok, p + 2, length(tok) - p - 2)
     gsub(/^[ ]+|[ ]+$/, "", dest)
     if (substr(dest, 1, 1) == "<") { sub(/^</, "", dest); sub(/>.*$/, "", dest) }
     else sub(/[ ].*$/, "", dest)
     if (dest == "" || dest ~ /^#/ || dest ~ /^[A-Za-z][A-Za-z0-9+.-]*:\/\// || dest ~ /^(mailto|tel|data):/) return
-    path = dest; sub(/[#?].*$/, "", path)
-    sdd_emit(ln, "md", dest, text, sdd_join(dir, sdd_unescape(path)))
+    path = dest; sub(/[#?].*$/, "", path); path = sdd_unescape(path)
+    if (img && path !~ /\.md$/) return
+    sdd_emit(ln, "md", dest, text, sdd_join(dir, path))
   }
 
   # Each `%XX` decodes to its byte, so `a%C3%B1o.md`, as some editors write it,

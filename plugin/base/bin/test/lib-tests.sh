@@ -511,6 +511,7 @@ mkdir -p "$D/sub"
 printf -- '---\r\nlinks: ["[x](gone-fm.md)"]\r\n---\r\n```\r\n[f](fenced.md)\r\n```\r\n' > "$D/crlf.md"
 cat > "$D/shapes.md" <<'EOF'
 [a [x] c](gone.md) [p](p(1).md) [n](a%C3%B1o.md) [s](<my file (v2).md#top>) [d](sub)
+![embed](año.md) ![picture](diagram.png)
 EOF
 (
   cd "$ROOT/links" || exit 1
@@ -527,6 +528,8 @@ has   "links: parentheses balance in the path"            "^1${T}md${T}p(1).md${
 has   "links: a percent-escaped non-ASCII byte decodes"   "^1${T}md${T}a%C3%B1o.md${T}n${T}$S/año.md\$" "$shapes"
 has   "links: a path in <> holds spaces and parentheses"  "^1${T}md${T}my file (v2).md#top${T}s${T}$S/my file (v2).md\$" "$shapes"
 has   "links: a link to a directory is broken"            "^1${T}md${T}sub${T}d${T}\$" "$shapes"
+has   "links: an image of a .md file is an embed, read as a link" "^2${T}md${T}año.md${T}embed${T}$S/año.md\$" "$shapes"
+hasnt "links: any other image is not"                     "diagram" "$shapes"
 has   "links: a CRLF frontmatter is read as frontmatter"  "^2${T}md${T}gone-fm.md${T}x${T}\$" "$shapes"
 hasnt "links: and the fence after it is code"             "fenced" "$shapes"
 
