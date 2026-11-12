@@ -17,5 +17,6 @@
       "message_substring": "unresolved outcome: data key 'secondary' is not declared"
     }
   ],
+  "finding_count": 3,
   "forbidden": ["refresh `main`", "state not anchored"]
 }
