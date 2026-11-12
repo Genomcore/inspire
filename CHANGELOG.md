@@ -9,6 +9,75 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.17.0 — 2026-11-12
+
+Upgrade with `/inspire:update`, commit, then run `/inspire:migrate` once before the next
+build. Use this version with INSPIRE Factory 0.16.0: that Factory reads only Markdown links
+and refuses a knowledge base that still holds a wikilink.
+
+### Breaking for existing vaults
+
+- **KB links are relative Markdown links to the target file**
+  ([`adr-markdown-links`](docs/adr/adr-markdown-links.md)):
+  `[adr-audit](../../_adr/audit.adr.md)`, not `[[adr-audit]]`. The path resolves the
+  link, and the target file gives the id. `/inspire:update` changes no link: it counts
+  the wikilinks in `inspire_kb/` and points at `/inspire:migrate`, which converts them.
+  A layered KB is moved, committed, then converted in a second run; a KB already in
+  `01_spec/` is only converted.
+- **Every remaining wikilink is an error.** `links-resolve.sh` reports each wikilink
+  outside code with `/inspire:migrate`, so `pre-pr.sh` blocks until the KB is converted.
+  The other validators pass over wikilinks and resolve nothing through them.
+- **INSPIRE Factory 0.16.0 is required.** It reads Markdown links only and refuses to plan
+  a KB that holds a wikilink outside code, a template or `_migration/`. Its remap keeps
+  built code realized: after the conversion it re-stamps each citation whose claim
+  changed only in link syntax, so nothing already built is built again.
+- `wikilinks-resolve.sh` and `rationale-wikilink.sh` are removed. An update deletes a
+  shipped copy and keeps an edited one.
+
+### Added
+
+- **`/inspire:migrate` converts the KB's links** (`plugin/scripts/migrate-links.sh`),
+  after the moves are committed so git records every move as a rename. A link resolves
+  through its path mapped through the move record, its path against the current files,
+  the id index the validators used before this version, its target as a pre-move file
+  name, then the screen id map. Every link none of these resolves is settled without a
+  person: an id that names an artifact type gets that artifact's draft from its template,
+  and any other link becomes its text. Markdown links written before the migration are
+  rebased onto the moved files, and a link to a layered directory names the concept
+  directory that took its contents. The run lists every draft and every link it turns
+  to text, so a migrated KB holds no wikilink and no broken link. `--dry-run` writes
+  nothing, the plan is saved to `_migration/links.tsv`, and a second run changes nothing.
+- **`links-resolve.sh`** replaces `wikilinks-resolve.sh`. It checks every Markdown file
+  under the KB, frontmatter included, except templates and `_migration/`: each link must
+  name a file or directory that exists, outside the KB too, and a path that starts with
+  `/` resolves from the repository root. A broken link is an error at every lifecycle.
+- `_references/kb-links.md`, the one place the skills read how to write a link: the
+  path, the text, anchors, embeds, frontmatter, and creating a missing target from its
+  template first.
+- **A shared link-syntax corpus** (`plugin/test/fixtures/link-syntax/`): the cases on which
+  the validators' reader, the converter and the INSPIRE Factory agree on what is a link,
+  what is code and where a link resolves. Code spans and fenced blocks follow CommonMark.
+
+### Changed
+
+- The skills, their templates and examples, and the KB skeleton write relative Markdown
+  links. A skill computes the path from the linking file, and creates a missing target
+  from its template before it links to it.
+- A skill and its references link to one another with relative Markdown links, which
+  resolve in this repository and in a project alike; a test resolves every one.
+  References to `.inspire/bin/` or `inspire_kb/` stay in code spans.
+- `rationale-wikilink.sh` is `rationale-link.sh`: a rationale section needs at least one
+  Markdown link.
+
+### Fixed
+
+- **Obsidian, GitHub, editors and agents follow KB links again.** Since 0.15.0 a typed
+  file name no longer matched its id, so only INSPIRE's own index resolved a wikilink,
+  and a wikilink that carried a layered path pointed at a directory the migration had
+  removed without any validator reporting it.
+- `adr-maturity-matches-features.sh` printed `command not found` and an empty file pattern
+  in its unresolved-ADR warning.
+
 ## 0.16.0 — 2026-11-11
 
 Upgrade with `/inspire:update`. Nothing in your knowledge base changes. Use this version
