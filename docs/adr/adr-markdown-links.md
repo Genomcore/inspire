@@ -2,7 +2,8 @@
 
 - **Status:** Accepted — 2026-11-12
 - **Amends:** [adr-kb-structure](adr-kb-structure.md) **D4** (links resolve by path, and
-  the target file gives the id). Upholds [adr-upgrade-path](adr-upgrade-path.md) **D10**
+  the target file gives the id) and **D10** (the migration rewrites links, those in a
+  screen's `## Bindings` included). Upholds [adr-upgrade-path](adr-upgrade-path.md) **D10**
   (`/inspire:update` stays additive on the KB) and **D11** (git is read-only against the
   operator's repository).
 - **Scope:** How one KB file links to another, how tools resolve a link, and how an
@@ -64,13 +65,16 @@ and each Markdown link whose target does not exist.
 
 ### D6 — `/inspire:migrate` converts the links
 
-- A layered KB has its links converted in the same run that moves it, from that run's own
-  move plan.
-- A concept KB that still holds wikilinks gets a conversion-only run.
+- The conversion is its own run, after the moves are committed. Git then records every
+  move as a rename, because no file is edited in the same commit. A layered KB is moved,
+  committed, then converted; a concept KB that still holds wikilinks is only converted.
 - A link resolves through, in order: its path, mapped through the move record
-  (`_migration/plan.tsv`, or git rename history read without writing); the id index; the
-  screen id map (`_migration/id-map.json`).
+  (`_migration/plan.tsv`, or git rename history read without writing); its path against
+  the current files; the id index; its target as a pre-move file name, mapped through
+  the move record; the screen id map (`_migration/id-map.json`).
 - A link that resolves through none of them stays as written, and the run lists it.
+- A link in a screen's `## Bindings` is converted like any other. Its text keeps the id
+  it named, so the citations the Factory's remap reads do not change.
 
 `/inspire:update` changes no link. It counts the wikilinks it finds and points at
 `/inspire:migrate`.
