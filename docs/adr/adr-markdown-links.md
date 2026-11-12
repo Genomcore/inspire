@@ -92,7 +92,11 @@ holds one.
 
 A path names a location, so a file that moves has every link to it rewritten in the same
 change. `/inspire:migrate` does this for the moves it makes, Markdown links written before
-the migration included, and lists every link in the KB it leaves broken. A skill that writes a link
+the migration included, and lists every link in the KB it leaves broken. A link to a
+layered directory, or to its README, points to the concept directory that took its
+contents (adr-kb-structure D2: `01_adr` to `_adr`, `02_modules`, `03_features` and
+`04_domain` to `_modules`, `05_screens` to `_faces`), or to that directory's README. No link
+points into `_migration/`. A skill that writes a link
 computes the path from the linking file. When the target is missing, the skill first
 creates it from its template (adr-kb-structure D4).
 
