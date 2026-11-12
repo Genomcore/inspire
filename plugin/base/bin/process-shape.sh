@@ -39,7 +39,7 @@ emit() {
 declared_ids() {
   sdd_section_link_ids "$1" "$2" \
     | while IFS= read -r l; do
-        l="${l%%#*}"; l="${l%\\}"
+        l="${l%%#*}"
         printf '%s\n' "${l//./::}"
       done | sort -u
 }
