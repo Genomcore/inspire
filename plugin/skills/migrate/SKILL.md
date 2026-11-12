@@ -118,17 +118,18 @@ settles, and writes nothing. A link resolves through, in order: its path, mapped
 through the move record; its path against the current files; the id index, which
 resolves a wikilink the way the validators did before 0.16.1 and reads the screen id
 map, so the link names the file they read; its target as a pre-move file name, mapped
-through the move record. A pre-move name two files had resolves nothing.
+through the move record. A pre-move name two files had resolves nothing. The move
+record is `_migration/plan.tsv`, or, when there is none, the renames git holds since
+the commit before the layered directories left, read and never written; when the
+history does not show that commit, ask the operator for it and pass `--since REV`.
 
 A wikilink none of these resolves is settled without a person, because a wikilink left
 in the KB stops the Factory. An ADR id (`adr-{slug}`), an entity id whose module
 exists, an action id whose entity exists or a screen id whose face exists gets that
 artifact's draft, from its template and in its first state, with one `drafted` line
 per file; the link names it. Any other link becomes its text, one `unlinked` line each
-with why: a retired file, a placeholder, or an id that names no artifact type. The move record is `_migration/plan.tsv`, or,
-when there is none, the renames git holds since the commit before the layered
-directories left, read and never written; when the history does not show that
-commit, ask the operator for it and pass `--since REV`.
+with why: a retired file, a placeholder, an id that names no artifact type, or a name
+a module and a face share.
 
 A Markdown link already in the KB that names nothing where it stands is rebased, one
 `link … rebased` line each: its path is read from the file's location before the move,
@@ -140,10 +141,10 @@ directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
 `_modules/{m}`, `03_features/{m}` → `_modules/{m}/_features`, `04_domain/{m}` →
 `_modules/{m}/_domain`, `05_screens/{f}/{m}` → `_faces/{f}/_screens`, a screen index →
 `_faces/{f}/_index.md`); when the directory a link maps to does not exist, it names
-the nearest directory on that path that does. A link to a retired file, or a placeholder outside a template,
-becomes its text. No link is converted or rebased into `_migration/`. A Markdown link
-that still names nothing, anywhere under the KB, gets a `broken` line and stays as
-written.
+the nearest directory on that path that does. A Markdown link to a retired file, or a
+placeholder outside a template, becomes its text. No link is converted or rebased
+into `_migration/`. A Markdown link that still names nothing, anywhere under the KB,
+gets a `broken` line and stays as written.
 
 The new link's text is the wikilink's alias, else the last segment of its target,
 so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
@@ -155,8 +156,9 @@ quoted string. Links inside code spans and fenced blocks stay as written.
 `broken` line**: a draft is a file to fill in, and `links-resolve` reports a broken link
 in a typed file until it points at a file. Then run it without `--dry-run`;
 it refuses while git lists uncommitted moves, additions or deletions under the KB
-(Step 3 comes first). The link plan is saved to
-`inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
+(Step 3 comes first), but not for the drafts an earlier conversion wrote. The link plan
+is saved to `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes
+nothing.
 
 Tell the operator to commit the conversion:
 

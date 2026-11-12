@@ -19,20 +19,14 @@
 # its target as a pre-move file name, mapped through the move record, where a name
 # two files had resolves nothing.
 #
-# A wikilink none of them resolves is settled without a person (D6): an ADR id, an
-# entity id whose module exists, an action id whose entity exists or a screen id whose
-# face exists gets that artifact's draft from its shipped template, and the link
-# names it; anything else, a retired file or a placeholder included, becomes its text.
+# A wikilink no route resolves is settled without a person, since one left in the KB
+# stops the Factory (D6): an id that names an artifact type gets its draft from the
+# shipped template, and anything else becomes its text.
 #
-# A Markdown link that names nothing where it stands is rebased (D7): its path is
-# read from the file's pre-move location, and a target that moved, or a directory
-# whose files all moved to one directory, is followed through the move record. A link
-# to a layered directory, or to its README, names the concept directory that took its
-# contents, or that directory's README; a subdirectory follows the layout, keeping a
-# deeper path where it exists, and a directory link whose mapped directory does not
-# exist names the nearest directory on that path that does. A link to a retired file, or a placeholder outside a
-# template, becomes its text. A Markdown link that still names nothing is listed as
-# broken and left as written. No link is converted or rebased into 01_spec/_migration/.
+# A Markdown link that names nothing where it stands is rebased through the move record
+# and the layout (D7). One to a retired file, or a placeholder outside a template,
+# becomes its text; the rest is listed as broken. No link is converted or rebased into
+# 01_spec/_migration/.
 #
 # Output (stdout): the plan, one tab-separated line per step —
 #   link <file> <line> <source> <wikilink> <markdown> ·
@@ -56,7 +50,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,49p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -159,14 +153,20 @@ for l in 01_adr 02_modules 03_features 04_domain 05_screens; do
 done
 
 # Moves not yet committed would land in one commit with the link edits, and git would
-# lose them as renames (D6). The move plan and the link plan are the run's own files.
+# lose them as renames (D6). The move plan, the link plan and the drafts an earlier
+# conversion wrote are the converter's own files, so a second run before the commit
+# is not refused.
 uncommitted=""; git_note=""
 if git -C "$KB" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   prefix="$(git -C "$KB" rev-parse --show-prefix)"
+  OWN="$WORK/own.txt"; : > "$OWN"
+  [ -f "$SPEC/_migration/links.tsv" ] && awk -F'\t' -v pre="$prefix" '
+      $1 == "drafted" && (i = index($2, "/01_spec/")) { print pre substr($2, i + 1) }' "$SPEC/_migration/links.tsv" > "$OWN"
   uncommitted="$(GIT_OPTIONAL_LOCKS=0 git -C "$KB" -c core.quotepath=false status --porcelain --untracked-files=all -- . 2>/dev/null \
-    | awk -v skip="${prefix}01_spec/_migration/" '
+    | awk -v skip="${prefix}01_spec/_migration/" -v own="$OWN" '
+        BEGIN { while ((getline l < own) > 0) OWNED[l] = 1 }
         { p = substr($0, 4); sub(/^.* -> /, "", p); gsub(/"/, "", p) }
-        index(p, skip) == 1 { next }
+        index(p, skip) == 1 || (p in OWNED) { next }
         substr($0, 1, 2) == "??" || substr($0, 1, 2) ~ /[RAD]/ { print "  " substr($0, 1, 2) " " p }')"
   if [ -n "$uncommitted" ] && [ "$DRY" -eq 0 ]; then
     printf 'migrate-links: %s has moves, additions or deletions git has not committed. Commit the moves on their own first (/inspire:migrate Step 3), then convert:\n%s\n' "$KB" "$(printf '%s\n' "$uncommitted" | head -10)" >&2
@@ -297,7 +297,10 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     masked = sdd_unspan(line, 1); res = ""; off = 0
     while (sdd_next_md(substr(masked, off + 1))) {
       s = off + MS; tok = substr(masked, s, ML); rtok = substr(line, s, ML); ntok = rtok
-      if ((d0 = sdd_md_dest(tok, MT)) != "" && (nd = rebased(f, d0, MDPATH, ln, rtok)) != "") {
+      # A token that is no KB link (a URL, an anchor, an image) is never rebased or unlinked.
+      nd = ""; UNLINK = ""
+      if ((d0 = sdd_md_dest(tok, MT)) != "") nd = rebased(f, d0, MDPATH, ln, rtok)
+      if (nd != "") {
         inner = substr(rtok, MT + 2, ML - MT - 2); lead = match(inner, /[^ ]/) - 1
         w = (substr(inner, lead + 1, 1) == "<") ? "<" d0 ">" : d0
         ntok = substr(rtok, 1, MT + 1) substr(inner, 1, lead) nd substr(inner, lead + length(w) + 1) ")"
@@ -318,9 +321,9 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
   # No link points into _migration/ (D7): what the migration could not place stays there.
   function placed(p) { return p !~ /^01_spec\/_migration(\/|$)/ }
   # layered(p) — where the layout puts what the layered path p named (D7): a layered
-  # directory goes to the concept directory that took its contents, its README to the README of
-  # that directory when there is one, a subdirectory to the directory of its module or
-  # face with any deeper path kept, and a screen index to the _index.md of its face.
+  # directory goes to the concept directory that took its contents, its README to the
+  # README of that directory when there is one, a subdirectory to the directory of its
+  # module or face with any deeper path kept, and a screen index to its face _index.md.
   function layered(p,   n, s, d, i) {
     n = split(p, s, "/")
     if (s[1] == "01_adr") d = "01_spec/_adr"
@@ -329,24 +332,23 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     else return ""
     if (n == 1) return d
     if (n == 2 && s[2] == "README.md") return present(d "/README.md") ? d "/README.md" : d
-    if (s[1] == "01_adr") return ""
+    if (s[1] == "01_adr" || index(s[2], ".")) return ""
     d = d "/" s[2]; i = 3
     if (s[1] == "03_features") d = d "/_features"
     else if (s[1] == "04_domain") d = d "/_domain"
-    else if (s[1] == "05_screens" && n == 4 && s[4] == "_index.md") return d "/_index.md"
+    else if (s[1] == "05_screens" && (n == 3 || n == 4) && s[n] == "_index.md") return d "/_index.md"
     else if (s[1] == "05_screens" && n >= 3) { d = d "/_screens"; i = 4 }
     for (; i <= n; i++) d = d "/" s[i]
     return d
   }
-  # nearest(c, written, old) — c where it exists; for a directory link (a trailing
-  # slash, or a last segment with no extension) whose mapped directory does not, the
-  # nearest directory on that path that does (D7). A file link or a placeholder gets
-  # no stand-in.
-  function nearest(c, written, old,   b) {
+  # nearest(c) — c where it exists; where c is a directory (its last segment has no
+  # extension) that does not, the nearest directory on that path that does (D7). A file
+  # or a placeholder gets no stand-in.
+  function nearest(c,   b) {
     if (present(c)) return c
     if (placeholder(c)) return ""
-    b = old; sub(/.*\//, "", b)
-    if (written !~ /\/$/ && index(b, ".")) return ""
+    b = c; sub(/.*\//, "", b)
+    if (index(b, ".")) return ""
     while (sub(/\/[^\/]*$/, "", c)) if (placed(c) && present(c)) return c
     return ""
   }
@@ -378,7 +380,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
         st["rebased"]++; return c
       }
       if ((old in REN) && placed(REN[old]) && present(REN[old])) nt = REN[old]
-      else if ((c = layered(old)) != "" && (c = nearest(c, written, old)) != "") nt = c
+      else if ((c = layered(old)) != "" && (c = nearest(c)) != "") nt = c
       else if (old != cur && placed(old) && present(old)) nt = old
       else if ((old in DMAP) && !(old in DCLASH) && placed(DMAP[old]) && present(DMAP[old])) nt = DMAP[old]
       if (nt != "") {
@@ -507,7 +509,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
           settle(f, target)
           if (DRAFT != "") { HOW = "draft"; path = DRAFT; rel = relpath(path, dir_of(f)) }
           else {
-            md = (alias != "") ? trim(alias) : target anchor
+            md = (alias != "") ? alias : target anchor
             if (LFM[w]) md = yaml(md, LPRE[w])
             out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
             st["unlinked"]++
@@ -515,7 +517,7 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
             continue
           }
         }
-        if (alias != "") text = trim(alias)
+        if (alias != "") text = alias
         else if (target == "") text = substr(anchor, 2)
         else { text = target; sub(/.*\//, "", text) }
         md = "[" text "](" angle(rel anchor) ")"
@@ -543,7 +545,7 @@ converted="$(tally converted)"
   printf 'note\tmove record: %s (%s renames)\n' "$record" "$(wc -l < "$RENAMES" | tr -d ' ')"
   [ -n "$git_note" ] && printf 'note\t%s\n' "$git_note"
   [ -n "$uncommitted" ] && printf 'note\tthe act run refuses until the moves are committed: git lists %s uncommitted move(s), addition(s) or deletion(s)\n' "$(printf '%s\n' "$uncommitted" | wc -l | tr -d ' ')"
-  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s to %s new draft(s), %s in code left as written\n' \
+  printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s), %s draft link(s), %s new draft(s), %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" \
     "$(tally draft)" "$(tally drafts)" "$(tally code)"
   printf 'note\tMarkdown links: %s rebased through the move record, %s broken and left as written\n' \
