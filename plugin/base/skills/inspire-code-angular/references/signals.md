@@ -305,7 +305,7 @@ export class Auth {
 
 `resource()` was introduced in Angular 19 (developer preview) and is stable
 since Angular 22. In v19–v21 the API may differ — verify for the Angular
-version in use. See `http.md` for `httpResource()`.
+version in use. See [http.md](http.md) for `httpResource()`.
 
 ```typescript
 import { resource, signal, computed } from '@angular/core';

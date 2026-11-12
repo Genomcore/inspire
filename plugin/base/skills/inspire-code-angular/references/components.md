@@ -659,7 +659,7 @@ getTemplate(): TemplateRef<any> {
 
 ## SCSS patterns
 
-Design tokens come from the project's shared style layer (see `styles.md`).
+Design tokens come from the project's shared style layer (see [styles.md](styles.md)).
 
 ### Design token imports
 

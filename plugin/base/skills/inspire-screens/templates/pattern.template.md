@@ -10,7 +10,7 @@
 
 **Purpose:** {one-line description of what this pattern is for — first body line, greppable}
 **State:** implemented | to-extract
-**Components:** [[{component-name}]]
+**Components:** [{component-name}](../components/{component-name}.component.md)
 
 {One-paragraph description of the pattern.}
 

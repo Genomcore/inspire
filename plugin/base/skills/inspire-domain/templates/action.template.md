@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## ACT1: Purpose
-{{ONE_PARAGRAPH_RATIONALE}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds that claim.
+{{ONE_PARAGRAPH_RATIONALE}} [{{PDD_DISPLAY_TEXT}}]({{PDD_BACK_SOURCE_PATH}}) grounds that claim.
 
 ## ACT2: Inputs
 
@@ -35,7 +35,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 <!--
   Pick the sub-pattern that fits and delete the others:
   - Option A (whole entity or array of it):
-      An array of [[{{MODULE}}.{{ENTITY}}|{{MODULE}}::{{ENTITY}}]] entities.
+      An array of [{{MODULE}}::{{ENTITY}}](../../../{{MODULE}}/_domain/{{ENTITY}}/{{ENTITY}}.entity.md) entities.
   - Option B (subset of an entity): default below — inline table of returned fields.
   - Option C (derived / synthesized / multi-entity): inline table declaring the actual returned shape.
 -->
@@ -46,7 +46,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 
 ## ACT4: Entities
 
-### [[{{MODULE}}.{{ENTITY}}|{{MODULE}}::{{ENTITY}}]]
+### [{{MODULE}}::{{ENTITY}}](../../../{{MODULE}}/_domain/{{ENTITY}}/{{ENTITY}}.entity.md)
 **As input:** {{AS_INPUT}} · **Effect:** {{EFFECT}}
 
 | Field | Touch | Type | Mapping | Notes |
@@ -66,7 +66,7 @@ Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 -->
 
 ## ACT6: Behavior
-1. `B1` — {{STEP_DESCRIPTION}}, following the model defined in [[{{BACK_SOURCE}}|{{BACK_SOURCE_DISPLAY}}]].
+1. `B1` — {{STEP_DESCRIPTION}}, following the model defined in [{{BACK_SOURCE_DISPLAY}}]({{BACK_SOURCE_PATH}}).
 2. `B2` — {{STEP_DESCRIPTION_2}}.
 
 <!--

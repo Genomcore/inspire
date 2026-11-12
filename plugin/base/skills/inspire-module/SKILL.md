@@ -68,7 +68,7 @@ below is an index, not the flow.
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames)
 > stay verbatim.
 
 > **Writing contract.** Module hubs follow
@@ -91,7 +91,7 @@ below is an index, not the flow.
    nothing that does not exist. A module operation that updates one but leaves the
    hub inconsistent is a bug. This is the skill's core invariant; `review` enforces
    it.
-3. **A link requires its target.** When a write links to something that does not
+3. **A link requires its target.** Links follow [kb-links.md](../_references/kb-links.md). When a write links to something that does not
    exist yet, create the target from its template in draft and name it in the
    output: an entity or action from `inspire-domain`'s templates at
    `lifecycle: draft`, a feature from `inspire-feature`'s template at

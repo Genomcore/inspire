@@ -36,13 +36,13 @@ frontmatter:
 | Field | Face | Bundle | Meaning |
 |---|---|---|---|
 | `id` | yes | yes | the slug; unique among faces, or among bundles |
-| `package` | yes | yes | where its code lives, relative to the single `source_root` (see `product-roots.md`) |
+| `package` | yes | yes | where its code lives, relative to the single `source_root` (see [product-roots.md](product-roots.md)) |
 | `profiles` | yes | yes | stack profile ids; omitted means `stack.md`'s |
 | `shell` | when two or more faces exist | no prefix | the route prefix for the face's screens, with its leading slash (`/admin`); a project with one face may omit it, so its routes stay `/{module}/{screen}` |
 | `bundles` | yes | — | the bundle ids the face's screens use |
 
-A bundle lists its members under `## Actions`: `[[{module}]] (whole module)` or
-`[[{module}.{entity}.{action}|{module}::{entity}::{action}]]`.
+A bundle lists its members under `## Actions`: a link to the module hub, `[{module}](../_modules/{module}/{module}.module.md) (whole module)`,
+or to one action, `[{module}::{entity}::{action}](../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md)`.
 
 **The set of faces is the set of `*.face.md` files; the set of bundles is the set of
 `*.bundle.md` files.** Find them by extension under `inspire_kb/01_spec/`, never by
@@ -76,8 +76,8 @@ bundles: [api]           # bundle ids this artifact affects
   scoped by that directory. Neither carries `faces:` or `bundles:`.
 - **Domain files never carry it.** No `*.entity.md` or `*.action.md` takes `faces:` or
   `bundles:`.
-- Each value is the id of a face or bundle that exists: `wikilinks-resolve.sh` and
-  `spec-identity.sh` report one that does not.
+- Each value is the id of a face or bundle that exists: `spec-identity.sh` reports one
+  that does not.
 
 ## Scope resolution
 
@@ -93,7 +93,7 @@ write that must pick a face or a module:
 **Never invent an id.** A face, bundle or module id comes from a file that exists, or
 from the operator. When a write links to a face or bundle that does not exist yet, the
 link requires its file: create it from `inspire-face`'s template
-(`face.template.md` or `bundle.template.md`) with `lifecycle: draft`, and say so in
+([face.template.md](../inspire-face/templates/face.template.md) or [bundle.template.md](../inspire-face/templates/bundle.template.md)) with `lifecycle: draft`, and say so in
 the output. A missing face or bundle file then always means a broken link, never a
 concept nobody wrote down.
 

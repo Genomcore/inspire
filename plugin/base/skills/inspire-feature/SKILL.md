@@ -72,7 +72,7 @@ fit exactly is worse than no head.
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames)
 > stay verbatim.
 
 > **Writing contract.** Use-case files follow
@@ -97,7 +97,7 @@ fit exactly is worse than no head.
    acceptance-criteria gate before writing.
 5. **Propagation is mandatory.** Deleting or renaming a feature without cleaning
    references is drift.
-6. **A link requires its target.** When a write links to something that does not
+6. **A link requires its target.** Links follow [kb-links.md](../_references/kb-links.md). When a write links to something that does not
    exist yet (a `**Depends on:**` feature, an ADR, the module hub), create the target
    from its template in draft and name it in the output: a feature from
    [`templates/feature.template.md`](templates/feature.template.md) at

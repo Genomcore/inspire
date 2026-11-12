@@ -11,5 +11,5 @@ lifecycle: draft
 
 ## Actions
 
-- [[{module}]] (whole module)
-- [[{module}.{entity}.{action}|{module}::{entity}::{action}]]
+- [{module}](../_modules/{module}/{module}.module.md) (whole module)
+- [{module}::{entity}::{action}](../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md)

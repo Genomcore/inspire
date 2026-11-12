@@ -11,20 +11,20 @@ documentation) to specification prose. STE constrains vocabulary and sentence
 construction so a procedure means one thing to every reader. INSPIRE borrows the
 construction discipline and drops the closed dictionary. A product's vocabulary is the
 operator's own, so the term list is per-fork —
-[`inspire_kb/00_bootstrap/glossary.md`](../../../inspire_kb/00_bootstrap/glossary.md) —
+`inspire_kb/00_bootstrap/glossary.md` —
 not a standard shipped from outside.
 
 ## Scope
 
 This contract binds the prose an INSPIRE skill writes into
-[`inspire_kb/`](../../../inspire_kb): specs, features, ADRs, screen specs, module
+`inspire_kb`: specs, features, ADRs, screen specs, module
 hubs, spike learnings, lessons, tickets and bootstrap documents. It binds
 operator-facing reports — a finding is prose someone acts on — and it binds the
 session's own replies. An answer in the conversation is read the same way and for
 the same purpose as a report, so the rules that make a report legible apply there
 too. See § Reports and replies.
 
-It does **not** bind machine-read tokens. Frontmatter keys and enum values, wikilink
+It does **not** bind machine-read tokens. Frontmatter keys and enum values, link
 target slugs, identifiers, filenames and code fences stay exactly as
 [`output-language.md`](output-language.md) requires. The schema is not prose, and
 rewriting it for style breaks the graph.
@@ -90,7 +90,7 @@ clusters hide best.
 
 Two words for one concept split the graph: a reader greps one and misses the other,
 and an agent generates both. The approved term is **the operator's own language**,
-recorded in [`inspire_kb/00_bootstrap/glossary.md`](../../../inspire_kb/00_bootstrap/glossary.md)
+recorded in `inspire_kb/00_bootstrap/glossary.md`
 when an interview settles a naming question. It is never the agent's taxonomy, and it
 is never chosen for elegance over what the team already says out loud.
 
@@ -136,7 +136,7 @@ wrong description of the system sitting beside the right one.
 > **Good.** The server computes the total.
 
 **The future.** A plan is a ticket, and a ticket has a home in
-[`99_tracker/`](../../../inspire_kb/99_tracker). A description that promises
+`inspire_kb/99_tracker`. A description that promises
 tomorrow's behavior is wrong on the day the work lands and wrong until someone
 notices.
 
@@ -213,7 +213,7 @@ several kinds, and a rule that is right for a `## Purpose` paragraph is wrong fo
 | **Normative prose** | `## Purpose`, `## Rationale`, `## Behavior`, `## Context`, `## Decision`, `## Consequences`, feature descriptions, screen prose | R1 · R2 · R3 · R4 · R5 · R6 · R7 |
 | **Acceptance criteria** | feature `## Acceptance criteria` | R1 · R2 · R3 · R4 · R6 · R7, and each criterion states an observable outcome — see below |
 | **Tabular / structured** | `## Inputs`, `## Outputs`, `## Entities` field tables, `## Fields`, inventory and coverage tables | R3 · R4 · R6 · R7 (cells are fragments, so R1, R2 and R5 do not apply) |
-| **Machine-read tokens** | frontmatter keys and enum values, wikilink targets, identifiers, filenames, code fences | nothing — [`output-language.md`](output-language.md) governs these |
+| **Machine-read tokens** | frontmatter keys and enum values, link targets, identifiers, filenames, code fences | nothing — [`output-language.md`](output-language.md) governs these |
 
 **R8 is absent from that table on purpose.** Every other rule reads one sentence,
 one paragraph or one cell, so a section kind is enough to decide whether it binds.
@@ -279,8 +279,8 @@ document.
 
 - an ADR's `### Breaking changes` content — naming what breaks *is* the section's job;
 - an ADR's `## Related ADRs` section;
-- the `**Status:**` line, including `superseded by [[…]]`;
-- a `Supersedes: [[…]]` header line.
+- the `**Status:**` line, including `superseded by [{id}](…)`;
+- a `Supersedes: [{id}](…)` header line.
 
 These exemptions make R6 **narrower than an unconditional ban** inside an ADR, and the
 narrowing is intended. An unconditional ban is unwritable against the sections
@@ -338,15 +338,19 @@ an operator-led one on the same scope is not reporting more — it is restating.
 
 ## Prosaic back-sourcing
 
-A claim carries its source **inside the sentence that makes it**. The wikilink is part
-of the prose, using pipe-syntax display text where that reads better. It is never a
-trailing `Back-source: [[x]], [[y]].` line and never a bare `[[link]]` parked at the
-end of a step.
+A claim carries its source **inside the sentence that makes it**. The link is part
+of the prose, with prose as its text where that reads better
+([kb-links.md](kb-links.md)). It is never a trailing `Back-source: [x](…), [y](…).`
+line and never a bare link parked at the end of a step.
 
-> **Bad.** Hash the password before writing the row. Back-source:
-> [[adr-auth-01-identity-model]].
-> **Good.** Hash the password using [[auth.password.hash|auth::password::hash]],
-> following the auth-provider integration model in [[adr-auth-01-identity-model]].
+```markdown
+Bad.  Hash the password before writing the row. Back-source:
+      [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
+Good. Hash the password using
+      [auth::password::hash](../password/password.hash.action.md), following the
+      auth-provider integration model in
+      [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
+```
 
 Paratextual references are cheap to write and cheap to break. Nothing in the sentence
 says which clause the link grounds, so editing the sentence silently orphans it.
@@ -404,7 +408,7 @@ layer, and never escalates. **Nothing gates a commit on style.**
 R4 is alone because it is the one check that reads a **declaration** rather than
 judging prose. `00_bootstrap/glossary.md` records that this word is rejected and
 names the approved one, so a hit contradicts something the operator wrote down —
-the same class of defect as a broken wikilink, and the glossary is what makes it
+the same class of defect as a broken link, and the glossary is what makes it
 checkable. Delete the row and the finding goes away, correctly.
 
 Every other rule states a preference about how a sentence reads. R1, R3 and R7

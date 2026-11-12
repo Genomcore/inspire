@@ -6,8 +6,9 @@ processes that run with nobody behind them, and the design system. One directory
 per concept, so reviewing a module or a face is one directory.
 
 **No tool reads this layout.** Every validator, every skill and the INSPIRE Factory
-find an artifact by its **typed extension** and resolve a link by its **id**. The
-directories are for people.
+find an artifact by its **typed extension**. A link names its target file by a
+relative Markdown path, so moving a file rewrites the links to it; the target's id
+comes from the file, never from the link text. The directories are for people.
 
 ```
 01_spec/
@@ -59,6 +60,7 @@ template in its type's first state: `lifecycle: draft` for an entity, an action,
 screen, a face, a bundle or a process; `**State:** 🟡 Planned` for a feature;
 `**Status:** design` for an ADR. A module hub has no state, so its file is enough. A
 missing target then always means a broken link, never a concept nobody wrote down.
+Links are written as `.claude/skills/_references/kb-links.md` says.
 
 ## `_migration/`
 
