@@ -30,6 +30,15 @@ has "update: the warning counts every wikilink in the KB" "$warning" "inspire_kb
 has "update: the warning points at /inspire:migrate" "$warning" "run /inspire:migrate"
 eq "update: a file holding wikilinks is left as it was" "$(shasum -a 256 "$note" | cut -d' ' -f1)" "$note_before"
 
+# A KB with no wikilink left gets no warning.
+while IFS= read -r f; do
+  sed 's/\[\[/[/g; s/\]\]/]/g' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+done < <(grep -rl '\[\[' "$proj/inspire_kb")
+premise "the KB holds no wikilink" "[ \"\$(bash '$PLUGIN_ROOT/scripts/migrate-links.sh' --count --kb '$proj/inspire_kb')\" = 0 ]"
+out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "update: no wikilink, no warning" "! (printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q 'wikilink')"
+
 rm -rf "$(dirname "$proj")"
 fixture_cleanup "$FIXTURE_WORK"
 summary

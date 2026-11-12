@@ -14,8 +14,8 @@ step that moves anything in `inspire_kb/`: `/inspire:update` never does
 D10).
 
 From 0.16.1 a KB link is a relative Markdown link to the target file,
-`[adr-audit](../../_adr/audit.adr.md)`. After the moves are committed, the skill
-converts every `[[wikilink]]` in a second step and a second commit
+`[adr-audit](../../_adr/audit.adr.md)`. The skill converts every `[[wikilink]]` in
+its own step
 ([`adr-markdown-links`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-markdown-links.md)
 D6). A KB already on the concept layout that still holds wikilinks starts at
 Step 4: its links are converted and nothing moves.
@@ -60,7 +60,7 @@ Never answer a question yourself: these are specification decisions.
 **Relay the plan grouped:** how many files move per kind, every screen id that changes
 (the `idmap` lines, old → new), every file it cannot place (`unplaced`: moved under
 `_migration/unplaced/`, never dropped) and every `note`. Add how many wikilinks
-Step 4 converts:
+the KB holds outside code:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/migrate-links.sh" --count --kb inspire_kb
@@ -116,14 +116,19 @@ when there is none, the renames git holds since the commit before the layered
 directories left, read and never written; when the history does not show that
 commit, ask the operator for it and pass `--since REV`.
 
-The new link's text is the wikilink's alias, else its target as written, so a link
-in a screen's `## Bindings` keeps the screen id it named. Links inside code spans
-and fenced blocks stay as written.
+The new link's text is the wikilink's alias, else the last segment of its target,
+so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
+(`[[b#context]]`) stays on the new path, an embed (`![[b]]`) keeps its `!`, a path
+holding a space or a parenthesis is written in `<…>`, and a link in frontmatter is a
+quoted string. Links inside code spans and fenced blocks stay as written.
 
 **Relay the count per source and every `unresolved` line**: each one stays a
 wikilink, and `links-resolve` reports it until it points at a file. Ask the operator
-which file each one means. Then run it without `--dry-run`; the link plan is saved
-to `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
+which file each one means, and edit each wikilink they name to that file's id or
+path before the act run, which then converts it. Then run it without `--dry-run`;
+it refuses while git lists uncommitted moves, additions or deletions under the KB
+(Step 3 comes first). The link plan is saved to
+`inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
 
 Tell the operator to commit the conversion:
 
@@ -159,3 +164,8 @@ reads a screen id's shape (its first segment was the module, it is now the face)
 not text it can fix, so its report lists those sites to review by hand. The test
 suite runs on that branch before it is merged. The only new units it plans are the
 grouping bundles, one mount test each. An older Factory refuses this KB and says why.
+
+A KB whose links Step 4 converted needs the Factory release that reads Markdown
+links and rewrites the fingerprint of each built claim whose payload differs only in
+link syntax (adr-markdown-links D8). An older release rebuilds every claim that
+quotes a link.

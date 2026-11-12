@@ -544,6 +544,19 @@ while IFS='|' read -r id pkg prof mods; do
   [ -n "$pkg" ] || plan note "bundle $id has no package: set package: in its file before the Factory plans it"
 done < "$BUNDLES"
 
+# A bundle links each module's hub, so a module the layered layout gave no hub gets
+# one with the template's sections (adr-markdown-links D7).
+MODULE_TEMPLATE="$(cd -P "$(dirname "$0")" && pwd -P)/../base/skills/inspire-module/templates/module.template.md"
+cut -d'|' -f4 "$BUNDLES" | tr ',' '\n' | grep -v '^$' | sort -u | while IFS= read -r m; do
+  [ -f "$KB/02_modules/$m.md" ] && continue
+  {
+    printf -- '---\nkind: module-hub\n---\n\n# %s\n\n' "$m"
+    printf '<!-- Created by /inspire:migrate: a bundle groups this module, and the layered layout had no hub for it. -->\n'
+    [ -f "$MODULE_TEMPLATE" ] && awk '/^## / { print ""; print }' "$MODULE_TEMPLATE"
+  } > "$GEN/hub-$m.md"
+  plan write "$SPEC/_modules/$m/$m.module.md" "hub of module $m, which a bundle links"
+done
+
 for l in $(cat "$DS_LIBS"); do
   plan note "lib surface $l is now part of the design system; its package is no longer declared anywhere"
 done
@@ -618,6 +631,11 @@ for g in "$GEN"/bundle-*.md; do
   [ -f "$g" ] || continue
   id="${g##*/bundle-}"; id="${id%.md}"
   mkdir -p "$SPEC/_bundles"; cp "$g" "$SPEC/_bundles/$id.bundle.md"
+done
+for g in "$GEN"/hub-*.md; do
+  [ -f "$g" ] || continue
+  m="${g##*/hub-}"; m="${m%.md}"
+  mkdir -p "$SPEC/_modules/$m"; cp "$g" "$SPEC/_modules/$m/$m.module.md"
 done
 for g in "$GEN"/nav-*.md; do
   [ -f "$g" ] || continue

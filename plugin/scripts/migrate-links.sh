@@ -23,7 +23,8 @@
 # In act mode the files are rewritten and the plan is saved to
 # 01_spec/_migration/links.tsv, when it converted anything.
 #
-# Exit: 0 converted (or nothing to do) · 1 refused · 2 usage.
+# Exit: 0 converted (or nothing to do) · 1 refused (a layered KB, or moves git has not
+# committed) · 2 usage.
 #
 # It leaves a link inside a code span or a fenced block, and a link it cannot resolve,
 # as written. It reads git and never writes to it. bash 3.2 compatible.
@@ -35,7 +36,7 @@ DRY=0
 COUNT=0
 SINCE=""
 
-usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -82,54 +83,45 @@ function relpath(p, start,   na, nb, a, b, i, c, r) {
   return r == "" ? "." : r
 }
 function slurp(f,   t) { t = ""; RS = "\001"; getline t < f; close(f); return t }
-# A fence is ``` to the next ```; an inline span is ` to the next ` on the same line.
-function code_spans(t,   L, i, j, k, rest) {
-  NCS = 0; L = length(t); i = 1
-  while (i <= L) {
-    j = index(substr(t, i), "`"); if (!j) break
-    i += j - 1
-    if (substr(t, i, 3) == "```" && (k = index(substr(t, i + 3), "```"))) {
-      CS[++NCS] = i; CE[NCS] = i + k + 5; i = CE[NCS]; continue
-    }
-    rest = substr(t, i + 1)
-    if ((k = match(rest, /[`\n]/)) && substr(rest, k, 1) == "`") {
-      CS[++NCS] = i; CE[NCS] = i + k + 1; i = CE[NCS]; continue
-    }
-    i++
+# wikilinks(t) — the wikilinks in t that the reader reads, line by line with its
+# frontmatter, fence and span rules: NL of them, each at LS (start) to LE (end,
+# exclusive) on line LLN, inner text LIN; LFM marks frontmatter. NCODE counts those
+# the reader takes for code.
+function wikilinks(t,   n, lines, k, base, line, fm) {
+  NL = 0; NCODE = 0; sdd_fence_ch = ""; sdd_fence_len = 0
+  n = split(t, lines, "\n"); base = 0; fm = 0
+  for (k = 1; k <= n; k++) {
+    line = lines[k]
+    if (k == 1 && sdd_fm_delim(line)) fm = 1
+    else if (fm && sdd_fm_delim(line)) fm = 0
+    else if (!fm && (sdd_fence(line) || sdd_in_fence())) NCODE += wiki_scan(line)
+    else NCODE += wiki_scan(line) - wiki_scan(sdd_unspan(line, 1), line, base, k, fm)
+    base += length(line) + 1
   }
-  CI = 1
 }
-# Called with increasing positions only.
-function in_code(i) {
-  while (CI <= NCS && CE[CI] <= i) CI++
-  return CI <= NCS && CS[CI] <= i
-}
-# next_link(t, from) — the next [[…]] not preceded by `!`: sets LS (start), LE (end,
-# exclusive) and LINNER, and returns 0 when there is none.
-function next_link(t, from,   i, j, rest) {
-  while ((i = index(substr(t, from), "[["))) {
-    i += from - 1
-    if (i > 1 && substr(t, i - 1, 1) == "!") { from = i + 1; continue }
-    rest = substr(t, i + 2)
-    if (!(j = index(rest, "]"))) return 0
-    if (j > 1 && substr(rest, j, 2) == "]]") {
-      LS = i; LE = i + j + 3; LINNER = substr(rest, 1, j - 1); return 1
-    }
-    from = i + 1
+# The reader's wikilink pattern over s; with raw given, each match is recorded
+# from raw, which s masks code in without moving a byte.
+function wiki_scan(s, raw, base, ln, fm,   c, off, m) {
+  c = 0; off = 0
+  while (match(substr(s, off + 1), /\[\[[^][]+\]\]/)) {
+    m = off + RSTART; off = m + RLENGTH - 1; c++
+    if (raw == "") continue
+    NL++; LS[NL] = base + m; LE[NL] = base + off + 1; LLN[NL] = ln; LFM[NL] = fm
+    LIN[NL] = substr(raw, m + 2, RLENGTH - 4); LPRE[NL] = substr(raw, 1, m - 1)
   }
-  return 0
+  return c
 }
 AWK
+# The reader's span, fence and frontmatter rules come from the runtime library itself.
+. "$(cd -P "$(dirname "$0")" && pwd -P)/../base/bin/_lib.sh" || { printf 'migrate-links: cannot read the plugin library\n' >&2; exit 1; }
+AWK_LIB="$AWK_LIB$SDD_AWK_SPAN_FUNCS$SDD_AWK_FENCE_FUNCS"
 
 if [ "$COUNT" -eq 1 ]; then
-  awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
+  LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
     BEGIN {
       while ((getline f < LIST) > 0) files[++nf] = f
       close(LIST)
-      for (n = 1; n <= nf; n++) {
-        t = slurp(KB "/" files[n]); code_spans(t); pos = 1
-        while (next_link(t, pos)) { if (!in_code(LS)) c++; pos = LE }
-      }
+      for (n = 1; n <= nf; n++) { wikilinks(slurp(KB "/" files[n])); c += NL }
       print c + 0
     }'
   exit 0
@@ -141,6 +133,24 @@ for l in 01_adr 02_modules 03_features 04_domain 05_screens; do
     exit 1
   fi
 done
+
+# Moves not yet committed would land in one commit with the link edits, and git would
+# lose them as renames (D6). The move plan and the link plan are the run's own files.
+uncommitted=""; git_note=""
+if git -C "$KB" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  prefix="$(git -C "$KB" rev-parse --show-prefix)"
+  uncommitted="$(GIT_OPTIONAL_LOCKS=0 git -C "$KB" -c core.quotepath=false status --porcelain --untracked-files=all -- . 2>/dev/null \
+    | awk -v skip="${prefix}01_spec/_migration/" '
+        { p = substr($0, 4); sub(/^.* -> /, "", p); gsub(/"/, "", p) }
+        index(p, skip) == 1 { next }
+        substr($0, 1, 2) == "??" || substr($0, 1, 2) ~ /[RAD]/ { print "  " substr($0, 1, 2) " " p }')"
+  if [ -n "$uncommitted" ] && [ "$DRY" -eq 0 ]; then
+    printf 'migrate-links: %s has moves, additions or deletions git has not committed. Commit the moves on their own first (/inspire:migrate Step 3), then convert:\n%s\n' "$KB" "$(printf '%s\n' "$uncommitted" | head -10)" >&2
+    exit 1
+  fi
+else
+  git_note="the KB is not in a git work tree, so nothing checks that its moves are committed"
+fi
 
 # ── the move record: old <TAB> new, both relative to the KB ──────────────────
 RENAMES="$WORK/renames.tsv"; : > "$RENAMES"
@@ -160,7 +170,8 @@ elif git -C "$KB" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     [ -n "$moved" ] && SINCE="$moved^"
   fi
   if [ -n "$SINCE" ]; then
-    GIT_OPTIONAL_LOCKS=0 git -C "$KB" -c core.quotepath=false diff --name-status -M --relative "$SINCE" HEAD 2>/dev/null \
+    # No rename limit: above it git stops pairing edited moves and lists them as D + A.
+    GIT_OPTIONAL_LOCKS=0 git -C "$KB" -c core.quotepath=false -c diff.renameLimit=0 diff --name-status -M --relative "$SINCE" HEAD 2>/dev/null \
       | awk -F'\t' '$1 ~ /^R/ { printf "%s\t%s\n", $2, $3 }' > "$RENAMES"
     record="git renames since $SINCE"
   else
@@ -172,7 +183,7 @@ fi
 
 # ── the id index: key <TAB> path, ambiguous keys dropped ─────────────────────
 INDEX="$WORK/index.tsv"
-awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
+LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
   function add(k, p) {
     k = tolower(k); if (k == "") return
     if ((k in idx) && idx[k] != p) clash[k] = 1
@@ -191,8 +202,9 @@ awk -v KB="$KB" -v LIST="$FILES" "$AWK_LIB"'
         add(ty == "adr" ? "adr-" s : ty == "adr.rationale" ? "adr-" s ".rationale" : s, f)
       }
       t = slurp(KB "/" f)
-      if (substr(t, 1, 4) != "---\n" || !(k = index(substr(t, 5), "\n---"))) continue
-      m = split(substr(t, 5, k - 1), line, "\n")
+      h = substr(t, 1, 4) == "---\n" ? 5 : substr(t, 1, 5) == "---\r\n" ? 6 : 0
+      if (!h || !(k = index(substr(t, h), "\n---"))) continue
+      m = split(substr(t, h, k - 1), line, "\n")
       for (i = 1; i <= m; i++) {
         if (substr(line[i], 1, 3) != "id:") continue
         v = substr(line[i], 4)
@@ -217,7 +229,8 @@ OUT="$WORK/out"; mkdir -p "$OUT"
 PLAN="$WORK/links.tsv"
 CHANGED="$WORK/changed.tsv"; : > "$CHANGED"
 STATS="$WORK/stats.tsv"
-awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX" -v IDMAP="$IDMAP" \
+# Byte semantics in every pass, so a span is masked and a file rewritten byte for byte.
+LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX" -v IDMAP="$IDMAP" \
     -v OUT="$OUT" -v CHANGED="$CHANGED" -v STATS="$STATS" "$AWK_LIB"'
   function exists(p,   r, x) { r = (getline x < (KB "/" p)); if (r >= 0) close(KB "/" p); return r >= 0 }
   function resolve(src, target,   cand, seg, k) {
@@ -239,6 +252,17 @@ awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX" -v IDMA
   }
   function flat(s) { gsub(/[\t\n]/, " ", s); return s }
   function trim(s) { sub(/^[ \t\n\r]+/, "", s); sub(/[ \t\n\r]+$/, "", s); return s }
+  # A destination with a space or a parenthesis goes in <…>, the CommonMark form.
+  function dest(p) { return p ~ /[ ()]/ ? "<" p ">" : p }
+  # A frontmatter link is a quoted YAML string (D3): inside quotes it is escaped for
+  # them, and where it starts a value unquoted it gets double quotes of its own.
+  function yaml(md, pre,   dq, sq, s) {
+    s = pre; gsub(/\\./, "", s); dq = gsub(/"/, "", s) % 2; sq = gsub(/\047/, "", s) % 2
+    if (sq) { gsub(/\047/, "\047\047", md); return md }
+    if (!dq && pre !~ /(^|[:,[-])[ \t]*$/) return md
+    s = ""; while (match(md, /[\\"]/)) { s = s substr(md, 1, RSTART - 1) "\\" substr(md, RSTART, 1); md = substr(md, RSTART + 1) }
+    return dq ? s md : "\"" s md "\""
+  }
   BEGIN {
     while ((getline l < RENAMES) > 0) {
       split(l, a, "\t"); REN[a[1]] = a[2]; BACK[a[2]] = a[1]
@@ -252,28 +276,29 @@ awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$INDEX" -v IDMA
     while ((getline f < LIST) > 0) files[++nf] = f
     close(LIST)
     for (n = 1; n <= nf; n++) {
-      f = files[n]; t = slurp(KB "/" f); code_spans(t)
-      out = ""; pos = 1; from = 1; ln = 1; lnpos = 1; changed = 0
-      while (next_link(t, from)) {
-        from = LE
-        if (in_code(LS)) { st["code"]++; continue }
-        chunk = substr(t, lnpos, LS - lnpos); ln += gsub(/\n/, "", chunk); lnpos = LS
-        inner = LINNER; target = inner; alias = ""
+      f = files[n]; t = slurp(KB "/" f); wikilinks(t); st["code"] += NCODE
+      out = ""; pos = 1; changed = 0
+      for (w = 1; w <= NL; w++) {
+        inner = LIN[w]; ln = LLN[w]; target = inner; alias = ""
         if ((p = index(inner, "|"))) {
           alias = substr(inner, p + 1)
           target = substr(inner, 1, p - ((p > 1 && substr(inner, p - 1, 1) == "\\") ? 2 : 1))
         }
-        target = trim(target)
-        path = resolve(f, target)
-        if (path == "") {
+        target = trim(target); anchor = ""
+        if ((p = index(target, "#"))) { anchor = substr(target, p); target = trim(substr(target, 1, p - 1)) }
+        if (target == "" && anchor != "") { HOW = "path"; rel = "" }
+        else if ((path = resolve(f, target)) != "") rel = relpath(path, dir_of(f))
+        else {
           st["unresolved"]++
           printf "unresolved\t%s/%s\t%d\t%s\n", KB, f, ln, flat("[[" inner "]]")
           continue
         }
         if (alias != "") text = trim(alias)
+        else if (target == "") text = substr(anchor, 2)
         else { text = target; sub(/.*\//, "", text) }
-        md = "[" text "](" relpath(path, dir_of(f)) ")"
-        out = out substr(t, pos, LS - pos) md; pos = LE; changed = 1
+        md = "[" text "](" dest(rel anchor) ")"
+        if (LFM[w]) md = yaml(md, LPRE[w])
+        out = out substr(t, pos, LS[w] - pos) md; pos = LE[w]; changed = 1
         st[HOW]++; st["converted"]++
         printf "link\t%s/%s\t%d\t%s\t%s\t%s\n", KB, f, ln, HOW, flat("[[" inner "]]"), flat(md)
       }
@@ -293,6 +318,8 @@ tally() { awk -F'\t' -v k="$1" '$1 == k { print $2; f = 1 } END { if (!f) print 
 converted="$(tally converted)"
 {
   printf 'note\tmove record: %s (%s renames)\n' "$record" "$(wc -l < "$RENAMES" | tr -d ' ')"
+  [ -n "$git_note" ] && printf 'note\t%s\n' "$git_note"
+  [ -n "$uncommitted" ] && printf 'note\tthe act run refuses until the moves are committed: git lists %s uncommitted move(s), addition(s) or deletion(s)\n' "$(printf '%s\n' "$uncommitted" | wc -l | tr -d ' ')"
   printf 'note\tlinks: %s converted in %s file(s) (moved-path %s, path %s, id %s, moved-stem %s, id-map %s), %s unresolved and left as written, %s in code left as written\n' \
     "$converted" "$(tally files)" "$(tally moved-path)" "$(tally path)" "$(tally id)" "$(tally moved-stem)" "$(tally id-map)" \
     "$(tally unresolved)" "$(tally code)"

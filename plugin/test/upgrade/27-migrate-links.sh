@@ -59,7 +59,7 @@ printf '# order, with no id: in its frontmatter\n' | mk "$S/_modules/a/_domain/o
 printf -- '---\nid: portal.detail\n---\n# detail\n' | mk "$S/_faces/portal/_screens/detail.screen.md"
 printf '# T-1\nTouches [[a]].\n' | mk "$K/99_tracker/tickets/T-1.md"
 
-eq "it counts the wikilinks outside code" "$(cd "$P" && bash "$LINKS" --count)" "11"
+eq "it counts the wikilinks outside code" "$(cd "$P" && bash "$LINKS" --count)" "12"
 
 before="$(tree_hash "$P")"
 out="$(cd "$P" && bash "$LINKS" --dry-run 2>&1)"; rc=$?
@@ -79,7 +79,7 @@ has "an alias becomes the text"                              "$A" "- alias: [the
 has "an escaped table pipe splits target from alias"         "$A" "| x | [module b](../b/b.module.md) |"
 has "an ambiguous key resolves nothing"                      "$A" "- ambiguous: [[create]]"
 has "a link to nothing stays as written"                     "$A" "- nowhere: [[nowhere]]"
-has "an embed stays"                                         "$A" "- embed: ![[b]]"
+has "an embed converts and keeps its !"                      "$A" "- embed: ![b](../b/b.module.md)"
 has "a link in a code span stays"                            "$A" '- code: `[[b]]`'
 has "a link in a fenced block stays"                         "$A" '```
 [[b]]
@@ -88,7 +88,7 @@ check "a frontmatter link converts and stays quoted" \
   "grep -qxF 'requires: [\"[a](../../a/a.module.md)\"]' '$S/_modules/b/_features/create.feature.md'"
 check "a link outside 01_spec converts too" "grep -qxF 'Touches [a](../../01_spec/_modules/a/a.module.md).' '$K/99_tracker/tickets/T-1.md'"
 has "the run lists each unresolved link with its line" "$out" "unresolved${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}8${TAB}[[create]]"
-has "and sums up by source" "$out" "links: 9 converted in 3 file(s) (moved-path 1, path 1, id 4, moved-stem 1, id-map 2), 2 unresolved and left as written, 2 in code left as written"
+has "and sums up by source" "$out" "links: 10 converted in 3 file(s) (moved-path 1, path 1, id 5, moved-stem 1, id-map 2), 2 unresolved and left as written, 2 in code left as written"
 check "the link plan is saved" "grep -q '^link${TAB}' '$S/_migration/links.tsv' && grep -q '^unresolved${TAB}' '$S/_migration/links.tsv'"
 eq "only the unresolved links are left" "$(cd "$P" && bash "$LINKS" --count)" "2"
 
@@ -129,11 +129,129 @@ mv "$G/inspire_kb/03_features/b/create.md" "$GS/b/_features/create.feature.md"
 rm -rf "$G/inspire_kb/02_modules" "$G/inspire_kb/03_features"
 gitq add -A && gitq commit -qm moved
 head_before="$(gitq rev-parse HEAD)"
+# --since names the commit before the move when the history cannot.
+out="$(cd "$G" && bash "$LINKS" --dry-run --since HEAD~1 2>&1)"
+has "--since sets the commit the renames are read from" "$out" "move record: git renames since HEAD~1"
+has "and a path link follows those renames" "$out" "moved-path${TAB}[[../03_features/a/create]]${TAB}[create](_features/create.feature.md)"
 out="$(cd "$G" && bash "$LINKS" 2>&1)"; rc=$?
 eq "with no plan.tsv the conversion exits 0" "$rc" "0"
 check "a path link follows git's renames" "grep -qxF -- '- [create](_features/create.feature.md)' '$GS/a/a.module.md'"
 has "and the plan names git as the move record" "$out" "move record: git renames since"
 eq "git is only read: HEAD is where it was" "$(gitq rev-parse HEAD)" "$head_before"
 eq "and the only change is the converted file" "$(gitq status --porcelain | tr '\n' ' ')" " M inspire_kb/01_spec/_modules/a/a.module.md ?? inspire_kb/01_spec/_migration/ "
+
+gitq add -A && gitq commit -qm converted
+
+# Moves git has not committed refuse the act run: they would share its commit (D6).
+mkdir -p "$GS/c"; gitq mv "$GS/b/_features/create.feature.md" "$GS/c/create.feature.md"
+printf '# c\n[[a]]\n' | mk "$GS/c/c.module.md"
+before="$(tree_hash "$G")"
+out="$(cd "$G" && bash "$LINKS" 2>&1)"; rc=$?
+eq "uncommitted moves: refused" "$rc" "1"
+has "the refusal names Step 3" "$out" "Step 3"
+has "and lists the move" "$out" "c/create.feature.md"
+eq "and nothing changed" "$(tree_hash "$G")" "$before"
+out="$(cd "$G" && bash "$LINKS" --dry-run 2>&1)"; rc=$?
+eq "a dry run still plans" "$rc" "0"
+has "and says the act run refuses" "$out" "the act run refuses until the moves are committed"
+gitq add -A && gitq commit -qm "moved c"
+out="$(cd "$G" && bash "$LINKS" 2>&1)"; rc=$?
+eq "once committed, the conversion runs" "$rc" "0"
+has "outside git a run proceeds with a note" "$(cd "$P" && bash "$LINKS" --dry-run 2>&1)" "not in a git work tree"
+
+# Git pairs moves it must compare by content only below diff.renameLimit; the run
+# lifts the limit, so an edited move is still a rename.
+R="$W/renamelimit"; mkdir -p "$R"
+gitr() { git -C "$R" -c user.email=t@t -c user.name=t -c commit.gpgsign=false -c core.hooksPath=/dev/null "$@"; }
+gitr init -q; gitr config diff.renameLimit 1
+for m in a b c; do printf '# %s\n[[../03_features/%s/list]]\none\ntwo\nthree\n' "$m" "$m" | mk "$R/inspire_kb/02_modules/$m.md"
+  printf '# list of %s\none\ntwo\nthree\nfour\n' "$m" | mk "$R/inspire_kb/03_features/$m/list.md"; done
+gitr add -A && gitr commit -qm layered
+for m in a b c; do mkdir -p "$R/inspire_kb/01_spec/_modules/$m/_features"
+  mv "$R/inspire_kb/02_modules/$m.md" "$R/inspire_kb/01_spec/_modules/$m/$m.module.md"
+  { cat "$R/inspire_kb/03_features/$m/list.md"; printf 'edited in the move\n'; } > "$R/inspire_kb/01_spec/_modules/$m/_features/list.feature.md"
+  rm "$R/inspire_kb/03_features/$m/list.md"; done
+rm -rf "$R/inspire_kb/02_modules" "$R/inspire_kb/03_features"
+gitr add -A && gitr commit -qm moved
+out="$(cd "$R" && bash "$LINKS" --dry-run 2>&1)"
+has "an edited move above the rename limit still maps a path link" "$out" "moved-path${TAB}[[../03_features/c/list]]${TAB}[list](_features/list.feature.md)"
+
+# The edge cases: the reader's code rules, frontmatter, anchors, spaces, CRLF, bytes.
+E="$W/edge"; EK="$E/inspire_kb/01_spec/_modules"
+printf '# b\n' | mk "$EK/b/b.module.md"
+printf '# v2\n' | mk "$EK/b/my file (v2).md"
+printf -- '---\r\nid: zed.custom\r\n---\r\n# crlf entity\r\n' | mk "$EK/b/crlf.entity.md"
+printf -- '---\r\nrequires: [[b]]\r\n---\r\nSee [[b]].\r\n' | mk "$EK/b/crlf-links.md"
+printf 'no newline [[b]]' | mk "$EK/b/tail.md"
+mk "$EK/a/a.module.md" <<'E'
+---
+requires: [[b]]
+links:
+  - [[b]]
+deps: [[[b]], [[b|bee]]]
+quoted: '[[b]]'
+---
+# a
+~~~
+[[b]] tilde
+~~~
+
+````
+```
+[[b]] inner4
+````
+
+``x [[b]] dbl``
+anchor [[b#context]] and [[b#context|ctx]] and [[#local]]
+space [[my file (v2)]] crlf id [[zed.custom]]
+E
+reader() { (cd "$E" && . "$PLUGIN_ROOT/base/bin/_lib.sh" && SDD_ENTITY_INDEX_FILE="" && sdd_links "$1"; rm -f "${SDD_LINK_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"); }
+wikis_read=0
+while IFS= read -r f; do
+  wikis_read=$((wikis_read + $(reader "$f" | awk -F'\t' '$2 == "wiki"' | wc -l)))
+done < <(cd "$E" && find inspire_kb -name '*.md')
+eq "--count counts exactly the wikilinks the reader reads" "$(cd "$E" && bash "$LINKS" --count)" "$wikis_read"
+premise "the reader reads the corpus's 13 wikilinks outside code" "[ '$wikis_read' -eq 13 ]"
+tail_before="$(shasum -a 256 < "$EK/b/tail.md")"
+out="$(cd "$E" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the edge KB converts" "$rc" "0"
+A="$(cat "$EK/a/a.module.md")"
+has "a ~~~ fence is code"                         "$A" '~~~
+[[b]] tilde
+~~~'
+has "a four-backtick fence quoting a three-backtick one is code" "$A" '```
+[[b]] inner4
+````'
+has "a double-backtick span is code"              "$A" '``x [[b]] dbl``'
+has "an anchor stays after the path"              "$A" "anchor [b](../b/b.module.md#context) and [ctx](../b/b.module.md#context)"
+has "a same-file anchor becomes an in-file link"  "$A" "and [local](#local)"
+has "a path holding a space or a parenthesis goes in <>" "$A" "space [my file (v2)](<../b/my file (v2).md>)"
+has "a CRLF file's frontmatter id is indexed"     "$A" "crlf id [zed.custom](../b/crlf.entity.md)"
+has "an unquoted frontmatter wikilink is quoted"  "$A" 'requires: "[b](../b/b.module.md)"'
+has "a list item is quoted"                       "$A" '  - "[b](../b/b.module.md)"'
+has "flow sequence items are quoted"              "$A" 'deps: ["[b](../b/b.module.md)", "[bee](../b/b.module.md)"]'
+has "a single-quoted link stays in its quotes"    "$A" "quoted: '[b](../b/b.module.md)'"
+bad_yaml=0
+while IFS= read -r f; do
+  head -1 "$f" | grep -q '^---' || continue
+  yq --front-matter=extract '.' "$f" >/dev/null 2>&1 || bad_yaml=$((bad_yaml + 1))
+done < <(find "$E/inspire_kb" -name '*.md')
+eq "yq parses every converted frontmatter" "$bad_yaml" "0"
+eq "and reads the quoted link as the value" "$(yq --front-matter=extract '.requires' "$EK/a/a.module.md")" "[b](../b/b.module.md)"
+eq "a CRLF file keeps its line ends" "$(tr -cd '\r' < "$EK/b/crlf-links.md" | wc -c | tr -d ' ')" "4"
+eq "a CRLF frontmatter link is quoted before its \\r" "$(sed -n 2p "$EK/b/crlf-links.md")" "$(printf 'requires: "[b](b.module.md)"\r')"
+hasnt "a file with no last newline converts" "$(shasum -a 256 < "$EK/b/tail.md")" "$tail_before"
+eq "and gets no newline" "$(tail -c 1 "$EK/b/tail.md")" ")"
+R1="$(reader inspire_kb/01_spec/_modules/a/a.module.md)"
+has "the reader resolves the anchored path" "$R1" "../b/b.module.md#context${TAB}ctx${TAB}inspire_kb/01_spec/_modules/b/b.module.md"
+has "the reader resolves the path in <>"    "$R1" "my file (v2)${TAB}inspire_kb/01_spec/_modules/b/my file (v2).md"
+hasnt "the reader finds no unresolved link" "$(printf '%s\n' "$R1" | awk -F'\t' '$5 == ""')" "md"
+
+# A layered KB is counted as it stands, for Step 1.
+eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
+
+out="$(cd "$P" && bash "$LINKS" --bogus 2>&1)"; rc=$?
+eq "an unknown argument is a usage error" "$rc" "2"
+has "and names it" "$out" "unknown argument: --bogus"
 
 summary
