@@ -107,7 +107,7 @@ check "a frontmatter link converts and stays quoted" \
   "grep -qxF 'requires: [\"[a](../../a/a.module.md)\"]' '$S/_modules/b/_features/create.feature.md'"
 check "a link outside 01_spec converts too" "grep -qxF 'Touches [a](../../01_spec/_modules/a/a.module.md).' '$K/99_tracker/tickets/T-1.md'"
 has "the run lists each link it unlinks, with its line and why" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/a/a.module.md${TAB}9${TAB}[[nowhere]]${TAB}nowhere${TAB}no artifact type"
-has "and sums up by source" "$out" "links: 11 converted in 3 file(s) (moved-path 1, path 1, id 8, moved-stem 1), 0 to 0 new draft(s), 2 in code left as written"
+has "and sums up by source" "$out" "links: 11 converted in 3 file(s) (moved-path 1, path 1, id 8, moved-stem 1), 0 draft link(s), 0 new draft(s), 2 in code left as written"
 has "and the links that became their text" "$out" "unlinked: 2 link(s) became their text"
 check "the link plan is saved" "grep -q '^link${TAB}' '$S/_migration/links.tsv' && grep -q '^unlinked${TAB}' '$S/_migration/links.tsv'"
 eq "no wikilink is left outside code" "$(cd "$P" && bash "$LINKS" --count)" "0"
@@ -393,6 +393,7 @@ Module: [m](../02_modules/m/). Features: [f](../03_features/m) and [readme](../0
 Domain: [d](../04_domain/m/). Screens: [s](../05_screens/f/m/). Index: [i](../05_screens/f/m/_index.md).
 Wiki index: [[../05_screens/f/m/_index]].
 No features: [nf](../03_features/n/). One segment: [sv](../05_screens/saved-views). Gone: [g](../03_features/m/gone.md).
+Deep: [deep](../04_domain/n/sub/). No ADRs: [ar](../01_adr/README.md). Face index: [fi](../05_screens/f/_index.md).
 E
 out="$(cd "$U" && bash "$LINKS" 2>&1)"; rc=$?
 eq "the layered-subdirectory run exits 0" "$rc" "0"
@@ -405,6 +406,9 @@ has "a face's module screens name the face's screens"  "$R" "Screens: [s](../01_
 has "a layered screen index names its face's _index.md" "$R" "Index: [i](../01_spec/_faces/f/_index.md)."
 has "and a wikilink to it converts the same way"       "$R" "Wiki index: [_index](../01_spec/_faces/f/_index.md)."
 has "a mapped directory that does not exist falls back to its nearest parent" "$R" "No features: [nf](../01_spec/_modules/n)."
+has "two levels up when it has to"                      "$R" "Deep: [deep](../01_spec/_modules/n)."
+has "a README whose concept directory is missing names the nearest one" "$R" "No ADRs: [ar](../01_spec)."
+has "a face-level screen index names its face's _index.md" "$R" "Face index: [fi](../01_spec/_faces/f/_index.md)."
 has "so does a one-segment screens directory"           "$R" "One segment: [sv](../01_spec/_faces)."
 has "a missing file gets no stand-in"                   "$R" "Gone: [g](../03_features/m/gone.md)."
 has "and is listed as broken" "$out" "broken${TAB}inspire_kb/06_spikes/README.md${TAB}4${TAB}[g](../03_features/m/gone.md)"
@@ -435,10 +439,14 @@ also: "[[adr-{slug}]]"
 - no module: [[nomod::thing]]
 - retired: [[../../../../00_bootstrap/surfaces]] and [roster](../../../../00_bootstrap/surfaces.md)
 - placeholder: [[03_features/{module}/{use-case}|{USE-CASE-ID}]] and [[04_domain/…]] and [p]({path}.md)
+- chain: [[m::fresh]] then [[m::fresh::create]]
+- alias: [[m::user| the  user ]] and [[nowhere| keep  this ]]
 E
 printf '# T\n[p]({path}.md)\n[f](../../../../03_features/{module}/)\n' | mk "$VD/_modules/m/_features/feature.template.md"
+before="$(tree_hash "$V")"
 out="$(cd "$V" && bash "$LINKS" --dry-run 2>&1)"
 eq "a dry run drafts nothing" "$(find "$VD/_adr" -type f 2>/dev/null | wc -l | tr -d ' ')" "0"
+eq "and rewrites nothing" "$(tree_hash "$V")" "$before"
 has "and lists each draft it would make" "$out" "drafted${TAB}inspire_kb/01_spec/_adr/new-thing.adr.md${TAB}adr"
 out="$(cd "$V" && bash "$LINKS" 2>&1)"; rc=$?
 eq "the residue run exits 0" "$rc" "0"
@@ -466,7 +474,11 @@ check "and a layered placeholder path takes the layout, placeholder kept" "grep 
 has "the run lists each draft link" "$out" "draft${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}6${TAB}draft${TAB}[[adr-new-thing]]"
 has "each unlinked one with why" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}12${TAB}[[nomod::thing]]${TAB}nomod::thing${TAB}no artifact type"
 has "and each file it drafted" "$out" "drafted${TAB}inspire_kb/01_spec/_modules/m/_domain/user/user.archive.action.md${TAB}action"
-has "and sums them up" "$out" "6 to 7 new draft(s)"
+has "and sums them up" "$out" "7 draft link(s), 8 new draft(s)"
+has "an entity drafted in the run gets its link" "$X1" "- chain: [m::fresh](../_domain/fresh/fresh.entity.md) then"
+has "but an action on it becomes its text: the entity is not on disk yet" "$X1" "then m::fresh::create"
+has "an alias is kept exactly as the link text" "$X1" "- alias: [ the  user ](../_domain/user/user.entity.md) and"
+has "and as the plain text"                     "$X1" "and  keep  this "
 hasnt "and lists no draft link as broken" "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md"
 eq "no wikilink is left outside code" "$(cd "$V" && bash "$LINKS" --count)" "0"
 lr="$(cd "$V" && SDD_KB_ROOT=inspire_kb SDD_SPEC_ROOT=inspire_kb/01_spec "$PLUGIN_ROOT/base/bin/links-resolve.sh" 2>&1)"
@@ -475,6 +487,71 @@ hasnt "and no wikilink is reported" "$lr" "wikilink"
 after="$(tree_hash "$V")"
 out="$(cd "$V" && bash "$LINKS" 2>&1)"
 eq "a second residue run changes nothing" "$(tree_hash "$V")" "$after"
+
+# Unlinking one link touches no other: a URL, a mailto, an anchor or an image after it,
+# on its line, the next line or in the next file, stays a link, and the count is exact.
+Q2="$W/unlink-scope"; QK="$Q2/inspire_kb"; QD="$QK/01_spec"
+mk "$QD/_migration/plan.tsv" <<E
+unplaced${TAB}inspire_kb/00_bootstrap/surfaces.md${TAB}inspire_kb/01_spec/_migration/retired/00_bootstrap/surfaces.md
+E
+printf '# roster\n' | mk "$QD/_migration/retired/00_bootstrap/surfaces.md"
+mk "$QD/_modules/m/a.md" <<'E'
+[r](../../../00_bootstrap/surfaces.md) then [web](https://x.org/a) and [mail](mailto:a@b) and [anc](#top) and ![img](https://i/x.png)
+next [site](https://x.org) and [t](#top)
+code: `[r](../../../00_bootstrap/surfaces.md)`
+```
+[p]({x}.md)
+```
+E
+printf '[p]({x}.md)\n' | mk "$QD/_modules/m/b.md"
+printf 'see [site](https://x.org) and [top](#top) and ![i](https://i/y.png)\n' | mk "$QD/_modules/m/c.md"
+mk "$QD/_modules/m/d.md" <<'E'
+---
+see: "[r](../../../00_bootstrap/surfaces.md)"
+---
+![alt](../../../00_bootstrap/surfaces.md) and [a [b] c](../../../00_bootstrap/surfaces.md "t")
+E
+out="$(cd "$Q2" && bash "$LINKS" 2>&1)"
+QA="$(cat "$QD/_modules/m/a.md")"
+has "the links after an unlinked one on its line stay" "$QA" "r then [web](https://x.org/a) and [mail](mailto:a@b) and [anc](#top) and ![img](https://i/x.png)"
+has "and on the next line"                             "$QA" "next [site](https://x.org) and [t](#top)"
+has "a retired link in a code span stays"              "$QA" 'code: `[r](../../../00_bootstrap/surfaces.md)`'
+check "a placeholder in a fenced block stays" "grep -qxF '[p]({x}.md)' '$QD/_modules/m/a.md'"
+check "and in the next file, after a placeholder became its text" \
+  "grep -qxF 'p' '$QD/_modules/m/b.md' && grep -qxF 'see [site](https://x.org) and [top](#top) and ![i](https://i/y.png)' '$QD/_modules/m/c.md'"
+QDD="$(cat "$QD/_modules/m/d.md")"
+has "a retired link in frontmatter becomes its text, quoted" "$QDD" 'see: "r"'
+has "an image becomes its alt text, a bracketed text and a title kept apart" "$QDD" "alt and a [b] c"
+eq "the unlinked lines are exactly the links unlinked" "$(printf '%s\n' "$out" | grep -c "^unlinked${TAB}")" "5"
+has "and the count says so" "$out" "unlinked: 5 link(s) became their text"
+
+# A draft never overwrites a file: an ADR whose decision exists gets only its rationale.
+D2="$W/no-overwrite"; DD="$D2/inspire_kb/01_spec"
+printf '# kept\n**Status:** design\n' | mk "$DD/_adr/kept.adr.md"
+printf '# m\nWhy: [[adr-kept.rationale]].\n' | mk "$DD/_modules/m/m.module.md"
+out="$(cd "$D2" && bash "$LINKS" 2>&1)"
+eq "the existing decision is untouched" "$(cat "$DD/_adr/kept.adr.md")" "$(printf '# kept\n**Status:** design')"
+check "its rationale is drafted and links it" "grep -qF '**Decision:** [adr-kept](kept.adr.md)' '$DD/_adr/kept.adr.rationale.md'"
+hasnt "and only the rationale is listed as drafted" "$out" "drafted${TAB}inspire_kb/01_spec/_adr/kept.adr.md${TAB}"
+
+# A second run before the commit is not refused for the drafts the first run wrote,
+# and changes nothing; a file the operator added still is.
+G2="$W/second-run"; G2S="$G2/inspire_kb/01_spec"
+gitg() { git -C "$G2" -c user.email=t@t -c user.name=t -c commit.gpgsign=false -c core.hooksPath=/dev/null "$@"; }
+printf '# m\nSee [[adr-fresh]].\n' | mk "$G2S/_modules/m/m.module.md"
+gitg init -q; gitg add -A && gitg commit -qm concept
+out="$(cd "$G2" && bash "$LINKS" 2>&1)"; rc=$?
+eq "the first run in git exits 0" "$rc" "0"
+premise "it drafted the ADR" "[ -f '$G2S/_adr/fresh.adr.md' ]"
+after="$(tree_hash "$G2")"
+out="$(cd "$G2" && bash "$LINKS" 2>&1)"; rc=$?
+eq "a second run before the commit exits 0" "$rc" "0"
+eq "and changes nothing" "$(tree_hash "$G2")" "$after"
+printf '# stray\n' | mk "$G2S/_modules/m/stray.md"
+out="$(cd "$G2" && bash "$LINKS" 2>&1)"; rc=$?
+eq "a file the operator added is still refused" "$rc" "1"
+has "and named" "$out" "stray.md"
+hasnt "the drafts are not" "$out" "fresh.adr"
 
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
