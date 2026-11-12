@@ -95,6 +95,12 @@ built code, each fingerprint whose claim payload differs only in link syntax, as
 rewrites screen ids after a move (adr-kb-structure D10). A project that has not converted
 keeps every fingerprint it has.
 
+The plain text a fingerprint covers reduces a wikilink exactly as before this decision, and
+a Markdown link to a specification file to its text, so moving a file (D7) changes no
+fingerprint. A Markdown link inside a code span, or to anything else, stays as written.
+A claim counts as changed only in link syntax when its links resolve to the same ids
+before and after.
+
 ### D9 — The runtime's own files follow D1 within a payload class
 
 A skill, its `references/` and the shared `_references/` link to one another with relative
