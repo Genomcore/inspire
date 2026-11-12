@@ -27,9 +27,8 @@ through `create`.
 The argument is the **id** — `/inspire-screens update admin.users-list`. Resolve
 it to a path by finding every `*.screen.md` under `inspire_kb/01_spec/` and
 matching its frontmatter `id: {id}`, never by deriving a path from the id: the file
-may have been renamed since the id was minted. No tool answers this lookup — the
-screen-id index in `.inspire/bin/wikilinks-resolve.sh` is that rule's own, built
-per run for its own pass — so the frontmatter search is the mechanism.
+may have been renamed since the id was minted. No tool answers this lookup, so the
+frontmatter search is the mechanism.
 
 `{face}/{module}/{screen}` resolves too when exactly one screen in that face
 matches it. When several do, ask for the id rather than pick a file.
@@ -63,7 +62,7 @@ traceable act rather than a side effect of an edit.
 
 At `superseded` the screen is kept for backward reference, so this flow narrows
 to two things: `superseded_by:`, which is no part of the write-once triple, and
-the body shape — an old-shape conversion, a stale wikilink, an absent
+the body shape — an old-shape conversion, a stale link, an absent
 `## Purpose`. Bindings are declined, and the identity triple stays exactly as it
 is: new behaviour belongs on the screen that replaced it, and the id is the
 referent something downstream still points at

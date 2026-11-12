@@ -22,16 +22,17 @@ lifecycle: draft
      derives from `module` + `screen` under the face's shell; see
      references/format-screen.md.
 
-     Catalog links are bare ids, never relative paths. A linked screen, pattern,
+     Links are relative Markdown links, per
+     .claude/skills/_references/kb-links.md. A linked screen, pattern,
      layout or component that does not exist yet is created from its template in
      the same turn: a screen at lifecycle: draft, a catalog entry at
      **State:** to-extract. -->
 # {Screen Title}
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[{pattern-name}]]
-**Layout:** [[{layout-name}]]
-**Components:** [[{component-name}]]
+**Pattern:** [{pattern-name}](../../../_design-system/patterns/{pattern-name}.pattern.md)
+**Layout:** [{layout-name}](../../../_design-system/layouts/{layout-name}.layout.md)
+**Components:** [{component-name}](../../../_design-system/components/{component-name}.component.md)
 
 <!-- One paragraph of prose — no table, no list: who comes to this screen, for
      which task, and what they see first. It orients a human reader and gives
@@ -50,7 +51,7 @@ lifecycle: draft
      claim ({id}/param/{key} · {id}/data/{key} · {id}/dispatch/{key} ·
      {id}/nav/{key} · {id}/state/{key}). Drop a subsection this screen has
      nothing to declare in.
-     A pipe-syntax wikilink inside a table cell escapes its pipe (`\|`) — an
+     A pipe-syntax link inside a table cell escapes its pipe (`\|`) — an
      unescaped one would end the cell. A bare colon-form link is equally valid.
 
      One transition, one declaration, one claim: a transition a dispatch causes
@@ -81,20 +82,20 @@ lifecycle: draft
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what this feed is for}, by param `id` |
+| `main` | [{module}::{entity}::{action}](../../../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md) | {what this feed is for}, by param `id` |
 
 ### SCR5: Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[{module}.{entity}.{action}\|{module}::{entity}::{action}]] | {what the user does} | → [[{target-screen-id}]] | state `{state-key}` |
+| `create` | [{module}::{entity}::{action}](../../../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md) | {what the user does} | → [{target-screen-id}]({target-slug}.screen.md) | state `{state-key}` |
 
 ### SCR6: Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `back` | [[{target-screen-id}]] | {what the user does} |
-| `open` | [[{target-screen-id}]] param `{target-param-key}` | {what the user does} |
+| `back` | [{target-screen-id}]({target-slug}.screen.md) | {what the user does} |
+| `open` | [{target-screen-id}]({target-slug}.screen.md) param `{target-param-key}` | {what the user does} |
 
 ### SCR7: States
 

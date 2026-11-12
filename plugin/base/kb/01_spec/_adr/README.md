@@ -15,7 +15,7 @@ decision itself, and the rationale that explains it.
   collide when two branches each grab the next one. The canonical id is
   `adr-{slug}`: the extension says the file is an ADR, so the name does not repeat
   `adr-`, and the prefix is added back when the id is read. The rationale's id is
-  `adr-{slug}.rationale`, and a `[[adr-{slug}]]` wikilink always reaches the
+  `adr-{slug}.rationale`, and a link to `{slug}.adr.md` always reaches the
   decision.
 - **Three scopes:** this directory holds the **global** decisions. A decision that
   binds one module lives in that module's `_adr/`
@@ -26,8 +26,8 @@ decision itself, and the rationale that explains it.
 
 | File | Holds | Read |
 |---|---|---|
-| `{slug}.adr.md` — the **decision** | optional `faces:` / `bundles:` frontmatter (a global decision's blast radius; absent means the whole project), the H1 title, `**Status:**`, `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:` or `**Prototype:**` line, and `## Decision`: one or a few imperative statements | by every session: the session-start hook injects every live decision |
-| `{slug}.adr.rationale.md` — the **rationale** | `**Decision:** [[adr-{slug}]]`, then `## Context`, `## Consequences` with `### Breaking changes`, `## Alternatives considered` and `## Related ADRs` | when someone questions or supersedes the decision |
+| `{slug}.adr.md` — the **decision** | optional `faces:` / `bundles:` frontmatter (a global decision's blast radius; absent means the whole project), the H1 title, `**Status:**`, `**Modules affected:**`, `**Rationale:** [adr-{slug}.rationale]({slug}.adr.rationale.md)`, any `Supersedes:` or `**Prototype:**` line, and `## Decision`: one or a few imperative statements | by every session: the session-start hook injects every live decision |
+| `{slug}.adr.rationale.md` — the **rationale** | `**Decision:** [adr-{slug}]({slug}.adr.md)`, then `## Context`, `## Consequences` with `### Breaking changes`, `## Alternatives considered` and `## Related ADRs` | when someone questions or supersedes the decision |
 
 The decision constrains; the rationale explains and constrains nothing. Status,
 blast radius and modules live in the decision only.

@@ -23,7 +23,7 @@ reference does not show either.
    once with the prototype as the default.
 3. **Build `design-system.tokens.json`** in the
    [W3C Design Tokens format](https://www.designtokens.org/tr/drafts/format/), the
-   shape [`theme.tokens.json`](../../../../inspire_kb/01_spec/_design-system/theme.tokens.json)
+   shape `inspire_kb/01_spec/_design-system/theme.tokens.json`
    shows. Three sources, in this order, each filling only what the one before left
    open:
    1. **`design-system.md` itself.** Every colour, font, size, spacing, radius and

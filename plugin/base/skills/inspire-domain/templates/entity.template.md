@@ -6,10 +6,10 @@ lifecycle: draft
 ---
 
 ## ENT1: Purpose
-{{ONE_TO_THREE_SENTENCES_STATING_WHAT_THIS_ENTITY_IS_AND_WHY_IT_EXISTS_AS_A_DISCRETE_OBJECT}} [[{{PDD_BACK_SOURCE}}|{{PDD_DISPLAY_TEXT}}]] grounds the role of this entity in the {{MODULE_SUBSYSTEM_NAME}}.
+{{ONE_TO_THREE_SENTENCES_STATING_WHAT_THIS_ENTITY_IS_AND_WHY_IT_EXISTS_AS_A_DISCRETE_OBJECT}} [{{PDD_DISPLAY_TEXT}}]({{PDD_BACK_SOURCE_PATH}}) grounds the role of this entity in the {{MODULE_SUBSYSTEM_NAME}}.
 
 ## ENT2: Rationale
-{{PARAGRAPH_EXPLAINING_WHY_THE_ENTITY_EXISTS_WHY_THESE_FIELDS_AND_WHAT_MOTIVATES_THE_SHAPE}} The design follows the discipline laid out in [[{{ADR_BACK_SOURCE}}|{{ADR_DISPLAY_TEXT}}]], where {{ADR_CLAIM_SUMMARY}}. {{SECOND_CLAIM_WITH_INLINE_WIKILINK}} grounded in [[{{SECOND_PDD_BACK_SOURCE}}|{{SECOND_PDD_DISPLAY_TEXT}}]].
+{{PARAGRAPH_EXPLAINING_WHY_THE_ENTITY_EXISTS_WHY_THESE_FIELDS_AND_WHAT_MOTIVATES_THE_SHAPE}} The design follows the discipline laid out in [{{ADR_DISPLAY_TEXT}}]({{ADR_BACK_SOURCE_PATH}}), where {{ADR_CLAIM_SUMMARY}}. {{SECOND_CLAIM_WITH_INLINE_LINK}} grounded in [{{SECOND_PDD_DISPLAY_TEXT}}]({{SECOND_PDD_BACK_SOURCE_PATH}}).
 
 ## ENT3: Invariants
 - `I1` — {{OPTIONAL_HEAD_FROM_V2_ELSE_DELETE_THIS_SEGMENT}} — {{INVARIANT_PROSE}}.
@@ -40,7 +40,7 @@ Constraints: `nonnull, unique, immutable`
 ### {{FIELD_TWO}}
 Constraints: `{{CLOSED_VOCABULARY_LIST}}`
 
-{{PER_FIELD_RATIONALE}} [[{{FIELD_BACK_SOURCE}}|{{FIELD_DISPLAY_TEXT}}]] grounds that constraint.
+{{PER_FIELD_RATIONALE}} [{{FIELD_DISPLAY_TEXT}}]({{FIELD_BACK_SOURCE_PATH}}) grounds that constraint.
 
 ### created_at
 Constraints: `nonnull, immutable, default(now)`
@@ -61,4 +61,4 @@ Constraints: `nonnull, immutable, default(now)`
 
 | Action                                                                           | Touch  | Notes                          |
 |----------------------------------------------------------------------------------|--------|--------------------------------|
-| [[{{MODULE}}.{{ENTITY}}.{{ACTION}}|{{MODULE}}::{{ENTITY}}::{{ACTION}}]]          | write  | {{TOUCHED_BY_NOTES}}           |
+| [{{MODULE}}::{{ENTITY}}::{{ACTION}}]({{ENTITY}}.{{ACTION}}.action.md)          | write  | {{TOUCHED_BY_NOTES}}           |

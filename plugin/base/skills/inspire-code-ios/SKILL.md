@@ -8,7 +8,7 @@ layer: frontend
 ## Layering
 Not yet formulated for this stack — deliberately deferred to an iOS iteration that
 exercises real module boundaries, rather than transcribed untested from another
-stack's rules. The contract in `_references/stack-skills.md` still applies; this line is the deferral,
+stack's rules. The contract in [_references/stack-skills.md](../_references/stack-skills.md) still applies; this line is the deferral,
 not the answer.
 
 ## Test conventions

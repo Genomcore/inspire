@@ -23,9 +23,9 @@ lifecycle: draft         # draft | accepted | stable | superseded
 # Users
 
 **Features:** FEAT-01, FEAT-02
-**Pattern:** [[list]]
-**Layout:** [[collection]]
-**Components:** [[data-table]], [[person-chip]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
+**Layout:** [collection](../../../_design-system/layouts/collection.layout.md)
+**Components:** [data-table](../../../_design-system/components/data-table.component.md), [person-chip](../../../_design-system/components/person-chip.component.md)
 
 ## Purpose
 
@@ -45,20 +45,20 @@ everything else on the screen serves that search.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | primary table feed, filtered by param `q` |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | primary table feed, filtered by param `q` |
 
 ### Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[admin.user-detail]] param `id` | state `form-error` |
-| `delete` | [[auth.user.delete\|auth::user::delete]] | row action | refresh `main` | state `error` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | primary action | → [admin.user-detail](user-detail.screen.md) param `id` | state `form-error` |
+| `delete` | [auth::user::delete](../../../_modules/auth/_domain/user/user.delete.action.md) | row action | refresh `main` | state `error` |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[admin.user-detail]] param `id` | clicking a row |
+| `row` | [admin.user-detail](user-detail.screen.md) param `id` | clicking a row |
 
 ### States
 
@@ -147,12 +147,11 @@ the emanation frontier reads it, is [`screen-lifecycle.md`](screen-lifecycle.md)
 | Line | Required | What it declares |
 |---|---|---|
 | `**Features:**` | yes | the feature ids this screen realizes, comma-separated |
-| `**Pattern:**` | no | one repeatable structure: a `*.pattern.md` entry, linked by bare id (`[[list]]`) |
-| `**Layout:**` | no | the page frame it sits in: a `*.layout.md` entry by bare id — or every frame, outermost first, when one nests inside another |
-| `**Components:**` | no | the shared components this screen instantiates: `*.component.md` entries by bare id |
+| `**Pattern:**` | no | one repeatable structure: a `*.pattern.md` entry, linked by its file (`[list](../../../_design-system/patterns/list.pattern.md)`) |
+| `**Layout:**` | no | the page frame it sits in: a `*.layout.md` entry, linked — or every frame, outermost first, when one nests inside another |
+| `**Components:**` | no | the shared components this screen instantiates: `*.component.md` entries, linked |
 
-Catalog links are bare ids, never relative paths: the id is what a link means, and
-the directory is for people. A linked entry that does not exist yet is created in
+A catalog link is a relative Markdown link to the entry's file, its id as the text. A linked entry that does not exist yet is created in
 the same turn from its template, at `**State:** to-extract`
 ([`screen-catalog.md`](screen-catalog.md)).
 
@@ -207,7 +206,7 @@ a screen-local key**:
   once; an explicit distinct key is mandatory on duplicates.
 - **Outcomes are attributes of their dispatch, not claims of their own.**
   `On success` and `On error` take one of three forms, and nothing else:
-  `→ [[{screen-id}]]` (navigate), `state \`{key}\`` (a key declared in
+  `→ [{screen-id}]({path})` (navigate), `state \`{key}\`` (a key declared in
   `### States`), or `refresh \`{key}\`` (a key declared in `### Data`). A dash
   means the dispatch has no declared outcome on that side.
 - **One transition, one declaration, one claim.** A transition a dispatch causes
@@ -220,10 +219,9 @@ a screen-local key**:
   this mechanically, because the same target screen may legitimately be reached
   both ways: one row click and one dispatch outcome are two transitions, not a
   duplicate.
-- **Navigation targets name screens by id**, never by route or path. Screen-id
-  wikilinks resolve through the id index in `.inspire/bin/wikilinks-resolve.sh`,
-  so a positional file name never has to match one. A target that does not exist
-  yet is created in the same turn from
+- **Navigation targets are links to screen files**, never routes
+  ([kb-links.md](../../_references/kb-links.md)); the link text is the screen id. A
+  target that does not exist yet is created in the same turn from
   [`screen.template.md`](../templates/screen.template.md), at `lifecycle: draft`.
 - **Every bound action is exposed to the face.** An action a `### Data` or
   `### Dispatches` row binds belongs to a bundle the face lists in `bundles:`.
@@ -234,9 +232,6 @@ a screen-local key**:
   key `main`, while the same sentence written `main returns zero rows` does not
   and is reported as unanchored. The backticks are what separate a declared key
   from an English word that happens to spell it.
-- **A pipe-syntax wikilink inside a table cell escapes its pipe** (`\|`), or the
-  cell ends early. A bare colon-form link (`[[auth::user::list]]`) is equally
-  valid and needs no escape.
 - Drop any subsection the screen has nothing to declare in. `## Bindings` itself
   stays, with at least one subsection under it.
 
@@ -266,8 +261,8 @@ them. One row per input:
 - **Reliance is declared with `param \`{key}\``.** A `### Data` row that loads by
   a parameter names it in its cells (`filtered by param \`q\``) and must name one
   this screen declares. A transition that passes one — a `### Navigation`
-  target, or a `→ [[{screen-id}]]` dispatch outcome — writes it after the link
-  (`[[admin.user-detail]] param \`id\``), and it must be one the **target** declares.
+  target, or a `→ [{screen-id}]({path})` dispatch outcome — writes it after the link
+  (`[admin.user-detail](user-detail.screen.md) param \`id\``), and it must be one the **target** declares.
   Write the token once per parameter.
 - **A screen with no URL reads the same table.** On a native target the rows
   are the screen's typed inputs — the arguments its navigation passes —
@@ -356,12 +351,12 @@ handed an empty section:
 |---|---|
 | no frontmatter at all | the identity block — `id` · `module` · `screen` · `lifecycle` |
 | an id shaped `{module}.{screen}` or `{surface}.{module}.{screen}`, from a layered KB | `{face}.{slug}`, written once by `/inspire:migrate`, which records every change in `_migration/id-map.json`; never hand-edited |
-| a path-shaped catalog link (`[[../patterns/list]]`) | the bare id (`[[list]]`) |
+| a wikilink to a catalog entry (`[[list]]`, `[[../patterns/list]]`) | a Markdown link to its file (`[list](../../../_design-system/patterns/list.pattern.md)`), converted by `/inspire:migrate` |
 | the route in the H1 (`# Users — \`/users\``) | the H1 is the title alone; the route derives |
 | `**Pattern:** bespoke` | omit the line; a screen with no shared layout declares none |
 | `## Instantiation` prose ("**Data:** the user entity") | `## Bindings`, keyed, one row per declaration |
 | a pattern's `## Slots` filled slot by slot | the screen's own bindings; the pattern's `## Regions` are joined, not filled in |
-| outcomes as prose ("→ `/users/:id`") | `→ [[{screen-id}]]`, a screen id, never a route |
+| outcomes as prose ("→ `/users/:id`") | `→ [{screen-id}]({path})`, a link to a screen file, never a route |
 
 The presence of `id:` in frontmatter is the deterministic marker of the new shape:
 every new-shape screen has one, and no old-shape screen does.

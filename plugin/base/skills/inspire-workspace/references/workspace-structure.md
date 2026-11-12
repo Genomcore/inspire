@@ -31,9 +31,10 @@ inspire_kb/
 and the INSPIRE Factory find an artifact by its **typed extension** (`.module.md`,
 `.feature.md`, `.entity.md`, `.action.md`, `.adr.md`, `.adr.rationale.md`,
 `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`, `.component.md`,
-`.layout.md`, `.pattern.md`) anywhere under `01_spec/`, and resolve a link by its
-**id**. A file in an unexpected directory is still found, so a misplaced file is a
-`minor` finding for the people who read the tree, never a broken reference.
+`.layout.md`, `.pattern.md`) anywhere under `01_spec/`; a link names its target file by path
+([kb-links.md](../../_references/kb-links.md)). A file in an unexpected directory is still
+found, so a misplaced file is a `minor` finding for the people who read the tree.
+Moving it rewrites every link to it in the same change.
 
 A leading `_` on a directory is INSPIRE structure; on a file it means navigation
 (`_index.md`). A user-chosen id never starts with `_`.

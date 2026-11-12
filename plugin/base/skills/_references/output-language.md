@@ -2,7 +2,7 @@
 
 Every INSPIRE skill authors the artifacts it produces in the project's **declared
 output language**, read from `output_language` in
-[`00_bootstrap/project.md`](../../../inspire_kb/00_bootstrap/project.md). Default:
+`inspire_kb/00_bootstrap/project.md`. Default:
 `en` (English). Set it with `/inspire-bootstrap language`.
 
 ## The rule
@@ -33,7 +33,7 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
 
 - frontmatter **keys** and enum **values** (`kind`, `status`, `maturity`, the
   lifecycle states `draft`/`accepted`/`stable`, ADR maturities, …);
-- wikilink **target slugs** and the file / directory names they resolve to;
+- link **target slugs** and the file / directory names they resolve to;
 - code identifiers, IDs, prefixes, and status-map **keys**;
 - the **section ids** that open headings (`ENT4`) — see below;
 - the **bold header-line markers** a validator reads (`**Status:**`,
@@ -44,7 +44,7 @@ validators enforce. Translating them breaks the graph. Keep verbatim:
   `B1`, `Q1`, `AC-1`, `AF-1`) and the heads after them (`unique(email)`);
 - the **vocabulary cells** of a table: a touch (`read`, `written`, `write`), a
   `Required` answer (`yes`, `no`), a region's `Fill` and `Accepts`, a render row's
-  `Align` and `Narrow`, a binding's outcome (`→ [[…]]`, ``state `key` ``,
+  `Align` and `Narrow`, a binding's outcome (`→ [{screen-id}](…)`, ``state `key` ``,
   ``refresh `key` ``, ``param `key` ``).
 
 A table's **column headers** are prose: translate them (`| Campo | Tipo | Notas |`).
@@ -78,7 +78,7 @@ in `output_language`. The templates ship the English label:
   as its section, so a KB written before ids existed keeps validating. Write the id
   in every new heading and in every heading you edit.
 - A heading that is itself an identifier — a field's `### {field}`, an entity's
-  `### [[module.entity|module::entity]]`, a keyed flow's `### AF-1: {label}`, a
+  `### [module::entity](../entity/entity.entity.md)`, a keyed flow's `### AF-1: {label}`, a
   screen's Render region — keeps the shape its format already gives it.
 
 An artifact's **identity** never lives in a heading or a title. It lives in a token
@@ -86,7 +86,7 @@ that is never translated: the frontmatter `id` of entities, actions, screens and
 processes, and the file name, without its typed extension, of everything else —
 features (`ANL-02.feature.md`, whose H1 repeats it as `ANL-02: {label}`), modules,
 faces, bundles and ADRs (`{slug}.adr.md`, id `adr-{slug}`). That id is what every
-wikilink resolves.
+link resolves.
 
 ## Exception: lessons (`98_lessons`)
 

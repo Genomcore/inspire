@@ -16,7 +16,7 @@ Each numbered folder is a part of the graph, operated by matching skills in
 | [`99_tracker`](99_tracker) | Tickets and work log | `inspire-task` |
 
 The layout of `01_spec/` is for people: no tool depends on it. Tools find an
-artifact by its typed extension and resolve a link by its id — see
+artifact by its typed extension, and a link is a relative Markdown link to the file — see
 [`01_spec/README.md`](01_spec/README.md). A project written before this layout
 reaches it with `/inspire:migrate`.
 

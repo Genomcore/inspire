@@ -13,8 +13,8 @@ either one small:
 | [`components/`](../components) | props | what goes in a hole |
 | [`design-system.md`](../design-system.md) · `design-system.tokens.json` | tokens | the values a layout cites |
 
-A screen names both: `**Pattern:** [[list]]` and
-`**Layout:** [[collection]]`. The face **shell** — the sidebar, the
+A screen links both: `**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)` and
+`**Layout:** [collection](../../../_design-system/layouts/collection.layout.md)`. The face **shell** — the sidebar, the
 bars, every persistent control — is a layout entry too, `shell.layout.md`, that no screen
 names because it frames every route.
 

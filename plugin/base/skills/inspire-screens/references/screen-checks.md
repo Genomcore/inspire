@@ -30,10 +30,10 @@ What follows is the whole list, mechanical and judgment alike.
    one is required; every `param \`{key}\`` a data row relies on is declared by
    this screen, and every one a transition passes is declared by its target.
    *(mechanical)*
-5. **Bindings resolve outward.** Every action wikilink resolves to a
-   `*.action.md` descriptor; every navigation target resolves to a screen id. A
+5. **Bindings resolve outward.** Every action link names an existing
+   `*.action.md` descriptor; every navigation target names an existing screen file. A
    missing target is created from its template at draft, never left dangling.
-   *(mechanical, via `wikilinks-resolve`)*
+   *(mechanical, via `links-resolve`)*
 5b. **The face exposes what the screen binds.** Every action a `### Data` or
    `### Dispatches` row binds belongs to a bundle the face lists in `bundles:`.
    *(mechanical, via `face-exposure.sh`)*
@@ -47,8 +47,8 @@ What follows is the whole list, mechanical and judgment alike.
    finding. Every `## Geometry` and `## Breakpoints` row of the layout carries a
    `Source` from the closed vocabulary; `generated` and `undecided` rows are
    counted on the layout, never on the screen that names it. *(mechanical, warning)*
-9. **Component references resolve.** Every component wikilink is a bare id that
-   resolves to a `*.component.md` entry — and a screen at
+9. **Component references resolve.** Every component link
+   names an existing `*.component.md` entry — and a screen at
    `lifecycle: stable` declares no component still at `**State:** to-extract`.
    *(mechanical)*
 10. **No redundant structure.** The screen doesn't redescribe what the pattern or

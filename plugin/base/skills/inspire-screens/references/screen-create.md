@@ -51,12 +51,12 @@
    something that does not exist yet requires its file.
 6. **Name a pattern only if one fits.** Read the `**Purpose:**` first lines of
    every `*.pattern.md` under `inspire_kb/01_spec/` and name the pattern whose
-   regions match this screen's structure, by bare id (`[[list]]`). A screen that fits none names none — omit the line rather than
+   regions match this screen's structure, by link (`[list](../../../_design-system/patterns/list.pattern.md)`). A screen that fits none names none — omit the line rather than
    writing `bespoke`. The project's own conventions (default list layout, header
    layout, tabs, toolbar rules) live in the patterns, the layouts and
    `design-system.md`.
 6b. **Name the layout that frames it.** Read the `**Purpose:**` first lines of
-   every `*.layout.md` and name, by bare id, the frame whose `**Pattern:**` matches
+   every `*.layout.md` and name, by link, the frame whose `**Pattern:**` matches
    the one just named. Where several frame the same pattern, the geometry decides — a record with
    tabs and a record without them are two frames over one `detail`. Where none fits,
    create the entry from its template at `**State:** to-extract` rather than writing
@@ -64,7 +64,7 @@
    ([`screen-catalog.md`](screen-catalog.md) § When adding a new pattern, layout or
    component).
 7. **Declare the components** the screen instantiates, on the `**Components:**`
-   line, by bare id (`[[data-table]]`). Link, never re-describe — a
+   line, by link (`[data-table](../../../_design-system/components/data-table.component.md)`). Link, never re-describe — a
    component's props belong to its own entry. **A component this screen names and
    the catalog does not hold gets its entry now**, at `**State:** to-extract`, with
    its props, its anatomy and its states — never a name with nothing behind it.

@@ -6,14 +6,14 @@
 
 # {FEATURE-ID}: {Feature Name}
 
-> Source: [[{module}]]
+> Source: [{module}](../{module}.module.md)
 
 {One-paragraph description of the feature.}
 
 **State:** 🟡 Planned
 <!-- State ladder: 🟡 Planned → 🔵 In progress → 🟢 Implemented. -->
 **Priority:** {Core | Important | Nice-to-have}
-**Depends on:** [[{feature-id}]], [[{feature-id}]]
+**Depends on:** [{feature-id}]({feature-id}.feature.md), [{feature-id}]({feature-id}.feature.md)
 <!-- omit the Depends on line entirely when there are no dependencies -->
 
 ## UC1: Actor

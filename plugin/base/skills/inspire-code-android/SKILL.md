@@ -8,7 +8,7 @@ layer: frontend
 ## Layering
 Not yet formulated for this stack — deliberately deferred to an Android iteration
 that exercises real module boundaries, rather than transcribed untested from another
-stack's rules. The contract in `_references/stack-skills.md` still applies; this line is the deferral,
+stack's rules. The contract in [_references/stack-skills.md](../_references/stack-skills.md) still applies; this line is the deferral,
 not the answer. The test-level table below implies the working shape (ViewModel /
 UseCase / Repository / DataSource), but the boundary rules are unwritten.
 

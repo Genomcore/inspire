@@ -25,7 +25,7 @@ prop-drilled component state.
 
 Module boundaries: not yet formulated for this stack — deliberately deferred to a
 frontend iteration that exercises them, rather than transcribed untested from the
-backend rules. The contract in `_references/stack-skills.md` still applies; this line is the deferral,
+backend rules. The contract in [_references/stack-skills.md](../_references/stack-skills.md) still applies; this line is the deferral,
 not the answer.
 
 ## Test conventions
@@ -102,7 +102,7 @@ inside its face's shell, with no face segment of its own.
 - A screen named `index` renders the module's landing route, `/{module}`.
 - **The face contributes only its shell prefix.** The `shell` in `{face}.face.md`
   already carries its own leading slash
-  (`inspire-face/references/face-format.md`), so the rendering is a plain
+  ([inspire-face/references/face-format.md](../inspire-face/references/face-format.md)), so the rendering is a plain
   concatenation, `{shell}{route}`, with no separator in between — a face with no
   `shell` renders `{route}` alone, with no prefix. Example: shell `/admin` + route
   `/users/list` → `/admin/users/list`. (The notation `{shell}/{module}/{screen}`
@@ -141,7 +141,7 @@ of one wire.
 - **Dispatch keys** → MUST be one mutation hook per key, named the same way. The row's
   **On success** / **On error** attributes become its `onSuccess` / `onError`,
   rendering whichever of the three declared forms is present: a navigation
-  outcome (`→ [[{screen-id}]]`) resolves through `## Routes` by screen id; a
+  outcome (`→ [{screen-id}]({path})`) resolves through `## Routes` by screen id; a
   state outcome (`` state `{key}` ``) writes the named state key; a refresh
   outcome (`` refresh `{key}` ``) invalidates that data key's cache entry,
   `['{screen-id}', '{key}']` (the same key `## Bindings` mints above), so the

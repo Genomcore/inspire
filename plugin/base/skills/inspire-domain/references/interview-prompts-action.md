@@ -11,7 +11,7 @@ The interview cadence is **one question at a time**. Never present a numbered de
 ## Purpose prompts
 
 ### Categorical
-Ask what the action accomplishes in one sentence, and which feature / ADR grounds it. The answer becomes the body of `## Purpose` plus the wikilinks woven into its prose.
+Ask what the action accomplishes in one sentence, and which feature / ADR grounds it. The answer becomes the body of `## Purpose` plus the links woven into its prose.
 
 ### Probes
 - **Boundary probe.** "Could this be a parameter of an existing action on the same entity, or is the verb load-bearing?" Use when the proposed verb is close in shape to an existing one (e.g. `update-status` vs. `update`).
@@ -36,7 +36,7 @@ Ask what the caller gets back, and which of the three output patterns applies: w
 
 ### Probes
 - **Pattern probe.** "Are you returning the whole `<entity>` row, a subset, or a derived shape that joins multiple entities? Each pattern has a different rendering — I want to use the right one." Always ask when outputs aren't trivially a scalar id.
-- **Drift probe.** "If we inline the full entity shape here, every field change on the entity doc forces a descriptor edit. Want a 1-line reference (`An array of [[module.entity|module::entity]] entities.`) instead?" Use whenever the operator proposes inlining a full whole-entity table.
+- **Drift probe.** "If we inline the full entity shape here, every field change on the entity doc forces a descriptor edit. Want a 1-line reference (`An array of [module::entity](../../../module/_domain/entity/entity.entity.md) entities.`) instead?" Use whenever the operator proposes inlining a full whole-entity table.
 - **Field-coverage probe.** "Output field `<field>` — is it declared on the entity doc? If not, is it derived (computed here) or should it be added to the entity Fields table?" Use whenever an output field name doesn't match an obvious entity field.
 
 ## Entities prompts
@@ -64,10 +64,10 @@ Ask what must already be true for the action to be allowed to run at all. The an
 ## Behavior prompts
 
 ### Categorical
-Ask for the step-by-step description, in order, with the feature/ADR back-source for each non-obvious claim. The answer becomes the keyed, numbered `## Behavior` list, with wikilinks woven prosaically into each step. Each step carries a `Bn` key; on a revision, an existing step keeps the key it already has and a new step takes the next free number — never renumber, never reuse.
+Ask for the step-by-step description, in order, with the feature/ADR back-source for each non-obvious claim. The answer becomes the keyed, numbered `## Behavior` list, with links woven prosaically into each step. Each step carries a `Bn` key; on a revision, an existing step keeps the key it already has and a new step takes the next free number — never renumber, never reuse.
 
 ### Probes
-- **Sourcing probe.** "Step `<N>` references `<concept>` (validation rules / hashing algorithm / audit emission). Which feature or ADR grounds it? The wikilink weaves into the sentence." Ask for every step that makes a sourceable claim — back-sourcing is not optional.
+- **Sourcing probe.** "Step `<N>` references `<concept>` (validation rules / hashing algorithm / audit emission). Which feature or ADR grounds it? The link weaves into the sentence." Ask for every step that makes a sourceable claim — back-sourcing is not optional.
 - **Implicit-side-effect probe.** "Anything implicit in this step — audit emission, event bus publish, cache invalidation, a downstream notification? If yes, it should either be a separate Entity touch in the table above or explicitly out-of-scope here (with the wrapper action linked)." Use whenever a step ends without naming its side-effects.
 - **Error-correspondence probe.** "Step `<N>` mentions `<failure condition>`. Does that correspond to a row in `## Errors`, or is it a precondition the caller is expected to handle?" Use when a step describes a failure mode without a paired error code.
 - **Conflict-mechanism probe.** "Step `<N>` says the action inserts a row with a unique constraint on `<field>`. Is the DB constraint the conflict-detection mechanism (fall through to error), or is there an explicit pre-check?" Use for any step involving uniqueness or referential integrity.

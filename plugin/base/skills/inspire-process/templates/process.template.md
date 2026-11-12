@@ -9,11 +9,11 @@ lifecycle: draft
 
 ## Trigger
 
-{What starts it: a schedule (`every day at 02:00 UTC`), an event (`[[module.entity.action|module::entity::action]] succeeded`), start-up, or another process.}
+{What starts it: a schedule (`every day at 02:00 UTC`), an event (`[module::entity::action](../_domain/{entity}/{entity}.{action}.action.md) succeeded`), start-up, or another process.}
 
 ## Requires
 
-- [[{module}.{entity}.{action}|{module}::{entity}::{action}]]
+- [{module}::{entity}::{action}](../_domain/{entity}/{entity}.{action}.action.md)
 
 ## Before
 
@@ -29,4 +29,4 @@ lifecycle: draft
 
 ## Affects
 
-- [[{module}.{entity}|{module}::{entity}]]
+- [{module}::{entity}](../_domain/{entity}/{entity}.entity.md)

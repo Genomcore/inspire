@@ -48,7 +48,7 @@ propagated (the *propagation contract*):
   prototype does **not** count. Still refined in place.
 - `implemented` — additionally realized in the **product codebase**. **Immutable —
   both files of the pair; `supersede` to change.**
-- `superseded` (by [[x]]) / `rejected` — terminal.
+- `superseded` (by `[adr-{new-slug}]({new-slug}.adr.md)`) / `rejected` — terminal.
 
 There is no `proposed`/`accepted` state: an ADR present and not
 superseded/rejected **is** the current decision at its maturity; the debate
@@ -59,7 +59,7 @@ happens in chat before authoring.
 - `/inspire-adr create {slug}` — new ADR (defaults to `Status: design`)
 - `/inspire-adr update {id}` — modify an ADR (supersede required only at `implemented`)
 - `/inspire-adr promote {id} {maturity}` — advance maturity and propagate consequences
-- `/inspire-adr supersede {id} {new-id}` — mark old ADR superseded and wire the wikilink
+- `/inspire-adr supersede {id} {new-id}` — mark old ADR superseded and wire the link
 - `/inspire-adr migrate [{id}…]` — split single-file ADRs into a decision and a rationale
 
 ## The decision and its rationale
@@ -67,21 +67,22 @@ happens in chat before authoring.
 Every ADR is a pair of files that share one slug, side by side in the same `_adr/`:
 
 - **`{slug}.adr.md` — the decision.** The H1 title, `**Status:**`,
-  `**Modules affected:**`, `**Rationale:** [[adr-{slug}.rationale]]`, any `Supersedes:`
+  `**Modules affected:**`, `**Rationale:** [adr-{slug}.rationale]({slug}.adr.rationale.md)`, any `Supersedes:`
   or `**Prototype:**` line, on a global ADR the `faces:` / `bundles:` frontmatter, and
   `## Decision`: one or a few imperative statements ("Authentication uses the Better
   Auth library."). It binds, so
   it stays short: the session-start hook injects every live decision into every
   session, through `.inspire/bin/decisions.sh`.
-- **`{slug}.adr.rationale.md` — the rationale.** `**Decision:** [[adr-{slug}]]`, then
+- **`{slug}.adr.rationale.md` — the rationale.** `**Decision:** [adr-{slug}]({slug}.adr.md)`, then
   `## Context`, `## Consequences` (with `### Breaking changes`),
   `## Alternatives considered` and `## Related ADRs`. It explains the decision and
   constrains nothing, so it is read only when someone questions or supersedes it.
 
 The test for a sentence in `## Decision`: would a reader who follows it build
 something different without it? If not, it is a reason, and it belongs in the rationale.
-A `[[adr-{slug}]]` wikilink always means the decision; link the rationale by its own
-name only when the reasons are the point.
+A link to `{slug}.adr.md` always means the decision; link the rationale file
+only when the reasons are the point. Links follow
+[kb-links.md](../_references/kb-links.md).
 
 ## Subcommand: create {slug}
 
@@ -115,7 +116,7 @@ same next number). Slug-only filenames are collision-free by construction
 
 *Which service exposes which modules* is not an ADR. It is expressed by
 **bundles**: each `{bundle}.bundle.md` lists, under `## Actions`, the whole modules
-(`[[tenancy]] (whole module)`) and the single actions it exposes, with its package
+(`[tenancy](../_modules/tenancy/tenancy.module.md) (whole module)`) and the single actions it exposes, with its package
 and profiles. [`/inspire-face`](../inspire-face/SKILL.md) owns the bundle files. The
 domain stays a single untagged truth: no entity or action names a bundle. Overlap is
 allowed — an action may sit in two bundles. A project with one bundle exposing
@@ -166,7 +167,7 @@ ADR only and defaults to the whole project by omission, per
    `{slug}.adr.rationale.md`. Keep every reason out of `## Decision` (see [the
    decision and its rationale](#the-decision-and-its-rationale)).
 3. **Create every missing link target.** A link to something that does not exist yet
-   requires its file. For each `[[…]]` the two files write (`**Modules affected:**`,
+   requires its file. For each link the two files write (`**Modules affected:**`,
    `## Related ADRs`, a face or bundle in the frontmatter) whose target is missing,
    create it from its template in draft: a module hub from
    [`inspire-module`'s template](../inspire-module/templates/module.template.md), an ADR
@@ -217,10 +218,10 @@ Replace an ADR with a new one that changes its decision (create the new ADR firs
 via `create`).
 
 1. Verify both ADRs exist (the old one at any non-terminal maturity).
-2. Update the old decision file: `**Status:** superseded by [[{new-id}]]`. Its
+2. Update the old decision file: `**Status:** superseded by [{new-id}]({new-slug}.adr.md)`. Its
    rationale stays as it is.
-3. Update the new decision file's header: `Supersedes: [[{old-id}]]`.
-4. Search `inspire_kb/` for links to the old ADR (`[[{old-id}]]`); propose updates.
+3. Update the new decision file's header: `Supersedes: [{old-id}]({old-slug}.adr.md)`.
+4. Search `inspire_kb/` for links to the old ADR's file name; propose updating each path.
 
 ## Subcommand: migrate [{id}…]
 
@@ -257,7 +258,7 @@ the operator runs it.
 > (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in; machine-read tokens (frontmatter
-> keys/values, wikilink slugs, filenames) stay verbatim.
+> keys/values, link paths, filenames) stay verbatim.
 
 > **Writing contract.** ADR prose follows
 > [`_references/writing-style.md`](../_references/writing-style.md). `## Decision` in
