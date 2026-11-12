@@ -521,6 +521,46 @@ eq    "links: one row per link" "$(printf '%s\n' "$links" | grep -c .)" "11"
 eq    "links: the target's id comes from the file it resolves to" \
       "$(sdd_artifact_id "$ROOT/links/kb/01_spec/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
 
+# Every typed kind that declares an `id:` is reached by that id in both forms, and
+# still by its file name id when no file owns that name outright.
+I="$ROOT/ids/kb/01_spec"
+mkdir -p "$I/_modules/billing/_processes" "$I/_modules/orders" "$I/_modules/auth/_domain/user" \
+  "$I/_faces/portal/_screens" "$I/_faces/admin" "$I/_bundles"
+printf -- '---\nid: billing.nightly-close\n---\n' > "$I/_modules/billing/_processes/nightly-close.process.md"
+: > "$I/_modules/orders/orders.module.md"
+printf -- '---\nid: portal.orders\n---\n' > "$I/_faces/portal/_screens/orders.screen.md"
+printf -- '---\nid: portal.detail\n---\n' > "$I/_faces/portal/_screens/detail.screen.md"
+printf -- '---\nid: admin\n---\n' > "$I/_faces/admin/backoffice.face.md"
+printf -- '---\nid: public-api\n---\n' > "$I/_bundles/api.bundle.md"
+printf -- '---\nid: auth.user\n---\n' > "$I/_modules/auth/_domain/user/user.entity.md"
+printf -- '---\nid: auth::user::create\n---\n' > "$I/_modules/auth/_domain/user/user.create.action.md"
+printf '%s\n' '[[billing.nightly-close]] [[billing::nightly-close]] [[nightly-close]]' \
+  '[[orders]] [[portal.orders]] [[detail]] [[admin]] [[backoffice]] [[public-api]] [[api]]' \
+  '[[auth.user]] [[auth::user]] [[user]] [[auth::user::create]] [[auth.user.create]]' > "$I/ids.md"
+ids="$(
+  cd "$ROOT/ids" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_LINK_INDEX_FILE=""; SDD_ENTITY_INDEX_FILE=""
+  sdd_link_index
+  sdd_links "kb/01_spec/ids.md" | cut -f3,5
+  rm -f "$SDD_LINK_INDEX_FILE" "$SDD_ENTITY_INDEX_FILE"
+)"
+P="kb/01_spec/_modules/billing/_processes/nightly-close.process.md"
+has "ids: a process by its dotted id"            "^billing.nightly-close${T}$P\$" "$ids"
+has "ids: a process by its colon id"             "^billing::nightly-close${T}$P\$" "$ids"
+has "ids: a process by its file name id"         "^nightly-close${T}$P\$" "$ids"
+has "ids: a name a module owns is the module's"  "^orders${T}kb/01_spec/_modules/orders/orders.module.md\$" "$ids"
+has "ids: a screen by its id"                    "^portal.orders${T}kb/01_spec/_faces/portal/_screens/orders.screen.md\$" "$ids"
+has "ids: a screen never by its file name id"    "^detail${T}\$" "$ids"
+has "ids: a face by its declared id"             "^admin${T}kb/01_spec/_faces/admin/backoffice.face.md\$" "$ids"
+has "ids: a face by its file name id"            "^backoffice${T}kb/01_spec/_faces/admin/backoffice.face.md\$" "$ids"
+has "ids: a bundle by its declared id"           "^public-api${T}kb/01_spec/_bundles/api.bundle.md\$" "$ids"
+has "ids: a bundle by its file name id"          "^api${T}kb/01_spec/_bundles/api.bundle.md\$" "$ids"
+has "ids: an entity by its dotted id"            "^auth.user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an entity by its colon id"             "^auth::user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an entity by its file name id"         "^user${T}kb/01_spec/_modules/auth/_domain/user/user.entity.md\$" "$ids"
+has "ids: an action by its colon id"             "^auth::user::create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
+has "ids: an action by its dotted id"            "^auth.user.create${T}kb/01_spec/_modules/auth/_domain/user/user.create.action.md\$" "$ids"
+
 # The CommonMark shapes the converter writes or an editor leaves.
 D="$L/_modules/shapes"
 mkdir -p "$D/sub"

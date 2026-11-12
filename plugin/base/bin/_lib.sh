@@ -533,7 +533,8 @@ sdd_catalog_state() {
 
 # sdd_link_index — builds the wikilink index once, KB-wide whatever the scope:
 #   `{kind}<TAB>{key}<TAB>{path}`, kind A action id · E entity id (dotted) ·
-#   S screen id · M old screen id (path holds the new one) · N file name id.
+#   S screen id · M old screen id (path holds the new one) · N file id ·
+#   F file name id a declared id displaces, never a screen's.
 #   Call it in the calling script's own shell, which removes
 #   `$SDD_LINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
 SDD_LINK_INDEX_FILE=""
@@ -553,9 +554,11 @@ sdd_link_index() {
       [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
     done < <(sdd_find_screens "$SDD_SPEC_ROOT")
     [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
-    # A file is named by its plain name and by the id its typed name gives, unless its
-    # frontmatter declares another id: then that id is the file's (adr-kb-structure
-    # D3), and `orders.screen.md` with `id: portal.orders` is never `orders`.
+    # A typed file is named by its frontmatter id where it declares one (adr-kb-structure
+    # D3), else by the id its name gives. A name the declared id displaces is kept as
+    # F, read only when nothing else answers, so `[[nightly-close]]` still reaches
+    # `billing.nightly-close`. A screen keeps none: its slug repeats its module's name,
+    # and `[[orders]]` never names `orders.screen.md` (`id: portal.orders`).
     find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
       | awk '
           function fm_id(f,   l, n, v) {
@@ -582,7 +585,11 @@ sdd_link_index() {
             }
             else next
             fm = fm_id($0)
-            if (fm == "" || fm == id) print "N\t" id "\t" $0
+            if (fm == "") { print "N\t" id "\t" $0; next }
+            print "N\t" fm "\t" $0
+            alt = fm; if (index(alt, "::")) gsub(/::/, ".", alt); else gsub(/\./, "::", alt)
+            if (alt != fm) print "N\t" alt "\t" $0
+            if (fm != id && $0 !~ /\.screen\.md$/) print "F\t" id "\t" $0
           }'
   } > "$SDD_LINK_INDEX_FILE"
 }
@@ -755,6 +762,7 @@ SDD_AWK_WIKI_RESOLVE='
     if (("S", t) in ix) return ix["S", t]
     if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
     if (("N", t) in ix) return ix["N", t]
+    if (("F", t) in ix) return ix["F", t]
     return ""
   }
 '

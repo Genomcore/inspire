@@ -276,6 +276,17 @@ printf 'See [[portal.orders]].\n' | mk "$XS/_modules/orders/see.md"
 out="$(cd "$X" && bash "$LINKS" --kb ./inspire_kb/ 2>&1)"
 has "a KB spelled ./inspire_kb/ resolves a screen id all the same" "$(cat "$XS/_modules/orders/see.md")" "See [portal.orders](../../_faces/portal/_screens/orders.screen.md)."
 
+# A process's scoped id is its id in either form, and its file name still names it.
+Y="$W/process"; YS="$Y/inspire_kb/01_spec"
+printf -- '---\nid: billing.nightly-close\n---\n# Nightly close\n' | mk "$YS/_modules/billing/_processes/nightly-close.process.md"
+printf '# billing\n- [[nightly-close]]\n- [[billing.nightly-close]]\n- [[billing::nightly-close]]\n' | mk "$YS/_modules/billing/billing.module.md"
+out="$(cd "$Y" && bash "$LINKS" 2>&1)"
+BM="$(cat "$YS/_modules/billing/billing.module.md")"
+has "a process link by file name converts"  "$BM" "- [nightly-close](_processes/nightly-close.process.md)"
+has "a process link by dotted id converts"  "$BM" "- [billing.nightly-close](_processes/nightly-close.process.md)"
+has "a process link by colon id converts"   "$BM" "- [billing::nightly-close](_processes/nightly-close.process.md)"
+hasnt "and none is left unresolved"         "$out" "unresolved${TAB}"
+
 # A layered KB is counted as it stands, for Step 1.
 eq "--count on a layered KB" "$(cd "$L" && bash "$LINKS" --count)" "1"
 
