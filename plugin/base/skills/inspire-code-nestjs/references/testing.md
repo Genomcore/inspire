@@ -112,12 +112,12 @@ A setup fixture takes a single object of **partial** overrides
 ## Mocking
 
 **Never** hand-roll mock objects — use a typed auto-mock library
-(`jest-mock-extended`):
+(`vitest-mock-extended`):
 
 ```typescript
 // Never
 const mockProvider: EmailProvider = {
-  sendEmail: jest.fn().mockResolvedValue(undefined),
+  sendEmail: vi.fn().mockResolvedValue(undefined),
 };
 
 // Always

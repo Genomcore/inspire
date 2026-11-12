@@ -15,44 +15,63 @@ language: typescript
 # relative to the project's source root. `expect: absent` inverts it, which is how a
 # deliberate non-adoption stays deliberate instead of drifting back in unnoticed.
 gates:
-  - literal: strictTypeChecked
-    config: eslint.config.mjs
-  - literal: ban-ts-comment
-    config: eslint.config.mjs
+  # Type-aware linting is a gate in its own right, not plumbing: without it oxlint skips
+  # every `typescript/no-unsafe-*` rule below and they silently pass on everything.
+  - literal: typeAware
+    config: .oxlintrc.json
+  - literal: typescript/no-explicit-any
+    config: .oxlintrc.json
+  - literal: typescript/no-non-null-assertion
+    config: .oxlintrc.json
+  - literal: typescript/no-unsafe-argument
+    config: .oxlintrc.json
+  - literal: typescript/no-unsafe-assignment
+    config: .oxlintrc.json
+  - literal: typescript/no-unsafe-call
+    config: .oxlintrc.json
+  - literal: typescript/no-unsafe-member-access
+    config: .oxlintrc.json
+  - literal: typescript/no-unsafe-return
+    config: .oxlintrc.json
+  - literal: typescript/ban-ts-comment
+    config: .oxlintrc.json
   - literal: max-depth
-    config: eslint.config.mjs
+    config: .oxlintrc.json
   - literal: max-lines-per-function
-    config: eslint.config.mjs
-  - literal: import-x/no-cycle
-    config: eslint.config.mjs
-  - literal: import-x/no-restricted-paths
-    config: eslint.config.mjs
-  # The resolver is a gate in its own right, not plumbing: without it the two rules above
-  # resolve nothing and silently pass on everything.
-  - literal: import-x/resolver-next
-    config: eslint.config.mjs
-  - literal: jest/expect-expect
-    config: eslint.config.mjs
-  - literal: jest/no-disabled-tests
-    config: eslint.config.mjs
-  - literal: jest/no-focused-tests
-    config: eslint.config.mjs
-  - literal: jest/no-conditional-expect
-    config: eslint.config.mjs
-  # Neither is in the plugin's `recommended` preset, so both must be enabled by name.
-  - literal: eslint-comments/require-description
-    config: eslint.config.mjs
-  - literal: eslint-comments/no-unused-disable
-    config: eslint.config.mjs
-  - literal: coverageThreshold
-    config: package.json
+    config: .oxlintrc.json
+  - literal: import/no-cycle
+    config: .oxlintrc.json
+  # The layer boundary: one `no-restricted-imports` override per layer.
+  - literal: no-restricted-imports
+    config: .oxlintrc.json
+  - literal: vitest/expect-expect
+    config: .oxlintrc.json
+  - literal: vitest/no-disabled-tests
+    config: .oxlintrc.json
+  - literal: vitest/no-focused-tests
+    config: .oxlintrc.json
+  - literal: vitest/no-conditional-expect
+    config: .oxlintrc.json
+  # Off unless named: oxlint reports a stale suppression only when this option is set.
+  - literal: reportUnusedDisableDirectives
+    config: .oxlintrc.json
+  # The local escape-hatch plugin: `references/oxlint-escape-hatches.mjs` in inspire-code-typescript.
+  - literal: escape-hatches/require-reason
+    config: .oxlintrc.json
+  - literal: escape-hatches/no-restricted-disable
+    config: .oxlintrc.json
+  - literal: escape-hatches/no-double-cast
+    config: .oxlintrc.json
+  - literal: thresholds
+    config: vitest.config.ts
   # Rejected on measured evidence — see `## Quality gates`. Re-adopting it is a decision,
-  # so it must come with an edit here rather than arrive quietly.
-  - literal: "'complexity'"
-    config: eslint.config.mjs
+  # so it must come with an edit here rather than arrive quietly. oxlint accepts the rule
+  # under both names, so both are refused.
+  - literal: '"complexity"'
+    config: .oxlintrc.json
     expect: absent
-  - literal: recommendedTypeChecked
-    config: eslint.config.mjs
+  - literal: '"eslint/complexity"'
+    config: .oxlintrc.json
     expect: absent
 ---
 
@@ -187,14 +206,28 @@ owns the entity, never to the shared client's config.
   and, the actual point, a future functional change cannot land silently: a service
   behavior change surfaces in its unit spec, a contract change in the e2e suite, and
   both are re-entered through the same red→green TDD cycle as new code.
-- Run: `npm run test` (unit) · `npm run test:e2e` (e2e).
-- **E2E run serially, and that is a correctness requirement, not a performance choice.**
-  `maxWorkers: 1` in the e2e jest config is load-bearing: the files share one real
-  database, so concurrent runs interfere — and the interference surfaces as flakiness,
-  not as an honest failure. Give each test FILE its own table/collection anyway (derive
-  the name from the test path, never a shared constant, so a new file cannot forget),
-  and make teardown synchronous where the store's drop is asynchronous by default — a
-  drop that returns while the table is still detaching is a race the next run inherits.
+- Run: `npm run test` (unit) · `npm run test:e2e` (e2e). Both run on **Vitest**, unit
+  specs under `vitest.config.ts` and e2e under `vitest.e2e.config.ts`.
+- **Vitest MUST transform through SWC** (`unplugin-swc`, `swc.vite()` in both configs).
+  Vitest's default transformer, esbuild, emits no `emitDecoratorMetadata`, and Nest's
+  DI resolves constructor parameters from that metadata: without SWC an injected
+  dependency arrives `undefined` and the failure looks like a broken provider, not a
+  missing transform.
+- **Each e2e FILE gets its own database, copied from one migrated template.** The
+  e2e `globalSetup` applies the migrations once, with the project's own migration
+  runner, to a template database, then closes every connection to it (Postgres refuses
+  to copy a database anyone is connected to). Each file's `beforeAll` runs
+  `CREATE DATABASE <file db> TEMPLATE <template db>`, which copies the migrated schema
+  in milliseconds, and its `afterAll` runs `DROP DATABASE <file db> WITH (FORCE)` and
+  awaits it. Derive the file's database name from its test path, never a shared
+  constant, so a new file cannot forget. **Never run the migrations per file:** each
+  run starts the migration tool and replays every migration, which costs seconds per
+  file and turns a suite of a few dozen files into minutes. A store without database
+  templates keeps the same shape: build once, copy per file.
+- **E2E files run one at a time** (`fileParallelism: false` in the e2e Vitest config).
+  The files no longer share tables, so this is a resource choice, not a correctness
+  one: a unit's container gets about one CPU, so parallel files gain little and each
+  extra worker costs its own memory.
 
 ## Test infrastructure
 
@@ -246,10 +279,19 @@ own `## Test infrastructure`; the compose file realizes them:
   logs or error responses.
 
 ## Quality gates
-**Absolute** (eslint — the agent hits these in its own loop and fixes them before
-anything reaches the operator):
-- `typescript-eslint` **`strictTypeChecked`**, not `recommendedTypeChecked` — it
-  brings `no-non-null-assertion` and the stricter `any` rules with it.
+**Absolute** (oxlint, configured in `.oxlintrc.json` — the agent hits these in its own
+loop and fixes them before anything reaches the operator):
+- **Type-aware linting on** — `"options": { "typeAware": true }`, with `oxlint-tsgolint`
+  installed beside `oxlint`. The `typescript/no-unsafe-*` rules need type information;
+  without the option oxlint skips them and reports nothing, which reads as clean.
+- **The strict `any` and non-null rules, by name.** oxlint has no counterpart to
+  typescript-eslint's `strictTypeChecked` preset, so the part of it this stack relies on
+  is enabled rule by rule: `typescript/no-non-null-assertion` · `typescript/no-explicit-any`
+  · `typescript/no-unsafe-argument` · `typescript/no-unsafe-assignment` ·
+  `typescript/no-unsafe-call` · `typescript/no-unsafe-member-access` ·
+  `typescript/no-unsafe-return`. The rest of that preset is not implied: a rule it carried
+  is in force only when `.oxlintrc.json` names it, and a rule oxlint does not implement
+  has no equivalent here.
 - `max-depth` · `max-lines-per-function` · `max-lines`. Two caveats measured rather than
   assumed, both about the rule fitting the file kind: `max-lines-per-function` fires on
   every `describe` block, since a suite callback is a function to the linter — off for
@@ -261,39 +303,44 @@ anything reaches the operator):
   dozen query operators to one-line cases scores ~15 cyclomatic while being trivially
   readable. Cyclomatic complexity counts branches, and a dispatch table is all branches and no
   complexity; splitting one to satisfy the rule makes the code worse. Adopt a *cognitive*
-  complexity rule instead if the need is real.
-- `eslint-plugin-import-x` (**not** `eslint-plugin-import`, which declares peer support
-  only through eslint 9): `import-x/no-cycle`, plus `import-x/no-restricted-paths` to make
-  the four-layer boundary above a build error instead of a review comment
-  (controllers → application → infrastructure → domain; `domain/` imports nothing).
-  Two things this rule needs, both of which produce a **silently passing** rule when
-  missing, and both measured rather than assumed:
-  - **A TypeScript resolver** (`eslint-import-resolver-typescript`, wired through
-    `settings['import-x/resolver-next']`). Without one, not a single relative `.ts` import
-    resolves and every zone check is skipped — the rule reports nothing, for ever.
-  - **Zones derived from the modules on disk**, not globbed and not written per module.
-    `target: './src/*/domain'` matches nothing; hard-coding one module's paths works until
-    the second module is added and escapes the boundary unnoticed. Generate them from the
-    layer ordering and `readdirSync('./src')`, and throw if the derivation yields none —
-    a boundary rule with zero zones passes on everything.
-- `eslint-plugin-jest`: `expect-expect` (a test that asserts nothing — the
-  characteristic failure of generated tests) · `no-disabled-tests` ·
-  `no-focused-tests` · `no-conditional-expect`.
+  complexity rule instead if the need is real; oxlint ships none today.
+- `import/no-cycle` (the `import` plugin), plus the four-layer boundary above as a build
+  error instead of a review comment (controllers → application → infrastructure → domain;
+  `domain/` imports nothing). oxlint has no `no-restricted-paths`, so the boundary is
+  `no-restricted-imports`, set once per layer in an `overrides` entry: `files:
+  ["src/*/domain/**"]` refuses an import whose specifier names `application`,
+  `infrastructure` or `controllers` (a `patterns` entry with a `regex` such as
+  `(^|/)(application|infrastructure|controllers)(/|$)`); `src/*/infrastructure/**`
+  refuses `application` and `controllers`; `src/*/application/**` refuses `controllers`.
+  Two things to know, both measured:
+  - **Resolution is built in.** oxlint resolves imports itself and reads the
+    `tsconfig.json` `paths`, so `import/no-cycle` follows relative and `@/` imports with
+    no resolver to wire.
+  - **The boundary matches the import specifier, not the resolved file.** The glob in
+    `files` covers every module on disk, so a new module is inside the boundary from its
+    first file; but an import that reaches a layer without naming its directory (a
+    barrel re-export, say) passes. Import a layer through its directory name.
+- The `vitest` plugin: `vitest/expect-expect` (a test that asserts nothing — the
+  characteristic failure of generated tests) · `vitest/no-disabled-tests` ·
+  `vitest/no-focused-tests` · `vitest/no-conditional-expect`.
 - **A local rule worth authoring: a test may not import a *numeric* constant from the
   code it tests.** This is the lint half of "never build the expected value from the code
   under test": a threshold imported into a test makes the test move with the code, so
   changing `MAX_CONDITION_DEPTH` from 10 to 11 leaves the suite green while an observable
   limit changed — a mutation that survives suites that otherwise look thorough.
-  Scoped to **numbers**, decided by the type checker rather than by naming, and the
-  distinction is the whole reason it has no false positives: a number is a threshold whose
-  value a caller observes, so a test must state it as a literal; a string / object / array
-  constant is usually a registry or schema (the field list a DDL is generated from), where
-  deriving is the point and hard-coding forty names would duplicate the source of truth.
-  It lives inline in `eslint.config.mjs` — a rule this project-shaped needs no package —
-  which is why the template cannot ship it as a `gates:` entry: a project that adopts it
-  declares the gate in its own copy of this profile, and the literal must be the
-  **activation line, severity included** (`'local/…': 'error'`), never the bare rule name,
-  which also appears in the rule's definition and would match with the rule switched off.
+  Scoped to **numbers**, and the distinction is the whole reason it has no false
+  positives: a number is a threshold whose value a caller observes, so a test must state
+  it as a literal; a string / object / array constant is usually a registry or schema
+  (the field list a DDL is generated from), where deriving is the point and hard-coding
+  forty names would duplicate the source of truth. In oxlint it is a JS plugin
+  (`jsPlugins` in `.oxlintrc.json`, ESLint's rule API) — a rule this project-shaped needs
+  no package. oxlint gives a JS plugin **no type information**, so the rule decides
+  "numeric" from the exported constant's initializer (a numeric literal) rather than from
+  the type checker; a constant computed from other constants escapes it. That is why the
+  template cannot ship it as a `gates:` entry: a project that adopts it declares the gate
+  in its own copy of this profile, and the literal must be the **activation line,
+  severity included** (`"local/…": "error"`), never the bare rule name, which also
+  appears in the rule's definition and would match with the rule switched off.
 
   Why lint and not the drill: the drill finds a weak test after the fact and only when
   someone runs it, and it **cannot tell a weak test from a shortcut fix to one** — pinning
@@ -301,14 +348,15 @@ anything reaches the operator):
   all. Lint refuses it at the moment of writing.
 
 **Ratcheted** (aggregates; baseline kept outside the repo per Rule 3):
-- **coverage** — `npm run test -- --coverage`; jest's `coverageThreshold` is the in-repo
+- **coverage** — `npm run test -- --coverage` (`@vitest/coverage-v8`);
+  `coverage.thresholds` in `vitest.config.ts` is the in-repo
   floor, the history lives in the metrics service. Set the floor to **what is measured
   today**, per metric, and raise it as work lands: the absolute value carries no claim,
   the direction does.
-  Read the number honestly, because two things distort it. `collectCoverageFrom` counts
+  Read the number honestly, because two things distort it. `coverage.include` counts
   declaration-heavy files (a DTO that is all field decorators, generated types), which
   drags statements down without any behaviour going unchecked; and the **e2e suite runs
-  under its own jest config, so it contributes nothing to this number** — which is where
+  under its own Vitest config, so it contributes nothing to this number** — which is where
   most acceptance criteria are actually covered. A low statements floor beside a high
   branch floor is the expected shape, not a defect to explain away.
   With `## Test conventions` above in force, `application/` and `domain/` should measure
@@ -330,30 +378,41 @@ is written down, never silently missing):
   tests the tests. Neither replaces the other.
 
 **Escape hatches** (Rule 4 — the linter allows or refuses each one, never a count):
-- `@typescript-eslint/ban-ts-comment` at `allow-with-description` — `@ts-expect-error`
-  permitted with a reason, `@ts-ignore` never (expect-error expires by itself when the
-  underlying error is fixed).
-- `@eslint-community/eslint-plugin-eslint-comments`: `require-description` ·
-  `no-unlimited-disable` · `no-unused-disable` — a suppression must name its rule and
-  say why, and a stale one is an error rather than a fossil.
-  **Its `recommended` preset is not enough**, measured: that preset enables five rules
-  (`disable-enable-pair`, `no-aggregating-enable`, `no-duplicate-disable`,
-  `no-unlimited-disable`, `no-unused-enable`) and **neither `require-description` nor
-  `no-unused-disable` is among them**. Enabling the preset alone leaves the promise above
-  unenforced while looking installed — turn both on explicitly.
-- `strictTypeChecked` already refuses `as any` (`no-explicit-any`) and `x!`
-  (`no-non-null-assertion`) at `error`. `as unknown as` needs its own rule, because no
-  preset refuses it: `no-restricted-syntax` with the selector
-  `TSAsExpression[expression.type='TSAsExpression'][expression.typeAnnotation.type='TSUnknownKeyword']`.
-  A hatch none of these rules refuses is allowed; there is no count of them.
-- `@eslint-community/eslint-comments/no-restricted-disable` lists
-  `@typescript-eslint/no-explicit-any`, `@typescript-eslint/no-non-null-assertion` and
-  `no-restricted-syntax`, so no inline comment re-allows what the rules above refuse. A
-  refusal a spec file needs (the negative-path cast below) is a config override, never
+- `typescript/ban-ts-comment` with `"ts-expect-error": "allow-with-description"` and
+  `"ts-ignore": true` — `@ts-expect-error` permitted with a reason, `@ts-ignore` never
+  (expect-error expires by itself when the underlying error is fixed).
+- `"options": { "reportUnusedDisableDirectives": "error" }` — a stale suppression is an
+  error rather than a fossil. oxlint reports it only when this option is set.
+- `typescript/no-explicit-any` and `typescript/no-non-null-assertion` (above) refuse
+  `as any` and `x!`. A hatch no rule refuses is allowed; there is no count of them.
+- **The rest is a local JS plugin**, because oxlint has no `eslint-plugin-eslint-comments`
+  and no `no-restricted-syntax`, and the ESLint plugin itself crashes under oxlint's JS
+  plugin host. Copy
+  [`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs)
+  into the package, list it in `jsPlugins`, and turn on its three rules at `error`:
+  - `escape-hatches/require-reason` — a disable directive names its rules and says why
+    after `--` (`require-description` and `no-unlimited-disable`);
+  - `escape-hatches/no-restricted-disable`, with the refused rules as its option
+    (`["typescript/no-explicit-any", "typescript/no-non-null-assertion"]`) — no inline
+    comment re-allows what the config refuses (`no-restricted-disable`). It matches the
+    rule name without its plugin prefix, because oxlint honours
+    `@typescript-eslint/no-explicit-any` and a bare `no-explicit-any` in a directive too,
+    and it refuses any directive that names one of the plugin's own rules;
+  - `escape-hatches/no-double-cast` — refuses `as unknown as`, which no oxlint rule does.
+
+  oxlint's JS plugins are **alpha**, so these three rules stand on an experimental host.
+  Two disables still get past them, both measured: a bare `/* oxlint-disable */`
+  switches off every rule from its line on, the plugin's included, and an
+  `oxlint-disable-line` that names the plugin's rules silences their report on its own
+  line. Both are visible in the diff, and refusing them needs a check that runs outside
+  the linter.
+- A refusal a spec file needs (the negative-path cast below) is a config override, never
   a disable.
-- On existing code, refuse first and baseline with ESLint's bulk suppressions
-  (`eslint --suppress-all`), committed as `eslint-suppressions.json`; a new violation
-  fails, and `--prune-suppressions` removes the entries a fix cleared.
+- On existing code with too many hatches to refuse today, the refusal still goes in at
+  `error`, and an `overrides` entry turns the rule off for the files that already break it,
+  listed by path. oxlint keeps no bulk-suppression file, so that list is the baseline: a
+  new file is refused from its first line, and a file leaves the list when its cleanup
+  (a `/inspire-task` ticket) lands.
 
 Test-file relaxations are enumerated **per rule with a written reason**. Two legitimate
 cases, and they are different in kind:
@@ -369,8 +428,13 @@ cases, and they are different in kind:
 Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 
 ## Build & verify
-build: `npm run build` · lint: `npm run lint` · types: `npx tsc --noEmit` ·
-tests: `npm run test` + `npm run test:e2e`
+build: `npm run build` · lint: `npm run lint` (`oxlint`) · format: `npx oxfmt --check` ·
+types: `npx tsgo --noEmit` · tests: `npm run test` + `npm run test:e2e` (`vitest run`)
+
+The default toolchain is **oxlint** with `oxlint-tsgolint` for the type-aware rules,
+**oxfmt** for formatting, **tsgo** (`@typescript/native-preview`) for type checking and
+**Vitest** with `unplugin-swc` for tests. A project whose `stack.md` names other tools
+uses its own commands, and declares its own `gates:` for them.
 
 **Monorepo scoping.** In a workspace, scope every command to the target bundle's
 package (its `package` field): `pnpm --filter {package} build|lint|test` (or the workspace tool's

@@ -33,8 +33,9 @@ Score the source and the KB current on the same axes, then compare.
 | Real quality gates wired (strict lint set, coverage threshold, CI running them) | defaults untouched, or a config nothing enforces |
 
 **Quality gates are the one part of `stack.md` that migrates upward by default.** A
-source's installed gates are evidence, not opinion — they are in its `eslint.config` /
-CI and the code already satisfies them. So when the source enforces something the KB's
+source's installed gates are evidence, not opinion — they are in its lint config
+(`.oxlintrc.json`, `eslint.config.*`) / CI and the code already satisfies them. So
+when the source enforces something the KB's
 `## Quality gates` does not, **recommend migrating the gate** even where the overall
 verdict for `stack.md` is *keep local*, and record what the existing code already
 passes: that number is the ratchet's starting baseline, and it is only measurable

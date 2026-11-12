@@ -77,30 +77,46 @@ and in which form, is decided once, in the linter's config — never counted aft
 Each condition below is local and binary, so by Rule 1 the linter owns it:
 
 - **Allowed or refused, per rule** — the config says, for each hatch, whether code may
-  use it at all. `@typescript-eslint/no-explicit-any` at `error` refuses `as any`
-  everywhere; `@typescript-eslint/ban-ts-comment` refuses `@ts-ignore` and allows
-  `@ts-expect-error` only with a description. A refused hatch fails at the line, in the
-  agent's own loop, before anyone sees the code. A rule the project never allows is also
-  closed to inline disables (`eslint-comments/no-restricted-disable`): otherwise one
-  described `eslint-disable-next-line` turns a refused hatch into an allowed one.
+  use it at all. `no-explicit-any` at `error` refuses `as any` everywhere;
+  `ban-ts-comment` refuses `@ts-ignore` and allows `@ts-expect-error` only with a
+  description. A refused hatch fails at the line, in the agent's own loop, before anyone
+  sees the code. A rule the project never allows is also closed to inline disables:
+  otherwise one described disable directive turns a refused hatch into an allowed one.
 - **Named** — one greppable syntax, never a wholesale one. `@ts-expect-error`, not
   `@ts-ignore`: expect-error *fails once the underlying error is fixed*, so it expires
-  by itself. `eslint-disable-next-line <rule>`, never a bare file-wide `eslint-disable`
-  (`eslint-comments/no-unlimited-disable`), and a directive that no longer suppresses
-  anything is an error (`--report-unused-disable-directives`).
+  by itself. A directive names the rules it disables, never a bare file-wide disable,
+  and a directive that no longer suppresses anything is an error.
 - **Justified in place** — a suppression without a written reason is a lint error, not
-  a review comment (`eslint-comments/require-description`). Where the reason is "later",
-  it carries the tracker id that owns the cleanup.
+  a review comment. Where the reason is "later", it carries the tracker id that owns the
+  cleanup.
+
+Each linter spells these differently, and a stack skill names the rules it uses:
+
+| Condition | ESLint | oxlint |
+|---|---|---|
+| closed to inline disables | `eslint-comments/no-restricted-disable` | a local JS plugin rule |
+| names its rules | `eslint-comments/no-unlimited-disable` | a local JS plugin rule |
+| says why | `eslint-comments/require-description` | a local JS plugin rule |
+| stale directive is an error | `eslint-comments/no-unused-disable` | `reportUnusedDisableDirectives` |
+
+oxlint has no counterpart to `eslint-plugin-eslint-comments`, so the three rules it lacks
+are a JS plugin the TypeScript profile ships
+([`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs)).
+Under oxlint, a directive that disables the plugin's own rules gets past them: a bare
+file-wide disable switches them off with everything else. That gap is known, it is
+visible in the diff, and only a check outside the linter closes it.
 
 There is no count and no ceiling. A hatch the config allows is allowed wherever its
 rule permits it; one it refuses is refused everywhere. Using fewer is a change to the
 config — turning a rule to `error`, narrowing where an override applies — and that
 change is a diff a reviewer sees (Rule 3). A codebase with too many existing hatches
 to refuse one today adopts the refusal the way Rule 2 says, with the cleanup as a
-`/inspire-task` ticket. The linter keeps that baseline itself: ESLint's bulk
+`/inspire-task` ticket, and the baseline lives in the linter's own config. ESLint's bulk
 suppressions (`eslint --suppress-all`) record each existing violation in
 `eslint-suppressions.json`, a new one fails, and `--prune-suppressions` drops the
-entries a fix removed.
+entries a fix removed. oxlint keeps no such file, so an `overrides` entry turns the
+rule off for the files that already break it, listed by path, and a file leaves the
+list when its cleanup lands.
 
 ## Rule 5 — a gate the runtime cannot install is declared, never pretended
 

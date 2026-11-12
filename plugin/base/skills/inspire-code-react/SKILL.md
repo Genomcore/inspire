@@ -66,13 +66,22 @@ Rule 2 forbids dressing up as adoption. The rules themselves still bind: a proje
 this stack derives its own `## Quality gates` (and the `gates:` frontmatter that lets
 `.inspire/bin/profile-gates-installed.sh` verify them) from a frontend iteration that
 exercises each rule before writing it down. The shared-toolchain candidates are
-obvious — `strictTypeChecked`, `ban-ts-comment`, the eslint-comments rules — and the
-React-only ground (`eslint-plugin-react-hooks`, `jsx-a11y`, a bundle-size budget) is
-where the measuring has to happen. This section is the deferral, not the answer.
+obvious — the type-aware `typescript/no-unsafe-*` rules and `typescript/ban-ts-comment`
+in `.oxlintrc.json`, the escape-hatch plugin
+([`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs))
+— and the React-only ground (oxlint's `react/rules-of-hooks` and `react/exhaustive-deps`,
+its `jsx-a11y` plugin, a bundle-size budget) is where the measuring has to happen. This
+section is the deferral, not the answer.
 
 ## Build & verify
-build: `npm run build` · lint: `npm run lint` · types: `npx tsc --noEmit` ·
-tests: `npm run test` + `npm run test:e2e`
+build: `npm run build` · lint: `npm run lint` (`oxlint`) · format: `npx oxfmt --check` ·
+types: `npx tsgo --noEmit` · tests: `npm run test` (`vitest run`) + `npm run test:e2e`
+
+The default toolchain is **oxlint** with `oxlint-tsgolint` for the type-aware rules,
+**oxfmt** for formatting, **tsgo** (`@typescript/native-preview`) for type checking and
+**Vitest** for unit and component tests, transforming through SWC
+(`@vitejs/plugin-react-swc`). A project whose `stack.md` names other tools uses its own
+commands.
 
 **Monorepo scoping.** In a workspace, scope every command to the target face's or
 bundle's package (its `package` field): `pnpm --filter {package} build|lint|test` (or the workspace tool's

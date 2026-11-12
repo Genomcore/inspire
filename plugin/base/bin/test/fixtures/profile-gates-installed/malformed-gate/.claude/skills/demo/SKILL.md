@@ -2,7 +2,7 @@
 name: demo
 stack: demo
 gates:
-  - config: lint.config.js
+  - config: .oxlintrc.json
 ---
 
 ## Quality gates

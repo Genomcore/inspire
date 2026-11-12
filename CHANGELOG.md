@@ -9,7 +9,7 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.16.0 — unreleased
+## 0.17.0 — unreleased
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
 sets in its lint config the rules that refuse each hatch it does not allow, closed to
@@ -20,16 +20,64 @@ the file is still there, and leaves it as it is.
 
 - **The linter allows or refuses each escape hatch, and nothing counts them.**
   `escape-hatch-ratchet.sh` is removed, with its gate in the pre-commit and pre-PR
-  hooks. Whether code may use `as any`, `@ts-ignore` or an `eslint-disable` is a lint
+  hooks. Whether code may use `as any`, `@ts-ignore` or a disable directive is a lint
   rule, so a refused hatch fails at the line, in the agent's loop and in INSPIRE
-  Factory's lint check, before it merges. `quality-gates.md` Rule 4 says so, and the
-  NestJS skill names the rules: `strictTypeChecked` refuses `as any` and `x!`, and a
-  `no-restricted-syntax` selector refuses `as unknown as`, and
-  `eslint-comments/no-restricted-disable` keeps an inline comment from re-allowing
-  any of them. On existing code, ESLint's bulk suppressions record what is already
-  there and fail anything new. The ratchet counted a
-  mention in a comment as a use, and the Factory never ran it, so code a unit merged
-  could fail the next person's commit.
+  Factory's lint check, before it merges. `quality-gates.md` Rule 4 says so, for ESLint
+  and for oxlint. The ratchet counted a mention in a comment as a use, and the Factory
+  never ran it, so code a unit merged could fail the next person's commit.
+- **oxlint gets the escape-hatch rules it lacks from a local JS plugin.** The
+  `inspire-code-typescript` skill ships `references/oxlint-escape-hatches.mjs`, and the
+  NestJS skill gates its three rules: `escape-hatches/require-reason` (a disable names
+  its rules and says why), `escape-hatches/no-restricted-disable` (no inline comment
+  re-allows a refused rule, under any of its spellings) and `escape-hatches/no-double-cast`
+  (`as unknown as`). A NestJS project copies the file into its package, lists it in
+  `jsPlugins` and turns the three rules on, or `profile-gates-installed.sh` reports them
+  as not installed. oxlint's JS plugins are alpha. A bare `/* oxlint-disable */` still
+  gets past the plugin; it is visible in the diff.
+- On existing code, a refused rule is turned off by path in an `overrides` entry, which
+  is the baseline: oxlint keeps no bulk-suppression file.
+
+## 0.16.0 — 2026-11-11
+
+Upgrade with `/inspire:update`. Nothing in your knowledge base changes. Use this version
+with INSPIRE Factory 0.15.0 or later: that Factory scaffolds TypeScript projects on the
+new toolchain and refuses a project on an older INSPIRE.
+
+### Breaking for existing vaults
+
+- **TypeScript projects on ESLint and Jest fail their quality gates after the update.**
+  The `inspire-code-nestjs` skill now declares its gates in `.oxlintrc.json` (oxlint rule
+  names) and `vitest.config.ts`, and `profile-gates-installed.sh` reads them from the
+  skill, not from `stack.md`. A project that still has `eslint.config.mjs` and Jest
+  reports every gate as `config-missing`, `pre-pr.sh` blocks, and agents write Vitest
+  tests. Before the next emanation, either:
+  - **move the project to the new toolchain**: Vitest with SWC (`unplugin-swc`),
+    type-aware oxlint carrying the gate rules, oxfmt and tsgo. The Factory's
+    `react-nestjs-npm` template is a working reference. Update the checks in
+    `.inspire/emanate.yml` to match (`/inspire-config` derives them again); or
+  - **keep ESLint and Jest** by keeping the 0.15.0 `inspire-code-nestjs`, `-react` and
+    `-typescript` skills: after `/inspire:update`, restore them from git before you
+    commit (`git checkout HEAD -- .claude/skills/inspire-code-nestjs
+    .claude/skills/inspire-code-react .claude/skills/inspire-code-typescript`). Later
+    updates see them as local edits and leave them alone. There is no setting for this
+    yet.
+- A project that edited those skills (its own gates or test rules) gets a local-edit
+  conflict on them. `/inspire:update` never overwrites it: merge the new toolchain
+  sections by hand, or keep your version as above.
+
+### Changed
+
+- **TypeScript stacks default to Vitest + SWC, oxlint, oxfmt and tsgo** instead of Jest +
+  ts-jest, ESLint, Prettier and tsc, to cut the memory and time a suite takes. The
+  `typescript`, `nestjs` and `react` profiles, the bootstrap `stack.md` and
+  `/inspire-config`'s derived checks follow. Rules oxlint cannot express are stated in
+  the skill prose. The e2e suite runs from `vitest.e2e.config.ts`, one file at a time,
+  and each e2e file gets its own database, copied from one template the global setup
+  migrates once.
+- **`/inspire-config` knows the Factory's memory settings.** `factory.sandbox.memory`
+  defaults to `1536m` and must be a Docker size, and a service accepts `memory`
+  (default `512m`). The Factory admits only as many units at once as fit in Docker's
+  memory, so the worked example no longer sets `8g`.
 
 ## 0.15.0 — 2026-11-11
 

@@ -76,7 +76,11 @@ adding mobile, moving off a deployed database) is an ADR.
 
 - One package manager, one lint/format config, one shared component library across
   consoles, satellites and SDK — `class-variance-authority` / `clsx` /
-  `tailwind-merge` for component variants, ESLint for linting.
+  `tailwind-merge` for component variants.
+- **oxlint** for linting, with `oxlint-tsgolint` for the type-aware rules · **oxfmt**
+  for formatting · **tsgo** (`@typescript/native-preview`) for type checking ·
+  **Vitest** for tests, transforming through SWC (`unplugin-swc` on the NestJS side,
+  so decorators and their metadata survive).
 
 ## Wire conventions
 

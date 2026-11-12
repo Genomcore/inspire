@@ -40,7 +40,7 @@ default. The reader refuses any key not in the table, under `factory` and under
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
 | `base_branch` | a branch name, or `null` for a local release | `main` | `… factory.base_branch must be a branch name or null` |
 | `viewer_port` | an integer from 0 to 65535 | `4319` | `… factory.viewer_port must be an integer from 0 to 65535` |
-| `sandbox` | a mapping with only `memory`, a nonempty string (default `8g`); requires `model` | none | `… factory.sandbox must be a mapping` · `… factory.sandbox has unknown key <k>; allowed keys: memory` · `… factory.sandbox requires model` |
+| `sandbox` | a mapping with only `memory`, the memory limit of each unit container (setup, each check, each agent): a Docker size such as `1536m` or `2g` (default `1536m`); requires `model`. The Factory runs at once only as many units as fit in Docker's memory, each taking `sandbox.memory` plus every service's `memory`, so raise it only for a suite that needs it | none | `… factory.sandbox must be a mapping` · `… factory.sandbox has unknown key <k>; allowed keys: memory` · `… factory.sandbox.memory must be a Docker memory size such as 1536m or 2g` · `… factory.sandbox requires model` |
 
 The old file's `schema` key has no place here: the reader refuses it as an unknown key.
 A model name must be exact: the reader checks only its form, and the run stops when it
@@ -81,11 +81,12 @@ The unit reaches it by its name, which is the hostname.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | `<name>` | — | a hostname label: lowercase letters, digits, hyphens, at most 63 characters, not `orchestrator` | `… services.<name>: the name must be a hostname label (lowercase letters, digits and hyphens) other than orchestrator` |
-| (keys) | — | only `image`, `env`, `command`, `healthcheck` | `… services.<name> has unknown key <k>; allowed keys: image, env, command, healthcheck` |
+| (keys) | — | only `image`, `env`, `command`, `healthcheck`, `memory` | `… services.<name> has unknown key <k>; allowed keys: image, env, command, healthcheck, memory` |
 | `image` | yes | same reference rule as `image.name`. The bash/git/glibc probe does not apply: a service image may be Alpine | `… services.<name>.image must be a nonempty string` |
 | `env` | no | same rules as `env`. The top-level `env` is **not** passed to services | `… services.<name>.env.<VAR> must be a string; quote numbers and booleans` |
 | `healthcheck` | yes | one shell string, run **inside the service's image**, so that image must carry the tool it calls. Compose's `[CMD, …]` form is not accepted | `… services.<name>.healthcheck must be a nonempty string` |
 | `command` | no | a nonempty list of strings; replaces the image's `CMD` | `… services.<name>.command must be a nonempty list` |
+| `memory` | no | the service container's memory limit, a Docker size such as `512m` or `1g` (default `512m`); it counts towards each unit's share when the Factory decides how many units run at once | `… services.<name>.memory must be a Docker memory size such as 512m or 1g` |
 
 At run time the factory polls the healthcheck every second for up to 60 seconds,
 then stops the run:
@@ -248,8 +249,7 @@ A worked example, and not a rule: React and NestJS in one npm package under
 factory:
   model: 'litellm/claude-opus-5-5'
   review_model: 'litellm/claude-sonnet-5-5'
-  sandbox:
-    memory: '8g'
+  sandbox: {}
   max_tries: 2
   base_branch: 'main'
 image:
@@ -276,9 +276,9 @@ phases:
   - name: tests
     checks:
       - name: Unit tests
-        run: 'cd source && npx --no-install jest --config jest.config.json --maxWorkers=2'
+        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
       - name: E2E tests
-        run: 'cd source && npx --no-install jest --config test/jest-e2e.json'
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
   - name: review
     checks:
       - name: Conventions
@@ -292,7 +292,8 @@ phases:
 ```
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
-Postgres is still initializing. The e2e suite takes no `--maxWorkers`: the flag
-overrides the `maxWorkers: 1` its config sets, and the NestJS profile requires 1.
+Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config sets
+`fileParallelism: false`, which already runs one file at a time, as the NestJS profile
+requires.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews.
