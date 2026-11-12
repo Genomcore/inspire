@@ -127,3 +127,10 @@ it needs production reach no skill can install.
   `quality-gates.md` Rule 4 says the linter allows or refuses each hatch, and the stack
   skills name the rules that do it. PR #95, which fixed the use/mention defect and made
   the Factory run the ratchet, is closed unmerged.
+- *oxlint (0.16.0 moved the TypeScript stacks to it):* oxlint has no
+  `eslint-plugin-eslint-comments`, and in 0.16.0 the ratchet was the only check on
+  suppressions. Its three missing rules (reason, named rules, no re-allowing a refused
+  rule) and an `as unknown as` refusal ship as a local JS plugin,
+  `inspire-code-typescript/references/oxlint-escape-hatches.mjs`, gated by the NestJS
+  skill. A bare `/* oxlint-disable */` still gets past it. A check outside the linter
+  would close that, and is deferred until it is seen in practice.

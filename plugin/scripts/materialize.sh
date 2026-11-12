@@ -509,6 +509,12 @@ gitignore_extend_block() {
   log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
 }
 
+warn_retired_escape_hatches() {
+  [ -f "$PROJECT_ROOT/.escape-hatches.json" ] || return 0
+  WARNINGS+=(".escape-hatches.json is no longer read: INSPIRE stopped counting escape hatches, and the linter now allows or refuses each one (quality-gates.md Rule 4). Delete the file, and set in the lint config the rules that refuse each hatch the project does not allow, closed to inline disables (escape-hatches/no-restricted-disable under oxlint, eslint-comments/no-restricted-disable under ESLint). A pre-commit.sh you edited still calls the removed ratchet and blocks every commit until the file is gone.")
+  log "  · .escape-hatches.json is no longer read — delete it and move the refusals into the lint config"
+}
+
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
 # the repo, so teammates and CI need no plugin. A .gitignore rule that excludes
 # it therefore defeats the whole delivery model, silently: init reports
@@ -537,12 +543,6 @@ gitignore_extend_block() {
 # The paths checked are the 0.3 dest_map's destination roots, one per payload
 # class — keep them in step with scripts/hops/layouts.tsv. A class missing from
 # this list is a class whose absence from git nobody is told about.
-warn_retired_escape_hatches() {
-  [ -f "$PROJECT_ROOT/.escape-hatches.json" ] || return 0
-  WARNINGS+=(".escape-hatches.json is no longer read: INSPIRE stopped counting escape hatches, and the linter now allows or refuses each one (quality-gates.md Rule 4). Delete the file, and set in the lint config the rules that refuse each hatch the project does not allow, closed to inline disables (eslint-comments/no-restricted-disable). A pre-commit.sh you edited still calls the removed ratchet and blocks every commit until the file is gone.")
-  log "  · .escape-hatches.json is no longer read — delete it and move the refusals into the lint config"
-}
-
 warn_shadowed_runtime() {
   local shadowed=() p
   for p in .claude/skills .claude/agents .claude/inspire/hooks .inspire/bin; do
