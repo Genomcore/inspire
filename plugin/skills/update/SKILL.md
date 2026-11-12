@@ -215,6 +215,12 @@ this update moved nothing in the KB, because it never does. The next step is
 `/inspire:migrate`, after the update is committed. Skip Steps 5, 8 and 9 — they act on
 `01_spec/` — and run them after the migration instead.
 
+**Wikilinks.** When a warning counts wikilinks in `inspire_kb/`, say that from 0.16.1
+a KB link is a relative Markdown link to the target file, that this update changed no
+link, and that `links-resolve` reports each wikilink until it is converted. The next
+step is `/inspire:migrate`, after the update is committed: on a KB already on the
+concept layout it converts the links and moves nothing.
+
 ## Step 5 — Backfill the UI specification
 
 A release can add parts of the screen layer an older vault never wrote — the token

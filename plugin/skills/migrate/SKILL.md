@@ -1,6 +1,6 @@
 ---
 name: migrate
-description: "Move this project's knowledge base from the layered layout (01_adr, 02_modules, 03_features, 04_domain, 05_screens and the surface roster) to the concept layout under inspire_kb/01_spec/, where every artifact has a typed extension. Run once, on purpose, after /inspire:update to 0.15.0 or later reports the layered layout. Rebuilds nothing that is already built."
+description: "Move this project's knowledge base from the layered layout (01_adr, 02_modules, 03_features, 04_domain, 05_screens and the surface roster) to the concept layout under inspire_kb/01_spec/, where every artifact has a typed extension, and convert its [[wikilinks]] to relative Markdown links. Run once, on purpose, after /inspire:update reports the layered layout or counts wikilinks. Rebuilds nothing that is already built."
 ---
 
 # /inspire:migrate — the KB by concept
@@ -13,9 +13,16 @@ step that moves anything in `inspire_kb/`: `/inspire:update` never does
 ([`adr-kb-structure`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-kb-structure.md)
 D10).
 
+From 0.16.1 a KB link is a relative Markdown link to the target file,
+`[adr-audit](../../_adr/audit.adr.md)`. After the moves are committed, the skill
+converts every `[[wikilink]]` in a second step and a second commit
+([`adr-markdown-links`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-markdown-links.md)
+D6). A KB already on the concept layout that still holds wikilinks starts at
+Step 4: its links are converted and nothing moves.
+
 **What it never does:** rename a module, an entity or an action; change any id but a
-screen's; rewrite a link inside a screen's `## Bindings`; extract a shared screen
-into a pattern; create a process, or a bundle with an artifact of its own; run git.
+screen's; point a link at a different file; extract a shared screen into a pattern;
+create a process, or a bundle with an artifact of its own; write to git.
 Every screen id it changes goes into `inspire_kb/01_spec/_migration/id-map.json`,
 which the INSPIRE Factory release that goes with 0.15.0 reads to rewrite the built
 code instead of rebuilding it.
@@ -52,8 +59,14 @@ Never answer a question yourself: these are specification decisions.
 
 **Relay the plan grouped:** how many files move per kind, every screen id that changes
 (the `idmap` lines, old → new), every file it cannot place (`unplaced`: moved under
-`_migration/unplaced/`, never dropped) and every `note`. Ask the operator to confirm
-before Step 2.
+`_migration/unplaced/`, never dropped) and every `note`. Add how many wikilinks
+Step 4 converts:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/migrate-links.sh" --count --kb inspire_kb
+```
+
+Ask the operator to confirm before Step 2.
 
 ## Step 2 — Migrate
 
@@ -85,9 +98,40 @@ Tell the operator to commit now, before any edit:
 git add -A inspire_kb && git commit -m "chore(kb): move the KB to 01_spec (/inspire:migrate)"
 ```
 
-Do not commit for them unless they ask you to.
+Do not commit for them unless they ask you to. Step 4 waits for this commit.
 
-## Step 4 — Review, then narrow
+## Step 4 — Convert the links
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/migrate-links.sh" --dry-run --kb inspire_kb
+```
+
+It prints one `link` line per link it converts (file, line, the source that resolved
+it, the wikilink, the Markdown link) and one `unresolved` line per link it cannot
+resolve, and writes nothing. A link resolves through, in order: its path, mapped
+through the move record; its path against the current files; the id index; its
+target as a pre-move file name, mapped through the move record; the screen id map. A
+key two files share resolves nothing. The move record is `_migration/plan.tsv`, or,
+when there is none, the renames git holds since the commit before the layered
+directories left, read and never written; when the history does not show that
+commit, ask the operator for it and pass `--since REV`.
+
+The new link's text is the wikilink's alias, else its target as written, so a link
+in a screen's `## Bindings` keeps the screen id it named. Links inside code spans
+and fenced blocks stay as written.
+
+**Relay the count per source and every `unresolved` line**: each one stays a
+wikilink, and `links-resolve` reports it until it points at a file. Ask the operator
+which file each one means. Then run it without `--dry-run`; the link plan is saved
+to `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes nothing.
+
+Tell the operator to commit the conversion:
+
+```bash
+git add -A inspire_kb && git commit -m "chore(kb): convert KB links to relative Markdown links (/inspire:migrate)"
+```
+
+## Step 5 — Review, then narrow
 
 ```bash
 .inspire/bin/review.sh inspire_kb
@@ -99,12 +143,13 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- Old screen ids in `## Bindings` resolve through the id map and are not findings.
+- `links-resolve` errors for each link Step 4 listed as unresolved, until the operator
+  points it at a file.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.
 
-## Step 5 — The INSPIRE Factory
+## Step 6 — The INSPIRE Factory
 
 Tell the operator what comes next for code already built: the INSPIRE Factory release
 that goes with INSPIRE 0.15.0 reads `_migration/id-map.json`, rewrites the screen

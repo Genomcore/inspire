@@ -56,7 +56,7 @@ E
   printf -- '---\nsurfaces: all\n---\n# Global\n**Modules affected:** [[auth]], [[billing]]\n' | mk "$K/01_adr/adr-global.md"
   printf '# Auth only\n**Modules affected:** [[auth]]\n' | mk "$K/01_adr/adr-auth-local.md"
   printf '# hub\n' | mk "$K/02_modules/auth.md"
-  printf -- '---\nsurfaces: [portal, api]\n---\n# login\n' | mk "$K/03_features/auth/login.md"
+  printf -- '---\nsurfaces: [portal, api]\n---\n# login\nSee [[../../02_modules/auth]].\n' | mk "$K/03_features/auth/login.md"
   printf -- '---\nid: auth::user\n---\n# user\n' | mk "$K/04_domain/auth/user/auth.user.md"
   printf -- '---\nid: auth::user::create\n---\n# create\n' | mk "$K/04_domain/auth/user/auth.user.create.md"
   printf -- '---\nid: auth.list\nmodule: auth\nscreen: list\n---\n# list\n## Bindings\n- nav: [[auth.detail]]\n' | mk "$K/05_screens/portal/auth/list.md"
@@ -107,8 +107,8 @@ check "theme moves out of 00_bootstrap" "[ -f '$S/_design-system/theme.md' ] && 
 check "a ui surface becomes a face file, with its packaging" \
   "grep -q '^package: apps/portal' '$S/_faces/portal/portal.face.md' && grep -q '^shell: /portal' '$S/_faces/portal/portal.face.md'"
 check "a headless surface becomes a bundle of every module" \
-  "grep -q '^package: apps/api' '$S/_bundles/api.bundle.md' && grep -q '^- \[\[auth\]\] (whole module)' '$S/_bundles/api.bundle.md'"
-check "a module with no action is not in the bundle" "! grep -q '\[\[mail\]\]' '$S/_bundles/api.bundle.md'"
+  "grep -q '^package: apps/api' '$S/_bundles/api.bundle.md' && grep -qF -- '- [auth](../_modules/auth/auth.module.md) (whole module)' '$S/_bundles/api.bundle.md'"
+check "a module with no action is not in the bundle" "! grep -q 'mail' '$S/_bundles/api.bundle.md'"
 check "the lib chosen as design system makes no bundle" "[ ! -e '$S/_bundles/kit.bundle.md' ]"
 check "the roster is retired, not deleted" "[ -f '$S/_migration/retired/00_bootstrap/surfaces.md' ] && [ ! -e '$P/inspire_kb/00_bootstrap/surfaces.md' ]"
 check "a file it cannot place is kept under _migration/unplaced" "[ -f '$S/_migration/unplaced/04_domain/auth/NOTES.txt' ]"
@@ -132,6 +132,7 @@ eq "module: and screen: stay, so the route does not change" \
 eq "the id map lists every screen id that changed" \
   "$(jq -c '.screens' "$S/_migration/id-map.json")" '{"admin.auth.list":"admin.list","auth.detail":"portal.detail","auth.list":"portal.list"}'
 check "a link inside ## Bindings is not rewritten" "grep -q -- '- nav: \[\[auth.detail\]\]' '$S/_faces/portal/_screens/list.screen.md'"
+check "the moves rewrite no link" "grep -qF 'See [[../../02_modules/auth]].' '$S/_modules/auth/_features/login.feature.md'"
 
 # surfaces: becomes faces: / bundles:, and goes where placement already says it.
 eq "a feature's surfaces: splits by kind" \
@@ -153,6 +154,19 @@ eq "every original body survives somewhere under 01_spec" "$lost" "0"
 out="$(cd "$P" && bash "$MIG" --lib kit=design-system 2>&1)"; rc=$?
 eq "a second run is a no-op" "$rc" "0"
 has "and says so" "$out" "already migrated"
+
+# Once the moves are committed, migrate-links.sh converts the links from the saved
+# move plan (adr-markdown-links D6).
+out="$(cd "$P" && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" 2>&1)"
+check "a path link follows its target through the move plan" \
+  "grep -qF 'See [auth](../auth.module.md).' '$S/_modules/auth/_features/login.feature.md'"
+check "an id link becomes a path from the linking file" \
+  "grep -qF '**Modules affected:** [auth](../auth.module.md)' '$S/_modules/auth/_adr/auth-local.adr.md'"
+check "a link inside ## Bindings keeps the old screen id as its text and points at the screen" \
+  "grep -q -- '- nav: \[auth.detail\](detail.screen.md)' '$S/_faces/portal/_screens/list.screen.md'"
+check "a link to nothing stays as written" "grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
+has "and the run lists it" "$out" "unresolved	inspire_kb/01_spec/_adr/global.adr.md"
+check "the link plan is saved beside the move plan" "grep -q '^link	' '$S/_migration/links.tsv'"
 
 # A half-migrated KB is refused, never merged into.
 H="$W/half"; old_kb "$H"; mkdir -p "$H/inspire_kb/01_spec"
@@ -181,7 +195,7 @@ has "it asks for the bundle" "$out" "ask	bundle"
 check "the one face holds the screen" "[ -f '$N/inspire_kb/01_spec/_faces/shop-web/_screens/cart.screen.md' ]"
 eq "its id names the face" "$(yq --front-matter=extract '.id' "$N/inspire_kb/01_spec/_faces/shop-web/_screens/cart.screen.md")" "shop-web.cart"
 check "the one bundle groups every module, with its package" \
-  "grep -q '^package: apps/api' '$N/inspire_kb/01_spec/_bundles/api.bundle.md' && grep -q '\[\[shop\]\]' '$N/inspire_kb/01_spec/_bundles/api.bundle.md'"
+  "grep -q '^package: apps/api' '$N/inspire_kb/01_spec/_bundles/api.bundle.md' && grep -qF '[shop](../_modules/shop/shop.module.md)' '$N/inspire_kb/01_spec/_bundles/api.bundle.md'"
 check "the face uses the bundle" "grep -q '^bundles: \[api\]' '$N/inspire_kb/01_spec/_faces/shop-web/shop-web.face.md'"
 
 # No screens, no roster: modules and domain only — no face, no bundle.
