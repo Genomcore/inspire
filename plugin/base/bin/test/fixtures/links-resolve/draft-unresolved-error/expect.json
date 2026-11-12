@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink does not resolve: ..ghost-doc-that-does-not-exist" }
+  ],
+  "forbidden": ["\"severity\":\"warning\""]
+}

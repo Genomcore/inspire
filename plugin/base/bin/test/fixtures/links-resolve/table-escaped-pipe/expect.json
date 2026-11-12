@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "finding_count": 2,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..auth.user.create.. at line 22: .*resolves to .*user.create.action.md" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .owner|keeper.(user.owner.action.md) at line 23" }
+  ],
+  "forbidden": ["does not resolve: [[", "auth.user.create\\\\", "(user.create.action.md)"]
+}

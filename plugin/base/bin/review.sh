@@ -35,6 +35,7 @@ frontmatter-mechanics.sh \
 acyclic-deps.sh \
 sections-present.sh \
 no-todos.sh \
+links-resolve.sh \
 action-fields-in-entity.sh \
 entity-coherence.sh \
 stable-blockers.sh \
@@ -44,7 +45,6 @@ screen-presentation.sh \
 design-system-coherence.sh \
 field-coverage.sh \
 rationale-wikilink.sh \
-wikilinks-resolve.sh \
 keys-present.sh \
 constraints-mechanics.sh \
 head-referents.sh \

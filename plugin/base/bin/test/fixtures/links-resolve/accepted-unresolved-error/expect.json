@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink does not resolve: ..adr-that-was-deleted.*/inspire:migrate" }
+  ]
+}

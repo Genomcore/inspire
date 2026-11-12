@@ -564,6 +564,198 @@ sdd_catalog_state() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# KB links (adr-markdown-links)
+#
+# A link is a relative Markdown link, `[text](path)`, resolved by joining its
+# path to the linking file's directory (D2). A wikilink, `[[target|text]]`, is the
+# form before 0.16.1 and still resolves by id (D5). A link inside a code span or a
+# fenced block is an example and is never read (D4). The id of a resolved file is
+# `sdd_artifact_id`.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# sdd_link_index — builds the wikilink index once, KB-wide whatever the scope:
+#   `{kind}<TAB>{key}<TAB>{path}`, kind A action id · E entity id (dotted) ·
+#   S screen id · M old screen id (path holds the new one) · N file name id.
+#   Call it in the calling script's own shell, which removes
+#   `$SDD_LINK_INDEX_FILE` and `$SDD_ENTITY_INDEX_FILE` on exit.
+SDD_LINK_INDEX_FILE=""
+sdd_link_index() {
+  [ -n "$SDD_LINK_INDEX_FILE" ] && [ -f "$SDD_LINK_INDEX_FILE" ] && return 0
+  SDD_LINK_INDEX_FILE="$(mktemp -t sdd-link-index.XXXXXX)"
+  local f id map="$SDD_SPEC_ROOT/_migration/id-map.json"
+  {
+    while IFS= read -r f; do
+      id="$(sdd_fm_value "$f" '.id')"
+      [ -n "$id" ] && printf 'A\t%s\t%s\n' "$id" "$f"
+    done < <(sdd_find_actions "$SDD_SPEC_ROOT")
+    _sdd_entity_index
+    awk '{ print "E\t" $0 }' "$SDD_ENTITY_INDEX_FILE"
+    while IFS= read -r f; do
+      id="$(sdd_fm_value "$f" '.id')"
+      [ -n "$id" ] && printf 'S\t%s\t%s\n' "$id" "$f"
+    done < <(sdd_find_screens "$SDD_SPEC_ROOT")
+    [ -f "$map" ] && jq -r '.screens // {} | to_entries[] | "M\t\(.key)\t\(.value)"' "$map" 2>/dev/null
+    # A file is named both by its plain name and by the id its typed name gives.
+    find "$SDD_KB_ROOT" .claude/skills -type f -name '*.md' ! -path '*/node_modules/*' 2>/dev/null \
+      | awk '
+          {
+            n = split($0, seg, "/"); base = seg[n]; sub(/\.md$/, "", base)
+            print "N\t" base "\t" $0
+            if (base ~ /\.adr\.rationale$/) { sub(/\.adr\.rationale$/, "", base); print "N\tadr-" base ".rationale\t" $0 }
+            else if (base ~ /\.adr$/) { sub(/\.adr$/, "", base); print "N\tadr-" base "\t" $0 }
+            else if (base ~ /\.(module|feature|entity|action|bundle|face|screen|process|component|layout|pattern)$/) {
+              sub(/\.[a-z]+$/, "", base); print "N\t" base "\t" $0
+            }
+          }'
+  } > "$SDD_LINK_INDEX_FILE"
+}
+
+# sdd_links <file> — every link in the file, frontmatter included, one per line:
+#   `{line}<TAB>{md|wiki}<TAB>{target as written}<TAB>{text}<TAB>{resolved path}`.
+#   The path is empty when the link resolves to no file. Text and target are never
+#   empty, so `IFS=$'\t' read` keeps the five fields apart: a link that shows no
+#   text reports its target as text. Images and external URLs are not links here.
+sdd_links() {
+  local file="$1" dir ln form target text path
+  sdd_link_index
+  case "$file" in */*) dir="${file%/*}" ;; *) dir="." ;; esac
+  awk -v idx="$SDD_LINK_INDEX_FILE" -v dir="$dir" "$SDD_AWK_LINKS$SDD_AWK_FENCE_FUNCS" \
+    "$SDD_LINK_INDEX_FILE" "$file" \
+  | while IFS=$'\t' read -r ln form target text path; do
+      [ -n "$path" ] && [ -f "$path" ] || path=""
+      printf '%s\t%s\t%s\t%s\t%s\n' "$ln" "$form" "$target" "$text" "$path"
+    done
+}
+
+# The reader's awk program. The index file is read first; every later line is the
+# linking file. A wikilink resolves through the routes it always took (D5), in
+# order; a Markdown path is joined and normalized here and tested for existence by
+# the caller.
+SDD_AWK_LINKS='
+  FILENAME == idx {
+    if ($0 !~ /\t/) next
+    split($0, r, "\t")
+    if (!((r[1], r[2]) in ix)) ix[r[1], r[2]] = r[3]
+    next
+  }
+  FNR == 1 && $0 == "---" { fm = 1; next }
+  fm { if ($0 == "---") fm = 0; else sdd_scan(sdd_unspan($0), FNR); next }
+  sdd_fence($0) { next }
+  sdd_in_fence() { next }
+  { sdd_scan(sdd_unspan($0), FNR) }
+
+  # A code span is a run of n backticks closed by the next run of exactly n.
+  function sdd_unspan(s,   out, i, n, run, rest, pos, k, m, found) {
+    out = ""
+    while ((i = index(s, "`")) > 0) {
+      n = 0; while (substr(s, i + n, 1) == "`") n++
+      run = substr(s, i, n); rest = substr(s, i + n); pos = 1; found = 0
+      while ((k = index(substr(rest, pos), run)) > 0) {
+        k += pos - 1; m = 0
+        while (substr(rest, k + m, 1) == "`") m++
+        if (m == n) { found = k; break }
+        pos = k + m
+      }
+      if (found) { out = out substr(s, 1, i - 1) " "; s = substr(rest, found + n) }
+      else { out = out substr(s, 1, i + n - 1); s = rest }
+    }
+    return out s
+  }
+
+  function sdd_scan(s, ln,   w, ws, wl, ms, ml, tok) {
+    while (1) {
+      w = match(s, /\[\[[^]]+\]\]/); ws = RSTART; wl = RLENGTH
+      ms = match(s, /!?\[[^]]*\]\([^)]*\)/); ml = RLENGTH
+      if (!w && !ms) return
+      if (w && (!ms || ws <= ms)) {
+        sdd_wiki(substr(s, ws + 2, wl - 4), ln); s = substr(s, ws + wl)
+      } else {
+        tok = substr(s, ms, ml); s = substr(s, ms + ml)
+        if (substr(tok, 1, 1) != "!") sdd_md(tok, ln)
+      }
+    }
+  }
+
+  function sdd_emit(ln, form, target, text, path) {
+    gsub(/\t/, " ", target); gsub(/\t/, " ", text)
+    if (text == "") text = target
+    print ln "\t" form "\t" target "\t" text "\t" path
+  }
+
+  # `[[target|text]]`: the target is the left half, and a pipe escaped for a
+  # table cell leaves its backslash on it.
+  function sdd_wiki(inner, ln,   p, t, text) {
+    p = index(inner, "|")
+    if (p) { t = substr(inner, 1, p - 1); sub(/\\$/, "", t); text = substr(inner, p + 1) }
+    else { t = inner; text = inner }
+    if (t == "") return
+    sdd_emit(ln, "wiki", t, text, sdd_wres(t))
+  }
+
+  function sdd_wres(t,   c) {
+    sub(/#.*/, "", t)
+    if (t == "") return ""
+    # A path-shaped target means its last segment (adr-kb-structure D4).
+    if (index(t, "/")) { sub(/.*\//, "", t); sub(/\.md$/, "", t); if (t == "") return "" }
+    if (index(t, "::")) {
+      if (("A", t) in ix) return ix["A", t]
+      c = t; gsub(/::/, ".", c)
+      if (("E", c) in ix) return ix["E", c]
+    } else if (index(t, ".")) {
+      c = t; gsub(/\./, "::", c)
+      if (("A", c) in ix) return ix["A", c]
+      if (("E", t) in ix) return ix["E", t]
+      if (("N", t) in ix) return ix["N", t]
+    }
+    if (("S", t) in ix) return ix["S", t]
+    if ((("M", t) in ix) && (("S", ix["M", t]) in ix)) return ix["S", ix["M", t]]
+    if (("N", t) in ix) return ix["N", t]
+    return ""
+  }
+
+  function sdd_md(tok, ln,   p, text, dest, path) {
+    p = index(tok, "](")
+    text = substr(tok, 2, p - 2); gsub(/\\\|/, "|", text)
+    dest = substr(tok, p + 2, length(tok) - p - 2)
+    gsub(/^[ ]+|[ ]+$/, "", dest)
+    if (substr(dest, 1, 1) == "<") { sub(/^</, "", dest); sub(/>.*$/, "", dest) }
+    else sub(/[ ].*$/, "", dest)
+    if (dest == "" || dest ~ /^#/ || dest ~ /^[A-Za-z][A-Za-z0-9+.-]*:\/\// || dest ~ /^(mailto|tel|data):/) return
+    path = dest; sub(/[#?].*$/, "", path)
+    sdd_emit(ln, "md", dest, text, sdd_join(dir, sdd_unescape(path)))
+  }
+
+  # Percent-decoding of printable ASCII; any other `%` stays as written.
+  function sdd_unescape(s,   out, i, hi, lo) {
+    out = ""
+    while ((i = index(s, "%")) > 0) {
+      hi = index("0123456789abcdef", tolower(substr(s, i + 1, 1)))
+      lo = index("0123456789abcdef", tolower(substr(s, i + 2, 1)))
+      if (hi < 3 || hi > 8 || lo == 0) { out = out substr(s, 1, i); s = substr(s, i + 1); continue }
+      out = out substr(s, 1, i - 1) sprintf("%c", (hi - 1) * 16 + lo - 1); s = substr(s, i + 3)
+    }
+    return out s
+  }
+
+  # Lexical join: `.` dropped, `..` pops a segment, leading `..` kept.
+  function sdd_join(d, p,   abs, n, seg, i, st, k, out) {
+    abs = (substr(p, 1, 1) == "/")
+    n = split((abs ? "" : d "/") p, seg, "/")
+    if (substr(d, 1, 1) == "/") abs = 1
+    k = 0
+    for (i = 1; i <= n; i++) {
+      if (seg[i] == "" || seg[i] == ".") continue
+      if (seg[i] == ".." && k > 0 && st[k] != "..") { k--; continue }
+      if (seg[i] == ".." && abs) continue
+      st[++k] = seg[i]
+    }
+    out = ""
+    for (i = 1; i <= k; i++) out = out (i > 1 ? "/" : "") st[i]
+    return (abs ? "/" : "") out
+  }
+'
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Finding emission
 #
 # Findings are JSON lines on stderr. Stdout is reserved for human summaries.
@@ -617,8 +809,8 @@ sdd_exit_with_counters() {
 # sdd_progressive_severity <lifecycle>
 #   Maps an object's lifecycle to the severity tier for lifecycle-
 #   progressive rules. Used by field-coverage, rationale-wikilink,
-#   wikilinks-resolve, sections-present (its order check) and prose-style
-#   (its four non-heuristic checks).
+#   sections-present (its order check) and prose-style (its four
+#   non-heuristic checks).
 #     draft (and empty / unknown) → warning
 #     accepted, stable            → error
 #     superseded                  → warning

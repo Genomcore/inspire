@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "does not resolve: ..adr-auth-cookies.rationale" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "adr-auth-sessions.*resolves to .*auth-sessions.adr.md" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "adr-auth-sessions.rationale.*resolves to .*auth-sessions.adr.rationale.md" }
+  ],
+  "forbidden": ["does not resolve: [[adr-auth-sessions]]", "does not resolve: [[adr-auth-sessions.rationale]]"]
+}

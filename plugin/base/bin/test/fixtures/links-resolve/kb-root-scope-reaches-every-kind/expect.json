@@ -1,0 +1,38 @@
+{
+  "exit": 1,
+  "args": [
+    "spec/kb"
+  ],
+  "findings": [
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "this-wikilink-resolves-nowhere"
+    },
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "user.profile.edit.screen.md"
+    },
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "FEAT-01-login.feature.md.*adr-does-not-exist-anywhere"
+    },
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "auth-sessions.adr.md.*adr-also-does-not-exist"
+    },
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "api.bundle.md.*\\[\\[auth\\]\\]"
+    }
+  ],
+  "forbidden": [
+    "03_features",
+    "01_adr",
+    "app.face.md"
+  ]
+}

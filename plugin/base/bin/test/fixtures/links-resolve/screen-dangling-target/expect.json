@@ -1,0 +1,17 @@
+{
+  "exit": 1,
+  "args": [
+    "spec/kb"
+  ],
+  "findings": [
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "does not resolve: ..users.no-such-screen"
+    }
+  ],
+  "forbidden": [
+    "\"severity\":\"warning\"",
+    "users.list]]"
+  ]
+}
