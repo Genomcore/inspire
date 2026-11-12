@@ -16,6 +16,12 @@ sets in its lint config the rules that refuse each hatch it does not allow, clos
 inline disables: from this version nothing counts them. `/inspire:update` warns while
 the file is still there, and leaves it as it is.
 
+A project on the `nestjs` profile also installs the oxlint escape-hatch plugin, with or
+without `.escape-hatches.json`: it copies `oxlint-escape-hatches.mjs` from the
+`inspire-code-typescript` skill's `references/` into its package, lists it in `jsPlugins`
+and turns on its three rules. Until then `profile-gates-installed.sh` fails the pre-PR
+hook, and `/inspire:update` warns, naming the config that lacks them.
+
 ### Changed
 
 - **The linter allows or refuses each escape hatch, and nothing counts them.**
