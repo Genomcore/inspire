@@ -139,7 +139,8 @@ names the concept directory that took its contents (`01_adr` → `_adr`, `02_mod
 directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
 `_modules/{m}`, `03_features/{m}` → `_modules/{m}/_features`, `04_domain/{m}` →
 `_modules/{m}/_domain`, `05_screens/{f}/{m}` → `_faces/{f}/_screens`, a screen index →
-`_faces/{f}/_index.md`). A link to a retired file, or a placeholder outside a template,
+`_faces/{f}/_index.md`); when the directory a link maps to does not exist, it names
+the nearest directory on that path that does. A link to a retired file, or a placeholder outside a template,
 becomes its text. No link is converted or rebased into `_migration/`. A Markdown link
 that still names nothing, anywhere under the KB, gets a `broken` line and stays as
 written.

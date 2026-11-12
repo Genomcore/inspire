@@ -29,7 +29,8 @@
 # whose files all moved to one directory, is followed through the move record. A link
 # to a layered directory, or to its README, names the concept directory that took its
 # contents, or that directory's README; a subdirectory follows the layout, keeping a
-# deeper path where it exists. A link to a retired file, or a placeholder outside a
+# deeper path where it exists, and a directory link whose mapped directory does not
+# exist names the nearest directory on that path that does. A link to a retired file, or a placeholder outside a
 # template, becomes its text. A Markdown link that still names nothing is listed as
 # broken and left as written. No link is converted or rebased into 01_spec/_migration/.
 #
@@ -337,6 +338,18 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     for (; i <= n; i++) d = d "/" s[i]
     return d
   }
+  # nearest(c, written, old) — c where it exists; for a directory link (a trailing
+  # slash, or a last segment with no extension) whose mapped directory does not, the
+  # nearest directory on that path that does (D7). A file link or a placeholder gets
+  # no stand-in.
+  function nearest(c, written, old,   b) {
+    if (present(c)) return c
+    if (placeholder(c)) return ""
+    b = old; sub(/.*\//, "", b)
+    if (written !~ /\/$/ && index(b, ".")) return ""
+    while (sub(/\/[^\/]*$/, "", c)) if (placed(c) && present(c)) return c
+    return ""
+  }
   # retired(old) — a file the migration retired: its move record took it to
   # _migration/retired/, or it is the surface roster or a layered theme file (D6).
   function retired(old,   b) {
@@ -359,8 +372,13 @@ LC_ALL=C awk -v KB="$KB" -v LIST="$FILES" -v RENAMES="$RENAMES" -v INDEX="$WIKIL
     if (!abs) {
       src = (f in BACK) ? BACK[f] : f
       old = normpath(join_path(dir_of(src), path)); nt = ""
+      # A placeholder in a template names no file: it takes the layout, and is not checked.
+      if (is_template(f) && placeholder(path)) {
+        if ((c = layered(old)) == "" || (c = angle(relpath(c, dir_of(f)))) == written) return ""
+        st["rebased"]++; return c
+      }
       if ((old in REN) && placed(REN[old]) && present(REN[old])) nt = REN[old]
-      else if ((c = layered(old)) != "" && present(c)) nt = c
+      else if ((c = layered(old)) != "" && (c = nearest(c, written, old)) != "") nt = c
       else if (old != cur && placed(old) && present(old)) nt = old
       else if ((old in DMAP) && !(old in DCLASH) && placed(DMAP[old]) && present(DMAP[old])) nt = DMAP[old]
       if (nt != "") {

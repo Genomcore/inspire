@@ -387,10 +387,12 @@ printf '# features\n' | mk "$UD/_modules/m/_features/README.md"
 printf -- '---\nid: f.list\n---\n# list\n' | mk "$UD/_faces/f/_screens/list.screen.md"
 printf '# f navigation\n' | mk "$UD/_faces/f/_index.md"
 printf '# old index\n' | mk "$UD/_migration/merged/05_screens/f/m/_index.md"
+printf '# n\n' | mk "$UD/_modules/n/n.module.md"
 mk "$UK/06_spikes/README.md" <<'E'
 Module: [m](../02_modules/m/). Features: [f](../03_features/m) and [readme](../03_features/m/README.md).
 Domain: [d](../04_domain/m/). Screens: [s](../05_screens/f/m/). Index: [i](../05_screens/f/m/_index.md).
 Wiki index: [[../05_screens/f/m/_index]].
+No features: [nf](../03_features/n/). One segment: [sv](../05_screens/saved-views). Gone: [g](../03_features/m/gone.md).
 E
 out="$(cd "$U" && bash "$LINKS" 2>&1)"; rc=$?
 eq "the layered-subdirectory run exits 0" "$rc" "0"
@@ -402,6 +404,10 @@ has "a domain directory names the module's domain"     "$R" "Domain: [d](../01_s
 has "a face's module screens name the face's screens"  "$R" "Screens: [s](../01_spec/_faces/f/_screens)."
 has "a layered screen index names its face's _index.md" "$R" "Index: [i](../01_spec/_faces/f/_index.md)."
 has "and a wikilink to it converts the same way"       "$R" "Wiki index: [_index](../01_spec/_faces/f/_index.md)."
+has "a mapped directory that does not exist falls back to its nearest parent" "$R" "No features: [nf](../01_spec/_modules/n)."
+has "so does a one-segment screens directory"           "$R" "One segment: [sv](../01_spec/_faces)."
+has "a missing file gets no stand-in"                   "$R" "Gone: [g](../03_features/m/gone.md)."
+has "and is listed as broken" "$out" "broken${TAB}inspire_kb/06_spikes/README.md${TAB}4${TAB}[g](../03_features/m/gone.md)"
 
 # A wikilink nothing resolves is settled without a person (D6): an id that names an
 # artifact type gets its draft from the shipped template, anything retired or a
@@ -430,7 +436,7 @@ also: "[[adr-{slug}]]"
 - retired: [[../../../../00_bootstrap/surfaces]] and [roster](../../../../00_bootstrap/surfaces.md)
 - placeholder: [[03_features/{module}/{use-case}|{USE-CASE-ID}]] and [[04_domain/…]] and [p]({path}.md)
 E
-printf '# T\n[p]({path}.md)\n' | mk "$VD/_modules/m/_features/feature.template.md"
+printf '# T\n[p]({path}.md)\n[f](../../../../03_features/{module}/)\n' | mk "$VD/_modules/m/_features/feature.template.md"
 out="$(cd "$V" && bash "$LINKS" --dry-run 2>&1)"
 eq "a dry run drafts nothing" "$(find "$VD/_adr" -type f 2>/dev/null | wc -l | tr -d ' ')" "0"
 has "and lists each draft it would make" "$out" "drafted${TAB}inspire_kb/01_spec/_adr/new-thing.adr.md${TAB}adr"
@@ -455,6 +461,8 @@ has "a link to a retired file becomes its text, either form" "$X1" "- retired: .
 has "a placeholder becomes its text" "$X1" "- placeholder: {USE-CASE-ID} and 04_domain/… and p"
 has "a frontmatter placeholder becomes its text, still quoted" "$X1" 'also: "adr-{slug}"'
 check "a template keeps its placeholder link" "grep -qxF '[p]({path}.md)' '$VD/_modules/m/_features/feature.template.md'"
+hasnt "and lists no template placeholder as broken" "$out" "broken${TAB}inspire_kb/01_spec/_modules/m/_features/feature.template.md"
+check "and a layered placeholder path takes the layout, placeholder kept" "grep -qxF '[f](../../{module}/_features)' '$VD/_modules/m/_features/feature.template.md'"
 has "the run lists each draft link" "$out" "draft${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}6${TAB}draft${TAB}[[adr-new-thing]]"
 has "each unlinked one with why" "$out" "unlinked${TAB}inspire_kb/01_spec/_modules/m/_features/x.feature.md${TAB}12${TAB}[[nomod::thing]]${TAB}nomod::thing${TAB}no artifact type"
 has "and each file it drafted" "$out" "drafted${TAB}inspire_kb/01_spec/_modules/m/_domain/user/user.archive.action.md${TAB}action"
