@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # .inspire/bin/links-resolve.sh
 #
-# Rule: every link in an action, an entity or a screen is a relative Markdown
-# link to a file that exists (adr-markdown-links D1, D2). Frontmatter is read;
-# a link in a code span or a fenced block is an example and is skipped (D4).
+# Rule: every link in a typed specification file (every kind but a template)
+# is a relative Markdown link to a file that exists (adr-markdown-links D1, D2).
+# Frontmatter is read; a link in a code span or a fenced block is an example and
+# is skipped (D4).
 #
 #   - A Markdown link whose path, joined to the linking file's directory, names
 #     no file → error.
@@ -63,6 +64,9 @@ SPEC_SCOPE="$(sdd_scope_intersect "$SCOPE" "$SDD_SPEC_ROOT")"
 
 while IFS= read -r file; do
   [ -n "$file" ] && check_file "$file"
-done < <(sdd_find_actions "$SPEC_SCOPE"; sdd_find_entities "$SPEC_SCOPE"; sdd_find_screens "$SPEC_SCOPE")
+done < <(for kind in action entity feature module bundle face screen process adr adr.rationale \
+                     component layout pattern; do
+           sdd_find_typed "$SPEC_SCOPE" "$kind"
+         done)
 
 sdd_exit_with_counters

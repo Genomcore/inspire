@@ -32,7 +32,7 @@ The library implements the **quality gate** (per D24 in the SDD V3 reframe adden
 |---|---|---|
 | `frontmatter-mechanics.sh` | (1) `lifecycle:` present + valid enum, (2) `requires:` resolves to existing action descriptors, (3) `superseded_by:` resolves to existing object. | Three small mechanical checks grouped into one pass for efficiency. |
 | `acyclic-deps.sh` | (4) action→action `requires:` graph is acyclic + no self-loops. | Uses `tsort` for cycle detection. |
-| `links-resolve.sh` | (10) Every link in an entity, an action or a screen, frontmatter included, is a relative Markdown link to a file that exists. A wikilink is reported with `/inspire:migrate`, the command that converts it, and the finding says whether it resolves. A link in a code span or a fenced block is skipped. | One finding per target per file, at the line it first appears. |
+| `links-resolve.sh` | (10) Every link in a typed specification file (every kind; a template is not one), frontmatter included, is a relative Markdown link to a file that exists. A wikilink is reported with `/inspire:migrate`, the command that converts it, and the finding says whether it resolves. A link in a code span or a fenced block is skipped. | One finding per target per file, at the line it first appears. |
 
 ### Tier 2 — Coherence blockers (error from draft+ for entities and actions; warning for features and ADRs, which carry no lifecycle; ramping with the screen's own lifecycle for screens)
 
