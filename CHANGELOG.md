@@ -43,6 +43,22 @@ hook, and `/inspire:update` warns, naming the config that lacks them.
 - On existing code, a refused rule is turned off by path in an `overrides` entry, which
   is the baseline: oxlint keeps no bulk-suppression file.
 
+## 0.17.2 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The rule applies to the code agents write
+from now on; code already built keeps what it has.
+
+### Fixed
+
+- **`inspire-code-react` reads a screen's module and face from the route table, never
+  from its id.** A screen id's first segment has been its face since 0.15.0, so code that
+  took a module from `id.split('.')` picked the same module for every screen once a
+  migration rewrote the ids. The route table now carries each screen's `module` and `face`
+  from its frontmatter, read through `moduleOf('{screen id}')` and `faceOf('{screen id}')`;
+  Forbidden patterns names any read of an id's shape, and the `## Routes` seed of
+  `_references/stack-skills.md` says the table is where code reads them.
+
 ## 0.17.1 — 2026-11-13
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
