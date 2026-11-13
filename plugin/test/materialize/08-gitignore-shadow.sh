@@ -54,16 +54,15 @@ shdry="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$shp
 check "gitignore shadow: dry run warns before writing" \
   "printf '%s' \"\$shdry\" | jq -e '.warnings | length > 0' >/dev/null"
 
-# No false positive on a clean repo: the INSPIRE block ignores
-# settings.local.json and .claude/worktrees/, neither of which is a payload
-# class root, so neither may ever trip the warning.
+# No false positive on a clean repo: no entry of the INSPIRE block is a payload
+# class root or a shipped file, so none may ever trip the warning.
 nsh="$(mktemp -d)/nshproj"; mkdir -p "$nsh"; ( cd "$nsh" && git init -q )
 nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$nsh" \
   --source-root source --prototype-root prototype 2>/dev/null)"
 check "gitignore shadow: no false positive on a clean repo" \
   "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
 check "gitignore shadow: the block's own worktrees line shadows no class" \
-  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && ! git -C '$nsh' check-ignore -q --no-index .claude/skills .claude/agents"
+  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && [ -z \"\$(git -C '$nsh' check-ignore --no-index .claude/skills .claude/agents)\" ]"
 
 # Per payload class, not per .claude/. A rule that excludes ONLY the agents root
 # leaves every other class committed, so the warning must name that root and no
@@ -82,6 +81,19 @@ check "gitignore shadow: an agents-only rule is warned about" \
 check "gitignore shadow: and it names only the class that is shadowed" \
   "! printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/skills'"
 
-rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")"
+# Per shipped file, below a root that is not ignored: a Node project's `dist/`
+# rule drops the visor plugin's dist/index.js from git and leaves the rest.
+dsh="$(mktemp -d)/dshproj"; mkdir -p "$dsh"; ( cd "$dsh" && git init -q )
+printf 'dist/\n' > "$dsh/.gitignore"
+dshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$dsh" \
+  --source-root source --prototype-root prototype 2>"$dsh/.stderr")"
+check "gitignore shadow: the visor root is NOT ignored (premise)" \
+  "! git -C '$dsh' check-ignore -q --no-index .inspire/visor"
+check "gitignore shadow: a dist/ rule is warned about, naming the shipped file" \
+  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep -q '.inspire/visor/plugins/inspire/dist/index.js'"
+check "gitignore shadow: the stderr block names its source rule" \
+  "grep -q '.inspire/visor/plugins/inspire/dist/index.js  (.gitignore:1:dist/)' '$dsh/.stderr'"
+
+rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")" "$(dirname "$dsh")"
 
 summary

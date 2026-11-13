@@ -1,0 +1,10 @@
+# Settings /inspire:visor reads. A project may change any value.
+#
+# quartz      the Quartz release the visor installs into .quartz/; every plugin
+#             under plugins/ declares the Quartz versions it works with
+# node_image  the container image the visor runs Quartz in when the host has
+#             no Node 22 or later
+# port        the local port the site is served on
+quartz: "5.1.0"
+node_image: "node:22.23.2-bookworm"
+port: 8080

@@ -203,7 +203,7 @@ resolve_paths() {
 # The layout this plugin version installs. Its dest_map — and every source
 # version's — comes from layouts.tsv via layout_map, never from a literal here.
 #
-# There is no copy plan any more. base/{bin,hooks,skills,agents} reach the
+# There is no copy plan any more. The payload classes under base/ reach the
 # project through lib/merge.sh's apply_base, driven by the target layout's
 # dest_map and by classify's verdicts, so "in the project but never shipped by
 # us" is a KEEP row and the file survives by construction. The function this
@@ -435,14 +435,17 @@ seed_claude_md() {
   log "  · seeded CLAUDE.md"
 }
 
-# Seed (or extend) the project's .gitignore with the entries INSPIRE needs.
-# Two of them, and they are there for different reasons:
+# Seed (or extend) the project's .gitignore with the entries INSPIRE needs,
+# each there for its own reason:
 #   .claude/settings.local.json  Claude Code's personal per-user override
 #                                file, which must never be committed/shared.
 #   .claude/worktrees/           the house convention for every worktree a
 #                                skill cuts (inspire-module's scan cuts one per
 #                                module) — without this line each would show
 #                                as untracked in the checkout it came from.
+#   .inspire/visor/.quartz/      the visor's Quartz install and built site,
+#                                rebuilt on each machine; lib/merge.sh's
+#                                classify never walks it either.
 # A pre-existing .gitignore is never replaced: the block is appended under a
 # marked comment. A block that is already there is EXTENDED with whatever
 # entries it lacks rather than left alone — a project installed before an
@@ -451,7 +454,7 @@ seed_claude_md() {
 # the operator's and are never touched.
 GITIGNORE_MARK_BEGIN="# --- INSPIRE (materialize.sh) ---"
 GITIGNORE_MARK_END="# --- end INSPIRE ---"
-GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/")
+GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/" ".inspire/visor/.quartz/")
 
 seed_gitignore() {
   local gi="$PROJECT_ROOT/.gitignore"
@@ -515,12 +518,18 @@ gitignore_extend_block() {
     return 0
   fi
 
+  # Through the environment: BSD awk rejects a newline inside a -v value, which
+  # is what two missing entries are.
   tmp="$(mktemp)" || return 0
-  awk -v end_mark="$GITIGNORE_MARK_END" -v add="$(printf '%s\n' "${missing[@]}")" '
-    $0 == end_mark && !done { printf "%s\n", add; done = 1 }
-    { print }
-  ' "$gi" > "$tmp" && mv "$tmp" "$gi"
-  log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
+  if end_mark="$GITIGNORE_MARK_END" add="$(printf '%s\n' "${missing[@]}")" awk '
+       $0 == ENVIRON["end_mark"] && !done { printf "%s\n", ENVIRON["add"]; done = 1 }
+       { print }
+     ' "$gi" > "$tmp" && mv "$tmp" "$gi"; then
+    log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
+  else
+    rm -f "$tmp"
+    WARNINGS+=("gitignore: could not add to the INSPIRE block: ${missing[*]} — add them by hand.")
+  fi
 }
 
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
@@ -530,7 +539,7 @@ gitignore_extend_block() {
 #
 # WHO WROTE THE RULE: not us. No INSPIRE release ever wrote a .gitignore rule
 # that excludes the runtime — the block seed_gitignore appends names only
-# .claude/settings.local.json and .claude/worktrees/, and pre-0.3 wrote no
+# GITIGNORE_ENTRIES, none of them a shipped path, and pre-0.3 wrote no
 # .gitignore line at all,
 # verified at v0.1.0, v0.2.0 and v0.2.1, where `git grep -il gitignore` is empty
 # tree-wide, and this repo's own .gitignore has three commits, none of them an
@@ -548,19 +557,30 @@ gitignore_extend_block() {
 # adds could fix it.
 #
 # So: report, never rewrite. The operator's .gitignore is the operator's.
-# The paths checked are the 0.3 dest_map's destination roots, one per payload
-# class — keep them in step with scripts/hops/layouts.tsv. A class missing from
-# this list is a class whose absence from git nobody is told about.
+# The roots come from the target layout's dest_map, so every payload class is
+# checked. Under a root that is not ignored, each shipped file is checked too: a
+# project's `dist/` rule would drop the visor plugin's dist/index.js from git.
 warn_shadowed_runtime() {
-  local shadowed=() p
-  for p in .claude/skills .claude/agents .claude/inspire/hooks .inspire/bin; do
-    if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$p" 2>/dev/null; then
-      shadowed+=("$p")
+  local shadowed=() pair name dest p list
+  list="$(mktemp)"
+  for pair in $(layout_map "$PLUGIN_ROOT" "$TARGET_LAYOUT"); do
+    name="${pair%%:*}"; dest="${pair#*:}"
+    if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$dest" 2>/dev/null; then
+      shadowed+=("$dest"); continue
     fi
+    [ -d "$PLUGIN_ROOT/base/$name" ] || continue
+    while IFS= read -r p; do
+      p="${p#"$PLUGIN_ROOT/base/$name"/}"
+      _base_excluded "$name" "$p" || printf '%s\n' "$dest/$p" >> "$list"
+    done < <(find "$PLUGIN_ROOT/base/$name" -type f)
   done
+  while IFS= read -r p; do
+    shadowed+=("$p")
+  done < <(git -C "$PROJECT_ROOT" check-ignore --no-index --stdin < "$list" 2>/dev/null)
+  rm -f "$list"
   [ "${#shadowed[@]}" -gt 0 ] || return 0
 
-  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: the block it seeds names only .claude/settings.local.json and .claude/worktrees/. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
+  WARNINGS+=("gitignore excludes the INSPIRE runtime: ${shadowed[*]} — the runtime will not be committed, so teammates and CI will not have it. INSPIRE did not write this rule: the block it seeds names only ${GITIGNORE_ENTRIES[*]}. Find it with 'git check-ignore -v <path>', remove it by hand, and commit these paths.")
   {
     echo ""
     echo "  WARNING · .gitignore excludes the INSPIRE runtime"
@@ -571,9 +591,8 @@ warn_shadowed_runtime() {
     echo ""
     echo "  v0.3 expects these committed — that is what makes the runtime travel"
     echo "  with the repo, so teammates and CI need no plugin. This rule is not"
-    echo "  ours: the block INSPIRE seeds names only .claude/settings.local.json"
-    echo "  and .claude/worktrees/. The file this rule came from is named in"
-    echo "  parentheses above."
+    echo "  ours: the block INSPIRE seeds names only ${GITIGNORE_ENTRIES[*]}."
+    echo "  The file this rule came from is named in parentheses above."
     echo ""
     echo "  Nothing this script appends can undo it: git cannot re-include a path"
     echo "  below an excluded directory. Remove the rule by hand, then commit."
