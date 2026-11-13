@@ -23,6 +23,10 @@ export interface D3Config {
   showTags: boolean;
   focusOnHover?: boolean;
   enableRadial?: boolean;
+  /** Colours each node by a content-index field (dot path), e.g. `inspire.kind`. */
+  nodeColors?: { field: string; palette: Record<string, string> };
+  /** Keeps only the nodes whose field (dot path) equals the current page's. */
+  scopeTo?: string;
 }
 
 export interface GraphOptions {
@@ -100,6 +104,7 @@ export default ((userOpts?: Partial<GraphOptions>) => {
             </svg>
           </button>
         </div>
+        <ul class="graph-legend"></ul>
         <div class="global-graph-outer">
           <div class="global-graph-container" data-cfg={JSON.stringify(globalGraph)}></div>
         </div>

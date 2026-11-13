@@ -1,11 +1,13 @@
 // @ts-nocheck
+// Subpath imports: the package root also pulls in its JSX helpers, which a browser
+// script never uses and which need hast-util-to-jsx-runtime to resolve.
+import { removeAllChildren } from "@quartz-community/utils/dom";
 import {
-  removeAllChildren,
   getBasePath,
   getFullSlugFromUrl,
   simplifySlug,
   resolveBasePath,
-} from "@quartz-community/utils";
+} from "@quartz-community/utils/path";
 
 (function () {
   function getSlugFromUrl() {
@@ -86,11 +88,32 @@ import {
       return resolved || fallback;
     }
 
-    async function renderGraph(graph, fullSlug, renderGeneration) {
+    // Lists the palette kinds drawn on this graph, in palette order. A node drawn in no
+    // palette colour (the current page, or a kind the palette lacks) adds no entry.
+    function renderLegend(legend, nodes, slug, nodeColors, kindOf) {
+      if (!nodeColors) return;
+      var drawn = new Set();
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].id !== slug) drawn.add(kindOf(nodes[i].id));
+      }
+      Object.keys(nodeColors.palette).forEach(function (kind) {
+        if (!drawn.has(kind)) return;
+        var item = document.createElement("li");
+        var swatch = document.createElement("span");
+        swatch.className = "graph-legend-swatch";
+        swatch.style.backgroundColor = nodeColors.palette[kind];
+        item.appendChild(swatch);
+        item.appendChild(document.createTextNode(kind));
+        legend.appendChild(item);
+      });
+    }
+
+    async function renderGraph(graph, fullSlug, renderGeneration, legend) {
       var slug = simplifySlug(fullSlug);
       if (slug === "") slug = "index";
       var visited = getVisited();
       removeAllChildren(graph);
+      if (legend) removeAllChildren(legend);
 
       if (renderGeneration !== undefined && renderGeneration !== currentRenderGeneration) {
         console.log("[Graph] Stale render, skipping");
@@ -111,6 +134,8 @@ import {
       var showTags = config.showTags;
       var focusOnHover = config.focusOnHover;
       var enableRadial = config.enableRadial;
+      var nodeColors = config.nodeColors;
+      var scopeTo = config.scopeTo;
 
       var data;
       try {
@@ -187,6 +212,22 @@ import {
         }
       }
 
+      function fieldOf(id, path) {
+        var value = data.get(id);
+        var keys = path.split(".");
+        for (var ki = 0; ki < keys.length && value != null; ki++) value = value[keys[ki]];
+        return value;
+      }
+
+      if (scopeTo) {
+        var scopeValue = fieldOf(slug, scopeTo);
+        if (scopeValue != null) {
+          neighbourhood.forEach(function (id) {
+            if (id !== slug && fieldOf(id, scopeTo) !== scopeValue) neighbourhood.delete(id);
+          });
+        }
+      }
+
       var nodes = [];
       var nodeMap = new Map();
       neighbourhood.forEach(function (url) {
@@ -205,6 +246,17 @@ import {
         nodes.push(node);
         nodeMap.set(url, node);
       });
+
+      if (!legend && nodeColors) {
+        legend = document.createElement("ul");
+        legend.className = "graph-legend";
+        graph.appendChild(legend);
+      }
+      if (legend) {
+        renderLegend(legend, nodes, slug, nodeColors, function (id) {
+          return fieldOf(id, nodeColors.field);
+        });
+      }
 
       var graphLinks = [];
       for (var i = 0; i < links.length; i++) {
@@ -294,10 +346,14 @@ import {
         return 2 + Math.sqrt(numLinks);
       }
 
+      // With a palette, a node's colour says its kind only: a kind the palette lacks is
+      // grey whether or not it was visited, so no node reads as a kind it is not.
       function nodeColor(d) {
-        var isCurrent = d.id === slug;
-        if (isCurrent) {
+        if (d.id === slug) {
           return secondary;
+        } else if (nodeColors && !d.id.startsWith("tags/")) {
+          var mapped = nodeColors.palette[fieldOf(d.id, nodeColors.field)];
+          return mapped ? resolveColor(mapped, gray) : gray;
         } else if (visited.has(d.id) || d.id.startsWith("tags/")) {
           return tertiary;
         } else {
@@ -711,7 +767,9 @@ import {
       var localContainers = document.querySelectorAll(".graph-container");
       for (var i = 0; i < localContainers.length; i++) {
         (function (container) {
-          renderGraph(container, slug, thisGeneration)
+          var panel = container.closest(".graph");
+          var legend = panel && panel.querySelector(":scope > .graph-legend");
+          renderGraph(container, slug, thisGeneration, legend)
             .then(function (cleanup) {
               if (thisGeneration === currentRenderGeneration) {
                 localCleanups.push(cleanup);
