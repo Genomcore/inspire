@@ -13,8 +13,9 @@ site live in `.inspire/visor/.quartz/`, which is gitignored.
 ## Preconditions
 
 1. `jq`, `yq` (Mike Farah v4) and `git` are on `PATH`.
-2. Node 22 or later is on `PATH`, or Docker is running. Without Node, the visor runs
-   Quartz in a container of the image `node_image` in `.inspire/visor/visor.yaml`.
+2. Node 22 or later with npm is on `PATH`, or Docker is running. Without that Node, the visor
+   runs Quartz in a container of the image `node_image` in `.inspire/visor/visor.yaml`.
+   Either way the site listens on `localhost` only.
 3. The first run installs Quartz into `.inspire/visor/.quartz/` and needs the network.
 
 ## Step 1 — Start it
@@ -33,15 +34,19 @@ Live reload uses the next port, `N+1`.
 Read the background output until it prints `Started a Quartz server listening at`, or
 until the process exits.
 
-- **It serves.** Give the operator the URL from the line
-  `visor.sh: serving inspire_kb/ on http://localhost:N`.
+- **It serves.** The site is up when that line is printed and the background task still
+  runs a few seconds after it. Give the operator the URL from the line
+  `visor.sh: serving inspire_kb/ on http://localhost:N`. A task that ends after the
+  line served nothing: relay its output as a failure.
 - **Files left out.** If the output holds
   `visor.sh: left out of the site, their frontmatter does not parse:`, relay every path
-  and parse error listed under it verbatim. The site serves without those files.
+  and parse error listed under it verbatim. The site serves without those files, and a
+  file fixed while it runs comes back when the visor is restarted.
 - **It exits.** Exit 1 is a refusal (the INSPIRE version of `.inspire.lock`, a missing
-  `.inspire/visor/`, the Quartz version against a plugin's range, no Node and no Docker),
-  3 is a failed Quartz install, 2 is a failed build. Relay the `visor.sh:` lines and the
-  output after them verbatim, and do not work around them.
+  `.inspire/visor/`, the Quartz version against a plugin's range, no Node and no Docker,
+  a port in use, a visor container left from an earlier run, a visor of this project
+  already serving), 3 is a failed Quartz install, 2 is a failed build. Relay the
+  `visor.sh:` lines and the output after them verbatim, and do not work around them.
 
 ## Stopping it
 

@@ -15,10 +15,12 @@
 # stderr: progress, refusals, and the files left out of the site.
 # exit:   0 ok · 1 refusal (a check failed) · 2 the build failed · 3 the Quartz install failed
 #
-# Prerequisites: bash 3.2+, jq, yq (Mike Farah's v4), git; Node 22 or later, or Docker.
+# Prerequisites: bash 3.2+, jq, yq (Mike Farah's v4), git; Node 22 or later with npm, or
+# Docker. It passes visor-scan.mjs and visor-loopback.mjs, beside it, to Node.
 
 set -uo pipefail
 
+HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 LOCK_FLOOR="0.17.0"
 NODE_MIN=22
 QUARTZ_REPO="https://github.com/jackyzha0/quartz.git"
@@ -119,31 +121,71 @@ read_settings() {
   [ -n "$PORT" ] || PORT="$(yq -r '.port // ""' "$VISOR/visor.yaml")"
   [[ $QUARTZ =~ $SEMVER_RE ]] || refuse "quartz in .inspire/visor/visor.yaml is '$QUARTZ', not a version X.Y.Z"
   case "$PORT" in ''|*[!0-9]*) refuse "the port '$PORT' is not a number" ;; esac
+  # Leading zeros go first: bash reads 010 as octal, and a long number wraps.
+  PORT="${PORT#"${PORT%%[!0]*}"}"
+  case "$PORT" in ''|??????*) refuse "the port ${PORT:-0} is outside 1-65534" ;; esac
   [ "$PORT" -ge 1 ] && [ "$PORT" -le 65534 ] || refuse "the port $PORT is outside 1-65534"
   # Quartz's live reload needs a second port; deriving it lets two visors run side by side.
   WS_PORT=$((PORT + 1))
 }
 
+# The host's Node needs npm too, because the install runs npm ci on it.
 pick_runtime() {
-  local v="" major=0
+  local v="" major=0 found
   if command -v node >/dev/null 2>&1; then
     v="$(node --version 2>/dev/null)"; major="${v#v}"; major="${major%%.*}"
     case "$major" in ''|*[!0-9]*) major=0 ;; esac
   fi
+  found="${v:-none}"
   if [ "$major" -ge "$NODE_MIN" ]; then
-    RUNTIME="host"; RT=()
-    log "visor.sh: runtime: node $v on the host"; return
+    if command -v npm >/dev/null 2>&1; then
+      RUNTIME="host"; RT=()
+      log "visor.sh: runtime: node $v on the host"; return
+    fi
+    found="$v without npm"
   fi
   if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
-    refuse "no runtime: the visor needs node $NODE_MIN or later on PATH (found ${v:-none}) or a running docker (found none)"
+    refuse "no runtime: the visor needs node $NODE_MIN or later and npm on PATH (found $found) or a running docker (found none)"
   fi
-  [ -n "$NODE_IMAGE" ] || refuse "node_image in .inspire/visor/visor.yaml is empty, and the host has no node $NODE_MIN or later"
+  [ -n "$NODE_IMAGE" ] || refuse "node_image in .inspire/visor/visor.yaml is empty, and the host has no node $NODE_MIN or later with npm"
+  case "$ROOT" in
+    *:*) refuse "the project path $ROOT holds a ':', which docker cannot mount: move the project, or put node $NODE_MIN or later and npm on PATH" ;;
+  esac
   RUNTIME="docker:$NODE_IMAGE"
   # The project is mounted at its own path so the absolute links Quartz writes under
   # .quartz/ resolve on the host and in the container; the KB is mounted read-only.
   RT=(docker run --rm --init --user "$(id -u):$(id -g)" -e HOME=/tmp
       -v "$ROOT:$ROOT" -v "$KB:$KB:ro" -w "$Q")
-  log "visor.sh: runtime: docker, image $NODE_IMAGE (host node: ${v:-none})"
+  log "visor.sh: runtime: docker, image $NODE_IMAGE (host node: $found)"
+}
+
+# One checkout serves one run: a second run rewrites the staged configuration that a
+# running serve watches, and rebuilds into the directory it serves.
+check_serving() {
+  local pid
+  pid="$(cat "$Q/.serving" 2>/dev/null)"
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac
+  ps -ww -p "$pid" -o command= 2>/dev/null | grep -q 'bootstrap-cli\.mjs build' \
+    && refuse "a visor of this project is serving (pid $pid): stop it first"
+  return 0
+}
+
+# Quartz prints its start line before the bind fails, so a taken port is refused here.
+check_ports() {
+  local h
+  for h in 127.0.0.1 ::1; do
+    (exec 3<>"/dev/tcp/$h/$PORT") 2>/dev/null \
+      && refuse "the port $PORT is in use on localhost: pass --port N for a free N (the visor uses N and N+1)"
+    (exec 3<>"/dev/tcp/$h/$WS_PORT") 2>/dev/null \
+      && refuse "the live-reload port $WS_PORT (--port + 1) is in use on localhost: pass --port N for a free N (the visor uses N and N+1)"
+  done
+  return 0
+}
+
+# A container whose docker client was killed keeps its name and both ports.
+check_container() {
+  [ -z "$(docker ps -aq --filter "name=^/?inspire-visor-$PORT\$" 2>/dev/null)" ] \
+    || refuse "a visor container from an earlier run still holds port $PORT: docker stop inspire-visor-$PORT"
 }
 
 check_plugin_ranges() {
@@ -176,7 +218,8 @@ install_quartz() {
   fi
   command -v git >/dev/null 2>&1 || refuse "git is required on PATH to install Quartz"
   log "visor.sh: installing Quartz $QUARTZ into .inspire/visor/.quartz/"
-  rm -rf "$Q"
+  rm -rf "$Q" 2> "$TMP/rm.log" \
+    || install_failed "removing the previous install in .inspire/visor/.quartz/" "$TMP/rm.log"
   git clone -q -c advice.detachedHead=false --depth 1 --branch "v$QUARTZ" "$QUARTZ_REPO" "$Q" \
     > "$TMP/clone.log" 2>&1 || install_failed "git clone of Quartz v$QUARTZ" "$TMP/clone.log"
   (cd "$Q" && rt npm ci --no-audit --no-fund) \
@@ -201,59 +244,32 @@ stage_config() {
   esac
 }
 
-# ignored_by REL PATTERN... — whether a pattern of the configuration already leaves REL out.
-ignored_by() {
-  local rel="$1" p; shift
-  for p in "$@"; do
-    p="${p#\*\*/}"
-    case "$rel" in $p|*/$p|$p/*|*/$p/*) return 0 ;; esac
-  done
-  return 1
-}
-
-# Every frontmatter goes to its own numbered file; yq reads them in one call and stops at
-# the first that does not parse, so the scan resumes after it.
+# Quartz stops the whole build at a file whose frontmatter it cannot read, so the scan
+# runs the checkout's own parser on the chosen runtime, and every file it lists joins the
+# staged ignorePatterns with its glob characters escaped.
 scan_frontmatter() {
-  local cfg="$Q/quartz.config.yaml" fm="$TMP/fm" names=() i n rel err pre pats=() listed=0
-  mkdir -p "$fm"
-  (cd "$KB" && find . -type f -name '*.md' | sed 's|^\./||' | LC_ALL=C sort) > "$TMP/md.list"
-  awk -v kb="$KB" -v dir="$fm" '
-    { path = kb "/" $0; out = dir "/" NR ".yaml"; first = 1; fm = 0
-      while ((getline line < path) > 0) {
-        sub(/\r$/, "", line)
-        if (first) { first = 0; if (line != "---") break; fm = 1; printf "" > out; continue }
-        if (line == "---") break
-        print line > out
-      }
-      close(path); if (fm) { close(out); print NR ".yaml" }
-    }' "$TMP/md.list" > "$TMP/fm.list"
-  while IFS= read -r n; do names[${#names[@]}]="$n"; done < "$TMP/fm.list"
-  while IFS= read -r rel; do pats[${#pats[@]}]="$rel"; done \
-    < <(yq -r '.configuration.ignorePatterns[]?' "$cfg")
-  while [ "${#names[@]}" -gt 0 ]; do
-    err="$(cd "$fm" && yq '.' "${names[@]}" 2>&1 >/dev/null)" && break
-    n="$(printf '%s\n' "$err" | sed -n "s/^Error: bad file '\([0-9]*\.yaml\)': .*/\1/p" | head -n 1)"
-    [ -n "$n" ] || { log "visor.sh: the frontmatter scan failed: $err"; exit 2; }
-    rel="$(sed -n "${n%.yaml}p" "$TMP/md.list")"
-    P="$(printf '%s' "$rel" | sed 's/[][*?{}()!\\]/\\&/g')" yq -i '.configuration.ignorePatterns += [strenv(P)]' "$cfg"
-    if ! ignored_by "$rel" ${pats[@]+"${pats[@]}"}; then
-      [ "$listed" -gt 0 ] || log "visor.sh: left out of the site, their frontmatter does not parse:"
-      pre="Error: bad file '$n': "
-      log "  inspire_kb/$rel: $(printf '%s\n' "${err#"$pre"}" | head -n 1)"
-      listed=$((listed + 1))
-    fi
-    i=0; while [ "${names[$i]}" != "$n" ]; do i=$((i + 1)); done
-    names=(${names[@]:$((i + 1))})
-  done
-  SKIPPED=$listed
+  local cfg="$Q/quartz.config.yaml" out="$TMP/scan.jsonl"
+  rt node --input-type=module -e "$(cat "$HERE/visor-scan.mjs")" "$Q" "$KB" \
+    > "$out" 2> "$TMP/scan.log" || { log "visor.sh: the frontmatter scan failed:"; tail -n 20 "$TMP/scan.log" >&2; exit 2; }
+  SKIPPED="$(jq -s length "$out")" || { log "visor.sh: the frontmatter scan printed something other than JSON"; exit 2; }
+  [ "$SKIPPED" -gt 0 ] || return 0
+  log "visor.sh: left out of the site, their frontmatter does not parse:"
+  jq -r '"  inspire_kb/\(.path): \(.error)"' "$out" >&2
+  P="$(jq -sc '[.[].path | gsub("(?<c>[\\[\\]*?{}()!\\\\])"; "\\\(.c)")]' "$out")" \
+    yq -i '.configuration.ignorePatterns += env(P)' "$cfg"
 }
 
 main() {
   parse_args "$@"
   check_lock
   read_settings
+  check_serving
   pick_runtime
   check_plugin_ranges
+  if [ "$CHECK" -eq 0 ]; then
+    [ "$RUNTIME" = host ] || check_container
+    check_ports
+  fi
   TMP="$(mktemp -d)"
   trap 'rm -rf "$TMP"' EXIT
   install_quartz
@@ -271,9 +287,13 @@ main() {
     exit 0
   fi
   rm -rf "$TMP"; trap - EXIT
+  # The first install can take minutes, in which a port can be taken.
+  check_ports
+  printf '%s\n' "$$" > "$Q/.serving"
   log "visor.sh: serving inspire_kb/ on http://localhost:$PORT"
   if [ "$RUNTIME" = host ]; then
-    exec "${build[@]}" --serve --port "$PORT" --wsPort "$WS_PORT"
+    exec node --import "data:text/javascript;base64,$(base64 < "$HERE/visor-loopback.mjs" | tr -d '\n')" \
+      "${build[@]:1}" --serve --port "$PORT" --wsPort "$WS_PORT"
   fi
   log "visor.sh: stop: docker stop inspire-visor-$PORT"
   exec "${RT[@]}" --name "inspire-visor-$PORT" -p "127.0.0.1:$PORT:$PORT" -p "127.0.0.1:$WS_PORT:$WS_PORT" \
