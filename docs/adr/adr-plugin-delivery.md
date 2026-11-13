@@ -1,6 +1,9 @@
 # ADR — Plugin-based delivery: marketplace distribution and project materialization
 
 - **Status:** Accepted — 2026-07-29
+- **Amended by:** [adr-visor](adr-visor.md) **D1** (placement follows whether a project
+  may change a file, replacing D4b's criterion; the plugin also carries commands a
+  project runs as shipped, amending D1).
 - **Supersedes:** [[adr-runtime-lifecycle-and-lessons]] **D1** only. Implements its D2,
   confirms D3, upholds D5. Leaves D4–D7 (the lessons model) intact and still the target.
 - **Scope:** How the INSPIRE runtime is distributed and installed. Not a decision about
