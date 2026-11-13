@@ -7,15 +7,17 @@
 #   RESERVED  — a user-chosen id never starts with `_`: a leading `_` is INSPIRE
 #               structure (`_modules/`, `_faces/` …). Error.
 #   UNIQUE    — two artifacts of one type never share an id within the scope D3
-#               names: the project for modules, ADRs, bundles, faces, processes
-#               and catalog entries; the module for features. Entities, actions
-#               and screens are checked by the rules that own them. Error.
+#               names: the project for modules, ADRs, bundles, faces, stores,
+#               processes and catalog entries; the module for features.
+#               Entities, actions and screens are checked by the rules that own
+#               them. Error.
 #   TYPE      — a frontmatter `type:` (or a `kind:` that names a type) agrees with
 #               the typed extension. Error.
 #   FACES AND BUNDLES, as a set (what the surface roster used to check):
 #               two faces never share a shell; a face's `bundles:` names bundles
-#               that exist; a bundle declares its `package:` (warning — the
-#               Factory cannot plan its mount test without one).
+#               that exist, and its `shell_layout:` a layout that exists; a
+#               bundle declares its `package:` (warning — the Factory cannot plan
+#               its mount test without one).
 #
 # Scope: `$1 ∩ 01_spec` for what is reported; the indexes are spec-wide, because a
 # duplicate is not local.
@@ -52,7 +54,7 @@ INDEX="$(mktemp -t sdd-spec-identity.XXXXXX)"
 trap 'rm -f "$INDEX"' EXIT
 
 # kind <TAB> uniqueness key <TAB> id <TAB> path — one row per typed artifact.
-TYPES="module feature entity action adr adr.rationale bundle face screen process component layout pattern"
+TYPES="module feature entity action adr adr.rationale bundle face store screen process component layout pattern"
 for t in $TYPES; do
   while IFS= read -r f; do
     [ -n "$f" ] || continue
@@ -123,6 +125,11 @@ while IFS= read -r face; do
     printf '%s\n' "$bundles" | grep -qxF "$b" || \
       emit "error" "$face" "face uses bundle '$b', which no {bundle}.bundle.md declares"
   done < <(sdd_fm_list "$face" '.bundles')
+  shell_layout="$(sdd_fm_value "$face" '.shell_layout')"
+  if [ -n "$shell_layout" ] && [ "$shell_layout" != "null" ]; then
+    awk -F'\t' -v id="$shell_layout" '$1 == "layout" && $3 == id { f = 1 } END { exit !f }' "$INDEX" || \
+      emit "error" "$face" "face names shell layout '$shell_layout', which no {layout}.layout.md declares"
+  fi
 done < <(sdd_find_faces "$SDD_SPEC_ROOT")
 
 while IFS= read -r bundle; do

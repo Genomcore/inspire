@@ -118,6 +118,11 @@ shell contributes. Never derived from a file path or from the screen's id string
 ORM, entity→table and field→column naming, keys, and the append-shaped migration
 rule. A stack that stores nothing states that instead.
 
+## Store                     # seed — UI skills only
+How a face's `{face}.store.md` becomes code: the library for server keys and for
+client keys, what each `Load`, `Persist` and error outcome renders to, and how a
+screen or the shell reads and writes a key.
+
 ## Declaration-only tree
 How this stack yields a bodies-stripped tree for the test phase's worktree.
 **Required on a language skill** (it owns the recipe); on a framework skill it is
@@ -161,10 +166,10 @@ architecture, and architecture is the framework skill's.
 
 ## Seeds
 
-`## Bindings`, `## Routes` and `## Persistence` are **project-owned conventions**:
+`## Bindings`, `## Routes`, `## Persistence` and `## Store` are **project-owned conventions**:
 INSPIRE's validators do not enforce them, but code MUST follow a seed exactly as
 written until the project edits it. The shipped `react` and `nestjs` skills carry
-defaults — a REST shape, a route shape, an ORM — purely as **seeds**: a starting
+defaults — a REST shape, a route shape, an ORM, a store library — purely as **seeds**: a starting
 convention so a fresh project is not asked to invent one. Every consumer reads
 whatever the skill declares, so editing a seed changes the emitted code and
 nothing else. An undeclared convention is a readiness refusal for that unit,

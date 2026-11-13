@@ -1,0 +1,11 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "screen reads store key 'study', and face 'portal' has no store (portal.store.md)",
+      "severity": "error"
+    }
+  ],
+  "finding_count": 1
+}

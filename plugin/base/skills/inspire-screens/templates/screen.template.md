@@ -62,6 +62,11 @@ lifecycle: draft
      Every action a Data or Dispatches row binds is exposed by a bundle the
      face lists in `bundles:` (face-exposure.sh).
 
+     The face's store: a Data row reads key `k` with store `k` in its Action
+     cell. A dispatch's On success may add set store `k` or refresh store `k`,
+     joined to another outcome by `; `. A Navigation row's Then sets a client
+     key from a parameter it passes: set store `k` from param `p`.
+
      A state's `When` anchors by naming a declared key in BACKTICKS
      (`main` returns zero rows) — an unbackticked mention is not read as an
      anchor and the state is reported as free-floating.
@@ -83,6 +88,7 @@ lifecycle: draft
 | Key | Action | Notes |
 |---|---|---|
 | `main` | [{module}::{entity}::{action}](../../../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md) | {what this feed is for}, by param `id` |
+| `{data-key}` | store `{store-key}` | {what the screen shows from the face's store} |
 
 ### SCR5: Dispatches
 
@@ -92,10 +98,10 @@ lifecycle: draft
 
 ### SCR6: Navigation
 
-| Key | Target | Trigger |
-|---|---|---|
-| `back` | [{target-screen-id}]({target-slug}.screen.md) | {what the user does} |
-| `open` | [{target-screen-id}]({target-slug}.screen.md) param `{target-param-key}` | {what the user does} |
+| Key | Target | Trigger | Then |
+|---|---|---|---|
+| `back` | [{target-screen-id}]({target-slug}.screen.md) | {what the user does} | — |
+| `open` | [{target-screen-id}]({target-slug}.screen.md) param `{target-param-key}` | {what the user does} | set store `{client-key}` from param `{target-param-key}` |
 
 ### SCR7: States
 

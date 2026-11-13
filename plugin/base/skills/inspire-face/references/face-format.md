@@ -43,6 +43,7 @@ own organisation's data; the back office is a separate face.
 | `package` | path **relative to the single `source_root`** | yes | `apps/{id}` |
 | `profiles` | bracketed list of stack profile ids, `[react]` | no | the global `profiles:` in `00_bootstrap/stack.md` |
 | `shell` | prototype and application route prefix, leading slash | no | none: the face's routes take no prefix |
+| `shell_layout` | the id of the layout entry that is this face's shell | no | `shell` |
 | `bundles` | bracketed list of bundle ids this face's screens use | yes, once a screen binds an action | — |
 | `lifecycle` | `draft` · `accepted` · `stable` · `superseded` | yes | `draft` |
 
@@ -58,6 +59,11 @@ own organisation's data; the back office is a separate face.
   from the screen's own `module:` and `screen:` fields. A project with one face may
   omit it, and that face's routes take no prefix. With two or more faces, each one
   declares a shell: two faces without one would derive the same routes.
+- **shell_layout** — the layout entry that frames this face's routes. One face
+  keeps the default, `shell.layout.md`. With several faces, each names its own
+  entry, and that entry lists the face in `faces:`: a shell binds its face's
+  store and bundles, so one entry cannot be the shell of two faces that bind data.
+  `spec-identity.sh` checks that the layout exists.
 - **bundles** — every id names an existing `{bundle}.bundle.md`. A screen of this
   face binds only actions these bundles expose (`face-exposure.sh`).
 

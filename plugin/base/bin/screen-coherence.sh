@@ -17,8 +17,8 @@
 #     subsections and no others (`Parameters` · `Data` · `Dispatches` ·
 #     `Navigation` · `States`). Every row is keyed, keys are unique per
 #     subsection, every dispatch outcome names a declared state key, a declared
-#     data key or a screen id, and every state's `When` references something
-#     declared. A parameter travels in `path` or `query`, and a path one is
+#     data key, a screen id or a store write, and every state's `When` references
+#     something declared. A shell layout's `## Bindings` is checked the same way. A parameter travels in `path` or `query`, and a path one is
 #     required; every `param \`key\`` a data row relies on is declared here, and
 #     every one a transition passes is declared by its target screen.
 #
@@ -327,49 +327,83 @@ check_bindings() {
     fi
   done < <(awk -F'\t' '$1 == "ROW" { print }' "$SC_ROWS")
 
-  # Dispatch outcomes: a declared state key, a declared data key, or a screen id.
-  local outcome col navtarget
+  # Dispatch outcomes: a declared state key, a declared data key, a screen id, or a store write.
+  local cell outcome col navtarget moves
   while IFS= read -r line; do
     for col in 6 7; do
-      outcome="$(printf '%s\n' "$line" | cut -f$col)"
-      outcome="$(printf '%s\n' "$outcome" | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }')"
-      case "$outcome" in
-        ""|"-"|"—"|"n/a"|"none") continue ;;
-      esac
-      case "$(sc_linked "$outcome"):$outcome" in
-        link:*)                                        # navigate: a screen id
-          # …and a screen id has no slash in it. Wrapping a route in a link
-          # satisfies the grammar's shape and none of its meaning, so it is
-          # caught here rather than left to `links-resolve` to report as a
-          # generic dangling target.
-          navtarget="$(sc_link_target "$outcome")"
-          case "$navtarget" in
-            */*) emit "$sev" "$file" \
-                   "navigate outcome is route-shaped: '$navtarget' — an outcome names a screen id, never a route" ;;
-          esac
-          continue ;;
-        wiki:*) continue ;;
-        *:"state "*|*:"→ state "*)
-          key="$(sc_bare "${outcome##*state }")"
-          if ! awk -F'\t' -v k="$key" '$1 == "States" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
-            emit "$sev" "$file" \
-              "unresolved outcome: state '$key' is not declared under '### States'"
-          fi
-          ;;
-        *:"refresh "*|*:"→ refresh "*)
-          key="$(sc_bare "${outcome##*refresh }")"
-          if ! awk -F'\t' -v k="$key" '$1 == "Data" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
-            emit "$sev" "$file" \
-              "unresolved outcome: data key '$key' is not declared under '### Data'"
-          fi
-          ;;
-        *)
+      cell="$(printf '%s\n' "$line" | cut -f$col)"
+      moves=0
+      while IFS= read -r outcome; do
+        outcome="$(printf '%s\n' "$outcome" | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }')"
+        case "$outcome" in
+          ""|"-"|"—"|"n/a"|"none") continue ;;
+        esac
+        case "$outcome" in
+          "set store \`"*"\`"|"refresh store \`"*"\`")
+            if [ "$col" = 7 ]; then
+              emit "$sev" "$file" \
+                "store write on error: '$outcome' — a dispatch writes the store on success only"
+            fi
+            continue ;;
+        esac
+        case "$(sc_linked "$outcome"):$outcome" in
+          link:*|wiki:*|*:"state "*|*:"→ state "*) moves=$((moves + 1)) ;;
+        esac
+        if [ "$moves" = 2 ]; then
           emit "$sev" "$file" \
-            "unresolved outcome: '$outcome' is none of '→ [{screen-id}]({path})', 'state \`{key}\`' or 'refresh \`{key}\`'"
-          ;;
-      esac
+            "two outcomes leave one dispatch: '$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")' navigates or enters a state twice on one side"
+        fi
+        case "$(sc_linked "$outcome"):$outcome" in
+          link:*)                                        # navigate: a screen id
+            # …and a screen id has no slash in it. Wrapping a route in a link
+            # satisfies the grammar's shape and none of its meaning, so it is
+            # caught here rather than left to `links-resolve` to report as a
+            # generic dangling target.
+            navtarget="$(sc_link_target "$outcome")"
+            case "$navtarget" in
+              */*) emit "$sev" "$file" \
+                     "navigate outcome is route-shaped: '$navtarget' — an outcome names a screen id, never a route" ;;
+            esac
+            continue ;;
+          wiki:*) continue ;;
+          *:"state "*|*:"→ state "*)
+            key="$(sc_bare "${outcome##*state }")"
+            if ! awk -F'\t' -v k="$key" '$1 == "States" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
+              emit "$sev" "$file" \
+                "unresolved outcome: state '$key' is not declared under '### States'"
+            fi
+            ;;
+          *:"refresh "*|*:"→ refresh "*)
+            key="$(sc_bare "${outcome##*refresh }")"
+            if ! awk -F'\t' -v k="$key" '$1 == "Data" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
+              emit "$sev" "$file" \
+                "unresolved outcome: data key '$key' is not declared under '### Data'"
+            fi
+            ;;
+          *)
+            emit "$sev" "$file" \
+              "unresolved outcome: '$outcome' is none of '→ [{screen-id}]({path})', 'state \`{key}\`', 'refresh \`{key}\`', 'set store \`{key}\`' or 'refresh store \`{key}\`'"
+            ;;
+        esac
+      done < <(printf '%s\n' "$cell" | tr ';' '\n')
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
+
+  local then
+  while IFS= read -r line; do
+    then="$(printf '%s\n' "$line" | cut -f6 | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }')"
+    case "$then" in
+      ""|"-"|"—") continue ;;
+    esac
+    while IFS= read -r outcome; do
+      outcome="$(printf '%s\n' "$outcome" | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }')"
+      [ -n "$outcome" ] || continue
+      if ! printf '%s\n' "$outcome" | grep -qE '^set store `[^`]+` from param `[^`]+`$'; then
+        emit "$sev" "$file" \
+          "navigation Then: '$outcome' is not 'set store \`{key}\` from param \`{param}\`'"
+      fi
+    done < <(printf '%s\n' "$then" | tr ';' '\n')
+  done < <(awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { print }' "$SC_ROWS")
 
   # Navigation targets are screen ids, written as links. A link alone is not enough:
   # a screen id is `{face}.{slug}` and carries no slash, so a route survives the link
@@ -494,7 +528,7 @@ check_parameters() {
 
   while IFS= read -r line; do
     key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
-    check_param_refs_target "$file" "$sev" "$(printf '%s\n' "$line" | cut -f4)" "navigation '$key'"
+    check_param_refs_target "$file" "$sev" "$(printf '%s\n' "$line" | cut -f4) $(printf '%s\n' "$line" | cut -f6)" "navigation '$key'"
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { print }' "$SC_ROWS")
 
   while IFS= read -r line; do
@@ -675,6 +709,23 @@ if [ -n "$SCREEN_SCOPE" ]; then
     check_parameters "$screen_file" "$s_sev"
     check_join "$screen_file" "$s_sev" "$s_lifecycle"
   done < <(sdd_find_screens "$SCREEN_SCOPE")
+
+  while IFS= read -r layout_file; do
+    [ -z "$layout_file" ] && continue
+    sdd_has_section "$layout_file" "Bindings" || continue
+    case "$(awk 'index($0, "**State:**") == 1 { s = $0; sub(/^\*\*State:\*\*[ \t]*/, "", s); gsub(/[ \t]+$/, "", s); print s; exit }' "$layout_file")" in
+      implemented) l_sev="$(sdd_progressive_severity stable)" ;;
+      to-extract)  l_sev="$(sdd_progressive_severity accepted)" ;;
+      *)           l_sev="$(sdd_progressive_severity draft)" ;;
+    esac
+    SC_LINK_ROWS="$(sdd_links "$layout_file" wiki)"
+    check_bindings "$layout_file" "$l_sev"
+    check_parameters "$layout_file" "$l_sev"
+    if awk -F'\t' '$1 == "SUB" && $2 == "Parameters" { f=1 } END { exit !f }' "$SC_ROWS"; then
+      emit "$l_sev" "$layout_file" \
+        "shell declares parameters: no route opens the shell, so its '## Bindings' has no '### Parameters'"
+    fi
+  done < <(sdd_find_catalog "$SCREEN_SCOPE" layouts)
 fi
 
 sdd_exit_with_counters

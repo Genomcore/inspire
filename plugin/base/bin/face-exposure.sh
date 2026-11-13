@@ -9,7 +9,8 @@
 # `{bundle}.bundle.md` lists its actions under `## Actions` — a whole module
 # (`[orders](../../_modules/orders/orders.module.md)`) or one action
 # (`[orders::order::close](...)`). Every action a screen
-# binds in its `## Bindings` (a `Data` or `Dispatches` row) must be one of them.
+# binds in its `## Bindings` (a `Data` or `Dispatches` row) must be one of them, and
+# so must every action a face's shell binds and every action its store loads.
 #
 # Severity: lifecycle-progressive by the screen's own `lifecycle:`. A face that
 # lists no bundles while its screens bind actions is one warning on the face: the
@@ -102,5 +103,41 @@ while IFS= read -r screen; do
     emit "$sev" "$screen" "binds action $a, which no bundle of face '$face' exposes — add it (or its module) to one of the face's bundles, or the face to a bundle that has it"
   done <<< "$actions"
 done < <(sdd_find_screens "$SCOPE")
+
+check_face_actions() {
+  local file="$1" face="$2" sev="$3" section="$4" verb="$5" face_file actions exposure a module
+  face_file="$(awk -F'\t' -v k="$face" '$1 == k { print $2; exit }' "$FACE_FILES")"
+  [ -n "$face_file" ] || return 0
+  actions="$(links_in "$file" "$section" | grep -E '^[A-Za-z0-9_-]+::[A-Za-z0-9_-]+::[A-Za-z0-9_-]+$' | sort -u)"
+  [ -n "$actions" ] || return 0
+  [ -n "$(sdd_fm_list "$face_file" '.bundles')" ] || return 0
+  exposure="$(exposure_of_face "$face_file" | sort -u)"
+  while IFS= read -r a; do
+    [ -n "$a" ] || continue
+    module="${a%%::*}"
+    printf '%s\n' "$exposure" | grep -qxF -e "$a" -e "$module" && continue
+    emit "$sev" "$file" "$verb $a, which no bundle of face '$face' exposes — add it (or its module) to one of the face's bundles, or the face to a bundle that has it"
+  done <<< "$actions"
+}
+
+while IFS= read -r store; do
+  [ -n "$store" ] || continue
+  check_face_actions "$store" "$(sdd_artifact_id "$store")" \
+    "$(sdd_progressive_severity "$(sdd_fm_value "$store" '.lifecycle')")" "Server keys" "loads"
+done < <(sdd_find_stores "$SCOPE")
+
+while IFS= read -r layout; do
+  [ -n "$layout" ] || continue
+  sdd_has_section "$layout" "Bindings" || continue
+  faces="$(sdd_fm_list "$layout" '.faces')"
+  [ -n "$faces" ] || faces="$(cut -f1 "$FACE_FILES")"
+  [ "$(printf '%s\n' "$faces" | grep -c .)" = 1 ] || continue
+  case "$(sdd_catalog_state "$layout")" in
+    implemented) sev="$(sdd_progressive_severity stable)" ;;
+    to-extract)  sev="$(sdd_progressive_severity accepted)" ;;
+    *)           sev="$(sdd_progressive_severity draft)" ;;
+  esac
+  check_face_actions "$layout" "$faces" "$sev" "Bindings" "binds action"
+done < <(sdd_find_catalog "$SCOPE" layouts)
 
 sdd_exit_with_counters

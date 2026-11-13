@@ -16,7 +16,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
 
-KINDS="action entity feature adr screen pattern component layout module spike"
+KINDS="action entity feature adr screen pattern component layout module store spike"
 
 MODE="rewrite"
 if [ "${1:-}" = "--list" ]; then
@@ -47,6 +47,7 @@ files_of_kind() {
     component) sdd_find_catalog "$scope" components ;;
     layout) sdd_find_catalog "$scope" layouts ;;
     module) sdd_find_modules "$scope" ;;
+    store) sdd_find_stores "$scope" ;;
     spike) find_flat "$scope" 06_spikes ;;
   esac
 }

@@ -1,0 +1,10 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "shell binds data for several faces",
+      "severity": "error"
+    }
+  ]
+}

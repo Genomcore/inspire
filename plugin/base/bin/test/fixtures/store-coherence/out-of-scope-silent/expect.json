@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "args": [
+    "kb/01_spec/_bundles"
+  ],
+  "findings": [],
+  "forbidden": [
+    "store-coherence"
+  ]
+}

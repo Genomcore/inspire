@@ -11,7 +11,7 @@ copied here, because two catalogues of one class is one catalogue too many.
 
 ## What a unit is
 
-Eight kinds, and the kind is always given explicitly. Each kind is found by its
+Nine kinds, and the kind is always given explicitly. Each kind is found by its
 typed extension, by a recursive search under `$SDD_SPEC_ROOT`, never by its
 directory:
 
@@ -25,10 +25,11 @@ directory:
 | `layout` | `{name}.layout.md` | `collection` · `shell` |
 | `bundle` | `{bundle}.bundle.md` | `api` |
 | `process` | `{process}.process.md` | `auth.refresh-tokens` (`{scope}.{process}`) |
+| `store` | `{face}.store.md` | `portal` (its face's id) |
 
 The kind is given rather than inferred from the id because a 2-segment id is an
-entity, a screen *or* a process, and a bare word a component, a pattern, a layout
-*or* a bundle. With `--file`, the file's typed extension must name the given kind;
+entity, a screen *or* a process, and a bare word a component, a pattern, a layout,
+a bundle *or* a store. With `--file`, the file's typed extension must name the given kind;
 a mismatch is a usage error.
 
 **The typed extension is never part of an id.** Where the frontmatter has `id:`
@@ -46,8 +47,12 @@ module that instantiates it, so the key is absent rather than guessed.
 **A bundle carries no version.** Its id is `api`, never `api@v1`: publishing a
 new version of a bundle changes nothing in the specification.
 
-**A face is not a unit.** It has no claims of its own; its screens do. A face's
-file gives its screens their shell and the bundles they may bind.
+**A face is not a unit.** It has no claims of its own; its screens and its store
+do. A face's file gives its screens their shell and the bundles they may bind.
+
+**A store is its face's id.** It carries no `id:`; its file name is the face's id
+plus `.store.md`, and it is unique per face. Its lifecycle is its frontmatter
+`lifecycle:`, like a process's.
 
 **A catalog entry's lifecycle is its `**State:**` line**, over a closed
 vocabulary: `to-extract` (authored, no code behind it yet) is the analogue of
@@ -63,8 +68,8 @@ emanates from a use case directly.
 ## CLI
 
 ```
-derive <entity|action|screen|component|pattern|layout|bundle|process> <id>
-derive <entity|action|screen|component|pattern|layout|bundle|process> --file <path>
+derive <entity|action|screen|component|pattern|layout|bundle|process|store> <id>
+derive <entity|action|screen|component|pattern|layout|bundle|process|store> --file <path>
 ```
 
 The current working directory is the repo root; `SDD_SPEC_ROOT` (default
@@ -99,7 +104,7 @@ the grouped human report.
 - **`unit`** carries the identity as declared, never as inferred from location.
   A screen with no identity block is refused, not renamed. `module` is absent
   for the three catalog kinds and for a bundle, and `state` is the catalog
-  kinds' alone. `face` is a screen's: the first segment of its id. `package` is
+  kinds' alone. `face` is a screen's, the first segment of its id, and a store's, its id. `package` is
   a bundle's, relative to `source_root`.
 - **`unit.population`** is an entity's alone — `internal` (the default a missing
   `population:` field means) or `external`, the marker
@@ -122,7 +127,9 @@ the grouped human report.
   no screen names it; a pattern's own `**Components:**` line; a layout's
   `**Pattern:**` line; a bundle's member actions, a whole-module entry expanded
   to every action of that module; a process's `## Requires` actions and every
-  action its `## Before` and `## After` entries link. A component declares none — A17's rule is that
+  action its `## Before` and `## After` entries link; a store's server-key actions;
+  and, for a screen or a shell layout that reads or writes its face's store, that
+  store. A shell layout's binding edges are a screen's, store included. A component declares none — A17's rule is that
   catalog entries order only by a *declared* edge between them, never by an
   assumed tier. Whether a required id exists is
   the planner's question — derive records the edge.
@@ -146,10 +153,12 @@ the grouped human report.
   for a screen the parameter, data, dispatch, navigation and state bindings,
   in the order the file writes them; for a
   component its props then its states; for a pattern its regions; for a layout
-  its geometry rows, then its breakpoint rows, then — for the shell alone — its
-  mount claim; for a bundle its one mount claim; for a process its trigger, its
+  its geometry rows, then its breakpoint rows, then — for a shell alone — its
+  binding claims in a screen's order and its mount claim; for a bundle its one mount claim; for a process its trigger, its
   `## Before` entries, its behaviour steps, then its `## After` entries, in the
-  order the file writes them.
+  order the file writes them; for a store each server key's load and own
+  on-error claims in row order, then each client key's initial and persist
+  claims in row order, then its `## On error` rows.
 
 ### Shared shapes
 
@@ -201,9 +210,10 @@ vocabulary.
 | `screen` | `features` · `pattern` · `layouts` · `components` · `bindings` · `route` |
 | `component` | `structure` · `variants` · `props` (each `{name, carries}`) · `states` (each `{key, when, presentation}`) |
 | `pattern` | `structure` · `variants` · `regions` (each `{region, fill, accepts, holds}`) |
-| `layout` | `frame` · `geometry` (each `{element, property, value, source}`) · `breakpoints` (each `{range, region, change, source}`) · `composition` · `variants` |
+| `layout` | `frame` · `geometry` (each `{element, property, value, source}`) · `breakpoints` (each `{range, region, change, source}`) · `composition` · `variants` · `bindings` (a shell's, else absent) |
 | `bundle` | `members` (sorted action ids) |
 | `process` | `trigger` · `before` · `behavior` · `after` (each `before` / `after` item `{action, prose}`) · `affects` (entity ids) |
+| `store` | `server` (each `{key, action, load, on_error}`) · `client` (each `{key, type, initial, persist}`) · `on_error` (each `{class, outcome}`) |
 
 - **`outputs`** is `{ "entity", "fields" }`. The whole-entity one-liner
   (`An array of [auth::user](../user/user.entity.md) entities.`) sets `entity` and leaves
@@ -224,8 +234,19 @@ vocabulary.
   every other `Type` cell. A data row and a navigation row carry `params`, the
   `param \`{key}\`` tokens written in them, in order. A dispatch's
   `on_success` / `on_error` are canonicalized to `nav:{screen-id}` ·
-  `state:{key}` · `refresh:{key}` · `none`; a navigate outcome that passes
-  parameters appends them, `nav:{screen-id}({key},{key})`.
+  `state:{key}` · `refresh:{key}` · `store-set:{key}` · `store-refresh:{key}` ·
+  `none`; a navigate outcome that passes parameters appends them,
+  `nav:{screen-id}({key},{key})`, and a cell of several outcomes joins their
+  canonical forms with `;` in the order written. A data row that reads the store
+  carries `store:{key}` where an action row carries the action id. A navigation
+  row carries `then`, canonicalized to `store-set:{key}<-{param}` (several joined
+  by `;`), or `none`. A shell's `bindings` has the same shape, without
+  `parameters`.
+- **`server`**, **`client`** and **`on_error`** carry a store's three tables row by
+  row. `load` is `start-up`, `first-read` or `on-change:{key}`; `on_error` on a
+  server key is `default` when its cell is `—`, else its outcome; an outcome is
+  `keep`, `clear` or `nav:{screen-id}`. `type` resolves like every other `Type`
+  cell, and `initial` is `null` for `—`.
 - **`route`** is `{module, screen, default, path}`. The inputs are the declared
   `module:` and `screen:` fields, never the id string, so `portal.user-list`
   (`module: users`, `screen: list`) renders `/users/list`. `path` lists the
@@ -289,10 +310,15 @@ declared key, the way every other kind's are:
 {pattern-id}/region/{key}
 {layout-id}/geometry/{element}/{property}
 {layout-id}/breakpoint/{range}/{region}
-shell/mount/every-route
+{layout-id}/mount/every-route
+{layout-id}/data/{key}                   {layout-id}/dispatch/{key}
+{layout-id}/nav/{key}                    {layout-id}/state/{key}
 {bundle-id}/mount/every-action
 {process-id}/trigger                     {process-id}/step/B{n}
 {process-id}/before/{action-id}          {process-id}/after/{action-id}
+{face}/store/{key}/load                  {face}/store/{key}/on-error
+{face}/store/{key}/initial               {face}/store/{key}/persist
+{face}/store/on-error/{class}
 ```
 
 `{op}` is the constraint word itself, one claim per word, so changing a
@@ -309,8 +335,8 @@ width` · `records area` is
 `collection/breakpoint/every-supported-width/records-area`. Breakpoint rows
 sharing a range and a region are one claim, their changes in table order: an
 author writes the measured change and the proposal beside it as two rows, and
-both say how that one region behaves in that range. The **shell** — the layout
-entry named `shell` — makes one more claim, that the application mounts it
+both say how that one region behaves in that range. A **shell** — the layout
+entry a face names in `shell_layout:`, `shell` by default — makes one more claim, that the application mounts it
 around every route: its geometry claims hold on the frame, this one on the
 application, and without it a shell can be built, tested and still frame
 nothing.
@@ -325,6 +351,15 @@ else: the bundle requires its members, so its run comes after the new action's,
 and **that run changes test files only**. A bundle that produces an artifact of
 its own (an SDK, a library, a backend for a frontend) makes further claims about
 that code; this contract does not define them yet.
+
+**A shell's bindings are claims of the shell**, keyed by its layout id exactly as a
+screen's are keyed by the screen id, so the shell's data and dispatches are tested
+where they are declared. It has no parameter claims.
+
+**A store makes one claim per declaration**: a server key its load trigger and,
+when its `On error` is not `—`, its own failure outcome; a client key its starting
+value and its persistence; each `## On error` row its class's outcome. A store read
+or write is the reading or writing row's claim, never the store's.
 
 **A process makes one claim per keyed entry**, on the action's model: one for its
 trigger, one per behaviour step `B{n}`, and one per `## Before` and `## After`
@@ -351,7 +386,7 @@ whitespace-collapsed and trimmed:
 | screen parameter | in · type name · required · notes |
 | screen data | action id · notes |
 | screen dispatch | action id · trigger · canonical `on_success` · canonical `on_error` |
-| screen navigation | target screen id, with `({key},…)` appended when it passes parameters · trigger |
+| screen navigation | target screen id, with `({key},…)` appended when it passes parameters · trigger · the canonical `then`, a field present only when the row declares one |
 | screen state | when · presentation |
 | component prop | what it carries |
 | component state | when · presentation |
@@ -359,6 +394,12 @@ whitespace-collapsed and trimmed:
 | layout geometry | value |
 | layout breakpoint | every change for that range and region, in table order |
 | shell mount | `every route` |
+| shell data · dispatch · navigation · state | as the screen's |
+| store load | action id · canonical load |
+| store key on-error | canonical outcome |
+| store initial | type name · initial value, or empty |
+| store persist | persist value |
+| store on-error class | canonical outcome |
 | bundle mount | the member action ids, sorted and comma-joined · the bundle's `package` |
 | process trigger | the `## Trigger` prose |
 | process behaviour step | the canonical head text (always empty) · the prose |
@@ -424,7 +465,8 @@ D7). On exit `4` stdout carries every class found, not the first, and no
 
 `remedy` names the owning skill's touch command — `/inspire-domain update {id}`,
 `/inspire-screens update {id}`, or `/inspire-screens extract {kind} {id}` for a
-catalog entry, `/inspire-face` for a bundle, `/inspire-process` for a process. Nothing machine-edits the knowledge base: naming an invariant is
+catalog entry, `/inspire-face` for a bundle, `/inspire-process` for a process,
+`/inspire-store update {face}` for a store. Nothing machine-edits the knowledge base: naming an invariant is
 judgment, and judgment happens inside the touch interview.
 
 **Derive refuses on every `OS-E*`, `OS-A*` and `OS-X*` class regardless of the
@@ -445,10 +487,12 @@ second copy of a check to drift. The rules consulted, and nothing else:
 | kind | rules |
 |---|---|
 | `entity` · `action` | `keys-present` · `constraints-mechanics` · `head-referents` · `sections-present` |
-| `screen` | `screen-coherence` · `sections-present` |
+| `screen` | `screen-coherence` · `sections-present` · `store-coherence` |
 | `bundle` | `spec-identity` |
 | `process` | `process-shape` |
-| `component` · `pattern` · `layout` | none |
+| `store` | `store-coherence` · `spec-identity` |
+| `layout` carrying `## LAY8: Bindings` | `screen-coherence` · `store-coherence` |
+| `component` · `pattern` · any other `layout` | none |
 
 Nothing a consulted rule reports against the unit is ignored. A message carrying
 an `OS-*` prefix is filed under that class; the rest map to the `DR-*` ids below;
@@ -460,15 +504,17 @@ a relaxation.** No review rule owns a catalog entry's own shape:
 pattern-scoped run finds no screen to reach it from and a consulted rule would
 report nothing at all — silence that would read as a clean entry. The `DR-C*`
 classes below are therefore the whole of the strictness for these three kinds,
-not half of it.
+not half of it. A shell is the exception, and only for its `## LAY8: Bindings`:
+both rules read a layout that carries one, so its bindings are checked like a
+screen's while its geometry stays `DR-C*`'s.
 
 ### `DR-*` — the classes derive names itself
 
 `DR-T*`, `DR-R*`, `DR-B*`, `DR-C*`, `DR-N*` and `DR-P*` are derive-only: no rule owns them, because they
 are questions only a reader that has to *render* the unit needs answered — and
-for `DR-C*`, because no rule owns a catalog entry's shape at all. `DR-S*`
-and `DR-D1` are shapes the screen and section rules already report and no
-catalogue had numbered; derive numbers them so a golden fixture, a finding and
+for `DR-C*`, because no rule owns a catalog entry's shape at all. `DR-S*`,
+`DR-K*` and `DR-D1` are shapes the screen, store and section rules already report
+and no catalogue had numbered; derive numbers them so a golden fixture, a finding and
 this table name the same thing.
 
 | id | shape | remedy |
@@ -505,6 +551,10 @@ this table name the same thing.
 | `DR-N2` | a bundle's `## Actions` entry resolves to no module or action, or the bundle names no action at all | touch the bundle |
 | `DR-P1` | a process's `## Trigger` is absent or empty | touch the process |
 | `DR-P2` | a `## Before` or `## After` entry links no action, or links one already linked in that section | touch the process |
+| `DR-K1` | a store's file name names no face a `*.face.md` declares, or two stores share a face | touch the store |
+| `DR-K2` | a store row with no key or a key used twice; a `Load`, `Persist`, `Class` or outcome outside its closed vocabulary; an `on change of` naming no key of the store, or a chain of them that loops | touch the store |
+| `DR-K3` | a store read or write names a key the face's store does not declare, or a `refresh` a client key, or a `Then` a server key | touch the screen or the shell |
+| `DR-K4` | a shell that binds data serves no single face | touch the shell |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |

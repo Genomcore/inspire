@@ -49,7 +49,10 @@ component's props, and never a measurement.
 A **layout** names the pattern it frames and answers where each region sits, at what
 size, in what order, and what changes at each supported width. The face **shell**
 — sidebar, bars, every persistent control — is a layout entry of its own, `shell`,
-framing every route though no screen names it. Every row of a layout's
+framing every route though no screen names it. It is also the one layout that
+binds data: its `## LAY8: Bindings` declares what it shows and fires, in a screen's
+binding format, reading its face's store ([format-screen.md](references/format-screen.md)
+§ The store). Every row of a layout's
 `## Geometry` and `## Breakpoints` tables carries a `Source` from a closed
 vocabulary (`design-system.md §…` · `design-system.tokens.json` · `reference` · `generated`
 · `undecided` · `as {layout}`), defined in
@@ -72,8 +75,10 @@ belongs to exactly one face, and its id says which. Tiers 1, 2a, 2b and 2c do no
 split by face — `design-system.md`, `design-system.tokens.json`, `patterns/`,
 `components/` and `layouts/` serve the whole project from `_design-system/`, never
 from inside a face. An entry that serves only some faces says so in its `faces:`
-field. The chrome every face sits in is one layout entry, `shell.layout.md`, shared
-by every face; never copy the catalog into a face. How a write resolves its face is
+field. The chrome a face sits in is one layout entry: `shell.layout.md` by default,
+or the entry its face file names in `shell_layout:`. Faces whose shells bind no data
+may share one; a shell that binds data serves one face and lists it in `faces:`.
+Never copy the catalog into a face. How a write resolves its face is
 [`_references/face-scope.md`](../_references/face-scope.md); read it before writing a
 screen. Creating or retiring a face is [`/inspire-face`](../inspire-face/SKILL.md)'s,
 never this skill's.
@@ -170,6 +175,11 @@ an id that no face file declares stops the write and routes to
   `bundles:`. `.inspire/bin/face-exposure.sh` checks it. An action outside them is
   a question for `/inspire-face` — add the bundle to the face, or the action to a
   bundle — never a reason to drop the binding.
+- **The face's store holds what outlives the screen.** A value several screens or
+  the shell share, or that survives a reload, is a store key the screen reads with
+  ``store `k` `` and writes as an outcome. A key the store does not declare yet is a
+  question for [`/inspire-store`](../inspire-store/SKILL.md); `store-coherence.sh`
+  checks every read and write against the store.
 - **Directories are created lazily.** A face's `_screens/` directory comes into
   existence when the first screen lands in it, never ahead of one.
 - **One navigation file per face.** `_faces/{face}/_index.md` carries the face's

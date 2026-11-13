@@ -149,6 +149,12 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 | `process carries no id:` / `process id … is not {scope}.{process}` | process-shape | The id is two segments: a scope (`global`, a module or a face) and the process slug. Lifecycle-progressive. |
 | `process has no trigger` / `process runs no action` | process-shape | `## Trigger` is empty, or `## Requires` links no action. Lifecycle-progressive. |
 | `process affects …, which none of its required actions touches` | process-shape | An `## Affects` entity is reached by no `## Requires` action. Lifecycle-progressive. |
+| `loads …, which no bundle of face … exposes` | face-exposure | A store's server key loads through an action outside its face's bundles. Lifecycle-progressive by the store's `lifecycle:`. |
+| `store names face …, which no face declares` | store-coherence | The store's file name is not `{face}.store.md` for a face that exists. Lifecycle-progressive. |
+| `server key …` / `client key …` / `error class …` / `duplicate store key` | store-coherence | A store row breaks its table's shape or closed vocabulary (adr-face-store D2–D4). Lifecycle-progressive by the store's `lifecycle:`. |
+| `… reads / sets / refreshes store key …` | store-coherence | A screen or shell names a store key its face's store does not declare, or the wrong kind of key. Lifecycle-progressive by the reader's lifecycle. |
+| `shell binds data for several faces` | store-coherence | A layout with `## Bindings` lists no single face in `faces:`. Give each face its own shell layout. |
+| `store key … has no reader` | store-coherence | Warning. Nothing reads the key and no key loads on its change. |
 
 ### Presentation and design system (warning at every state)
 
