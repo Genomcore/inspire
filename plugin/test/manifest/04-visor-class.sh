@@ -19,7 +19,7 @@ eq "0.17.0's files map is unchanged with visor in the map" \
    "$(jq -cS .files "$m")" "$(jq -cS .files "$HERE/../manifests/0.17.0.json")"
 rm -f "$m"
 
-# Built rather than borrowed: no tag has the directory yet.
+# A synthetic revision keeps the test independent of which tags carry the class.
 gsrc="$(mktemp -d)"
 mkdir -p "$gsrc/plugin/.claude-plugin" "$gsrc/plugin/base/visor/plugins/inspire/dist" \
          "$gsrc/plugin/base/bin"
