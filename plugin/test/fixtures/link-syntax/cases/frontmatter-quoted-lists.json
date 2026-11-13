@@ -1,0 +1,36 @@
+{
+  "links": [
+    {
+      "line": 3,
+      "form": "md",
+      "target": "x.action.md",
+      "text": "a::e::x"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "y z.action.md",
+      "text": "a::e::y"
+    },
+    {
+      "line": 5,
+      "form": "wiki",
+      "target": "w",
+      "text": "old"
+    },
+    {
+      "line": 8,
+      "form": "md",
+      "target": "d.md",
+      "text": "d"
+    }
+  ],
+  "code": [
+    {
+      "kind": "span",
+      "from": 6,
+      "to": 6,
+      "text": "`[c](c.md)`"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    {
+      "rule": "links-resolve",
+      "severity": "error",
+      "message_substring": "wikilink ..auth.user.ghost.. at line 12: convert it to a Markdown link with /inspire:migrate"
+    }
+  ],
+  "forbidden": ["a phrase a human reads"]
+}

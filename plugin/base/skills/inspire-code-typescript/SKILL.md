@@ -46,7 +46,7 @@ this row.
 ## Mapping tokens
 
 How each `Mapping`-column token expands here. The token *meanings* are universal
-and defined in `type-mapping.md`; only the expansions are this file's.
+and defined in [type-mapping.md](../inspire-domain/references/type-mapping.md); only the expansions are this file's.
 
 | Token | TypeScript | SQL default |
 |---|---|---|
@@ -63,7 +63,7 @@ and defined in `type-mapping.md`; only the expansions are this file's.
 ## Project semantic types
 
 A project declares its own semantic types in
-[`00_bootstrap/semantic-types.md`](../../../inspire_kb/00_bootstrap/semantic-types.md),
+`inspire_kb/00_bootstrap/semantic-types.md`,
 and every one of them carries a **universal base type**.
 
 - **No row here → render as the declared base type**, in all three targets. A

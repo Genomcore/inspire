@@ -14,6 +14,8 @@
 #
 # Each fixture lives at plugin/base/bin/test/fixtures/{rule}/{scenario}/
 # and contains:
+#   - spec/...             the repository root (SDD_REPO_ROOT), where a link
+#                          path that starts with `/` resolves
 #   - spec/kb/...          the KB to scan (exported as SDD_KB_ROOT)
 #   - spec/kb/01_spec/...  its specification, every artifact under one root
 #                          and found by its typed extension (SDD_SPEC_ROOT)
@@ -164,7 +166,7 @@ for fixture in ${1+"$@"}; do
   fi
 
   pushd "$fixture" >/dev/null
-  SDD_SPEC_ROOT="spec/kb/01_spec" SDD_KB_ROOT="spec/kb" \
+  SDD_SPEC_ROOT="spec/kb/01_spec" SDD_KB_ROOT="spec/kb" SDD_REPO_ROOT="spec" \
     "$script" ${fixture_args[@]+"${fixture_args[@]}"} >/dev/null 2>"$actual_stderr"
   actual_exit=$?
   popd >/dev/null

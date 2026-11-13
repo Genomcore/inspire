@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "severity": "warning",
+      "message_substring": "screen superseded without superseded_by"
+    }
+  ],
+  "finding_count": 1,
+  "forbidden": ["superseded_by target does not resolve", "\"severity\":\"error\""]
+}

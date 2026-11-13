@@ -1,0 +1,17 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "embed",
+      "target": "x.md",
+      "text": "e"
+    },
+    {
+      "line": 1,
+      "form": "embed",
+      "target": "x.md#s",
+      "text": "q"
+    }
+  ],
+  "code": []
+}

@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .auth::user::create.(user.mint.action.md) at line 14" }
+  ],
+  "forbidden": ["the action that mints one"]
+}

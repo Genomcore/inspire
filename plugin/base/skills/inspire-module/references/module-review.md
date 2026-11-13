@@ -24,7 +24,7 @@ module's directory.
 
 **Use-case files (`_features/`):**
 - One file per use case (`{use-case}.feature.md`); each carries a back-link to the
-  hub `[[{module}|ModuleName]]` in its intro.
+  hub `[ModuleName](../{module}.module.md)` in its intro.
 - Feature / use-case IDs are unique within the module and use the module's ID
   prefix (declared in the hub / the project's `00_bootstrap` conventions).
 
@@ -52,7 +52,7 @@ module's directory. Each face's `_index.md` is that face's navigation and belong
   state, never history) above all. The closed token list and its section-scoped
   exemptions live there.
 - No embedded ADR content (>~10 lines of rationale without an ADR link).
-- All `[[wikilinks]]` resolve, by id: design-system entries (`*.pattern.md`,
+- Every link is a relative Markdown link ([kb-links.md](../../_references/kb-links.md)) whose path names an existing file: design-system entries (`*.pattern.md`,
   `*.layout.md`, `*.component.md`, `design-system.md`), ADRs at every scope, and the
   screens in every face. A link whose target is missing is fixed by creating the
   target in draft (rule 3 of [`../SKILL.md`](../SKILL.md)).
@@ -71,7 +71,7 @@ module's directory. Each face's `_index.md` is that face's navigation and belong
 - **Features ↔ Specs:** every feature that describes a behavior has at least one
   realizing action descriptor in the module's `_domain/` (flag gaps as
   `important`); every action's `## Purpose` back-sources to a feature via
-  `[[wikilink]]` (flag orphan actions as `important`).
+  link (flag orphan actions as `important`).
 - **ADR alignment:** flag anything that contradicts a **current** ADR — one present
   and not superseded or rejected — within its maturity's reach: the global ADRs, the
   module's own `_adr/`, and the `_adr/` of every face whose screens use the module. Flag it whatever the narrower artifact says: a module hub, a

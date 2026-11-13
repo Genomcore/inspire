@@ -8,10 +8,11 @@
 # {Title}
 
 **Status:** design
-**Modules affected:** [[module-a]], [[module-b]]
-**Rationale:** [[adr-{slug}.rationale]]
-<!-- Supersedes: [[old-adr-id]] — optional; add only when this ADR supersedes a prior one. -->
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+**Modules affected:** [module-a]({path-to-module-a}.module.md), [module-b]({path-to-module-b}.module.md)
+**Rationale:** [adr-{slug}.rationale]({slug}.adr.rationale.md)
+<!-- Supersedes: [adr-{old-slug}]({old-slug}.adr.md) — optional; add only when this ADR supersedes a prior one.
+     Links are relative Markdown links, per .claude/skills/_references/kb-links.md. -->
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [adr-{new-slug}]({new-slug}.adr.md) | rejected.
      design = the design workspace (features + screen spec + horizontal prototype + specs).
      prototyped = validated in an EXTERNAL functional prototype (a vertical spike repo,
        NOT the horizontal prototype) — add: **Prototype:** `repo-or-env` — what it validated. -->

@@ -25,7 +25,7 @@ Crear un usuario.
 
 ## ACT4: Entidades
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

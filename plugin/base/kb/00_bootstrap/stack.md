@@ -50,7 +50,7 @@ adding mobile, moving off a deployed database) is an ADR.
 
 - **React** — the UI library (the app consoles and any embedded frontends).
 - **Vite** — dev server + build.
-- **Tailwind CSS** — utility-first styling (tokens in [`theme.md`](theme.md)).
+- **Tailwind CSS** — utility-first styling (tokens in [`design-system.md`](../01_spec/_design-system/design-system.md)).
 - **shadcn/ui** (Radix primitives) — the shared component layer.
 - **Lucide** — icon set.
 - **Recharts** — charts. **@xyflow/react** — node/graph canvases.
@@ -68,7 +68,7 @@ adding mobile, moving off a deployed database) is an ADR.
 
 ## Prototype (mock data)
 
-- The horizontal prototype at [`/prototype`](../../prototype) runs on **mocked
+- The horizontal prototype at `/prototype` runs on **mocked
   data, not a real backend** — pick whatever mock-data approach fits the project
   (in-memory fixtures, static JSON, a WASM database, …). Not fixed by default.
 
@@ -90,7 +90,7 @@ validation status, the error body shape. Decided **once**, at
 `/inspire-bootstrap stack`, and never re-asked per feature: the ids go in the
 frontmatter as `wire_conventions: [<id>, …]`, the answers in the table below. The
 catalogue is
-[`_references/conventions/`](../../.claude/skills/_references/conventions/README.md).
+`.claude/skills/_references/conventions/`.
 
 | Decision | Answer |
 |---|---|

@@ -9,4 +9,4 @@
 
 ## Decisions it realizes
 
-- [[../../01_adr/adr-x]]
+- [adr-x](../../../_adr/x.adr.md)

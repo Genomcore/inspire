@@ -21,7 +21,7 @@ Most actions follow a small number of well-formed shapes. This matrix documents 
 
 ## Mixed-entity actions (orchestrators)
 
-A single action may declare multiple `### [[module.entity|module::entity]]` sub-sections, one per touched entity. Each sub-section follows the canonical shapes independently. Typical pattern:
+A single action may declare multiple `### [module::entity](../../../module/_domain/entity/entity.entity.md)` sub-sections, one per touched entity. Each sub-section follows the canonical shapes independently. Typical pattern:
 
 - A primary write entity (`create` or `update` Effect)
 - One or more event log entities (`append` Effect, with metadata fields like `event_type`, `actor_id`, `at`)
@@ -40,6 +40,6 @@ The matrix is **descriptive, not prescriptive**: there's no rule that fails an a
 
 - A field declared `Touch=read` on entity R but never declared `Touch=written` on R (across all actions) → `field-unsourced`: a warning while the entity and every action reading the field are draft, an error once any of them is accepted or stable. The canonical `read` shape relies on some `create` or `update` action having declared the writer.
 - A field declared `Touch=written` on R but never declared `Touch=read` on R → `field-orphan-write` warning. "Writing for no-one." If the field is intentional (e.g. a write-only audit trail), suppress by declaring at least one `read` action on it — usually the same module has a reporting action that needs it.
-- A `read-whole` effect on an entity desugars to per-field `read` touches across every field declared in the entity document, at rule-check time (via `sdd_expand_whole_reads`). An entity marked `population: external` (see `format-entity.md`) suppresses both the resulting `field-unsourced` errors and the entity's `field-uncovered` findings.
+- A `read-whole` effect on an entity desugars to per-field `read` touches across every field declared in the entity document, at rule-check time (via `sdd_expand_whole_reads`). An entity marked `population: external` (see [format-entity.md](format-entity.md)) suppresses both the resulting `field-unsourced` errors and the entity's `field-uncovered` findings.
 
 If your action's shape doesn't fit any canonical row above, that's a smell worth pausing on. Either decompose into smaller actions, or document the non-canonical shape in `## Purpose` so a future reader knows it was intentional.

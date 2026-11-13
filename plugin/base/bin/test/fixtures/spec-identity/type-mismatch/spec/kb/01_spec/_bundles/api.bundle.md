@@ -4,4 +4,4 @@ package: apps/api
 ---
 # Bundle: api
 ## Actions
-- [[orders]] (whole module)
+- [orders](../_modules/orders/orders.module.md) (whole module)

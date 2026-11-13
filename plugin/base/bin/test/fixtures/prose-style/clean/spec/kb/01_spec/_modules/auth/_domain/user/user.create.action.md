@@ -23,7 +23,7 @@ The action creates a user for the tenant, and it hashes the password before the 
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 
 **As input:** no · **Effect:** create
 
@@ -33,7 +33,7 @@ The action creates a user for the tenant, and it hashes the password before the 
 
 ## Behavior
 
-The action hashes the password with [[auth.password.hash|auth::password::hash]], then it writes the row.
+The action hashes the password with [auth::password::hash](../password/password.hash.action.md), then it writes the row.
 
 ## Errors
 

@@ -56,7 +56,7 @@ E
   printf -- '---\nsurfaces: all\n---\n# Global\n**Modules affected:** [[auth]], [[billing]]\n' | mk "$K/01_adr/adr-global.md"
   printf '# Auth only\n**Modules affected:** [[auth]]\n' | mk "$K/01_adr/adr-auth-local.md"
   printf '# hub\n' | mk "$K/02_modules/auth.md"
-  printf -- '---\nsurfaces: [portal, api]\n---\n# login\n' | mk "$K/03_features/auth/login.md"
+  printf -- '---\nsurfaces: [portal, api]\n---\n# login\nSee [[../../02_modules/auth]].\n' | mk "$K/03_features/auth/login.md"
   printf -- '---\nid: auth::user\n---\n# user\n' | mk "$K/04_domain/auth/user/auth.user.md"
   printf -- '---\nid: auth::user::create\n---\n# create\n' | mk "$K/04_domain/auth/user/auth.user.create.md"
   printf -- '---\nid: auth.list\nmodule: auth\nscreen: list\n---\n# list\n## Bindings\n- nav: [[auth.detail]]\n' | mk "$K/05_screens/portal/auth/list.md"
@@ -107,8 +107,8 @@ check "theme moves out of 00_bootstrap" "[ -f '$S/_design-system/theme.md' ] && 
 check "a ui surface becomes a face file, with its packaging" \
   "grep -q '^package: apps/portal' '$S/_faces/portal/portal.face.md' && grep -q '^shell: /portal' '$S/_faces/portal/portal.face.md'"
 check "a headless surface becomes a bundle of every module" \
-  "grep -q '^package: apps/api' '$S/_bundles/api.bundle.md' && grep -q '^- \[\[auth\]\] (whole module)' '$S/_bundles/api.bundle.md'"
-check "a module with no action is not in the bundle" "! grep -q '\[\[mail\]\]' '$S/_bundles/api.bundle.md'"
+  "grep -q '^package: apps/api' '$S/_bundles/api.bundle.md' && grep -qF -- '- [auth](../_modules/auth/auth.module.md) (whole module)' '$S/_bundles/api.bundle.md'"
+check "a module with no action is not in the bundle" "! grep -q 'mail' '$S/_bundles/api.bundle.md'"
 check "the lib chosen as design system makes no bundle" "[ ! -e '$S/_bundles/kit.bundle.md' ]"
 check "the roster is retired, not deleted" "[ -f '$S/_migration/retired/00_bootstrap/surfaces.md' ] && [ ! -e '$P/inspire_kb/00_bootstrap/surfaces.md' ]"
 check "a file it cannot place is kept under _migration/unplaced" "[ -f '$S/_migration/unplaced/04_domain/auth/NOTES.txt' ]"
@@ -132,6 +132,7 @@ eq "module: and screen: stay, so the route does not change" \
 eq "the id map lists every screen id that changed" \
   "$(jq -c '.screens' "$S/_migration/id-map.json")" '{"admin.auth.list":"admin.list","auth.detail":"portal.detail","auth.list":"portal.list"}'
 check "a link inside ## Bindings is not rewritten" "grep -q -- '- nav: \[\[auth.detail\]\]' '$S/_faces/portal/_screens/list.screen.md'"
+check "the moves rewrite no link" "grep -qF 'See [[../../02_modules/auth]].' '$S/_modules/auth/_features/login.feature.md'"
 
 # surfaces: becomes faces: / bundles:, and goes where placement already says it.
 eq "a feature's surfaces: splits by kind" \
@@ -153,6 +154,20 @@ eq "every original body survives somewhere under 01_spec" "$lost" "0"
 out="$(cd "$P" && bash "$MIG" --lib kit=design-system 2>&1)"; rc=$?
 eq "a second run is a no-op" "$rc" "0"
 has "and says so" "$out" "already migrated"
+
+# Once the moves are committed, migrate-links.sh converts the links from the saved
+# move plan (adr-markdown-links D6).
+out="$(cd "$P" && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" 2>&1)"
+check "a path link follows its target through the move plan" \
+  "grep -qF 'See [auth](../auth.module.md).' '$S/_modules/auth/_features/login.feature.md'"
+check "an id link becomes a path from the linking file" \
+  "grep -qF '**Modules affected:** [auth](../auth.module.md)' '$S/_modules/auth/_adr/auth-local.adr.md'"
+check "a link inside ## Bindings keeps the old screen id as its text and points at the screen" \
+  "grep -q -- '- nav: \[auth.detail\](detail.screen.md)' '$S/_faces/portal/_screens/list.screen.md'"
+check "a link to nothing becomes its text" "grep -q 'billing' '$S/_adr/global.adr.md' && ! grep -qF '[[billing]]' '$S/_adr/global.adr.md'"
+has "and the run lists it" "$out" "unlinked	inspire_kb/01_spec/_adr/global.adr.md"
+check "the link plan is saved beside the move plan" "grep -q '^link	' '$S/_migration/links.tsv'"
+eq "after the full run no wikilink is left outside code" "$(cd "$P" && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" --count)" "0"
 
 # A half-migrated KB is refused, never merged into.
 H="$W/half"; old_kb "$H"; mkdir -p "$H/inspire_kb/01_spec"
@@ -181,8 +196,12 @@ has "it asks for the bundle" "$out" "ask	bundle"
 check "the one face holds the screen" "[ -f '$N/inspire_kb/01_spec/_faces/shop-web/_screens/cart.screen.md' ]"
 eq "its id names the face" "$(yq --front-matter=extract '.id' "$N/inspire_kb/01_spec/_faces/shop-web/_screens/cart.screen.md")" "shop-web.cart"
 check "the one bundle groups every module, with its package" \
-  "grep -q '^package: apps/api' '$N/inspire_kb/01_spec/_bundles/api.bundle.md' && grep -q '\[\[shop\]\]' '$N/inspire_kb/01_spec/_bundles/api.bundle.md'"
+  "grep -q '^package: apps/api' '$N/inspire_kb/01_spec/_bundles/api.bundle.md' && grep -qF '[shop](../_modules/shop/shop.module.md)' '$N/inspire_kb/01_spec/_bundles/api.bundle.md'"
 check "the face uses the bundle" "grep -q '^bundles: \[api\]' '$N/inspire_kb/01_spec/_faces/shop-web/shop-web.face.md'"
+premise "the layered KB gave shop no hub" "[ ! -e '$N/inspire_kb/02_modules' ]"
+check "a module the bundle links gets a hub with the template's sections (D7)" \
+  "grep -q '^kind: module-hub' '$N/inspire_kb/01_spec/_modules/shop/shop.module.md' && grep -q '^## MOD1: Overview' '$N/inspire_kb/01_spec/_modules/shop/shop.module.md'"
+check "a module with its own hub gets none" "[ \"\$(cat '$S/_modules/auth/auth.module.md')\" = '# hub' ]"
 
 # No screens, no roster: modules and domain only — no face, no bundle.
 M="$W/domainonly"
@@ -193,7 +212,8 @@ eq "domain only: nothing to ask" "$rc" "0"
 check "no face and no bundle are invented" "[ ! -e '$M/inspire_kb/01_spec/_faces' ] && [ ! -e '$M/inspire_kb/01_spec/_bundles' ]"
 
 # A KB that was valid before the migration is valid after: the released golden
-# fixtures, in their layered form, through the migration and the validators.
+# fixtures, in their layered form, through the moves, the link conversion and the
+# validators, which read no wikilink.
 V="$W/valid"; mkdir -p "$V/old"
 if git -C "$REPO" rev-parse -q --verify 'origin/release/0.15.0^{commit}' >/dev/null 2>&1; then
   git -C "$REPO" archive origin/release/0.15.0 plugin/base/bin/test/fixtures/entity-coherence/coherent \
@@ -203,10 +223,15 @@ if git -C "$REPO" rev-parse -q --verify 'origin/release/0.15.0^{commit}' >/dev/n
     d="$V/${case%%/*}"; mkdir -p "$d/inspire_kb"
     [ -d "$FX/$case/spec/kb" ] && cp -R "$FX/$case/spec/kb/." "$d/inspire_kb/"
     [ -d "$FX/$case/spec/sdd" ] && { mkdir -p "$d/inspire_kb/04_domain"; cp -R "$FX/$case/spec/sdd/." "$d/inspire_kb/04_domain/"; }
-    ( cd "$d" && bash "$MIG" --face app --bundle api ) >/dev/null 2>&1
+    # The screen fixture navigates to a detail screen it never held; a link converts
+    # only to a file that exists.
+    [ -d "$d/inspire_kb/05_screens/users" ] \
+      && printf -- '---\nid: users.detail\nmodule: users\nscreen: detail\nlifecycle: draft\n---\n# Detail\n' > "$d/inspire_kb/05_screens/users/detail.md"
+    ( cd "$d" && bash "$MIG" --face app --bundle api && bash "$PLUGIN_ROOT/scripts/migrate-links.sh" ) >/dev/null 2>&1
     rule="${case%%/*}"
     ( cd "$d" && "$PLUGIN_ROOT/base/bin/$rule.sh" ) >/dev/null 2>"$d/findings"; rc=$?
     eq "$case: valid before the migration, valid after" "$rc" "0"
+    [ "$rc" -eq 0 ] || sed 's/^/    /' "$d/findings"
   done
 else
   skipped 2 "origin/release/0.15.0 is not fetched: no layered golden fixtures to migrate"

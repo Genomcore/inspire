@@ -17,7 +17,7 @@ lifecycle: draft
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `sign-in` | [[auth.session.create\|auth::session::create]] | primary action | → [[auth.home]] | state `denied` |
+| `sign-in` | [auth::session::create](../../../_modules/auth/_domain/session/session.create.action.md) | primary action | → [auth.home](../../auth/_screens/home.screen.md) | state `denied` |
 
 ### States
 

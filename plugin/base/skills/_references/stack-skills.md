@@ -53,7 +53,7 @@ three-way split, the other two of which live outside the stack skills entirely:
 | part | home |
 |---|---|
 | universal semantic vocabulary + predicates | [`inspire-domain/references/type-mapping.md`](../inspire-domain/references/type-mapping.md) (runtime, stack-agnostic) |
-| a project's own semantic types | [`00_bootstrap/semantic-types.md`](../../../inspire_kb/00_bootstrap/semantic-types.md) (project content) |
+| a project's own semantic types | `inspire_kb/00_bootstrap/semantic-types.md` (project content) |
 | per-target rendering | **the language skill** ([`inspire-code-typescript`](../inspire-code-typescript/SKILL.md) ships; a project adds its own) |
 
 A project semantic type the language skill has no row for renders as its declared
@@ -112,7 +112,8 @@ A skill whose stack exposes nothing says so.
 
 ## Routes                  # seed — UI skills only
 How a screen's `module:` + `screen:` frontmatter becomes a route, and what the face's
-shell contributes. Never derived from a file path or from the screen's id string.
+shell contributes, and the table code reads a screen's module and face from. Never
+derived from a file path or from the screen's id string.
 
 ## Persistence             # seed — how state is stored, or "not applicable"
 ORM, entity→table and field→column naming, keys, and the append-shaped migration

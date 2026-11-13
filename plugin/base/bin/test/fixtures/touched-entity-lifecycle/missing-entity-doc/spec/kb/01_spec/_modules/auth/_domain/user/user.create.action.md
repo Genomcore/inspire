@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Stable action touching an entity that has no entity doc on disk — should fail.
+Stable action touching an entity whose file is no entity document (it has no `.entity.md` extension) — should fail.
 
 ## Inputs
 
@@ -25,7 +25,7 @@ Stable action touching an entity that has no entity doc on disk — should fail.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.md)
 **As input:** shape · **Effect:** create
 
 | Field | Touch   | Type  | Mapping       | Notes |

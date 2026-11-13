@@ -79,9 +79,8 @@ describe the screen:
 7. **Intent & contract** — the `*.feature.md` in the module's `_features/` and,
    where relevant, the `*.entity.md` and `*.action.md` in its `_domain/`.
 
-Every link resolves by id, never by path: a catalog entry is linked by its bare
-name (`[[list]]`), a screen by `{face}.{slug}`. Find each file by its typed
-extension under `inspire_kb/01_spec/`.
+Find each linked file by its typed extension under `inspire_kb/01_spec/` and link it
+as [kb-links.md](../_references/kb-links.md) says.
 
 > **Stack-agnostic.** This skill assumes no framework. The project's own stack,
 > component catalog, conventions and known pitfalls live in its KB
@@ -122,7 +121,7 @@ loop stay the user's.
 > **Output language.** Write every artifact you produce — vault edits, prototype
 > learnings — in the project's declared `output_language` (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Machine-read
-> tokens (frontmatter keys/values, wikilink slugs, filenames) stay verbatim.
+> tokens (frontmatter keys/values, link paths, filenames) stay verbatim.
 
 > **Writing contract.** Vault edits and prototype learnings follow
 > [`_references/writing-style.md`](../_references/writing-style.md).

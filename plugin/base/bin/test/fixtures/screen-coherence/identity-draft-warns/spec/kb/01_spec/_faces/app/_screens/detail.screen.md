@@ -20,4 +20,4 @@ list leads, so the reader sees who exists before choosing anyone to open.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed |

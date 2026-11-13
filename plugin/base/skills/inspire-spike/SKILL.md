@@ -10,7 +10,7 @@ A **vertical spike** is a narrow, deep, **functional** prototype that lives in i
 horizontal prototype ([`/inspire-prototype`](../inspire-prototype/SKILL.md), which is
 wide, shallow and in *this* repo), a spike is throwaway code somewhere else — so
 this skill never builds it. It **brings the knowledge home** into
-[`inspire_kb/06_spikes/`](../../../inspire_kb/06_spikes), so it survives even after
+`inspire_kb/06_spikes`, so it survives even after
 the spike repo goes stale.
 
 The code is disposable; the **learnings are the deliverable**. A spike usually
@@ -69,7 +69,8 @@ here?
    ([`/inspire-adr promote`](../inspire-adr/SKILL.md)); a proven capability → a
    feature/contract via `/inspire-feature` / `/inspire-domain`. A learning that
    links a feature, action or screen the vault does not have yet creates that file
-   as a draft from its template, through the skill that owns it.
+   as a draft from its template, through the skill that owns it. Links follow
+   [kb-links.md](../_references/kb-links.md).
 5. **Record the outcome:** promote to a spec/ADR, feed the horizontal prototype,
    park it, or mark it archived — keep the learnings either way.
 
@@ -78,7 +79,7 @@ here?
 > **Output language.** Write vault artifacts — vertical-spike notes — in the
 > project's declared `output_language` (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Machine-read
-> tokens (frontmatter keys/values, wikilink slugs, filenames) stay verbatim.
+> tokens (frontmatter keys/values, link paths, filenames) stay verbatim.
 
 > **Writing contract.** Spike notes follow
 > [`_references/writing-style.md`](../_references/writing-style.md). `## Question`,

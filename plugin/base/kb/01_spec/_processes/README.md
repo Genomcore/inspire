@@ -7,7 +7,7 @@ with `id: {scope}.{process}` — the scope is `global`, a module id or a face id
 A process states:
 
 - `## Trigger` — what starts it;
-- `## Requires` — the actions it calls, as wikilinks;
+- `## Requires` — the actions it calls, as links;
 - `## Before` and `## After` — its pre-actions and post-actions, in order;
 - `## Behaviour` — its steps, keyed `B{n}`;
 - `## Affects` — the domain it changes.

@@ -1,6 +1,0 @@
-{
-  "exit": 1,
-  "findings": [
-    { "rule": "rationale-wikilink", "message_substring": "has no wikilink" }
-  ]
-}

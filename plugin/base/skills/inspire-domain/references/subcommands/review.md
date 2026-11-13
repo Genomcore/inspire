@@ -43,8 +43,8 @@ The gate composes rule families across three severity tiers, plus the style chec
 | `constraints-mechanics` | A `Constraints:` line that is malformed, carries a word outside the closed V1 vocabulary, uses one at the wrong arity, or sits somewhere other than its H3's first content line (`OS-E8` — the line is read and checked wherever it sits, so only its placement is the finding); an entity whose `id` carries no Constraints line (the pre-keying marker) or no `id` row at all; a `### {field}` sub-section whose field is no row of `## Fields` (`OS-E9`); `nonnull` on an input line, where the `Required` column already owns required-ness |
 | `head-referents` | A head naming something that is not there: a written `unique` field with no matching `unique(...)` error head; an invariant head naming a field absent from `## Fields`; a `P`/`Q` head naming an untouched entity; `returns(...)` naming a missing output; an unresolvable `references(...)` |
 | `field-coverage` | Entity Fields row declared but no action touches the field |
-| `rationale-wikilink` | Entity `## Rationale` (or action `## Purpose` ∪ `## Behavior`) has no `[[wikilink]]` back-source |
-| `wikilinks-resolve` | A `[[wikilink]]` in body does not resolve to an existing file |
+| `rationale-link` | Entity `## Rationale` (or action `## Purpose` ∪ `## Behavior`) has no link back-source |
+| `links-resolve` | A wikilink in body, or a Markdown link whose path names no file |
 
 `constraints-mechanics` also emits the one **permanent** flat-warning finding in
 this family, `W-1`: a constraint still narrated in a `Notes` or `Description`
@@ -80,4 +80,4 @@ the contract in
 [`writing-style.md`](../../../_references/writing-style.md) still binds as
 authoring judgment.
 
-The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see [`.inspire/bin/README.md`](../../../../../.inspire/bin/README.md) for the script catalog).
+The full per-state gate table is in [`lifecycle-rules.md`](../../../_references/lifecycle-rules.md). Implementation in `.inspire/bin/*.sh` (see `.inspire/bin/README.md` for the script catalog).

@@ -41,7 +41,8 @@ split_adr() {
   slug="$(sdd_artifact_id "$file")"
   rationale="${file%.md}.rationale.md"
 
-  awk -v slug="$slug" -v dec_out="$file.tmp" -v rat_out="$rationale.tmp" '
+  awk -v slug="$slug" -v dec_name="${file##*/}" -v rat_name="${rationale##*/}" \
+    -v dec_out="$file.tmp" -v rat_out="$rationale.tmp" '
     function flush(out, n, arr,    i, last) {
       last = n
       while (last > 0 && arr[last] ~ /^[[:space:]]*$/) last--
@@ -74,7 +75,7 @@ split_adr() {
         out[++no] = pre[i]
         if (i == anchor) {
           if (!lastmeta) out[++no] = ""
-          out[++no] = "**Rationale:** [[" slug ".rationale]]"
+          out[++no] = "**Rationale:** [" slug ".rationale](" rat_name ")"
         }
       }
       while (no > 0 && out[no] ~ /^[[:space:]]*$/) no--
@@ -84,7 +85,7 @@ split_adr() {
 
       head[1] = "# " title " — rationale"
       head[2] = ""
-      head[3] = "**Decision:** [[" slug "]]"
+      head[3] = "**Decision:** [" slug "](" dec_name ")"
       head[4] = ""
       nh = 4
       for (i = 1; i <= nr; i++) head[++nh] = rat[i]

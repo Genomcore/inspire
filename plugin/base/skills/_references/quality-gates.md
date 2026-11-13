@@ -125,7 +125,7 @@ branch protection that makes a failing check actually block a merge. The runtime
 three moves, and no more:
 
 1. **Declare** which service the project uses, in
-   [`00_bootstrap/stack.md`](../../../inspire_kb/00_bootstrap/stack.md) — the stack
+   `inspire_kb/00_bootstrap/stack.md` — the stack
    registry already records environment choices the runtime does not provision.
 2. **Install and validate the in-repo bridge** — the CI workflow, the reporter
    config. That part *is* a versioned file and is owned like any other.

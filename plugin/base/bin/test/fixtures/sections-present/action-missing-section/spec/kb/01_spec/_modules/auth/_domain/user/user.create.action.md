@@ -25,7 +25,7 @@ Action that is missing several required sections (no Behavior, no Errors).
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

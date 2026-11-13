@@ -70,7 +70,7 @@ lifecycle: draft
 ---
 
 ## Purpose
-The user account. [[pdd|pdd]]
+The user account. [pdd](../../pdd.md)
 
 ## ENT2: Justificación
 Already keyed, so left alone.
@@ -104,8 +104,8 @@ An unknown heading stays as written.
 MD
 
 ADR="$SDD_SPEC_ROOT/_adr/auth-sessions.adr.rationale.md"
-printf '# T — rationale\n\n**Decision:** [[adr-auth-sessions]]\n\n## Context\nWhy.\n\n## Consequences\nWhat.\n\n### Breaking changes\n- None.\n\n## Alternatives considered\n### Breaking changes\nWrong parent.\n\n## Related ADRs\n- none\n' > "$ADR"
-printf '# T\n\n**Status:** design\n**Rationale:** [[adr-auth-sessions.rationale]]\n\n## Decision\nDo it.\n' > "$SDD_SPEC_ROOT/_adr/auth-sessions.adr.md"
+printf '# T — rationale\n\n**Decision:** [adr-auth-sessions](auth-sessions.adr.md)\n\n## Context\nWhy.\n\n## Consequences\nWhat.\n\n### Breaking changes\n- None.\n\n## Alternatives considered\n### Breaking changes\nWrong parent.\n\n## Related ADRs\n- none\n' > "$ADR"
+printf '# T\n\n**Status:** design\n**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)\n\n## Decision\nDo it.\n' > "$SDD_SPEC_ROOT/_adr/auth-sessions.adr.md"
 
 SCREEN="$SDD_SPEC_ROOT/_faces/app/_screens/login.screen.md"
 printf '# Sign in\n\n**Features:** FEAT-01\n\n## Purpose\nSign in.\n\n## Bindings\n\n### States\n\n| Key | When | Presentation |\n|---|---|---|\n| `x` | y | z |\n\n## Render\n\n### States\nA region that happens to share a binding name.\n' > "$SCREEN"

@@ -50,7 +50,7 @@ collision fails review whether or not anyone runs `routes`.
 One graph per face. The edges come from the bindings, never from prose:
 
 - every `### Navigation` row — `{source-id} --{key}--> {target-id}`
-- every `### Dispatches` outcome of the form `→ [[{screen-id}]]` — labelled with
+- every `### Dispatches` outcome of the form `→ [{screen-id}]({path})` — labelled with
   the dispatch key and the side it fires on (success or error)
 
 Each edge carries the `param \`{key}\`` tokens written after its link, so the
@@ -63,8 +63,8 @@ Report, in this order:
 2. **unreachable screens** — screens no edge targets, excluding the ones a shell's
    landing route reaches by convention. An unreachable screen is a question for
    the operator, never an error: a route typed by hand is still a route.
-3. **dangling targets** — edges pointing at an id no screen declares. These are
-   findings, and `wikilinks-resolve` reports them independently. The fix is the
+3. **dangling targets** — edges pointing at a file no screen is written in. These are
+   findings, and `links-resolve` reports them independently. The fix is the
    missing screen, created from its template at `lifecycle: draft`.
 4. **cross-face edges** — an edge whose target belongs to another face. A question
    for the operator: a person moving between faces leaves one shell for another,

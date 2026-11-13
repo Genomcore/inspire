@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## ACT1: Propósito
-Leer una cuenta de usuario, según [[adr-auth-sessions]].
+Leer una cuenta de usuario, según [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ACT2: Entradas
 
@@ -18,11 +18,11 @@ Leer una cuenta de usuario, según [[adr-auth-sessions]].
 | `id`      | uuid | yes         | La cuenta a leer.    |
 
 ## ACT3: Salidas
-La fila completa de [[auth.user|auth::user]].
+La fila completa de [auth::user](user.entity.md).
 
 ## ACT4: Entidades
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** read
 
 | Campo    | Contacto | Tipo  | Correspondencia | Notas |

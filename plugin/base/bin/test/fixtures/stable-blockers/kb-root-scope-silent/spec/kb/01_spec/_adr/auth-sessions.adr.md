@@ -4,7 +4,7 @@ module: auth
 entity: session
 action: rotate
 lifecycle: stable
-requires: ["[[auth.session.create|auth::session::create]]"]
+requires: ["[auth::session::create](../_modules/auth/_features/FEAT-01-login.feature.md)"]
 ---
 
 # Session rotation
@@ -14,7 +14,7 @@ Rotate a session token. XXX: unfinished.
 
 ## Entities
 
-### [[auth.session|auth::session]]
+### [auth::session](../_modules/auth/_domain/session/session.entity.md)
 **Effect:** update
 
 | Field   | Touch   | Type    | Mapping | Notes |
@@ -22,7 +22,7 @@ Rotate a session token. XXX: unfinished.
 | `token` | written | integer |         |       |
 
 ## Behavior
-1. Replace the token. See [[adr-also-does-not-exist]].
+1. Replace the token. See [adr-also-does-not-exist](also-does-not-exist.adr.md).
 
 ## Errors
 - `none`

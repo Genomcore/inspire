@@ -12,12 +12,12 @@ entity: user
 action: create
 lifecycle: accepted             # ← gated rules: field-conflict errors from draft+; unsourced warns at draft, errors from accepted.
 requires:                       # ← action→action edges; checked by acyclic-deps + stable-blockers.
-  - "[[auth.password.hash|auth::password::hash]]"
+  - "[auth::password::hash](../password/password.hash.action.md)"
 superseded_by: null             # ← required iff lifecycle == superseded.
 ---
 
 ## Purpose
-Provision a new user account for the platform from an email and password pair. The [[auth-user-management|user-management subsystem]] is the single entrypoint for user creation — agents must not write the `auth::user` row directly. [[adr-identity-model]] grounds the identity model, the scopes and the auth-provider integration.
+Provision a new user account for the platform from an email and password pair. The [user-management subsystem](../../_features/auth-user-management.feature.md) is the single entrypoint for user creation — agents must not write the `auth::user` row directly. [adr-identity-model](../../../../_adr/identity-model.adr.md) grounds the identity model, the scopes and the auth-provider integration.
 
 ## Inputs
 
@@ -29,7 +29,7 @@ Provision a new user account for the platform from an email and password pair. T
 ### password    <!-- ← per-input H3: the Constraints line, then why those bounds. -->
 Constraints: `len(12, 128)`
 
-The floor is the platform-wide minimum [[adr-password-hashing]] sets; the ceiling exists so a pathological input cannot turn hashing into a denial of service. Note what is *not* here: `nonnull`. Required-ness is the `Required` column's, and saying it twice would let the two drift.
+The floor is the platform-wide minimum [adr-password-hashing](../../../../_adr/password-hashing.adr.md) sets; the ceiling exists so a pathological input cannot turn hashing into a denial of service. Note what is *not* here: `nonnull`. Required-ness is the `Required` column's, and saying it twice would let the two drift.
 
 ## Outputs
 
@@ -39,7 +39,7 @@ The floor is the platform-wide minimum [[adr-password-hashing]] sets; the ceilin
 
 ## Entities
 
-### [[auth.user|auth::user]]    <!-- ← H3 with pipe-syntax wikilink. The entity id is the join key in entity-coherence. -->
+### [auth::user](user.entity.md)    <!-- ← H3 with an entity link. The entity id is the join key in entity-coherence. -->
 **As input:** shape · **Effect:** create
 
 | Field          | Touch   | Type      | Mapping                | Notes                                |
@@ -51,14 +51,14 @@ The floor is the platform-wide minimum [[adr-password-hashing]] sets; the ceilin
 | `created_at`   | written | timestamp | `now()`                | The audit-timeline anchor.           |
 
 ## Preconditions
-- `P1` — actor(admin) — Only an administrator provisions accounts directly; the public path is [[auth.user.signup|auth::user::signup]], which layers allow-list and audit on top.
-- `P2` — absent(auth.user) — No account may already hold the submitted email, since [[adr-identity-model]] makes the email half of the principal's identity.
+- `P1` — actor(admin) — Only an administrator provisions accounts directly; the public path is [auth::user::signup](user.signup.action.md), which layers allow-list and audit on top.
+- `P2` — absent(auth.user) — No account may already hold the submitted email, since [adr-identity-model](../../../../_adr/identity-model.adr.md) makes the email half of the principal's identity.
 
 ## Behavior
-1. `B1` — Validate `email` against RFC 5321 and the project's allow-list rules described in [[auth-email-validation|the email-validation rules]].
-2. `B2` — Hash `password` via [[auth.password.hash|auth::password::hash]] using bcrypt at the cost defined in [[adr-password-hashing]].
+1. `B1` — Validate `email` against RFC 5321 and the project's allow-list rules described in [the email-validation rules](../../_features/auth-email-validation.feature.md).
+2. `B2` — Hash `password` via [auth::password::hash](../password/password.hash.action.md) using bcrypt at the cost defined in [adr-password-hashing](../../../../_adr/password-hashing.adr.md).
 3. `B3` — INSERT INTO `auth_user (id, scope, email, password, created_at)`. The DB unique constraint on `(scope, email)` is the conflict-detection mechanism — if it fires, fall through to the `email_exists` error.
-4. `B4` — Audit event emission is out of scope for this action; the public-facing wrapper [[auth.user.signup|auth::user::signup]] layers that side-effect on top.
+4. `B4` — Audit event emission is out of scope for this action; the public-facing wrapper [auth::user::signup](user.signup.action.md) layers that side-effect on top.
 
 ## Postconditions
 - `Q1` — created(auth.user) — Exactly one row exists for the submitted email, with the hashed credential and the insert timestamp set.
@@ -81,7 +81,7 @@ Things you might expect but that don't belong in the descriptor:
 - **No H1 heading.** The id lives in frontmatter and is reconstructible from the file path, so a leading `# auth::user::create` heading would be the third repetition of the same information. The body starts directly with `## Purpose`.
 - **No face or bundle in the actor claim.** `P1` says `actor(admin)`, not "admin console only". Who may act is true wherever the action runs; which face or bundle reaches it is downstream. A face or bundle name appearing in a descriptor is nearly always a missing actor precondition or a missing module boundary.
 - **No exposure declarations.** No HTTP routes, no CLI command forms, no MCP tool names. The descriptor describes the contract; how the action is exposed comes from the stack skill's `## Bindings` and the bundle that lists it — not from the SDD layer. **No status codes either**: what a caller observes when `email_exists` fires comes from the project's resolved wire convention ([`_references/conventions/README.md`](../../_references/conventions/README.md)), stated once for the whole project. The single exception is a `**Wire deviation:**` note under `## Errors`, for an action that genuinely departs from it.
-- **No trailing `Back-source:` lines.** Back-sourcing is prosaic: wikilinks weave into the sentence that makes the claim. No paratextual trailing references, no bare `[[link]]` at the end of behavior steps.
+- **No trailing `Back-source:` lines.** Back-sourcing is prosaic: links weave into the sentence that makes the claim. No paratextual trailing references, no bare link at the end of behavior steps.
 - **No implementation language.** "Use Postgres", "implement in Node.js", "via Drizzle ORM" — these are downstream concerns. The descriptor specifies *what*, not *how*.
-- **No validation *rules* — only bounds.** `password`'s Constraints line carries `len(12, 128)`, because a bound is a fact a validator can enforce and a test can assert. The email-validation *rules* — deliverability, allow-lists, normalization — stay in the [[auth-email-validation|email-validation feature]] the prose links to, because they change without the contract changing. The line between the two: if a downstream reader could act on it mechanically, it is a constraint; if acting on it needs judgment, it is a rule and it lives upstream.
-- **No related-entity fields in the `auth::user` table.** This action only writes `auth::user` rows. Audit event logging is a separate Entity in the orchestrator action [[auth.user.signup|auth::user::signup]].
+- **No validation *rules* — only bounds.** `password`'s Constraints line carries `len(12, 128)`, because a bound is a fact a validator can enforce and a test can assert. The email-validation *rules* — deliverability, allow-lists, normalization — stay in the `auth-email-validation` feature the prose links to, because they change without the contract changing. The line between the two: if a downstream reader could act on it mechanically, it is a constraint; if acting on it needs judgment, it is a rule and it lives upstream.
+- **No related-entity fields in the `auth::user` table.** This action only writes `auth::user` rows. Audit event logging is a separate Entity in the orchestrator action `auth::user::signup`.

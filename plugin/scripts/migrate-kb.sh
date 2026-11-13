@@ -23,13 +23,14 @@
 #   unplaced <old> <new> · seed <new> · config <file> <change> · note <text> ·
 #   ask <key> <question>
 # In act mode the same plan is applied and also saved to
-# 01_spec/_migration/plan.tsv.
+# 01_spec/_migration/plan.tsv, which migrate-links.sh reads to convert the links
+# once the moves are committed (adr-markdown-links D6).
 #
 # Exit: 0 migrated (or nothing to do) · 1 refused · 2 usage · 3 an answer is missing.
 #
 # What it never does (adr-kb-structure D10): rename a module, entity or action;
-# change any id but a screen's; rewrite a link inside a screen's `## Bindings`;
-# extract a shared screen; create a process or an artifact bundle; run git.
+# change any id but a screen's; rewrite a link; extract a shared screen; create a
+# process or an artifact bundle; run git.
 #
 # bash 3.2 compatible: no associative arrays, everything keyed goes through files.
 
@@ -45,7 +46,7 @@ SKELETON=""
 BUNDLE_MODULES=""   # newline list of id=m1,m2
 LIBS=""             # newline list of id=bundle|design-system
 
-usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -535,13 +536,26 @@ while IFS='|' read -r id pkg prof mods; do
     printf -- '---\n\n# Bundle: %s\n\n## Actions\n\n' "$id"
     if [ -n "$mods" ]; then
       printf '%s\n' "$mods" | tr ',' '\n' | grep -v '^$' | while IFS= read -r m; do
-        printf -- '- [[%s]] (whole module)\n' "$m"
+        printf -- '- [%s](../_modules/%s/%s.module.md) (whole module)\n' "$m" "$m" "$m"
       done
     fi
   } > "$out"
   plan write "$SPEC/_bundles/$id.bundle.md" "bundle $id, grouping $(printf '%s' "$mods" | tr ',' '\n' | grep -vc '^$') module(s)"
   [ -n "$pkg" ] || plan note "bundle $id has no package: set package: in its file before the Factory plans it"
 done < "$BUNDLES"
+
+# A bundle links each module's hub, so a module the layered layout gave no hub gets
+# one with the template's sections (adr-markdown-links D7).
+MODULE_TEMPLATE="$(cd -P "$(dirname "$0")" && pwd -P)/../base/skills/inspire-module/templates/module.template.md"
+cut -d'|' -f4 "$BUNDLES" | tr ',' '\n' | grep -v '^$' | sort -u | while IFS= read -r m; do
+  [ -f "$KB/02_modules/$m.md" ] && continue
+  {
+    printf -- '---\nkind: module-hub\n---\n\n# %s\n\n' "$m"
+    printf '<!-- Created by /inspire:migrate: a bundle groups this module, and the layered layout had no hub for it. -->\n'
+    [ -f "$MODULE_TEMPLATE" ] && awk '/^## / { print ""; print }' "$MODULE_TEMPLATE"
+  } > "$GEN/hub-$m.md"
+  plan write "$SPEC/_modules/$m/$m.module.md" "hub of module $m, which a bundle links"
+done
 
 for l in $(cat "$DS_LIBS"); do
   plan note "lib surface $l is now part of the design system; its package is no longer declared anywhere"
@@ -617,6 +631,11 @@ for g in "$GEN"/bundle-*.md; do
   [ -f "$g" ] || continue
   id="${g##*/bundle-}"; id="${id%.md}"
   mkdir -p "$SPEC/_bundles"; cp "$g" "$SPEC/_bundles/$id.bundle.md"
+done
+for g in "$GEN"/hub-*.md; do
+  [ -f "$g" ] || continue
+  m="${g##*/hub-}"; m="${m%.md}"
+  mkdir -p "$SPEC/_modules/$m"; cp "$g" "$SPEC/_modules/$m/$m.module.md"
 done
 for g in "$GEN"/nav-*.md; do
   [ -f "$g" ] || continue

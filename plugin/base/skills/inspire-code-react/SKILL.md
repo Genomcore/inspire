@@ -25,7 +25,7 @@ prop-drilled component state.
 
 Module boundaries: not yet formulated for this stack — deliberately deferred to a
 frontend iteration that exercises them, rather than transcribed untested from the
-backend rules. The contract in `_references/stack-skills.md` still applies; this line is the deferral,
+backend rules. The contract in [_references/stack-skills.md](../_references/stack-skills.md) still applies; this line is the deferral,
 not the answer.
 
 ## Test conventions
@@ -49,6 +49,8 @@ not the answer.
   the i18n / constants layer.
 - External URLs MUST be sanitized before use in `href`/navigation, and
   `dangerouslySetInnerHTML` MUST NOT receive unsanitized input.
+- Code MUST NOT read anything from a screen id's shape — no `id.split('.')`, no prefix
+  match: a screen's module, face and route come from the route table (§ Routes).
 
 ## Review focus
 - **styling**: uses the design-system tokens (`01_spec/_design-system/design-system.tokens.json`, plus the face's own `{face}.tokens.json` when it has one; meanings in `01_spec/_design-system/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
@@ -104,7 +106,7 @@ inside its face's shell, with no face segment of its own.
 - A screen named `index` renders the module's landing route, `/{module}`.
 - **The face contributes only its shell prefix.** The `shell` in `{face}.face.md`
   already carries its own leading slash
-  (`inspire-face/references/face-format.md`), so the rendering is a plain
+  ([inspire-face/references/face-format.md](../inspire-face/references/face-format.md)), so the rendering is a plain
   concatenation, `{shell}{route}`, with no separator in between — a face with no
   `shell` renders `{route}` alone, with no prefix. Example: shell `/admin` + route
   `/users/list` → `/admin/users/list`. (The notation `{shell}/{module}/{screen}`
@@ -117,6 +119,12 @@ inside its face's shell, with no face segment of its own.
   frontmatter is the only place a module and screen name live.
 - Code MUST resolve every route through a `routeOf('{screen id}')` helper built from that
   table; a literal path string MUST NOT appear outside the route table.
+- The route table also carries each screen's `module` and `face`, from the same
+  frontmatter. Code that needs either one (the shell's active entry, a breadcrumb, a
+  per-module guard) reads it through `moduleOf('{screen id}')` / `faceOf('{screen id}')`
+  helpers built from that table, never from the id string: a screen id's first segment
+  is its face, not its module, and a migration can rewrite an id while the frontmatter
+  stays.
 - Navigation targets screens **by id** and resolves through this same rule, so a
   route and a screen can never disagree. Moving a screen to another face changes its
   id and its shell prefix, and nothing else of its route.
@@ -143,7 +151,7 @@ of one wire.
 - **Dispatch keys** → MUST be one mutation hook per key, named the same way. The row's
   **On success** / **On error** attributes become its `onSuccess` / `onError`,
   rendering whichever of the three declared forms is present: a navigation
-  outcome (`→ [[{screen-id}]]`) resolves through `## Routes` by screen id; a
+  outcome (`→ [{screen-id}]({path})`) resolves through `## Routes` by screen id; a
   state outcome (`` state `{key}` ``) writes the named state key; a refresh
   outcome (`` refresh `{key}` ``) invalidates that data key's cache entry,
   `['{screen-id}', '{key}']` (the same key `## Bindings` mints above), so the

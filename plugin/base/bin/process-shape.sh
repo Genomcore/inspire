@@ -23,6 +23,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -36,16 +37,16 @@ emit() {
 }
 
 declared_ids() {
-  sdd_body_section "$1" "$2" \
-    | grep -oE '\[\[[^]]+\]\]' \
+  sdd_section_link_ids "$1" "$2" \
     | while IFS= read -r l; do
-        l="$(sdd_unwrap_wikilink "$l")"; l="${l%%#*}"; l="${l%\\}"
+        l="${l%%#*}"
         printf '%s\n' "${l//./::}"
       done | sort -u
 }
 
 sdd_build_id_index "$SDD_SPEC_ROOT"
-trap 'rm -f "${SDD_ID_INDEX_FILE:-}"' EXIT
+_sdd_entity_index
+trap 'rm -f "${SDD_ID_INDEX_FILE:-}" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r p; do
   [ -n "$p" ] || continue

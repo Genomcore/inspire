@@ -14,6 +14,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -28,11 +29,10 @@ while IFS= read -r action; do
   lifecycle="$(sdd_fm_value "$action" '.lifecycle')"
   [ "$lifecycle" != "stable" ] && continue
 
-  while IFS= read -r req; do
-    [ -z "$req" ] && continue
-    to_id="$(sdd_unwrap_wikilink "$req")"
-
-    target_file="$(sdd_resolve_id "$to_id")"
+  while IFS=$'\t' read -r form target to_id path; do
+    [ "$form" = wiki ] && continue
+    if [ "$form" != bare ]; then target_file=""; [ -f "$path" ] && target_file="$path"; to_id="${to_id:-$target}"
+    else target_file="$(sdd_resolve_id "$to_id")"; fi
     if [ -z "$target_file" ]; then
       sdd_finding "error" "stable-blockers" "$action" "requires target not found: $to_id"
       sdd_count_error
@@ -44,7 +44,7 @@ while IFS= read -r action; do
       sdd_finding "error" "stable-blockers" "$action" "stable action requires $to_id which is at lifecycle: $target_lifecycle"
       sdd_count_error
     fi
-  done < <(sdd_fm_list "$action" '.requires')
+  done < <(sdd_fm_link_refs "$action" requires)
 done < <(sdd_find_actions "$SCOPE")
 
 sdd_exit_with_counters
