@@ -25,7 +25,7 @@ export interface D3Config {
   enableRadial?: boolean;
   /** Colours each node by a content-index field (dot path), e.g. `inspire.kind`. */
   nodeColors?: { field: string; palette: Record<string, string> };
-  /** Keeps only the nodes whose field (dot path) equals the current page's. */
+  /** Keeps the pages whose field (dot path) equals the current page's, and their tags. */
   scopeTo?: string;
 }
 

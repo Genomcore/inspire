@@ -361,6 +361,63 @@ function stripSlashes(s, onlyStripPrefix) {
   return s;
 }
 
+// src/components/scripts/graph-logic.js
+var isKind = (kind) => typeof kind === "string" && kind !== "";
+var isTag = (id) => id.startsWith("tags/");
+function resolvePalette(palette, resolve) {
+  const colors = /* @__PURE__ */ new Map();
+  for (const kind of Object.keys(palette)) colors.set(kind, resolve(palette[kind]));
+  return colors;
+}
+function legendEntries(palette, kinds) {
+  const onScreen = new Set(kinds.filter(isKind));
+  const paletted = Object.keys(palette);
+  const listed = paletted.filter((kind) => onScreen.has(kind));
+  const others = [...onScreen].filter((kind) => !paletted.includes(kind)).sort();
+  return listed.map((kind) => ({ kind, color: palette[kind] })).concat(others.map((kind) => ({ kind, color: null })));
+}
+function renderLegend(legend, nodes, palette, kindOf) {
+  const entries = legendEntries(palette, nodes.map((node) => kindOf(node.id)));
+  while (legend.firstChild) legend.removeChild(legend.firstChild);
+  for (const entry of entries) {
+    const item = document.createElement("li");
+    const swatch = document.createElement("span");
+    swatch.className = "graph-legend-swatch";
+    swatch.style.backgroundColor = entry.color ?? "var(--gray)";
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(entry.kind));
+    legend.appendChild(item);
+  }
+}
+function neighbourhoodOf(slug, ids, links, depth, keep) {
+  const kept = (id) => id === slug || isTag(id) || keep(id);
+  const nodes = /* @__PURE__ */ new Set();
+  if (!(depth >= 0)) {
+    for (const id of ids) if (kept(id)) nodes.add(id);
+    for (const link of links) {
+      if (isTag(link.target) && nodes.has(link.source)) nodes.add(link.target);
+    }
+    return nodes;
+  }
+  let queue = [slug];
+  const seen = new Set(queue);
+  for (let d = 0; d <= depth && queue.length > 0; d++) {
+    const next = [];
+    for (const cur of queue) {
+      nodes.add(cur);
+      for (const link of links) {
+        const other = link.source === cur ? link.target : link.target === cur ? link.source : null;
+        if (other !== null && !seen.has(other) && kept(other)) {
+          seen.add(other);
+          next.push(other);
+        }
+      }
+    }
+    queue = next;
+  }
+  return nodes;
+}
+
 // src/components/scripts/src/components/scripts/graph.inline.ts
 (function() {
   function getSlugFromUrl() {
@@ -428,30 +485,15 @@ function stripSlashes(s, onlyStripPrefix) {
       el.remove();
       return resolved || fallback;
     }
-    function renderLegend(legend, nodes, slug, nodeColors, kindOf) {
-      if (!nodeColors) return;
-      var drawn = /* @__PURE__ */ new Set();
-      for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].id !== slug) drawn.add(kindOf(nodes[i].id));
-      }
-      Object.keys(nodeColors.palette).forEach(function(kind) {
-        if (!drawn.has(kind)) return;
-        var item = document.createElement("li");
-        var swatch = document.createElement("span");
-        swatch.className = "graph-legend-swatch";
-        swatch.style.backgroundColor = nodeColors.palette[kind];
-        item.appendChild(swatch);
-        item.appendChild(document.createTextNode(kind));
-        legend.appendChild(item);
-      });
-    }
     async function renderGraph(graph, fullSlug, renderGeneration, legend) {
       var slug = simplifySlug(fullSlug);
       if (slug === "") slug = "index";
       var visited = getVisited();
       removeAllChildren(graph);
-      if (legend) removeAllChildren(legend);
-      if (renderGeneration !== void 0 && renderGeneration !== currentRenderGeneration) {
+      function stale() {
+        return renderGeneration !== void 0 && renderGeneration !== currentRenderGeneration;
+      }
+      if (stale()) {
         console.log("[Graph] Stale render, skipping");
         return function() {
         };
@@ -484,10 +526,11 @@ function stripSlashes(s, onlyStripPrefix) {
         return function() {
         };
       }
+      if (stale()) return function() {
+      };
       var width = graph.offsetWidth;
       var height = Math.max(graph.offsetHeight, 250);
       var links = [];
-      var allTags = [];
       var validLinks = new Set(data.keys());
       data.forEach(function(details, source) {
         var outgoing = details.links || [];
@@ -502,66 +545,30 @@ function stripSlashes(s, onlyStripPrefix) {
           for (var i2 = 0; i2 < tags.length; i2++) {
             var tag = tags[i2];
             if (removeTags.indexOf(tag) === -1) {
-              var tagSlug = simplifySlug("tags/" + tag);
-              if (allTags.indexOf(tagSlug) === -1) {
-                allTags.push(tagSlug);
-              }
-              links.push({ source, target: tagSlug });
+              links.push({ source, target: simplifySlug("tags/" + tag) });
             }
           }
         }
       });
-      var neighbourhood = /* @__PURE__ */ new Set();
-      if (depth >= 0) {
-        var queue = [slug];
-        var seen = /* @__PURE__ */ new Set([slug]);
-        for (var d = 0; d <= depth && queue.length > 0; d++) {
-          var nextQueue = [];
-          for (var qi = 0; qi < queue.length; qi++) {
-            var cur = queue[qi];
-            neighbourhood.add(cur);
-            for (var li = 0; li < links.length; li++) {
-              var link = links[li];
-              if (link.source === cur && !seen.has(link.target)) {
-                seen.add(link.target);
-                nextQueue.push(link.target);
-              }
-              if (link.target === cur && !seen.has(link.source)) {
-                seen.add(link.source);
-                nextQueue.push(link.source);
-              }
-            }
-          }
-          queue = nextQueue;
-        }
-      } else {
-        validLinks.forEach(function(id) {
-          neighbourhood.add(id);
-        });
-        for (var i = 0; i < allTags.length; i++) {
-          neighbourhood.add(allTags[i]);
-        }
-      }
       function fieldOf(id, path) {
         var value = data.get(id);
         var keys = path.split(".");
         for (var ki = 0; ki < keys.length && value != null; ki++) value = value[keys[ki]];
         return value;
       }
-      if (scopeTo) {
-        var scopeValue = fieldOf(slug, scopeTo);
-        if (scopeValue != null) {
-          neighbourhood.forEach(function(id) {
-            if (id !== slug && fieldOf(id, scopeTo) !== scopeValue) neighbourhood.delete(id);
-          });
-        }
+      function kindOf(id) {
+        return fieldOf(id, nodeColors.field);
       }
+      var scopeValue = scopeTo ? fieldOf(slug, scopeTo) : void 0;
+      var neighbourhood = neighbourhoodOf(slug, validLinks, links, depth, function(id) {
+        return scopeValue == null || fieldOf(id, scopeTo) === scopeValue;
+      });
       var nodes = [];
       var nodeMap = /* @__PURE__ */ new Map();
       neighbourhood.forEach(function(url) {
-        var isTag = url.startsWith("tags/");
-        var text = isTag ? "#" + url.substring(5) : data.get(url)?.title || url;
-        var nodeTags = isTag ? [] : data.get(url)?.tags || [];
+        var isTag2 = url.startsWith("tags/");
+        var text = isTag2 ? "#" + url.substring(5) : data.get(url)?.title || url;
+        var nodeTags = isTag2 ? [] : data.get(url)?.tags || [];
         var node2 = {
           id: url,
           text,
@@ -574,15 +581,14 @@ function stripSlashes(s, onlyStripPrefix) {
         nodes.push(node2);
         nodeMap.set(url, node2);
       });
-      if (!legend && nodeColors) {
-        legend = document.createElement("ul");
-        legend.className = "graph-legend";
-        graph.appendChild(legend);
-      }
-      if (legend) {
-        renderLegend(legend, nodes, slug, nodeColors, function(id) {
-          return fieldOf(id, nodeColors.field);
-        });
+      if (nodeColors) {
+        if (!legend) legend = graph.querySelector(":scope > .graph-legend");
+        if (!legend) {
+          legend = document.createElement("ul");
+          legend.className = "graph-legend";
+          graph.appendChild(legend);
+        }
+        renderLegend(legend, nodes, nodeColors.palette, kindOf);
       }
       var graphLinks = [];
       for (var i = 0; i < links.length; i++) {
@@ -603,6 +609,9 @@ function stripSlashes(s, onlyStripPrefix) {
       var dark = resolveColor(styles.getPropertyValue("--dark").trim(), "#1a1a1a");
       var light = resolveColor(styles.getPropertyValue("--light").trim(), "#f5f5f5");
       var bodyFont = styles.getPropertyValue("--bodyFont").trim() || "inherit";
+      var kindColors = nodeColors ? resolvePalette(nodeColors.palette, function(value) {
+        return resolveColor(value, gray);
+      }) : null;
       var app = new PIXI.Application();
       await app.init({
         width,
@@ -618,10 +627,10 @@ function stripSlashes(s, onlyStripPrefix) {
       app.stage.addChild(stage);
       var simulation = d3.forceSimulation(nodes).force("charge", d3.forceManyBody().strength(-100 * repelForce)).force("center", d3.forceCenter().strength(centerForce)).force("link", d3.forceLink(graphLinks).distance(linkDistance)).force(
         "collide",
-        d3.forceCollide().radius(function(d2) {
+        d3.forceCollide().radius(function(d) {
           var numLinks = 0;
           for (var i2 = 0; i2 < graphLinks.length; i2++) {
-            if (graphLinks[i2].source.id === d2.id || graphLinks[i2].target.id === d2.id) {
+            if (graphLinks[i2].source.id === d.id || graphLinks[i2].target.id === d.id) {
               numLinks++;
             }
           }
@@ -645,22 +654,21 @@ function stripSlashes(s, onlyStripPrefix) {
       var dragStartTime = 0;
       var dragging = false;
       var currentTransform = d3.zoomIdentity;
-      function nodeRadius(d2) {
+      function nodeRadius(d) {
         var numLinks = 0;
         for (var i2 = 0; i2 < graphLinks.length; i2++) {
-          if (graphLinks[i2].source.id === d2.id || graphLinks[i2].target.id === d2.id) {
+          if (graphLinks[i2].source.id === d.id || graphLinks[i2].target.id === d.id) {
             numLinks++;
           }
         }
         return 2 + Math.sqrt(numLinks);
       }
-      function nodeColor(d2) {
-        if (d2.id === slug) {
+      function nodeColor(d) {
+        if (kindColors && !d.id.startsWith("tags/")) {
+          return kindColors.get(kindOf(d.id)) || gray;
+        } else if (d.id === slug) {
           return secondary;
-        } else if (nodeColors && !d2.id.startsWith("tags/")) {
-          var mapped = nodeColors.palette[fieldOf(d2.id, nodeColors.field)];
-          return mapped ? resolveColor(mapped, gray) : gray;
-        } else if (visited.has(d2.id) || d2.id.startsWith("tags/")) {
+        } else if (visited.has(d.id) || d.id.startsWith("tags/")) {
           return tertiary;
         } else {
           return gray;
@@ -761,6 +769,10 @@ function stripSlashes(s, onlyStripPrefix) {
         gfx.fill({ color: isTagNode ? light : color });
         if (isTagNode) {
           gfx.stroke({ width: 2, color: tertiary });
+        }
+        if (kindColors && nodeId === slug) {
+          gfx.circle(0, 0, radius + 2.5);
+          gfx.stroke({ width: 1.5, color: dark });
         }
         gfx.eventMode = "static";
         gfx.cursor = "pointer";
