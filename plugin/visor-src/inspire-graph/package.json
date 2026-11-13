@@ -27,7 +27,7 @@
     "displayName": "INSPIRE graph",
     "category": "component",
     "version": "0.1.0",
-    "quartzVersion": ">=5.1.0",
+    "quartzVersion": ">=5.1.0 <6.0.0",
     "dependencies": [],
     "defaultOrder": 50,
     "defaultEnabled": true,
