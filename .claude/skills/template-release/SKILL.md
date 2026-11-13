@@ -18,8 +18,9 @@ version is already tagged. It checks only PRs into `main`: ticket work lands on 
 from that branch to `main` carries the bump, the changelog section and the
 manifest. `plugin/scripts/` is deliberately **not** exempt from that check: it
 decides how every install behaves. The manifest is generated **last**, from the
-commit carrying the bump: it hashes `plugin/base/{bin,hooks,skills,agents}`, so
-any change under those four classes afterwards invalidates it — while
+commit carrying the bump: it hashes every payload class under `plugin/base/` that
+`plugin/scripts/hops/layouts.tsv` maps (all but `kb/` and `templates/`), so any
+change under one of them afterwards invalidates it — while
 `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`, `docs/`, `base/kb/` and
 `base/templates/` do not perturb it.
 

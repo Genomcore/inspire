@@ -62,7 +62,7 @@ nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$ns
 check "gitignore shadow: no false positive on a clean repo" \
   "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
 check "gitignore shadow: the block's own worktrees line shadows no class" \
-  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && [ -z \"\$(git -C '$nsh' check-ignore --no-index .claude/skills .claude/agents)\" ]"
+  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && { git -C '$nsh' check-ignore --no-index .claude/skills .claude/agents >/dev/null; [ \$? = 1 ]; }"
 
 # Per payload class, not per .claude/. A rule that excludes ONLY the agents root
 # leaves every other class committed, so the warning must name that root and no
@@ -80,20 +80,38 @@ check "gitignore shadow: an agents-only rule is warned about" \
   "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/agents'"
 check "gitignore shadow: and it names only the class that is shadowed" \
   "! printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/skills'"
+check "gitignore shadow: a shadowed class root is told to remove the rule" \
+  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q 'remove it by hand'"
 
-# Per shipped file, below a root that is not ignored: a Node project's `dist/`
-# rule drops the visor plugin's dist/index.js from git and leaves the rest.
+# A Node project's `dist/` rule above the INSPIRE block: the block's negation
+# re-includes the visor plugins' dist/ and the project's own dist/ stays ignored.
+nod="$(mktemp -d)/nodproj"; mkdir -p "$nod"; ( cd "$nod" && git init -q )
+printf 'dist/\n' > "$nod/.gitignore"
+nodout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$nod" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "gitignore shadow: a dist/ rule above the block leaves the plugin's dist/ committed" \
+  "{ git -C '$nod' check-ignore --no-index .inspire/visor/plugins/inspire/dist/index.js >/dev/null; [ \$? = 1 ]; }"
+check "gitignore shadow: and the project's own dist/ stays ignored" \
+  "git -C '$nod' check-ignore -q --no-index dist/app.js"
+check "gitignore shadow: and nothing is warned about" \
+  "[ \"\$(printf '%s' \"\$nodout\" | jq -r '.warnings | length')\" = 0 ]"
+
+# Per shipped file, below a root that is not ignored: a `dist/` rule BELOW the
+# block wins over its negation and drops the visor plugin's dist/index.js.
 dsh="$(mktemp -d)/dshproj"; mkdir -p "$dsh"; ( cd "$dsh" && git init -q )
-printf 'dist/\n' > "$dsh/.gitignore"
+printf '# --- INSPIRE (materialize.sh) ---\n.claude/settings.local.json\n# --- end INSPIRE ---\ndist/\n' > "$dsh/.gitignore"
 dshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$dsh" \
   --source-root source --prototype-root prototype 2>"$dsh/.stderr")"
+dsh_line="$(grep -nx 'dist/' "$dsh/.gitignore" | cut -d: -f1)"
 check "gitignore shadow: the visor root is NOT ignored (premise)" \
   "! git -C '$dsh' check-ignore -q --no-index .inspire/visor"
 check "gitignore shadow: a dist/ rule is warned about, naming the shipped file" \
   "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep -q '.inspire/visor/plugins/inspire/dist/index.js'"
 check "gitignore shadow: the stderr block names its source rule" \
-  "grep -q '.inspire/visor/plugins/inspire/dist/index.js  (.gitignore:1:dist/)' '$dsh/.stderr'"
+  "grep -q '.inspire/visor/plugins/inspire/dist/index.js  (.gitignore:$dsh_line:dist/)' '$dsh/.stderr'"
+check "gitignore shadow: a shadowed file is told to add a negation, not to remove the rule" \
+  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep 'dist/index.js' | grep -q 'negation' && ! printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep -q 'remove it by hand'"
 
-rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")" "$(dirname "$dsh")"
+rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")" "$(dirname "$nod")" "$(dirname "$dsh")"
 
 summary

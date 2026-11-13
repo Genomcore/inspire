@@ -12,7 +12,7 @@ configuration:
     - "**/*.template.md"
     - .obsidian
     - "**/.gitkeep"
-    - 01_spec/_migration
+    - "**/_migration"
   theme:
     fontOrigin: googleFonts
     cdnCaching: true
@@ -72,9 +72,9 @@ plugins:
   - source: "@quartz-community/obsidian-flavored-markdown"
     enabled: true
     options:
+      preset: strict
       enableInHtmlEmbed: false
       enableCheckbox: true
-      strictLineBreaks: true
     order: 40
   - source: "@quartz-community/table-of-contents"
     enabled: true
