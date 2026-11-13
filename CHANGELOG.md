@@ -22,6 +22,27 @@ without `.escape-hatches.json`: it copies `oxlint-escape-hatches.mjs` from the
 and turns on its three rules. Until then `profile-gates-installed.sh` fails the pre-PR
 hook, and `/inspire:update` warns, naming the config that lacks them.
 
+`/inspire:update` adds `.inspire/visor/` and three entries to the INSPIRE block of
+`.gitignore` (the visor's install directory, and a negation that keeps the visor plugins'
+`dist/` tracked under a project's own `dist/` rule). Commit them.
+
+### Added
+
+- **`/inspire:visor` serves the KB as a local site** (`adr-visor`). It builds
+  `inspire_kb/` with Quartz on the operator's machine and serves it on `127.0.0.1` with
+  live reload: search, backlinks, link previews, and a graph that colours each node by its
+  unit kind, with a legend. It reads the KB in place and writes nothing in it. It refuses a
+  KB older than 0.17.0, runs Quartz on the host's Node 22 or later or in a pinned Node
+  container, and leaves out and lists every file whose frontmatter Quartz's parser rejects.
+  The command is a plugin skill; its engine is `plugin/scripts/visor.sh`.
+- **A payload class, `.inspire/visor/`:** `visor.yaml` (Quartz version, Node image, port),
+  `quartz.config.yaml`, and the Quartz plugins the visor loads. A project may edit them or
+  add its own Quartz plugins, and `/inspire:update` keeps the edits. Quartz's install and
+  the built site live in `.inspire/visor/.quartz/`, which is gitignored and never scanned
+  by the update.
+- **Placement rule** (`adr-visor` D1, amending `adr-plugin-delivery`): a file lives in the
+  project when a project may change it, and in the plugin otherwise.
+
 ### Changed
 
 - **The linter allows or refuses each escape hatch, and nothing counts them.**
@@ -42,6 +63,15 @@ hook, and `/inspire:update` warns, naming the config that lacks them.
   gets past the plugin; it is visible in the diff.
 - On existing code, a refused rule is turned off by path in an `overrides` entry, which
   is the baseline: oxlint keeps no bulk-suppression file.
+
+### Fixed
+
+- `/inspire:update` adds every missing `.gitignore` entry in one run. With two or more
+  missing it added none, while its log said it had.
+- A `.gitignore` with CRLF line endings gets a warning naming the entries the update could
+  not add, instead of a silent no-op.
+- The warning about a `.gitignore` rule that hides the runtime also names a shipped file
+  hidden under a root that is not ignored, and says to add a negation after the rule.
 
 ## 0.17.2 — 2026-11-13
 
