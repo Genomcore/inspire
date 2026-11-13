@@ -14,8 +14,10 @@ repo is both its source and its own marketplace.
 - `plugin/` — the distributable plugin:
   - `plugin/.claude-plugin/plugin.json` — the runtime **release identity**
     (`version` + `released`).
-  - `plugin/skills/{init,update,migrate}/` — the only **live** skills, installed
-    with the plugin itself: `/inspire:init` (materialize the runtime into a project,
+  - `plugin/skills/{init,update,migrate,visor}/` — the only **live** skills, installed
+    with the plugin itself. A file lives in the plugin when every project runs it as
+    shipped, and is materialized when a project may change it
+    ([adr-visor](docs/adr/adr-visor.md) D1). `/inspire:init` (materialize the runtime into a project,
     once), `/inspire:update` (**upgrade from any released version**, in one command —
     it detects the installed version, replays the layout hops between there and
     here, and merges content per file, never overwriting a locally-edited one; a
@@ -28,7 +30,9 @@ repo is both its source and its own marketplace.
     `plugin/scripts/migrate-links.sh`, and they alone read wikilinks). An update
     never moves the KB and changes no link: a layered KB gets a warning pointing at
     `/inspire:migrate`, and no `01_spec/`; a KB that holds wikilinks gets their count
-    and the same pointer.
+    and the same pointer. `/inspire:visor` serves the project's `inspire_kb/` as a
+    local site through Quartz, configured by `.inspire/visor/`; its engine is
+    `plugin/scripts/visor.sh`.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
@@ -60,6 +64,14 @@ repo is both its source and its own marketplace.
     every lesson. In act mode it also saves the grouped report to
     `.inspire/last-upgrade.log` — overwritten each run, so what the last upgrade did
     stays auditable; `--mode plan` writes nothing, that file included.
+  - `plugin/scripts/visor.sh` — the visor's launcher: checks the lock floor, picks
+    host Node or Docker, installs the configured Quartz version into
+    `.inspire/visor/.quartz/`, leaves out and lists KB files whose frontmatter does not
+    parse, then builds and serves. It writes nothing in `inspire_kb/` or in the
+    committed `.inspire/visor/` files.
+  - `plugin/visor-src/inspire-graph/` — source of the visor's graph plugin; never
+    materialized. `plugin/scripts/build-visor-graph.sh` (maintainer tool, needs Node)
+    rebuilds its shipped copy under `plugin/base/visor/plugins/inspire-graph/`.
   - `plugin/scripts/gen-manifest.sh` — maintainer tool: emit a version's manifest.
     Past releases are read from their tag, since that is the only place they exist;
     the release being *prepared* is read from the commit carrying its version bump,
@@ -168,6 +180,12 @@ repo is both its source and its own marketplace.
       project's `output_language`, the runtime version from `.inspire.lock` and
       the decision digest `base/bin/decisions.sh` prints — every live ADR's
       `## Decision`, held to a budget — into every session.
+    - `base/visor/` → `.inspire/visor/` — the **visor payload class**: `visor.yaml`
+      (Quartz version, Node image, port), `quartz.config.yaml` and the Quartz plugins
+      the visor loads (`inspire`, `inspire-graph`). A project may edit any of them, its
+      own Quartz plugins included, and an update keeps the edits. The Quartz install
+      and the built site live in `.inspire/visor/.quartz/`, which the INSPIRE
+      `.gitignore` block ignores and an update never scans.
     - `base/kb/` → `inspire_kb/` — the **knowledge-base skeleton**: the navigable
       graph a project fills in. `00_bootstrap` (stack, project, glossary, semantic
       types, style tokens), **`01_spec`** — the specification, one directory per
