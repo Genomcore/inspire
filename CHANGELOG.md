@@ -9,6 +9,30 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.17.1 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. Re-run `/inspire-config init` to take the
+new defaults into `.inspire/emanate.yml`. Use the file it writes with INSPIRE Factory 0.17.0
+or later: an earlier Factory refuses `run_related` as an unknown key when the run starts.
+
+### Changed
+
+- **`/inspire-config` writes `run_related` by default.** Every Jest and Vitest unit suite in
+  the `tests` phase gets the same command as its `run`, narrowed to the tests related to the
+  files the unit changed and with `--passWithNoTests`: `jest --findRelatedTests {files}`,
+  `vitest related --run {files}`. A unit then runs only those tests, and the Factory runs the
+  whole suite once on the release before the PR. An e2e suite gets none unless you ask.
+- **The `review` phase goes before `tests`.** The Factory stops at the first red phase, so
+  a change the review rejects is repaired before a full test run is spent. An existing file
+  gets the move in its proposal.
+- The format reference documents `run_related`, when the Factory falls back to `run`, and
+  the release check. The agent of a unit no longer runs every check; the Factory does.
+- `/inspire-config review` checks what the Factory's reader cannot: a Jest or Vitest
+  `run_related` without `--passWithNoTests`, `{files}` quoted again, a `run_related` that is
+  not its `run` narrowed, and a `review` phase after `tests`.
+- Tracker: `FB3-config-run-related` is filed and closed.
+
 ## 0.17.0 — 2026-11-12
 
 Upgrade with `/inspire:update`, commit, then run `/inspire:migrate` once before the next
