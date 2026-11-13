@@ -203,7 +203,7 @@ resolve_paths() {
 # The layout this plugin version installs. Its dest_map — and every source
 # version's — comes from layouts.tsv via layout_map, never from a literal here.
 #
-# There is no copy plan any more. base/{bin,hooks,skills,agents} reach the
+# There is no copy plan any more. The payload classes under base/ reach the
 # project through lib/merge.sh's apply_base, driven by the target layout's
 # dest_map and by classify's verdicts, so "in the project but never shipped by
 # us" is a KEEP row and the file survives by construction. The function this
