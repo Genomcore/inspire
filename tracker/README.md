@@ -148,7 +148,7 @@ Factory work.
   tickets are not authority). When the Factory ships its command that checks a branch as it
   checks a unit, INSPIRE's hooks get a ticket to call it.
 - **INSPIRE Factory follow-up review, block 3, FB3:** how a unit's work is checked and
-  repaired. `FB3-config-run-related` (Done, ships in 0.18.0; `/inspire-config` writes
+  repaired. `FB3-config-run-related` (Done, ships in 0.17.1; `/inspire-config` writes
   `run_related` by default and puts the review phase before the tests).
 - **INSPIRE Factory follow-up review, block 5, FB5:** errors and observability in the code the
   Factory builds. `FB5-audit-events-kept` (the NestJS profile's audit events reach an output
