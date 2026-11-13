@@ -2,9 +2,11 @@ import fs from "node:fs/promises"
 import path from "node:path"
 
 // The unit kind is the typed extension of the file name (x.screen.md -> "screen").
+// A segment that is not a type name is a dotted file name (upgrade-to-0.17.0), not a kind.
 const kindOf = (slug) => {
   const parts = String(slug ?? "").split("/").pop().split(".")
-  return parts.length > 1 ? parts.at(-1) : undefined
+  const last = parts.length > 1 ? parts.at(-1) : undefined
+  return /^[a-z][a-z-]*$/.test(last ?? "") ? last : undefined
 }
 
 // Adds each file's unit kind, module and lifecycle to its content-index entry, for
