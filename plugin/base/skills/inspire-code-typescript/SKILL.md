@@ -107,11 +107,30 @@ nothing and holds under any configuration: oxlint's default lets an `_` prefix
 through, but that renames the parameter the contract declared, and a project that
 sets its own `argsIgnorePattern` takes the prefix away.
 
-**And a stub is never a suppression.** The escape-hatch ratchet holds every
-ceiling at zero, so an inline disable is not available to buy this — which is why
-the idiom is the *form of the stub* rather than a relaxation of the gate.
+**And a stub is never a suppression.** An inline disable on a stub would ship a
+suppression into code that is about to be filled in, and the next body would inherit
+it — which is why the idiom is the *form of the stub* rather than a relaxation of
+the gate.
 Interpolate something the parameter carries (an id, a key); where it carries
 nothing nameable, `String(param)` reads it.
+
+## Escape-hatch plugin
+
+[`references/oxlint-escape-hatches.mjs`](references/oxlint-escape-hatches.mjs) is an
+oxlint JS plugin carrying the escape-hatch rules oxlint lacks
+([`quality-gates.md`](../_references/quality-gates.md) Rule 4). A framework profile
+that lints with oxlint gates its rules; the project copies the file into the package,
+lists it in `.oxlintrc.json`'s `jsPlugins` and owns it from then on:
+
+| rule | refuses |
+|---|---|
+| `escape-hatches/require-reason` | a disable directive that names no rule or gives no reason after `--` |
+| `escape-hatches/no-restricted-disable` | a directive disabling a rule in its option list, under any plugin prefix, or one of the plugin's own rules |
+| `escape-hatches/no-double-cast` | `as unknown as` |
+
+oxlint's JS plugins are alpha and run without type information. A bare
+`/* oxlint-disable */`, or an `oxlint-disable-line` naming the plugin's rules, switches
+them off too; both stay visible in the diff.
 
 ## Declaration-only tree
 
