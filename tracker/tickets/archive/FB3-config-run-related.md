@@ -2,15 +2,15 @@
 id: FB3-config-run-related
 title: "FB3 — /inspire-config writes run_related and puts the review before the tests"
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 reporter: "@irene.gonzalez"
-closed_by: null
-closed_at: null
+closed_by: "@irene.gonzalez"
+closed_at: 2026-11-13
 epic: roadmap
 size: S
 importance: High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: [0143-factory-settings-in-emanate-yml]
 ---
@@ -74,7 +74,7 @@ decide. When the Factory tags the release, replace that wording with the exact v
 
 ## Acceptance criteria
 
-- [ ] `format.md`, `derive.md`, `validate.md` and `SKILL.md` describe `run_related`, the release
+- [x] `format.md`, `derive.md`, `validate.md` and `SKILL.md` describe `run_related`, the release
       check and the review-before-tests order as #157 ships them.
 - [ ] On a Jest or Vitest project, `/inspire-config init` writes `run_related` by default, with
       `--passWithNoTests` and the review phase before `tests`, and the factory's reader accepts
@@ -88,3 +88,6 @@ decide. When the Factory tags the release, replace that wording with the exact v
   reference for the key.
 - Do not release the skill change before the Factory release: a project that follows it with an
   older factory fails at the reader.
+- Closed in the PR that ships it, Genomcore/inspire#108, so its merge closes the ticket with no
+  second PR. That PR stays a draft until the Factory tags the release that reads `run_related`;
+  the last two acceptance criteria are met and ticked in it before it leaves draft.
