@@ -41,6 +41,7 @@ What this skill does **not** own:
   `_screens/` and the face's `_index.md`. This skill moves screens only inside a
   split the operator has classified entry by entry.
 - **processes** — `inspire-process` writes a face's `_processes/`.
+- **the store** — `inspire-store` writes a face's `{face}.store.md`.
 - the `faces:` and `bundles:` fields on global ADRs, features and design-system
   entries — `inspire-adr`, `inspire-feature`, `inspire-screens` and `inspire-task`
   stamp their own.

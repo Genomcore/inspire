@@ -212,3 +212,5 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
   screens that bind actions their face does not reach; the fix is that skill's.
 - `/inspire-process` — owns processes; review reports `process-shape` findings and
   routes them there.
+- `/inspire-store` — owns face stores; review reports `store-coherence` findings on a
+  store file and routes them there, and those on a screen or shell to `/inspire-screens`.

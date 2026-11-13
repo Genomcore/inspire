@@ -75,6 +75,36 @@
      these are the screens still holding their own copy. -->
 - {screen id}
 
+<!-- A face's shell only: the data it shows and the actions it fires, in the
+     screen's binding format (references/format-screen.md), store forms included.
+     No ### Parameters: no route opens the shell. A shell that binds data lists
+     exactly one face in `faces:`. Every other layout omits this section. -->
+## LAY8: Bindings
+
+### LAY9: Data
+
+| Key | Action | Notes |
+|---|---|---|
+| `{data-key}` | store `{store-key}` | {what the shell shows} |
+
+### LAY10: Dispatches
+
+| Key | Action | Trigger | On success | On error |
+|---|---|---|---|---|
+| `{dispatch-key}` | [{module}::{entity}::{action}](../../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md) | {the control} | {outcome} | {outcome} |
+
+### LAY11: Navigation
+
+| Key | Target | Trigger | Then |
+|---|---|---|---|
+| `{nav-key}` | [{face}.{slug}](../../_faces/{face}/_screens/{slug}.screen.md) | {the control} | — |
+
+### LAY12: States
+
+| Key | When | Presentation |
+|---|---|---|
+| `{state-key}` | `{data-key}` fails | {what the shell shows} |
+
 ## LAY7: Notes
 
 <!-- Commentary a run never reads. A requirement written here reaches no persona.

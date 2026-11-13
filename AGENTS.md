@@ -69,12 +69,12 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 22 agent skills: the
       judgment half of the runtime, in three families:
-      - **Specification** (8) — capture what the product is and why: `module` ·
+      - **Specification** (9) — capture what the product is and why: `module` ·
         `feature` · `domain` · `process` (work that runs on a trigger, with nobody
-        behind it) · `screens` · `prototype` (horizontal mock) · `spike` (external
-        verticals) · `adr`.
+        behind it) · `screens` · `store` (the state a face keeps between screens) ·
+        `prototype` (horizontal mock) · `spike` (external verticals) · `adr`.
       - **Codification** (6) — coding itself runs in INSPIRE Factory; what ships
         here is what it reads. Six **stack skills** — `inspire-code-react` ·
         `inspire-code-nestjs` · `inspire-code-angular` · `inspire-code-ios` ·
@@ -133,7 +133,9 @@ repo is both its source and its own marketplace.
       `inspire_kb/01_spec`); no rule reads the directory a file sits in.
       `screen-coherence.sh` checks screen identity (`{face}.{slug}`), keyed bindings
       and the screen↔layout join; `spec-identity.sh`, `face-exposure.sh` and
-      `process-shape.sh` check ids, the actions a face's bundles expose, and processes.
+      `process-shape.sh` check ids, the actions a face's bundles expose, and processes;
+      `store-coherence.sh` checks a face's store and every screen and shell that reads
+      or writes it ([docs/adr/adr-face-store.md](docs/adr/adr-face-store.md)).
       `links-resolve.sh` checks that every link in a Markdown file under the KB names
       a file or directory that exists, and reports each wikilink with
       `/inspire:migrate`; every validator reads links through `sdd_links` in `_lib.sh`,
@@ -173,11 +175,11 @@ repo is both its source and its own marketplace.
       types, style tokens), **`01_spec`** — the specification, one directory per
       concept: `_adr/` (global ADRs), `_design-system/` (design system, tokens, theme,
       components, layouts, patterns), `_modules/{m}/` (hub, `_adr/`, `_features/`,
-      `_domain/`, `_processes/`), `_bundles/`, `_faces/{f}/` (face file, tokens, `_adr/`,
-      `_screens/`, `_processes/`) and `_processes/` — then `06_spikes`, `98_lessons`
+      `_domain/`, `_processes/`), `_bundles/`, `_faces/{f}/` (face file, store, tokens,
+      `_adr/`, `_screens/`, `_processes/`) and `_processes/` — then `06_spikes`, `98_lessons`
       and `99_tracker`. Every specification file carries a typed extension
       (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`, `.adr.md`,
-      `.adr.rationale.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`,
+      `.adr.rationale.md`, `.bundle.md`, `.face.md`, `.store.md`, `.screen.md`, `.process.md`,
       `.component.md` · `.layout.md` · `.pattern.md`, `{type}.template.md`), is found by
       it, and is linked to by a relative Markdown link to the file
       (`[adr-audit](../../_adr/audit.adr.md)`); the extension is never part of an id. Four concepts: a

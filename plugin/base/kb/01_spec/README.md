@@ -16,7 +16,7 @@ comes from the file, never from the link text. The directories are for people.
 ├── _design-system/       ← design-system.md, its tokens, components/, layouts/, patterns/
 ├── _modules/{module}/    ← {module}.module.md, _adr/, _features/, _domain/{entity}/, _processes/
 ├── _bundles/             ← {bundle}.bundle.md
-├── _faces/{face}/        ← {face}.face.md, {face}.tokens.json, _adr/, _screens/, _processes/
+├── _faces/{face}/        ← {face}.face.md, {face}.store.md, {face}.tokens.json, _adr/, _screens/, _processes/
 └── _processes/           ← global processes
 ```
 
@@ -30,7 +30,7 @@ bundle, entity, action, process or screen id never starts with `_`.
 |---|---|---|
 | **Module** | A slice of the domain: its use cases, entities and actions | `_modules/{module}/` |
 | **Bundle** | The unit of exposure: which actions are published together, by which package | `_bundles/` |
-| **Face** | What a person uses: a set of screens with its own shell, package and tokens | `_faces/{face}/` |
+| **Face** | What a person uses: a set of screens with its own shell, store, package and tokens | `_faces/{face}/` |
 | **Process** | Work that runs on a trigger (a schedule, an event, start-up), with nobody behind it | `_processes/`, or a module's or face's `_processes/` |
 
 ## Typed extensions
@@ -45,6 +45,7 @@ bundle, entity, action, process or screen id never starts with `_`.
 | ADR (rationale) | `{slug}.adr.rationale.md` | `adr-{slug}.rationale` |
 | Bundle | `{bundle}.bundle.md` | `{bundle}` |
 | Face | `{face}.face.md` | `{face}` |
+| Store | `{face}.store.md` | `{face}` |
 | Screen | `{slug}.screen.md` | `id:` (`{face}.{slug}`) |
 | Process | `{process}.process.md` | `id:` (`{scope}.{process}`) |
 | Component · layout · pattern | `{name}.component.md` · `.layout.md` · `.pattern.md` | `{name}` |
@@ -57,7 +58,7 @@ The typed extension is never part of an id: `list.pattern.md` is the pattern
 
 **A link to something that does not exist yet requires its file,** created from its
 template in its type's first state: `lifecycle: draft` for an entity, an action, a
-screen, a face, a bundle or a process; `**State:** 🟡 Planned` for a feature;
+screen, a face, a store, a bundle or a process; `**State:** 🟡 Planned` for a feature;
 `**Status:** design` for an ADR. A module hub has no state, so its file is enough. A
 missing target then always means a broken link, never a concept nobody wrote down.
 Links are written as `.claude/skills/_references/kb-links.md` says.

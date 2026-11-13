@@ -146,18 +146,58 @@ of one wire.
   outcome (`` refresh `{key}` ``) invalidates that data key's cache entry,
   `['{screen-id}', '{key}']` (the same key `## Bindings` mints above), so the
   next read re-fetches.
-- **State keys** → a slice of the screen's own store, keyed by the declared key.
-  Nothing is lifted to global state unless another screen's bindings name it.
+- **State keys** → a slice of the screen's own state, keyed by the declared key.
+  Nothing is lifted to the face's store unless the store declares it (`## Store`).
 - **Nav keys** → MUST use `navigate(routeOf('{target screen id}'))`, never a literal path.
 - Components MUST NOT call the client directly (see `## Forbidden patterns`) — the hook
   is its only caller.
+- **The shell** → its `## LAY8: Bindings` renders exactly like a screen's, with the
+  layout id in place of the screen id (`['shell', '{key}']`).
+
+## Store
+
+> **Seed**, as above. The defaults are TanStack Query for server keys and Zustand
+> (`zustand`, added with the first client key) for client keys. A project that uses
+> other libraries edits this section, and the rules below follow its edit.
+
+How a face's `{face}.store.md` becomes code. It lives in the face's `src/store/`, and
+components reach it through hooks only.
+
+- **Server keys** → MUST be one query hook per key, `useStore{Key}` (`me` →
+  `useStoreMe`), with cache key `['store', '{key}']`, calling the action's client
+  function from `## Bindings`.
+  - `start-up` → fetched with `queryClient.ensureQueryData` before the router renders
+    its first route.
+  - `first read` → `staleTime: Infinity`, fetched by the first hook that mounts.
+  - ``on change of `k` `` → cache key `['store', '{key}', {value of k}]`, `enabled`
+    while `k` holds a value, which is the action's input.
+- **Client keys** → MUST be one Zustand store per face, `use{Face}Store`, with one
+  field and one setter, `set{Key}`, per key. `Initial` is the field's initial value.
+  `Persist`: `none` is a plain field; `session` and `local` go through the `persist`
+  middleware, with `sessionStorage` and `localStorage` respectively, named
+  `{face}-store`, and `partialize` keeps only the keys that persist.
+- **On error** → the `api/` layer classifies a failure once into `unauthenticated`,
+  `forbidden`, `not-found`, `unavailable` or `other`. The key's own outcome, or the
+  store's default for that class: `keep` leaves the cached data as it is, `clear`
+  removes the query (`queryClient.removeQueries`), a navigate outcome calls
+  `navigate(routeOf('{screen id}'))`.
+- **Reads** → a data row ``store `k` `` calls `useStore{Key}()` for a server key and
+  `use{Face}Store((s) => s.{key})` for a client key. A store read never fetches with
+  a screen's cache key.
+- **Writes** → ``set store `k` `` in a mutation's `onSuccess` calls
+  `queryClient.setQueryData(['store', '{key}'], output)` for a server key and the
+  setter for a client key; ``refresh store `k` `` invalidates `['store', '{key}']`;
+  a navigation `Then` calls the setter, then navigates.
+- **Tests** → each test MUST start from an empty store: a new `QueryClient`, and
+  `use{Face}Store.setState(initialState, true)` with both storages cleared.
 
 ## Persistence
 
-**Not applicable.** A face owns no store: every write leaves through a dispatch
-binding to a backend action, and that action's profile owns the persistence
-convention. Browser storage here is UI state — a remembered filter, a draft — never a
-source of truth, and never the home of anything a claim asserts.
+**Not applicable.** Every write of domain data leaves through a dispatch binding to a
+backend action, and that action's profile owns the persistence convention. Browser
+storage holds the store's `session` and `local` keys (`## Store`) and UI state — a
+remembered filter, a draft — never a source of truth for domain data, and never the
+home of anything a claim asserts.
 
 ## Declaration-only tree
 
