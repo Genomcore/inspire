@@ -92,6 +92,10 @@ Read the reference before the step it covers. The table is an index, not the flo
    A `review` check needs a factory with review checks (0.11.0 or later); an
    older reader refuses it, so validate before proposing one. The `factory` section
    needs a factory 0.13.0 or later: an older reader refuses it as an unknown key.
+   `run_related` is the exception: it is written by default, with no check of the
+   factory's version. A factory that does not know it refuses the file when the run
+   starts, before any unit, with `… has unknown key run_related`; the fix is to
+   update the factory, not to drop the key.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that
