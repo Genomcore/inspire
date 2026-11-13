@@ -489,12 +489,10 @@ $GITIGNORE_MARK_END"
   log "  · appended the INSPIRE block to .gitignore"
 }
 
-# Add every shipped entry the existing marked block is missing, immediately
-# before its end marker. Membership is tested against the WHOLE file, not just
-# the block: an operator who wrote `.claude/worktrees/` of their own outside it
-# already has the rule, and a second copy would be noise.
+# Membership is tested against the whole file, not the block: an operator's own
+# copy of a rule outside it already does the job.
 gitignore_extend_block() {
-  local gi="$1" entry missing=() tmp
+  local gi="$1" entry missing=() added=() still=() tmp
   for entry in "${GITIGNORE_ENTRIES[@]}"; do
     grep -qxF "$entry" "$gi" 2>/dev/null || missing+=("$entry")
   done
@@ -504,9 +502,7 @@ gitignore_extend_block() {
     return 0
   fi
 
-  # No end marker means the operator reshaped the block. Say what is missing
-  # and touch nothing: guessing where the block ends is how a .gitignore gets
-  # a rule in the wrong place.
+  # A reshaped block: guessing where it ends puts a rule in the wrong place.
   if ! grep -qF "$GITIGNORE_MARK_END" "$gi" 2>/dev/null; then
     WARNINGS+=("gitignore: the INSPIRE block has no end marker, so these entries were not added: ${missing[*]} — add them by hand.")
     log "  · .gitignore: INSPIRE block has no end marker — not extended"
@@ -518,18 +514,18 @@ gitignore_extend_block() {
     return 0
   fi
 
-  # Through the environment: BSD awk rejects a newline inside a -v value, which
-  # is what two missing entries are.
+  # Through the environment: BSD awk rejects a newline inside a -v value.
   tmp="$(mktemp)" || return 0
-  if end_mark="$GITIGNORE_MARK_END" add="$(printf '%s\n' "${missing[@]}")" awk '
+  end_mark="$GITIGNORE_MARK_END" add="$(printf '%s\n' "${missing[@]}")" awk '
        $0 == ENVIRON["end_mark"] && !done { printf "%s\n", ENVIRON["add"]; done = 1 }
        { print }
-     ' "$gi" > "$tmp" && mv "$tmp" "$gi"; then
-    log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
-  else
-    rm -f "$tmp"
-    WARNINGS+=("gitignore: could not add to the INSPIRE block: ${missing[*]} — add them by hand.")
-  fi
+     ' "$gi" > "$tmp" && mv "$tmp" "$gi" || rm -f "$tmp"
+  # Re-checked on disk: a CRLF end marker passes grep -F but never matches the awk.
+  for entry in "${missing[@]}"; do
+    if grep -qxF "$entry" "$gi" 2>/dev/null; then added+=("$entry"); else still+=("$entry"); fi
+  done
+  [ ${#added[@]} -eq 0 ] || log "  · added to the INSPIRE .gitignore block: ${added[*]}"
+  [ ${#still[@]} -eq 0 ] || WARNINGS+=("gitignore: could not add to the INSPIRE block: ${still[*]} — add them by hand.")
 }
 
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
