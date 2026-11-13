@@ -69,7 +69,9 @@ repo is both its source and its own marketplace.
     range, installs the configured Quartz version into
     `.inspire/visor/.quartz/`, leaves out and lists KB files whose frontmatter Quartz's
     own parser rejects, then builds and serves. It writes nothing in `inspire_kb/` or in the
-    committed `.inspire/visor/` files.
+    committed `.inspire/visor/` files. It hands Node two modules beside it:
+    `visor-scan.mjs` (the frontmatter scan) and `visor-loopback.mjs` (binds the host's
+    server to `127.0.0.1`).
   - `plugin/visor-src/inspire-graph/` — source of the visor's graph plugin; never
     materialized. `plugin/scripts/build-visor-graph.sh` (maintainer tool, needs Node 22 or later with npm)
     rebuilds its shipped copy under `plugin/base/visor/plugins/inspire-graph/`.

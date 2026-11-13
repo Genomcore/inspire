@@ -35,16 +35,37 @@ visor_bin() {
 }
 no_host_runtime() { [ ! -e /usr/bin/node ] && [ ! -e /bin/node ] && [ ! -e /usr/bin/docker ] && [ ! -e /bin/docker ]; }
 
-# stub_node DIR VERSION LOG — `node --version` prints VERSION; any other call is logged.
+# stub_node DIR VERSION LOG [SCAN] — `node --version` prints VERSION; the frontmatter scan
+# is logged as `node scan QUARTZ KB` and prints the file SCAN when there is one; any other
+# call is logged.
 stub_node() {
-  printf '#!/bin/sh\n[ "$1" = --version ] && { echo %s; exit 0; }\necho "node $*" >> "%s"\nexit 0\n' \
-    "$2" "$3" > "$1/node"
+  printf '#!/bin/sh\n[ "$1" = --version ] && { echo %s; exit 0; }
+[ "$1" = --input-type=module ] && { echo "node scan $4 $5" >> "%s"; cat "%s" 2>/dev/null; exit 0; }
+echo "node $*" >> "%s"\nexit 0\n' "$2" "$3" "${4:-/dev/null}" "$3" > "$1/node"
   chmod +x "$1/node"
 }
 
-# stub_docker DIR LOG — answers `docker info`; logs every other call on one line.
+# stub_npm DIR — an npm on PATH, which the host runtime needs beside node.
+stub_npm() {
+  printf '#!/bin/sh\nexit 0\n' > "$1/npm"
+  chmod +x "$1/npm"
+}
+
+# port_open PORT — whether something accepts connections on 127.0.0.1:PORT.
+port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
+# free_port — a port N such that nothing listens on N or N+1.
+free_port() {
+  local p=$((20000 + RANDOM % 20000))
+  while port_open "$p" || port_open $((p + 1)); do p=$((p + 2)); done
+  echo "$p"
+}
+
+# stub_docker DIR LOG [PS] — answers `docker info`, and `docker ps` with PS; logs every
+# other call on one line (the scan's script up to its first newline).
 stub_docker() {
-  printf '#!/bin/sh\n[ "$1" = info ] && exit 0\necho "docker $*" >> "%s"\nexit 0\n' "$2" > "$1/docker"
+  printf '#!/bin/sh\n[ "$1" = info ] && exit 0\n[ "$1" = ps ] && { echo %s; exit 0; }
+echo "docker $*" | head -n 1 >> "%s"\nexit 0\n' "${3:-}" "$2" > "$1/docker"
   chmod +x "$1/docker"
 }
 
