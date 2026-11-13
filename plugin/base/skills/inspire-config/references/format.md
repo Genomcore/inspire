@@ -153,8 +153,8 @@ A unit's agent does not run these commands as a whole. It runs only the tests it
 change touches, and when it finishes the factory runs the checks. A failing check
 reaches the agent through the repair prompt, with its output.
 
-`run_related` needs a factory that reads it, which is a release later than 0.15.2.
-An older reader refuses it as an unknown key. In the command, `{files}` becomes
+`run_related` needs a factory whose reader accepts it. An older reader refuses it
+as an unknown key. In the command, `{files}` becomes
 the files the unit changed since it left the release (`release...HEAD`, the range
 the reviewer judges), as absolute paths, each shell-quoted. Write it where the
 runner takes file paths:
@@ -341,5 +341,5 @@ requires.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
 an e2e test that starts the whole application relates to most changes, so the
-narrowing saves little there. That one `run_related` turns on the release check. Drop it for a factory of
-0.15.2 or earlier.
+narrowing saves little there. That one `run_related` turns on the release check.
+Drop it for a factory whose reader refuses the key.

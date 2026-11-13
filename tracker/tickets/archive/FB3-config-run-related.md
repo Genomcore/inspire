@@ -65,29 +65,33 @@ INSPIRE-8.
 - `SKILL.md` rule 2: `run_related` needs a factory that reads it; validate a draft with it, and
   drop it on an unknown-key refusal.
 
-### Minimum factory version
+### Release order and minimum version
 
-A factory that predates #157 refuses `run_related` as an unknown key. The PR is not merged and
-has no version yet, so the skill names it as "later than 0.15.2" and relies on the reader to
-decide. When the Factory tags the release, replace that wording with the exact version in
-`SKILL.md` rule 2, `format.md` § Run checks and the note under the worked example.
+A factory that predates #157 refuses `run_related` as an unknown key. The skill names no factory
+version: it writes `run_related` only when the project's factory reader accepts it, and drops it
+on an unknown-key refusal. So INSPIRE ships first, and a project on an older factory gets no
+`run_related` and nothing breaks.
+
+1. Genomcore/inspire#108 is reviewed, merged and released (0.18.0).
+2. Genomcore/inspire-factory#157 raises its `inspireVersionFloor` to that release, so every
+   project on the new factory has an `/inspire-config` that knows `run_related`.
+3. Genomcore/inspire-factory#157 is reviewed, merged and released.
+
+Naming the factory's version here would make the two releases wait on each other: INSPIRE on
+the factory's number, the factory on INSPIRE's.
 
 ## Acceptance criteria
 
 - [x] `format.md`, `derive.md`, `validate.md` and `SKILL.md` describe `run_related`, the release
       check and the review-before-tests order as #157 ships them.
-- [ ] On a Jest or Vitest project, `/inspire-config init` writes `run_related` by default, with
-      `--passWithNoTests` and the review phase before `tests`, and the factory's reader accepts
-      the file.
-- [ ] The wording "later than 0.15.2" is replaced with the Factory's tagged version.
+- [x] The worked example in `format.md` passes the reader of Genomcore/inspire-factory#157,
+      which turns the release check on; without `{files}` the reader refuses it with the
+      documented error.
 
 ## Notes
 
 - Factory: `tracker/tickets/FB3-whole-suite-per-unit.md` in Genomcore/inspire-factory, and
   Genomcore/inspire-factory#157. Its README's `phases` table and `emanate.example.yml` are the
   reference for the key.
-- Do not release the skill change before the Factory release: a project that follows it with an
-  older factory fails at the reader.
 - Closed in the PR that ships it, Genomcore/inspire#108, so its merge closes the ticket with no
-  second PR. That PR stays a draft until the Factory tags the release that reads `run_related`;
-  the last two acceptance criteria are met and ticked in it before it leaves draft.
+  second PR.
