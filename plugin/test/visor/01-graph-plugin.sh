@@ -36,9 +36,13 @@ check "dist is unminified: the colour and legend functions keep their names" \
   "grep -q 'function nodeColor(' '$GB/dist/index.js' && grep -q 'function renderLegend(' '$GB/dist/index.js'"
 check "LICENSE is upstream's MIT licence, as in the source" \
   "grep -q '^MIT License' '$GB/LICENSE' && cmp -s '$GB/LICENSE' '$SRC/LICENSE'"
+eq "the package names its origin, quartz-community/graph" \
+   "$(jq -r .repository.url "$PKG")" "https://github.com/quartz-community/graph"
+# git's output is captured under && so a git that cannot run fails the check.
 check "no node_modules lies under base/ or is tracked under plugin/" \
   "[ -z \"\$(find '$PLUGIN_ROOT/base' -name node_modules)\" ] \
-   && [ -z \"\$(git -C '$PLUGIN_ROOT' ls-files -- . | grep node_modules)\" ]"
+   && tracked=\"\$(git -C '$PLUGIN_ROOT' ls-files -- .)\" && [ -n \"\$tracked\" ] \
+   && ! printf '%s\n' \"\$tracked\" | grep -q node_modules"
 eq "the configuration enables ./plugins/inspire-graph and disables Quartz's graph" \
    "$(yq -r '[.plugins[] | select(.source == "./plugins/inspire-graph" or .source == "@quartz-community/graph") | .source + "=" + (.enabled | tostring)] | join(" ")' "$VB/quartz.config.yaml")" \
    "@quartz-community/graph=false ./plugins/inspire-graph=true"
@@ -54,8 +58,26 @@ if command -v npm >/dev/null 2>&1 && [ "$major" -ge 22 ] 2>/dev/null; then
     3) skip "$LABEL (npm ci failed: offline with a cold npm cache)" ;;
     *) bad "$LABEL (the build failed: $(tail -n 3 "$out/log" | tr '\n' ' '))" ;;
   esac
+
+  # Exit 3 is the skip above, so it must mean a network failure and nothing else. The
+  # script runs from a copy laid out as in plugin/, with the source changed in place.
+  copy_build() {
+    rm -rf "$out/copy"; mkdir -p "$out/copy/scripts" "$out/copy/visor-src/inspire-graph"
+    cp "$PLUGIN_ROOT/scripts/build-visor-graph.sh" "$out/copy/scripts/"
+    ( cd "$SRC" && tar cf - --exclude node_modules --exclude dist . ) \
+      | ( cd "$out/copy/visor-src/inspire-graph" && tar xf - )
+  }
+  copy_build
+  jq '.devDependencies["left-pad"] = "1.3.0"' "$SRC/package.json" > "$out/copy/visor-src/inspire-graph/package.json"
+  bash "$out/copy/scripts/build-visor-graph.sh" --out "$out/o" >"$out/log" 2>&1
+  eq "a lock out of step with package.json fails the build: exit 1, not the offline skip" "$?" "1"
+  copy_build
+  npm_config_cache="$out/cache" npm_config_registry="http://127.0.0.1:9/" npm_config_fetch_retries=0 \
+    bash "$out/copy/scripts/build-visor-graph.sh" --out "$out/o" >"$out/log" 2>&1
+  eq "an unreachable registry with a cold npm cache exits 3, the offline skip" "$?" "3"
   rm -rf "$out"
 else
   skip "$LABEL (no Node 22 or later with npm)"
+  skipped 2 "the build's exit for a broken lock and for no network (no Node 22 or later with npm)"
 fi
 summary
