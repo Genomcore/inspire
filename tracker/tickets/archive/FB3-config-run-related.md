@@ -57,28 +57,27 @@ INSPIRE-8.
   it falls back to `run`; the release check; the phase order lint and types, review, tests,
   claims; the worked example with one `run_related` and the review before the tests.
 - `references/derive.md`: `run_related` with `--passWithNoTests` on every Jest and Vitest unit
-  suite by default, with no question, whenever the factory's reader accepts the key; the review
+  suite by default, with no question and no check of the factory's version; the review
   phase before `tests`; an existing file gets both in its proposal.
 - `references/validate.md`: checks the reader cannot make (`--passWithNoTests` missing, `{files}`
   quoted again, a `run_related` that is not its `run` narrowed, a review after the tests). A
   `run_related` without `{files}` needs no check here: the reader refuses it.
-- `SKILL.md` rule 2: `run_related` needs a factory that reads it; validate a draft with it, and
-  drop it on an unknown-key refusal.
+- `SKILL.md` rule 2: `run_related` is written with no check of the factory's version; a factory
+  that does not know it refuses the file when the run starts, and the fix is to update it.
 
-### Release order and minimum version
+### Release order
 
-A factory that predates #157 refuses `run_related` as an unknown key. The skill names no factory
-version: it writes `run_related` only when the project's factory reader accepts it, and drops it
-on an unknown-key refusal. So INSPIRE ships first, and a project on an older factory gets no
-`run_related` and nothing breaks.
+The Factory ships first, and INSPIRE names no Factory version.
 
-1. Genomcore/inspire#108 is reviewed, merged and released (0.18.0).
-2. Genomcore/inspire-factory#157 raises its `inspireVersionFloor` to that release, so every
-   project on the new factory has an `/inspire-config` that knows `run_related`.
-3. Genomcore/inspire-factory#157 is reviewed, merged and released.
+1. Genomcore/inspire-factory#157 is reviewed, merged and released.
+2. Genomcore/inspire#108 is reviewed, merged and released.
 
-Naming the factory's version here would make the two releases wait on each other: INSPIRE on
-the factory's number, the factory on INSPIRE's.
+A factory that predates #157 refuses `run_related` as an unknown key. It does so when the run
+starts, before any unit, with `… has unknown key run_related`, so the cost is one failed start
+and the fix is to update the factory. That case needs an operator who updated INSPIRE, ran
+`/inspire-config` and approved the diff, but kept the old factory. Checking the factory's
+version or asking its reader first would couple INSPIRE to the Factory's releases, and the
+reader has no command INSPIRE can call today.
 
 ## Acceptance criteria
 

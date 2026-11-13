@@ -89,8 +89,8 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
-- **`run_related`.** On by default, whenever the factory's reader accepts it
-  ([`format.md`](format.md) § Run checks); no question asks for it. Every Jest or
+- **`run_related`.** On by default ([`format.md`](format.md) § Run checks); no
+  question asks for it, and no factory version is checked. Every Jest or
   Vitest unit suite in phase `tests` gets the same command as `run`, narrowed and
   with `--passWithNoTests`:
   - Jest: `run` plus `--passWithNoTests --findRelatedTests {files}`;
@@ -100,8 +100,7 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite whose
   tests start the whole application gains little, so it gets none unless the
   operator asks. Other runners get none unless the operator gives the command and
-  it passes with no related test. When the reader refuses the key, the factory is
-  too old: write no `run_related` and say why. In the proposal, say that
+  it passes with no related test. In the proposal, say that
   `run_related` turns on the release check, which runs the whole suite once more
   before the PR; the operator may drop it from the draft like any other key.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
