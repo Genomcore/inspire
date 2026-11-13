@@ -6,7 +6,7 @@ description: "Install the INSPIRE runtime into this repository: materialize the 
 # /inspire:init — install INSPIRE into this project
 
 Materializes the plugin's inert payload into the repository and registers it. Once
-committed, the runtime travels with the repo: teammates and CI need no plugin.
+committed, the runtime travels with the repo: teammates and CI need no plugin to run it; `/inspire:visor` runs from the plugin.
 
 ## Preconditions
 
