@@ -8,6 +8,7 @@ import {
   simplifySlug,
   resolveBasePath,
 } from "@quartz-community/utils/path";
+import { neighbourhoodOf, renderLegend, resolvePalette } from "./graph-logic.js";
 
 (function () {
   function getSlugFromUrl() {
@@ -88,34 +89,16 @@ import {
       return resolved || fallback;
     }
 
-    // Lists the palette kinds drawn on this graph, in palette order. A node drawn in no
-    // palette colour (the current page, or a kind the palette lacks) adds no entry.
-    function renderLegend(legend, nodes, slug, nodeColors, kindOf) {
-      if (!nodeColors) return;
-      var drawn = new Set();
-      for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].id !== slug) drawn.add(kindOf(nodes[i].id));
-      }
-      Object.keys(nodeColors.palette).forEach(function (kind) {
-        if (!drawn.has(kind)) return;
-        var item = document.createElement("li");
-        var swatch = document.createElement("span");
-        swatch.className = "graph-legend-swatch";
-        swatch.style.backgroundColor = nodeColors.palette[kind];
-        item.appendChild(swatch);
-        item.appendChild(document.createTextNode(kind));
-        legend.appendChild(item);
-      });
-    }
-
     async function renderGraph(graph, fullSlug, renderGeneration, legend) {
       var slug = simplifySlug(fullSlug);
       if (slug === "") slug = "index";
       var visited = getVisited();
       removeAllChildren(graph);
-      if (legend) removeAllChildren(legend);
 
-      if (renderGeneration !== undefined && renderGeneration !== currentRenderGeneration) {
+      function stale() {
+        return renderGeneration !== undefined && renderGeneration !== currentRenderGeneration;
+      }
+      if (stale()) {
         console.log("[Graph] Stale render, skipping");
         return function () {};
       }
@@ -148,12 +131,13 @@ import {
         console.error("[Graph] Error loading data:", err);
         return function () {};
       }
+      // A newer render may have started while the content index loaded.
+      if (stale()) return function () {};
 
       var width = graph.offsetWidth;
       var height = Math.max(graph.offsetHeight, 250);
 
       var links = [];
-      var allTags = [];
       var validLinks = new Set(data.keys());
 
       data.forEach(function (details, source) {
@@ -170,47 +154,11 @@ import {
           for (var i = 0; i < tags.length; i++) {
             var tag = tags[i];
             if (removeTags.indexOf(tag) === -1) {
-              var tagSlug = simplifySlug("tags/" + tag);
-              if (allTags.indexOf(tagSlug) === -1) {
-                allTags.push(tagSlug);
-              }
-              links.push({ source: source, target: tagSlug });
+              links.push({ source: source, target: simplifySlug("tags/" + tag) });
             }
           }
         }
       });
-
-      var neighbourhood = new Set();
-      if (depth >= 0) {
-        var queue = [slug];
-        var seen = new Set([slug]);
-        for (var d = 0; d <= depth && queue.length > 0; d++) {
-          var nextQueue = [];
-          for (var qi = 0; qi < queue.length; qi++) {
-            var cur = queue[qi];
-            neighbourhood.add(cur);
-            for (var li = 0; li < links.length; li++) {
-              var link = links[li];
-              if (link.source === cur && !seen.has(link.target)) {
-                seen.add(link.target);
-                nextQueue.push(link.target);
-              }
-              if (link.target === cur && !seen.has(link.source)) {
-                seen.add(link.source);
-                nextQueue.push(link.source);
-              }
-            }
-          }
-          queue = nextQueue;
-        }
-      } else {
-        validLinks.forEach(function (id) {
-          neighbourhood.add(id);
-        });
-        for (var i = 0; i < allTags.length; i++) {
-          neighbourhood.add(allTags[i]);
-        }
-      }
 
       function fieldOf(id, path) {
         var value = data.get(id);
@@ -219,14 +167,14 @@ import {
         return value;
       }
 
-      if (scopeTo) {
-        var scopeValue = fieldOf(slug, scopeTo);
-        if (scopeValue != null) {
-          neighbourhood.forEach(function (id) {
-            if (id !== slug && fieldOf(id, scopeTo) !== scopeValue) neighbourhood.delete(id);
-          });
-        }
+      function kindOf(id) {
+        return fieldOf(id, nodeColors.field);
       }
+
+      var scopeValue = scopeTo ? fieldOf(slug, scopeTo) : undefined;
+      var neighbourhood = neighbourhoodOf(slug, validLinks, links, depth, function (id) {
+        return scopeValue == null || fieldOf(id, scopeTo) === scopeValue;
+      });
 
       var nodes = [];
       var nodeMap = new Map();
@@ -247,15 +195,16 @@ import {
         nodeMap.set(url, node);
       });
 
-      if (!legend && nodeColors) {
-        legend = document.createElement("ul");
-        legend.className = "graph-legend";
-        graph.appendChild(legend);
-      }
-      if (legend) {
-        renderLegend(legend, nodes, slug, nodeColors, function (id) {
-          return fieldOf(id, nodeColors.field);
-        });
+      // The global graph holds its own legend; an overlapping render of the same graph
+      // reuses the one already there.
+      if (nodeColors) {
+        if (!legend) legend = graph.querySelector(":scope > .graph-legend");
+        if (!legend) {
+          legend = document.createElement("ul");
+          legend.className = "graph-legend";
+          graph.appendChild(legend);
+        }
+        renderLegend(legend, nodes, nodeColors.palette, kindOf);
       }
 
       var graphLinks = [];
@@ -278,6 +227,11 @@ import {
       var dark = resolveColor(styles.getPropertyValue("--dark").trim(), "#1a1a1a");
       var light = resolveColor(styles.getPropertyValue("--light").trim(), "#f5f5f5");
       var bodyFont = styles.getPropertyValue("--bodyFont").trim() || "inherit";
+      var kindColors = nodeColors
+        ? resolvePalette(nodeColors.palette, function (value) {
+            return resolveColor(value, gray);
+          })
+        : null;
 
       var app = new PIXI.Application();
       await app.init({
@@ -346,14 +300,14 @@ import {
         return 2 + Math.sqrt(numLinks);
       }
 
-      // With a palette, a node's colour says its kind only: a kind the palette lacks is
-      // grey whether or not it was visited, so no node reads as a kind it is not.
+      // With a palette, a node's colour says its kind only, the current page's included:
+      // a kind the palette lacks is grey whether or not it was visited, so no node reads
+      // as a kind it is not.
       function nodeColor(d) {
-        if (d.id === slug) {
+        if (kindColors && !d.id.startsWith("tags/")) {
+          return kindColors.get(kindOf(d.id)) || gray;
+        } else if (d.id === slug) {
           return secondary;
-        } else if (nodeColors && !d.id.startsWith("tags/")) {
-          var mapped = nodeColors.palette[fieldOf(d.id, nodeColors.field)];
-          return mapped ? resolveColor(mapped, gray) : gray;
         } else if (visited.has(d.id) || d.id.startsWith("tags/")) {
           return tertiary;
         } else {
@@ -468,6 +422,12 @@ import {
         gfx.fill({ color: isTagNode ? light : color });
         if (isTagNode) {
           gfx.stroke({ width: 2, color: tertiary });
+        }
+        // The fill says the kind, so a ring marks the current page. It takes the theme's
+        // text colour, which contrasts with the background in light and dark mode.
+        if (kindColors && nodeId === slug) {
+          gfx.circle(0, 0, radius + 2.5);
+          gfx.stroke({ width: 1.5, color: dark });
         }
 
         gfx.eventMode = "static";

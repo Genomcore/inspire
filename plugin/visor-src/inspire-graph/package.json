@@ -1,10 +1,14 @@
 {
   "name": "inspire-graph",
   "version": "0.1.0",
-  "description": "The visor's graph panel: nodes coloured by a content-index field, with a legend of the colours on screen",
+  "description": "The visor's graph panel: nodes coloured by a content-index field, with a legend of the values on screen",
   "type": "module",
   "private": true,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartz-community/graph"
+  },
   "exports": {
     ".": { "import": "./dist/index.js" },
     "./components": { "import": "./dist/index.js" },
