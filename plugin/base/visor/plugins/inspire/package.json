@@ -14,7 +14,7 @@
     "displayName": "INSPIRE",
     "category": ["transformer", "emitter"],
     "version": "0.1.0",
-    "quartzVersion": ">=5.1.0",
+    "quartzVersion": ">=5.1.0 <6.0.0",
     "dependencies": [],
     "defaultOrder": 15,
     "defaultEnabled": true,
