@@ -26,6 +26,11 @@ summary; the cache is an accelerator, never a dependency. The shared assertion
 vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/` holds no tests and
 the runner never runs it.
 
+Files under `visor/` run their Node assertions only with Node 22 or later on `PATH`
+(and npm for the builds), and the graph and Quartz builds also need the npm registry
+and GitHub; without them each records a `SKIP` with its assertion count. Compare
+`--inventory` files only between runs with the same Node, network and `PATH`.
+
 ## Cost
 
 A run takes minutes rather than seconds, and that is fixture builds and process

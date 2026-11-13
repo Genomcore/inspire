@@ -55,6 +55,8 @@ eq "premise: the generator still has two layout branches to check" \
    "$(grep -cE '^  MAP_NAMES=' "$GEN" | tr -d ' ')" "2"
 eq "MAP_NAMES and MAP_DESTS have the same arity, branch for branch" \
    "$(map_arity MAP_NAMES)" "$(map_arity MAP_DESTS)"
-eq "the 0.3 branch names four classes" "$(map_arity MAP_NAMES | cut -d' ' -f1)" "4"
+eq "the 0.3 branch names the classes of layouts.tsv's 0.3 row, in order" \
+   "$(grep -E '^  MAP_NAMES=' "$GEN" | head -1 | sed -e 's/^[^"]*"//' -e 's/".*$//')" \
+   "$(awk -F'\t' '$1 == "0.3" { print $4 }' "$HERE/../scripts/hops/layouts.tsv" | tr ' ' '\n' | cut -d: -f1 | paste -sd' ' -)"
 rm -f "$gm"; rm -rf "$gsrc"
 summary

@@ -11,10 +11,12 @@ The convention: **dotfolders = INSPIRE scaffolding**, non-dot dirs = the product
 you build on top of it. INSPIRE is delivered as a **Claude Code plugin**; this
 repo is both its source and its own marketplace.
 
-- `plugin/` — the distributable plugin:
+- `plugin/` — the distributable plugin. A file lives in the plugin when every project
+  runs it as shipped, and is materialized from `plugin/base/` when a project may change
+  it ([adr-visor](docs/adr/adr-visor.md) D1):
   - `plugin/.claude-plugin/plugin.json` — the runtime **release identity**
     (`version` + `released`).
-  - `plugin/skills/{init,update,migrate}/` — the only **live** skills, installed
+  - `plugin/skills/{init,update,migrate,visor}/` — the only **live** skills, installed
     with the plugin itself: `/inspire:init` (materialize the runtime into a project,
     once), `/inspire:update` (**upgrade from any released version**, in one command —
     it detects the installed version, replays the layout hops between there and
@@ -28,7 +30,9 @@ repo is both its source and its own marketplace.
     `plugin/scripts/migrate-links.sh`, and they alone read wikilinks). An update
     never moves the KB and changes no link: a layered KB gets a warning pointing at
     `/inspire:migrate`, and no `01_spec/`; a KB that holds wikilinks gets their count
-    and the same pointer.
+    and the same pointer. `/inspire:visor` serves the project's `inspire_kb/` as a
+    local site through Quartz, configured by `.inspire/visor/`; its engine is
+    `plugin/scripts/visor.sh`.
   - `plugin/manifests/<version>.json` — one **hash manifest per released version**
     (`{version, released, commit, layout, files}`), generated from its tag and the
     *only* record of what INSPIRE shipped at that version. This is what lets an
@@ -50,7 +54,7 @@ repo is both its source and its own marketplace.
     disk is never replaced, only missing skeleton files are added, because the KB is
     product content INSPIRE never owns), seeding the design system, seeding a
     provisional root `CLAUDE.md` + a `.gitignore` block, creating the product roots,
-    warning when `.gitignore` excludes the runtime, the marker-based
+    warning when `.gitignore` excludes a payload class root or a shipped file, the marker-based
     `settings.json` merge (which also retires the unmarked pre-0.3 hook entries),
     and writing `.inspire.lock`. The lock is **provenance only** —
     `inspire_version`/`released`/`template_sha`/`installed_at`, no `files` map:
@@ -60,6 +64,17 @@ repo is both its source and its own marketplace.
     every lesson. In act mode it also saves the grouped report to
     `.inspire/last-upgrade.log` — overwritten each run, so what the last upgrade did
     stays auditable; `--mode plan` writes nothing, that file included.
+  - `plugin/scripts/visor.sh` — the visor's launcher: checks the lock floor, picks
+    host Node or Docker, refuses a Quartz version outside a plugin's declared
+    range, installs the configured Quartz version into
+    `.inspire/visor/.quartz/`, leaves out and lists KB files whose frontmatter Quartz's
+    own parser rejects, then builds and serves. It writes nothing in `inspire_kb/` or in the
+    committed `.inspire/visor/` files. It hands Node two modules beside it:
+    `visor-scan.mjs` (the frontmatter scan) and `visor-loopback.mjs` (binds the host's
+    server to `127.0.0.1`).
+  - `plugin/visor-src/inspire-graph/` — source of the visor's graph plugin; never
+    materialized. `plugin/scripts/build-visor-graph.sh` (maintainer tool, needs Node 22 or later with npm)
+    rebuilds its shipped copy under `plugin/base/visor/plugins/inspire-graph/`.
   - `plugin/scripts/gen-manifest.sh` — maintainer tool: emit a version's manifest.
     Past releases are read from their tag, since that is the only place they exist;
     the release being *prepared* is read from the commit carrying its version bump,
@@ -168,6 +183,13 @@ repo is both its source and its own marketplace.
       project's `output_language`, the runtime version from `.inspire.lock` and
       the decision digest `base/bin/decisions.sh` prints — every live ADR's
       `## Decision`, held to a budget — into every session.
+    - `base/visor/` → `.inspire/visor/` — the **visor payload class**: `visor.yaml`
+      (Quartz version, Node image, port), `quartz.config.yaml` and the Quartz plugins
+      the visor loads (`inspire`, `inspire-graph`). A project may edit any of them, its
+      own Quartz plugins included, and an update keeps the edits. The Quartz install
+      and the built site live in `.inspire/visor/.quartz/`, which the INSPIRE
+      `.gitignore` block ignores and an update never scans; the block also re-includes
+      `.inspire/visor/plugins/*/dist/` against a project's own `dist/` rule.
     - `base/kb/` → `inspire_kb/` — the **knowledge-base skeleton**: the navigable
       graph a project fills in. `00_bootstrap` (stack, project, glossary, semantic
       types, style tokens), **`01_spec`** — the specification, one directory per
@@ -247,9 +269,9 @@ plugin installed:
 /inspire:init
 ```
 
-It materializes `plugin/base/{skills,agents,bin,hooks,kb,templates}` into the
+It materializes `plugin/base/{skills,agents,bin,hooks,visor,kb,templates}` into the
 project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
-`.claude/inspire/hooks/`, `inspire_kb/`, plus
+`.claude/inspire/hooks/`, `.inspire/visor/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
 `01_spec/_design-system/design-system.md` from `theme.md` beside it (and
