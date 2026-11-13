@@ -36,7 +36,7 @@ check "init: the .gitignore block names the Quartz install" \
 check "init: the install is ignored" \
   "git -C '$ip' check-ignore -q --no-index .inspire/visor/.quartz/node_modules/x/index.js"
 check "init: the class root and its shipped files are not" \
-  "[ -z \"\$(git -C '$ip' check-ignore --no-index .inspire/visor .inspire/visor/visor.yaml .inspire/visor/plugins/inspire/dist/index.js)\" ]"
+  "{ git -C '$ip' check-ignore --no-index .inspire/visor .inspire/visor/visor.yaml .inspire/visor/plugins/inspire/dist/index.js >/dev/null; [ \$? = 1 ]; }"
 rm -rf "$(dirname "$ip")"
 
 # --- update ----------------------------------------------------------------

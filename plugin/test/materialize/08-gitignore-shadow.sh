@@ -62,7 +62,7 @@ nshout="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$ns
 check "gitignore shadow: no false positive on a clean repo" \
   "[ \"\$(printf '%s' \"\$nshout\" | jq -r '.warnings | length')\" = 0 ]"
 check "gitignore shadow: the block's own worktrees line shadows no class" \
-  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && [ -z \"\$(git -C '$nsh' check-ignore --no-index .claude/skills .claude/agents)\" ]"
+  "grep -qxF '.claude/worktrees/' '$nsh/.gitignore' && { git -C '$nsh' check-ignore --no-index .claude/skills .claude/agents >/dev/null; [ \$? = 1 ]; }"
 
 # Per payload class, not per .claude/. A rule that excludes ONLY the agents root
 # leaves every other class committed, so the warning must name that root and no
