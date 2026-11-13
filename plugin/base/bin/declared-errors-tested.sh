@@ -15,7 +15,7 @@
 #   stable          → error   (the implementation is locked; an untested clause is a lie)
 #   superseded      → skipped (no longer authoritative)
 #
-# Like `escape-hatch-ratchet.sh`, this rule reads `source/` as well as the KB, and is
+# This rule reads `source/` as well as the KB, and is
 # deliberately NOT in `review.sh`'s default list: `/inspire-domain review` is a
 # knowledge-base review. Invoked by `pre-pr.sh`.
 #

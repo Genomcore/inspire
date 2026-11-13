@@ -98,7 +98,7 @@ security). Each is a lens name + one line of what it hunts for.
 The concrete tools and rules that mechanically enforce this stack's share of
 [`quality-gates.md`](quality-gates.md): which lint
 rules, which coverage tooling, which of them are absolute vs ratcheted, and which
-suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+lint rules allow or refuse this stack's escape hatches. A rule that does not hold for
 this stack is listed as **dropped with its reason**, never left out silently. Names
 tools and rules only — never an org's server or pipeline.
 
@@ -112,7 +112,8 @@ A skill whose stack exposes nothing says so.
 
 ## Routes                  # seed — UI skills only
 How a screen's `module:` + `screen:` frontmatter becomes a route, and what the face's
-shell contributes. Never derived from a file path or from the screen's id string.
+shell contributes, and the table code reads a screen's module and face from. Never
+derived from a file path or from the screen's id string.
 
 ## Persistence             # seed — how state is stored, or "not applicable"
 ORM, entity→table and field→column naming, keys, and the append-shaped migration

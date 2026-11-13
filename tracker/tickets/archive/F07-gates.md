@@ -2,15 +2,15 @@
 id: F07-gates
 title: "F7 GATES — enforcement the author cannot negotiate with"
 created: 2026-08-13
-updated: 2026-10-30
+updated: 2026-11-11
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-11
 epic: roadmap
 size: S
 importance: High
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [F06-tdd, B5-react-skill-from-the-team]
 ---
@@ -33,9 +33,11 @@ kept out of the author's reach.
       no ADR:* see the tracker-pass amendment below.
 - [x] External profile source resolves at run time; a sync upstream never conflicts with
       an operator edit. *Dropped 2026-10-28:* see the tracker-pass amendment below.
-- [ ] Suppression accounting exists: greppable form, in-place justification, falling
-      ceiling.
-- [ ] The INSPIRE Factory runs the ratchet before it merges. When
+- [x] Suppression accounting exists: greppable form, in-place justification, falling
+      ceiling. *Replaced 2026-11-11:* the linter allows or refuses each hatch, with no
+      count; see the closing amendment below.
+- [x] The INSPIRE Factory runs the ratchet before it merges. *Dropped 2026-11-11:* the
+      ratchet is removed; see the closing amendment below. When
       `.escape-hatches.json` exists, `/inspire-config` writes the ratchet as a check, and
       lists every other check the project's commit hooks run, so code the Factory merges
       never fails the next person's commit. A config test covers a project with a
@@ -109,3 +111,26 @@ it needs production reach no skill can install.
   `emanate.yml` today and for the spec config once that design ships.
 - No Factory port: the check is declared in the project's own config, and the Factory
   runs whatever is declared there.
+
+**Closed 2026-11-11: the linter owns escape hatches, and nothing counts them.**
+
+- *Decision:* whether code may use a hatch (`as any`, `@ts-ignore`, an `eslint-disable`)
+  is the lint config's, rule by rule. A hatch the config refuses is a lint error at the
+  line; one it allows is allowed. No ceiling, no count.
+- *Why:* a count is a second, weaker copy of a decision the linter already makes. It
+  needed a regex that cannot tell a use from a mention (the 2026-09-09 defect), a
+  config of its own, a hook gate, and a Factory check, so that code the Factory merged
+  would not fail the next person's commit. A lint rule has none of these problems:
+  the Factory already runs every stack's lint command, so a refused hatch fails the
+  unit before it merges.
+- *Change:* `escape-hatch-ratchet.sh`, its fixtures and both hook gates are removed.
+  `quality-gates.md` Rule 4 says the linter allows or refuses each hatch, and the stack
+  skills name the rules that do it. PR #95, which fixed the use/mention defect and made
+  the Factory run the ratchet, is closed unmerged.
+- *oxlint (0.16.0 moved the TypeScript stacks to it):* oxlint has no
+  `eslint-plugin-eslint-comments`, and in 0.16.0 the ratchet was the only check on
+  suppressions. Its three missing rules (reason, named rules, no re-allowing a refused
+  rule) and an `as unknown as` refusal ship as a local JS plugin,
+  `inspire-code-typescript/references/oxlint-escape-hatches.mjs`, gated by the NestJS
+  skill. A bare `/* oxlint-disable */` still gets past it. A check outside the linter
+  would close that, and is deferred until it is seen in practice.

@@ -1,7 +1,0 @@
-{
-  "scope": ["src"],
-  "extensions": ["ts"],
-  "patterns": [
-    { "id": "prop-access", "regex": "foo\\.bar", "ceiling": 1 }
-  ]
-}

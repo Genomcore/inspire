@@ -141,13 +141,30 @@ a phase.
 
 | Key | Rule | Factory error |
 |---|---|---|
-| (keys) | only `name` and `run` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run` |
+| (keys) | only `name`, `run` and `run_related` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
+| `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed. It must contain `{files}`, and it must pass when no test relates to those files: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files}` |
 
 There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
-command starts with `set -o pipefail`. Agents run these same commands, exactly as
-written.
+command starts with `set -o pipefail`.
+
+A unit's agent does not run these commands as a whole. It runs only the tests its
+change touches, and when it finishes the factory runs the checks. A failing check
+reaches the agent through the repair prompt, with its output.
+
+A factory that does not know `run_related` refuses the whole file as soon as the
+run starts, before any unit, with `… has unknown key run_related`: update the
+factory. In the command, `{files}` becomes
+the files the unit changed since it left the release (`release...HEAD`, the range
+the reviewer judges), as absolute paths, each shell-quoted. Write it where the
+runner takes file paths:
+
+- Jest: `npx --no-install jest --passWithNoTests --findRelatedTests {files}`
+- Vitest: `npx --no-install vitest related --run --passWithNoTests {files}`
+
+Without `--passWithNoTests`, a unit that changes only files outside this check's
+package fails it: no test relates to them, and the runner exits non-zero.
 
 ### Review checks
 
@@ -194,7 +211,8 @@ How the factory runs a review:
 - `factory.review_model` picks the reviewer's model; without it the
   reviewer uses `model`.
 - Each review costs a model session per round, and its findings cost repairs.
-  Narrow it with `focus`, and order it after the cheaper phases.
+  Narrow it with `focus`, and order it after lint and types and before the tests
+  ([§ How the factory runs the phases](#how-the-factory-runs-the-phases)).
 
 ### The claims check
 
@@ -218,7 +236,32 @@ or `.venv` makes the scan read all of it. Point at the directories that hold tes
 - Each new try starts again from the first phase. `factory.max_tries`
   bounds the repairs.
 - The claims check runs only once every run and review check is green.
-- Order phases from cheap to expensive: lint and types, then tests, then claims.
+- A run check with `run_related` runs that command in the unit: in its first
+  run, after each repair, and again when the unit is rechecked after a merge from
+  a base that moved. It runs `run` instead in three cases: the unit changed no
+  file, it deleted a file, or the command with its files would pass 100,000
+  characters.
+- Order the phases: lint and types, then `review`, then tests, then claims. A
+  red phase stops the suite, so a change the review rejects is repaired before a
+  full test run is spent on it.
+
+### The release check
+
+When at least one check has `run_related`, the factory checks the whole suite
+once more at the end of the run. It does this after every unit has merged and
+before it opens the PR, also when `base_branch` is `null`.
+
+- It runs the `run` of every run check in a worktree of the release, with its
+  own services and `setup`. It does not run `run_related`, review checks or the
+  claims check, which already ran in each unit.
+- A red suite goes to a repair agent, up to `factory.max_tries` repairs. A suite
+  that stays red fails the run like a unit: no PR, and the release keeps the
+  merged units.
+- It covers what `run_related` lets through: a change that no test imports, such
+  as a migration or `package.json`, runs no test in the unit.
+
+Without any `run_related`, there is no release check: every unit already ran the
+whole suite.
 
 Agents cannot change this file during a run: it is a protected path, and so are
 the project skill folders and the `read` files a review check uses. A wrong
@@ -273,18 +316,19 @@ phases:
         run: 'cd source && npm run lint'
       - name: Typecheck
         run: 'cd source && npm run typecheck'
-  - name: tests
-    checks:
-      - name: Unit tests
-        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
-      - name: E2E tests
-        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
   - name: review
     checks:
       - name: Conventions
         review:
           read: ['{profiles}#Review focus']
           focus: 'Report only clear violations of the review focus in code this change adds.'
+  - name: tests
+    checks:
+      - name: Unit tests
+        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
+        run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 {files}'
+      - name: E2E tests
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
   - name: claims
     checks:
       - name: Claim citations
@@ -296,4 +340,6 @@ Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its confi
 `fileParallelism: false`, which already runs one file at a time, as the NestJS profile
 requires.
 The review phase reads the `## Review focus` section of the react and nestjs
-profiles; drop it to run without reviews.
+profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
+an e2e test that starts the whole application relates to most changes, so the
+narrowing saves little there. That one `run_related` turns on the release check.

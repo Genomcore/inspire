@@ -9,6 +9,80 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.18.0 — unreleased
+
+Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
+sets in its lint config the rules that refuse each hatch it does not allow, closed to
+inline disables: from this version nothing counts them. `/inspire:update` warns while
+the file is still there, and leaves it as it is.
+
+A project on the `nestjs` profile also installs the oxlint escape-hatch plugin, with or
+without `.escape-hatches.json`: it copies `oxlint-escape-hatches.mjs` from the
+`inspire-code-typescript` skill's `references/` into its package, lists it in `jsPlugins`
+and turns on its three rules. Until then `profile-gates-installed.sh` fails the pre-PR
+hook, and `/inspire:update` warns, naming the config that lacks them.
+
+### Changed
+
+- **The linter allows or refuses each escape hatch, and nothing counts them.**
+  `escape-hatch-ratchet.sh` is removed, with its gate in the pre-commit and pre-PR
+  hooks. Whether code may use `as any`, `@ts-ignore` or a disable directive is a lint
+  rule, so a refused hatch fails at the line, in the agent's loop and in INSPIRE
+  Factory's lint check, before it merges. `quality-gates.md` Rule 4 says so, for ESLint
+  and for oxlint. The ratchet counted a mention in a comment as a use, and the Factory
+  never ran it, so code a unit merged could fail the next person's commit.
+- **oxlint gets the escape-hatch rules it lacks from a local JS plugin.** The
+  `inspire-code-typescript` skill ships `references/oxlint-escape-hatches.mjs`, and the
+  NestJS skill gates its three rules: `escape-hatches/require-reason` (a disable names
+  its rules and says why), `escape-hatches/no-restricted-disable` (no inline comment
+  re-allows a refused rule, under any of its spellings) and `escape-hatches/no-double-cast`
+  (`as unknown as`). A NestJS project copies the file into its package, lists it in
+  `jsPlugins` and turns the three rules on, or `profile-gates-installed.sh` reports them
+  as not installed. oxlint's JS plugins are alpha. A bare `/* oxlint-disable */` still
+  gets past the plugin; it is visible in the diff.
+- On existing code, a refused rule is turned off by path in an `overrides` entry, which
+  is the baseline: oxlint keeps no bulk-suppression file.
+
+## 0.17.2 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The rule applies to the code agents write
+from now on; code already built keeps what it has.
+
+### Fixed
+
+- **`inspire-code-react` reads a screen's module and face from the route table, never
+  from its id.** A screen id's first segment has been its face since 0.15.0, so code that
+  took a module from `id.split('.')` picked the same module for every screen once a
+  migration rewrote the ids. The route table now carries each screen's `module` and `face`
+  from its frontmatter, read through `moduleOf('{screen id}')` and `faceOf('{screen id}')`;
+  Forbidden patterns names any read of an id's shape, and the `## Routes` seed of
+  `_references/stack-skills.md` says the table is where code reads them.
+
+## 0.17.1 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. Re-run `/inspire-config init` to take the
+new defaults into `.inspire/emanate.yml`. Use the file it writes with INSPIRE Factory 0.17.0
+or later: an earlier Factory refuses `run_related` as an unknown key when the run starts.
+
+### Changed
+
+- **`/inspire-config` writes `run_related` by default.** Every Jest and Vitest unit suite in
+  the `tests` phase gets the same command as its `run`, narrowed to the tests related to the
+  files the unit changed and with `--passWithNoTests`: `jest --findRelatedTests {files}`,
+  `vitest related --run {files}`. A unit then runs only those tests, and the Factory runs the
+  whole suite once on the release before the PR. An e2e suite gets none unless you ask.
+- **The `review` phase goes before `tests`.** The Factory stops at the first red phase, so
+  a change the review rejects is repaired before a full test run is spent. An existing file
+  gets the move in its proposal.
+- The format reference documents `run_related`, when the Factory falls back to `run`, and
+  the release check. The agent of a unit no longer runs every check; the Factory does.
+- `/inspire-config review` checks what the Factory's reader cannot: a Jest or Vitest
+  `run_related` without `--passWithNoTests`, `{files}` quoted again, a `run_related` that is
+  not its `run` narrowed, and a `review` phase after `tests`.
+- Tracker: `FB3-config-run-related` is filed and closed.
+
 ## 0.17.0 — 2026-11-12
 
 Upgrade with `/inspire:update`, commit, then run `/inspire:migrate` once before the next
