@@ -112,7 +112,8 @@ A skill whose stack exposes nothing says so.
 
 ## Routes                  # seed — UI skills only
 How a screen's `module:` + `screen:` frontmatter becomes a route, and what the face's
-shell contributes. Never derived from a file path or from the screen's id string.
+shell contributes, and the table code reads a screen's module and face from. Never
+derived from a file path or from the screen's id string.
 
 ## Persistence             # seed — how state is stored, or "not applicable"
 ORM, entity→table and field→column naming, keys, and the append-shaped migration
