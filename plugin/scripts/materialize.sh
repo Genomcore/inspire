@@ -435,14 +435,17 @@ seed_claude_md() {
   log "  · seeded CLAUDE.md"
 }
 
-# Seed (or extend) the project's .gitignore with the entries INSPIRE needs.
-# Two of them, and they are there for different reasons:
+# Seed (or extend) the project's .gitignore with the entries INSPIRE needs,
+# each there for its own reason:
 #   .claude/settings.local.json  Claude Code's personal per-user override
 #                                file, which must never be committed/shared.
 #   .claude/worktrees/           the house convention for every worktree a
 #                                skill cuts (inspire-module's scan cuts one per
 #                                module) — without this line each would show
 #                                as untracked in the checkout it came from.
+#   .inspire/visor/.quartz/      the visor's Quartz install and built site,
+#                                rebuilt on each machine; lib/merge.sh's
+#                                classify never walks it either.
 # A pre-existing .gitignore is never replaced: the block is appended under a
 # marked comment. A block that is already there is EXTENDED with whatever
 # entries it lacks rather than left alone — a project installed before an
@@ -451,7 +454,7 @@ seed_claude_md() {
 # the operator's and are never touched.
 GITIGNORE_MARK_BEGIN="# --- INSPIRE (materialize.sh) ---"
 GITIGNORE_MARK_END="# --- end INSPIRE ---"
-GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/")
+GITIGNORE_ENTRIES=(".claude/settings.local.json" ".claude/worktrees/" ".inspire/visor/.quartz/")
 
 seed_gitignore() {
   local gi="$PROJECT_ROOT/.gitignore"

@@ -274,11 +274,16 @@ classify() {
   # never ours and must survive; this is the row that replaces materialize_entry's
   # `rm -rf` of a whole owned entry. Disk is still in SOURCE space at this point,
   # so walk the source map.
-  local ex_name ex_rel
+  local ex_name ex_rel prune
   : > "$w/p3"
   for pair in $src_map; do
-    dest="${pair#*:}"
+    name="${pair%%:*}"; dest="${pair#*:}"
     [ -d "$root/$dest" ] || continue
+    # The visor's .quartz/ is its Quartz install (a checkout, node_modules, the
+    # built site): neither shipped nor the operator's work, so it is never walked
+    # and gets no verdict. The INSPIRE .gitignore block names the same directory.
+    prune=()
+    [ "$name" = visor ] && prune=(-path "$root/$dest/.quartz" -prune -o)
     while IFS= read -r abs; do
       rel="${abs#"$root"/}"
       # A path `_base_excluded` rejects is INSPIRE's own staged source, not
@@ -299,7 +304,7 @@ classify() {
       # Flag first, path last: these are the operator's own names, the one place
       # a TAB is reachable. See the row-file invariant.
       printf '%s\t%s\n' "$ex" "$rel" >> "$w/p3"
-    done < <(find "$root/$dest" -type f)
+    done < <(find "$root/$dest" ${prune[@]+"${prune[@]}"} -type f -print)
   done
 
   sf="$seen1" sf2="$seen2" LC_ALL=C awk -F'\t' '
