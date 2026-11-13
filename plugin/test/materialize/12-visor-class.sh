@@ -45,7 +45,9 @@ rm -rf "$(dirname "$ip")"
 FIXTURE_WORK="$(mktemp -d)"
 # The tag is spelled out: run.sh greps these call sites for what to pre-build.
 FIXTURE_BASE="$(fixture_from_tag v0.6.0 "$FIXTURE_WORK" "$REPO")"
-up="$(mktemp -d)/proj"; mkdir -p "$up" && cp -R "$FIXTURE_BASE/." "$up/"
+# A glob character in the project's path must not reach find's -path pattern.
+up="$(mktemp -d)/proj[1]"; mkdir -p "$up" && cp -R "$FIXTURE_BASE/." "$up/"
+check "premise: the project path holds a glob character" "case '$up' in *'['*) true ;; *) false ;; esac"
 check "premise: the released baseline has no .inspire/visor (the class postdates it)" \
   "[ ! -e '$up/.inspire/visor' ]"
 check "premise: its .gitignore block has no Quartz line" \
