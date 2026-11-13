@@ -50,8 +50,9 @@ plugins included, survive an update. Quartz itself and the built site are instal
 ### D4 — The visor reads `inspire_kb/` in place and writes nothing in it
 
 Quartz reads the KB directory directly, and no file inside `inspire_kb/` is created,
-changed or deleted. The site adds no pages, tags or properties of its own. The only page
-outside the KB is the site root, which redirects to the KB's `README.md`.
+changed or deleted. The site shows no content the KB does not hold: the pages Quartz
+generates render what the KB declares (its directories, its own tags and aliases), and the
+site root redirects to the KB's `README.md`.
 
 ### D5 — The visor serves the whole KB except templates and `_migration/`
 
