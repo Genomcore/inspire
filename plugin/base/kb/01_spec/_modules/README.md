@@ -90,7 +90,7 @@ plan-time net, and is a heuristic that never blocks.
 ## Logical here, physical in `/source`
 
 This layer is **provider-agnostic and logical**. The *physical* realizations are
-implementation and live in [`/source`](../../source), not here:
+implementation and live in `/source`, not here:
 
 | Concern | Logical (here, `_domain/`) | Physical (`/source`) |
 |---------|------------------------------|----------------------|

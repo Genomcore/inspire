@@ -21,9 +21,9 @@ on.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
-| `main` | [[auth.user.search\|auth::user::search]] | a second feed under one key |
-|  | [[auth.user.count\|auth::user::count]] | a row that keys nothing |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed |
+| `main` | [auth::user::search](../../../_modules/auth/_domain/user/user.search.action.md) | a second feed under one key |
+|  | [auth::user::count](../../../_modules/auth/_domain/user/user.count.action.md) | a row that keys nothing |
 
 ### Slots
 

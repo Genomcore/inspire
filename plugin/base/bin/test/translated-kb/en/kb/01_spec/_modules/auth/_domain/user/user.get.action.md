@@ -9,7 +9,7 @@ superseded_by: null
 ---
 
 ## ACT1: Purpose
-Read one user account, per [[adr-auth-sessions]].
+Read one user account, per [adr-auth-sessions](../../_adr/auth-sessions.adr.md).
 
 ## ACT2: Inputs
 
@@ -18,11 +18,11 @@ Read one user account, per [[adr-auth-sessions]].
 | `id`      | uuid | yes      | The account to read. |
 
 ## ACT3: Outputs
-The whole [[auth.user|auth::user]] row.
+The whole [auth::user](user.entity.md) row.
 
 ## ACT4: Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** read
 
 | Field    | Touch | Type  | Mapping | Notes |

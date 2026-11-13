@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "finding_count": 2,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..auth.user.create.. at line 22: convert it to a Markdown link with /inspire:migrate" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .owner|keeper.(user.owner.action.md) at line 23" }
+  ],
+  "forbidden": ["auth.user.create\\\\", "(user.create.action.md)"]
+}

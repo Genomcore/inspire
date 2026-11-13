@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..ghost-doc-that-does-not-exist.. at line 12: convert it to a Markdown link with /inspire:migrate" }
+  ],
+  "forbidden": ["\"severity\":\"warning\""]
+}

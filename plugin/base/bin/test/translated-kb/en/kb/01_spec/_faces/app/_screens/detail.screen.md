@@ -25,7 +25,7 @@ An administrator comes here to read one account in full.
 
 | Key | Action | Notes |
 |---|---|---|
-| `record` | [[auth.user.get\|auth::user::get]] | the account named by param `id` |
+| `record` | [auth::user::get](../../../_modules/auth/_domain/user/user.get.action.md) | the account named by param `id` |
 
 ### SCR7: States
 

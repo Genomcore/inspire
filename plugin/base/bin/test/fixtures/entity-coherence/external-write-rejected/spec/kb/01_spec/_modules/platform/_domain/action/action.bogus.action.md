@@ -20,7 +20,7 @@ Bogus write on an external entity — should be rejected.
 
 ## Entities
 
-### [[platform.action|platform::action]]
+### [platform::action](action.entity.md)
 **As input:** id · **Effect:** update
 
 | Field         | Touch   | Type   | Mapping             | Notes |

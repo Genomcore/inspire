@@ -25,7 +25,7 @@ Touches only `id` — `email` declared in entity is uncovered.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

@@ -5,8 +5,8 @@
 # Session tokens are opaque
 
 **Status:** design
-**Modules affected:** [[auth]]
-<!-- Status maturity ladder: design | prototyped | implemented | superseded by [[x]] | rejected.
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
+<!-- Status maturity ladder: design | prototyped | implemented | superseded by [x](x.adr.md) | rejected.
      ## Context is named here on purpose: a guidance comment is not a section. -->
 
 ## Decision

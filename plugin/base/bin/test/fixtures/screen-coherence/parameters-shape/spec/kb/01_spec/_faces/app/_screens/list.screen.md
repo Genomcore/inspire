@@ -8,7 +8,7 @@ lifecycle: accepted
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
 
 ## Purpose
 
@@ -28,20 +28,20 @@ on.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed, filtered by param `q` |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed, filtered by param `q` |
 
 ### Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] param `id` | state `form-error` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | primary action | → [users.detail](detail.screen.md) param `id` | state `form-error` |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] param `id` | clicking a row |
-| `advanced` | [[users.detail]] param `id`, param `view` | the row menu's advanced entry |
+| `row` | [users.detail](detail.screen.md) param `id` | clicking a row |
+| `advanced` | [users.detail](detail.screen.md) param `id`, param `view` | the row menu's advanced entry |
 
 ### States
 

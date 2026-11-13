@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "action-fields-in-entity", "message_substring": "'display_name' on auth::user but the entity document's '## Fields' table does not declare it" }
+  ],
+  "forbidden": ["on auth.user"]
+}

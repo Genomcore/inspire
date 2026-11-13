@@ -14,8 +14,8 @@ profiles: [nestjs]
 
 ## Actions
 
-- [[orders]] (whole module)
-- [[billing.invoice.close|billing::invoice::close]]
+- [orders](../_modules/orders/orders.module.md) (whole module)
+- [billing::invoice::close](../_modules/billing/_domain/invoice/invoice.close.action.md)
 ```
 
 - **Which actions go into which bundle is a specification decision**, made from the

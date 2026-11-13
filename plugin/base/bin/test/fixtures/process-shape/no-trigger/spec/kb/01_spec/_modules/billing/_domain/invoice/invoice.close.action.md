@@ -4,7 +4,7 @@ lifecycle: accepted
 ---
 # close
 ## Entities
-### [[billing.invoice|billing::invoice]]
+### [billing::invoice](invoice.entity.md)
 **As input:** id · **Effect:** write
 
 | Field | Touch | Type | Mapping | Notes |

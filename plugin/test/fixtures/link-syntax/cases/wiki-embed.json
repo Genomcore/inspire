@@ -1,0 +1,17 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "diagram",
+      "text": "diagram"
+    },
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "n.md",
+      "text": "t"
+    }
+  ],
+  "code": []
+}

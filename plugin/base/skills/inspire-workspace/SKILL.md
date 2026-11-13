@@ -59,7 +59,7 @@ scheduling differs.
   [`references/workspace-review.md`](references/workspace-review.md).
 - **Workflow (opt-in, when the user enables ultracode / multi-agent).** After
   Phase 1 (scope), run the bundled workflow at
-  `.claude/skills/inspire-workspace/review.workflow.mjs` via the **Workflow** tool
+  [`review.workflow.mjs`](review.workflow.mjs) via the **Workflow** tool
   — pass `args: { modules: [<in-scope slugs>] }` and prefer `scriptPath` with that
   file's absolute path. It fans the per-module reviews out in parallel, runs a
   deterministic **completeness gate** (any dropped module review becomes a
@@ -178,7 +178,7 @@ lives in [`references/workspace-structure.md`](references/workspace-structure.md
 > `output_language` (default English), per
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in; machine-read tokens (frontmatter
-> keys/values, wikilink slugs, filenames) stay verbatim.
+> keys/values, link paths, filenames) stay verbatim.
 
 > **Writing contract.** Review reports and findings follow
 > [`_references/writing-style.md`](../_references/writing-style.md).

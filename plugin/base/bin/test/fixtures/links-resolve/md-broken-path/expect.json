@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "finding_count": 2,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .adr-auth-gone.(../../../../_adr/auth-gone.adr.md) at line 13" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .auth::user::create.(../user.create.action.md) at line 15" }
+  ],
+  "forbidden": ["auth-sessions.adr.md"]
+}

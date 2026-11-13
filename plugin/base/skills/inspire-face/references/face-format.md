@@ -100,8 +100,8 @@ The platform API. Every face calls it; partners call it with their own keys.
 
 ## Actions
 
-- [[orders]] (whole module)
-- [[billing.invoice.close|billing::invoice::close]]
+- [orders](../_modules/orders/orders.module.md) (whole module)
+- [billing::invoice::close](../_modules/billing/_domain/invoice/invoice.close.action.md)
 ```
 
 ### Frontmatter
@@ -122,8 +122,8 @@ A bundle has no `shell`: it is not something a person navigates.
 
 - `# Bundle: {id}` and one paragraph: what the bundle exposes, and to whom.
 - `## Actions` — one entry per line, each either
-  - a whole module: `[[{module}]] (whole module)`, or
-  - one action: `[[{module}.{entity}.{action}|{module}::{entity}::{action}]]`.
+  - a whole module: `[{module}](../_modules/{module}/{module}.module.md) (whole module)`, or
+  - one action: `[{module}::{entity}::{action}](../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md)`.
 
   Every link names an existing module or action file; a missing one is created as a
   draft from its template before the bundle is written. Which actions go here is a

@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "link does not resolve: .the notes.(/docs/notes.md) at line 3" }
+  ]
+}

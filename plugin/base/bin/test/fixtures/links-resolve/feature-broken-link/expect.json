@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "login.feature.md.*link does not resolve: .gone.(missing.md) at line 3" }
+  ],
+  "forbidden": ["(login.feature.md)", "feature.template.md", "sibling.feature.md"]
+}

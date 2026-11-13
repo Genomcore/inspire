@@ -42,7 +42,7 @@ lifecycle: draft
 ---
 
 ## Rationale
-Grounded in [[adr-auth-01|adr-auth-01-sessions]] and [[adr-auth-02]].
+Grounded in [adr-auth-01-sessions](auth-01.adr.md) and [adr-auth-02](auth-02.adr.md).
 
 | Field | Type |
 |-------|------|
@@ -72,9 +72,9 @@ prose="$(sdd_body_prose "$ROOT/prose.md" "Rationale")"
 has   "body_prose keeps prose"                  "Below a thematic break" "$prose"
 has   "body_prose keeps list items"             "a list item"            "$prose"
 has   "body_prose keeps two-dash lines"         '^-- two dashes'         "$prose"
-has   "body_prose unwraps piped wikilinks"      "adr-auth-01-sessions"   "$prose"
-hasnt "body_prose drops the wikilink brackets"  '\[\['                   "$prose"
-has   "body_prose unwraps bare wikilinks"       "adr-auth-02"            "$prose"
+has   "body_prose unwraps a link to its text"   "adr-auth-01-sessions"   "$prose"
+hasnt "body_prose drops the link's path"        'auth-01.adr.md'         "$prose"
+has   "body_prose unwraps every link"           "adr-auth-02"            "$prose"
 hasnt "body_prose drops table rows"             "uuid"                   "$prose"
 hasnt "body_prose drops fenced content"         "## Errors"              "$prose"
 hasnt "body_prose drops nested-fence content"   "still inside"           "$prose"
@@ -294,7 +294,6 @@ has   "find_components finds a component entry"    "table.component.md" "$comps"
 hasnt "find_components excludes the pattern catalog" "pattern"         "$comps"
 eq "find_patterns is empty on a domain scope"   "$(sdd_find_catalog "$M/_domain" patterns)" ""
 eq "resolve_catalog finds an entry by its id"   "$(sdd_resolve_catalog pattern form)" "$SPEC/_design-system/patterns/form.pattern.md"
-eq "resolve_catalog reads a path-shaped target" "$(sdd_resolve_catalog patterns ../patterns/form)" "$SPEC/_design-system/patterns/form.pattern.md"
 eq "resolve_catalog is empty for no such entry" "$(sdd_resolve_catalog pattern nothing)" ""
 
 # The id a file is linked by: frontmatter first, then the name without its type.
@@ -402,20 +401,148 @@ hasnt "the extension still tells the two apart" \
       "ENT.*promote" "$(cat "$ROOT/kebab.out")"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# The two wikilink readers — one link, two questions, opposite answers
-#
-# `[[target|display]]` declares an id on the right and points at a file on the
-# left. Each reader is pinned against the other here, because a rule that asked
-# the wrong one reported every aliased prose link in a vault as dangling.
+# The target of a wikilink, as `sdd_links <file> wiki` lists it for links-resolve:
+# the left half of `[[target|display]]`, which the finding names.
 # ─────────────────────────────────────────────────────────────────────────────
 
-eq "unwrap reads the declared id"           "$(sdd_unwrap_wikilink '[[auth.user|auth::user]]')" "auth::user"
-eq "target reads the file it points at"     "$(sdd_wikilink_target '[[auth.user|auth::user]]')" "auth.user"
-eq "an alias is never the target"           "$(sdd_wikilink_target '[[adr-x|the audit decision]]')" "adr-x"
-eq "a path target survives whole"           "$(sdd_wikilink_target '[[../../01_adr/adr-x|the audit decision]]')" "../../01_adr/adr-x"
-eq "the table-cell escape is not the target" "$(sdd_wikilink_target '[[a.b\|a::b]]')" "a.b"
-eq "a bare link is its own target"          "$(sdd_wikilink_target '[[adr-x]]')" "adr-x"
-eq "only the first pipe divides"            "$(sdd_wikilink_target '[[adr-x|a|b]]')" "adr-x"
+# wl <link> <field> — one field (3 target, 4 text) of the only link in a one-line file.
+wl() {
+  printf '%s\n' "$1" > "$ROOT/wl.md"
+  sdd_links "$ROOT/wl.md" wiki | cut -f"$2"
+}
+
+eq "the target is the left half"           "$(wl '[[auth.user|auth::user]]' 3)" "auth.user"
+eq "a wikilink is plain text unless asked for" "$(sdd_links "$ROOT/wl.md")" ""
+eq "an alias is never the target"           "$(wl '[[adr-x|the audit decision]]' 3)" "adr-x"
+eq "a path target survives whole"           "$(wl '[[../../01_adr/adr-x|the audit decision]]' 3)" "../../01_adr/adr-x"
+eq "the table-cell escape is not the target" "$(wl '[[a.b\|a::b]]' 3)" "a.b"
+eq "a bare link is its own target"          "$(wl '[[adr-x]]' 3)" "adr-x"
+eq "only the first pipe divides"            "$(wl '[[adr-x|a|b]]' 3)" "adr-x"
+
+# A Markdown heading names a touched entity in the colon form, whatever form the
+# entity's `id:` writes; a wikilink heading names none.
+E="$ROOT/touched/kb/01_spec/_modules/auth/_domain/user"
+mkdir -p "$E"
+printf -- '---\nid: auth.user\n---\n' > "$E/user.entity.md"
+printf '%s\n' '## Entities' '### [auth.user](user.entity.md)' '| Field | Touch | Type |' '|---|---|---|' '| `id` | written | uuid |' \
+  '### [[auth.user]]' '| Field | Touch | Type |' '|---|---|---|' '| `email` | read | email |' > "$E/user.create.action.md"
+touched="$(
+  cd "$ROOT/touched" || exit 1
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"; SDD_ENTITY_INDEX_FILE=""
+  sdd_entities_touched "kb/01_spec/_modules/auth/_domain/user/user.create.action.md" | cut -f1,2
+  rm -f "$SDD_ENTITY_INDEX_FILE"
+)"
+eq "entities_touched: a Markdown head gives the colon id; a wikilink head names none" \
+   "$touched" "$(printf 'auth::user\tid')"
+eq "unwrap_links: a Markdown link reads as its text, adjacent ones too" \
+   "$(printf 'see [the ADR](../a.adr.md)[b](c.md) ![img](p.png)\n' | sdd_unwrap_links)" "see the ADRb ![img](p.png)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# sdd_links — every link in a file, with the file each one names
+# ─────────────────────────────────────────────────────────────────────────────
+
+L="$ROOT/links/kb/01_spec"
+mkdir -p "$L/_modules/auth/_domain/user" "$L/_adr"
+printf -- '---\nid: auth::user::create\n---\n' > "$L/_modules/auth/_domain/user/user.create.action.md"
+: > "$L/_adr/auth-sessions.adr.md"
+cat > "$L/_modules/auth/_domain/user/user.entity.md" <<'EOF'
+---
+id: auth.user
+requires: ["[[auth.user.create|auth::user::create]]"]
+links:
+  - "[create](user.create.action.md)"
+---
+Prose [the decision](../../../../_adr/auth-sessions.adr.md#context) and [gone](./gone.md).
+Spans `[[adr-span]]` and ``a `[s](s.md)` b`` are examples; ![img](p.png), [web](https://x.org/a.md) and [top](#top) are not KB links.
+| [[auth.user.create\|auth::user::create]] | [x\|y](<user.create.action.md> "title") | [](user%2Ecreate.action.md) |
+```
+[[fenced]] [f](f.md)
+```
+[[../../01_adr/adr-auth-sessions]] [[users.list]] [[../patterns/list]] [[nowhere]]
+EOF
+(
+  cd "$ROOT/links" || exit 1
+  sdd_links "kb/01_spec/_modules/auth/_domain/user/user.entity.md"
+  printf 'WIKI\n'
+  sdd_links "kb/01_spec/_modules/auth/_domain/user/user.entity.md" wiki | awk -F'\t' '$2 == "wiki"'
+) > "$ROOT/links.out"
+links="$(sed '/^WIKI$/,$d' "$ROOT/links.out")"
+wikis="$(sed '1,/^WIKI$/d' "$ROOT/links.out")"
+U="kb/01_spec/_modules/auth/_domain/user"
+T="$(printf '\t')"
+
+hasnt "links: a wikilink is not listed by default" "${T}wiki${T}" "$links"
+has   "links: with wiki, a frontmatter wikilink is listed with no path" \
+      "^3${T}wiki${T}auth.user.create${T}auth::user::create${T}\$" "$wikis"
+has   "links: a quoted frontmatter list item" \
+      "^5${T}md${T}user.create.action.md${T}create${T}$U/user.create.action.md\$" "$links"
+has   "links: a path joins the linking file's directory and keeps its anchor as written" \
+      "^7${T}md${T}../../../../_adr/auth-sessions.adr.md#context${T}the decision${T}kb/01_spec/_adr/auth-sessions.adr.md\$" "$links"
+has   "links: a missing file resolves to nothing" \
+      "^7${T}md${T}./gone.md${T}gone${T}\$" "$links"
+hasnt "links: a code span is skipped"          "adr-span" "$links"
+hasnt "links: a span holding backticks is one" "${T}s\.md" "$links"
+hasnt "links: an image is not a link"          "p\.png"   "$links"
+hasnt "links: an external URL is skipped"      "x\.org"   "$links"
+hasnt "links: an in-file anchor is skipped"    "#top"     "$links"
+has   "links: a table-escaped pipe is not part of a wikilink target" \
+      "^9${T}wiki${T}auth.user.create${T}auth::user::create${T}\$" "$wikis"
+has   "links: angle brackets and a title wrap the path; the escaped pipe reads as text" \
+      "^9${T}md${T}user.create.action.md${T}x|y${T}$U/user.create.action.md\$" "$links"
+has   "links: a link with no text reports its target; percent-escapes decode" \
+      "^9${T}md${T}user%2Ecreate.action.md${T}user%2Ecreate.action.md${T}$U/user.create.action.md\$" "$links"
+hasnt "links: a fenced block is skipped" "fenced" "$links"
+hasnt "links: a wikilink in code is not listed either" "fenced\|adr-span" "$wikis"
+eq    "links: one row per link" "$(printf '%s\n' "$links" | grep -c .)" "5"
+eq    "links: one row per wikilink" "$(printf '%s\n' "$wikis" | grep -c .)" "6"
+eq    "links: the target's id comes from the file it resolves to" \
+      "$(sdd_artifact_id "$ROOT/links/kb/01_spec/_adr/auth-sessions.adr.md")" "adr-auth-sessions"
+
+# A frontmatter value whose path is written in <…>, as the converter writes a path
+# holding a space or a parenthesis, still reads as a link.
+A="$ROOT/angle/kb/01_spec/_modules/a/_domain/e"
+mkdir -p "$A"
+printf -- '---\nid: a::e::y\n---\n' > "$A/e.y.action.md"
+printf -- '---\nid: a::e::x\nrequires: ["[a::e::y](<e.y.action.md>)"]\n---\n' > "$A/e.x.action.md"
+angle="$(
+  cd "$ROOT/angle" || exit 1
+  . "$HERE/../_link-reads.sh"
+  SDD_KB_ROOT="kb"; SDD_SPEC_ROOT="kb/01_spec"
+  sdd_fm_link_refs "kb/01_spec/_modules/a/_domain/e/e.x.action.md" requires
+)"
+eq "fm_link_refs: a path in <> is a Markdown link" \
+   "$angle" "$(printf 'md\te.y.action.md\ta::e::y\tkb/01_spec/_modules/a/_domain/e/e.y.action.md')"
+
+# The CommonMark shapes the converter writes or an editor leaves.
+D="$L/_modules/shapes"
+mkdir -p "$D/sub"
+: > "$D/p(1).md"; : > "$D/año.md"; : > "$D/my file (v2).md"
+printf -- '---\r\nlinks: ["[x](gone-fm.md)"]\r\n---\r\n```\r\n[f](fenced.md)\r\n```\r\n' > "$D/crlf.md"
+cat > "$D/shapes.md" <<'EOF'
+[a [x] c](gone.md) [p](p(1).md) [n](a%C3%B1o.md) [s](<my file (v2).md#top>) [d](sub)
+![embed](año.md) ![picture](diagram.png) [nd](nodir/) [`g`](gone2.md)
+EOF
+(
+  cd "$ROOT/links" || exit 1
+  sdd_links "kb/01_spec/_modules/shapes/shapes.md"
+  printf 'CRLF\n'
+  sdd_links "kb/01_spec/_modules/shapes/crlf.md"
+) > "$ROOT/shapes.out"
+shapes="$(cat "$ROOT/shapes.out")"
+S="kb/01_spec/_modules/shapes"
+has   "links: brackets nest in the text, so the broken link is read" "^1${T}md${T}gone.md${T}a \[x\] c${T}\$" "$shapes"
+has   "links: parentheses balance in the path"            "^1${T}md${T}p(1).md${T}p${T}$S/p(1).md\$" "$shapes"
+has   "links: a percent-escaped non-ASCII byte decodes"   "^1${T}md${T}a%C3%B1o.md${T}n${T}$S/año.md\$" "$shapes"
+has   "links: a path in <> holds spaces and parentheses"  "^1${T}md${T}my file (v2).md#top${T}s${T}$S/my file (v2).md\$" "$shapes"
+has   "links: a link to a directory resolves to it"       "^1${T}md${T}sub${T}d${T}$S/sub\$" "$shapes"
+has   "links: a link to a missing directory is broken"    "^2${T}md${T}nodir/${T}nd${T}\$" "$shapes"
+has   "links: a code span in the text shows in the text"  "^2${T}md${T}gone2.md${T}\`g\`${T}\$" "$shapes"
+eq    "links: a directory names no id" \
+      "$(. "$HERE/../_link-reads.sh"; sdd_link_id "$ROOT/links/$S/sub" || echo none)" "none"
+has   "links: an image of a .md file is an embed, read as a link" "^2${T}embed${T}año.md${T}embed${T}$S/año.md\$" "$shapes"
+hasnt "links: any other image is not"                     "diagram" "$shapes"
+has   "links: a CRLF frontmatter is read as frontmatter"  "^2${T}md${T}gone-fm.md${T}x${T}\$" "$shapes"
+hasnt "links: and the fence after it is code"             "fenced" "$shapes"
 
 echo ""
 echo "Passed: $pass · Failed: $fail"

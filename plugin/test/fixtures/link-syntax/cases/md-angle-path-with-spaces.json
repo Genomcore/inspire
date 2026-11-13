@@ -1,0 +1,11 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "md",
+      "target": "path with spaces.md",
+      "text": "t"
+    }
+  ],
+  "code": []
+}

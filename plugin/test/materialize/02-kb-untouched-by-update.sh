@@ -125,8 +125,13 @@ check "KB regression: drift-check names no inspire_kb path" \
 
 skip_args=(--skip .claude/skills/inspire-domain/SKILL.md)
 
-"$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
-  --source-root source --prototype-root prototype "${skip_args[@]}" >/dev/null 2>&1
+upd_out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" \
+  --source-root source --prototype-root prototype "${skip_args[@]}" 2>/dev/null)"
+
+# A layered KB gets the layout warning only: its links convert after the moves.
+premise "the layered KB holds wikilinks" "[ \"\$(bash '$PLUGIN_ROOT/scripts/migrate-links.sh' --count --kb '$kbp/inspire_kb')\" -gt 0 ]"
+check "KB regression: a layered KB gets no wikilink warning" \
+  "! (printf '%s' \"\$upd_out\" | jq -r '.warnings[]' | grep -q 'wikilink')"
 
 check "KB regression: ADR in 01_adr survives update" \
   "[ -f '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' ] && [ '$adr_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' | cut -d' ' -f1)\" ]"

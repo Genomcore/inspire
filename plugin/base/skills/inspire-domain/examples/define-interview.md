@@ -10,7 +10,7 @@ agent:    [Step 0 — authoring context: fresh authoring of an action.
            Grounds: reads the auth module hub (auth.module.md), finds the feature
            row; reads adr-identity-model]
           "Got it — this is the user-provisioning entry point. Looking at the
-           feature it sources from [[adr-identity-model]] and the
+           feature it sources from [adr-identity-model](../../../../_adr/identity-model.adr.md) and the
            Account provisioning section. Quick question before I draft anything:
            the action takes an email + password, but should it also accept a
            pre-set role, or is role assignment a separate action?"

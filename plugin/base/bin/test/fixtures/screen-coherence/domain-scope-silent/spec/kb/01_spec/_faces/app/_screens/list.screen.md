@@ -5,7 +5,7 @@ screen: list
 ---
 # Users — `/users`
 
-**Pattern:** [[../patterns/nowhere]]
+**Pattern:** [nowhere](../../../_design-system/patterns/nowhere.pattern.md)
 
 ## Instantiation
 

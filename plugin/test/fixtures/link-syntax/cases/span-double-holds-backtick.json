@@ -1,0 +1,18 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "y",
+      "text": "y"
+    }
+  ],
+  "code": [
+    {
+      "kind": "span",
+      "from": 1,
+      "to": 1,
+      "text": "``a ` [[x]]``"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ markers, and the sections after them must still be read.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

@@ -6,7 +6,7 @@ screen: list
 # Users — `/users`
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
 
 ## Instantiation
 

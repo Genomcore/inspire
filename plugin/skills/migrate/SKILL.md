@@ -1,6 +1,6 @@
 ---
 name: migrate
-description: "Move this project's knowledge base from the layered layout (01_adr, 02_modules, 03_features, 04_domain, 05_screens and the surface roster) to the concept layout under inspire_kb/01_spec/, where every artifact has a typed extension. Run once, on purpose, after /inspire:update to 0.15.0 or later reports the layered layout. Rebuilds nothing that is already built."
+description: "Move this project's knowledge base from the layered layout (01_adr, 02_modules, 03_features, 04_domain, 05_screens and the surface roster) to the concept layout under inspire_kb/01_spec/, where every artifact has a typed extension, and convert its [[wikilinks]] to relative Markdown links. Run once, on purpose, after /inspire:update reports the layered layout or counts wikilinks. Rebuilds nothing that is already built."
 ---
 
 # /inspire:migrate — the KB by concept
@@ -13,12 +13,19 @@ step that moves anything in `inspire_kb/`: `/inspire:update` never does
 ([`adr-kb-structure`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-kb-structure.md)
 D10).
 
+From 0.17.0 a KB link is a relative Markdown link to the target file,
+`[adr-audit](../../_adr/audit.adr.md)`. The skill converts every `[[wikilink]]` in
+its own step
+([`adr-markdown-links`](https://github.com/Genomcore/inspire/blob/main/docs/adr/adr-markdown-links.md)
+D6). A KB already on the concept layout that still holds wikilinks starts at
+Step 4: its links are converted and nothing moves.
+
 **What it never does:** rename a module, an entity or an action; change any id but a
-screen's; rewrite a link inside a screen's `## Bindings`; extract a shared screen
-into a pattern; create a process, or a bundle with an artifact of its own; run git.
+screen's; point a link at a different file; extract a shared screen into a pattern;
+create a process, or a bundle with an artifact of its own; write to git.
 Every screen id it changes goes into `inspire_kb/01_spec/_migration/id-map.json`,
-which the INSPIRE Factory release that goes with 0.15.0 reads to rewrite the built
-code instead of rebuilding it.
+which INSPIRE Factory 0.16.0 or later reads to rewrite the built code instead of
+rebuilding it.
 
 ## Preconditions
 
@@ -36,7 +43,10 @@ code instead of rebuilding it.
 ```
 
 It prints the plan, one tab-separated line per step (`move`, `write`, `idmap`,
-`unplaced`, `note`), and writes nothing. When it needs an answer it prints `ask` lines
+`unplaced`, `config`, `note`), and writes nothing. A `config` line names a file outside
+the KB, `.inspire/emanate.yml` or `.inspire/emanate.json`, and the change to its spec
+root, which moves to `inspire_kb/01_spec`. Step 2 also prints a `seed` line for each
+skeleton file `--skeleton` adds. When it needs an answer it prints `ask` lines
 instead and exits 3. Ask the operator each one, in their words, then run the dry run
 again with the answers as flags:
 
@@ -52,8 +62,14 @@ Never answer a question yourself: these are specification decisions.
 
 **Relay the plan grouped:** how many files move per kind, every screen id that changes
 (the `idmap` lines, old → new), every file it cannot place (`unplaced`: moved under
-`_migration/unplaced/`, never dropped) and every `note`. Ask the operator to confirm
-before Step 2.
+`_migration/unplaced/`, never dropped), every `config` change and every `note`. Add how many wikilinks
+the KB holds outside code:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/migrate-links.sh" --count --kb inspire_kb
+```
+
+Ask the operator to confirm before Step 2.
 
 ## Step 2 — Migrate
 
@@ -82,12 +98,77 @@ A second run on a migrated KB is a no-op.
 Tell the operator to commit now, before any edit:
 
 ```bash
-git add -A inspire_kb && git commit -m "chore(kb): move the KB to 01_spec (/inspire:migrate)"
+git add -A && git commit -m "chore(kb): move the KB to 01_spec (/inspire:migrate)"
 ```
 
-Do not commit for them unless they ask you to.
+The tree was clean before Step 2, so every change is the run's: the KB, and the file of
+each `config` line. `git status --porcelain` is empty afterwards; the Factory's remap
+refuses a dirty checkout. Do not commit for them unless they ask you to. Step 4 waits
+for this commit.
 
-## Step 4 — Review, then narrow
+## Step 4 — Convert the links
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/migrate-links.sh" --dry-run --kb inspire_kb
+```
+
+It prints one `link` line per link it converts (file, line, the source that resolved
+it, the wikilink, the Markdown link), one `draft` or `unlinked` line per link it
+settles, and writes nothing. A link resolves through, in order: its path, mapped
+through the move record; its path against the current files; the id index, which
+resolves a wikilink the way the validators did before 0.17.0 and reads the screen id
+map, so the link names the file they read; its target as a pre-move file name, mapped
+through the move record. A pre-move name two files had resolves nothing. The move
+record is `_migration/plan.tsv`, or, when there is none, the renames git holds since
+the commit before the layered directories left, read and never written; when the
+history does not show that commit, ask the operator for it and pass `--since REV`.
+
+A wikilink none of these resolves is settled without a person, because a wikilink left
+in the KB stops the Factory. An ADR id (`adr-{slug}`), an entity id whose module
+exists, an action id whose entity exists or a screen id whose face exists gets that
+artifact's draft, from its template and in its first state, with one `drafted` line
+per file; the link names it. Any other link becomes its text, one `unlinked` line each
+with why: a retired file, a placeholder, an id that names no artifact type, or a name
+a module and a face share.
+
+A Markdown link already in the KB that names nothing where it stands is rebased, one
+`link … rebased` line each: its path is read from the file's location before the move,
+and a target that moved, or a directory whose files all moved to one directory, is
+followed through the move record. A link to a layered directory, or to its README,
+names the concept directory that took its contents (`01_adr` → `_adr`, `02_modules`,
+`03_features` and `04_domain` → `_modules`, `05_screens` → `_faces`), or that
+directory's README, and a subdirectory follows the layout (`02_modules/{m}` →
+`_modules/{m}`, `03_features/{m}` → `_modules/{m}/_features`, `04_domain/{m}` →
+`_modules/{m}/_domain`, `05_screens/{f}/{m}` → `_faces/{f}/_screens`, a screen index →
+`_faces/{f}/_index.md`); when the directory a link maps to does not exist, it names
+the nearest directory on that path that does. No link is converted or rebased into
+`_migration/`. A Markdown link it can neither rebase nor resolve, hand-written ones
+included, becomes its text, with an `unlinked` line and why (retired, placeholder,
+broken), so the migrated KB holds no broken link. A template (`*.template.md`) is
+converted like any other file, a placeholder path mapped through the layout, and its
+links are never unlinked or listed as broken.
+
+The new link's text is the wikilink's alias, else the last segment of its target,
+so a link in a screen's `## Bindings` keeps the screen id it named. An anchor
+(`[[b#context]]`) stays on the new path, an embed (`![[b]]`) keeps its `!`, a path
+holding a space or a parenthesis is written in `<…>`, and a link in frontmatter is a
+quoted string. Links inside code spans and fenced blocks stay as written.
+
+**Relay the count per source, the rebased count, and every `drafted` and `unlinked`
+line**: a draft is a file to fill in, and an unlinked one is text the operator may want
+to link again. Then run it without `--dry-run`;
+it refuses while git lists uncommitted moves, additions or deletions under the KB
+(Step 3 comes first), but not for the drafts an earlier conversion wrote. The link plan
+is saved to `inspire_kb/01_spec/_migration/links.tsv`, and a second run changes
+nothing.
+
+Tell the operator to commit the conversion:
+
+```bash
+git add -A inspire_kb && git commit -m "chore(kb): convert KB links to relative Markdown links (/inspire:migrate)"
+```
+
+## Step 5 — Review, then narrow
 
 ```bash
 .inspire/bin/review.sh inspire_kb
@@ -99,18 +180,22 @@ Expected after a migration, and fine to fix in a later commit:
   did not say which bundles a face uses. Narrow each face's `bundles:`.
 - `spec-identity` warnings for a bundle with no `package:` — fill it in before the
   Factory plans the bundle's mount test.
-- Old screen ids in `## Bindings` resolve through the id map and are not findings.
 
 Anything else the review reports was already wrong before the migration, or is a
 defect in it: report the second kind.
 
-## Step 5 — The INSPIRE Factory
+## Step 6 — The INSPIRE Factory
 
-Tell the operator what comes next for code already built: the INSPIRE Factory release
-that goes with INSPIRE 0.15.0 reads `_migration/id-map.json`, rewrites the screen
+Tell the operator what comes next for code already built: INSPIRE Factory 0.16.0 or
+later reads `_migration/id-map.json`, rewrites the screen
 ids in the built code and the claim citations that name them, and commits that as a
 branch for review, without running any agent. It rewrites literals only: code that
 reads a screen id's shape (its first segment was the module, it is now the face) is
 not text it can fix, so its report lists those sites to review by hand. The test
 suite runs on that branch before it is merged. The only new units it plans are the
 grouping bundles, one mount test each. An older Factory refuses this KB and says why.
+
+The same run rewrites the fingerprint of each built claim whose payload differs only
+in link syntax (adr-markdown-links D8), so the converted links rebuild nothing. That
+Factory reads Markdown links only and refuses a KB that still holds a wikilink; an
+older Factory does not read Markdown links.

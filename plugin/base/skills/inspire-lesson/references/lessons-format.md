@@ -79,7 +79,7 @@ reporter: "@handle"                # git handle who captured it
 inspire_version: "0.1.0"           # FROZEN at capture — from .inspire.lock
 template_sha: "abe68b3"            # FROZEN at capture — from .inspire.lock
 supersedes: null                   # id of an earlier lesson this revises, or null
-related_to: []                     # IDs / wikilink targets: [[TASK-…]], ADRs, features
+related_to: []                     # IDs: TASK-…, ADRs, features
 ---
 
 When generating a NestJS controller, keep DTOs in a separate file.

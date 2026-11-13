@@ -8,7 +8,7 @@ description: "Lessons catalog: capture durable, write-once, version-stamped LESS
 ## Scope
 
 The **self-teaching layer** —
-[`inspire_kb/98_lessons/`](../../../inspire_kb/98_lessons): **one Markdown file
+`inspire_kb/98_lessons`: **one Markdown file
 per lesson**, **write-once** (created once, never edited). A lesson is a durable,
 transmissible instruction about how an `inspire-*` **skill itself** should behave —
 not about the product. It can be *learned* or *taught*; the folder is a **catalog of
@@ -178,7 +178,7 @@ audiences, and which signal goes where is the routing stated once in
 What this section owns is the **graduation**. A friction ticket the team has confirmed,
 and that should durably change how a skill behaves, becomes a lesson: the ticket keeps
 tracking the local fix, while the new lesson carries the instruction and links back
-with `[[TASK-…]]`. Both records stay: the ticket is the local work, and the lesson is
+with a link to the ticket file (`[TASK-{id}](../99_tracker/tickets/TASK-{id}.md)`). Both records stay: the ticket is the local work, and the lesson is
 what the skill learns from it — and, via the observer, what INSPIRE core may learn.
 
 ## Related skills

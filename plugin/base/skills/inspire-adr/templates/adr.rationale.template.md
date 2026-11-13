@@ -1,6 +1,6 @@
 # {Title} — rationale
 
-**Decision:** [[adr-{slug}]]
+**Decision:** [adr-{slug}]({slug}.adr.md)
 
 ## ADR1: Context
 What problem or question prompted this decision, and why the decision answers it.
@@ -15,4 +15,4 @@ What follows — positive and negative. Include breaking changes.
 1. **{alternative}.** Why rejected.
 
 ## ADR6: Related ADRs
-- [[adr-xxx]] — {relation}
+- [adr-xxx](xxx.adr.md) — {relation}

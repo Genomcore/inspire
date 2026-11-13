@@ -1,0 +1,6 @@
+{
+  "exit": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "wikilink ..adr-that-was-deleted.. at line 12: convert it to a Markdown link with /inspire:migrate" }
+  ]
+}

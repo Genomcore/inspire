@@ -8,7 +8,7 @@ lifecycle: accepted      # draft | accepted | stable | superseded
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
 
 ## Purpose
 
@@ -22,20 +22,20 @@ on.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed |
 
 ### Dispatches
 
 | Key | Action | Trigger | On success | On error |
 |---|---|---|---|---|
-| `create` | [[auth.user.create\|auth::user::create]] | primary action | → [[users.detail]] | state `form-error` |
-| `delete` | [[auth.user.delete\|auth::user::delete]] | row action | refresh `main` | state `form-error` |
+| `create` | [auth::user::create](../../../_modules/auth/_domain/user/user.create.action.md) | primary action | → [users.detail](../../users/_screens/detail.screen.md) | state `form-error` |
+| `delete` | [auth::user::delete](../../../_modules/auth/_domain/user/user.delete.action.md) | row action | refresh `main` | state `form-error` |
 
 ### Navigation
 
 | Key | Target | Trigger |
 |---|---|---|
-| `row` | [[users.detail]] | clicking a row |
+| `row` | [users.detail](../../users/_screens/detail.screen.md) | clicking a row |
 
 ### States
 

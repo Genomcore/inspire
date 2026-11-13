@@ -1,0 +1,9 @@
+{
+  "exit": 1,
+  "finding_count": 2,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "kb/README.md.*link does not resolve: .the plan.(plan.md) at line 3" },
+    { "rule": "links-resolve", "severity": "error", "message_substring": "T-1.md.*link does not resolve: .gone.(../T-0.md) at line 3" }
+  ],
+  "forbidden": ["01_spec/README.md)", "(../../01_spec/)"]
+}

@@ -162,7 +162,7 @@ error) is:
 ```
 
 `head` is `null` for a prose-only entry and for every behavior step (a step
-carries no head by design). `oracle` is `keyed-heads.md`'s split: `store` for
+carries no head by design). `oracle` is [keyed-heads.md](keyed-heads.md)'s split: `store` for
 `unique` · `nonnull` · `default` · `references` · `immutable`, `test` for
 everything else and for every prose-only entry.
 
@@ -176,7 +176,7 @@ has no venue — the only assertable form of it is an absence, green before
 anything is built and green through every violation — and derive says nothing
 about that. The net is `PR-26` at plan time, a heuristic over the vault's own
 identifiers, and the authoring rule it points at
-(`inspire-domain`'s `references/format-entity.md`). Without it, the defect would
+([format-entity.md](../inspire-domain/references/format-entity.md)). Without it, the defect would
 surface only when the unit's agent tries to test the claim.
 
 A **type** is `{ "name", "base" }`, always. Every `Type` cell must resolve —
@@ -206,7 +206,7 @@ vocabulary.
 | `process` | `trigger` · `before` · `behavior` · `after` (each `before` / `after` item `{action, prose}`) · `affects` (entity ids) |
 
 - **`outputs`** is `{ "entity", "fields" }`. The whole-entity one-liner
-  (`An array of [[auth.user|auth::user]] entities.`) sets `entity` and leaves
+  (`An array of [auth::user](../user/user.entity.md) entities.`) sets `entity` and leaves
   `fields` empty — the entity document is the canonical field shape and
   duplicating it here would drift.
 - **`entities`** is one object per touched entity: `{id, as_input, effect,
@@ -262,7 +262,7 @@ vocabulary.
   it is never part of a claim, because promoting a row's source without
   changing its value changes nothing the code renders.
 - **`members`** is every action the bundle's `## Actions` names, a whole-module
-  entry (`[[orders]] (whole module)`) expanded to every `*.action.md` of that
+  entry (`[orders](../_modules/orders/orders.module.md) (whole module)`) expanded to every `*.action.md` of that
   module, deduplicated and sorted bytewise.
 - **`affects`** is carried and never claimed: `process-shape.sh` checks it
   against what the required actions touch, so no test covers it. A
@@ -271,8 +271,8 @@ vocabulary.
 
 ## Claim ids
 
-Domain claim ids are exactly `keyed-heads.md` § Keyspaces, screen claim ids
-exactly `format-screen.md` § Claims; a catalog entry's are keyed by its own
+Domain claim ids are exactly [keyed-heads.md](keyed-heads.md) § Keyspaces, screen claim ids
+exactly [format-screen.md](../inspire-screens/references/format-screen.md) § Claims; a catalog entry's are keyed by its own
 declared key, the way every other kind's are:
 
 ```
@@ -479,7 +479,7 @@ this table name the same thing.
 | `DR-B1` | more than one profile in the stack is `layer: backend` and declares `## Bindings`, so no single rule renders the action's route | declare one backend profile with `## Bindings` in `00_bootstrap/stack.md` |
 | `DR-R1` | an action's `## Entities` names an entity with no document on disk | touch the artifact |
 | `DR-R2` | a screen binding names an action id that resolves to no descriptor | touch the screen |
-| `DR-R3` | a transition target — a `### Navigation` row, or a `→ [[…]]` dispatch outcome — resolves to no screen id | touch the screen |
+| `DR-R3` | a transition target — a `### Navigation` row, or a `→ [{screen-id}](…)` dispatch outcome — resolves to no screen id | touch the screen |
 | `DR-R4` | a `**Pattern:**`, `**Layout:**` or `**Components:**` link resolves to no catalog entry | touch the screen |
 | `DR-S1` | the screen identity block is absent or incomplete — the pre-0.9 screen | touch the screen |
 | `DR-S2` | the identity contradicts itself or the vault: lifecycle enum, an id not shaped `{face}.{slug}` or naming a face no `*.face.md` declares, `superseded_by`, a duplicate id, a route collision | touch the screen |
@@ -489,7 +489,7 @@ this table name the same thing.
 | `DR-S6` | a bindings subsection outside the closed set, or rows under none | touch the screen |
 | `DR-S7` | a binding row with no key, or a key used twice in one subsection | touch the screen |
 | `DR-S8` | a dispatch outcome outside the three declared forms, route-shaped included | touch the screen |
-| `DR-S9` | a navigation target that is not a wikilinked screen id | touch the screen |
+| `DR-S9` | a navigation target that is not a linked screen id | touch the screen |
 | `DR-S10` | a state whose `When` anchors nothing declared | touch the screen |
 | `DR-S11` | the pattern join: a required region finds no binding of a kind it accepts | touch the screen |
 | `DR-S12` | a `stable` screen declaring a `to-extract` component | touch the screen |

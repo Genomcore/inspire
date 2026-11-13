@@ -18,11 +18,11 @@ Looks up a user by id.
 | `id`      | uuid | yes      | User id.    |
 
 ## Outputs
-The matching [[auth.user|auth::user]] entity.
+The matching [auth::user](user.entity.md) entity.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** id · **Effect:** read-whole
 
 | Field | Touch | Type | Mapping    | Notes        |

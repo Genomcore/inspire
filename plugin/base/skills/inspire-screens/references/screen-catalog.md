@@ -30,8 +30,8 @@ layout here, and each face keeps its own screen naming it.
 
 Process: write `{name}.pattern.md` in `_design-system/patterns/`,
 `{name}.layout.md` in `_design-system/layouts/` or `{name}.component.md` in
-`_design-system/components/`. The name is the entry's id, and screens link it bare
-(`[[{name}]]`). Copy
+`_design-system/components/`. The name is the entry's id, and screens link its file
+(`[{name}](../../../_design-system/patterns/{name}.pattern.md)`). Copy
 [`pattern.template.md`](../templates/pattern.template.md) for a pattern,
 [`layout.template.md`](../templates/layout.template.md) for a layout,
 [`component.template.md`](../templates/component.template.md) for a

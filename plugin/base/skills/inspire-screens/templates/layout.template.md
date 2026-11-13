@@ -14,7 +14,7 @@
 
 **Purpose:** {one-line description of the frame — first body line, greppable}
 **State:** implemented | to-extract
-**Pattern:** [[{pattern-name}]]
+**Pattern:** [{pattern-name}](../patterns/{pattern-name}.pattern.md)
 
 {One-paragraph description of the frame and what decides its shape.}
 

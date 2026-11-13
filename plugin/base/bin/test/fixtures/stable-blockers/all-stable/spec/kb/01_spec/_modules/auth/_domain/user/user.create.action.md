@@ -5,7 +5,7 @@ entity: user
 action: create
 lifecycle: stable
 requires:
-  - "[[auth.password.hash|auth::password::hash]]"
+  - "[auth::password::hash](../password/password.hash.action.md)"
 superseded_by: null
 ---
 
@@ -27,7 +27,7 @@ Stable action with stable dep — should pass.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** shape · **Effect:** create
 
 | Field | Touch   | Type  | Mapping       | Notes |

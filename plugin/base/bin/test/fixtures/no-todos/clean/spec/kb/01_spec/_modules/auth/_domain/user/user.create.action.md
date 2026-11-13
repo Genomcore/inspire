@@ -25,7 +25,7 @@ Create a user. Clean body, no markers.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field | Touch   | Type | Mapping  | Notes |

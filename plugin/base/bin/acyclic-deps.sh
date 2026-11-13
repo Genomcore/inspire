@@ -7,8 +7,9 @@
 #   - cycles (action A → B → ... → A)
 #
 # Implementation: reads `.requires` lists from each action descriptor,
-# strips [[ ]] wikilink wrappers, and pipes (predecessor, successor) pairs
-# through `tsort`. BSD macOS tsort silently elides self-loops, so those are
+# reads each link as the id of the file it names, and pipes
+# (predecessor, successor) pairs through `tsort`. A broken link names no
+# id and adds no edge. BSD macOS tsort silently elides self-loops, so those are
 # detected directly before the tsort call.
 #
 # Severity: error.
@@ -21,6 +22,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 command -v tsort >/dev/null 2>&1 || {
@@ -55,9 +57,8 @@ while IFS= read -r action; do
   from_id="$(sdd_fm_value "$action" '.id')"
   [ -z "$from_id" ] && continue
 
-  while IFS= read -r req; do
-    [ -z "$req" ] && continue
-    to_id="$(sdd_unwrap_wikilink "$req")"
+  while IFS=$'\t' read -r form target to_id path; do
+    [ -z "$to_id" ] && continue
 
     # Self-loops — BSD tsort silently elides these, so detect directly.
     if [ "$from_id" = "$to_id" ] && in_scope "$from_id"; then
@@ -71,7 +72,7 @@ while IFS= read -r action; do
     fi
 
     printf '%s\t%s\n' "$from_id" "$to_id" >> "$EDGES_FILE"
-  done < <(sdd_fm_list "$action" '.requires')
+  done < <(sdd_fm_link_refs "$action" requires)
 done < <(sdd_find_actions "$SDD_SPEC_ROOT")
 
 # No edges → trivially acyclic.

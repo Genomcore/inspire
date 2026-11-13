@@ -70,6 +70,7 @@ source "$SCRIPT_DIR/_keyed-heads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
+_sdd_entity_index
 
 SCOPE="${1:-}"
 
@@ -82,6 +83,7 @@ hr_cleanup() {
   local rc=$?
   [ -n "$HR_TMP1" ] && rm -f "$HR_TMP1"
   [ -n "$HR_TMP2" ] && rm -f "$HR_TMP2"
+  rm -f "${SDD_ENTITY_INDEX_FILE:-}"
   return $rc
 }
 trap hr_cleanup EXIT
@@ -209,7 +211,7 @@ check_action() {
   copy="$HR_TMP1"
   sev="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
 
-  touched_ids="$(sdd_entities_touched_meta "$copy" \
+  touched_ids="$(sdd_entities_touched_meta "$copy" "$file" \
     | awk -F'\t' 'NF { gsub(/::/, ".", $1); print $1 }' | sort -u)"
   outputs="$(kh_first_column "$copy" "Outputs")"
 
@@ -257,7 +259,7 @@ check_action() {
   # by entity so each touched entity's unique-field set is read once.
   local err_args rows ent field prev_ent="" uniq="" entity_file reported=" "
   err_args="$(hr_error_unique_args "$copy")"
-  rows="$(sdd_entities_touched "$copy" \
+  rows="$(sdd_entities_touched "$copy" "$file" \
     | awk -F'\t' 'NF && $3 == "written" && $2 != "id" { gsub(/::/, ".", $1); print $1 "\t" $2 }' \
     | sort -u)"
   [ -z "$rows" ] && return 0

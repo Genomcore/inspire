@@ -36,7 +36,7 @@ surfaces: [console]
 # Session tokens are opaque
 
 **Status:** implemented
-**Modules affected:** [[auth]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
 <!--
 ## Decision is named here on purpose: a comment is not a section.
 -->
@@ -62,7 +62,7 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.
 
 ## Notes
 An extra section travels with the rationale.
@@ -93,8 +93,8 @@ surfaces: [console]
 # Session tokens are opaque
 
 **Status:** implemented
-**Modules affected:** [[auth]]
-**Rationale:** [[adr-auth-sessions.rationale]]
+**Modules affected:** [auth](../_modules/auth/auth.module.md)
+**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)
 <!--
 ## Decision is named here on purpose: a comment is not a section.
 -->
@@ -106,7 +106,7 @@ MD
 eq "the rationale takes every other section, in order" "$RAT" "$(cat <<'MD'
 # Session tokens are opaque — rationale
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## Context
 Sessions need a transport-safe identifier.
@@ -126,7 +126,7 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.
 
 ## Notes
 An extra section travels with the rationale.
@@ -134,9 +134,9 @@ MD
 )"
 
 moved="$(printf '%s\n%s\n' "$DEC" "$RAT" \
-  | grep -vxF '**Rationale:** [[adr-auth-sessions.rationale]]' \
+  | grep -vxF '**Rationale:** [adr-auth-sessions.rationale](auth-sessions.adr.rationale.md)' \
   | grep -vxF '# Session tokens are opaque — rationale' \
-  | grep -vxF '**Decision:** [[adr-auth-sessions]]' | grep -v '^$' | sort)"
+  | grep -vxF '**Decision:** [adr-auth-sessions](auth-sessions.adr.md)' | grep -v '^$' | sort)"
 eq "no line is lost or reworded" "$moved" "$(printf '%s\n' "$ORIGINAL" | grep -v '^$' | sort)"
 
 findings="$("$SECTIONS" "$SDD_KB_ROOT" 2>&1 >/dev/null)"
@@ -150,12 +150,12 @@ eq "and leaves the decision as it was"        "$(cat "$ADR/auth-sessions.adr.md"
 printf '# Bare\n\n## Decision\nUse it.\n\n## Context\nWhy.\n' > "$ADR/bare.adr.md"
 "$SPLIT" "$ADR/bare.adr.md" >/dev/null
 eq "with no header lines, the link goes under the H1" "$(cat "$ADR/bare.adr.md")" \
-  "$(printf '# Bare\n\n**Rationale:** [[adr-bare.rationale]]\n\n## Decision\nUse it.')"
+  "$(printf '# Bare\n\n**Rationale:** [adr-bare.rationale](bare.adr.rationale.md)\n\n## Decision\nUse it.')"
 
 printf '# Opacos\n\n## ADR1: Contexto\nPor qué.\n\n## ADR2: Decisión\nUsarlo.\n' > "$ADR/es.adr.md"
 "$SPLIT" "$ADR/es.adr.md" >/dev/null
 eq "a section id still keys the decision" "$(cat "$ADR/es.adr.md")" \
-  "$(printf '# Opacos\n\n**Rationale:** [[adr-es.rationale]]\n\n## ADR2: Decisión\nUsarlo.')"
+  "$(printf '# Opacos\n\n**Rationale:** [adr-es.rationale](es.adr.rationale.md)\n\n## ADR2: Decisión\nUsarlo.')"
 
 echo ""
 echo "Passed: $pass · Failed: $fail"

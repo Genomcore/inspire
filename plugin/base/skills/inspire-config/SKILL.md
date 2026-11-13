@@ -99,7 +99,7 @@ Read the reference before the step it covers. The table is an index, not the flo
 4. **Never invent an image.** An image is pulled at every run; a reference that
    cannot be pulled stops it. Propose, then have the operator confirm.
 5. **Never start a service** and never leave a container behind. The optional
-   image probe in `validate.md` runs one throwaway container on an explicit yes.
+   image probe in [validate.md](references/validate.md) runs one throwaway container on an explicit yes.
 6. **The operator commits.** A run reads `.inspire/emanate.yml` from its clone of
    `factory.base_branch`, so only the committed file counts: an uncommitted edit never
    reaches it. Only `base_branch` itself is read from the working tree, because the

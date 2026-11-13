@@ -100,7 +100,7 @@ untested gates). The candidates this profile's conventions already imply:
 - **Coverage** via `ng test --code-coverage`, floor set to what is measured
   today and only raised.
 Escape hatches and their ratchet follow the shared rules in
-`quality-gates.md`; nothing Angular-specific replaces them.
+[quality-gates.md](../_references/quality-gates.md); nothing Angular-specific replaces them.
 
 ## Build & verify
 build: `ng build` (`-c production` for release) · lint: `ng lint` ·

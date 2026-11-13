@@ -8,8 +8,8 @@ lifecycle: accepted
 # Users
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/list]]
-**Layout:** [[../layouts/collection]]
+**Pattern:** [list](../../../_design-system/patterns/list.pattern.md)
+**Layout:** [collection](../../../_design-system/layouts/collection.layout.md)
 
 ## Purpose
 
@@ -21,4 +21,4 @@ An administrator comes here to find one member of the workspace among many.
 
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[auth.user.list\|auth::user::list]] | the primary table feed |
+| `main` | [auth::user::list](../../../_modules/auth/_domain/user/user.list.action.md) | the primary table feed |

@@ -141,8 +141,10 @@ then `/inspire:update` (which reports drift on the runtime — skills, validator
 hooks — and never overwrites a file INSPIRE shipped without your say-so), not
 re-forking. `inspire_kb/` is out of scope for update entirely: it is seeded once
 at init and is yours from then on. A project whose KB predates INSPIRE 0.15.0 is on
-the layered layout (`01_adr` … `05_screens`); after updating, run `/inspire:migrate`
-once to move it to `inspire_kb/01_spec/`. It rebuilds nothing already built.
+the layered layout (`01_adr` … `05_screens`), and one whose KB predates 0.17.0 links
+with `[[wikilinks]]`; after updating, run `/inspire:migrate` once to move it to
+`inspire_kb/01_spec/` and convert its links to relative Markdown links. It rebuilds
+nothing already built.
 
 > Drift tracking covers the files INSPIRE shipped: each release's manifest holds
 > their hashes, and `.inspire.lock` records only provenance — version, commit,

@@ -58,7 +58,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
    A row already sourced `design-system.md` or `design-system.tokens.json` is a decision:
    leave it as it stands.
 5. **Each screen in the gap list:**
-   - add the `**Layout:**` line naming its frame by bare id;
+   - add the `**Layout:**` line linking its frame;
    - write `## Render` — one H3 per region of its pattern, one row per column,
      field, meta value or control the capture shows (or, when generating, per data
      binding and the values the design system's field types imply), with the

@@ -144,9 +144,9 @@ A bundle groups actions that are published together, by one package.
 2. **Ask which actions it exposes.** This is the operator's specification decision,
    made from the use cases. INSPIRE may suggest a grouping — one bundle per module
    is a reasonable start — but never decides it. Each entry in `## Actions` is a
-   whole module (`[[{module}]] (whole module)`) or one action
-   (`[[{module}.{entity}.{action}|{module}::{entity}::{action}]]`).
-3. **Every link has a file.** A module or action named here that does not exist
+   whole module (`[{module}](../_modules/{module}/{module}.module.md) (whole module)`) or one action
+   (`[{module}::{entity}::{action}](../_modules/{module}/_domain/{entity}/{entity}.{action}.action.md)`).
+3. **Every link has a file.** Links follow [kb-links.md](../_references/kb-links.md). A module or action named here that does not exist
    yet is created as a draft from its template (`inspire-module`,
    `inspire-domain`) before the bundle is written.
 4. **Ask what kind of bundle it is.** A bundle that only groups actions has exactly
@@ -234,7 +234,7 @@ judgment checks above name the check in the rule slot.
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames,
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames,
 > face and bundle ids) stay verbatim.
 
 > **Writing contract.** Face and bundle prose and every review report follow

@@ -7,7 +7,7 @@ The **universal semantic vocabulary** used by action descriptors and entity docu
 | part | home |
 |---|---|
 | universal vocabulary + predicates | **this file** (runtime, stack-agnostic) |
-| a project's own semantic types | [`00_bootstrap/semantic-types.md`](../../../../inspire_kb/00_bootstrap/semantic-types.md) (project content) |
+| a project's own semantic types | `inspire_kb/00_bootstrap/semantic-types.md` (project content) |
 | per-target rendering | the language skill ([`stack-skills.md`](../../_references/stack-skills.md)) |
 
 ## The vocabulary
@@ -47,7 +47,7 @@ The `Mapping` column of `## Entities` field tables uses small DSL tokens to say 
 Which of the three homes a new type belongs in is decided by who would recognize it:
 
 - **A new universal type** — one every project would recognize (`duration`, `url`) — is a **runtime change**: add a row above, PR-reviewed, with a brief rationale in the PR description, plus a rendering row in each shipped language profile.
-- **A project's own type** (`money`, `tenant_id`, a domain identifier) goes in [`00_bootstrap/semantic-types.md`](../../../../inspire_kb/00_bootstrap/semantic-types.md), never here. Each one declares a **universal base type** from the table above, so it renders even where no language profile names it explicitly.
+- **A project's own type** (`money`, `tenant_id`, a domain identifier) goes in `inspire_kb/00_bootstrap/semantic-types.md`, never here. Each one declares a **universal base type** from the table above, so it renders even where no language profile names it explicitly.
 - **A rendering** — a new target language, a different SQL engine, a changed column type — is the **language profile's**, never this file's.
 
 Two consequences worth stating:
