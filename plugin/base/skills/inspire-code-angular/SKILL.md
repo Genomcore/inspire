@@ -99,8 +99,9 @@ untested gates). The candidates this profile's conventions already imply:
   the build-time ratchet this stack gets for free; a budget bump is a diff.
 - **Coverage** via `ng test --code-coverage`, floor set to what is measured
   today and only raised.
-Escape hatches and their ratchet follow the shared rules in
-[quality-gates.md](../_references/quality-gates.md); nothing Angular-specific replaces them.
+Escape hatches follow the shared rule in
+[quality-gates.md](../_references/quality-gates.md): the lint config allows or refuses
+each one; nothing Angular-specific replaces it.
 
 ## Build & verify
 build: `ng build` (`-c production` for release) · lint: `ng lint` ·

@@ -50,23 +50,6 @@ adr_maturity="$PROJECT_ROOT/.inspire/bin/adr-maturity-matches-features.sh"
 profile_gates="$PROJECT_ROOT/.inspire/bin/profile-gates-installed.sh"
 [ -x "$profile_gates" ] && { "$profile_gates" || STATUS=2; }
 
-# The escape-hatch ratchet, unscoped. `pre-commit` deliberately skips commits that
-# touch no configured scope so a preexisting breach cannot block unrelated work; at
-# PR time there is no unrelated work — this is the last gate before a merge, and a
-# `git commit` from a plain terminal never fired the commit-time check at all.
-hatch_config="${ESCAPE_HATCH_CONFIG:-.escape-hatches.json}"
-if [ -f "$hatch_config" ]; then
-  hatch_script="$PROJECT_ROOT/.inspire/bin/escape-hatch-ratchet.sh"
-  if [ ! -x "$hatch_script" ]; then
-    echo "pre-pr: $hatch_config declares a ratchet but $hatch_script is missing —" >&2
-    echo "        restore it (it is committed to this repo), or remove the config. A" >&2
-    echo "        declared gate that silently does not run is worse than no gate." >&2
-    STATUS=2
-  else
-    "$hatch_script" >/dev/null || STATUS=2
-  fi
-fi
-
 # Trust is a signal, never a gate: a project without the tool (pre-0.6) prints
 # nothing, and no outcome here may change this hook's own exit code.
 if [ -f "$PROJECT_ROOT/.inspire/bin/trust.sh" ]; then

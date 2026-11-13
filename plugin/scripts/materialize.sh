@@ -523,6 +523,23 @@ gitignore_extend_block() {
   log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
 }
 
+warn_retired_escape_hatches() {
+  [ -f "$PROJECT_ROOT/.escape-hatches.json" ] || return 0
+  WARNINGS+=(".escape-hatches.json is no longer read: INSPIRE stopped counting escape hatches, and the linter now allows or refuses each one (quality-gates.md Rule 4). Delete the file, and set in the lint config the rules that refuse each hatch the project does not allow, closed to inline disables (escape-hatches/no-restricted-disable under oxlint, eslint-comments/no-restricted-disable under ESLint). A pre-commit.sh you edited still calls the removed ratchet and blocks every commit until the file is gone.")
+  log "  · .escape-hatches.json is no longer read — delete it and move the refusals into the lint config"
+}
+
+warn_uninstalled_escape_hatch_rules() {
+  local configs
+  configs="$(cd "$PROJECT_ROOT" && SDD_SKILLS_ROOT="$PLUGIN_ROOT/base/skills" \
+    "$PLUGIN_ROOT/base/bin/profile-gates-installed.sh" 2>&1 >/dev/null \
+    | jq -rR 'fromjson? | select(.message | startswith("does not contain `escape-hatches/")) | .target' \
+    | sort -u | paste -sd ' ' -)"
+  [ -n "$configs" ] || return 0
+  WARNINGS+=("$configs lacks the escape-hatch rules its stack skill now gates (escape-hatches/require-reason, escape-hatches/no-restricted-disable, escape-hatches/no-double-cast), so profile-gates-installed.sh fails the pre-PR hook. Copy oxlint-escape-hatches.mjs from .claude/skills/inspire-code-typescript/references/ into the package, list it in jsPlugins and turn on its three rules (quality-gates.md Rule 4).")
+  log "  · $configs lacks the escape-hatch plugin rules — install them, or the pre-PR hook fails"
+}
+
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
 # the repo, so teammates and CI need no plugin. A .gitignore rule that excludes
 # it therefore defeats the whole delivery model, silently: init reports
@@ -1099,6 +1116,8 @@ run_materialize() {
   seed_gitignore
   create_product_roots
   warn_shadowed_runtime
+  warn_retired_escape_hatches
+  warn_uninstalled_escape_hatch_rules
   merge_settings "$HOP_JOURNAL"
   write_lock "$target"
 
