@@ -20,13 +20,31 @@ R="$T/p"; KB="$R/inspire_kb"; Q="$R/.inspire/visor/.quartz"
 visor_project "$R"
 
 # --- host node 22 or later -------------------------------------------------
-stubs new; stub_node "$S" v22.0.0 "$S/node.log"; stub_docker "$S" "$S/docker.log"
+stubs new; stub_node "$S" v22.0.0 "$S/node.log"; stub_npm "$S"; stub_docker "$S" "$S/docker.log"
 visor_installed "$R" host
 run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
 eq "node v22.0.0 and docker: exit 0" "$RC" 0
 has "node v22.0.0 and docker: the host's node runs Quartz" "$OUT" "runtime: node v22.0.0 on the host"
 has "the host's node runs the build" "$(cat "$S/node.log")" "node quartz/bootstrap-cli.mjs build -d $KB"
+has "the host's node runs the frontmatter scan" "$(cat "$S/node.log")" "node scan $Q $KB"
 eq "docker is not called when the host has node 22" "$(cat "$S/docker.log")" ""
+
+# --- docker when the host's node has no npm ---------------------------------
+stubs nonpm; stub_node "$S" v22.11.0 "$S/node.log"; stub_docker "$S" "$S/docker.log"
+visor_installed "$R" "docker:$IMAGE"
+if [ ! -e /usr/bin/npm ] && [ ! -e /bin/npm ]; then
+  run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
+  eq "node v22.11.0 without npm, and docker: exit 0" "$RC" 0
+  has "node v22.11.0 without npm, and docker: docker runs Quartz" "$OUT" \
+    "runtime: docker, image $IMAGE (host node: v22.11.0 without npm)"
+  rm "$S/docker"
+  run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
+  eq "node v22.11.0 without npm, and no docker: exit 1" "$RC" 1
+  has "node v22.11.0 without npm, and no docker: the refusal names npm" "$OUT" \
+    "needs node 22 or later and npm on PATH (found v22.11.0 without npm)"
+else
+  skipped 4 "a host node without npm: /usr/bin or /bin holds npm"
+fi
 
 # --- docker when the host's node is older ----------------------------------
 stubs old; stub_node "$S" v20.18.1 "$S/node.log"; stub_docker "$S" "$S/docker.log"
@@ -44,15 +62,28 @@ has "the container works in the Quartz checkout" "$D" "-w $Q"
 has "the container runs visor.yaml's node_image and builds inspire_kb/" "$D" \
   "$IMAGE node quartz/bootstrap-cli.mjs build -d $KB -o $Q/public"
 hasnt "--check publishes no port" "$D" " -p "
+has "the frontmatter scan runs in the container, its script passed as an argument" \
+  "$(cat "$S/docker.log")" "-w $Q $IMAGE node --input-type=module -e // plugin/scripts/visor-scan.mjs"
 
 : > "$S/docker.log"
-run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --port 9000
+FP="$(free_port)"; WP=$((FP + 1))
+run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --port "$FP"
 D="$(grep -- '--serve' "$S/docker.log")"
-has "a serve in docker names the container after the port" "$D" "--name inspire-visor-9000"
+has "a serve in docker names the container after the port" "$D" "--name inspire-visor-$FP"
 has "a serve in docker publishes the port and the live-reload port on localhost" "$D" \
-  "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 $IMAGE"
-has "a serve in docker passes both ports to Quartz" "$D" "--serve --port 9000 --wsPort 9001"
-has "a serve in docker says how to stop it" "$OUT" "stop: docker stop inspire-visor-9000"
+  "-p 127.0.0.1:$FP:$FP -p 127.0.0.1:$WP:$WP $IMAGE"
+has "a serve in docker passes both ports to Quartz" "$D" "--serve --port $FP --wsPort $WP"
+has "a serve in docker says how to stop it" "$OUT" "stop: docker stop inspire-visor-$FP"
+hasnt "a serve in docker preloads nothing into the container's node" "$D" "--import"
+
+# --- a project path docker cannot mount --------------------------------------
+visor_project "$T/a:b"
+visor_installed "$T/a:b" "docker:$IMAGE"
+: > "$S/docker.log"
+run_visor "$S:$B:/usr/bin:/bin" --project-root "$T/a:b" --check
+eq "a project path with ':' under docker: exit 1" "$RC" 1
+has "a project path with ':' under docker: the refusal names the ':'" "$OUT" "holds a ':', which docker cannot mount"
+eq "a project path with ':' under docker: no container runs" "$(cat "$S/docker.log")" ""
 
 # --- no node at all, or no docker ------------------------------------------
 if no_host_runtime; then
@@ -65,12 +96,12 @@ if no_host_runtime; then
   run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
   eq "node v20 and no docker: exit 1" "$RC" 1
   has "node v20 and no docker: the refusal names node 22, the node found and docker" "$OUT" \
-    "no runtime: the visor needs node 22 or later on PATH (found v20.18.1) or a running docker (found none)"
+    "no runtime: the visor needs node 22 or later and npm on PATH (found v20.18.1) or a running docker (found none)"
 
   stubs neither
   run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
   eq "neither node nor docker: exit 1" "$RC" 1
-  has "neither node nor docker: the refusal names both" "$OUT" "node 22 or later on PATH (found none) or a running docker"
+  has "neither node nor docker: the refusal names both" "$OUT" "node 22 or later and npm on PATH (found none) or a running docker"
 else
   skipped 6 "runtime absence: /usr/bin or /bin holds node or docker"
 fi
@@ -113,4 +144,18 @@ run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
 eq "a failing npm ci: exit 3" "$RC" 3
 has "a failing npm ci: its output is relayed" "$OUT" "npm error network"
 check "a failing npm ci leaves no stamp, so the next run installs again" "[ ! -e '$Q/.inspire-visor' ]"
+
+# --- an old install the launcher cannot remove ------------------------------
+if [ "$(id -u)" -ne 0 ]; then
+  mkdir -p "$Q/owned/elsewhere"; chmod a-w "$Q/owned"
+  : > "$S/git.log"
+  run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
+  chmod u+w "$Q/owned"
+  eq "an old install that cannot be removed: exit 3" "$RC" 3
+  has "an old install that cannot be removed: the message names .inspire/visor/.quartz/" "$OUT" \
+    "removing the previous install in .inspire/visor/.quartz/ failed:"
+  eq "an old install that cannot be removed: no clone runs" "$(cat "$S/git.log")" ""
+else
+  skipped 3 "an old install that cannot be removed: root removes it anyway"
+fi
 summary

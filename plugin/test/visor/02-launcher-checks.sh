@@ -12,6 +12,7 @@ T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 B="$T/bin"; S="$T/stubs"; mkdir -p "$S"
 visor_bin "$B"
 stub_node "$S" v22.11.0 "$T/node.log"
+stub_npm "$S"
 stub_git_fail "$S"
 P="$S:$B:/usr/bin:/bin"
 
@@ -71,6 +72,13 @@ visor_project "$T/badport"
 run_visor "$P" --project-root "$T/badport" --check --port 80a
 eq "a port that is not a number: exit 1" "$RC" 1
 has "a port that is not a number: the message names it" "$OUT" "the port '80a' is not a number"
+run_visor "$P" --project-root "$T/badport" --check --port 65535
+eq "--port 65535 leaves no port for live reload: exit 1" "$RC" 1
+has "--port 65535: the message names the range" "$OUT" "the port 65535 is outside 1-65534"
+run_visor "$P" --project-root "$T/badport" --check --port 0
+eq "--port 0: exit 1" "$RC" 1
+run_visor "$P" --project-root "$T/badport" --check --port 08080
+has "a port with a leading zero reads as decimal and goes on to the install" "$OUT" "installing Quartz"
 
 # --- the Quartz version against each plugin's range ------------------------
 # set_range PROJECT PLUGIN RANGE — writes quartz.quartzVersion; an empty RANGE deletes it.
