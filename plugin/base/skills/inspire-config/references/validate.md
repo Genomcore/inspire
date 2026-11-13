@@ -63,7 +63,7 @@ warning explicitly.
 | a review `skills` name with no `.claude/skills/<name>/SKILL.md` committed, and not a factory skill | error | the runner stops before the release |
 | a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
 | a review check without `focus` | warning | the reviewer judges every rule it was given |
-| a `factory.model`, `review_model` or `subagent_models` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
+| a `factory.model`, `review_model`, `subagent_models` or `spec_classifier_model` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
 | `.inspire/emanate.json` still on disk | error | the factory refuses the project until its keys move under `factory` ([`derive.md`](derive.md) § Migrating `emanate.json`) |
 
 ## 3. The image probe (optional)
