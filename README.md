@@ -67,7 +67,7 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update,migrate}/` are the only **live** skills — `/inspire:init`, `/inspire:update` and `/inspire:migrate`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
+| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update,migrate,visor}/` are the only **live** skills — `/inspire:init`, `/inspire:update`, `/inspire:migrate` and `/inspire:visor`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/agents/` → `.claude/agents/`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/visor/` → `.inspire/visor/` (the visor's configuration), `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Makes this repo its own plugin marketplace, so `/plugin marketplace add Genomcore/inspire` resolves. |
 | [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_spec/` (`*.adr.md`). |
 
@@ -100,9 +100,9 @@ prototypes — so they fit any stack.
 /reload-plugins
 ```
 
-This is a per-user maintainer tool, not a runtime dependency — it is never
-referenced once a project is materialized. Only whoever runs an init or update
-needs it installed; teammates and CI need nothing.
+The plugin is installed per user. A materialized project runs its skills, validators
+and hooks without it, so CI needs nothing; whoever runs an init, an update, a migration
+or `/inspire:visor` needs it installed.
 
 **2. In the repo you want to govern, initialize.**
 
@@ -115,8 +115,7 @@ teammates), then materializes the skills, validators, hooks and KB skeleton,
 marker-merges the `session-start` + `dispatch` hooks into `.claude/settings.json`,
 seeds the design system and its token file from your bootstrap theme, seeds a provisional root
 `CLAUDE.md` and a `.gitignore` block (both left untouched if already present), and
-writes `.inspire.lock` recording which release was materialized plus a hash of
-every file it wrote (used later for drift detection). It never touches your git
+writes `.inspire.lock` recording which release was materialized. It never touches your git
 history and never clobbers existing content.
 
 **3. Reload, then bootstrap.**
