@@ -46,11 +46,11 @@ Template: [`templates/process.template.md`](templates/process.template.md).
 | Section | What it holds |
 |---|---|
 | `## Trigger` | What starts it: a schedule, an event (an action succeeding, a message arriving), start-up, or another process. Exactly one trigger. |
-| `## Requires` | The actions it calls, as wikilinks `[[{module}.{entity}.{action}\|{module}::{entity}::{action}]]`. Dependencies, not claims: each action is tested as its own unit. |
+| `## Requires` | The actions it calls, as links `[{module}::{entity}::{action}](../_domain/{entity}/{entity}.{action}.action.md)`. Dependencies, not claims: each action is tested as its own unit. |
 | `## Before` | Its pre-actions, in order — what must run before the steps. `None.` when there are none. |
 | `## Behaviour` | Its steps, keyed `B{n}`, in the order they run. |
 | `## After` | Its post-actions, in order. `None.` when there are none. |
-| `## Affects` | The entities it changes, as wikilinks `[[{module}.{entity}\|{module}::{entity}]]`. |
+| `## Affects` | The entities it changes, as links `[{module}::{entity}](../_domain/{entity}/{entity}.entity.md)`. |
 
 **Claims.** The INSPIRE Factory derives one claim for the trigger
 (`{process}/trigger`), one per `B{n}` step, and one per pre-action and post-action,
@@ -74,9 +74,9 @@ renumbered, never reused. Deleting a step leaves a gap.
 4. **Interview the sections** in template order: trigger, required actions,
    pre-actions, steps, post-actions, affected entities. State each step as one
    observable thing the system does.
-5. **Every link has a file.** An action in `## Requires`, `## Before` or `## After`,
+5. **Every link has a file.** Links follow [kb-links.md](../_references/kb-links.md). An action in `## Requires`, `## Before` or `## After`,
    or an entity in `## Affects`, that does not exist yet is created as a draft from
-   its template (`inspire-domain`'s `action.template.md` or `entity.template.md`)
+   its template (`inspire-domain`'s [action.template.md](../inspire-domain/templates/action.template.md) or [entity.template.md](../inspire-domain/templates/entity.template.md))
    with `lifecycle: draft`, in the same change.
 6. **Write the file** at the placement the scope names, from the template, with
    `lifecycle: draft`.
@@ -130,7 +130,7 @@ findings name their rule; the judgment checks name the check in the rule slot.
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames)
 > stay verbatim.
 
 > **Writing contract.** Process files follow

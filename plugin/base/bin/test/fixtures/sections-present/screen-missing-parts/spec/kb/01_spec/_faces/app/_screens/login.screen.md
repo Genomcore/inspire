@@ -5,7 +5,7 @@ screen: login
 ---
 # Sign in
 
-**Pattern:** [[../patterns/form]]
+**Pattern:** [form](../../../_design-system/patterns/form.pattern.md)
 
 ## Module-specific deviations
 

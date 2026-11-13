@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "finding_count": 1,
+  "findings": [
+    { "rule": "links-resolve", "severity": "error", "message_substring": "api.bundle.md.*link does not resolve: .gone.(missing.md) at line 3" }
+  ],
+  "forbidden": ["(api.bundle.md)"]
+}

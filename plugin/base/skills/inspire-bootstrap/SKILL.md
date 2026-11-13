@@ -8,7 +8,7 @@ description: "Configure the project's foundation — the output language, tech s
 ## Scope
 
 This skill owns the **bootstrap layer** —
-[`inspire_kb/00_bootstrap/`](../../../inspire_kb/00_bootstrap):
+`inspire_kb/00_bootstrap`:
 
 - `project.md` — **project conventions**, chiefly `output_language`: the single
   language every skill writes its artifacts in (default English).
@@ -29,7 +29,7 @@ This skill owns the **bootstrap layer** —
   the `stack` flow.
 
 It also owns the **design system** in
-[`inspire_kb/01_spec/_design-system/`](../../../inspire_kb/01_spec/_design-system):
+`inspire_kb/01_spec/_design-system`:
 
 - `theme.md` + `theme.tokens.json` — the **design-system default** (fonts, color
   palette + status map, density, layout, icons, supported viewports) — the
@@ -43,9 +43,9 @@ The components, layouts and patterns in the same directory belong to
 `/inspire-screens`.
 
 These are the foundation everything else reads: the specification
-([`01_spec`](../../../inspire_kb/01_spec)) — modules, their domain, faces and their
-screens — the prototype ([`/prototype`](../../../prototype))
-and production code ([`/source`](../../../source)) all build on what is declared here —
+(`inspire_kb/01_spec`) — modules, their domain, faces and their
+screens — the prototype (`/prototype`)
+and production code (`/source`) all build on what is declared here —
 those last two named at their defaults, the operative roots being the
 `prototype_root` / `source_root` this skill records above.
 The template seeds all three with a sensible default (English + the OpenBIMS
@@ -186,7 +186,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
 `en`). See [`_references/output-language.md`](../_references/output-language.md).
 
 1. Read the current `output_language` from
-   [`00_bootstrap/project.md`](../../../inspire_kb/00_bootstrap/project.md).
+   `inspire_kb/00_bootstrap/project.md`.
 2. Ask for the language (an ISO 639-1 code or a plain name; default English). Make
    clear what it does and does **not** govern:
    - **Governs:** every KB artifact — specs, features, ADRs, screen specs,
@@ -196,7 +196,7 @@ writes its KB artifacts in (`project.md` frontmatter `output_language`; default
      single-language for a stable, diffable shared context.
 3. Present the change and write `output_language` to `project.md` on approval.
    Changing it does **not** retranslate existing artifacts — say so, and offer to
-   translate on request. Machine-read tokens (frontmatter keys/values, wikilink
+   translate on request. Machine-read tokens (frontmatter keys/values, link
    slugs, filenames, IDs) are never translated regardless.
 4. When the language is not English and `style-tokens.md` has no rows, propose
    tokens in that language: for R6, words that narrate the past

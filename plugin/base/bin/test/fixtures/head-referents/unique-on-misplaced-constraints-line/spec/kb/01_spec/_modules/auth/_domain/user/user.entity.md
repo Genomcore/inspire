@@ -6,10 +6,10 @@ lifecycle: accepted
 ---
 
 ## Purpose
-The user account entity, grounded in [[auth-user-management]].
+The user account entity, grounded in [auth-user-management](../../_features/user-management.feature.md).
 
 ## Rationale
-Identity model rationale, per [[adr-auth-01-identity-model]].
+Identity model rationale, per [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
 
 ## Invariants
 None beyond Fields constraints.
@@ -25,7 +25,7 @@ None beyond Fields constraints.
 Constraints: `nonnull, unique, immutable`
 
 ### email
-The handle a person signs in with, per [[adr-auth-01-identity-model]].
+The handle a person signs in with, per [adr-auth-01-identity-model](../../../../_adr/auth-01-identity-model.adr.md).
 
 Constraints: `nonnull, unique, pattern(/.+@.+/)`
 
@@ -33,4 +33,4 @@ Constraints: `nonnull, unique, pattern(/.+@.+/)`
 
 | Action | Touch | Notes |
 |---|---|---|
-| [[auth.user.create|auth::user::create]] | write | Inserts the row. |
+| [auth::user::create](user.create.action.md) | write | Inserts the row. |

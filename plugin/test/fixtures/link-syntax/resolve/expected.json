@@ -1,0 +1,156 @@
+{
+  "files": [
+    "inspire_kb/01_spec/README.md",
+    "inspire_kb/01_spec/_adr/audit.adr.md",
+    "inspire_kb/01_spec/_adr/r(1).md",
+    "inspire_kb/01_spec/_adr/ñ.md",
+    "inspire_kb/99_tracker/tickets/T-1.md",
+    "inspire_kb/README.md"
+  ],
+  "links": [
+    {
+      "line": 3,
+      "form": "md",
+      "target": "../README.md",
+      "text": "up",
+      "file": "inspire_kb/01_spec/README.md",
+      "resolved": "inspire_kb/README.md"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "_adr/audit.adr.md#context",
+      "text": "audit",
+      "file": "inspire_kb/01_spec/README.md",
+      "resolved": "inspire_kb/01_spec/_adr/audit.adr.md"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "next.adr.md",
+      "text": "next",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": null
+    },
+    {
+      "line": 5,
+      "form": "md",
+      "target": "r\\(1\\).md",
+      "text": "escaped",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": "inspire_kb/01_spec/_adr/r(1).md"
+    },
+    {
+      "line": 5,
+      "form": "md",
+      "target": "%C3%B1.md",
+      "text": "encoded",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": "inspire_kb/01_spec/_adr/ñ.md"
+    },
+    {
+      "line": 5,
+      "form": "embed",
+      "target": "r(1).md",
+      "text": "embed",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": "inspire_kb/01_spec/_adr/r(1).md"
+    },
+    {
+      "line": 5,
+      "form": "md",
+      "target": "r(1).md",
+      "text": "angle",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": "inspire_kb/01_spec/_adr/r(1).md"
+    },
+    {
+      "line": 5,
+      "form": "md",
+      "target": "../../../source/app/gone.ts",
+      "text": "out",
+      "file": "inspire_kb/01_spec/_adr/audit.adr.md",
+      "resolved": null
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "../../01_spec/",
+      "text": "spec",
+      "file": "inspire_kb/99_tracker/tickets/T-1.md",
+      "resolved": "inspire_kb/01_spec"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "../T-0.md",
+      "text": "gone",
+      "file": "inspire_kb/99_tracker/tickets/T-1.md",
+      "resolved": null
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "01_spec/README.md",
+      "text": "spec",
+      "file": "inspire_kb/README.md",
+      "resolved": "inspire_kb/01_spec/README.md"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "plan.md",
+      "text": "plan",
+      "file": "inspire_kb/README.md",
+      "resolved": null
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "../source/app/main.ts",
+      "text": "main",
+      "file": "inspire_kb/README.md",
+      "resolved": "source/app/main.ts"
+    },
+    {
+      "line": 3,
+      "form": "md",
+      "target": "01_spec/",
+      "text": "dir",
+      "file": "inspire_kb/README.md",
+      "resolved": "inspire_kb/01_spec"
+    },
+    {
+      "line": 4,
+      "form": "md",
+      "target": "/source/app/main.ts",
+      "text": "root main",
+      "file": "inspire_kb/README.md",
+      "resolved": "source/app/main.ts"
+    },
+    {
+      "line": 4,
+      "form": "md",
+      "target": "/source",
+      "text": "root dir",
+      "file": "inspire_kb/README.md",
+      "resolved": "source"
+    },
+    {
+      "line": 4,
+      "form": "md",
+      "target": "/nowhere/x.md",
+      "text": "nowhere",
+      "file": "inspire_kb/README.md",
+      "resolved": null
+    },
+    {
+      "line": 4,
+      "form": "wiki",
+      "target": "old",
+      "text": "old",
+      "file": "inspire_kb/README.md",
+      "resolved": null
+    }
+  ]
+}

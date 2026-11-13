@@ -25,7 +25,7 @@ Create a user — field touch maps to entity Fields table cleanly.
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 
 | Field   | Touch   | Type  | Mapping       | Notes |

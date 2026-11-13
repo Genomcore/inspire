@@ -4,6 +4,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -15,24 +16,26 @@ emit() {
   sdd_count_warning
 }
 
+# header_targets <file> <marker> — the id of the file each link on the `**Marker:**`
+# line names. A link that names no file gives its last segment without the typed
+# extension, so the catalog lookup fails for it.
 header_targets() {
-  awk -v pfx="$2" '
+  local ln form target text path t
+  ln="$(awk -v pfx="$2" '
     /^---[ \t]*$/ && NR == 1 { fm = 1; next }
     fm { if ($0 ~ /^---[ \t]*$/) fm = 0; next }
-    index($0, pfx) == 1 {
-      s = $0
-      while (match(s, /\[\[[^]]+\]\]/)) {
-        t = substr(s, RSTART + 2, RLENGTH - 4)
-        p = index(t, "|")
-        if (p > 0) t = substr(t, 1, p - 1)
-        sub(/#.*/, "", t)
-        n = split(t, seg, "/")
-        print seg[n]
-        s = substr(s, RSTART + RLENGTH)
-      }
-      exit
-    }
-  ' "$1"
+    index($0, pfx) == 1 { print NR; exit }
+  ' "$1")"
+  [ -n "$ln" ] || return 0
+  sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
+    t="${target%%#*}"; t="${t##*/}"
+    if [ -f "$path" ]; then sdd_artifact_id "$path"
+    else
+      t="${t%.md}"
+      case "$t" in *.layout|*.pattern|*.component) t="${t%.*}" ;; esac
+      printf '%s\n' "$t"
+    fi
+  done
 }
 
 table_rows() {

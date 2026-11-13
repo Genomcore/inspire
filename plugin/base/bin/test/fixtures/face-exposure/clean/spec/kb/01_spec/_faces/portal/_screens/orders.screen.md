@@ -9,8 +9,8 @@ lifecycle: accepted
 ### Data
 | Key | Action | Notes |
 |---|---|---|
-| `main` | [[orders.order.list\|orders::order::list]] | feed |
+| `main` | [orders::order::list](../../../_modules/orders/_domain/order/order.list.action.md) | feed |
 ### Dispatches
 | Key | Action | Outcome |
 |---|---|---|
-| `close` | [[billing.invoice.close\|billing::invoice::close]] | refresh `main` |
+| `close` | [billing::invoice::close](../../../_modules/billing/_domain/invoice/invoice.close.action.md) | refresh `main` |

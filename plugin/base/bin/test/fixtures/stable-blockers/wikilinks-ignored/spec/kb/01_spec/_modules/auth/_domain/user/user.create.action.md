@@ -1,0 +1,42 @@
+---
+id: auth::user::create
+module: auth
+entity: user
+action: create
+lifecycle: stable
+requires:
+  - "[[auth.password.hash|auth::password::hash]]"
+  - "[[auth.nothing.here]]"
+superseded_by: null
+---
+
+## Purpose
+Stable action with non-stable dep — should fail.
+
+## Inputs
+
+| Parameter  | Type     | Required | Description |
+|------------|----------|----------|-------------|
+| `email`    | email    | yes      | Login.      |
+| `password` | password | yes      | Plaintext.  |
+
+## Outputs
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id`  | uuid | New user id.|
+
+## Entities
+
+### [auth::user](user.entity.md)
+**As input:** shape · **Effect:** create
+
+| Field | Touch   | Type  | Mapping       | Notes |
+|-------|---------|-------|---------------|-------|
+| `id`  | written | uuid  | `uuid()`      |       |
+
+## Behavior
+1. Persist.
+
+## Errors
+- `none`

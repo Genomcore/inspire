@@ -28,7 +28,7 @@
 #     `**State:** to-extract` blocks a `stable` screen.
 #
 # Ownership, deliberately: this rule checks the FORM of an outward reference and
-# never its existence — `wikilinks-resolve.sh` owns resolution, for screens as
+# never its existence — `links-resolve.sh` owns resolution, for screens as
 # for domain objects. Two rules reporting one dangling link would double every
 # finding.
 #
@@ -51,6 +51,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_lib.sh"
+source "$SCRIPT_DIR/_link-reads.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
@@ -60,6 +61,7 @@ SCOPE="${1:-}"
 SC_INDEX="$(mktemp -t sdd-screen-index.XXXXXX)"
 SC_ROWS="$(mktemp -t sdd-screen-rows.XXXXXX)"
 SC_SEEN="$(mktemp -t sdd-screen-seen.XXXXXX)"
+SC_LINK_ROWS=""   # `sdd_links` of the screen being checked
 trap 'rm -f "$SC_INDEX" "$SC_ROWS" "$SC_SEEN"' EXIT
 
 BINDING_SUBSECTIONS="Parameters Data Dispatches Navigation States"
@@ -83,23 +85,18 @@ sc_h1_route() {
     '"${SDD_AWK_FENCE_FUNCS}" "$1"
 }
 
-# sc_header_links <file> <marker> — every wikilink target on a `**Marker:**`
-# body line, one per line, pipe-syntax unwrapped to the canonical right side.
+# sc_header_links <file> <marker> — the file each link on a `**Marker:**` body line
+# resolves to, one per line (a broken one is links-resolve's finding, not listed here).
 sc_header_links() {
-  awk -v pfx="$2" \
+  local ln form target text path
+  ln="$(awk -v pfx="$2" \
     "${SDD_AWK_FM_READER}${SDD_AWK_FENCE_SKIP}"'
-      index($0, pfx) == 1 {
-        s = $0
-        while (match(s, /\[\[[^]]+\]\]/)) {
-          t = substr(s, RSTART+2, RLENGTH-4)
-          p = index(t, "|")
-          if (p > 0) t = substr(t, p+1)
-          print t
-          s = substr(s, RSTART + RLENGTH)
-        }
-        exit
-      }
-    '"${SDD_AWK_FENCE_FUNCS}" "$1"
+      index($0, pfx) == 1 { print NR; exit }
+    '"${SDD_AWK_FENCE_FUNCS}" "$1")"
+  [ -n "$ln" ] || return 0
+  sdd_line_links "$1" "$ln" "$ln" | while IFS=$'\t' read -r ln form target text path; do
+    [ -f "$path" ] && printf '%s\n' "$path"
+  done
 }
 
 # sc_parse_bindings <file> — normalizes `## Bindings` into TSV on stdout:
@@ -107,7 +104,7 @@ sc_header_links() {
 #   ROW<TAB>{subsection}<TAB>{cell}...   one per data row, cells trimmed
 #   NOSUB                                a table sits under no H3 at all
 # A pipe escaped for a table cell (`\|`) is protected before the split and
-# restored after, so a pipe-syntax wikilink does not end its cell. HTML comments
+# restored after, so a link whose text holds a pipe does not end its cell. HTML comments
 # are dropped whole-line: the templates carry guidance comments, and no binding
 # row ever carries one.
 sc_parse_bindings() {
@@ -150,37 +147,30 @@ sc_bare() {
   printf '%s\n' "$1" | tr -d '`' | awk '{ gsub(/^[ \t]+|[ \t]+$/, ""); print }'
 }
 
-# sc_link_target <cell> — the canonical target of the first wikilink in a table
-# cell (pipe-syntax right side, anchor dropped), or nothing when the cell carries
-# none. Existence is `wikilinks-resolve.sh`'s question; this reader exists so the
-# FORM of a transition target can be judged, which is this rule's half.
-sc_link_target() {
-  printf '%s\n' "$1" | awk '
-    match($0, /\[\[[^]]+\]\]/) {
-      t = substr($0, RSTART+2, RLENGTH-4)
-      p = index(t, "|")
-      if (p > 0) t = substr(t, p+1)
-      sub(/#.*$/, "", t)
-      gsub(/^[ \t]+|[ \t]+$/, "", t)
-      print t
-    }
-  '
+# sc_linked <cell> — `link` when the cell carries a link, `wiki` when that link is a
+# wikilink, which only links-resolve reports (D5).
+sc_linked() {
+  local row
+  row="$(sdd_link_in_text "$SC_LINK_ROWS" "$1")"
+  case "$row" in "") ;; *$'\t'wiki$'\t'*) printf 'wiki\n' ;; *) printf 'link\n' ;; esac
 }
 
-# sc_resolve_rel <from_dir> <target> — prints the file a path-shaped or bare
-# wikilink target names inside the catalogs, or nothing.
-sc_resolve_rel() {
-  local from_dir="$1" target="$2" cand
-  target="${target%%#*}"
-  [ -n "$target" ] || return 0
-  for cand in "$from_dir/$target" "$from_dir/$target.md" "$target" "$target.md"; do
-    if [ -f "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
-  done
-  # Bare name, or a path written for another layout: look the name up in the
-  # pattern and component catalogs, by extension.
-  for cand in "$(sdd_resolve_catalog pattern "$target")" "$(sdd_resolve_catalog component "$target")"; do
-    if [ -n "$cand" ]; then printf '%s\n' "$cand"; return 0; fi
-  done
+# sc_link_target <cell> — the canonical target of the first link in a table cell,
+# or nothing when the cell carries none: the id of the file it names, or, for a
+# broken link that is not a file path (`/users`), the path as written, so its route
+# shape can be judged. Existence is
+# `links-resolve.sh`'s question; this reader serves the FORM check, this rule's half.
+sc_link_target() {
+  local row ln form target text path
+  row="$(sdd_link_in_text "$SC_LINK_ROWS" "$1")"
+  [ -n "$row" ] || return 0
+  IFS=$'\t' read -r ln form target text path <<< "$row"
+  if [ "$form" = wiki ]; then return 0
+  elif [ -f "$path" ]; then
+    sdd_artifact_id "$path"
+  else
+    case "${target%%#*}" in *.md) ;; *) printf '%s\n' "${target%%#*}" ;; esac
+  fi
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -203,17 +193,9 @@ while IFS= read -r f; do
     "$(id="$(sdd_fm_value "$f" '.id')"; printf '%s' "${id%%.*}")" >> "$SC_INDEX"
 done < <(sdd_find_screens "$SDD_SPEC_ROOT")
 
-# sc_screen_file <id> — the screen file declaring <id>, or the one the migration's id
-# map renamed it to: a link inside `## Bindings` keeps the id it was written with.
+# sc_screen_file <id> — the screen file declaring <id>.
 sc_screen_file() {
-  local f alias
-  f="$(awk -F'\t' -v k="$1" '$2 == k { print $1; exit }' "$SC_INDEX")"
-  if [ -z "$f" ]; then
-    alias="$(sdd_screen_id_alias "$1")"
-    [ -n "$alias" ] && f="$(awk -F'\t' -v k="$alias" '$2 == k { print $1; exit }' "$SC_INDEX")"
-  fi
-  [ -n "$f" ] && printf '%s\n' "$f"
-  return 0
+  awk -F'\t' -v k="$1" '$2 == k { print $1; exit }' "$SC_INDEX"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -266,15 +248,15 @@ check_identity() {
   fi
 
   if [ "$lifecycle" = "superseded" ]; then
-    local sb
-    sb="$(sdd_fm_value "$file" '.superseded_by')"
-    sb="$(sdd_unwrap_wikilink "$sb")"
-    if [ -z "$sb" ]; then
+    local sb_form sb_written sb sb_path
+    IFS=$'\t' read -r sb_form sb_written sb sb_path < <(sdd_fm_link_refs "$file" superseded_by)
+    if [ "$sb_form" = wiki ]; then :
+    elif [ -z "$sb_form" ]; then
       emit "$sev" "$file" \
         "screen superseded without superseded_by: name the screen id that replaced it"
-    elif [ -z "$(sc_screen_file "$sb")" ]; then
+    elif [ -z "$sb" ] || [ -z "$(sc_screen_file "$sb")" ]; then
       emit "$sev" "$file" \
-        "superseded_by target does not resolve to a screen id: '$sb'"
+        "superseded_by target does not resolve to a screen id: '${sb:-$sb_written}'"
     fi
   fi
 
@@ -354,11 +336,11 @@ check_bindings() {
       case "$outcome" in
         ""|"-"|"—"|"n/a"|"none") continue ;;
       esac
-      case "$outcome" in
-        *"[["*"]]"*)                                   # navigate: a screen id
-          # …and a screen id has no slash in it. Wrapping a route in brackets
+      case "$(sc_linked "$outcome"):$outcome" in
+        link:*)                                        # navigate: a screen id
+          # …and a screen id has no slash in it. Wrapping a route in a link
           # satisfies the grammar's shape and none of its meaning, so it is
-          # caught here rather than left to `wikilinks-resolve` to report as a
+          # caught here rather than left to `links-resolve` to report as a
           # generic dangling target.
           navtarget="$(sc_link_target "$outcome")"
           case "$navtarget" in
@@ -366,14 +348,15 @@ check_bindings() {
                    "navigate outcome is route-shaped: '$navtarget' — an outcome names a screen id, never a route" ;;
           esac
           continue ;;
-        "state "*|"→ state "*)
+        wiki:*) continue ;;
+        *:"state "*|*:"→ state "*)
           key="$(sc_bare "${outcome##*state }")"
           if ! awk -F'\t' -v k="$key" '$1 == "States" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
             emit "$sev" "$file" \
               "unresolved outcome: state '$key' is not declared under '### States'"
           fi
           ;;
-        "refresh "*|"→ refresh "*)
+        *:"refresh "*|*:"→ refresh "*)
           key="$(sc_bare "${outcome##*refresh }")"
           if ! awk -F'\t' -v k="$key" '$1 == "Data" && $2 == k { f=1; exit } END { exit !f }' "$SC_SEEN"; then
             emit "$sev" "$file" \
@@ -382,28 +365,29 @@ check_bindings() {
           ;;
         *)
           emit "$sev" "$file" \
-            "unresolved outcome: '$outcome' is none of '→ [[{screen-id}]]', 'state \`{key}\`' or 'refresh \`{key}\`'"
+            "unresolved outcome: '$outcome' is none of '→ [{screen-id}]({path})', 'state \`{key}\`' or 'refresh \`{key}\`'"
           ;;
       esac
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 
-  # Navigation targets are screen ids, written as wikilinks. Brackets alone are
-  # not enough: a screen id is `{face}.{slug}` and carries no slash, so a route survives the bracket test and
-  # fails this one — otherwise the check would accept what its own message
+  # Navigation targets are screen ids, written as links. A link alone is not enough:
+  # a screen id is `{face}.{slug}` and carries no slash, so a route survives the link
+  # test and fails this one — otherwise the check would accept what its own message
   # forbids.
   while IFS= read -r line; do
     key="$(printf '%s\n' "$line" | cut -f4)"
-    case "$key" in
-      *"[["*"]]"*)
+    case "$(sc_linked "$key")" in
+      link)
         navtarget="$(sc_link_target "$key")"
         case "$navtarget" in
           */*) emit "$sev" "$file" \
-                 "navigation target is route-shaped: '$navtarget' — targets are wikilinked screen ids, never routes" ;;
+                 "navigation target is route-shaped: '$navtarget' — targets are linked screen ids, never routes" ;;
         esac
         ;;
+      wiki) ;;
       *) emit "$sev" "$file" \
-           "navigation target is not a screen id: '$key' — targets are wikilinked ids, never routes" ;;
+           "navigation target is not a screen id: '$key' — targets are linked ids, never routes" ;;
     esac
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { print }' "$SC_ROWS")
 
@@ -517,9 +501,7 @@ check_parameters() {
     key="$(sc_bare "$(printf '%s\n' "$line" | cut -f3)")"
     for col in 6 7; do
       cell="$(printf '%s\n' "$line" | cut -f$col)"
-      case "$cell" in
-        *"[["*"]]"*) check_param_refs_target "$file" "$sev" "$cell" "dispatch '$key'" ;;
-      esac
+      [ "$(sc_linked "$cell")" != link ] || check_param_refs_target "$file" "$sev" "$cell" "dispatch '$key'"
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 }
@@ -606,8 +588,7 @@ check_pattern_vocab() {
 #   normalized rows already say. The dispatch below keeps the order.
 check_join() {
   local file="$1" sev="$2" lifecycle="$3"
-  local dir target pattern_file kinds have region fill accepts tok
-  dir="$(dirname "$file")"
+  local pattern_file kinds have region fill accepts tok
 
   # An old-shape screen has no `## Bindings` at all. sections-present already
   # says so; joining a layout against a section that is not there would only
@@ -620,54 +601,49 @@ check_join() {
   awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { f=1 } END { exit !f }' "$SC_ROWS" && have="$have dispatch"
   awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { f=1 } END { exit !f }' "$SC_ROWS" && have="$have nav"
 
-  target="$(sc_header_links "$file" '**Pattern:**' | head -n 1)"
-  if [ -n "$target" ]; then
-    pattern_file="$(sc_resolve_rel "$dir" "$target")"
-    if [ -n "$pattern_file" ]; then
-      if ! sdd_has_section "$pattern_file" "Regions"; then
-        case " $SC_PATTERNS_REPORTED " in
-          *" $pattern_file "*) ;;
-          *)
-            SC_PATTERNS_REPORTED="$SC_PATTERNS_REPORTED $pattern_file"
-            # Reported on the pattern, because that is the file to change: an
-            # entry with no `## Regions` cannot be joined to anything.
-            emit "warning" "$pattern_file" \
-              "pattern entry declares no '## Regions' table: the screen-to-layout join cannot be checked"
-            ;;
-        esac
-      else
-        check_pattern_vocab "$pattern_file"
-        while IFS=$'\t' read -r region fill accepts; do
-          [ -z "$region" ] && continue
-          [ "$fill" = "required" ] || continue
-          kinds=""
-          for tok in $(printf '%s\n' "$accepts" | tr ',|' '  '); do
-            case "$tok" in
-              data|dispatch|nav) kinds="$kinds $tok" ;;
-            esac
-          done
-          [ -n "$kinds" ] || continue
-          for tok in $kinds; do
-            case " $have " in
-              *" $tok "*) kinds="SATISFIED"; break ;;
-            esac
-          done
-          if [ "$kinds" != "SATISFIED" ]; then
-            emit "$sev" "$file" \
-              "pattern join: required region '$region' of $(sdd_artifact_id "$pattern_file") accepts$(printf '%s' "$kinds") and this screen declares no such binding"
-          fi
-        done < <(sc_pattern_regions "$pattern_file")
-      fi
+  pattern_file="$(sc_header_links "$file" '**Pattern:**' | head -n 1)"
+  if [ -n "$pattern_file" ]; then
+    if ! sdd_has_section "$pattern_file" "Regions"; then
+      case " $SC_PATTERNS_REPORTED " in
+        *" $pattern_file "*) ;;
+        *)
+          SC_PATTERNS_REPORTED="$SC_PATTERNS_REPORTED $pattern_file"
+          # Reported on the pattern, because that is the file to change: an
+          # entry with no `## Regions` cannot be joined to anything.
+          emit "warning" "$pattern_file" \
+            "pattern entry declares no '## Regions' table: the screen-to-layout join cannot be checked"
+          ;;
+      esac
+    else
+      check_pattern_vocab "$pattern_file"
+      while IFS=$'\t' read -r region fill accepts; do
+        [ -z "$region" ] && continue
+        [ "$fill" = "required" ] || continue
+        kinds=""
+        for tok in $(printf '%s\n' "$accepts" | tr ',|' '  '); do
+          case "$tok" in
+            data|dispatch|nav) kinds="$kinds $tok" ;;
+          esac
+        done
+        [ -n "$kinds" ] || continue
+        for tok in $kinds; do
+          case " $have " in
+            *" $tok "*) kinds="SATISFIED"; break ;;
+          esac
+        done
+        if [ "$kinds" != "SATISFIED" ]; then
+          emit "$sev" "$file" \
+            "pattern join: required region '$region' of $(sdd_artifact_id "$pattern_file") accepts$(printf '%s' "$kinds") and this screen declares no such binding"
+        fi
+      done < <(sc_pattern_regions "$pattern_file")
     fi
   fi
 
   # A component still to extract is a promise, not a dependency: it blocks
   # `stable` and nothing else.
   [ "$lifecycle" = "stable" ] || return 0
-  local comp comp_file state
-  while IFS= read -r comp; do
-    [ -z "$comp" ] && continue
-    comp_file="$(sc_resolve_rel "$dir" "$comp")"
+  local comp_file state
+  while IFS= read -r comp_file; do
     [ -n "$comp_file" ] || continue
     state="$(awk 'index($0, "**State:**") == 1 { s = $0; sub(/^\*\*State:\*\*[ \t]*/, "", s); gsub(/[ \t]+$/, "", s); print s; exit }' "$comp_file")"
     if [ "$state" = "to-extract" ]; then
@@ -692,6 +668,7 @@ if [ -n "$SCREEN_SCOPE" ]; then
     s_screen="$(printf '%s\n' "$row" | cut -f4)"
     s_lifecycle="$(sdd_fm_value "$screen_file" '.lifecycle')"
     s_sev="$(sdd_progressive_severity "$s_lifecycle")"
+    SC_LINK_ROWS="$(sdd_links "$screen_file" wiki)"
 
     check_identity "$screen_file" "$s_sev" "$s_id" "$s_module" "$s_screen" "$s_lifecycle"
     check_bindings "$screen_file" "$s_sev"

@@ -150,8 +150,10 @@ out="$(classify "$mf21" "$p" "$base" "$MAP_PRE" "$MAP_03")"
 
 check "a pre-0.3 source finds its base counterparts (nothing wholesale-deleted)" \
    "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 !~ /^\.claude\/bin\/test\//' | wc -l | tr -d ' ')\" -lt 20 ]"
+# wikilinks-resolve.sh and rationale-wikilink.sh are the validators the plugin no
+# longer ships under those names (0.17.0: links-resolve.sh, rationale-link.sh).
 check "the validator set is NOT mass-classified as delete" \
-   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 ~ /^\.claude\/bin\/[^\/]*\$/' | wc -l | tr -d ' ')\" = 0 ]"
+   "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"delete\" && \$2 ~ /^\.claude\/bin\/[^\/]*\$/ { print \$2 }' | sort | paste -sd, -)\" = .claude/bin/rationale-wikilink.sh,.claude/bin/wikilinks-resolve.sh ]"
 check "at least one untouched-but-stale file is replaced" \
    "[ \"\$(printf '%s' \"\$out\" | awk -F'\t' '\$1==\"replace\"' | wc -l | tr -d ' ')\" -ge 1 ]"
 check "the dropped bin/test fixtures are recognised as ours to delete" \

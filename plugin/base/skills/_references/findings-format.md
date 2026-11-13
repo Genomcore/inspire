@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-wikilink`, `wikilinks-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -32,7 +32,7 @@ When skills surface findings in conversation, render each one as a markdown sub-
 Three required slots:
 
 1. **Heading** — `### {severity} · {rule} — {target}`
-2. **Issue** — the message, lightly humanized (resolve ids to wikilinks where helpful)
+2. **Issue** — the message, lightly humanized (link ids to their files where helpful)
 3. **Suggested follow-up** — what action to take. If the rule's catalog entry doesn't supply one, ask the operator.
 
 ## Finding type catalog (closed set)
@@ -71,8 +71,9 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 |---|---|---|
 | `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. Entities and actions only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
-| `has no wikilink in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-wikilink | No back-source link in the rationale-bearing section(s). |
-| `wikilink does not resolve` | wikilinks-resolve | A `[[wikilink]]` in body cannot be resolved to a file. Four resolution routes, tried in order: an SDD object id, a screen `id`, then — for a path-shaped target such as `../patterns/list` — its last segment, then a bare basename. A path is never resolved relative to the linking file: the name is what the link means, so a `../` depth that shifted with a move still names the right file. Screen files are checked alongside entities and actions, so a dangling navigation target is reported here, and both indexes are built KB-wide whatever the scope. |
+| `has no link in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-link | No back-source link in the rationale-bearing section(s). |
+| `link does not resolve` | links-resolve | A Markdown link in a KB file (any `.md` but a template or a file under `_migration/`) has a path that, joined to the linking file's directory, names no file and no directory; a path that starts with `/` joins the repository root. Screen files are checked alongside entities and actions, so a dangling navigation target is reported here. Fix it by correcting the path or by creating the target first ([kb-links.md](kb-links.md)). |
+| `wikilink [[…]]` | links-resolve | A wikilink in a KB file. It is an error at every lifecycle; `/inspire:migrate` converts it, or settles it: a draft of the artifact it names, or its text. |
 | `OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6` | keys-present | A keyed entry is there but wrong: a step key that is not `B{n}`, a section holding neither a declared-none body nor keyed entries, a head outside its closed vocabulary or at the wrong arity, a key used twice in one keyspace. |
 | `OS-E2` · `OS-E4` · `OS-E8` · `OS-E9` | constraints-mechanics | A `Constraints:` line is wrong: no `id` row to carry the marker, a word outside vocabulary V1 or at the wrong arity (`nonnull` on an input line included), a line that is not its H3's first content line, or a field sub-section whose field is no row of `## Fields`. |
 | `OS-E7` · `OS-X1` · `OS-X2` · `OS-X3` · `OS-X4` | head-referents | A name a head mentions does not exist: an unresolvable `references(...)`, a written `unique` field with no matching `unique(...)` error head, an invariant head naming a non-field, a `P`/`Q` head naming an untouched entity, `returns(...)` naming a non-output. |
@@ -109,7 +110,7 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 | Type | Rule | Meaning |
 |---|---|---|
 | `screen file missing required part(s)` / `has empty section(s)` | sections-present | A `*.screen.md` file is missing its H1 title, its `**Features:**` line, `## Purpose` or `## Bindings`, or carries one of those two sections with nothing under it. `**Pattern:**`, `**Components:**`, `## Module-specific deviations`, `## Current prototype` and `## Notes` are optional and never flagged. |
-| `screen file carries a retired section` | sections-present | `## Instantiation` is still there. Its declarations belong in keyed `## Bindings` rows — see `inspire-screens/references/format-screen.md` § Old shape → new shape. |
+| `screen file carries a retired section` | sections-present | `## Instantiation` is still there. Its declarations belong in keyed `## Bindings` rows — see [inspire-screens/references/format-screen.md](../inspire-screens/references/format-screen.md) § Old shape → new shape. |
 | `screen missing frontmatter field` | screen-coherence | One of `id` · `module` · `screen` · `lifecycle` is absent. On a file with no frontmatter at all this is the whole old-shape story, reported once per missing field. |
 | `invalid screen lifecycle value` | screen-coherence | `lifecycle:` is set but is not one of `draft / accepted / stable / superseded`. |
 | `screen id shape` | screen-coherence | `id` is not `{face}.{slug}`: two segments, the face and the screen's slug. |
@@ -119,8 +120,8 @@ it. A screen with no frontmatter at all reads as `draft`: warnings only.
 | `unknown bindings subsection` | screen-coherence | An H3 under `## Bindings` outside the closed set `Data` · `Dispatches` · `Navigation` · `States`. |
 | `binding row has no key` | screen-coherence | A binding table row whose first cell is empty. Every declaration is keyed. |
 | `duplicate binding key` | screen-coherence | One key used twice in the same subsection. Keys are screen-local and unique per subsection; a second dispatch of the same action needs its own key. |
-| `unresolved outcome` | screen-coherence | A dispatch's `On success` / `On error` is not one of `→ [[{screen-id}]]`, `state \`{key}\``, or `refresh \`{key}\`` — or names a state/data key the screen does not declare. |
-| `navigation target is not a screen id` / `navigation target is route-shaped` / `navigate outcome is route-shaped` | screen-coherence | A `### Navigation` target, or a dispatch outcome that navigates, is not a wikilinked screen id — or is one shaped like a route (`[[/users/:id]]`). A screen id carries no slash, so a route in brackets satisfies the form and none of the meaning. The rule reads the FORM only; whether the id exists is `wikilinks-resolve`'s question. |
+| `unresolved outcome` | screen-coherence | A dispatch's `On success` / `On error` is not one of `→ [{screen-id}]({path})`, `state \`{key}\``, or `refresh \`{key}\`` — or names a state/data key the screen does not declare. |
+| `navigation target is not a screen id` / `navigation target is route-shaped` / `navigate outcome is route-shaped` | screen-coherence | A `### Navigation` target, or a dispatch outcome that navigates, is not a linked screen id — or is a link whose target is a route (`[users](/users/:id)`). A screen id carries no slash, so a route in a link satisfies the form and none of the meaning. The rule reads the FORM only; whether the file exists is `links-resolve`'s question. |
 | `state not anchored` | screen-coherence | A state's `When` references no declared data key, no dispatch key and no deviation. A free-floating state has nothing to observe. The reference anchors only through backticks: `` `main` returns zero rows `` anchors, the same words unbackticked do not. |
 | `pattern join` | screen-coherence | The named pattern has a required region accepting `data`, `dispatch` or `nav`, and the screen declares no binding of that kind — a `list` layout with no data binding. |
 | `stable screen declares a to-extract component` | screen-coherence | Error at `stable` only, exempt elsewhere: a component still to extract is a promise, not a dependency. |
@@ -141,7 +142,7 @@ sides and neither can fire on a pre-0.9 file — they are **errors at every stat
 | `duplicate {type} id …` | spec-identity | **Error.** Two artifacts of one type share an id within the scope that type is unique in: the project, or the module for a feature. |
 | `frontmatter says this is a …, its extension says …` | spec-identity | **Error.** The frontmatter `type:` and the typed extension disagree. |
 | `shell … is also the shell of …` | spec-identity | **Error.** Two faces share a shell, so their routes would collide. |
-| `face uses bundle …, which no {bundle}.bundle.md declares` | spec-identity | **Error.** A face's `bundles:` names a bundle with no file. Create it from `bundle.template.md` in draft (`/inspire-face add bundle`). |
+| `face uses bundle …, which no {bundle}.bundle.md declares` | spec-identity | **Error.** A face's `bundles:` names a bundle with no file. Create it from [bundle.template.md](../inspire-face/templates/bundle.template.md) in draft (`/inspire-face add bundle`). |
 | `bundle declares no package:` | spec-identity | Warning. The package that exposes the bundle's actions is recorded nowhere, so the Factory cannot plan its mount test. |
 | `binds action …, which no bundle of face … exposes` | face-exposure | A screen binds an action outside its face's bundles. Lifecycle-progressive by the screen's `lifecycle:`. |
 | `face … lists no bundles: while its screens bind actions` | face-exposure | Warning, once on the face: the exposure is undeclared, not wrong. |

@@ -8,7 +8,7 @@ description: "Task tracker: create / update / close / list / show tickets in ins
 ## Scope
 
 A plain-file ticket tracker under
-[`inspire_kb/99_tracker/`](../../../inspire_kb/99_tracker): **one Markdown file
+`inspire_kb/99_tracker`: **one Markdown file
 per ticket**, the only source of truth — no external tool, no generated cache. Open
 tickets live at `tickets/*.md`; closed ones are archived under `tickets/archive/*.md`
 so default scans see only active work.

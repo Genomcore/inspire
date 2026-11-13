@@ -4,7 +4,7 @@
 
 # FEAT-01: Operator sign-in
 
-> Source: [[../../02_modules/auth]]
+> Source: [auth](../auth.module.md)
 
 An operator signs in with an email and a password and receives a session.
 

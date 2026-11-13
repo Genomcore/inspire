@@ -1,6 +1,6 @@
 # Session tokens are opaque — rationale
 
-**Decision:** [[adr-auth-sessions]]
+**Decision:** [adr-auth-sessions](auth-sessions.adr.md)
 
 ## Context
 Sessions need a transport-safe identifier.
@@ -15,7 +15,7 @@ Clients cannot introspect a token.
 1. **Signed JWTs.** Rejected: revocation is harder.
 
 ## Related ADRs
-- [[adr-auth-password-hashing]] — sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — sibling decision.
 
 ## Decision
 Session tokens are opaque.

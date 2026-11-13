@@ -1,0 +1,17 @@
+{
+  "links": [
+    {
+      "line": 4,
+      "form": "wiki",
+      "target": "y",
+      "text": "y"
+    }
+  ],
+  "code": [
+    {
+      "kind": "fence",
+      "from": 1,
+      "to": 3
+    }
+  ]
+}

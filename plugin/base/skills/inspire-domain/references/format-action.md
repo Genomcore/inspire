@@ -2,7 +2,7 @@
 
 The format spec for action descriptors. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An action descriptor lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`, beside its entity document. The file name keeps its entity (e.g. `_modules/auth/_domain/user/user.create.action.md`) because action names repeat across entities: a bare `create.action.md` in every entity directory would make link resolution by file name ambiguous inside a module, and Obsidian tabs unreadable. Dots — not `::` — because Windows forbids `:` in filenames. The typed extension is never part of the id: the id is the frontmatter `id:` (`auth::user::create`), and a wikilink names it as `[[auth.user.create|auth::user::create]]`.
+An action descriptor lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.{action}.action.md`, beside its entity document. The file name keeps its entity (e.g. `_modules/auth/_domain/user/user.create.action.md`) because action names repeat across entities: a bare `create.action.md` in every entity directory would make link resolution by file name ambiguous inside a module, and Obsidian tabs unreadable. Dots — not `::` — because Windows forbids `:` in filenames. The typed extension is never part of the id: the id is the frontmatter `id:` (`auth::user::create`), and a link names it as `[auth::user::create](user.create.action.md)`.
 
 A ready-to-copy template of this shape ships at [`../templates/action.template.md`](../templates/action.template.md).
 
@@ -16,12 +16,12 @@ entity: user
 action: create
 lifecycle: draft           # draft | accepted | stable | superseded
 requires:
-  - "[[auth.password.hash|auth::password::hash]]"
+  - "[auth::password::hash](../password/password.hash.action.md)"
 superseded_by: null        # required iff lifecycle == superseded
 ---
 
 ## Purpose
-Create a new platform user account from an email + password pair. The [[auth-user-management|user-management subsystem]] is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the auth-provider integration are defined in [[adr-identity-model]].
+Create a new platform user account from an email + password pair. The [user-management subsystem](../../_features/auth-user-management.feature.md) is the source of truth for identity; this verb is its admin-side account-provisioning entry point. Identity model, scopes, and the auth-provider integration are defined in [adr-identity-model](../../../../_adr/identity-model.adr.md).
 
 ## Inputs
 
@@ -33,7 +33,7 @@ Create a new platform user account from an email + password pair. The [[auth-use
 ### password
 Constraints: `len(12, 128)`
 
-The floor is the platform-wide minimum set by [[adr-password-hashing]]; the ceiling exists so a pathological input cannot turn hashing into a denial of service.
+The floor is the platform-wide minimum set by [adr-password-hashing](../../../../_adr/password-hashing.adr.md); the ceiling exists so a pathological input cannot turn hashing into a denial of service.
 
 ## Outputs
 
@@ -43,7 +43,7 @@ The floor is the platform-wide minimum set by [[adr-password-hashing]]; the ceil
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** shape · **Effect:** create
 
 | Field          | Touch   | Type      | Mapping       | Notes |
@@ -53,12 +53,12 @@ The floor is the platform-wide minimum set by [[adr-password-hashing]]; the ceil
 | `created_at`   | written | timestamp | `now()`       |       |
 
 ## Preconditions
-- `P1` — actor(admin) — Only an administrator provisions accounts directly; the public path is [[auth.user.signup|auth::user::signup]].
-- `P2` — absent(auth.user) — No account may already hold the submitted email, per the identity model in [[adr-identity-model]].
+- `P1` — actor(admin) — Only an administrator provisions accounts directly; the public path is [auth::user::signup](user.signup.action.md).
+- `P2` — absent(auth.user) — No account may already hold the submitted email, per the identity model in [adr-identity-model](../../../../_adr/identity-model.adr.md).
 
 ## Behavior
-1. `B1` — Validate the email format against the rules described in [[auth-user-management#email-constraints|the user-management email rules]].
-2. `B2` — Hash the password using [[auth.password.hash|auth::password::hash]], following the auth-provider integration model in [[adr-identity-model]].
+1. `B1` — Validate the email format against the rules described in [the user-management email rules](../../_features/auth-user-management.feature.md#email-constraints).
+2. `B2` — Hash the password using [auth::password::hash](../password/password.hash.action.md), following the auth-provider integration model in [adr-identity-model](../../../../_adr/identity-model.adr.md).
 3. `B3` — Persist a new user row with the hashed credential.
 
 ## Postconditions
@@ -73,22 +73,22 @@ The floor is the platform-wide minimum set by [[adr-password-hashing]]; the ceil
 
 - **No H1 heading.** The id lives in frontmatter `id:` and is reconstructible from the file path, so a leading `# {id}` heading would be the third repetition of the same information. The body starts directly with `## Purpose`.
 - `lifecycle` controls which quality_lib rules apply. See [`lifecycle-rules.md`](../../_references/lifecycle-rules.md) for the full per-state gate table.
-- `requires:` is the action→action dependency edge. It drives `acyclic-deps` and `stable-blockers`. Use the pipe-syntax wikilink convention: `"[[module.entity.action|module::entity::action]]"`.
+- `requires:` is the action→action dependency edge. It drives `acyclic-deps` and `stable-blockers`. Each entry is a quoted link ([kb-links.md](../../_references/kb-links.md)): `"[module::entity::action](../../../module/_domain/entity/entity.action.action.md)"`.
 - `superseded_by:` is required (non-null) when `lifecycle == superseded`. Must point to an existing action id.
 
 ## Body sections
 
 The body has eight sections in fixed order: `## Purpose` · `## Inputs` · `## Outputs` · `## Entities` · `## Preconditions` · `## Behavior` · `## Postconditions` · `## Errors`. The order is the Hoare reading of a contract — what must hold, what happens, what holds afterwards — and each section has a consistent shape across descriptors:
 
-- **`## Purpose`** — operator-readable role of the action in the system. Back-sourcing is **prosaic**: wikilinks weave into the sentence that makes the claim, using pipe-syntax display text where it reads better. No trailing `Back-source: [[x]], [[y]].` lines, no bare `[[link]]` at the end of behavior steps.
+- **`## Purpose`** — operator-readable role of the action in the system. Back-sourcing is **prosaic**: links weave into the sentence that makes the claim, with prose as the link text where it reads better. No trailing `Back-source: [x](…), [y](…).` lines, no bare link at the end of behavior steps.
 - **`## Inputs`** — 4-column table: `| Parameter | Type | Required | Description |`. When all params share a property (e.g. every parameter is optional, or every parameter is required), state it in a lead-in sentence above the table and you may omit the column. A constrained parameter carries a `### {param}` H3 under the table whose first line is its `Constraints:` line — the same shape and the same closed vocabulary the entity format uses for fields, per [`keyed-heads.md`](../../_references/keyed-heads.md). A `Constraints:` line further down that H3 is read and checked too, and reported as misplaced (`OS-E8`) rather than ignored. The `Required` column stays the **only** home for required-ness, so `nonnull` never appears on an input's Constraints line.
 - **`## Outputs`** — a **logical contract**, not a wire shape. Three sub-patterns by what the action returns:
-  - **Whole entity (or array of it)** → 1-line reference to the entity document, no inline table. Form: `An array of [[platform.action|platform::action]] entities.` The entity document's `## Fields` table is the canonical declaration of the field shape; duplicating it here would drift.
+  - **Whole entity (or array of it)** → 1-line reference to the entity document, no inline table. Form: `An array of [platform::action](../../../platform/_domain/action/action.entity.md) entities.` The entity document's `## Fields` table is the canonical declaration of the field shape; duplicating it here would drift.
   - **Subset of an entity** (e.g. the action returns only `{id, name}` from a 10-field entity) → inline table listing the returned fields, drawn from the entity's canonical types.
   - **Derived / synthesized / multi-entity** (e.g. the action reads A, joins B and C, returns a derived shape) → inline table declaring the actual returned shape.
-- **`## Entities`** — one sub-section per entity the action touches, headed `### [[module.entity|module::entity]]`, then a metadata line — an optional leading `**As input:** X · ` (how the entity is identified for this action) followed by `**Effect:** Y` (`create` · `read` · `read-whole` · `update` · `delete` · `append` · `replace`) — then a field-touch table. Field names in tables are wrapped in backticks (`` `field_name` ``) to neutralize intraword underscore italics in CommonMark renderers. These sub-sections drive `entity-coherence` and feed the entity document's `## Fields` + `## Touched by` tables during consolidation. The field-touch rows are the authoritative declarations of which fields this action reads or writes. Use `read-whole` when the action returns the entire entity (or an array of entities); the field-touch table then enumerates only filters and keys, not the full returned shape. Plain `read` is reserved for partial projections that genuinely surface only a subset of fields. [`effect-touch-matrix.md`](effect-touch-matrix.md) is the authority for valid As-input × Effect combinations. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens, and the project's own types in `00_bootstrap/semantic-types.md`.
+- **`## Entities`** — one sub-section per entity the action touches, headed `### [module::entity](../../../module/_domain/entity/entity.entity.md)`, then a metadata line — an optional leading `**As input:** X · ` (how the entity is identified for this action) followed by `**Effect:** Y` (`create` · `read` · `read-whole` · `update` · `delete` · `append` · `replace`) — then a field-touch table. Field names in tables are wrapped in backticks (`` `field_name` ``) to neutralize intraword underscore italics in CommonMark renderers. These sub-sections drive `entity-coherence` and feed the entity document's `## Fields` + `## Touched by` tables during consolidation. The field-touch rows are the authoritative declarations of which fields this action reads or writes. Use `read-whole` when the action returns the entire entity (or an array of entities); the field-touch table then enumerates only filters and keys, not the full returned shape. Plain `read` is reserved for partial projections that genuinely surface only a subset of fields. [`effect-touch-matrix.md`](effect-touch-matrix.md) is the authority for valid As-input × Effect combinations. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens, and the project's own types in `00_bootstrap/semantic-types.md`.
 - **`## Preconditions`** — what must hold before the action may run, as keyed entries: `` - `P{n}` — {head} — {prose} ``. Heads come from vocabulary V3 of [`keyed-heads.md`](../../_references/keyed-heads.md) — `actor` · `exists` · `absent` · `state` — and are optional; a precondition no head captures is written prose-only. An action with genuinely no precondition says so: `None.` A precondition is a claim about the world, never about a caller's transport — an actor constraint belongs here precisely because it is true wherever the action runs.
-- **`## Behavior`** — numbered steps, each **keyed**: `` 1. `B{n}` — {step prose} ``. The key is the step's identity and the markdown ordinal is presentation, so a deleted step leaves a gap rather than renumbering the survivors. Each step that makes a sourceable claim weaves its wikilinks into the sentence (prosaic back-sourcing), not as trailing references.
+- **`## Behavior`** — numbered steps, each **keyed**: `` 1. `B{n}` — {step prose} ``. The key is the step's identity and the markdown ordinal is presentation, so a deleted step leaves a gap rather than renumbering the survivors. Each step that makes a sourceable claim weaves its links into the sentence (prosaic back-sourcing), not as trailing references.
 - **`## Postconditions`** — what holds once the action has succeeded, as keyed entries: `` - `Q{n}` — {head} — {prose} ``. Heads come from vocabulary V4 — `created` · `updated` · `deleted` · `unchanged` · `returns`. `unchanged({module}.{entity})` is worth stating deliberately: it is the regression guard that says an entity the action *could* have touched is left alone, and it is the one head that names an entity `## Entities` does not list. `None.` is the valid body for an action with no observable effect, which is rare enough to be worth a second look.
 - **`## Errors`** — bullet list of error codes with operator-facing messages. An error may carry a head naming **what it reports the violation of** — `` - `email_exists` — unique(email) — operator-facing message: "…" `` — drawn from vocabulary V5. The head is what lets a uniqueness constraint on an entity field and the error an action raises for it be checked against each other rather than merely hoped to correspond. Each bullet becomes a test (the coding stage derives its list from the criteria ∪ this section ∪ the convention's always-present cases), so an error declared here and nowhere tested is a contract nobody checks. The observable response is **not** written here — see `## Pure-contract scope`; only a `**Wire deviation:**` note is.
 
@@ -155,12 +155,14 @@ Storage details, runtime engine, boot mechanics, persistence layer — also out 
 
 The action verb (the last id segment) is **the project's own**. It comes from the application's domain and is recorded in the ADR `adr-action-verbs` (see [`/inspire-adr`](../../inspire-adr/SKILL.md), *The action-verbs ADR*). A project with no such ADR uses the default set: `list` · `get` · `create` · `edit` · `delete`. Whatever the verbs, a few rules are generic: the verb acts on the one entity the id names; reads that return many take a plural verb and are paginated, while reads that return one take a singular verb; and a change the domain names gets its own verb, never an overloaded `edit` or `update`. The per-field touch verbs (`read`/`read-whole` and the effect verbs) are INSPIRE's and fixed. The interview applies all of this under *Action verb taxonomy* in [`interview-prompts-action.md`](interview-prompts-action.md).
 
-## Wikilink convention
+## Link convention
 
-Action and entity references use **pipe-syntax** wikilinks: `[[platform.action.find|platform::action::find]]`. The on-disk file (dotted name) resolves cleanly while the displayed text is the canonical id (colon form). Works in any CommonMark-compatible renderer without frontmatter aliases or plugin dependencies. Apply uniformly:
+Links follow [kb-links.md](../../_references/kb-links.md). An action or entity link shows the canonical id (colon form) as its text:
 
-- Action ref: `[[module.entity.action|module::entity::action]]`
-- Entity ref: `[[module.entity|module::entity]]`
+- Action ref: `[module::entity::action](../../../module/_domain/entity/entity.action.action.md)`
+- Entity ref: `[module::entity](../../../module/_domain/entity/entity.entity.md)`
+
+The paths above are relative to a file in `_modules/{module}/_domain/{entity}/`.
 
 ## Diff convention for proposals
 

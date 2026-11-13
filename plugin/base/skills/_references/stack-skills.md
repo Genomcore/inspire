@@ -53,7 +53,7 @@ three-way split, the other two of which live outside the stack skills entirely:
 | part | home |
 |---|---|
 | universal semantic vocabulary + predicates | [`inspire-domain/references/type-mapping.md`](../inspire-domain/references/type-mapping.md) (runtime, stack-agnostic) |
-| a project's own semantic types | [`00_bootstrap/semantic-types.md`](../../../inspire_kb/00_bootstrap/semantic-types.md) (project content) |
+| a project's own semantic types | `inspire_kb/00_bootstrap/semantic-types.md` (project content) |
 | per-target rendering | **the language skill** ([`inspire-code-typescript`](../inspire-code-typescript/SKILL.md) ships; a project adds its own) |
 
 A project semantic type the language skill has no row for renders as its declared

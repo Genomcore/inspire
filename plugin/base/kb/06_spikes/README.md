@@ -7,7 +7,7 @@ and gap analysis — **decoupled from the throwaway code** that produced it, so 
 survives after the spike repo goes stale or is archived.
 
 > The **horizontal** prototype (wide, shallow, mocked — "is this the right thing?")
-> is different: its code lives at [`/prototype`](../../prototype) and it keeps **no
+> is different: its code lives at `/prototype` and it keeps **no
 > file here** — its insights co-evolve the vault directly (features, screens, ADRs,
 > the design system). See `inspire-prototype`. **This layer is spikes only.**
 

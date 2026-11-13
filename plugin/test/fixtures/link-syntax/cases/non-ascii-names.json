@@ -1,0 +1,29 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "md",
+      "target": "año.md",
+      "text": "año"
+    },
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "módulo",
+      "text": "Módulo"
+    },
+    {
+      "line": 1,
+      "form": "md",
+      "target": "%C3%BC.md",
+      "text": "ü"
+    },
+    {
+      "line": 1,
+      "form": "embed",
+      "target": "ñ.md",
+      "text": "ñ"
+    }
+  ],
+  "code": []
+}

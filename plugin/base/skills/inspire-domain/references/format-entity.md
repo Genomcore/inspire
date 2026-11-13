@@ -2,7 +2,7 @@
 
 The format spec for entity documents. SKILL.md owns the interview cadence and lifecycle; this file owns the on-disk shape.
 
-An entity document lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md`, in the same directory as the action descriptors of that entity (`{entity}.{action}.action.md`). The typed extension is what tells the tooling the two object kinds apart. The id is the frontmatter `id:` (`auth.user`, read as `auth::user`), and a wikilink names it as `[[auth.user|auth::user]]`.
+An entity document lives at `inspire_kb/01_spec/_modules/{module}/_domain/{entity}/{entity}.entity.md`, in the same directory as the action descriptors of that entity (`{entity}.{action}.action.md`). The typed extension is what tells the tooling the two object kinds apart. The id is the frontmatter `id:` (`auth.user`, read as `auth::user`), and a link names it as `[auth::user](user.entity.md)`.
 
 The entity document is a **design-discipline artefact** — it captures *why* this entity exists as a discrete object and *what motivates* its field shape — not a thin projection of the actions that touch it.
 
@@ -17,13 +17,13 @@ lifecycle: draft           # draft | accepted | stable | superseded
 ---
 
 ## Purpose
-Operator-facing prose stating what this entity is and why it exists as a discrete object, with inline prosaic wikilinks back to feature/ADR. Required, non-empty.
+Operator-facing prose stating what this entity is and why it exists as a discrete object, with inline prosaic links back to feature/ADR. Required, non-empty.
 
 ## Rationale
-feature/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic wikilinks throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
+feature/ADR grounding for the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. Inline prosaic links throughout. Adding or changing a field requires updating this section: that is the discussion-forcing discipline.
 
 ## Invariants
-- `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [[adr-identity-model]] scopes principals to an org.
+- `I1` — unique(org_id, email) — Email is unique per organisation, not globally, because the identity model in [adr-identity-model](../../../../_adr/identity-model.adr.md) scopes principals to an org.
 - `I2` — A suspended account keeps every row it wrote; suspension changes what may be read, never what exists.
 
 ## Fields
@@ -45,12 +45,12 @@ Constraints: `nonnull, immutable, references(auth.org)`
 ### email
 Constraints: `nonnull, pattern(/.+@.+/)`
 
-Per-field rationale follows the Constraints line, in prose, with inline wikilinks where a claim needs sourcing — here, why the pattern is deliberately permissive and defers to [[auth-email-validation|the email-validation rules]].
+Per-field rationale follows the Constraints line, in prose, with inline links where a claim needs sourcing — here, why the pattern is deliberately permissive and defers to [the email-validation rules](../../_features/auth-email-validation.feature.md).
 
 ### password_hash
 Constraints: `nonnull`
 
-Use the per-field H3 for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline wikilink to [[adr-password-hashing]].
+Use the per-field H3 for fields that need rationale, design notes, or non-obvious behavior — e.g. why the hash algorithm is a system-level setting rather than a per-field choice, with inline link to [adr-password-hashing](../../../../_adr/password-hashing.adr.md).
 
 ### created_at
 Constraints: `nonnull, immutable, default(now)`
@@ -59,8 +59,8 @@ Constraints: `nonnull, immutable, default(now)`
 
 | Action                                                  | Touch  | Notes                          |
 |---------------------------------------------------------|--------|--------------------------------|
-| [[auth.user.create|auth::user::create]]                 | write  | Inserts the row.               |
-| [[auth.user.find|auth::user::find]]                     | read   | Looks up by `id` or `email`.   |
+| [auth::user::create](user.create.action.md)                 | write  | Inserts the row.               |
+| [auth::user::find](user.find.action.md)                     | read   | Looks up by `id` or `email`.   |
 ```
 
 ## Externally populated entities
@@ -69,7 +69,7 @@ _Reference material about the `population: external` frontmatter marker below �
 a section of an entity document; the entity document's own section list is defined
 in [Section conventions](#section-conventions)._
 
-Some entities' rows are populated outside the SDD action layer — build-time catalogs (e.g. [[platform.action]]), sync mirrors of external systems, vendor feeds. Set `population: external` in frontmatter to mark these:
+Some entities' rows are populated outside the SDD action layer — build-time catalogs (e.g. `platform::action`), sync mirrors of external systems, vendor feeds. Set `population: external` in frontmatter to mark these:
 
 ```markdown
 ---
@@ -94,12 +94,12 @@ Four tooling consequences:
 
 Six sections, in order: 4 mandatory (`## Purpose`, `## Rationale`, `## Invariants`, `## Fields`), 1 per-field H3 (`### {field-name}` sub-sections, placed immediately after the Fields table — mandatory for a constrained field, opt-in otherwise), 1 auto-populated (`## Touched by`).
 
-- **`## Purpose`** — non-empty, operator-readable prose stating what the entity is and why it exists as a discrete object. Back-sourcing is **prosaic**: wikilinks weave into the sentence that makes the claim.
+- **`## Purpose`** — non-empty, operator-readable prose stating what the entity is and why it exists as a discrete object. Back-sourcing is **prosaic**: links weave into the sentence that makes the claim.
 - **`## Rationale`** — operator-authored, feature/ADR-grounded. The **discussion-forcing function**: when an action introduces a new field, the agent surfaces the rationale question and waits for the operator to update this section *before* the new field row lands in `## Fields`. This is what keeps the entity shape an act of design rather than an emergent residue of action authoring.
 - **`## Invariants`** — operator-authored, and **keyed**: each entry is `` - `I{n}` — {head} — {prose} `` (or `` - `I{n}` — {prose} `` when no head fits), per [`keyed-heads.md`](../../_references/keyed-heads.md). Heads come from V2 there — the multi-field and relational predicates a single field's own line cannot express. `None beyond Fields constraints.` remains the valid one-line body; the section must be present, but brevity is welcome when there is genuinely nothing extra to assert.
 - **`## Fields`** — `| Field | Type | Notes |` table with backticked field names, **unchanged**: constraints do not live in the table. The row set is **largely emergent** — populated and reconciled by the agent during consolidation from every action descriptor's `## Entities` declarations — but each row exists because some action touches the field, and adding one forces a `## Rationale` update. [`type-mapping.md`](type-mapping.md) is the authority for the `Type` vocabulary and `Mapping` tokens, and the project's own types in `00_bootstrap/semantic-types.md`.
 - **`### {field-name}`** — per-field sub-section, immediately under the Fields table, in field-table order. Its **first line carries the field's constraints** when it has any: `` Constraints: `nonnull, unique, immutable` `` — the closed V1 vocabulary of [`keyed-heads.md`](../../_references/keyed-heads.md). A `Constraints:` line further down the body is read and checked too, and reported as misplaced (`OS-E8`) rather than ignored. Everything after that line is the per-field rationale prose: what motivates the design, which ADR or feature grounds it, what consumers need to know. A constrained field **must** carry the H3, even when the Constraints line is all it has to say; an unconstrained field needs one only when its design needs narrating. Every H3 names a row of the table: one that names none is reported as `OS-E9`, since its constraints bind no field.
-- **`## Touched by`** — auto-populated by consolidation: `| Action | Touch | Notes |` table. **Touch values**: `read` · `write` · `list` · `delete`. Action ids use pipe-syntax wikilinks (`[[module.entity.action|module::entity::action]]`). Operators do not hand-edit this section; it is rewritten on every consolidation pass.
+- **`## Touched by`** — auto-populated by consolidation: `| Action | Touch | Notes |` table. **Touch values**: `read` · `write` · `list` · `delete`. Action ids are links (`[module::entity::action](../../../module/_domain/entity/entity.action.action.md)`). Operators do not hand-edit this section; it is rewritten on every consolidation pass.
 
 **No `## Findings`, no `## Used by`.** Files state present truth only: findings live in `review` output, where git history is the audit trail. `## Touched by` is the section that records which actions reach an entity, with explicit touch semantics.
 
@@ -219,7 +219,7 @@ and the presence classes ramp in the release after 0.9.
 
 ## Entity lifecycle (symmetric with actions)
 
-Entity documents carry a `lifecycle:` frontmatter field with the **same 4-state enum** as actions: `draft → accepted → stable → superseded`. The states have the same meaning per [[lifecycle-rules]] — `draft` is permissive design space, `accepted` locks the shape, `stable` is release-grade, `superseded` is the terminal escape hatch. `define` creates entities at `draft`; `promote` and `demote` walk both object kinds through the same state machine.
+Entity documents carry a `lifecycle:` frontmatter field with the **same 4-state enum** as actions: `draft → accepted → stable → superseded`. The states have the same meaning per [lifecycle-rules](../../_references/lifecycle-rules.md) — `draft` is permissive design space, `accepted` locks the shape, `stable` is release-grade, `superseded` is the terminal escape hatch. `define` creates entities at `draft`; `promote` and `demote` walk both object kinds through the same state machine.
 
 **Promotion gating is one-directional.** A `lifecycle: stable` action requires every entity it touches (every entry in its `## Entities` section) to be at `lifecycle: accepted` or higher. Entities promote **independently** of the actions touching them — promoting an entity never requires its callers to be at any particular lifecycle. The rule enforces only one direction: stabilising an action forces its touched entities to be at least accepted; nothing forces the reverse.
 
@@ -227,6 +227,6 @@ The touch graph is **bipartite** (actions ↔ entities only) and therefore cycle
 
 Tooling: the gate is enforced by `.inspire/bin/touched-entity-lifecycle.sh` (severity: error), wired into `review.sh`'s default rule list. The rule scans every `lifecycle: stable` action, resolves each touched entity id (colon form, e.g. `auth::user`) to its entity document on disk, and emits a finding if the document's `lifecycle:` is below `accepted` (or the document is missing). It does **not** apply to draft or accepted actions — those may touch entities at any lifecycle, including `draft`.
 
-## Wikilink convention
+## Link convention
 
-Identical to actions: pipe-syntax `[[module.entity|module::entity]]` for entity refs, `[[module.entity.action|module::entity::action]]` for action refs.
+Identical to actions ([kb-links.md](../../_references/kb-links.md)): `[module::entity](../../../module/_domain/entity/entity.entity.md)` for entity refs, `[module::entity::action](../../../module/_domain/entity/entity.action.action.md)` for action refs.

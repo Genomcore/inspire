@@ -29,10 +29,10 @@ Three tiers under `inspire_kb/01_spec/`, with a **sibling middle**:
 | 2c | `_design-system/layouts/` | the page frames those structures sit in — their **geometry**, per width | `*.layout.md` |
 | 3 | `_faces/{face}/_screens/` | one face's screens — the **wiring**, and how each value is drawn | `*.screen.md` |
 
-Tools find every one of these by its typed extension and resolve a link by its id,
-never by its directory. The directories are for people. A catalog entry's id is its
-file name without the extension: `list.pattern.md` is the pattern `list`, linked as
-`[[list]]`, never by a relative path.
+Tools find every one of these by its typed extension, and a link names the file
+itself ([kb-links.md](../_references/kb-links.md)). A catalog entry's id is its file
+name without the extension: `list.pattern.md` is the pattern `list`, linked from a
+screen as `[list](../../../_design-system/patterns/list.pattern.md)`.
 
 Patterns, components and layouts are **siblings**: none depends on another by
 construction. A pattern's regions accept injected content, so it never imports leaf
@@ -139,7 +139,7 @@ shell prefix: the route lives inside that face's shell.
 route, or its own distinct set of bindings.
 
 Rationale: parallelization (agents work on different screens without conflicts),
-diff clarity, wikilink precision, and a **1:1 mapping to the prototype** (one
+diff clarity, link precision, and a **1:1 mapping to the prototype** (one
 screen file ≈ one prototype screen).
 
 **Not a separate file:** steps inside a wizard, tabs inside a detail page,
@@ -153,8 +153,8 @@ renaming the file is a move that leaves the `id`, the route and every claim
 untouched.
 
 **Where the file goes:** `inspire_kb/01_spec/_faces/{face}/_screens/{slug}.screen.md`,
-in the face its id names. Catalog links are bare ids (`[[list]]`, `[[collection]]`,
-`[[data-table]]`), whatever directory the screen sits in.
+in the face its id names. Catalog links (`[list](../../../_design-system/patterns/list.pattern.md)`, `[collection](../../../_design-system/layouts/collection.layout.md)`,
+`[data-table](../../../_design-system/components/data-table.component.md)`) climb from the screen's directory to `01_spec/`.
 
 ## Which face a screen belongs to
 
@@ -237,7 +237,7 @@ When uncertain which layer a finding belongs to, ask the user.
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames)
 > stay verbatim.
 
 > **Writing contract.** Screens, pattern entries and component entries follow

@@ -29,7 +29,7 @@ ID prefix (e.g. `MYM`), and a description.
    [`/inspire-screens`](../../inspire-screens/SKILL.md) in that face. `create` never
    pre-guesses which faces the module will reach.
 4. **Exposure:** not created here. Which bundle publishes the module is the bundle's
-   file (`[[{module}]] (whole module)` under its `## Actions`), owned by
+   file (`[{module}](../_modules/{module}/{module}.module.md) (whole module)` under its `## Actions`), owned by
    `/inspire-face`.
 5. Point the user to `/inspire-feature create` for the first use cases,
    `/inspire-face` for the bundle that exposes the module, and `/inspire-prototype`
@@ -56,7 +56,7 @@ source: the module directory `_modules/{module}/` and its hub
 (`{module}.{entity}`, `{module}::{entity}::{action}`) and the links that carry them,
 the `module:` field of every screen that declares it (in every face; it changes the
 route), every bundle that lists the module or its actions, tracker epics and
-wikilinks, ADR references, the source module directory, and every test annotation
+links, ADR references, the source module directory, and every test annotation
 that claims a feature's criteria (`@covers`). The entity and action file names do not
 carry the module, so they stay as they are. Move files with `git mv` so
 history follows the rename. Leave prose that describes the *product* rather than the
@@ -76,12 +76,12 @@ Remove a module and everything it holds. Use with caution.
    module that binds one of this module's actions is flagged for
    `/inspire-screens`. A module reaches every face as a whole, so its deletion does
    too.
-4. **Bundles:** every `*.bundle.md` that lists `[[{module}]]` or one of its actions
+4. **Bundles:** every `*.bundle.md` that links `{module}.module.md` or one of the module's action files
    is flagged for `/inspire-face`, which owns the bundle files.
 5. **Prototype:** remove the module's screens and routes from every face's shell;
    note any `inspire_kb/06_spikes/` entry that referenced this module.
 6. **Cross-references:**
-   - Search the whole `inspire_kb/` for `[[{module}]]`, its feature IDs and its
+   - Search the whole `inspire_kb/` for `{module}.module.md`, its feature IDs and its
      entity and action ids — flag and offer fixes.
    - Check global and face ADRs (every `*.adr.md` outside the deleted directory)
      for references to this module.

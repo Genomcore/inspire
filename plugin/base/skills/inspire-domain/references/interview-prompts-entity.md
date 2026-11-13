@@ -21,7 +21,7 @@ The skill picks the context from the invocation; this file does not enforce it. 
 ## Purpose prompts
 
 ### Categorical
-Ask what this entity is, and why it exists as a discrete object in the system. The answer becomes the body of `## Purpose`, with feature/ADR wikilinks woven prosaically into the sentence that makes each claim.
+Ask what this entity is, and why it exists as a discrete object in the system. The answer becomes the body of `## Purpose`, with feature/ADR links woven prosaically into the sentence that makes each claim.
 
 ### Probes
 - **Boundary-on-existence probe.** "Why is this its own entity rather than a field on `<adjacent-entity>`? E.g. why is `auth::password` separate from `auth::user`, not a column on it?" Always ask for any new entity — surfacing the boundary justification is the whole point of `## Purpose`.
@@ -31,10 +31,10 @@ Ask what this entity is, and why it exists as a discrete object in the system. T
 ## Rationale prompts
 
 ### Categorical
-Ask which feature sections and ADRs ground the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. The answer becomes the body of `## Rationale`, the longest operator-authored section, with inline prosaic wikilinks throughout.
+Ask which feature sections and ADRs ground the design decisions — why this entity exists at all, why these fields are the right shape, what motivates the structure. The answer becomes the body of `## Rationale`, the longest operator-authored section, with inline prosaic links throughout.
 
 ### Probes
-- **Field-shape probe.** "Why is the field shape minimal in this direction (no `display_name`, no `phone`, no `tenant_id`) and rich in that one (`password_hash` + `last_seen_at` + `created_at`)? What forces the shape — auth-provider integration constraints, the identity model in [[adr-identity-model]], something else?" Use whenever the field set has visible asymmetries.
+- **Field-shape probe.** "Why is the field shape minimal in this direction (no `display_name`, no `phone`, no `tenant_id`) and rich in that one (`password_hash` + `last_seen_at` + `created_at`)? What forces the shape — auth-provider integration constraints, the identity model in `adr-identity-model`, something else?" Use whenever the field set has visible asymmetries.
 - **ADR-grounding probe.** "Which ADR — if any — locks in the design call? If there's no ADR but the rationale is >10 lines, that's a signal an ADR is missing." Use whenever the rationale leans heavily on undocumented platform-level decisions.
 - **Discussion-forcing probe (field addition).** "Adding `<field>` to this entity. What's the design call behind it? — I'll fold the rationale into `## Rationale` before the row lands in `## Fields`." This is the **load-bearing probe**. Always trigger it when an action descriptor introduces a field not yet in the entity doc. The new field row blocks on the Rationale update.
 - **Out-of-scope probe.** "What does this entity *not* carry that a reader might expect — e.g. `auth::user` has no `display_name` because the display layer reads from a separate profile entity? Calling out the non-fields helps future readers." Use for entities whose minimal shape is a deliberate design choice.
@@ -76,8 +76,8 @@ For each field, establish two things: its **constraints** — the first line of 
 - **Migration probe.** "The Notes column currently says `<constraint-ish prose>`. Is that a constraint (it moves to the Constraints line) or an explanation of what the constraint means to a reader (it stays)? Both is not an option — two spellings of one fact drift." Use whenever a Notes cell reads like a rule rather than a gloss.
 - **Vocabulary-fit probe.** "That rule doesn't fit the closed vocabulary. Is it really a single-field constraint, or is it an invariant (spans fields), or behavior (belongs in an action's steps)? Inventing a word here is not available — the vocabulary is closed on purpose, so that a downstream reader never meets a constraint it cannot act on." Use whenever the operator proposes a constraint no word covers.
 - **Algorithm-as-system-setting probe.** "`<field>` carries `<credential / hash / token>` material. Is the algorithm a per-row column or a system-wide setting? If system-wide, the H3 should ground the choice in the relevant ADR and explain why per-row would have been wrong." Use for any cryptographic / opaque-blob field.
-- **Cross-action-reference probe.** "The H3 mentions `<concept>` (verification, archival, derivation). Should it link to the action that handles that concept (`[[module.entity.action|module::entity::action]]`)? Cross-action wikilinks help future readers trace behavior without grepping." Use whenever the H3 names an operation rather than a fact.
-- **Length probe.** "The H3 is approaching ADR length (>10 lines, multiple design tradeoffs). Should it stay here, or does the decision warrant its own ADR with the H3 reduced to a sentence + wikilink?" Use whenever an H3 drifts past a paragraph or two — the rationale-vs-ADR threshold matches the project's general convention.
+- **Cross-action-reference probe.** "The H3 mentions `<concept>` (verification, archival, derivation). Should it link to the action that handles that concept (`[module::entity::action](../../../module/_domain/entity/entity.action.action.md)`)? Cross-action links help future readers trace behavior without grepping." Use whenever the H3 names an operation rather than a fact.
+- **Length probe.** "The H3 is approaching ADR length (>10 lines, multiple design tradeoffs). Should it stay here, or does the decision warrant its own ADR with the H3 reduced to a sentence + link?" Use whenever an H3 drifts past a paragraph or two — the rationale-vs-ADR threshold matches the project's general convention.
 
 ## Cross-cutting probes
 

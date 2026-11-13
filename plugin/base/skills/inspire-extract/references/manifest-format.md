@@ -176,7 +176,7 @@ When a `keep` candidate is authored (Phase 4), the created KB artifact carries a
 ```
 
 Lives in `## Notes` — never in a `## Purpose` / `## Rationale`, which must
-carry a real feature wikilink. It is a prompt to verify, not authority; it resolves
+carry a real feature link. It is a prompt to verify, not authority; it resolves
 as the artifact is promoted.
 
 ## Durable record

@@ -6,8 +6,8 @@ screen: login
 # Sign in — `/login`
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/form]]
+**Pattern:** [form](../../../_design-system/patterns/form.pattern.md)
 
 ## Instantiation
 
-- **Data:** [[auth.session|auth::session]] — HACK: mocked for now.
+- **Data:** [auth::session](../../../_modules/auth/_domain/session/session.entity.md) — HACK: mocked for now.

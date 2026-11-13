@@ -1,5 +1,5 @@
 # Workspace — review (cross-cutting phases)
-> Part of [inspire-workspace](../SKILL.md). Read when the entry's index routes here. Phases 1–2 (scope + module fan-out) are performed by the caller — the entry, or `review.workflow.mjs`. The validators run here, before the cross-cutting phases.
+> Part of [inspire-workspace](../SKILL.md). Read when the entry's index routes here. Phases 1–2 (scope + module fan-out) are performed by the caller — the entry, or [`review.workflow.mjs`](../review.workflow.mjs). The validators run here, before the cross-cutting phases.
 
 ### Validators
 
@@ -18,7 +18,7 @@ phases below never restate a finding a validator already made.
 
 - **Dependency validation:** feature IDs referenced as dependencies in one module
   exist in the target.
-- **ADR references:** all `[[adr-xxx]]` wikilinks resolve to an `*.adr.md` under
+- **ADR references:** every link to an ADR names an existing `*.adr.md` under
   `inspire_kb/01_spec/` — global, a module's `_adr/` or a face's `_adr/`.
 - **ADR propagation alignment:** at *every* maturity, an ADR's consequences must
   cohere across the **in-repo design workspace** (features + screen spec + horizontal

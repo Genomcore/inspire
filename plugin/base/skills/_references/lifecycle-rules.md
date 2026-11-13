@@ -29,7 +29,7 @@ Every SDD object — **action descriptor** (`inspire_kb/01_spec/_modules/{module
 
 Forward progression: `draft → accepted → stable`. Regression (`stable → accepted`, `accepted → draft`) is permitted when a downstream constraint forces it — `/inspire-domain promote` walks both directions, just confirms more carefully on regressions.
 
-`superseded` is the escape hatch. An action in any state can be marked superseded; the descriptor stays in the tree, carries `superseded_by: "[[module::entity::new-action]]"`, and is dropped from the in-scope `requires` graph (other actions that listed it must be updated separately — `/inspire-domain graph` flags affected callers).
+`superseded` is the escape hatch. An action in any state can be marked superseded; the descriptor stays in the tree, carries `superseded_by: "[module::entity::new-action](../entity/entity.new-action.action.md)"`, and is dropped from the in-scope `requires` graph (other actions that listed it must be updated separately — `/inspire-domain graph` flags affected callers).
 
 ## Per-state rule gates
 
@@ -86,13 +86,14 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
 | `field-coverage` (every entity Fields row touched by ≥1 action) | warning | error | error | warning |
-| `rationale-wikilink` (≥1 wikilink in Rationale / Purpose / Behavior) | warning | error | error | warning |
-| `wikilinks-resolve` (every `[[wikilink]]` resolves to a file) | warning | error | error | warning |
+| `rationale-link` (≥1 link in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `keys-present` — what a keyed entry says (`OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6`) | warning | error | error | warning |
 | `constraints-mechanics` — vocabulary, arity, placement and a row for every field sub-section (`OS-E2` · `OS-E4` · `OS-E8` · `OS-E9`) | warning | error | error | warning |
 | `head-referents` — every name a head mentions exists (`OS-E7` · `OS-X1`–`OS-X4`) | warning | error | error | warning |
 
-The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale wikilinks emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
+The tier-3 rules ramp severity by the *current object's* lifecycle, not by the lifecycle of the targets they reference. A draft entity missing rationale links emits a warning; the same entity at `accepted` emits an error and blocks promotion. `superseded` de-escalates back to warning: the object is history, kept for the pointer to what replaced it, and no longer worth blocking a commit over.
+
+`links-resolve` is outside the ramp: a wikilink, and a Markdown link whose path names no file or directory, are errors at every lifecycle, because a skill creates a link's target before it writes the link ([kb-links.md](kb-links.md)).
 
 Three of the tier-3 rules report a **second, ungraded** class of finding: the five *old-shape presence* classes — `OS-A1`, `OS-A3`, `OS-A4` (`keys-present`), `OS-E1` (`constraints-mechanics`) and `OS-E3` (`keys-present`) — are flat warnings at **every** state in 0.9, columns and all. "New but unkeyed" and "pre-0.9" are the same shape on disk, so ramping them would make every `accepted` and `stable` artifact of an upgraded vault red at pre-PR and at `promote` — and since 0.8.0 shipped none of these classes, that is every vault there is, not an older tail of them. `derive` refuses an old-shape artifact regardless; the five ramp with this table's columns in the release after 0.9. See [`keyed-heads.md`](keyed-heads.md) § "Severity — two tiers".
 
@@ -107,7 +108,6 @@ Screen files carry `lifecycle:`, so the columns above are readable there too:
 | `face-exposure` (every action a screen binds is exposed by one of its face's bundles) | warning | error | error | warning |
 | `screen-coherence` (duplicate `id`; two screens deriving one route in one face) | error | error | error | error |
 | `screen-coherence` (a `stable` screen declaring a `**State:** to-extract` component) | exempt | exempt | error | exempt |
-| `wikilinks-resolve` (every `[[wikilink]]` in a screen resolves) | warning | error | error | warning |
 | `screen-presentation` (layout, `## Render`, breakpoints, touch) and `design-system-coherence` (sections, citations) | warning | warning | warning | warning |
 
 A screen file with **no frontmatter at all** — every screen written before the

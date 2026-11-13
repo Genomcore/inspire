@@ -9,7 +9,7 @@ screen: user.profile
 # Profile — `/profile`
 
 **Features:** FEAT-01
-**Pattern:** [[../patterns/form]]
+**Pattern:** [form](../../../_design-system/patterns/form.pattern.md)
 
 ## Rationale
 No wikilink in this section. TODO: finish it.
@@ -23,4 +23,4 @@ No wikilink in this section. TODO: finish it.
 
 ## Instantiation
 
-- **Data:** [[this-wikilink-resolves-nowhere]]
+- **Data:** [this-wikilink-resolves-nowhere](this-wikilink-resolves-nowhere.md)

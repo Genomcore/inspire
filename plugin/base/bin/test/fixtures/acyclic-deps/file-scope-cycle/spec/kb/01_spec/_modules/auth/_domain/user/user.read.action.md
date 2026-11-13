@@ -5,7 +5,7 @@ entity: user
 action: read
 lifecycle: draft
 requires:
-  - "[[auth.user.create|auth::user::create]]"
+  - "[auth::user::create](user.create.action.md)"
 superseded_by: null
 ---
 
@@ -26,7 +26,7 @@ Cycle test (read depends on create which depends on read).
 
 ## Entities
 
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **As input:** id · **Effect:** read
 
 | Field | Touch | Type | Mapping | Notes |

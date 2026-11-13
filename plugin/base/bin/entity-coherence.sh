@@ -31,13 +31,14 @@ source "$SCRIPT_DIR/_lib.sh"
 
 sdd_require_tools || exit 127
 sdd_init_counters
+_sdd_entity_index
 
 SCOPE="${1:-$SDD_SPEC_ROOT}"
 
 # Build a flat declarations table:
 #   entity<TAB>field<TAB>touch<TAB>type<TAB>action_file
 decls="$(mktemp -t sdd-decls.XXXXXX)"
-trap 'rm -f "$decls"' EXIT
+trap 'rm -f "$decls" "${SDD_ENTITY_INDEX_FILE:-}"' EXIT
 
 while IFS= read -r action; do
   [ -z "$action" ] && continue

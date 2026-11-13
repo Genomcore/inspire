@@ -35,7 +35,7 @@
 #
 #   ADR — `*.adr.md` (and its `*.adr.rationale.md`) (severity: warning)
 #     A decision `adr-{slug}.md` links its rationale with a
-#     `**Rationale:** [[adr-{slug}.rationale]]` line and holds ## Decision, and
+#     `**Rationale:** [adr-{slug}.rationale]({slug}.adr.rationale.md)` line and holds ## Decision, and
 #     nothing of the rationale. Its `adr-{slug}.rationale.md` holds ## Context ·
 #     ## Consequences · ## Alternatives considered · ## Related ADRs, plus
 #     `### Breaking changes` under ## Consequences, and no ## Decision. Either
@@ -475,7 +475,7 @@ check_adr() {
     sdd_count_warning
   elif [ "$links_rationale" = 0 ]; then
     sdd_finding "warning" "sections-present" "$file" \
-      "ADR decision does not link its rationale: add '**Rationale:** [[$(basename "$rationale" .md)]]'"
+      "ADR decision does not link its rationale: add '**Rationale:** [adr-$(basename "$rationale" .adr.rationale.md).rationale](${rationale##*/})'"
     sdd_count_warning
   fi
   sections_report "$tmp" "$file" "ADR decision" "warning" "" \

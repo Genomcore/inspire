@@ -1,6 +1,6 @@
 ## A meta/dispatch action — `platform::action::resolve`
 
-The canonical example (`canonical-action.md`) shows `auth::user::create` — a data-noun action where the entity is `auth::user`, a row in a table. But many SDD actions are **meta or dispatch verbs**: they read or manipulate other actions, configs, or system manifests, not domain data rows. This example shows what one of those looks like, and demonstrates the silent **plural→singular canonicalization** that happens between feature and SDD.
+The canonical example ([canonical-action.md](canonical-action.md)) shows `auth::user::create` — a data-noun action where the entity is `auth::user`, a row in a table. But many SDD actions are **meta or dispatch verbs**: they read or manipulate other actions, configs, or system manifests, not domain data rows. This example shows what one of those looks like, and demonstrates the silent **plural→singular canonicalization** that happens between feature and SDD.
 
 ## feature source
 
@@ -27,7 +27,7 @@ superseded_by: null
 ---
 
 ## Purpose
-Resolve a registered action's manifest by id. The [[platform-action-catalog|action catalog]] is the runtime source of truth for the capabilities the platform exposes, as [[adr-action-catalog]] defines. This verb is its read entry point.
+Resolve a registered action's manifest by id. The [action catalog](../../_features/platform-action-catalog.feature.md) is the runtime source of truth for the capabilities the platform exposes, as [adr-action-catalog](../../../../_adr/action-catalog.adr.md) defines. This verb is its read entry point.
 
 ## Inputs
 
@@ -37,11 +37,11 @@ Resolve a registered action's manifest by id. The [[platform-action-catalog|acti
 
 ## Outputs
 
-A single [[platform.action|platform::action]] entity — its frontmatter plus the resolved manifest.
+A single [platform::action](action.entity.md) entity — its frontmatter plus the resolved manifest.
 
 ## Entities
 
-### [[platform.action|platform::action]]
+### [platform::action](action.entity.md)
 **As input:** id · **Effect:** read
 
 | Field      | Touch | Type   | Mapping            | Notes                                  |
@@ -50,10 +50,10 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 | `manifest` | read  | json   | —                  | The descriptor's resolved contract.    |
 
 ## Preconditions
-- `P1` — exists(platform.action) — The id must name a registered action; the catalog in [[adr-action-catalog]] is the register.
+- `P1` — exists(platform.action) — The id must name a registered action; the catalog in [adr-action-catalog](../../../../_adr/action-catalog.adr.md) is the register.
 
 ## Behavior
-1. `B1` — Resolve `id` against the action catalog index defined in [[adr-action-catalog]].
+1. `B1` — Resolve `id` against the action catalog index defined in [adr-action-catalog](../../../../_adr/action-catalog.adr.md).
 2. `B2` — Return the descriptor's frontmatter and resolved manifest as JSON.
 3. `B3` — If the id is unknown → `action_not_found`.
 
@@ -76,9 +76,9 @@ A single [[platform.action|platform::action]] entity — its frontmatter plus th
 
 - **`P1` and the error share one head.** `exists(platform.action)` is the precondition, and `action_not_found` is what the caller sees when it fails. Writing the same head on both is what says they are the same fact seen from two sides — and it means a test generated from the precondition and a test generated from the error cover one claim rather than two.
 
-- **`entity-coherence` on meta entities is a known soft spot.** The rule expects every read field to have at least one `Touch=written` declaration somewhere. Here, the writers are *operators authoring descriptors* — not other actions. If `field-unsourced` fires on a meta entity, the fix (not yet implemented) is a `kind: meta` annotation on the `### [[platform.action|platform::action]]` subheader that tells the rule "this entity's fields are authored, not action-written; skip field-unsourced." Until then, it is acceptable noise while the meta entity and its readers are draft. Once one of them is accepted it is an error, as it is for any entity.
+- **`entity-coherence` on meta entities is a known soft spot.** The rule expects every read field to have at least one `Touch=written` declaration somewhere. Here, the writers are *operators authoring descriptors* — not other actions. If `field-unsourced` fires on a meta entity, the fix (not yet implemented) is a `kind: meta` annotation on the `### [platform::action](action.entity.md)` subheader that tells the rule "this entity's fields are authored, not action-written; skip field-unsourced." Until then, it is acceptable noise while the meta entity and its readers are draft. Once one of them is accepted it is an error, as it is for any entity.
 
-- **The back-source wikilinks** in `## Purpose` and `## Behavior` tie this descriptor to both the feature's action-catalog row and the governing ADR — woven into the prose that makes the claim, not appended as trailing references. An operator reading this descriptor doesn't need to know about the plural→singular shift; only that the wikilinks resolve.
+- **The back-source links** in `## Purpose` and `## Behavior` tie this descriptor to both the feature's action-catalog row and the governing ADR — woven into the prose that makes the claim, not appended as trailing references. An operator reading this descriptor doesn't need to know about the plural→singular shift; only that the links resolve.
 
 ## When to use the meta shape vs. the data-noun shape
 

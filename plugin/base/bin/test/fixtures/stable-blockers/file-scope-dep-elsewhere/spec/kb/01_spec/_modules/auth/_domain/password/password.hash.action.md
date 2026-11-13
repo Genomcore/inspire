@@ -25,7 +25,7 @@ Hash a password. Still in draft.
 
 ## Entities
 
-### [[auth.password|auth::password]]
+### [auth::password](password.entity.md)
 **As input:** shape · **Effect:** create
 
 | Field  | Touch   | Type   | Mapping            | Notes |

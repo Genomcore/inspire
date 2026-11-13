@@ -1,0 +1,17 @@
+{
+  "links": [
+    {
+      "line": 1,
+      "form": "md",
+      "target": "a.md",
+      "text": "see [[x]]"
+    },
+    {
+      "line": 1,
+      "form": "wiki",
+      "target": "x",
+      "text": "x"
+    }
+  ],
+  "code": []
+}

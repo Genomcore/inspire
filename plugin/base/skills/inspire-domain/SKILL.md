@@ -72,7 +72,7 @@ The interview produces files **incrementally as the dialogue unfolds**, not in a
 
 This skill owns: **action descriptors**, **entity documents**, **consolidation** (rebuilding the entity doc's derived `## Fields` + `## Touched by` tables after a descriptor change), and the **subcommands** below.
 
-This skill does NOT own: **feature authoring** (`/inspire-module` — back-sourcing to feature via wikilinks is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire-feature`); **exposure** (HTTP / CLI / MCP / workflow node / agent tool — the action's bindings come from the stack skill, and the bundles that publish it are `/inspire-face`'s); **implementation** (storage, runtime, SQL/TypeScript shapes).
+This skill does NOT own: **feature authoring** (`/inspire-module` — back-sourcing to feature via links is required, but the feature is not modified here); **feature-level grouping + prioritization** (`/inspire-feature`); **exposure** (HTTP / CLI / MCP / workflow node / agent tool — the action's bindings come from the stack skill, and the bundles that publish it are `/inspire-face`'s); **implementation** (storage, runtime, SQL/TypeScript shapes).
 
 ## Invocation
 
@@ -130,7 +130,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
   `## Postconditions`, `## Errors` and per-input `Constraints:` lines): the entry
   grammar, the closed head vocabularies, the derived claim ids, which oracle
   asserts what, and the catalogue of old shapes a strict reader refuses.
-- Externally populated entities use `population: external` — see `references/format-entity.md`.
+- Externally populated entities use `population: external` — see [references/format-entity.md](references/format-entity.md).
 
 ## Rules
 
@@ -138,7 +138,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
 > `output_language` (default English) — see
 > [`_references/output-language.md`](../_references/output-language.md). Applies
 > whatever language the conversation is in, and independently of the product's own
-> i18n; machine-read tokens (frontmatter keys/values, wikilink slugs, filenames)
+> i18n; machine-read tokens (frontmatter keys/values, link paths, filenames)
 > stay verbatim.
 
 > **Writing contract.** Descriptor prose follows
@@ -159,15 +159,15 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
    skill may also propose endorsing the object; on an explicit yes, run
    `.inspire/bin/trust.sh endorse <file>`
    ([trust-stamps](../_references/trust-stamps.md#endorsement)).
-3. **Back-sourcing is not optional.** Every claim in a body requires an inline prosaic wikilink. The agent prompts for the source; it never invents a link. Enforced at `review` time.
+3. **Back-sourcing is not optional.** Every claim in a body requires an inline prosaic link. The agent prompts for the source; it never invents a link. Enforced at `review` time.
 4. **`delete` refuses dependents.** If any action lists the target in `requires:`, delete is blocked — resolve consumers first, or supersede.
 5. **`update` refuses stable.** Modifying a stable object requires `demote` → `update` → `promote`. The regression is an explicit, traceable act.
 6. **`demote` refuses with cascade preview.** Walking lifecycle backwards refuses if downstream consumers depend on the current state. No `--cascade` flag.
 7. **Consolidation follows approval** and goes through show-then-approve. Operator-authored sections (Purpose / Rationale / Invariants / per-field H3) are preserved untouched.
 8. **Consult the task tracker** at the start of multi-step subcommands (`define`, `refactor`, `delete`). Surface known items as `(tracked: TASK-{id})`. If a session surfaces friction worth capturing (operator pushback, recurring `AskUserQuestion` patterns, drift the skill didn't anticipate), offer the operator a **skill-feedback ticket** per the convention in `/inspire-task` (`epic: skill-feedback`, `skills: [domain]`).
 9. **No bypassing error findings.** Hard findings from `review.sh` block promotion. The escape hatch is a manual edit outside the skill, accountable via git author.
-10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire-feature create` first. `define` refuses descriptors with no feature wikilink in `## Purpose`.
-11. **A link requires its target.** When a write links to an object that does not exist yet — an entity under `## Entities` or in a head, an action in `requires:` or in prose, an ADR — create the target in the same flow from its template and name it in the output: an entity or action from [`templates/`](templates/) at `lifecycle: draft`, in its module's `_domain/{entity}/`; an ADR from [`inspire-adr`'s template](../inspire-adr/templates/adr.template.md) at `**Status:** design`. A missing feature is rule 10's case: it is created through `/inspire-feature create`, which writes it from its template.
+10. **Features are upstream of specs; no escape hatch.** Every action descriptor must back-source to a feature. No feature home → `/inspire-feature create` first. `define` refuses descriptors with no feature link in `## Purpose`.
+11. **A link requires its target.** Links follow [kb-links.md](../_references/kb-links.md). When a write links to an object that does not exist yet — an entity under `## Entities` or in a head, an action in `requires:` or in prose, an ADR — create the target in the same flow from its template and name it in the output: an entity or action from [`templates/`](templates/) at `lifecycle: draft`, in its module's `_domain/{entity}/`; an ADR from [`inspire-adr`'s template](../inspire-adr/templates/adr.template.md) at `**Status:** design`. A missing feature is rule 10's case: it is created through `/inspire-feature create`, which writes it from its template.
 12. **Check and stamp every write.** After a descriptor or entity document is
     written, run `.inspire/bin/review.sh <file>` and fix what it reports on that
     file: every error, and every warning the operator does not choose to keep

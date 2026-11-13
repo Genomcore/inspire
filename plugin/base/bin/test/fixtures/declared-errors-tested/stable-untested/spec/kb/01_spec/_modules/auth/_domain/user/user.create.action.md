@@ -5,7 +5,7 @@ requires: []
 ---
 
 ## Purpose
-Create a user, per [[auth-user-management|the user-management feature]].
+Create a user, per [the user-management feature](../../_features/user-management.feature.md).
 
 ## Inputs
 | Parameter | Type | Required | Description |
@@ -13,17 +13,17 @@ Create a user, per [[auth-user-management|the user-management feature]].
 | `email` | email | yes | The address. |
 
 ## Outputs
-An [[auth.user|auth::user]] entity.
+An [auth::user](user.entity.md) entity.
 
 ## Entities
-### [[auth.user|auth::user]]
+### [auth::user](user.entity.md)
 **Effect:** create
 | Field | Touch | Type | Mapping | Notes |
 |---|---|---|---|---|
 | `email` | written | email | `input.email` | The address. |
 
 ## Behavior
-1. Persist the row, per [[auth-user-management|the feature]].
+1. Persist the row, per [the feature](../../_features/user-management.feature.md).
 
 ## Errors
 - `email_exists` — operator-facing message: "An account already exists with that email."

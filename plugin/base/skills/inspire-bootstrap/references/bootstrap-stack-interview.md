@@ -53,7 +53,7 @@ Define or update `stack.md` — the official application stack, including its
    replacing a load-bearing choice (a framework, the runtime, the primary DB) — or
    **changing the shape** (adding a backend, adding mobile, switching from a
    deployed database to an external one) — must be recorded as a global ADR in
-   [`01_spec/_adr`](../../../../inspire_kb/01_spec/_adr) — surface that and offer to chain
+   `inspire_kb/01_spec/_adr` — surface that and offer to chain
    `/inspire-adr create`.
 
 ### Stack skills
@@ -224,7 +224,7 @@ is a coding-stage job, brought up to standard from `source/` rather than scaffol
 
 ### Project semantic types
 
-The empty [`semantic-types.md`](../../../../inspire_kb/00_bootstrap/semantic-types.md)
+The empty `inspire_kb/00_bootstrap/semantic-types.md`
 is not filled by this interview — a type is declared when domain work meets a field
 the universal vocabulary has no type for. Mention it only if the stack conversation
 surfaces one (a project that must carry exact decimal amounts, say): every project

@@ -20,7 +20,7 @@ declares the departure.
 
 ## Resolution
 
-Resolved from [`00_bootstrap/stack.md`](../../../../inspire_kb/00_bootstrap/stack.md):
+Resolved from `inspire_kb/00_bootstrap/stack.md`:
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares
    `wire_conventions: [<id>, …]`, use that set. `/inspire-bootstrap stack`

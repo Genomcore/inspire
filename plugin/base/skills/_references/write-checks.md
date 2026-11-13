@@ -23,7 +23,7 @@ artifact of the types they check. Findings arrive on stderr, one JSON line each.
 - **An error** is fixed before you go on. Errors block the pull request, so leaving one
   only moves the work later.
 - **A warning about the file's own text** (prose style, a missing or empty section,
-  frontmatter, a wikilink) is fixed now. Rewrite the sentence; do not argue with the
+  frontmatter, a link) is fixed now. Rewrite the sentence; do not argue with the
   rule in the file.
 - **A warning that waits on another artifact** (a field no action touches yet, a
   criterion with no test yet, a dependency that is still a draft) is not fixed by

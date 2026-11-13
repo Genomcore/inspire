@@ -51,7 +51,7 @@ Both are records, aimed at different audiences:
 
 A recurring or confirmed friction ticket **graduates** into a lesson: the ticket tracks
 the local fix, the lesson carries the durable instruction and links back with
-`[[TASK-…]]`.
+`[TASK-{id}](../99_tracker/tickets/TASK-{id}.md)`.
 
 ## Distillation
 

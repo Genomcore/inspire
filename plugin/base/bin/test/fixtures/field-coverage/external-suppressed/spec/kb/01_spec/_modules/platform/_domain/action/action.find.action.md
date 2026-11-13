@@ -18,11 +18,11 @@ Looks up an action by id.
 | `id`      | string | yes      | Lookup key. |
 
 ## Outputs
-The matching [[platform.action|platform::action]] entity.
+The matching [platform::action](action.entity.md) entity.
 
 ## Entities
 
-### [[platform.action|platform::action]]
+### [platform::action](action.entity.md)
 **As input:** id · **Effect:** read
 
 | Field | Touch | Type   | Mapping    | Notes        |

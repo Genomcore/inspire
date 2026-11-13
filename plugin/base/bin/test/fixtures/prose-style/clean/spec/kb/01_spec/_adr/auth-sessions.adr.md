@@ -24,4 +24,4 @@ A client cannot read anything out of a token.
 
 ## Related ADRs
 
-- [[adr-auth-password-hashing]] — a sibling decision.
+- [adr-auth-password-hashing](auth-password-hashing.adr.md) — a sibling decision.
