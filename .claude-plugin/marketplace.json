@@ -9,7 +9,7 @@
       "name": "inspire",
       "source": "./plugin",
       "description": "Install and update the INSPIRE guardrail runtime in a project. Provides /inspire:init, /inspire:update and /inspire:migrate.",
-      "version": "0.17.2"
+      "version": "0.18.0"
     }
   ]
 }
