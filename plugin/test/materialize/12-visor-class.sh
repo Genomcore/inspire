@@ -37,6 +37,10 @@ check "init: the install is ignored" \
   "git -C '$ip' check-ignore -q --no-index .inspire/visor/.quartz/node_modules/x/index.js"
 check "init: the class root and its shipped files are not" \
   "[ -z \"\$(git -C '$ip' check-ignore --no-index .inspire/visor .inspire/visor/visor.yaml .inspire/visor/plugins/inspire/dist/index.js)\" ]"
+check "premise: the graph plugin's source holds files its shipped copy does not" \
+  "[ -f '$PLUGIN_ROOT/visor-src/inspire-graph/build.mjs' ] && [ ! -e '$VB/plugins/inspire-graph/build.mjs' ]"
+check "init: nothing of plugin/visor-src/ reached the project" \
+  "[ -z \"\$(find '$ip' -name build.mjs -o -name '*.inline.ts' -o -name package-lock.json)\" ]"
 rm -rf "$(dirname "$ip")"
 
 # --- update ----------------------------------------------------------------

@@ -22,9 +22,10 @@ rm -f "$m"
 # Built rather than borrowed: no tag has the directory yet.
 gsrc="$(mktemp -d)"
 mkdir -p "$gsrc/plugin/.claude-plugin" "$gsrc/plugin/base/visor/plugins/inspire/dist" \
-         "$gsrc/plugin/base/bin"
+         "$gsrc/plugin/base/bin" "$gsrc/plugin/visor-src/inspire-graph"
 printf '{"version":"9.9.9","released":"2099-01-01"}\n' > "$gsrc/plugin/.claude-plugin/plugin.json"
 printf 'port: 8080\n' > "$gsrc/plugin/base/visor/visor.yaml"
+printf '// source\n' > "$gsrc/plugin/visor-src/inspire-graph/build.mjs"
 printf 'export {}\n' > "$gsrc/plugin/base/visor/plugins/inspire/dist/index.js"
 printf '#!/bin/sh\n' > "$gsrc/plugin/base/bin/x.sh"
 ( cd "$gsrc" && git init -q && git add -A \
@@ -39,5 +40,9 @@ eq "a nested plugin file keeps its path below .inspire/visor/" \
 check "the sibling bin class still lands at .inspire/bin/" \
   "[ \"\$(jq -r '.files|has(\".inspire/bin/x.sh\")' '$gm')\" = true ]"
 eq "a visor-carrying revision still reports the 0.3 layout" "$(jq -r .layout "$gm")" "0.3"
+check "premise: the synthetic revision tracks plugin/visor-src/" \
+  "git -C '$gsrc' cat-file -e HEAD:plugin/visor-src/inspire-graph/build.mjs"
+eq "plugin/visor-src/ contributes no manifest path" \
+   "$(jq -r '[.files|keys[]|select(endswith("build.mjs"))]|length' "$gm")" "0"
 rm -f "$gm"; rm -rf "$gsrc"
 summary
