@@ -357,6 +357,7 @@ sdd_find_bundles()    { sdd_find_typed "${1:-}" bundle; }
 sdd_find_faces()      { sdd_find_typed "${1:-}" face; }
 sdd_find_screens()    { sdd_find_typed "${1:-}" screen; }
 sdd_find_processes()  { sdd_find_typed "${1:-}" process; }
+sdd_find_stores()     { sdd_find_typed "${1:-}" store; }
 sdd_find_adr_rationales() { sdd_find_typed "${1:-}" adr.rationale; }
 # `*.adr.md` never matches `*.adr.rationale.md`: the rationale ends in `.rationale.md`.
 sdd_find_adrs()       { sdd_find_typed "${1:-}" adr; }
@@ -416,6 +417,7 @@ sdd_typed_kind() {
     *.face.md)          printf 'face\n' ;;
     *.screen.md)        printf 'screen\n' ;;
     *.process.md)       printf 'process\n' ;;
+    *.store.md)         printf 'store\n' ;;
     *.component.md)     printf 'component\n' ;;
     *.layout.md)        printf 'layout\n' ;;
     *.pattern.md)       printf 'pattern\n' ;;
@@ -1080,6 +1082,15 @@ layout	LAY4	Composition
 layout	LAY5	Variants	
 layout	LAY6	Adopters	
 layout	LAY7	Notes	
+layout	LAY8	Bindings	
+layout	LAY9	Data	Bindings
+layout	LAY10	Dispatches	Bindings
+layout	LAY11	Navigation	Bindings
+layout	LAY12	States	Bindings
+store	STO1	Purpose	
+store	STO2	Server keys	
+store	STO3	Client keys	
+store	STO4	On error	
 module	MOD1	Overview	
 module	MOD2	Relationships	
 module	MOD3	Use cases	

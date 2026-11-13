@@ -48,6 +48,7 @@ for pair in \
   "component inspire-screens/templates/component.template.md" \
   "layout inspire-screens/templates/layout.template.md" \
   "module inspire-module/templates/module.template.md" \
+  "store inspire-store/templates/store.template.md" \
   "spike inspire-spike/templates/spike.template.md"; do
   set -- $pair
   kind="$1"; shift

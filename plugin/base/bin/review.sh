@@ -51,6 +51,7 @@ head-referents.sh \
 spec-identity.sh \
 face-exposure.sh \
 process-shape.sh \
+store-coherence.sh \
 prose-style.sh"
 read -r -a RULES <<< "${SDD_REVIEW_RULES:-$DEFAULT_RULES}"
 
