@@ -515,12 +515,18 @@ gitignore_extend_block() {
     return 0
   fi
 
+  # Through the environment: BSD awk rejects a newline inside a -v value, which
+  # is what two missing entries are.
   tmp="$(mktemp)" || return 0
-  awk -v end_mark="$GITIGNORE_MARK_END" -v add="$(printf '%s\n' "${missing[@]}")" '
-    $0 == end_mark && !done { printf "%s\n", add; done = 1 }
-    { print }
-  ' "$gi" > "$tmp" && mv "$tmp" "$gi"
-  log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
+  if end_mark="$GITIGNORE_MARK_END" add="$(printf '%s\n' "${missing[@]}")" awk '
+       $0 == ENVIRON["end_mark"] && !done { printf "%s\n", ENVIRON["add"]; done = 1 }
+       { print }
+     ' "$gi" > "$tmp" && mv "$tmp" "$gi"; then
+    log "  · added to the INSPIRE .gitignore block: ${missing[*]}"
+  else
+    rm -f "$tmp"
+    WARNINGS+=("gitignore: could not add to the INSPIRE block: ${missing[*]} — add them by hand.")
+  fi
 }
 
 # The 0.3 runtime is meant to be COMMITTED — that is what lets it travel with
