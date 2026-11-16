@@ -217,10 +217,12 @@ owns the entity, never to the shared client's config.
   run starts the migration tool and replays every migration, which costs seconds per
   file and turns a suite of a few dozen files into minutes. A store without database
   templates keeps the same shape: build once, copy per file.
-- **E2E files run one at a time** (`fileParallelism: false` in the e2e Vitest config).
-  The files no longer share tables, so this is a resource choice, not a correctness
-  one: a unit's container gets about one CPU, so parallel files gain little and each
-  extra worker costs its own memory.
+- **E2E files run four at a time** (`maxWorkers: 4` in the e2e Vitest config, and no
+  `fileParallelism: false`). The files share no tables, so this is a resource choice,
+  not a correctness one. INSPIRE Factory gives a check every CPU of its machine and
+  bounds how many checks run at once, so files side by side pay off: four cut a
+  genomics-suite e2e run of 279 files from 425 s to about 190 s. Each worker boots its
+  own application and connection pool and costs its own memory, so do not go higher.
 
 ## Test infrastructure
 

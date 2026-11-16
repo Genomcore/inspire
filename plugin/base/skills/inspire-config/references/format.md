@@ -33,11 +33,12 @@ default. The reader refuses any key not in the table, under `factory` and under
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
 | `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/01_spec` | `… factory.spec_root must be a nonempty string` |
-| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
+| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, check_concurrency, max_tries, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
 | `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
+| `check_concurrency` | a positive integer: check commands (lint, typecheck, test suites) running at once across all units; the others wait for a free one. Review checks, the setup and the agents take none. Agents mostly wait on the model while suites keep the CPUs busy, so this, not `concurrency`, bounds the CPU load | `2` | `… factory.check_concurrency must be a positive integer` |
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
 | `spec_strictness` | `strict`, `auto` or `yolo`: what a unit does when its agent reports a spec problem with `report_spec_issue`. `strict` stops the unit with the report. `yolo` has a spec writer agent apply the proposed solution to the spec files and lets the unit continue; each applied report is a numbered spec revision committed to the release branch. `auto` has a small model (`spec_classifier_model`) classify each report: `small` is applied as in `yolo`, `critical` stops the unit as in `strict` | `strict` | `… factory.spec_strictness must be strict, auto or yolo` |
 | `spec_max_revisions` | a positive integer: the most spec revisions a `yolo` or `auto` run commits; once the run holds that many, the next report stops its unit as in `strict` | `5` | `… factory.spec_max_revisions must be a positive integer` |
@@ -313,6 +314,7 @@ services:
 env:
   DATABASE_URL: 'postgresql://inspire:inspire@postgres:5432/app'
 setup: 'cd source && npm ci'
+bash_timeout: 600
 phases:
   - name: quality
     checks:
@@ -340,9 +342,9 @@ phases:
 ```
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
-Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config sets
-`fileParallelism: false`, which already runs one file at a time, as the NestJS profile
-requires.
+Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config already
+sets `maxWorkers: 4`, as the NestJS profile requires. `bash_timeout: 600` lets an agent's
+long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
 an e2e test that starts the whole application relates to most changes, so the

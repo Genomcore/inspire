@@ -82,8 +82,12 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   `tests`, with `review` between them when there is one. Each command starts
   `cd <source_root>[/<package>] &&`. No watch mode:
   `vitest run`, `npx --no-install jest`. Vitest and Jest unit suites take
-  `--maxWorkers=2`; a suite whose config already sets `maxWorkers` (or, in Vitest,
-  `fileParallelism: false`) takes no flag. A suite that may still be empty takes
+  `--maxWorkers=2`; a suite whose config already sets `maxWorkers` takes no flag. A
+  Vitest e2e suite whose config sets `fileParallelism: false` while each file gets a
+  database of its own (the NestJS profile's shape) takes `--fileParallelism
+  --maxWorkers=4`: its files share nothing, and the Factory bounds how many checks run
+  at once (`check_concurrency`). One whose files share a database keeps its config. A
+  suite that may still be empty takes
   `--passWithNoTests` in `run`: the release check and the units' fallback to `run`
   still run it whole.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
@@ -103,6 +107,11 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   it passes with no related test. In the proposal, say that
   `run_related` turns on the release check, which runs the whole suite once more
   before the PR; the operator may drop it from the draft like any other key.
+- **`bash_timeout`.** Proposed, confirm: `600`. Without it OMP kills an agent's command
+  after 300 s, before the agent sees its result, unless the agent passed a timeout of its
+  own; a migration, a build or a whole e2e file can take longer. A higher value lets a
+  shell that never returns hold the unit's slot that long: one held a genomics-suite unit
+  for 30 minutes at `1800`.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
   named `review`, after `quality` and **before** `tests`, with one check per
@@ -180,6 +189,9 @@ are expected.
   related tests; propose moving it before `tests`.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
   as in a new file.
+- A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
+  whose config runs one file at a time over per-file databases gets `--fileParallelism
+  --maxWorkers=4`, as in a new file.
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for
