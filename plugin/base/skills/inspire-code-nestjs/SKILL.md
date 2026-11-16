@@ -217,14 +217,14 @@ owns the entity, never to the shared client's config.
   run starts the migration tool and replays every migration, which costs seconds per
   file and turns a suite of a few dozen files into minutes. A store without database
   templates keeps the same shape: build once, copy per file.
-- **E2E files run a few at a time** (`maxWorkers` in the e2e Vitest config, and no
-  `fileParallelism: false`). The files share no tables, so this is a resource choice,
-  not a correctness one. INSPIRE Factory 0.19.0 and later give a check every CPU of its
-  machine and bound how many checks run at once, so files side by side pay off: four
-  workers ran a genomics-suite e2e suite of 279 files in about 120 s, against 425 s one
-  at a time. Each worker boots its own application and connection pool and costs its
-  own memory: four fit a unit container of 2 GB (`factory.sandbox.memory: 2g`); at the
-  default 1536m use two, and never go above four.
+- **E2E files run one at a time in the config** (`fileParallelism: false` in the e2e
+  Vitest config). The files share no tables, so this is a resource choice, not a
+  correctness one, and the config keeps the choice that is safe everywhere: a developer's
+  machine, and an INSPIRE Factory that caps each unit's CPUs. Running files side by side
+  is the factory's e2e check's choice: `/inspire-config` adds `--fileParallelism` and a
+  worker count to it when the Factory and the unit's memory allow, and four workers ran a
+  genomics-suite e2e suite of 279 files in about 120 s, against 425 s one at a time. Never
+  change the config to run files in parallel.
 
 ## Test infrastructure
 

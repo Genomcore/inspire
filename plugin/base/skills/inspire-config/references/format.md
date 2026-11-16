@@ -38,7 +38,7 @@ default. The reader refuses any key not in the table, under `factory` and under
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
-| `check_concurrency` | a positive integer: check commands (lint, typecheck, test suites) running at once across all units; the others wait for a free one. Review checks, the setup and the agents take none. Agents mostly wait on the model while suites keep the CPUs busy, so this, not `concurrency`, bounds the CPU load | `2` | `… factory.check_concurrency must be a positive integer` |
+| `check_concurrency` | a positive integer: check commands (lint, typecheck, test suites) running at once across all units; the others wait for a free one. Review checks, the setup and the agents take none. Agents mostly wait on the model while suites keep the CPUs busy, so this bounds the load of the factory's own checks better than `concurrency`. The tests an agent runs in its shell take no slot | `2` | `… factory.check_concurrency must be a positive integer` |
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
 | `spec_strictness` | `strict`, `auto` or `yolo`: what a unit does when its agent reports a spec problem with `report_spec_issue`. `strict` stops the unit with the report. `yolo` has a spec writer agent apply the proposed solution to the spec files and lets the unit continue; each applied report is a numbered spec revision committed to the release branch. `auto` has a small model (`spec_classifier_model`) classify each report: `small` is applied as in `yolo`, `critical` stops the unit as in `strict` | `strict` | `… factory.spec_strictness must be strict, auto or yolo` |
 | `spec_max_revisions` | a positive integer: the most spec revisions a `yolo` or `auto` run commits; once the run holds that many, the next report stops its unit as in `strict` | `5` | `… factory.spec_max_revisions must be a positive integer` |
@@ -334,7 +334,7 @@ phases:
         run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
         run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 {files}'
       - name: E2E tests
-        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2'
   - name: claims
     checks:
       - name: Claim citations
@@ -342,9 +342,11 @@ phases:
 ```
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
-Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config already
-sets `maxWorkers: 2`, as the NestJS profile requires at the default `sandbox` memory
-(`1536m`); with `sandbox.memory: 2g` or more it may set `4`. `bash_timeout: 600` lets an agent's
+Postgres is still initializing. The e2e config runs one file at a time, as the NestJS
+profile requires, and each file copies its own database, so the check runs files side by
+side with `--fileParallelism`: two workers at the default `sandbox` memory (`1536m`), four
+with `sandbox.memory: 2g` or more, on INSPIRE Factory 0.19.0 or later. On an older Factory
+the check keeps the config's one file at a time. `bash_timeout: 600` lets an agent's
 long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. Only the unit tests carry `run_related`:

@@ -96,7 +96,10 @@ Read the reference before the step it covers. The table is an index, not the flo
    `spec_strictness`, `spec_max_revisions` and `spec_classifier_model` need a
    factory 0.18.0 or later, for the same reason, and `check_concurrency` 0.19.0 or later.
    The parallel e2e flags also wait for 0.19.0: an older factory caps each unit's CPUs,
-   so the rule proposes them only on 0.19.0 or later.
+   so the rule proposes them only on 0.19.0 or later. The version is `version` in
+   `$INSPIRE_FACTORY_ROOT/orchestrator/package.json`, the checkout validation uses
+   ([`validate.md`](references/validate.md)). With no checkout the version is unknown:
+   propose neither, and say why.
    `run_related` is the exception: it is written by default, with no check of the
    factory's version. A factory that does not know it refuses the file when the run
    starts, before any unit, with `… has unknown key run_related`; the fix is to
