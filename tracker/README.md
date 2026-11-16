@@ -112,7 +112,9 @@ Factory work.
   `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
   nothing when the KB is not in English; blocked by `B4-section-keys`),
   `0143-factory-settings-in-emanate-yml` (High; `/inspire-config` follows the Factory's
-  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version).
+  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version),
+  `0170-screen-id-other-fronts` (the Angular, iOS and Android skills have no `## Routes`
+  seed and no rule against reading a screen id's shape, which F19 broke in React).
 - **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
