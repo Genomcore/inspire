@@ -178,6 +178,32 @@ Bytes that differ from that hash are your edit — if INSPIRE did not also chang
 file in the new release, it is **kept** untouched; if both sides changed it, the
 update **asks**. It never silently replaces an edited stack skill.
 
+## Datastores
+
+A project with one database needs nothing here: its entities follow the backend
+profile's `## Persistence`. A project with more than one names them in `stack.md`'s
+frontmatter, each mapped to the stack id whose skill carries its `## Persistence`,
+and may name one as the default:
+
+```yaml
+profiles: [react, nestjs, postgres, clickhouse]
+datastores:
+  metadata: postgres
+  analytics: clickhouse
+default_datastore: metadata
+```
+
+An entity names its datastore with `datastore:` in its frontmatter, or lives in the
+default when it names none
+([`format-entity.md`](../inspire-domain/references/format-entity.md) § *Datastore*).
+Its table then follows the `## Persistence` of the skill whose `stack:` is the id its
+datastore maps to (`stack: clickhouse`), never the backend profile's. Every id a
+datastore maps to is also in `profiles:`, and has a skill with a `## Persistence`
+section. INSPIRE ships no skill for a second engine, so a project writes its own; a
+database skill carries no `layer:`, which serves it to every unit, actions included.
+`entity-datastore.sh` checks all of this, and a datastore that cannot be resolved
+refuses the entity's unit (`DR-D3` in [`derived-contract.md`](derived-contract.md)).
+
 ## Authoring rules for stack skills
 
 - **Keep them lean and declarative** — a stack skill states conventions; it is not a

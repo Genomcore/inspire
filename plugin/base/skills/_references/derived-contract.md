@@ -89,6 +89,7 @@ the grouped human report.
 { "schema": "inspire.derived-contract/1",
   "unit": { "kind", "id", "path", "lifecycle", "module"?,
             "entity"? , "action"?, "face"?, "screen"?, "state"?, "population"?,
+            "datastore"?,
             "package"? },
   "purpose": "…",
   "requires": [ { "kind", "id", "ordering" } … ],
@@ -109,6 +110,16 @@ the grouped human report.
   the knowledge base to learn: there is no write path to declare and none to
   test. The refusal object carries it too — a unit does not stop being externally
   populated because its document is malformed.
+- **`unit.datastore`** is an entity's alone: the datastore its rows live in, from its
+  `datastore:` field or, when it names none, `stack.md`'s `default_datastore:` (a
+  single entry in `datastores:` is the default). It is absent when `stack.md`
+  declares no `datastores:`, so a project with one database derives what it did
+  before. The entity's table follows the `## Persistence` section of the stack skill
+  whose `stack:` is the id `datastores:` maps that datastore to, never the backend
+  profile's; with no `datastores:`, the backend profile's `## Persistence` is the
+  convention, as before. `population: external` changes none of this: the table is
+  still built from `## Fields`, and only its rows come from elsewhere. A datastore
+  that cannot be resolved this way is `DR-D3`.
 - **`purpose`** is the unit's intent, whitespace-collapsed to one line — the
   `## Purpose` prose, or the `**Purpose:**` header line for a catalog entry,
   which has no such section. It is what the unit's agent would otherwise have to
@@ -140,7 +151,8 @@ the grouped human report.
   policy, not derive's — `plan` drops navigation and self edges too. Derive
   carries the fact; the planner decides what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
-  the field constraints in table order then the invariants; for an action the
+  the field constraints in table order, then the invariants, then its datastore
+  claim when it has a `unit.datastore`; for an action the
   input constraints, preconditions, behavior steps, postconditions, errors and
   then its three binding claims;
   for a screen the parameter, data, dispatch, navigation and state bindings,
@@ -210,7 +222,9 @@ vocabulary.
   `fields` empty — the entity document is the canonical field shape and
   duplicating it here would drift.
 - **`entities`** is one object per touched entity: `{id, as_input, effect,
-  fields}`, and each touched field carries **the entity document's own
+  fields, datastore?}`, `datastore` being that entity's `unit.datastore` when it has
+  one, so an action knows which database it reads or writes without opening the
+  entity's document. Each touched field carries **the entity document's own
   constraints** for that field. They are carried, never claimed: the claim about
   a field belongs to the entity's contract and is minted exactly once, there.
 - **`pattern`** is `{id, path}` or `null`; **`layouts`** is a list of
@@ -277,6 +291,7 @@ declared key, the way every other kind's are:
 
 ```
 {module}.{entity}/field/{field}/{op}     {module}.{entity}/inv/I{n}
+{module}.{entity}/datastore
 {action}/input/{param}/{op}              {action}/pre/P{n}
 {action}/step/B{n}                       {action}/post/Q{n}
 {action}/error/{code}
@@ -315,6 +330,14 @@ around every route: its geometry claims hold on the frame, this one on the
 application, and without it a shell can be built, tested and still frame
 nothing.
 
+**An entity with a `unit.datastore` makes one more claim**,
+`{module}.{entity}/datastore`: its table exists in that datastore, built under that
+datastore's `## Persistence`. Its oracle is `store`, like the field constraints the
+table carries. It exists so that moving an entity to another datastore, or changing
+the `default_datastore:` an entity relies on, makes one claim stale and rebuilds the
+table where it now belongs. An entity in a project without `datastores:` makes no
+such claim, so its claims and their fingerprints are what they were.
+
 **A grouping bundle makes exactly one claim**, `{bundle-id}/mount/every-action`:
 the bundle's package exposes every one of its member actions. It is the
 aggregate claim the shell's mount claim models, cited by a test that starts the
@@ -343,6 +366,7 @@ whitespace-collapsed and trimmed:
 | claim family | payload fields |
 |---|---|
 | entity field constraint · action input constraint | the canonical constraint token |
+| entity datastore | `datastore` · the datastore id · the stack id it maps to |
 | invariant · precondition · postcondition · error | the canonical head text (empty when there is none) · the prose |
 | behavior step | the canonical head text (always empty) · the prose |
 | binding route | `route` · the input names, sorted and comma-joined · the bindings text |
@@ -506,6 +530,7 @@ this table name the same thing.
 | `DR-P1` | a process's `## Trigger` is absent or empty | touch the process |
 | `DR-P2` | a `## Before` or `## After` entry links no action, or links one already linked in that section | touch the process |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
+| `DR-D3` | an entity's datastore cannot be resolved: `stack.md` declares two or more `datastores:` and no `default_datastore:` and the entity names none; its `datastore:` names one `datastores:` does not declare, or `stack.md` declares no `datastores:`; the `default_datastore:` it falls to is not declared; or the stack id its datastore maps to is not in `profiles:`, or no stack skill with that `stack:` has a `## Persistence` section | `/inspire-domain update {id}` for the entity's field; `/inspire-bootstrap` for `stack.md` |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
 

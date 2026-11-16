@@ -115,9 +115,12 @@ entity document stays the one place that says what the columns are.
   declares none derives byte-identical contracts and every fingerprint stays where it was.
 - **An action's `entities`** objects gain `datastore`, so an action that reads or writes an
   entity knows which database it queries without reading the entity's document.
-- **The fingerprint.** `unit.datastore` feeds the entity's fingerprint: moving an entity to
-  another datastore rebuilds it, and so does changing `default_datastore:` for every entity that
-  relies on it.
+- **A datastore claim.** An entity with a `unit.datastore` makes one more claim,
+  `{module}.{entity}/datastore` (oracle `store`), whose fingerprint covers the datastore id and
+  the stack id it maps to. Moving an entity to another datastore makes that claim stale and
+  rebuilds its table where it now belongs, and so does changing the `default_datastore:` an
+  entity relies on. A project without `datastores:` makes no such claim, so its claims and
+  fingerprints stay as they were.
 - **Refusal.** A new class, `DR-D3`, refuses an entity whose datastore is missing or undeclared
   under D2, resolves to a `default_datastore:` that `datastores:` does not declare, or names a
   datastore D3 cannot serve. Its remedy is `/inspire-domain update {id}` for
@@ -125,7 +128,8 @@ entity document stays the one place that says what the columns are.
 
 ### D6 — A validator checks the field; a reference across datastores is a warning
 
-A validator reports, at every lifecycle:
+A new rule, `entity-datastore.sh`, in `review.sh`'s default list, reports as errors at every
+lifecycle:
 
 - `datastore-missing` (error): the stack declares two or more datastores and no default, and an
   entity names none.
@@ -161,8 +165,8 @@ And as a warning:
 - A project with a second database must write a stack skill for it with a `## Persistence`
   section before its entities can be built there.
 - **The INSPIRE Factory needs matching work**, filed in its tracker when this ships: its deriver
-  reads `datastore`, emits `unit.datastore` and `DR-D3`, adds `datastore` to an action's entities,
-  and serves the datastore's skill. The contracter's "create its migration as usual" follows the
+  reads `datastore`, emits `unit.datastore`, the datastore claim and `DR-D3`, adds `datastore` to an
+  action's entities, and serves the datastore's skill. The contracter's "create its migration as usual" follows the
   datastore's migration rule.
 
 ## Alternatives considered
