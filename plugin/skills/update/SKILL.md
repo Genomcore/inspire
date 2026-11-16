@@ -321,7 +321,10 @@ If `.inspire/emanate.yml` exists, run `/inspire-config review`. It writes nothin
 release can change how the file is derived (a check's flags, a top-level key), and this
 update never edits the file. When the review reports warnings, relay them and offer —
 never run unprompted — `/inspire-config init`, which re-derives the file, shows the diff
-against the current one and writes only on the operator's yes.
+against the current one and writes only on the operator's yes. Without a factory
+checkout (`INSPIRE_FACTORY_ROOT` unset, or a factory older than 0.18.1), the review says
+*validation pending*: relay it and the warnings it could still check, and go on; never
+stop the update to ask for a path.
 
 ## What this skill is, and what is missing from it
 

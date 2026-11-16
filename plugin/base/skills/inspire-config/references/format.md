@@ -343,7 +343,8 @@ phases:
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
 Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config already
-sets `maxWorkers: 4`, as the NestJS profile requires. `bash_timeout: 600` lets an agent's
+sets `maxWorkers: 2`, as the NestJS profile requires at the default `sandbox` memory
+(`1536m`); with `sandbox.memory: 2g` or more it may set `4`. `bash_timeout: 600` lets an agent's
 long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. Only the unit tests carry `run_related`:

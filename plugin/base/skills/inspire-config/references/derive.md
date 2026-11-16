@@ -82,12 +82,16 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   `tests`, with `review` between them when there is one. Each command starts
   `cd <source_root>[/<package>] &&`. No watch mode:
   `vitest run`, `npx --no-install jest`. Vitest and Jest unit suites take
-  `--maxWorkers=2`; a suite whose config already sets `maxWorkers` takes no flag. A
-  Vitest e2e suite whose config sets `fileParallelism: false` while each file gets a
-  database of its own (the NestJS profile's shape) takes `--fileParallelism
-  --maxWorkers=4`: its files share nothing, and the Factory bounds how many checks run
-  at once (`check_concurrency`). One whose files share a database keeps its config. A
-  suite that may still be empty takes
+  `--maxWorkers=2`; a suite whose config already sets `maxWorkers` (or, in Vitest,
+  `fileParallelism: false`) takes no flag. The exception is a Vitest e2e suite whose
+  config sets `fileParallelism: false` while each file gets a database of its own: its
+  `globalSetup` migrates one template database, and each file's `beforeAll` runs
+  `CREATE DATABASE … TEMPLATE` (the NestJS profile's shape). Its files share nothing, so
+  it takes `--fileParallelism --maxWorkers=4` when `factory.sandbox.memory` is at least
+  `2g`, and `--fileParallelism --maxWorkers=2` below that: each worker boots its own
+  application. It needs INSPIRE Factory 0.19.0 or later, which no longer caps a unit's
+  CPUs; with an older Factory, or when the per-file database cannot be found in the
+  test code, the suite keeps its config. A suite that may still be empty takes
   `--passWithNoTests` in `run`: the release check and the units' fallback to `run`
   still run it whole.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
@@ -190,8 +194,8 @@ are expected.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
   as in a new file.
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
-  whose config runs one file at a time over per-file databases gets `--fileParallelism
-  --maxWorkers=4`, as in a new file.
+  whose config runs one file at a time over per-file databases gets `--fileParallelism`
+  and its `--maxWorkers`, as in a new file (§ Run checks).
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for
