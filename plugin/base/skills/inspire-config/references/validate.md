@@ -52,6 +52,10 @@ warning explicitly.
 | a root that does not exist yet | warning | skipped silently; fine when the scaffold will create it |
 | a multi-line `run` without `set -e`, a pipe without `set -o pipefail` | warning | a red check reads green |
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
+| a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
+| `{files}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
+| a `run_related` whose runner or flags differ from its `run` beyond the narrowing | warning | the units and the release check would run different suites |
+| a `review` phase after a `tests` phase | warning | a change the review rejects costs a full test run before its repair |
 | `npm run <x>` with no script `<x>`; `npx --no-install <bin>` with `<bin>` not a dependency | warning | the command fails in every unit |
 | an image tag ending `-slim` or `-alpine`, or `latest` | warning | no `git`, musl, or a toolchain that moves between runs |
 | `uv sync --frozen` | warning | propose `--locked` |
@@ -59,7 +63,7 @@ warning explicitly.
 | a review `skills` name with no `.claude/skills/<name>/SKILL.md` committed, and not a factory skill | error | the runner stops before the release |
 | a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
 | a review check without `focus` | warning | the reviewer judges every rule it was given |
-| a `factory.model`, `review_model` or `subagent_models` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
+| a `factory.model`, `review_model`, `subagent_models` or `spec_classifier_model` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
 | `.inspire/emanate.json` still on disk | error | the factory refuses the project until its keys move under `factory` ([`derive.md`](derive.md) § Migrating `emanate.json`) |
 
 ## 3. The image probe (optional)

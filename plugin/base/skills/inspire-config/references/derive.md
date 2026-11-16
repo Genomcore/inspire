@@ -79,17 +79,35 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   subshell — `(cd source/web && npm ci) && (cd source/api && uv sync --locked)` —
   so one row's `cd` cannot move the next.
 - **Run checks.** Phase `quality` first (lint, types, format, build), then phase
-  `tests`. Each command starts `cd <source_root>[/<package>] &&`. No watch mode:
+  `tests`, with `review` between them when there is one. Each command starts
+  `cd <source_root>[/<package>] &&`. No watch mode:
   `vitest run`, `npx --no-install jest`. Vitest and Jest unit suites take
   `--maxWorkers=2`; a suite whose config already sets `maxWorkers` (or, in Vitest,
-  `fileParallelism: false`) takes no flag. A suite that may
-  still be empty takes `--passWithNoTests`, since every unit runs every check.
+  `fileParallelism: false`) takes no flag. A suite that may still be empty takes
+  `--passWithNoTests` in `run`: the release check and the units' fallback to `run`
+  still run it whole.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
+- **`run_related`.** On by default ([`format.md`](format.md) § Run checks); no
+  question asks for it, and no factory version is checked. Every Jest or
+  Vitest unit suite in phase `tests` gets the same command as `run`, narrowed and
+  with `--passWithNoTests`:
+  - Jest: `run` plus `--passWithNoTests --findRelatedTests {files}`;
+  - Vitest: `vitest run` becomes `vitest related --run`, plus `--passWithNoTests`
+    and `{files}` at the end.
+
+  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite whose
+  tests start the whole application gains little, so it gets none unless the
+  operator asks. Other runners get none unless the operator gives the command and
+  it passes with no related test. In the proposal, say that
+  `run_related` turns on the release check, which runs the whole suite once more
+  before the PR; the operator may drop it from the draft like any other key.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
-  named `review`, after `tests`, with one check per concern. The default reads
+  named `review`, after `quality` and **before** `tests`, with one check per
+  concern: the factory stops at the first red phase, so a change the review
+  rejects is repaired before a full test run is spent. The default reads
   `'{profiles}#Review focus'`: today the android, angular, ios, nestjs and react
   profiles carry that section. Add a project skill or a file (`CLAUDE.md`, a
   section of a conventions document) only when the operator names it, and give
@@ -127,6 +145,7 @@ sources leave it open.
 | Q11 | Does any test need a real secret, or `setup` a private registry? | the code reads an external credential | no — the factory has no channel for secrets; say so |
 | Q12 | Does the machine reach the internet through a proxy or a mirror? | always | no; if yes, `HTTP(S)_PROXY` plus a `NO_PROXY` naming `orchestrator` and every service |
 | Q13 | Add a review phase? With which rules: the profiles' `## Review focus`, project skills, other files? | a profile has `## Review focus`, or the operator asks | no review; if yes, `'{profiles}#Review focus'` |
+| Q14 | When a unit's agent reports a spec problem: stop the unit (`strict`), let a small model decide (`auto`), or apply the agent's fix to the spec (`yolo`)? With `auto`, which model classifies? | always | `strict`, which writes no key; `auto` also writes `spec_classifier_model` |
 
 ## What is never deduced
 
@@ -137,7 +156,7 @@ sources leave it open.
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
 | whether to review, and against which rules | a review is a cost the operator chooses |
 | secrets | `env` is committed and shown to every agent |
-| any value under `factory` | the models, the concurrency, the tries and the base branch are the operator's choice. The section is carried over from the old file or answered, never proposed |
+| any value under `factory` | the models, the concurrency, the tries, the spec strictness and the base branch are the operator's choice. The section is carried over from the old file or answered (Q14), never proposed |
 
 ## An empty project
 
@@ -157,6 +176,10 @@ are expected.
   `roots` (a ticket's wording, never the reader's), and a separate
   `.inspire/emanate.json`. Propose a migration; the last one follows its own steps
   below.
+- A `review` phase after `tests` is a file written before the factory ran only
+  related tests; propose moving it before `tests`.
+- A Jest or Vitest unit suite without `run_related` gets one in the proposal,
+  as in a new file.
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for

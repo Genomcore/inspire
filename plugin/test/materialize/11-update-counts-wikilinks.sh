@@ -13,7 +13,8 @@ SCRIPT="$PLUGIN_ROOT/scripts/materialize.sh"
 FIXTURE_WORK="$(mktemp -d)"
 # The tag is spelled out: run.sh greps these call sites for what to pre-build.
 FIXTURE_BASE="$(fixture_from_tag v0.16.0 "$FIXTURE_WORK" "$REPO")"
-proj="$(mktemp -d)/proj"; mkdir -p "$proj" && cp -R "$FIXTURE_BASE/." "$proj/"
+fixture_require "$FIXTURE_BASE" v0.16.0
+proj="$(mktemp -d)/proj"; mkdir -p "$proj" && cp -R "${FIXTURE_BASE:?}/." "$proj/"
 
 note="$proj/inspire_kb/99_tracker/tickets/T-1.md"
 mkdir -p "$(dirname "$note")"

@@ -49,6 +49,17 @@ fixture_from_tag() {
   printf '%s\n' "$proj"
 }
 
+# fixture_require <path> <tag> — stops the calling file when fixture_from_tag
+# failed. A failed build prints nothing, and every caller then copies
+# "$FIXTURE_BASE/." — which, left empty, is "/.": the whole disk, once per block
+# (13 Nov 2026: eight runs, 193 GiB of temp). Exit rather than `bad`: nothing
+# after the fixture line can run meaningfully without it.
+fixture_require() {
+  [ -n "${1:-}" ] && [ -d "$1" ] && return 0
+  echo "fixture_require: the $2 fixture did not build; stopping before anything copies it" >&2
+  exit 1
+}
+
 fixture_cleanup() { [ -n "${1:-}" ] && rm -rf "$1"; }
 
 # fixture_cache_build <cache-dir> <repo> <tag>...

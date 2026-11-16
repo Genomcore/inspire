@@ -45,8 +45,9 @@ check "fixture: the v$FIXTURE_VERSION baseline built" \
   "[ -n '$FIXTURE_BASE' ] && [ -f '$FIXTURE_BASE/.inspire.lock' ] && [ -d '$FIXTURE_BASE/inspire_kb' ]"
 check "fixture: its manifest ships, so detection has something to match" \
   "[ -f '$FIXTURE_MANIFEST' ]"
+fixture_require "$FIXTURE_BASE" v0.6.0
 # fixture_copy <dest> — a private copy of the baseline, for one block to mutate.
-fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
+fixture_copy() { mkdir -p "$1" && cp -R "${FIXTURE_BASE:?}/." "$1/"; }
 
 proj="$(mktemp -d)/proj"; mkdir -p "$proj"
 ( cd "$proj" && git init -q )
@@ -295,7 +296,19 @@ check "second init: CLAUDE.md still untouched" "[ '$claude_before' = '$claude_af
 check "second init: .gitignore block still once" "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$own/.gitignore')\" = 1 ]"
 check "second init: original line survives"     "grep -qF 'node_modules/' '$own/.gitignore'"
 
-rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")"
+# A CRLF .gitignore: the end marker is found as a substring but never matches a
+# whole line, so the block cannot be extended. That must reach the warnings.
+crlf="$(mktemp -d)/p5"; mkdir -p "$crlf"; ( cd "$crlf" && git init -q )
+printf '# --- INSPIRE (materialize.sh) ---\r\n.claude/settings.local.json\r\n# --- end INSPIRE ---\r\n' > "$crlf/.gitignore"
+crlf_before="$(shasum -a 256 "$crlf/.gitignore" | cut -d' ' -f1)"
+crlf_out="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$crlf" \
+  --source-root source --prototype-root prototype 2>/dev/null)"
+check "CRLF .gitignore: the block is left as it was" \
+  "[ '$crlf_before' = \"\$(shasum -a 256 '$crlf/.gitignore' | cut -d' ' -f1)\" ]"
+check "CRLF .gitignore: the entries it could not add are a warning" \
+  "printf '%s' \"\$crlf_out\" | jq -r '.warnings[]' | grep -q 'could not add to the INSPIRE block: .*\.inspire/visor/\.quartz/'"
+
+rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")" "$(dirname "$crlf")"
 
 fixture_cleanup "$FIXTURE_WORK"
 summary

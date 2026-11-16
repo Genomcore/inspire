@@ -49,6 +49,8 @@ not the answer.
   the i18n / constants layer.
 - External URLs MUST be sanitized before use in `href`/navigation, and
   `dangerouslySetInnerHTML` MUST NOT receive unsanitized input.
+- Code MUST NOT read anything from a screen id's shape — no `id.split('.')`, no prefix
+  match: a screen's module, face and route come from the route table (§ Routes).
 
 ## Review focus
 - **styling**: uses the design-system tokens (`01_spec/_design-system/design-system.tokens.json`, plus the face's own `{face}.tokens.json` when it has one; meanings in `01_spec/_design-system/design-system.md`; a token `{color.primary}` is the CSS custom property `--color-primary`) and the
@@ -67,9 +69,11 @@ this stack derives its own `## Quality gates` (and the `gates:` frontmatter that
 `.inspire/bin/profile-gates-installed.sh` verify them) from a frontend iteration that
 exercises each rule before writing it down. The shared-toolchain candidates are
 obvious — the type-aware `typescript/no-unsafe-*` rules and `typescript/ban-ts-comment`
-in `.oxlintrc.json`, the escape-hatch ratchet — and the React-only ground (oxlint's
-`react/rules-of-hooks` and `react/exhaustive-deps`, its `jsx-a11y` plugin, a bundle-size
-budget) is where the measuring has to happen. This section is the deferral, not the answer.
+in `.oxlintrc.json`, the escape-hatch plugin
+([`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs))
+— and the React-only ground (oxlint's `react/rules-of-hooks` and `react/exhaustive-deps`,
+its `jsx-a11y` plugin, a bundle-size budget) is where the measuring has to happen. This
+section is the deferral, not the answer.
 
 ## Build & verify
 build: `npm run build` · lint: `npm run lint` (`oxlint`) · format: `npx oxfmt --check` ·
@@ -115,6 +119,12 @@ inside its face's shell, with no face segment of its own.
   frontmatter is the only place a module and screen name live.
 - Code MUST resolve every route through a `routeOf('{screen id}')` helper built from that
   table; a literal path string MUST NOT appear outside the route table.
+- The route table also carries each screen's `module` and `face`, from the same
+  frontmatter. Code that needs either one (the shell's active entry, a breadcrumb, a
+  per-module guard) reads it through `moduleOf('{screen id}')` / `faceOf('{screen id}')`
+  helpers built from that table, never from the id string: a screen id's first segment
+  is its face, not its module, and a migration can rewrite an id while the frontmatter
+  stays.
 - Navigation targets screens **by id** and resolves through this same rule, so a
   route and a screen can never disagree. Moving a screen to another face changes its
   id and its shell prefix, and nothing else of its route.

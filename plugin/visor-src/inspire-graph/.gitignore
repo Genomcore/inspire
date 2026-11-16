@@ -1,0 +1,3 @@
+# A build run here in place; the shipped copy is plugin/base/visor/plugins/inspire-graph/.
+/node_modules/
+/dist/
