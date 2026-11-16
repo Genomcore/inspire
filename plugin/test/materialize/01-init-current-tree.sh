@@ -45,8 +45,9 @@ check "fixture: the v$FIXTURE_VERSION baseline built" \
   "[ -n '$FIXTURE_BASE' ] && [ -f '$FIXTURE_BASE/.inspire.lock' ] && [ -d '$FIXTURE_BASE/inspire_kb' ]"
 check "fixture: its manifest ships, so detection has something to match" \
   "[ -f '$FIXTURE_MANIFEST' ]"
+fixture_require "$FIXTURE_BASE" v0.6.0
 # fixture_copy <dest> — a private copy of the baseline, for one block to mutate.
-fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
+fixture_copy() { mkdir -p "$1" && cp -R "${FIXTURE_BASE:?}/." "$1/"; }
 
 proj="$(mktemp -d)/proj"; mkdir -p "$proj"
 ( cd "$proj" && git init -q )
