@@ -9,6 +9,23 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.17.3 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The `spec_*` keys need INSPIRE Factory
+0.18.0 or later: an earlier Factory refuses them as unknown keys.
+
+### Fixed
+
+- **`/inspire-config` knows every key INSPIRE Factory 0.18.0 accepts.** The format
+  reference treated four of them as unknown keys. It now documents `bash_timeout` at the
+  top level (the time limit of each shell command an agent runs without its own, 1 to 3600
+  seconds; OMP's 300 s without it) and, under `factory`, `spec_strictness` (`strict`,
+  `auto` or `yolo`: what a unit does when its agent reports a spec problem; default
+  `strict`), `spec_max_revisions` (default `5`) and `spec_classifier_model` (required by
+  `auto`), each with the reader's exact errors. `init` asks for `spec_strictness`, default
+  `strict`.
+
 ## 0.17.2 — 2026-11-13
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
