@@ -45,17 +45,23 @@ profiles: [react, nestjs, postgres, clickhouse]
 datastores:
   metadata: postgres
   analytics: clickhouse
+default_datastore: metadata
 ```
 
 A datastore id is a project's own name for one database (`metadata`, `analytics`). Each value is
 a stack id that `profiles:` also lists, so its stack skill resolves the way every stack skill
 does: the skill whose frontmatter `stack:` is that id.
 
+`default_datastore:` is optional and names one declared datastore. An entity that names no
+datastore lives in the default one (D2). A project whose entities mostly share one database
+declares it as the default and marks only the exceptions. With a single entry in
+`datastores:`, that entry is the default whether or not `default_datastore:` names it.
+
 Without `datastores:`, the project has one implied datastore whose convention is the backend
 profile's `## Persistence`, exactly as today. A project with one database declares nothing, and
 an existing project changes nothing.
 
-### D2 — An entity names its datastore when the stack declares more than one
+### D2 — An entity names its datastore unless the stack declares a default
 
 An entity's frontmatter gains `datastore: <id>`:
 
@@ -74,13 +80,15 @@ datastore: analytics
 |---|---|---|
 | absent | the implied datastore | error: nothing declares it |
 | one entry | that entry | that entry, or an error if it names another |
-| two or more | error: the entity must choose | that entry, or an error if undeclared |
+| two or more, with `default_datastore:` | the default | that entry, or an error if undeclared |
+| two or more, no `default_datastore:` | error: the entity must choose | that entry, or an error if undeclared |
 
 The field is `datastore`, not `store`: `store` already names a face's application state
 (`{face}.store.md`).
 
-A missing choice is a refusal, never a default. Picking the first datastore, or the backend
-profile's, is the guess the reported runs made.
+The default is the project's decision, written in `stack.md`, never INSPIRE's. Without one, a
+missing choice is a refusal: picking the first datastore, or the backend profile's, is the guess
+the reported runs made.
 
 ### D3 — The datastore's stack skill carries the entity's persistence convention
 
@@ -102,23 +110,27 @@ entity document stays the one place that says what the columns are.
 
 ### D5 — The derived contract carries the datastore
 
-- **`unit.datastore`** is an entity's datastore id, resolved under D2. It is absent when the
-  stack declares no `datastores:`, so a project that declares none derives byte-identical
-  contracts and every fingerprint stays where it was.
+- **`unit.datastore`** is an entity's datastore id, resolved under D2: the default when the
+  entity names none. It is absent when the stack declares no `datastores:`, so a project that
+  declares none derives byte-identical contracts and every fingerprint stays where it was.
 - **An action's `entities`** objects gain `datastore`, so an action that reads or writes an
   entity knows which database it queries without reading the entity's document.
 - **The fingerprint.** `unit.datastore` feeds the entity's fingerprint: moving an entity to
-  another datastore rebuilds it.
+  another datastore rebuilds it, and so does changing `default_datastore:` for every entity that
+  relies on it.
 - **Refusal.** A new class, `DR-D3`, refuses an entity whose datastore is missing or undeclared
-  under D2, or names a datastore D3 cannot serve. Its remedy is `/inspire-domain update {id}` for
+  under D2, resolves to a `default_datastore:` that `datastores:` does not declare, or names a
+  datastore D3 cannot serve. Its remedy is `/inspire-domain update {id}` for
   the entity's field and `/inspire-bootstrap` for the stack.
 
 ### D6 — A validator checks the field; a reference across datastores is a warning
 
 A validator reports, at every lifecycle:
 
-- `datastore-missing` (error): the stack declares two or more datastores and an entity names
-  none.
+- `datastore-missing` (error): the stack declares two or more datastores and no default, and an
+  entity names none.
+- `datastore-default-undeclared` (error): `default_datastore:` names a datastore `datastores:`
+  does not declare, or is set without `datastores:`.
 - `datastore-undeclared` (error): an entity names a datastore the stack does not declare, or the
   stack declares none.
 - `datastore-unserved` (error): a `datastores:` value is not in `profiles:`, or no stack skill
@@ -133,9 +145,10 @@ And as a warning:
 ### D7 — The authoring skills ask for it
 
 - `inspire-bootstrap` writes `datastores:` from `## Data` when the stack names more than one
-  database, and asks which stack id serves each.
+  database, asks which stack id serves each, and asks whether one of them is the default.
 - `inspire-domain` asks for the datastore when it creates or updates an entity in a stack that
-  declares two or more, and writes `datastore:`.
+  declares two or more. With a default declared, it offers the default and writes `datastore:`
+  only when the entity lives elsewhere.
 - `format-entity.md` defines the field beside `population:`.
 
 ## Consequences
