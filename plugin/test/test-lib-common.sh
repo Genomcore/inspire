@@ -68,13 +68,22 @@ eq "hash_paths: reversed list keeps each path's own hash (backslash)" \
 eq "hash_paths: reversed list is in reversed order" \
    "$(head -1 "$hprtab" | cut -f2)" 'back\slash.txt'
 
-# The fallback is forced by a PATH that cannot see sha256sum: /sbin is where
-# this machine keeps it.
+# The fallback is forced by a PATH that cannot see sha256sum. macOS keeps it in
+# /sbin and Linux in /usr/bin beside everything else, so the PATH is a directory
+# of links to /usr/bin and /bin with sha256sum left out.
+nosha="$(mktemp -d)"
+for d in /usr/bin /bin; do
+  for f in "$d"/*; do
+    n="${f##*/}"
+    [ "$n" = sha256sum ] || [ -e "$nosha/$n" ] || ln -s "$f" "$nosha/$n"
+  done
+done
 eq "premise: the fallback run cannot see sha256sum" \
-   "$(PATH=/usr/bin:/bin bash -c 'command -v sha256sum >/dev/null 2>&1 && echo yes || echo no')" "no"
+   "$(PATH="$nosha" bash -c 'command -v sha256sum >/dev/null 2>&1 && echo yes || echo no')" "no"
 hpfb="$(mktemp)"
-PATH=/usr/bin:/bin bash -c '. "$1"; hash_paths "$2" "$3" "$4"' \
+PATH="$nosha" bash -c '. "$1"; hash_paths "$2" "$3" "$4"' \
   _ "$HERE/../scripts/lib/common.sh" "$hpd" "$hplist" "$hpfb" 2>/dev/null
+rm -rf "$nosha"
 eq "hash_paths: the shasum fallback yields the same table" \
    "$(cat "$hpfb")" "$(cat "$hptab")"
 
