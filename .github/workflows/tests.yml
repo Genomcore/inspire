@@ -1,8 +1,9 @@
 # Tests — the plugin/test suite, split across parallel runners.
 #
-# Runs on PRs into main and release/*, and only when they touch code:
-# plugin/ (runtime and tests), .claude/hooks/ or this file. A PR that touches
-# only tracker/, docs/ or the root markdown skips the suite.
+# Runs on PRs into main and release/*, and only when they touch code. It is the
+# other way round on purpose: a PR skips the suite only when EVERY file it
+# touches is documentation (tracker/, docs/, a markdown file at the root), so a
+# new code directory is tested without anyone having to list it here.
 #
 # The check to mark as required is "Tests", not the shards: it passes when the
 # suite is skipped (no code changed) and fails if any shard fails. A path filter
@@ -24,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CODE_PATHS_RE: '^(plugin/|\.claude/hooks/|\.github/workflows/tests\.yml$)'
+  DOCS_ONLY_RE: '^(tracker/|docs/|[^/]+\.md$)'
   # Every shard must run with the same -j: it decides how golden rules are split,
   # and with it the list the shards are cut from.
   JOBS: 4
@@ -44,13 +45,13 @@ jobs:
         run: |
           set -euo pipefail
           files="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" -q '.[].filename')"
-          code="$(printf '%s\n' "$files" | grep -E "$CODE_PATHS_RE" || true)"
+          code="$(printf '%s\n' "$files" | grep -vE "$DOCS_ONLY_RE" || true)"
           if [ -n "$code" ]; then
             echo "code=true" >> "$GITHUB_OUTPUT"
             printf 'Code touched:\n%s\n' "$code" | head -20
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
-            echo "No code touched: the suite is skipped." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "Only documentation touched: the suite is skipped." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
   suite:
