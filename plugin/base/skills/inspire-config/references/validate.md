@@ -52,6 +52,8 @@ warning explicitly.
 | a root that does not exist yet | warning | skipped silently; fine when the scaffold will create it |
 | a multi-line `run` without `set -e`, a pipe without `set -o pipefail` | warning | a red check reads green |
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
+| no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
+| a Vitest e2e check over per-file databases whose config sets `fileParallelism: false`, with no `--fileParallelism` | warning | its files run one at a time; four at once halve a large suite ([`derive.md`](derive.md) § Run checks) |
 | a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
 | `{files}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
 | a `run_related` whose runner or flags differ from its `run` beyond the narrowing | warning | the units and the release check would run different suites |

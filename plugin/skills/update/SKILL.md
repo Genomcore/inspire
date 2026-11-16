@@ -315,6 +315,14 @@ recommended option, not as one of two equal choices. The KB is the operator's
 The validators still read the English name as its section, so a project that declines
 keeps validating.
 
+## Step 10 — The factory's project file
+
+If `.inspire/emanate.yml` exists, run `/inspire-config review`. It writes nothing. A new
+release can change how the file is derived (a check's flags, a top-level key), and this
+update never edits the file. When the review reports warnings, relay them and offer —
+never run unprompted — `/inspire-config init`, which re-derives the file, shows the diff
+against the current one and writes only on the operator's yes.
+
 ## What this skill is, and what is missing from it
 
 Update has two halves, and only one of them can be a script:
