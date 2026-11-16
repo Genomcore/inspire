@@ -18,9 +18,8 @@
 #
 # dest_map is where THIS layout materializes each base/ directory. It is what
 # lets a manifest path be translated to its base/ counterpart, in either
-# direction, without any inference: the base-relative middle (bin/…, hooks/…,
-# skills/…, agents/…) is stable across every released version — only the roots
-# moved.
+# direction, without any inference: the base-relative middle (bin/…, skills/…
+# and so on) is stable across every released version — only the roots moved.
 #
 # A NEW PAYLOAD CLASS IS NOT A NEW LAYOUT (decision, 0.9's base/agents/).
 # `agents:.claude/agents` was added to the 0.3 row rather than opening a `0.9`
@@ -51,10 +50,14 @@
 #      Nothing here is a presence or completeness check, so an operator who
 #      deletes `.claude/agents/` still upgrades.
 #
+# `visor:.inspire/visor` (0.18) follows the same rule: no manifest before it
+# lists a path under `.inspire/visor/`, and `.inspire/bin` is its sibling, not
+# its parent.
+#
 # The pre-0.3 row is deliberately NOT extended. That layout never materialized
 # agents, and its dest_map is only ever read as a SOURCE map (TARGET_LAYOUT is
 # 0.3), so an entry there would say a root pre-0.3 owned but never filled. The
 # class still reaches a pre-0.3 project: classify's pass 2 and apply_base's
 # pass 1 both walk the TARGET map, so base/agents/ arrives as a plain `create`.
 pre-0.3	.inspire_kb	inspire_kb .claude/inspire/hooks	bin:.claude/bin hooks:.claude/hooks skills:.claude/skills
-0.3	inspire_kb	.inspire_kb	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents
+0.3	inspire_kb	.inspire_kb	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents visor:.inspire/visor

@@ -1,5 +1,5 @@
 {
-  "commit": "8dc18971d7f4fe115bce82dfc41b116ec5407ea3",
+  "commit": "173e690eda5dbdf7a0a087bfc439a9be9ba7fd76",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -177,7 +177,15 @@
     ".inspire/bin/spec-identity.sh": "5093fd0bacae1d916d28e37bc3962c786491c174e0c4d26442ea75202fa59c79",
     ".inspire/bin/stable-blockers.sh": "70fc780b1d0a209dc4732f2ec19f8fa7cbafb13508eabae13f5a6a907f95e59e",
     ".inspire/bin/touched-entity-lifecycle.sh": "ffeb40a3525b558df6ce755f27b7aa04df90300f6a049c8047bebd41922c4cb0",
-    ".inspire/bin/trust.sh": "aaf2611fa2ff7172065cc1cab880718e432a6b12fad0b014f9d751ed904ac9d1"
+    ".inspire/bin/trust.sh": "aaf2611fa2ff7172065cc1cab880718e432a6b12fad0b014f9d751ed904ac9d1",
+    ".inspire/visor/README.md": "de43eec44ba0d9b79038c3c8f4a97a7e8ef4a2f05bb580c412920c58e0a26f40",
+    ".inspire/visor/plugins/inspire-graph/LICENSE": "9286169531e7410e40342f7d971c9e927d93e3d1f448027b9cf30e5baec3285a",
+    ".inspire/visor/plugins/inspire-graph/dist/index.js": "d230025ffc73833c0897968d8ec6aedf8c104a9185a6abce280b3ff4e6cb21cc",
+    ".inspire/visor/plugins/inspire-graph/package.json": "d6e591e8585fc71bd5f2334055b1d15eed6eed3635a8d9247003a843123d0826",
+    ".inspire/visor/plugins/inspire/dist/index.js": "50a07099d24d87773b355f5faa3f97069de3e995ece8e11116533377f6853243",
+    ".inspire/visor/plugins/inspire/package.json": "8523b96d31445fadaa2bc01e1631f09f5e81413a715e424eab5094d6cd0f7a33",
+    ".inspire/visor/quartz.config.yaml": "0e428690d7ab064b53755aabe591ac8b8cb3228e0b4a18811cc86c57e50d068a",
+    ".inspire/visor/visor.yaml": "dd8915a87a21e3fd58012ae679c3fe437bf6c16338b5c88742b3519b2d32395e"
   },
   "layout": "0.3",
   "released": "2026-11-13",

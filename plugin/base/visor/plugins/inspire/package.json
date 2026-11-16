@@ -1,0 +1,27 @@
+{
+  "name": "quartz-inspire",
+  "version": "0.1.0",
+  "description": "INSPIRE KB facts (unit kind, module, lifecycle) in the Quartz content index",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": { "import": "./dist/index.js" },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "quartz": {
+    "name": "inspire",
+    "displayName": "INSPIRE",
+    "category": ["transformer", "emitter"],
+    "version": "0.1.0",
+    "quartzVersion": ">=5.1.0 <6.0.0",
+    "dependencies": [],
+    "defaultOrder": 15,
+    "defaultEnabled": true,
+    "defaultOptions": {},
+    "optionSchema": {},
+    "capabilities": {
+      "provides": { "data": ["inspire"] }
+    }
+  }
+}
