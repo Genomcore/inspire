@@ -1,5 +1,5 @@
 {
-  "commit": "d817668f6b29aeb4fd7110534412d1996c4a70f6",
+  "commit": "60b1e26136e0888f045a76617abed7191db8d35d",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -54,7 +54,7 @@
     ".claude/skills/inspire-code-angular/references/testing.md": "723144a63128a3e6bb37a909257441ce0795e4a90c8c6026292afd68a741a9b2",
     ".claude/skills/inspire-code-angular/references/tooling.md": "a2d9f372c6b8790eb72372354b26359af3a20c5171b445d6b3107f9300f05f87",
     ".claude/skills/inspire-code-ios/SKILL.md": "6bfed03584f66b2c0a2be42f3bf9f2a71ead76e08283104e7b78f238352abb85",
-    ".claude/skills/inspire-code-nestjs/SKILL.md": "2b8e162612f2aa772379a752148f60a231a726af41d1d0882a50dbb4e589cad9",
+    ".claude/skills/inspire-code-nestjs/SKILL.md": "46fdd3c7c8e9ce1e3a4250963cc0522708350c49eeb173d79de15619c2a04c68",
     ".claude/skills/inspire-code-nestjs/references/coding-standards.md": "4f9e5a74d5d410f61fa0051cc2a709942ac08c9e9feb0331b4e72f1b528d94b4",
     ".claude/skills/inspire-code-nestjs/references/db-assertions.md": "e8a6096519ce9d893bf21624507bb21665ec1d49ea2ada6777ca8ab0221a88b5",
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
@@ -64,10 +64,10 @@
     ".claude/skills/inspire-code-react/references/testing.md": "4710e1e472b0554e48643ca2ea272e8d2b40b40bb4a03c91edfdc1765044bf11",
     ".claude/skills/inspire-code-typescript/SKILL.md": "34954960c58725c92677047ffd752eadbb9811c6c0bf2192edc0825e24008fdc",
     ".claude/skills/inspire-code-typescript/references/oxlint-escape-hatches.mjs": "3253008f33eb4bdd88c70cc55f9955ea3fa3c88cf20ff05810f897db5205ec95",
-    ".claude/skills/inspire-config/SKILL.md": "6c5a0ddad033326fe4eeab5cd881bed26fc7491637d3e2aeb0077c36789cbb78",
-    ".claude/skills/inspire-config/references/derive.md": "73830d84c652d7655384e2fbeeed2a2e01c95daa4e3ef3fa624b1c5a57a700ef",
-    ".claude/skills/inspire-config/references/format.md": "9794bb0e68018d91a8eb20c7fc34bcab9fa09345bf14c33535a473eb74e5ef11",
-    ".claude/skills/inspire-config/references/validate.md": "5a2bc29545c413c608506faab927b937b59d3657aaf12eaaf3273604eb3e3505",
+    ".claude/skills/inspire-config/SKILL.md": "a6d24c76f73d5169b7ed5d81b74a6f65d5fa3f9e368e3a48c32434f20a66c3c3",
+    ".claude/skills/inspire-config/references/derive.md": "8ff467498847708f78bc698aef157974824afa55427a39c53087b6071d79680d",
+    ".claude/skills/inspire-config/references/format.md": "0d161946e09867adbf35fcffea32ef0b6964301c9aea9ac7e95af548c7c21426",
+    ".claude/skills/inspire-config/references/validate.md": "939e14f4ecde71fac7359be4962477c1ac2689cc4e4d43db6b87b61e5b5e054a",
     ".claude/skills/inspire-domain/SKILL.md": "f196bacfd8e86b8df8563cc461b088c0b79eff32d4675a6558fafac735b69fcd",
     ".claude/skills/inspire-domain/examples/canonical-action-meta.md": "8e143d37c8badfa02224193c75dc50e276c0817e2529a24630aeb3adac14f5d4",
     ".claude/skills/inspire-domain/examples/canonical-action.md": "82dc0f0cc41d7531703b8a11d772fe3cde4350247f0892e9e7ca639a3585dc0b",
@@ -188,6 +188,6 @@
     ".inspire/visor/visor.yaml": "dd8915a87a21e3fd58012ae679c3fe437bf6c16338b5c88742b3519b2d32395e"
   },
   "layout": "0.3",
-  "released": "2026-11-13",
+  "released": "2026-11-16",
   "version": "0.18.0"
 }
