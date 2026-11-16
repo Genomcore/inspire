@@ -145,6 +145,7 @@ sources leave it open.
 | Q11 | Does any test need a real secret, or `setup` a private registry? | the code reads an external credential | no — the factory has no channel for secrets; say so |
 | Q12 | Does the machine reach the internet through a proxy or a mirror? | always | no; if yes, `HTTP(S)_PROXY` plus a `NO_PROXY` naming `orchestrator` and every service |
 | Q13 | Add a review phase? With which rules: the profiles' `## Review focus`, project skills, other files? | a profile has `## Review focus`, or the operator asks | no review; if yes, `'{profiles}#Review focus'` |
+| Q14 | When a unit's agent reports a spec problem: stop the unit (`strict`), let a small model decide (`auto`), or apply the agent's fix to the spec (`yolo`)? With `auto`, which model classifies? | always | `strict`, which writes no key; `auto` also writes `spec_classifier_model` |
 
 ## What is never deduced
 
@@ -155,7 +156,7 @@ sources leave it open.
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
 | whether to review, and against which rules | a review is a cost the operator chooses |
 | secrets | `env` is committed and shown to every agent |
-| any value under `factory` | the models, the concurrency, the tries and the base branch are the operator's choice. The section is carried over from the old file or answered, never proposed |
+| any value under `factory` | the models, the concurrency, the tries, the spec strictness and the base branch are the operator's choice. The section is carried over from the old file or answered (Q14), never proposed |
 
 ## An empty project
 

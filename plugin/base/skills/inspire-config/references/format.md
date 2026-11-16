@@ -1,7 +1,7 @@
 # Config — the format
 > Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-`.inspire/emanate.yml` has six top-level keys. The factory's reader is the
+`.inspire/emanate.yml` has seven top-level keys. The factory's reader is the
 authority, and this page summarizes it: when the two disagree, the reader wins
 and this page is stale. The reader stops at the **first** error, so one run of
 it reports one problem. Any key it does not know is an error, at every level.
@@ -14,12 +14,13 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | (document) | yes | one YAML document, a mapping | `… is not valid YAML: <parser message>` · `… must be a mapping` |
-| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, phases` |
+| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `bash_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, bash_timeout, phases` |
 | `factory` | no | a mapping: the factory's own settings, below. Omit the key to take every default | `… factory must be a mapping` |
 | `image` | yes | the reader accepts it absent; the runner then stops before planning | `the factory runs agents in the project image: add image to .inspire/emanate.yml` |
 | `services` | no | a mapping of name → service. With no services, omit the key: `services:` with nothing after it is null, and null is an error | `… services must be a mapping` |
 | `env` | no | a mapping of variable → string. Omit it rather than leave it empty | `… env must be a mapping` |
 | `setup` | no | one nonempty string | `… setup must be a nonempty string` |
+| `bash_timeout` | no | whole seconds from 1 to 3600: the time limit of each shell command a unit, scaffold, repair or reviewer agent runs when it passes no timeout of its own. Without it OMP's own limit applies (300 s), and a command that takes longer is killed before the agent sees its result. It limits the agents' commands, not the checks | `… bash_timeout must be a whole number of seconds from 1 to 3600` |
 | `phases` | yes | a nonempty list | `… phases must be a nonempty list` |
 
 ## `factory`
@@ -32,12 +33,15 @@ default. The reader refuses any key not in the table, under `factory` and under
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
 | `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/01_spec` | `… factory.spec_root must be a nonempty string` |
-| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, base_branch, viewer_port, sandbox` |
+| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
 | `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
+| `spec_strictness` | `strict`, `auto` or `yolo`: what a unit does when its agent reports a spec problem with `report_spec_issue`. `strict` stops the unit with the report. `yolo` has a spec writer agent apply the proposed solution to the spec files and lets the unit continue; each applied report is a numbered spec revision committed to the release branch. `auto` has a small model (`spec_classifier_model`) classify each report: `small` is applied as in `yolo`, `critical` stops the unit as in `strict` | `strict` | `… factory.spec_strictness must be strict, auto or yolo` |
+| `spec_max_revisions` | a positive integer: the most spec revisions a `yolo` or `auto` run commits; once the run holds that many, the next report stops its unit as in `strict` | `5` | `… factory.spec_max_revisions must be a positive integer` |
+| `spec_classifier_model` | same form as `model`: the model that classifies each report in `auto`; a small model is enough. Required by `auto` | none | `… factory.spec_classifier_model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` · `… factory.spec_strictness auto requires spec_classifier_model` |
 | `base_branch` | a branch name, or `null` for a local release | `main` | `… factory.base_branch must be a branch name or null` |
 | `viewer_port` | an integer from 0 to 65535 | `4319` | `… factory.viewer_port must be an integer from 0 to 65535` |
 | `sandbox` | a mapping with only `memory`, the memory limit of each unit container (setup, each check, each agent): a Docker size such as `1536m` or `2g` (default `1536m`); requires `model`. The Factory runs at once only as many units as fit in Docker's memory, each taking `sandbox.memory` plus every service's `memory`, so raise it only for a suite that needs it | none | `… factory.sandbox must be a mapping` · `… factory.sandbox has unknown key <k>; allowed keys: memory` · `… factory.sandbox.memory must be a Docker memory size such as 1536m or 2g` · `… factory.sandbox requires model` |
@@ -281,7 +285,7 @@ So: **single-quote every string value** except phase and check names —
 and `services.*.env` value, every `healthcheck` and `command` item, every string
 under `factory`. A single quote inside a value is written `''`. Indent with two
 spaces; tabs are rejected. Write the keys in the order `factory`, `image`,
-`services`, `env`, `setup`, `phases`.
+`services`, `env`, `setup`, `bash_timeout`, `phases`.
 
 ## Worked example
 
