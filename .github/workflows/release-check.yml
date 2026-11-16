@@ -1,0 +1,123 @@
+# Release check — corre en cada PR contra main y bloquea el merge si:
+#   - la rama de origen no es release/AAAA-MM-DD, hotfix/<algo> ni docs/<algo>
+#   - la versión no sube respecto a main (semver estrictamente mayor);
+#     las ramas docs/ no tienen que subirla, pero solo pueden tocar tracker/
+#   - la versión ya está tagueada (v<version> ya publicada)
+#   - (si el repo tiene CHANGELOG.md) falta la sección "## <version>"
+#   - (solo Inspire) el check propio del repo: plugin.json == marketplace.json
+#     y plugin/manifests/<version>.json coincide con el árbol
+#
+# Para que bloquee de verdad hay que añadir el check "Release check" como
+# required status check en el ruleset de main.
+#
+# Lo único que cambia entre Inspire y Factory es el bloque env.
+
+name: Release check
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Inspire: la identidad de release es plugin.json (marketplace.json la duplica).
+  VERSION_FILE: plugin/.claude-plugin/plugin.json
+  VERSION_JQ: .version
+  HEAD_BRANCH_RE: '^(release/[0-9]{4}-[0-9]{2}-[0-9]{2}|hotfix/.+|docs/.+)$'
+  # Ramas que llegan a main sin subir versión (no publican release): solo
+  # crean o actualizan tickets, así que solo pueden tocar DOCS_PATHS_RE.
+  NO_BUMP_RE: '^docs/.+$'
+  DOCS_PATHS_RE: '^tracker/'
+
+jobs:
+  release-check:
+    name: Release check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rama de origen permitida
+        id: branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if ! [[ "$HEAD_REF" =~ $HEAD_BRANCH_RE ]]; then
+            echo "::error::A main solo se llega desde release/AAAA-MM-DD, hotfix/<nombre> o docs/<nombre>. Esta PR viene de '$HEAD_REF': mergéala en la rama release/ abierta."
+            exit 1
+          fi
+          if [[ "$HEAD_REF" =~ $NO_BUMP_RE ]]; then
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+            echo "✓ $HEAD_REF (docs: sin subir versión, solo tracker/)" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "bump=true" >> "$GITHUB_OUTPUT"
+            echo "✓ $HEAD_REF"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0 # historial completo + tags
+
+      - name: docs/ solo toca tracker/
+        if: steps.branch.outputs.bump == 'false'
+        run: |
+          set -euo pipefail
+          base="$(git merge-base origin/main HEAD)"
+          outside="$(git diff --name-only "$base" HEAD | grep -vE "$DOCS_PATHS_RE" || true)"
+          if [ -n "$outside" ]; then
+            echo "::error::Una rama docs/ solo puede tocar tickets (tracker/). Estos ficheros tienen que ir por la rama release/ abierta o por un hotfix/:"
+            printf '  %s\n' $outside
+            exit 1
+          fi
+          echo "✓ solo cambia tracker/"
+
+      - name: La versión sube y no está publicada
+        id: version
+        if: steps.branch.outputs.bump == 'true'
+        run: |
+          set -euo pipefail
+          base_v="$(git show "origin/main:$VERSION_FILE" | jq -r "$VERSION_JQ")"
+          head_v="$(jq -r "$VERSION_JQ" "$VERSION_FILE")"
+          echo "main: $base_v → PR: $head_v"
+
+          semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+          if ! [[ "$head_v" =~ $semver ]]; then
+            echo "::error file=$VERSION_FILE::La versión '$head_v' no es X.Y.Z."
+            exit 1
+          fi
+          highest="$(printf '%s\n%s\n' "$base_v" "$head_v" | sort -V | tail -1)"
+          if [ "$head_v" = "$base_v" ] || [ "$highest" != "$head_v" ]; then
+            echo "::error file=$VERSION_FILE::La versión tiene que subir respecto a main ($base_v). Ahora es $head_v."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$head_v" >/dev/null; then
+            echo "::error file=$VERSION_FILE::v$head_v ya está tagueada: elige una versión nueva."
+            exit 1
+          fi
+          echo "version=$head_v" >> "$GITHUB_OUTPUT"
+          echo "✓ $base_v → $head_v" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: CHANGELOG tiene la sección de la versión
+        if: steps.branch.outputs.bump == 'true' && hashFiles('CHANGELOG.md') != ''
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          if grep -qE "^## ${V//./\\.}( |$)" CHANGELOG.md; then
+            echo "✓ CHANGELOG.md tiene ## $V"
+          else
+            echo "::error file=CHANGELOG.md::Falta la sección '## $V — AAAA-MM-DD' en CHANGELOG.md."
+            exit 1
+          fi
+
+      # Solo existe en Inspire: comprueba que marketplace.json coincide con
+      # plugin.json y que plugin/manifests/<version>.json describe el árbol.
+      - name: Check propio del repo (Inspire)
+        if: steps.branch.outputs.bump == 'true' && hashFiles('.claude/hooks/template-runtime-version.sh') != ''
+        run: |
+          base="$(git merge-base origin/main HEAD)"
+          bash .claude/hooks/template-runtime-version.sh --check "$base" HEAD
