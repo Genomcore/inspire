@@ -1,6 +1,6 @@
 # The last matching pattern wins.
 *           @Genomcore/inspire-spec-contributors @Genomcore/inspire-maintainers @Genomcore/inspire-admins
-# Tracker-only and README-only changes merge without review.
+# Tracker-only changes merge without review.
 /tracker/
-/README.md
+/README.md  @Genomcore/inspire-maintainers @Genomcore/inspire-admins
 /.github/   @Genomcore/inspire-maintainers @Genomcore/inspire-admins
