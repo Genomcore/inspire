@@ -16,8 +16,9 @@ FIXTURE_MANIFEST="$PLUGIN_ROOT/manifests/$FIXTURE_VERSION.json"
 FIXTURE_WORK="$(mktemp -d)"
 # The tag is spelled out: run.sh greps these call sites for what to pre-build.
 FIXTURE_BASE="$(fixture_from_tag v0.6.0 "$FIXTURE_WORK" "$REPO")"
+fixture_require "$FIXTURE_BASE" v0.6.0
 # fixture_copy <dest> — a private copy of the baseline, for one block to mutate.
-fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
+fixture_copy() { mkdir -p "$1" && cp -R "${FIXTURE_BASE:?}/." "$1/"; }
 
 # ---------------------------------------------------------------------------
 # Input guards. Each of these reports SUCCESS while doing the wrong thing if
