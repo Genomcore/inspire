@@ -90,8 +90,9 @@ Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0143-prose-checks-in-any-language` was filed, the first block of the INSPIRE Factory's
 follow-up review filed two, the second block filed `FB2-kb-contradiction-check`, and
 the fifth block filed `FB5-audit-events-kept`, `FB5-exists-precondition-error` and
-`FB5-errors-mapped-above-controller`, and governed projects' reports filed
-`0143-entity-datastore` and `0180-minted-unique-fields`.
+`FB5-errors-mapped-above-controller`, governed projects' reports filed
+`0143-entity-datastore` and `0180-minted-unique-fields`, and the 0.18.0 release filed
+`0180-sigpipe-in-scripts`.
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -116,7 +117,9 @@ Factory work.
   settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version),
   `0143-entity-datastore` (High; an entity cannot say which database it lives in, so a
   stack's second database never reaches the build), `0180-minted-unique-fields`
-  (`OS-X1` demands a conflict error for a unique value the action mints itself).
+  (`OS-X1` demands a conflict error for a unique value the action mints itself),
+  `0180-sigpipe-in-scripts` (validators and hooks pipe into `grep -q` under `pipefail`,
+  which can turn a match into a false negative).
 - **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
