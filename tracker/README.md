@@ -83,7 +83,7 @@ filed in the Factory's tracker when the change here lands, never before. The not
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
 
-## Where things stand (2026-11-16)
+## Where things stand (2026-11-17)
 
 Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
@@ -91,7 +91,9 @@ Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 follow-up review filed two, the second block filed `FB2-kb-contradiction-check`, and
 the fifth block filed `FB5-audit-events-kept`, `FB5-exists-precondition-error` and
 `FB5-errors-mapped-above-controller`, and governed projects' reports filed
-`0143-entity-datastore` and `0180-minted-unique-fields`.
+`0143-entity-datastore` and `0180-minted-unique-fields`. A governed project's Factory run filed
+`0180-component-without-props` and `0180-derive-only-refusals`, and amended
+`B3-overridable-types` and `FB2-kb-contradiction-check` (2026-11-17).
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -116,7 +118,10 @@ Factory work.
   settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version),
   `0143-entity-datastore` (High; an entity cannot say which database it lives in, so a
   stack's second database never reaches the build), `0180-minted-unique-fields`
-  (`OS-X1` demands a conflict error for a unique value the action mints itself).
+  (`OS-X1` demands a conflict error for a unique value the action mints itself),
+  `0180-component-without-props` (a component with no props passes review and the Factory
+  refuses it), `0180-derive-only-refusals` (High; a spec the Factory refuses can pass every
+  INSPIRE rule).
 - **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
