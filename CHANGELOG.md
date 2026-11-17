@@ -9,6 +9,19 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.18.1 — 2026-11-17
+
+Nothing changes for a project: this release touches only the template repo's CI, so
+`/inspire:update` has nothing to do.
+
+### Added
+
+- **The open release branch follows `main`.** A new workflow, `Sync release with main`,
+  runs on every push to `main` and, when the newest `release/YYYY-MM-DD` branch is behind
+  it, opens a PR from `main` into that branch, so hotfixes and `docs/` tickets merged into
+  `main` reach the release that ships next. It opens none while one is already open, or
+  once that release has been merged into `main`.
+
 ## 0.18.0 — 2026-11-17
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
