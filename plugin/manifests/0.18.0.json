@@ -1,5 +1,5 @@
 {
-  "commit": "60b1e26136e0888f045a76617abed7191db8d35d",
+  "commit": "e517ca7c3928fff0ed3ead0b16b8171c28e00f58",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -188,6 +188,6 @@
     ".inspire/visor/visor.yaml": "dd8915a87a21e3fd58012ae679c3fe437bf6c16338b5c88742b3519b2d32395e"
   },
   "layout": "0.3",
-  "released": "2026-11-16",
+  "released": "2026-11-17",
   "version": "0.18.0"
 }
