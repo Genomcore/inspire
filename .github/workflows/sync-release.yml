@@ -1,0 +1,64 @@
+name: Sync release with main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sync-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_BRANCH_RE: '^release/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  GH_TOKEN: ${{ github.token }}
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Abrir la PR main → release abierta
+        run: |
+          set -euo pipefail
+          summary() { echo "$1" | tee -a "$GITHUB_STEP_SUMMARY"; }
+
+          target="$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/release/" -q '.[].ref' \
+                    | sed 's#^refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" | sort | tail -1 || true)"
+          if [ -z "$target" ]; then
+            summary "No hay rama release/AAAA-MM-DD abierta: nada que sincronizar."
+            exit 0
+          fi
+
+          merged="$(gh pr list --head "$target" --base main --state merged --json number -q length)"
+          if [ "$merged" -gt 0 ]; then
+            summary "$target ya está mergeada en main: se espera a la siguiente release."
+            exit 0
+          fi
+
+          behind="$(gh api "repos/$GH_REPO/compare/$target...main" -q .ahead_by)"
+          if [ "$behind" -eq 0 ]; then
+            summary "$target ya tiene todo lo de main."
+            exit 0
+          fi
+
+          existing="$(gh pr list --head main --base "$target" --state open --json url -q '.[0].url // empty')"
+          if [ -n "$existing" ]; then
+            summary "$target va $behind commit(s) por detrás de main; la PR ya está abierta: $existing"
+            exit 0
+          fi
+
+          cat > body.md <<BODY
+          Sincroniza \`$target\` con \`main\` ($behind commit(s) que están en main y no en la release: hotfixes, tickets de \`docs/\`…).
+
+          - Mergear con **merge commit**, nunca squash: con squash la release y main divergen y la siguiente PR release → main da conflictos.
+          - Si hay conflictos (por ejemplo la versión, cuando un hotfix la sube), resuélvelos en una rama desde \`$target\`, no en \`main\`.
+          - Si no aparecen los checks, cierra y reabre la PR: las PRs que abre el workflow no lanzan otros workflows.
+          BODY
+          url="$(gh pr create --base "$target" --head main --title "Sync main into $target" --body-file body.md)"
+          summary "PR abierta: $url"
