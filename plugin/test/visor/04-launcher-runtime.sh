@@ -38,10 +38,16 @@ if [ ! -e /usr/bin/npm ] && [ ! -e /bin/npm ]; then
   has "node v22.11.0 without npm, and docker: docker runs Quartz" "$OUT" \
     "runtime: docker, image $IMAGE (host node: v22.11.0 without npm)"
   rm "$S/docker"
-  run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
-  eq "node v22.11.0 without npm, and no docker: exit 1" "$RC" 1
-  has "node v22.11.0 without npm, and no docker: the refusal names npm" "$OUT" \
-    "needs node 22 or later and npm on PATH (found v22.11.0 without npm)"
+  # Removing the stub hides docker only where the host keeps none on that PATH:
+  # a Linux CI runner has /usr/bin/docker.
+  if [ ! -e /usr/bin/docker ] && [ ! -e /bin/docker ]; then
+    run_visor "$S:$B:/usr/bin:/bin" --project-root "$R" --check
+    eq "node v22.11.0 without npm, and no docker: exit 1" "$RC" 1
+    has "node v22.11.0 without npm, and no docker: the refusal names npm" "$OUT" \
+      "needs node 22 or later and npm on PATH (found v22.11.0 without npm)"
+  else
+    skipped 2 "a host without docker: /usr/bin or /bin holds docker"
+  fi
 else
   skipped 4 "a host node without npm: /usr/bin or /bin holds npm"
 fi
