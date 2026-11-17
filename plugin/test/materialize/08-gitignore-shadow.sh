@@ -30,7 +30,7 @@ check "gitignore shadow: runtime really is ignored (premise)" \
 check "gitignore shadow: reported on stderr" \
   "grep -q 'WARNING' '$shp/.stderr' && grep -qi 'gitignore' '$shp/.stderr'"
 check "gitignore shadow: the warning names the shadowed path" \
-  "grep 'WARNING' -A6 '$shp/.stderr' | grep -q '.claude/skills'"
+  "grep 'WARNING' -A6 '$shp/.stderr' | grep >/dev/null '.claude/skills'"
 check "gitignore shadow: surfaced in the JSON summary" \
   "printf '%s' \"\$shout\" | jq -e '.warnings | length > 0' >/dev/null"
 # PROVENANCE. The warning used to say "remove the rule (a 0.2 install wrote
@@ -41,9 +41,9 @@ check "gitignore shadow: surfaced in the JSON summary" \
 check "gitignore shadow: the warning does not blame a 0.2 install for the rule" \
   "! grep -qi '0.2 install' '$shp/.stderr' && ! grep -qi \"install.sh wrote\" '$shp/.stderr'"
 check "gitignore shadow: the JSON warning does not blame a 0.2 install either" \
-  "! printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep -qi '0.2 install'"
+  "! printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep -i >/dev/null '0.2 install'"
 check "gitignore shadow: the warning says the rule is not ours" \
-  "printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep -q 'INSPIRE did not write this rule'"
+  "printf '%s' \"\$shout\" | jq -r '.warnings[]' | grep >/dev/null 'INSPIRE did not write this rule'"
 check "gitignore shadow: operator's own rules untouched" \
   "grep -qF 'node_modules/' '$shp/.gitignore' && grep -qxF '/.claude' '$shp/.gitignore'"
 
@@ -77,11 +77,11 @@ check "gitignore shadow: agents really is ignored (premise)" \
 check "gitignore shadow: skills is NOT ignored (premise)" \
   "! git -C '$agsh' check-ignore -q --no-index .claude/skills"
 check "gitignore shadow: an agents-only rule is warned about" \
-  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/agents'"
+  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep >/dev/null '.claude/agents'"
 check "gitignore shadow: and it names only the class that is shadowed" \
-  "! printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q '.claude/skills'"
+  "! printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep >/dev/null '.claude/skills'"
 check "gitignore shadow: a shadowed class root is told to remove the rule" \
-  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep -q 'remove it by hand'"
+  "printf '%s' \"\$agshout\" | jq -r '.warnings[]' | grep >/dev/null 'remove it by hand'"
 
 # A Node project's `dist/` rule above the INSPIRE block: the block's negation
 # re-includes the visor plugins' dist/ and the project's own dist/ stays ignored.
@@ -106,11 +106,11 @@ dsh_line="$(grep -nx 'dist/' "$dsh/.gitignore" | cut -d: -f1)"
 check "gitignore shadow: the visor root is NOT ignored (premise)" \
   "! git -C '$dsh' check-ignore -q --no-index .inspire/visor"
 check "gitignore shadow: a dist/ rule is warned about, naming the shipped file" \
-  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep -q '.inspire/visor/plugins/inspire/dist/index.js'"
+  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep >/dev/null '.inspire/visor/plugins/inspire/dist/index.js'"
 check "gitignore shadow: the stderr block names its source rule" \
   "grep -q '.inspire/visor/plugins/inspire/dist/index.js  (.gitignore:$dsh_line:dist/)' '$dsh/.stderr'"
 check "gitignore shadow: a shadowed file is told to add a negation, not to remove the rule" \
-  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep 'dist/index.js' | grep -q 'negation' && ! printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep -q 'remove it by hand'"
+  "printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep 'dist/index.js' | grep >/dev/null 'negation' && ! printf '%s' \"\$dshout\" | jq -r '.warnings[]' | grep >/dev/null 'remove it by hand'"
 
 rm -rf "$(dirname "$shp")" "$(dirname "$nsh")" "$(dirname "$agsh")" "$(dirname "$nod")" "$(dirname "$dsh")"
 

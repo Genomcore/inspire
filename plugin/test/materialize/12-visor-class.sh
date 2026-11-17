@@ -32,7 +32,7 @@ check "init: every visor file landed byte-identical" "visor_landed '$ip'"
 check "init: nothing under .inspire/visor came out executable" \
   "[ -z \"\$(find '$ip/.inspire/visor' -type f -perm -u+x)\" ]"
 check "init: the .gitignore block names the Quartz install" \
-  "$GI_BLOCK '$ip/.gitignore' | grep -qxF '.inspire/visor/.quartz/'"
+  "$GI_BLOCK '$ip/.gitignore' | grep -xF >/dev/null '.inspire/visor/.quartz/'"
 check "init: the install is ignored" \
   "git -C '$ip' check-ignore -q --no-index .inspire/visor/.quartz/node_modules/x/index.js"
 check "init: the class root and its shipped files are not" \
@@ -92,7 +92,7 @@ check "update: nor does the saved report" \
   "[ -f '$up/.inspire/last-upgrade.log' ] && ! grep -q '$Q_PATH' '$up/.inspire/last-upgrade.log'"
 eq "update: the install is untouched" "$(q_hash)" "$q_before"
 check "update: the .gitignore block gained the Quartz install" \
-  "$GI_BLOCK '$up/.gitignore' | grep -qxF '.inspire/visor/.quartz/'"
+  "$GI_BLOCK '$up/.gitignore' | grep -xF >/dev/null '.inspire/visor/.quartz/'"
 check "update: still exactly one INSPIRE block" \
   "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$up/.gitignore')\" = 1 ]"
 

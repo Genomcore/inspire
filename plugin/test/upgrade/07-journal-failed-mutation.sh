@@ -47,9 +47,9 @@ else
   check "a failed hop_rm journals keep with the reason" \
     "grep -q \$'^keep\tlocked/victim.txt\tcould not be removed' '$perm/j1'"
   check "a failed hop_rm leaks no raw rm error" \
-    "! printf '%s' \"\$perm_err\" | grep -q '^rm:'"
+    "! printf '%s' \"\$perm_err\" | grep >/dev/null '^rm:'"
   check "a failed hop_rm explains itself as INSPIRE" \
-    "printf '%s' \"\$perm_err\" | grep -q 'INSPIRE: could not delete'"
+    "printf '%s' \"\$perm_err\" | grep >/dev/null 'INSPIRE: could not delete'"
   check "the file hop_rm failed on is still on disk" "[ -f '$perm/locked/victim.txt' ]"
 
   # The severe case: the per-file rm had no error check at all, so this

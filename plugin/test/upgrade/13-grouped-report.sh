@@ -26,18 +26,18 @@ printf 'create\tinspire_kb/07_x/README.md\tnew\n'                   >> "$v"
 
 out="$(render_report 0.2.1 0.4.0 "$j" "$v" 1 2>&1)"
 
-check "report announces the dry run"  "printf '%s' \"\$out\" | grep -q 'DRY RUN'"
-check "report shows the chain"        "printf '%s' \"\$out\" | grep -q '0.2.1 → 0.4.0'"
-check "report has a RUNTIME group"    "printf '%s' \"\$out\" | grep -q 'RUNTIME'"
+check "report announces the dry run"  "printf '%s' \"\$out\" | grep >/dev/null 'DRY RUN'"
+check "report shows the chain"        "printf '%s' \"\$out\" | grep >/dev/null '0.2.1 → 0.4.0'"
+check "report has a RUNTIME group"    "printf '%s' \"\$out\" | grep >/dev/null 'RUNTIME'"
 check "report has a KNOWLEDGE BASE group" \
-      "printf '%s' \"\$out\" | grep -q 'KNOWLEDGE BASE'"
-check "report has a LEFT ALONE group" "printf '%s' \"\$out\" | grep -q 'LEFT ALONE'"
-check "report flags the decision"     "printf '%s' \"\$out\" | grep -q 'ASK'"
-check "report counts the decision"    "printf '%s' \"\$out\" | grep -q '1 decision'"
+      "printf '%s' \"\$out\" | grep >/dev/null 'KNOWLEDGE BASE'"
+check "report has a LEFT ALONE group" "printf '%s' \"\$out\" | grep >/dev/null 'LEFT ALONE'"
+check "report flags the decision"     "printf '%s' \"\$out\" | grep >/dev/null 'ASK'"
+check "report counts the decision"    "printf '%s' \"\$out\" | grep >/dev/null '1 decision'"
 check "report carries the superset caveat" \
-      "printf '%s' \"\$out\" | grep -qi 'already absent'"
+      "printf '%s' \"\$out\" | grep -i >/dev/null 'already absent'"
 check "KB move lands in the KB group" \
-      "printf '%s' \"\$out\" | awk '/KNOWLEDGE BASE/,/^\$/' | grep -q 'inspire_kb'"
+      "printf '%s' \"\$out\" | awk '/KNOWLEDGE BASE/,/^\$/' | grep >/dev/null 'inspire_kb'"
 rm -f "$j" "$v"
 
 # A path outside .claude/*, .inspire/*, inspire_kb and the harness literals
@@ -50,10 +50,10 @@ printf 'delete\tsource/README.md\tstale product-space file\n' >> "$pj"
 printf 'ask\tCLAUDE.md\tboth changed\n'                        >> "$pv"
 pout="$(render_report 0.2.1 0.4.0 "$pj" "$pv" 0 2>&1)"
 check "a product-space file is rendered in the body, not just tallied in the footer" \
-      "printf '%s' \"\$pout\" | grep -q 'PRODUCT' && \
-       printf '%s' \"\$pout\" | grep -q 'source/README.md' && \
-       printf '%s' \"\$pout\" | grep -q 'CLAUDE.md' && \
-       printf '%s' \"\$pout\" | grep -q '1 decision'"
+      "printf '%s' \"\$pout\" | grep >/dev/null 'PRODUCT' && \
+       printf '%s' \"\$pout\" | grep >/dev/null 'source/README.md' && \
+       printf '%s' \"\$pout\" | grep >/dev/null 'CLAUDE.md' && \
+       printf '%s' \"\$pout\" | grep >/dev/null '1 decision'"
 rm -f "$pj" "$pv"
 
 # The two streams legitimately describe the same paths, and the report merged
@@ -80,13 +80,13 @@ eq "the surviving line is the hop's, which performed the deletion" \
 eq "two different verbs on one path stay two lines" \
    "$(printf '%s' "$dout" | grep -c 'review.sh')" "2"
 check "the footer counts unique paths per verb, and tallies replace" \
-   "printf '%s' \"\$dout\" | grep -q '1 moves · 1 replacements · 1 deletions'"
+   "printf '%s' \"\$dout\" | grep >/dev/null '1 moves · 1 replacements · 1 deletions'"
 check "the footer tallies unregister too" \
-   "printf '%s' \"\$dout\" | grep -q '1 hook registration(s) retired'"
+   "printf '%s' \"\$dout\" | grep >/dev/null '1 hook registration(s) retired'"
 # A `report` note has NO path, so a verb+path key would collapse every note into
 # the first one. Path-less lines are exempt from de-duplication for that reason.
 check "path-less notes are exempt from de-duplication" \
-   "printf '%s' \"\$dout\" | grep -q 'first note' && printf '%s' \"\$dout\" | grep -q 'second note'"
+   "printf '%s' \"\$dout\" | grep >/dev/null 'first note' && printf '%s' \"\$dout\" | grep >/dev/null 'second note'"
 rm -f "$dj" "$dv"
 
 summary

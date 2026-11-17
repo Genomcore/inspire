@@ -34,7 +34,7 @@ rej_err="$(bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$
              --take-base .claude/skills/inspire-domain/SKILL.md 2>&1 >/dev/null)"
 eq "plan rejects --take-base (rc)" "$?" "1"
 check "plan's rejection says why, and where the flag belongs" \
-  "printf '%s' \"\$rej_err\" | grep -q 'UNRESOLVED' && printf '%s' \"\$rej_err\" | grep -q 'mode update --dry-run'"
+  "printf '%s' \"\$rej_err\" | grep >/dev/null 'UNRESOLVED' && printf '%s' \"\$rej_err\" | grep >/dev/null 'mode update --dry-run'"
 bash "$MZ" --mode plan --plugin-root "$PLUGIN_ROOT" --project-root "$p" \
      --take-mine .claude/skills/inspire-domain/SKILL.md >/dev/null 2>&1
 eq "plan rejects --take-mine too" "$?" "1"

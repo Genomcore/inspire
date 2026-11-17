@@ -12,11 +12,11 @@ VB="$PLUGIN_ROOT/base/visor"
 QV="$(yq -r .quartz "$VB/visor.yaml")"
 
 # --- the shipped settings --------------------------------------------------
-check "visor.yaml's quartz is a version X.Y.Z" "printf '%s' '$QV' | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'"
+check "visor.yaml's quartz is a version X.Y.Z" "printf '%s' '$QV' | grep -E >/dev/null '^[0-9]+\.[0-9]+\.[0-9]+$'"
 check "visor.yaml's node_image pins a Node 22 tag" \
-  "yq -r .node_image '$VB/visor.yaml' | grep -Eq '^node:22\.[0-9]+\.[0-9]+'"
+  "yq -r .node_image '$VB/visor.yaml' | grep -E >/dev/null '^node:22\.[0-9]+\.[0-9]+'"
 check "quartz.config.yaml's baseUrl is localhost, which the launcher sets to the port it serves on" \
-  "yq -r .configuration.baseUrl '$VB/quartz.config.yaml' | grep -Eqx 'localhost(:[0-9]+)?'"
+  "yq -r .configuration.baseUrl '$VB/quartz.config.yaml' | grep -Ex >/dev/null 'localhost(:[0-9]+)?'"
 eq "every shipped plugin declares a quartzVersion" \
   "$(for d in "$VB"/plugins/*/; do jq -r '.quartz.quartzVersion // "MISSING"' "$d/package.json"; done | grep -c MISSING)" "0"
 

@@ -59,6 +59,15 @@ and again before exit, so a job that writes into it fails the run and the failur
 names the cache rather than the job. Keep the cache inside `mktemp -d`: a fixed
 path under `/tmp` produces phantom failures in the upgrade suite.
 
+## Pipes into a match
+
+Never pipe into `grep -q`: it exits on the first match, the writer gets SIGPIPE,
+and under `pipefail` the assertion fails although the text is there — only when
+the output outgrows the pipe buffer, so it flakes. Pipe into a `grep` that reads
+everything and drop its output instead: `printf '%s' "$out" | grep >/dev/null 'x'`.
+The same goes for any reader that stops early (`head`, `awk … exit`) when the
+pipeline's status is what the assertion tests.
+
 ## Fixtures
 
 Fixtures cost the repo nothing: every tag ships a runnable installer, so `git
