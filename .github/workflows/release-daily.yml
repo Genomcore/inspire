@@ -9,8 +9,9 @@
 #   3. Merge (merge commit) → tag ligero v<version> sobre el merge commit →
 #      GitHub Release.
 #   4. Crea la siguiente rama release/<fecha de hoy> desde main si no hay otra.
-#   5. Reapunta a esa rama las PRs abiertas que se han quedado sin release (ver
-#      abajo) y borra la rama de release ya publicada.
+#   5. (job retarget) Reapunta a esa rama las PRs abiertas que se han quedado
+#      sin release (ver abajo), relanza su Release check y borra la rama de la
+#      release ya publicada.
 #
 # push a release/AAAA-MM-DD: abre la PR release → main si aún no existe y, si
 # es la release más reciente, le reapunta las PRs que se han quedado sin release.
@@ -44,9 +45,8 @@ on:
   push:
     branches: [main, 'release/**']
 
-permissions:
-  contents: write
-  pull-requests: write
+# Cada job pide solo lo que usa.
+permissions: {}
 
 concurrency:
   # La publicación nunca corre dos veces a la vez; los push no se limitan.
@@ -71,6 +71,12 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # tags, ramas y releases
+      pull-requests: write # abrir y mergear la PR de release
+    outputs:
+      # Rama de la release que se acaba de mergear (vacío si no se ha mergeado nada).
+      merged_branch: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -261,10 +267,14 @@ jobs:
       # ── siguiente rama de release ──────────────────────────────────────────
       - name: Crear la siguiente rama release/AAAA-MM-DD
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.dry_run
+        env:
+          MERGED_BRANCH: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
         run: |
           set -euo pipefail
+          # La release recién mergeada no cuenta: la borra el job retarget.
           open_branches="$(git ls-remote --heads origin 'release/*' \
-                           | sed 's#.*refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" || true)"
+                           | sed 's#.*refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" \
+                           | grep -vxF "${MERGED_BRANCH:-}" || true)"
           if [ -n "$open_branches" ]; then
             echo "Ya hay rama de release abierta: $open_branches" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -274,20 +284,32 @@ jobs:
           gh api "repos/$GH_REPO/git/refs" -f ref="refs/heads/$next" -f sha="$main_sha" >/dev/null
           echo "Creada $next desde main @ ${main_sha:0:7}" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # ── PRs que se han quedado sin release ─────────────────────────────────
+  # Job aparte para que solo él tenga actions: write (relanzar el Release check).
+  # Corre aunque el job release falle: mover las PRs no depende de publicar.
+  retarget:
+    needs: release
+    if: >-
+      !cancelled() && (
+        github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # borrar la rama de la release publicada
+      pull-requests: write # cambiar la rama destino de las PRs y comentar
+      actions: write       # relanzar el Release check que falló mientras apuntaban a main
+    steps:
       - name: Reapuntar PRs a la release abierta
-        if: >-
-          github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
-          (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/'))
         env:
           DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
           PUSHED: ${{ github.event_name == 'push' && github.ref_name || '' }}
-          MERGED_BRANCH: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
+          MERGED_BRANCH: ${{ needs.release.outputs.merged_branch }}
+          RELEASE_CHECK_WORKFLOW: Release check
         run: |
           set -euo pipefail
           # La release abierta es la release/AAAA-MM-DD más reciente.
-          target="$(git ls-remote --heads origin 'release/*' | sed 's#.*refs/heads/##' \
-                    | grep -E "$RELEASE_BRANCH_RE" | grep -vxF "${MERGED_BRANCH:-}" | sort | tail -1 || true)"
+          target="$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/release/" -q '.[].ref' \
+                    | sed 's#^refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" \
+                    | grep -vxF "${MERGED_BRANCH:-}" | sort | tail -1 || true)"
           if [ -z "$target" ]; then
             echo "No hay rama de release abierta: no se reapunta nada."
             exit 0
@@ -297,15 +319,15 @@ jobs:
             exit 0
           fi
 
-          candidates="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName \
+          candidates="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName,headRefOid \
             | jq -r --arg t "$target" --arg allowed "$ALLOWED_TO_MAIN_RE" --arg rel "$RELEASE_BRANCH_RE" '
                 .[] | select(.headRefName != $t and .baseRefName != $t)
                     | select((.baseRefName == "main" and (.headRefName | test($allowed) | not))
                              or (.baseRefName | test($rel)))
-                    | "\(.number) \(.baseRefName) \(.headRefName)"')"
+                    | "\(.number) \(.baseRefName) \(.headRefName) \(.headRefOid)"')"
 
           moved=0
-          while read -r num base head; do
+          while read -r num base head sha; do
             [ -n "$num" ] || continue
             # Una PR contra otra release/ solo se mueve si esa release ya está en main.
             if [ "$base" != main ] && [ "$base" != "${MERGED_BRANCH:-}" ]; then
@@ -320,6 +342,18 @@ jobs:
             gh pr comment "$num" --body "Reapuntada de \`$base\` a \`$target\`, la release abierta. A main solo se llega desde \`release/\`, \`hotfix/\` o \`docs/\`."
             echo "- #$num \`$head\`: $base → $target" | tee -a "$GITHUB_STEP_SUMMARY"
             moved=$((moved + 1))
+
+            # Mientras apuntaba a main, el Release check falló en este commit.
+            # Relanzado, ve que ya no apunta a main y pasa en verde.
+            failed_run="$(gh api "repos/$GH_REPO/actions/runs?head_sha=$sha&event=pull_request&per_page=100" \
+              | jq -r --arg w "$RELEASE_CHECK_WORKFLOW" '
+                  [.workflow_runs[] | select(.name == $w)] | max_by(.created_at) // empty
+                  | select(.conclusion == "failure") | .id')"
+            if [ -n "$failed_run" ]; then
+              gh api -X POST "repos/$GH_REPO/actions/runs/$failed_run/rerun-failed-jobs" >/dev/null \
+                && echo "  Release check relanzado (run $failed_run)" \
+                || echo "::warning::#$num: no se ha podido relanzar el Release check (run $failed_run)."
+            fi
           done <<<"$candidates"
           echo "PRs reapuntadas a $target: $moved"
 
