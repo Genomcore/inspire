@@ -90,6 +90,6 @@ async removeLineItems({ orderId, skus }: { orderId: string; skus: string[] }): P
 Rule of thumb: **type the invariant to catch literal misuse at compile time, but keep
 the runtime assertion in the service**, because external data is the realistic input
 and TypeScript cannot prove it. Never reach for `as NonEmptyArray<…>` to silence the
-type — that is the `as`-cast escape hatch the quality gates already ratchet; validate
+type — that is the `as`-cast escape hatch the profile's lint rules refuse; validate
 instead. Where the check lives follows the profile's layering rule: the DTO when
 there is a controller, the service when there is not, never the repository.

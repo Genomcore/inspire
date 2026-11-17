@@ -69,9 +69,11 @@ this stack derives its own `## Quality gates` (and the `gates:` frontmatter that
 `.inspire/bin/profile-gates-installed.sh` verify them) from a frontend iteration that
 exercises each rule before writing it down. The shared-toolchain candidates are
 obvious — the type-aware `typescript/no-unsafe-*` rules and `typescript/ban-ts-comment`
-in `.oxlintrc.json`, the escape-hatch ratchet — and the React-only ground (oxlint's
-`react/rules-of-hooks` and `react/exhaustive-deps`, its `jsx-a11y` plugin, a bundle-size
-budget) is where the measuring has to happen. This section is the deferral, not the answer.
+in `.oxlintrc.json`, the escape-hatch plugin
+([`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs))
+— and the React-only ground (oxlint's `react/rules-of-hooks` and `react/exhaustive-deps`,
+its `jsx-a11y` plugin, a bundle-size budget) is where the measuring has to happen. This
+section is the deferral, not the answer.
 
 ## Build & verify
 build: `npm run build` · lint: `npm run lint` (`oxlint`) · format: `npx oxfmt --check` ·

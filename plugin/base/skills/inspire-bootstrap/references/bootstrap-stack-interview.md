@@ -202,12 +202,9 @@ and `profiles:` are confirmed:
    — the lint rules, the test-runner thresholds, and the CI job that runs them. New
    rules go in **absolute**; a rule the existing code cannot satisfy yet enters scoped
    or ratcheted with a `/inspire-task` ticket for the cleanup. Never dropped silently.
-   Seed `.escape-hatches.json` with the stack's suppression patterns from the profile
-   and run `.inspire/bin/escape-hatch-ratchet.sh --update` to set the ceilings from
-   what the code actually contains. On a greenfield project that is **zero** — the only
-   moment it is free. On existing code, measure **before** raising the lint set:
-   raising it is what produces new suppressions, so the honest baseline only exists
-   beforehand.
+   The escape hatches are part of that lint set: the rules that refuse the hatches the
+   project does not allow, and the ones that require a reason on every suppression. On
+   a greenfield project they go in at `error` — the only moment it is free.
 2. **Declare the external gate** in `stack.md` — which service keeps the history of
    the aggregate metrics (coverage, duplication, bundle size), since the runtime must
    not store that baseline in the repository it is judging. Record it; the in-repo

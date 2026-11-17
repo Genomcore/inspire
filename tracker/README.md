@@ -83,14 +83,15 @@ filed in the Factory's tracker when the change here lands, never before. The not
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
 
-## Where things stand (2026-11-12)
+## Where things stand (2026-11-16)
 
 Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
 `0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
 `0143-prose-checks-in-any-language` was filed, the first block of the INSPIRE Factory's
 follow-up review filed two, the second block filed `FB2-kb-contradiction-check`, and
 the fifth block filed `FB5-audit-events-kept`, `FB5-exists-precondition-error` and
-`FB5-errors-mapped-above-controller`.
+`FB5-errors-mapped-above-controller`, and a governed project's report filed
+`0143-entity-datastore`.
 The tracker pass on 2026-10-28 closed six and filed none:
 
 - `F14-semantic-types` — Done; all three criteria shipped.
@@ -112,7 +113,9 @@ Factory work.
   `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
   nothing when the KB is not in English; blocked by `B4-section-keys`),
   `0143-factory-settings-in-emanate-yml` (High; `/inspire-config` follows the Factory's
-  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version).
+  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version),
+  `0143-entity-datastore` (High; an entity cannot say which database it lives in, so a
+  stack's second database never reaches the build).
 - **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
   are the two XL design items. Config waits on one decision: which shape the spec config
   takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE

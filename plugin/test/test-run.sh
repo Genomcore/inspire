@@ -71,6 +71,26 @@ bash "$A/plugin/test/run.sh" -j 1 --inventory "$WORK/inv1" >/dev/null 2>&1
 eq "-j 1 exits 0 too" "$?" "0"
 eq "-j 1 and -j 4 give the same inventory" "$(cat "$WORK/inv1")" "$(cat "$WORK/inv4")"
 
+# --shard: the slices of one run are disjoint and together are the whole run.
+: > "$WORK/invs"
+for k in 1 2 3; do
+  bash "$A/plugin/test/run.sh" -j 4 --shard "$k/3" --inventory "$WORK/invs$k" \
+    > "$WORK/outs$k" 2>&1
+  eq "shard $k/3 exits 0" "$?" "0"
+  cat "$WORK/invs$k" >> "$WORK/invs"
+done
+eq "the three shards together give the unsharded inventory" \
+   "$(LC_ALL=C sort "$WORK/invs")" "$(cat "$WORK/inv4")"
+eq "each job runs in exactly one shard" \
+   "$(cat "$WORK/outs1" "$WORK/outs2" "$WORK/outs3" | grep -c '^PASS plugin/test/synth/' | tr -d ' ')" "4"
+s5="$(bash "$A/plugin/test/run.sh" -j 4 --shard 5/5 2>&1)"; s5_rc=$?
+eq "a shard left with no jobs exits 0" "$s5_rc" "0"
+check "and says it is empty" "printf '%s\n' \"\$s5\" | grep -q 'has no jobs'"
+for bad in 0/3 4/3 x/3 1/ 3; do
+  bash "$A/plugin/test/run.sh" --shard "$bad" >/dev/null 2>&1
+  eq "--shard $bad is refused" "$?" "2"
+done
+
 f="$(bash "$A/plugin/test/run.sh" -j 1 a-green 2>&1)"
 eq "a filter narrows to the jobs whose name contains it" \
    "$(printf '%s\n' "$f" | grep -c '^PASS plugin/test/synth/' | tr -d ' ')" "1"

@@ -98,7 +98,7 @@ security). Each is a lens name + one line of what it hunts for.
 The concrete tools and rules that mechanically enforce this stack's share of
 [`quality-gates.md`](quality-gates.md): which lint
 rules, which coverage tooling, which of them are absolute vs ratcheted, and which
-suppression syntax counts as this stack's escape hatch. A rule that does not hold for
+lint rules allow or refuse this stack's escape hatches. A rule that does not hold for
 this stack is listed as **dropped with its reason**, never left out silently. Names
 tools and rules only — never an org's server or pipeline.
 

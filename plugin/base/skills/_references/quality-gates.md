@@ -68,42 +68,55 @@ in the one currency to be explicit about — it says nothing about code the diff
 touch. Name that limit when choosing the design (Rule 2's third branch); a scoped check
 sold as a global one is the failure mode.
 
-## Rule 4 — an escape hatch is enumerable, or it is not allowed
+## Rule 4 — an escape hatch is the linter's to allow or refuse
 
 Every rule set needs a way out: a mis-typed dependency, a framework bug, a boundary
 where the shape genuinely cannot be known yet. Forbidding that outright is what gets
-the whole rule switched off, which is strictly worse. So the hatch stays — under three
-conditions, each of them mechanical, not a habit:
+the whole rule switched off, which is strictly worse. So whether a hatch is allowed,
+and in which form, is decided once, in the linter's config — never counted afterwards.
+Each condition below is local and binary, so by Rule 1 the linter owns it:
 
+- **Allowed or refused, per rule** — the config says, for each hatch, whether code may
+  use it at all. `no-explicit-any` at `error` refuses `as any` everywhere;
+  `ban-ts-comment` refuses `@ts-ignore` and allows `@ts-expect-error` only with a
+  description. A refused hatch fails at the line, in the agent's own loop, before anyone
+  sees the code. A rule the project never allows is also closed to inline disables:
+  otherwise one described disable directive turns a refused hatch into an allowed one.
 - **Named** — one greppable syntax, never a wholesale one. `@ts-expect-error`, not
   `@ts-ignore`: expect-error *fails once the underlying error is fixed*, so it expires
-  by itself. `oxlint-disable-next-line <rule>` (or `eslint-disable-next-line <rule>`),
-  never a bare file-wide disable.
+  by itself. A directive names the rules it disables, never a bare file-wide disable,
+  and a directive that no longer suppresses anything is an error.
 - **Justified in place** — a suppression without a written reason is a lint error, not
-  a review comment (Rule 1: local and binary, so the linter owns it). Where the reason
-  is "later", it carries the tracker id that owns the cleanup.
-- **Counted** — the repo-wide total is a ratchet: it may fall, never rise.
+  a review comment. Where the reason is "later", it carries the tracker id that owns the
+  cleanup.
 
-That count is the one aggregate whose baseline belongs **inside** the repository, and
-Rule 3 is what says so rather than what it violates: a suppression is source text, so
-the metric is recomputable by anyone and both it and its allowance land in the same
-diff. Raising the ceiling is one line, and it *looks* exactly like what it is — the
-reviewable act Rule 3 asks for. Coverage cannot offer that (it is a property of a run,
-not of the text), which is why its history has to live outside.
+Each linter spells these differently, and a stack skill names the rules it uses:
 
-What the ratchet buys is adoption on contaminated ground: nobody has to clean up today,
-nobody may make it worse tomorrow, and every opportunistic fix is locked in. What it
-does not buy is silence — **exceeding** the ceiling blocks the commit (sitting at it is
-the normal resting state, not a failure), and the cleanup is a `/inspire-task` ticket,
-never a line in a log someone reads later.
+| Condition | ESLint | oxlint |
+|---|---|---|
+| closed to inline disables | `eslint-comments/no-restricted-disable` | a local JS plugin rule |
+| names its rules | `eslint-comments/no-unlimited-disable` | a local JS plugin rule |
+| says why | `eslint-comments/require-description` | a local JS plugin rule |
+| stale directive is an error | `eslint-comments/no-unused-disable` | `reportUnusedDisableDirectives` |
 
-Tooling: `.inspire/bin/escape-hatch-ratchet.sh`, driven by
-`.escape-hatches.json` at the repo root — per-pattern ceilings, because a single total
-would let a change trade one `@ts-expect-error` for three `as any` and still pass.
-`--update` only ever lowers a ceiling; raising one is a hand edit to the config, which
-is exactly the reviewable act described above. It is wired into `pre-commit` and runs
-only when the commit touches a configured scope, so a preexisting breach never blocks an
-unrelated change.
+oxlint has no counterpart to `eslint-plugin-eslint-comments`, so the three rules it lacks
+are a JS plugin the TypeScript profile ships
+([`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs)).
+Under oxlint, a directive that disables the plugin's own rules gets past them: a bare
+file-wide disable switches them off with everything else. That gap is known, it is
+visible in the diff, and only a check outside the linter closes it.
+
+There is no count and no ceiling. A hatch the config allows is allowed wherever its
+rule permits it; one it refuses is refused everywhere. Using fewer is a change to the
+config — turning a rule to `error`, narrowing where an override applies — and that
+change is a diff a reviewer sees (Rule 3). A codebase with too many existing hatches
+to refuse one today adopts the refusal the way Rule 2 says, with the cleanup as a
+`/inspire-task` ticket, and the baseline lives in the linter's own config. ESLint's bulk
+suppressions (`eslint --suppress-all`) record each existing violation in
+`eslint-suppressions.json`, a new one fails, and `--prune-suppressions` drops the
+entries a fix removed. oxlint keeps no such file, so an `overrides` entry turns the
+rule off for the files that already break it, listed by path, and a file leaves the
+list when its cleanup lands.
 
 ## Rule 5 — a gate the runtime cannot install is declared, never pretended
 
