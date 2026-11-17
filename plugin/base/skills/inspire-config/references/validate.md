@@ -9,7 +9,8 @@ reader, and the run applies the reader's rules anyway.
 ## 1. The factory's reader
 
 Locate the factory checkout through `INSPIRE_FACTORY_ROOT`; when it is unset, ask
-the operator for the path. Anyone who launches a factory run already has that
+the operator for the path, except when `/inspire:update` runs this review (its Step 10):
+then never ask, and go on to *validation pending* below. Anyone who launches a factory run already has that
 checkout and `bun`. Then run its project-file check on the draft, from the
 project root:
 
@@ -52,6 +53,8 @@ warning explicitly.
 | a root that does not exist yet | warning | skipped silently; fine when the scaffold will create it |
 | a multi-line `run` without `set -e`, a pipe without `set -o pipefail` | warning | a red check reads green |
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
+| no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
+| a Vitest e2e check whose config sets `fileParallelism: false`, with no `--fileParallelism`, while its test code gives each file its own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`), on INSPIRE Factory 0.19.0 or later | warning | its files run one at a time; four at once ran a 279-file suite in 120 s instead of 425 s ([`derive.md`](derive.md) § Run checks). No warning when the database is shared or cannot be found |
 | a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
 | `{files}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
 | a `run_related` whose runner or flags differ from its `run` beyond the narrowing | warning | the units and the release check would run different suites |
