@@ -9,7 +9,7 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
-## 0.18.0 — unreleased
+## 0.18.0 — 2026-11-16
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
 sets in its lint config the rules that refuse each hatch it does not allow, closed to
