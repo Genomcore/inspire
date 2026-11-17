@@ -18,9 +18,11 @@ Nothing changes for a project: this release touches only the template repo's CI,
 
 - **The open release branch follows `main`.** A new workflow, `Sync release with main`,
   runs on every push to `main` and, when the newest `release/YYYY-MM-DD` branch is behind
-  it, opens a PR from `main` into that branch, so hotfixes and `docs/` tickets merged into
-  `main` reach the release that ships next. It opens none while one is already open, or
-  once that release has been merged into `main`.
+  it, points `sync/<release>` at `main` and opens a PR from it into that branch, so
+  hotfixes and `docs/` tickets merged into `main` reach the release that ships next.
+  Conflicts are resolved in that PR, never in `main`. While the PR is open and has no
+  commits of its own, every push to `main` moves `sync/<release>` forward instead of
+  opening another; once that release has been merged into `main`, it opens none.
 
 ## 0.18.0 — 2026-11-17
 
