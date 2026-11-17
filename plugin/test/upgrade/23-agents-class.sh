@@ -163,7 +163,7 @@ ag_det_err="$(detect_version "$PLUGIN_ROOT" "$p" "" 2>&1 >/dev/null)"
 eq "detection: a v0.7.0 fixture is nominated 0.7.0" \
    "$(detect_version "$PLUGIN_ROOT" "$p" "" 2>/dev/null | cut -f1)" "0.7.0"
 check "detection: nothing was refused for spanning layouts" \
-  "! printf '%s' \"\$ag_det_err\" | grep -qi 'different layouts'"
+  "! printf '%s' \"\$ag_det_err\" | grep -i >/dev/null 'different layouts'"
 
 mkdir -p "$p/.claude/agents"; printf 'mine\n' > "$p/.claude/agents/mine.md"
 eq "detection: an operator's own .claude/agents does not move the verdict" \
@@ -190,7 +190,7 @@ ag_redet_err="$(detect_version "$PLUGIN_ROOT" "$p" "0.7.0" 2>&1 >/dev/null)"
 detect_version "$PLUGIN_ROOT" "$p" "0.7.0" >/dev/null 2>&1
 eq "re-detection after the upgrade still resolves to one version" "$?" "0"
 check "re-detection refused nothing for spanning layouts" \
-  "! printf '%s' \"\$ag_redet_err\" | grep -qi 'different layouts'"
+  "! printf '%s' \"\$ag_redet_err\" | grep -i >/dev/null 'different layouts'"
 fixture_cleanup "$w"
 
 # --- a pre-0.3 project reaches the class through the TARGET map ------------

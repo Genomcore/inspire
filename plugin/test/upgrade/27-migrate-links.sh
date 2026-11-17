@@ -253,7 +253,7 @@ has "flow sequence items are quoted"              "$A" 'deps: ["[b](../b/b.modul
 has "a single-quoted link stays in its quotes"    "$A" "quoted: '[b](../b/b.module.md)'"
 bad_yaml=0
 while IFS= read -r f; do
-  head -1 "$f" | grep -q '^---' || continue
+  head -1 "$f" | grep >/dev/null '^---' || continue
   yq --front-matter=extract '.' "$f" >/dev/null 2>&1 || bad_yaml=$((bad_yaml + 1))
 done < <(find "$E/inspire_kb" -name '*.md')
 eq "yq parses every converted frontmatter" "$bad_yaml" "0"

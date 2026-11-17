@@ -72,7 +72,7 @@ check "the saved report is the report, not a stub" \
    "grep -q 'INSPIRE upgrade — 0.1.0' '$p/.inspire/last-upgrade.log' && \
     grep -q 'decision(s) needed' '$p/.inspire/last-upgrade.log'"
 check "the report tells the operator where it was saved" \
-   "printf '%s' \"\$e2e1_err\" | grep -q '.inspire/last-upgrade.log'"
+   "printf '%s' \"\$e2e1_err\" | grep >/dev/null '.inspire/last-upgrade.log'"
 # Outside every dest_map root, or classify's pass 3 would report our own log back
 # to the operator as project-authored on the next run — forever.
 inlog_n="$(classify "$PLUGIN_ROOT/manifests/0.4.0.json" "$p" "$base" "$MAP_03" "$MAP_03" \

@@ -42,7 +42,7 @@ eq "the package names its origin, quartz-community/graph" \
 check "no node_modules lies under base/ or is tracked under plugin/" \
   "[ -z \"\$(find '$PLUGIN_ROOT/base' -name node_modules)\" ] \
    && tracked=\"\$(git -C '$PLUGIN_ROOT' ls-files -- .)\" && [ -n \"\$tracked\" ] \
-   && ! printf '%s\n' \"\$tracked\" | grep -q node_modules"
+   && ! printf '%s\n' \"\$tracked\" | grep >/dev/null node_modules"
 eq "the configuration enables ./plugins/inspire-graph and disables Quartz's graph" \
    "$(yq -r '[.plugins[] | select(.source == "./plugins/inspire-graph" or .source == "@quartz-community/graph") | .source + "=" + (.enabled | tostring)] | join(" ")' "$VB/quartz.config.yaml")" \
    "@quartz-community/graph=false ./plugins/inspire-graph=true"

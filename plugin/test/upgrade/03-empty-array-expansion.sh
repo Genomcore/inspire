@@ -20,7 +20,7 @@ noman_proj="$noman_w/proj"; mkdir -p "$noman_proj"
 noman_err="$(detect_version "$noman_plugin" "$noman_proj" 2>&1 >/dev/null)"; noman_rc=$?
 eq "empty manifests dir returns rc=1, not a crash" "$noman_rc" "1"
 check "empty manifests dir does not raise an unbound-variable error" \
-  "! printf '%s' \"\$noman_err\" | grep -qi 'unbound variable'"
+  "! printf '%s' \"\$noman_err\" | grep -i >/dev/null 'unbound variable'"
 fixture_cleanup "$noman_w"
 
 summary
