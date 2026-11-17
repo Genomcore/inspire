@@ -73,6 +73,43 @@ hook, and `/inspire:update` warns, naming the config that lacks them.
 - The warning about a `.gitignore` rule that hides the runtime also names a shipped file
   hidden under a root that is not ignored, and says to add a negation after the rule.
 
+## 0.17.4 — 2026-11-16
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The update now ends by checking
+`.inspire/emanate.yml` and offers to re-derive it; the new e2e flags and `check_concurrency`
+need INSPIRE Factory 0.19.0 or later, and on an older Factory `/inspire-config` proposes
+neither.
+
+### Added
+
+- **`/inspire:update` offers to re-derive `.inspire/emanate.yml`** (Step 10). It runs
+  `/inspire-config review`, which writes nothing, and when the review warns, offers
+  `/inspire-config init`, which shows the diff against the current file and writes only on
+  approval. Without a factory checkout the review says *validation pending* and the update
+  goes on. The review warns about a missing `bash_timeout` and about an e2e suite over
+  per-file databases that still runs one file at a time.
+- **`/inspire-config` proposes `bash_timeout: 600`** in a new file and in an update of an
+  existing one. Without it OMP kills an agent's command after 300 s; a higher value lets a
+  shell that never returns hold a unit's slot that long.
+- **`/inspire-config` documents `check_concurrency`** (Factory 0.19.0 or later, default `2`):
+  how many check commands run at once across all units. Like every `factory` value it is
+  never proposed.
+
+### Changed
+
+- **The factory's e2e check runs files side by side.** A Vitest e2e suite whose files each
+  copy their own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`) gets
+  `--fileParallelism` with `--maxWorkers=4` from `sandbox.memory: 2g`, and `2` below, on
+  Factory 0.19.0 or later, which no longer caps a unit's CPUs. Four workers ran a
+  genomics-suite e2e suite of 279 files in about 120 s, against 425 s one at a time. The
+  factory's version is read from `orchestrator/package.json` in `INSPIRE_FACTORY_ROOT`;
+  with no checkout, or with a suite whose files share a database, the check keeps the
+  config's one file at a time.
+- **The NestJS profile keeps the e2e config one file at a time.** Running files side by
+  side is the factory's check's choice, so the config stays safe on any machine and any
+  Factory.
+
 ## 0.17.3 — 2026-11-13
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
