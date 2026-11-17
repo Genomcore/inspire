@@ -9,6 +9,22 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.19.0 — 2026-11-17
+
+Upgrade with `/inspire:update` if you like; nothing in the runtime changed. Every
+file a project materializes is byte-identical to 0.18.0, nothing moves on disk, and
+nothing in your knowledge base needs to change.
+
+### Changed
+
+- **The daily release moves stranded pull requests to the open release branch.**
+  Deleting a merged `release/<date>` branch made GitHub retarget its open PRs to
+  `main`, where the Release check refused them. The daily workflow now points them,
+  and any PR into `main` that is not from `release/`, `hotfix/` or `docs/`, at the
+  newest open release branch, reruns their Release check, and only then deletes the
+  published release's branch. The Release check passes without checking anything
+  when the PR no longer targets `main`.
+
 ## 0.18.0 — 2026-11-17
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
