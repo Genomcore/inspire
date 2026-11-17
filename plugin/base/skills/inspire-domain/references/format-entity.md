@@ -123,7 +123,7 @@ Three tooling consequences:
 
 - `entity-datastore` reports an entity whose datastore is missing or undeclared, a default `datastores:` does not list, and a datastore whose stack id is not in `profiles:` or has no skill with a `## Persistence` section. Each is an error at every lifecycle.
 - `entity-datastore` warns when a `references(…)` names an entity in another datastore: no foreign key spans two engines, so the application keeps the reference. It does not block, since a design may need the link.
-- The derived contract carries it as `unit.datastore`, adds it to each entity an action touches, and derives one more claim, `{module}.{entity}/datastore`, so moving an entity rebuilds its table where it now belongs. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
+- The derived contract carries it as `unit.datastore`, adds it to each entity an action touches, and derives one more claim, `{module}.{entity}/datastore`, for an entity outside the default, so moving an entity out of the default rebuilds its table where it now belongs. An entity in the default makes no such claim, so declaring `datastores:` in a project that is already built rebuilds only the entities placed outside it. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
 
 ## Section conventions
 

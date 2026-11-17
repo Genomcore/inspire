@@ -152,7 +152,7 @@ the grouped human report.
   carries the fact; the planner decides what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order, then the invariants, then its datastore
-  claim when it has a `unit.datastore`; for an action the
+  claim when its `unit.datastore` is not the default; for an action the
   input constraints, preconditions, behavior steps, postconditions, errors and
   then its three binding claims;
   for a screen the parameter, data, dispatch, navigation and state bindings,
@@ -330,13 +330,18 @@ around every route: its geometry claims hold on the frame, this one on the
 application, and without it a shell can be built, tested and still frame
 nothing.
 
-**An entity with a `unit.datastore` makes one more claim**,
+**An entity outside the default datastore makes one more claim**,
 `{module}.{entity}/datastore`: its table exists in that datastore, built under that
 datastore's `## Persistence`. Its oracle is `store`, like the field constraints the
-table carries. It exists so that moving an entity to another datastore, or changing
-the `default_datastore:` an entity relies on, makes one claim stale and rebuilds the
-table where it now belongs. An entity in a project without `datastores:` makes no
-such claim, so its claims and their fingerprints are what they were.
+table carries. Moving an entity out of the default adds the claim, so the table is
+built where it now belongs; moving it between two other datastores makes the claim
+stale; moving it back to the default removes it. An entity in the default datastore
+makes no such claim, whether it names the default or names nothing, and neither
+does an entity in a project without `datastores:`. Its claims are what they were,
+so declaring `datastores:` in an emanated project rebuilds only the entities placed
+outside the default. The default is therefore the database the project's tables
+are already in. A change of `default_datastore:` moves the entities that rely on it
+without touching a claim; an entity that has to move is given its datastore by name.
 
 **A grouping bundle makes exactly one claim**, `{bundle-id}/mount/every-action`:
 the bundle's package exposes every one of its member actions. It is the
