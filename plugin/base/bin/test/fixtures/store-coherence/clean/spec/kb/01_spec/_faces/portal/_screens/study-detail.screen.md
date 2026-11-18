@@ -19,7 +19,7 @@ A researcher comes here to work on studies.
 
 | Key | In | Type | Required | Notes |
 |---|---|---|---|---|
-| `id` | path | id | yes | the study |
+| `id` | path | uuid | yes | the study |
 
 ### Data
 

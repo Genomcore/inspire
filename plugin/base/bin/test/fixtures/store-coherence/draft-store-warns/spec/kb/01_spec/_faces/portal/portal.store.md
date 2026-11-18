@@ -20,7 +20,7 @@ What the portal keeps between screens.
 
 | Key | Type | Initial | Persist | Notes |
 |---|---|---|---|---|
-| `currentStudyId` | id | — | forever | |
+| `currentStudyId` | uuid | — | forever | |
 
 ## STO4: On error
 
