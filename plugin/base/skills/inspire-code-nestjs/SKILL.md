@@ -536,8 +536,8 @@ editing this section moves every action's binding fingerprints.
   `npx typeorm migration:create src/migrations/<Name>`. It names the file
   `<ms>-<Name>.ts` and the class `<Name><ms>`, with `<ms>` from `Date.now()`; never
   number one by the previous migration plus one. TypeORM reads the instant from the
-  class name's last 13 characters. Migrations are **append-shaped**: a new change is a new file,
-  and a migration already merged is never edited.
+  class name's last 13 characters. Migrations are **append-shaped**: a new change
+  is a new file, and a migration already merged is never edited.
 - Never `synchronize: true` outside a throwaway local run — migrations are the only
   schema authority.
 
