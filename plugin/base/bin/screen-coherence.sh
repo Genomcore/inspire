@@ -385,7 +385,7 @@ check_bindings() {
               "unresolved outcome: '$outcome' is none of '→ [{screen-id}]({path})', 'state \`{key}\`', 'refresh \`{key}\`', 'set store \`{key}\`' or 'refresh store \`{key}\`'"
             ;;
         esac
-      done < <(printf '%s\n' "$cell" | tr ';' '\n')
+      done < <(printf '%s\n' "$cell" | awk '{ gsub(/;[ \t]+/, "\n"); print }')
     done
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Dispatches" { print }' "$SC_ROWS")
 
@@ -402,7 +402,7 @@ check_bindings() {
         emit "$sev" "$file" \
           "navigation Then: '$outcome' is not 'set store \`{key}\` from param \`{param}\`'"
       fi
-    done < <(printf '%s\n' "$then" | tr ';' '\n')
+    done < <(printf '%s\n' "$then" | awk '{ gsub(/;[ \t]+/, "\n"); print }')
   done < <(awk -F'\t' '$1 == "ROW" && $2 == "Navigation" { print }' "$SC_ROWS")
 
   # Navigation targets are screen ids, written as links. A link alone is not enough:
