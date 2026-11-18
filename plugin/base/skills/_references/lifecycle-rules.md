@@ -55,6 +55,8 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | `entity-coherence` (field-conflict, write-on-external) | error | error | error | error |
 | `entity-coherence` (field-unsourced — the column is the highest lifecycle among the entity and every action reading the field) | warning | error | error | warning |
 | `entity-coherence` (field-orphan-write) | warning | warning | warning | warning |
+| `entity-datastore` (datastore-missing, datastore-undeclared, datastore-default-undeclared, datastore-unserved) | error | error | error | error |
+| `entity-datastore` (reference-crosses-datastore) | warning | warning | warning | warning |
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 

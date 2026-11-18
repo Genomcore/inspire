@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -61,6 +61,10 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `no entity document found at expected path` | action-fields-in-entity | Action touches an entity id but no `{entity}.entity.md` carries that id. |
 | `field-conflict` | entity-coherence | Same field on same entity declared with differing types across actions. |
 | `field-unsourced` | entity-coherence | Field has at least one `Touch=read` declaration but no `Touch=written` declaration. |
+| `datastore-missing` | entity-datastore | `stack.md` declares two or more datastores and no `default_datastore:`, and the entity names none with `datastore:`. |
+| `datastore-undeclared` | entity-datastore | The entity's `datastore:` names a datastore `stack.md` does not declare. |
+| `datastore-default-undeclared` | entity-datastore | The entity names no datastore and `default_datastore:` is not in `datastores:`, or `stack.md` sets a default with no `datastores:`. |
+| `datastore-unserved` | entity-datastore | The entity's datastore maps to a stack id `profiles:` does not list, or no stack skill with that `stack:` has a `## Persistence` section. |
 | `requires target not found` | stable-blockers | A `requires` entry points to an id not present in the SDD tree. |
 | `stable action requires X which is at lifecycle: Y` | stable-blockers | A stable action lists a non-stable target in `requires`. |
 | `stable action touches entity X which is at lifecycle: Y` | touched-entity-lifecycle | A stable action touches an entity below `accepted`. |
@@ -83,6 +87,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | Type | Rule | Meaning |
 |---|---|---|
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
+| `reference-crosses-datastore` | entity-datastore | A `references(…)` names an entity in another datastore. No foreign key spans two engines, so the application keeps the reference. |
 | `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.9** — the shapes an upgrade inherits, which is all of them, since 0.8.0 shipped none of these classes — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
 | `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |
 | `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `*.feature.md` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |

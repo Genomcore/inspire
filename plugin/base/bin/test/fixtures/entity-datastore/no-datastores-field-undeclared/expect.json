@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [ { "rule": "entity-datastore", "severity": "error", "message_substring": "datastore-undeclared" } ], "finding_count": 1 }
