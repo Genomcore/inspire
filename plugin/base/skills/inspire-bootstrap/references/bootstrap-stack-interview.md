@@ -73,6 +73,8 @@ and the coding stage needs each one's conventions:
    and offer to scaffold one from
    [`stack-skill-example.md`](../../_references/stack-skill-example.md) when it does
    not: the engine, the table and column naming, the keys and the migration rule.
+   The skill declares `layer: backend`, and neither `language:` nor `## Bindings`
+   ([`stack-skills.md`](../../_references/stack-skills.md) § *Datastores*).
    INSPIRE ships none for a second engine, and an entity in a datastore without one
    is refused at the coding stage.
 4. **Offer an ADR** if none records why the data is split: moving entities to a

@@ -2,6 +2,7 @@
 name: pg
 description: "postgres conventions."
 stack: postgres
+layer: backend
 ---
 
 ## Layering

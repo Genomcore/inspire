@@ -99,7 +99,9 @@ migration rule. For an entity in the implied datastore it stays the backend prof
 entity in it, since that is an undeclared convention (`stack-skills.md` § *Seeds*).
 
 INSPIRE ships no ClickHouse skill and no skill for any second engine. A project writes its own,
-as it already may for any database (`stack-skills.md`).
+as it already may for any database (`stack-skills.md`). It declares `layer: backend`, and neither
+`language:` nor `## Bindings`: entities and actions, the units that touch a table, are backend
+units, so the skill reaches them and is not served to every screen, face and catalog of every run.
 
 ### D4 — `population: external` does not change who owns the table
 

@@ -43,7 +43,9 @@ A framework skill names its language in a `language:` frontmatter field
 and **a unit built under a framework skill also gets the language skill it names**.
 A language id may also be declared directly in `stack.md`'s `profiles:` — a library
 bundle with no framework has nothing else to name. A skill with no `layer:` (a
-database, a library) is served to every unit whose stack names its id.
+library) is served to every unit whose stack names its id. A database skill declares
+`layer: backend` and neither `language:` nor `## Bindings`, so it reaches the backend
+units without being a framework (§ *Datastores*).
 
 The axis exists because rendering is a property of the language, not of the
 framework: a React face and a NestJS service on the same TypeScript stack must
@@ -199,8 +201,15 @@ default when it names none
 Its table then follows the `## Persistence` of the skill whose `stack:` is the id its
 datastore maps to (`stack: clickhouse`), never the backend profile's. Every id a
 datastore maps to is also in `profiles:`, and has a skill with a `## Persistence`
-section. INSPIRE ships no skill for a second engine, so a project writes its own; a
-database skill carries no `layer:`, which serves it to every unit, actions included.
+section. INSPIRE ships no skill for a second engine, so a project writes its own.
+
+A database skill declares `layer: backend`. Entities and actions are the units that
+read or write a table, and both are backend units, so the skill reaches them and no
+screen, face or frontend process: without `layer:` it would be served to every unit,
+and every run would pay for it once per unit that never queries the database. It
+declares no `language:` and no `## Bindings`: those belong to the backend framework
+skill, and a second backend skill with `## Bindings` refuses every action.
+
 `entity-datastore.sh` checks all of this, and a datastore that cannot be resolved
 refuses the entity's unit (`DR-D3` in [`derived-contract.md`](derived-contract.md)).
 
