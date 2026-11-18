@@ -11,12 +11,47 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.19.0 — 2026-11-17
 
-Upgrade with `/inspire:update` if you like; nothing in the runtime changed. Every
-file a project materializes is byte-identical to 0.18.0, nothing moves on disk, and
-nothing in your knowledge base needs to change.
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and contracts and claims derive as before until a project declares `datastores:`
+in `stack.md`. The update re-materializes the skills, references and validators listed
+below.
+
+A project that keeps an entity in a database other than its main one declares
+`datastores:` and `default_datastore:` in `stack.md`, and `datastore:` on each entity
+that lives outside the default. INSPIRE Factory builds those entities in their database
+from **0.21.0**; Factory 0.20.0 and earlier ignore the fields and build every entity in
+the backend profile's database. In an emanated project the default must be the database
+its tables are already in: then only the entities placed outside the default are rebuilt.
+
+### Added
+
+- **An entity names the datastore it lives in** (`adr-entity-datastore`, Proposed).
+  `stack.md` may declare `datastores:` (datastore id → the stack id whose skill serves
+  it) and a `default_datastore:`; an entity names its database with `datastore:`, or
+  lives in the default. With two or more datastores and no default, an entity without
+  the field is refused: INSPIRE never picks one. The entity's table follows the
+  `## Persistence` of its datastore's stack skill, and `population: external` does not
+  move the table out of the project.
+- **A validator, `entity-datastore.sh`**, in `review.sh`'s default list. Errors at every
+  lifecycle: `datastore-missing`, `datastore-undeclared`, `datastore-default-undeclared`
+  and `datastore-unserved`. Warning: `reference-crosses-datastore`, for a `references(…)`
+  whose target lives in another datastore, since no foreign key spans two engines. A
+  stack with no `datastores:` produces no finding.
+- **The derived contract carries the datastore:** `unit.datastore`, `datastore` on an
+  action's entities, a claim `{module}.{entity}/datastore` (oracle `store`) made only by
+  an entity outside the default, and a refusal class, `DR-D3` (`derived-contract.md`).
 
 ### Changed
 
+- **`/inspire-bootstrap` asks for the datastores.** The stack interview writes
+  `datastores:` and asks for the default, its review checks them, and the `stack.md`
+  template's `## Data` explains the fields.
+- **`/inspire-domain` asks each entity for its datastore**, and never infers it.
+  `format-entity.md` documents the field and how it resolves, and the domain review
+  runs the new rule.
+- **A database skill declares `layer: backend` with no `## Bindings`** (`stack-skills.md`
+  § Datastores), so it reaches only backend units and is never taken for the backend
+  framework.
 - **The daily release moves stranded pull requests to the open release branch.**
   Deleting a merged `release/<date>` branch made GitHub retarget its open PRs to
   `main`, where the Release check refused them. The daily workflow now points them,
@@ -24,6 +59,12 @@ nothing in your knowledge base needs to change.
   newest open release branch, reruns their Release check, and only then deletes the
   published release's branch. The Release check passes without checking anything
   when the PR no longer targets `main`.
+
+### Fixed
+
+- The daily release reads the release notes without cutting the pipe. Under `pipefail`,
+  stopping `awk` at the end of the section killed `git show` with SIGPIPE (141) once the
+  CHANGELOG passed 64 KB, after the merge and before the tag and the GitHub Release.
 
 ## 0.18.0 — 2026-11-17
 
