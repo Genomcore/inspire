@@ -13,6 +13,10 @@
 #               them. Error.
 #   TYPE      — a frontmatter `type:` (or a `kind:` that names a type) agrees with
 #               the typed extension. Error.
+#   STORE ID  — a store's id, its face's, is the id of no other unit the Factory
+#               plans (an entity, action, screen, bundle, process or catalog entry):
+#               the Factory keys units by id alone and refuses such a plan (PR-14).
+#               Error.
 #   FACES AND BUNDLES, as a set (what the surface roster used to check):
 #               two faces never share a shell; a face's `bundles:` names bundles
 #               that exist, and its `shell_layout:` a layout that exists; a
@@ -100,6 +104,18 @@ while IFS="$(printf '\t')" read -r kind key id file; do
       [ "$declared" = "$kind" ] || \
         emit "error" "$file" "frontmatter says this is a $declared, its extension says $kind — one of them is wrong" ;;
   esac
+done < "$INDEX"
+
+while IFS="$(printf '\t')" read -r kind key id file; do
+  [ "$kind" = "store" ] || continue
+  in_scope "$file" || continue
+  while IFS="$(printf '\t')" read -r other_kind other_file; do
+    emit "error" "$file" "store '$id' shares its id with the $other_kind $other_file — the Factory plans units by id and refuses this plan (PR-14); rename the face or the $other_kind"
+  done < <(awk -F'\t' -v id="$id" '
+    $1 ~ /^(entity|action|screen|bundle|process|component|layout|pattern)$/ {
+      other = $3; gsub(/::/, ".", other)
+      if (other == id) print $1 "\t" $4
+    }' "$INDEX")
 done < "$INDEX"
 
 # Faces and bundles, as a set.
