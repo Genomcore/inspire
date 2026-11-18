@@ -66,5 +66,9 @@ have to start the same file in the same millisecond.
 - A migration merged after another with a later number is a separate problem, and the
   number's source does not fix it. TypeORM 0.3 runs it anyway: the check that rejected a
   migration older than the last one applied is commented out in `MigrationExecutor`.
+- The rule cites `npx typeorm migration:create`, which numbers with `Date.now()`, instead
+  of `date +%s%3N`: BSD `date` on macOS has no `%N` and prints the seconds followed by
+  `3N`, so a migration named on a Mac would not end in a 13-digit instant. Found in
+  review.
 - Closed in the PR that ships the rule, so its merge closes the ticket with no second
   PR. Jira: INSPIRE-27.

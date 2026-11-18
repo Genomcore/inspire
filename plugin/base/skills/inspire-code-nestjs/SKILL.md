@@ -532,11 +532,12 @@ editing this section moves every action's binding fingerprints.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`
   beside its repository and `toDomain()` mapper; the domain interface never imports
   the ORM (see `## Layering`).
-- **Migrations live in `src/migrations/`,** one file per change, numbered by its
-  creation time in milliseconds (`date +%s%3N`), never by the previous migration
-  plus one. The number ends the class name (`CreateBooksTable1793255939000`):
-  TypeORM reads its last 13 characters. Migrations are **append-shaped**: a new
-  change is a new file, and a migration already merged is never edited.
+- **Migrations live in `src/migrations/`,** one file per change, created with
+  `npx typeorm migration:create src/migrations/<Name>`. It names the file
+  `<ms>-<Name>.ts` and the class `<Name><ms>`, with `<ms>` from `Date.now()`; never
+  number one by the previous migration plus one. TypeORM reads the instant from the
+  class name's last 13 characters. Migrations are **append-shaped**: a new change is a new file,
+  and a migration already merged is never edited.
 - Never `synchronize: true` outside a throwaway local run — migrations are the only
   schema authority.
 
