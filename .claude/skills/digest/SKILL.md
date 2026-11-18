@@ -108,8 +108,8 @@ Only when the person says so ("create the PR from the agreed cards"):
 - Work in a worktree, `.claude/worktrees/<slug>`, on the branch `docs/tracker-<slug>` cut from
   `origin/main`, so the repo root stays on `main`.
 - Write one file per new card, `tracker/tickets/<prefix>-<slug>.md`, in the README's format.
-  Apply each `amend` card to its ticket and bump its `updated:` date. Update the README's
-  "Where things stand" section: the open count and the entries for this meeting.
+  Apply each `amend` card to its ticket and bump its `updated:` date. The README lists no
+  tickets, so it does not change.
 - Every new ticket opens with `## Origin`: the meeting's date and what it was about, and the
   decision in full. A reader acts on the ticket with nothing outside the repository.
 - Copy the agreed text from the page. Do not reword it in the PR.
