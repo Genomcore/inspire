@@ -3,8 +3,9 @@
 #
 # Library — not a review rule, and deliberately absent from `review.sh`'s
 # DEFAULT_RULES. It carries the readers for the keyed-entry grammar that the
-# domain and feature formats share, so that the three rules built on it
-# (`keys-present.sh`, `constraints-mechanics.sh`, `head-referents.sh`)
+# domain and feature formats share, so that the rules built on it
+# (`keys-present.sh`, `constraints-mechanics.sh`, `head-referents.sh`,
+# `entity-datastore.sh`)
 # cannot drift on what a key, a head or a Constraints line is.
 #
 # The grammar this file reads is specified once, in

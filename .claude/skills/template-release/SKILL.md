@@ -13,16 +13,32 @@ A release needs both `plugin/.claude-plugin/plugin.json` and
 changelog is the release-note channel, one section per release, and the convention
 starts at 0.9.0. `.claude/hooks/template-runtime-version.sh` blocks `gh pr create`
 if the two versions diverge, if the runtime changed without a bump, or if the
-version is already tagged. It checks only PRs into `main`: ticket work lands on a
-`release/<version>` branch cut from `main`, its PRs carry no bump, and the one PR
-from that branch to `main` carries the bump, the changelog section and the
-manifest. `plugin/scripts/` is deliberately **not** exempt from that check: it
-decides how every install behaves. The manifest is generated **last**, from the
-commit carrying the bump: it hashes every payload class under `plugin/base/` that
-`plugin/scripts/hops/layouts.tsv` maps (all but `kb/` and `templates/`), so any
-change under one of them afterwards invalidates it — while
-`CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`, `docs/`, `base/kb/` and
-`base/templates/` do not perturb it.
+version is already tagged. It checks only PRs into `main`. `plugin/scripts/` is
+deliberately **not** exempt from that check: it decides how every install behaves.
+
+Ticket work lands on the open `release/YYYY-MM-DD` branch, cut from `main` by the
+daily release workflow, whose PR to `main` is the release PR. The first PR into a
+fresh release branch bumps both versions to the next minor, and **ships the
+manifest for the new version in the same PR**: the test suite reads
+`plugin/manifests/<plugin.json version>.json`, so a bump without it fails
+`materialize/01-init-current-tree`, `upgrade/22b-derive-equal-real-root` and
+`upgrade/17-e2e-0.2.1` on "lock carries a real template_sha". Commit the bump
+(`chore(release): <version>`), then generate the manifest from that commit and
+commit it (`chore(release): the <version> manifest`):
+
+```sh
+bash plugin/scripts/gen-manifest.sh --tag HEAD --repo . > plugin/manifests/<version>.json
+```
+
+`--tag HEAD` resolves to the commit when no tag exists yet. The manifest hashes
+every payload class under `plugin/base/` that `plugin/scripts/hops/layouts.tsv`
+maps (all but `kb/` and `templates/`), so any later change under one of them on
+the release branch invalidates it, and so does a new `released` date in
+`plugin.json`: regenerate it then
+(`chore(release): regenerate the <version> manifest after …`), so the release PR
+reaches `main` with a manifest that describes its tree. `CHANGELOG.md`,
+`AGENTS.md`, `CLAUDE.md`, `docs/`, `base/kb/` and `base/templates/` do not
+perturb it.
 
 ## After the merge
 

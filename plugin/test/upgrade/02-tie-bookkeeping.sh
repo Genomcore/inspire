@@ -31,7 +31,7 @@ jq -n --arg h "$tie_h" '{version:"2.0.0",released:"x",commit:"x",layout:"B",file
 tie_err="$(detect_version "$tie_plugin" "$tie_proj" 2>&1 >/dev/null)"; tie_rc=$?
 eq "N-way cross-layout tie is refused (rc)" "$tie_rc" "1"
 check "N-way cross-layout tie mentions all three candidates" \
-  "printf '%s' \"\$tie_err\" | grep -q '1.0.0' && printf '%s' \"\$tie_err\" | grep -q '1.0.1' && printf '%s' \"\$tie_err\" | grep -q '2.0.0'"
+  "printf '%s' \"\$tie_err\" | grep >/dev/null '1.0.0' && printf '%s' \"\$tie_err\" | grep >/dev/null '1.0.1' && printf '%s' \"\$tie_err\" | grep >/dev/null '2.0.0'"
 
 # Same three-candidate shape, but all SAME layout: must still resolve, to the
 # highest version — a same-layout tie is the normal, safe case.

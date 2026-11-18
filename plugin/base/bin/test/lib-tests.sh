@@ -23,8 +23,8 @@ pass=0; fail=0
 ok(){   echo "PASS $1"; pass=$((pass+1)); }
 bad(){  echo "FAIL $1"; fail=$((fail+1)); }
 eq(){   if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
-has(){  if printf '%s\n' "$3" | grep -q -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
-hasnt(){ if printf '%s\n' "$3" | grep -q -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
+has(){  if printf '%s\n' "$3" | grep >/dev/null -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
+hasnt(){ if printf '%s\n' "$3" | grep >/dev/null -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
 yes(){  if "${@:2}" >/dev/null 2>&1; then ok "$1"; else bad "$1 (expected exit 0)"; fi; }
 no(){   if "${@:2}" >/dev/null 2>&1; then bad "$1 (expected non-zero exit)"; else ok "$1"; fi; }
 

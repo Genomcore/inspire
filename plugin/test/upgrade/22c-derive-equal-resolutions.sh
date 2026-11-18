@@ -83,7 +83,7 @@ eq "no question stays open once resolved" \
 eq "exactly the misspelled path warns in warnings[]" \
    "$(printf '%s' "$h7_up" | jq -r '[.warnings[]|select(contains("matched nothing"))]|length')" "1"
 check "the warning names the misspelled path, not the consumed one" \
-  "printf '%s' \"\$h7_up\" | jq -r '.warnings[]' | grep 'matched nothing' | grep -q '02_moduelz'"
+  "printf '%s' \"\$h7_up\" | jq -r '.warnings[]' | grep 'matched nothing' | grep >/dev/null '02_moduelz'"
 check "the same warning reached stderr" \
   "grep -q '02_moduelz.*matched nothing' '$h7_up_log'"
 rm -f "$h7_up_log"

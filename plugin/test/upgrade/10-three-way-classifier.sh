@@ -128,13 +128,13 @@ eq "classify left the whole tree byte-identical" "$before" "$after"
 vf="$w/verdicts.tsv"; printf '%s\n' "$out" > "$vf"
 ks="$(keepset_of "$vf" "$p")"
 check "keepset carries the operator's edited validator" \
-   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/no-todos.sh')\""
+   "printf '%s\n' \"\$ks\" | grep -Fx >/dev/null \"\$(sha256_of '$p/.inspire/bin/no-todos.sh')\""
 check "keepset carries the project-authored file" \
-   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.claude/skills/inspire-code/references/go-best-practices.md')\""
+   "printf '%s\n' \"\$ks\" | grep -Fx >/dev/null \"\$(sha256_of '$p/.claude/skills/inspire-code/references/go-best-practices.md')\""
 check "keepset does not carry a shipped file the operator did not touch" \
-   "! printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/.inspire/bin/review.sh')\""
+   "! printf '%s\n' \"\$ks\" | grep -Fx >/dev/null \"\$(sha256_of '$p/.inspire/bin/review.sh')\""
 check "keepset carries the operator's differing file from the pass-2 collision (ask defaults to keep)" \
-   "printf '%s\n' \"\$ks\" | grep -Fxq \"\$(sha256_of '$p/$ask_path')\""
+   "printf '%s\n' \"\$ks\" | grep -Fx >/dev/null \"\$(sha256_of '$p/$ask_path')\""
 check "keepset is deduplicated and hash-shaped" \
    "[ -z \"\$(printf '%s\n' \"\$ks\" | grep -vE '^[0-9a-f]{64}\$')\" ]"
 fixture_cleanup "$w"

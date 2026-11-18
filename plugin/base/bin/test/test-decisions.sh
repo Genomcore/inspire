@@ -12,8 +12,8 @@ pass=0; fail=0
 ok(){ echo "PASS $1"; pass=$((pass+1)); }
 bad(){ echo "FAIL $1"; fail=$((fail+1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1"; diff <(printf '%s\n' "$3") <(printf '%s\n' "$2") | sed 's/^/    /'; fi; }
-has(){ if printf '%s\n' "$3" | grep -qF -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
-hasnt(){ if printf '%s\n' "$3" | grep -qF -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
+has(){ if printf '%s\n' "$3" | grep -F >/dev/null -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
+hasnt(){ if printf '%s\n' "$3" | grep -F >/dev/null -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
 
 if [ ! -x "$DECISIONS" ]; then
   echo "FAIL decisions.sh is not executable at $DECISIONS" >&2

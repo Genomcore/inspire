@@ -82,7 +82,7 @@ check "the agent payload is byte-identical to what ships" \
 agent_lint() {
   local d="$1" f out=""
   while IFS= read -r f; do
-    head -n1 "$f" | grep -q '^---$' || out="$out $(basename "$f"):frontmatter"
+    head -n1 "$f" | grep >/dev/null '^---$' || out="$out $(basename "$f"):frontmatter"
     grep -q '^name:' "$f"          || out="$out $(basename "$f"):name"
   done < <(find "$d" -type f -name '*.md')
   printf '%s' "$out"
@@ -252,7 +252,7 @@ check "SKIPPED FILE UNTOUCHED" \
 check "update: .gitignore block gained .claude/worktrees/" \
   "grep -qxF '.claude/worktrees/' '$dproj/.gitignore'"
 check "update: the entry landed inside the marked block" \
-  "sed -n '/INSPIRE (materialize.sh)/,/end INSPIRE/p' '$dproj/.gitignore' | grep -qxF '.claude/worktrees/'"
+  "sed -n '/INSPIRE (materialize.sh)/,/end INSPIRE/p' '$dproj/.gitignore' | grep -xF >/dev/null '.claude/worktrees/'"
 check "update: the older entry survives"  "grep -qxF '.claude/settings.local.json' '$dproj/.gitignore'"
 check "update: still exactly one INSPIRE block" \
   "[ \"\$(grep -c 'INSPIRE (materialize.sh)' '$dproj/.gitignore')\" = 1 ]"
@@ -306,7 +306,7 @@ crlf_out="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$
 check "CRLF .gitignore: the block is left as it was" \
   "[ '$crlf_before' = \"\$(shasum -a 256 '$crlf/.gitignore' | cut -d' ' -f1)\" ]"
 check "CRLF .gitignore: the entries it could not add are a warning" \
-  "printf '%s' \"\$crlf_out\" | jq -r '.warnings[]' | grep -q 'could not add to the INSPIRE block: .*\.inspire/visor/\.quartz/'"
+  "printf '%s' \"\$crlf_out\" | jq -r '.warnings[]' | grep >/dev/null 'could not add to the INSPIRE block: .*\.inspire/visor/\.quartz/'"
 
 rm -rf "$(dirname "$proj")" "$(dirname "$clean")" "$(dirname "$bf")" "$(dirname "$own")" "$(dirname "$crlf")"
 

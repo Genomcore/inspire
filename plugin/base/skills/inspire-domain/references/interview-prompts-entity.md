@@ -27,6 +27,7 @@ Ask what this entity is, and why it exists as a discrete object in the system. T
 - **Boundary-on-existence probe.** "Why is this its own entity rather than a field on `<adjacent-entity>`? E.g. why is `auth::password` separate from `auth::user`, not a column on it?" Always ask for any new entity — surfacing the boundary justification is the whole point of `## Purpose`.
 - **Single-source-of-truth probe.** "Is this entity *the* canonical record of `<concept>`, or is it a projection / cache / mirror of something owned elsewhere?" Use whenever the entity's relationship to upstream data isn't obvious from the name.
 - **Lifecycle probe.** "Rows in this entity — are they immutable once created, mutable, or lifecycled through states? The Purpose sentence should hint at the answer; the invariants will pin it down." Use when the entity is non-trivially mutable.
+- **Datastore probe.** "`stack.md` declares the datastores `<ids>`, with `<default>` as the default. Do this entity's rows live there, or in `<other>`? The ADR or the `## Data` line that puts them there is the answer's source." Ask only when `00_bootstrap/stack.md` declares two or more `datastores:`, and always when it declares no `default_datastore:`, since the entity is then refused until it names one. Write `datastore:` in the frontmatter only when the answer is not the default ([`format-entity.md`](format-entity.md) § *Datastore*). Never infer it from `population: external` or from how the data sounds: an externally loaded catalog usually sits in the default database.
 
 ## Rationale prompts
 

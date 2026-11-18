@@ -45,7 +45,7 @@ scan() {
 # names_tree_file <root> <file> <span> — succeeds when the span, read from <file>, names a file in the tree.
 names_tree_file() {
   local root="$1" file="$2" span="$3" t skill n
-  printf '%s' "$span" | grep -Eq '^[A-Za-z0-9_./-]+\.[A-Za-z]+$' || return 1
+  printf '%s' "$span" | grep -E >/dev/null '^[A-Za-z0-9_./-]+\.[A-Za-z]+$' || return 1
   t="${span#.claude/skills/}"
   if [ "$t" != "$span" ]; then [ -f "$root/$t" ]; return; fi
   skill="${file#$root/}"; skill="$root/${skill%%/*}"

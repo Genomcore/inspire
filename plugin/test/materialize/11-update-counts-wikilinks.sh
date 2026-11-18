@@ -38,7 +38,7 @@ done < <(grep -rl '\[\[' "$proj/inspire_kb")
 premise "the KB holds no wikilink" "[ \"\$(bash '$PLUGIN_ROOT/scripts/migrate-links.sh' --count --kb '$proj/inspire_kb')\" = 0 ]"
 out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype 2>/dev/null)"
-check "update: no wikilink, no warning" "! (printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q 'wikilink')"
+check "update: no wikilink, no warning" "! (printf '%s' \"\$out\" | jq -r '.warnings[]' | grep >/dev/null 'wikilink')"
 
 rm -rf "$(dirname "$proj")"
 fixture_cleanup "$FIXTURE_WORK"
