@@ -2,7 +2,7 @@
 id: FB2-kb-contradiction-check
 title: "FB2 — a KB that contradicts itself reaches the Factory"
 created: 2026-11-06
-updated: 2026-11-06
+updated: 2026-11-17
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [adr, workspace]
 status: Open
 blocked_by: []
-related_to: [B1-decisions-in-context, B4-one-home-per-value, B1-adr-decision-rationale]
+related_to: [B1-decisions-in-context, B4-one-home-per-value, B1-adr-decision-rationale, 0180-derive-only-refusals]
 ---
 
 ## Origin
@@ -56,6 +56,12 @@ ladder, and no rule says they are not authority.
 - A contradiction blocks the queue until it is fixed at its home.
 - Mechanical where a script can find it; a review where only judgment can.
 - `authority.md` says that tracker tickets and open questions are not authority.
+- **A KB the deriver refuses is a contradiction too.** The same check derives the contract of
+  every unit the plan holds, and reports each refusal with its remedy. A spec that passes
+  `review.sh` but that the Factory refuses contradicts the Factory's rules, and a run finds it
+  only when the unit starts. When a Factory checkout is configured, the attended check (for
+  example `/inspire-config review`) runs the Factory's `derive` over the units. Without one, it
+  says the check was skipped.
 
 ### Open questions
 
@@ -70,6 +76,8 @@ ladder, and no rule says they are not authority.
 - [ ] A KB with a planted contradiction of each kind above is reported, and a KB without one
       passes.
 - [ ] `authority.md` states that tracker tickets and open questions are not authority.
+- [ ] With a Factory checkout configured, the check reports every unit the deriver refuses,
+      with its class and remedy. Without one, it says the derive step was skipped.
 
 ## Notes
 
@@ -79,3 +87,15 @@ ladder, and no rule says they are not authority.
 - `B1-adr-decision-rationale`: binding decision files make ADR comparisons smaller.
 - Factory note: if the check runs in the Factory before planning, the Factory work is filed in the
   Factory's tracker when this ticket ships.
+
+**Amended 2026-11-17 (a governed project's Factory run).**
+
+A governed project's first full INSPIRE Factory run (Factory 0.18.0, 2026-11-16) built 54
+units and refused six at derive, before any agent started. The six refusals blocked seven
+more units: the project's API bundle and six screens. Every refused spec had passed
+`review.sh` and been promoted to `accepted`. The run's plan
+said it was ready and listed no finding: the planner does not derive contracts, so each refusal
+appeared only when its unit started, after the run had already built 54 units. The Factory
+already ships `derive` for one unit, which is how the project checked its fixes. This ticket
+now asks for the attended side of that check. The Factory side, where the planner derives every
+unit and reports the plan as not ready, is Factory work in the Factory's tracker.

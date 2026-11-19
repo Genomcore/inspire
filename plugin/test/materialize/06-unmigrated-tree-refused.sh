@@ -25,7 +25,7 @@ umerr="$("$SCRIPT" --mode init --plugin-root "$PLUGIN_ROOT" --project-root "$um"
   --source-root source --prototype-root prototype 2>&1 >/dev/null)"
 rc_um=$?
 check "unmigrated v0.2: init exits 1"                 "[ '$rc_um' = 1 ]"
-check "unmigrated v0.2: points at /inspire:update"    "printf '%s' \"\$umerr\" | grep -q '/inspire:update'"
+check "unmigrated v0.2: points at /inspire:update"    "printf '%s' \"\$umerr\" | grep >/dev/null '/inspire:update'"
 check "unmigrated v0.2: no empty KB seeded beside it" "[ ! -e '$um/inspire_kb' ]"
 check "unmigrated v0.2: nothing written at all"       "[ ! -d '$um/.claude/skills' ] && [ ! -f '$um/.inspire.lock' ]"
 check "unmigrated v0.2: the old KB is untouched"      "[ -f '$um/.inspire_kb/03_features/feat-login.md' ]"

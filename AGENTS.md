@@ -150,7 +150,10 @@ repo is both its source and its own marketplace.
       and the screen↔layout join; `spec-identity.sh`, `face-exposure.sh` and
       `process-shape.sh` check ids, the actions a face's bundles expose, and processes;
       `store-coherence.sh` checks a face's store and every screen and shell that reads
-      or writes it ([docs/adr/adr-face-store.md](docs/adr/adr-face-store.md)).
+      or writes it ([docs/adr/adr-face-store.md](docs/adr/adr-face-store.md));
+      `entity-datastore.sh` checks each entity's `datastore:` against `stack.md`'s
+      `datastores:` and `default_datastore:`
+      ([docs/adr/adr-entity-datastore.md](docs/adr/adr-entity-datastore.md)).
       `links-resolve.sh` checks that every link in a Markdown file under the KB names
       a file or directory that exists, and reports each wikilink with
       `/inspire:migrate`; every validator reads links through `sdd_links` in `_lib.sh`,

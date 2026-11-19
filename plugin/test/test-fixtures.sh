@@ -57,7 +57,7 @@ check "fixture_cache_build drops the staged src/"    "[ ! -d '$cache/v0.6.0/src'
 
 fp1="$(fixture_cache_fingerprint "$cache")"
 eq "the cache fingerprint is stable across two calls" "$(fixture_cache_fingerprint "$cache")" "$fp1"
-check "the cache fingerprint is a sha256" "printf '%s' '$fp1' | grep -Eq '^[0-9a-f]{64}$'"
+check "the cache fingerprint is a sha256" "printf '%s' '$fp1' | grep -E >/dev/null '^[0-9a-f]{64}$'"
 
 # A one-byte mutation must move it — that comparison is the whole point of the
 # check the runner makes after building and again before exit.

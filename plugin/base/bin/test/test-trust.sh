@@ -23,8 +23,8 @@ bad(){ echo "FAIL $1"; fail=$((fail+1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
 ne(){ if [ "$2" != "$3" ]; then ok "$1"; else bad "$1 (both are '$2')"; fi; }
 yes(){ if [ -n "$2" ]; then ok "$1"; else bad "$1 (empty)"; fi; }
-has(){ if printf '%s\n' "$3" | grep -q -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
-hasnt(){ if printf '%s\n' "$3" | grep -q -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
+has(){ if printf '%s\n' "$3" | grep >/dev/null -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
+hasnt(){ if printf '%s\n' "$3" | grep >/dev/null -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
 sha256sum_of(){ if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1"; else shasum -a 256 "$1"; fi | awk '{print $1}'; }
 filesame(){ if diff -u "$2" "$3" >/dev/null 2>&1; then ok "$1"; else bad "$1 (differs)"; fi; }
 

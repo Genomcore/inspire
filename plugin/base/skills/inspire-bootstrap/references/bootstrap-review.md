@@ -22,6 +22,11 @@
   it (no frontend stack on a backend-only product; a data layer iff the shape
   deploys a database; a mobile stack iff mobile is in scope). Flag a `shape:
   undecided` platform as still-open, to revisit.
+- When `stack.md` declares `datastores:`, each one maps to a stack id that
+  `profiles:` lists and that a stack skill with a `## Persistence` section declares,
+  and `default_datastore:`, when set, is one of them. Flag a `## Data` section that
+  names two or more databases with no `datastores:`: the entities cannot say which
+  one they live in. `entity-datastore.sh` reports what this leaves unfixed.
 - `stack.md` declares `source_root` and `prototype_root` (frontmatter). Flag if
   missing. `source_root: .` and `prototype_root: none` are valid (brownfield); a
   relative path must not escape the repo.

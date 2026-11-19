@@ -63,8 +63,8 @@ else
   eq "a failed hop does NOT stamp the new version into the lock" \
      "$(jq -r .inspire_version "$p/.inspire.lock")" "0.2.1"
   check "the failure is explained and re-running is named as the recovery" \
-     "printf '%s' \"\$hf_err\" | grep -q 'did not complete' && \
-      printf '%s' \"\$hf_err\" | grep -q 'run the update again'"
+     "printf '%s' \"\$hf_err\" | grep >/dev/null 'did not complete' && \
+      printf '%s' \"\$hf_err\" | grep >/dev/null 'run the update again'"
   fixture_cleanup "$w"
 fi
 
@@ -82,7 +82,7 @@ eq "the refused plan still wrote nothing" \
    "$planfail_before" \
    "$(find "$p" -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256)"
 check "the plan says why it stopped" \
-   "printf '%s' \"\$pf_err\" | grep -q 'refused an operation'"
+   "printf '%s' \"\$pf_err\" | grep >/dev/null 'refused an operation'"
 fixture_cleanup "$w"
 
 summary

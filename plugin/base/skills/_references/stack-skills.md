@@ -43,7 +43,9 @@ A framework skill names its language in a `language:` frontmatter field
 and **a unit built under a framework skill also gets the language skill it names**.
 A language id may also be declared directly in `stack.md`'s `profiles:` — a library
 bundle with no framework has nothing else to name. A skill with no `layer:` (a
-database, a library) is served to every unit whose stack names its id.
+library) is served to every unit whose stack names its id. A database skill declares
+`layer: backend` and neither `language:` nor `## Bindings`, so it reaches the backend
+units without being a framework (§ *Datastores*).
 
 The axis exists because rendering is a property of the language, not of the
 framework: a React face and a NestJS service on the same TypeScript stack must
@@ -182,6 +184,39 @@ update hashes each file against the manifest of the version it is upgrading *fro
 Bytes that differ from that hash are your edit — if INSPIRE did not also change the
 file in the new release, it is **kept** untouched; if both sides changed it, the
 update **asks**. It never silently replaces an edited stack skill.
+
+## Datastores
+
+A project with one database needs nothing here: its entities follow the backend
+profile's `## Persistence`. A project with more than one names them in `stack.md`'s
+frontmatter, each mapped to the stack id whose skill carries its `## Persistence`,
+and may name one as the default:
+
+```yaml
+profiles: [react, nestjs, postgres, clickhouse]
+datastores:
+  metadata: postgres
+  analytics: clickhouse
+default_datastore: metadata
+```
+
+An entity names its datastore with `datastore:` in its frontmatter, or lives in the
+default when it names none
+([`format-entity.md`](../inspire-domain/references/format-entity.md) § *Datastore*).
+Its table then follows the `## Persistence` of the skill whose `stack:` is the id its
+datastore maps to (`stack: clickhouse`), never the backend profile's. Every id a
+datastore maps to is also in `profiles:`, and has a skill with a `## Persistence`
+section. INSPIRE ships no skill for a second engine, so a project writes its own.
+
+A database skill declares `layer: backend`. Entities and actions are the units that
+read or write a table, and both are backend units, so the skill reaches them and no
+screen, face or frontend process: without `layer:` it would be served to every unit,
+and every run would pay for it once per unit that never queries the database. It
+declares no `language:` and no `## Bindings`: those belong to the backend framework
+skill, and a second backend skill with `## Bindings` refuses every action.
+
+`entity-datastore.sh` checks all of this, and a datastore that cannot be resolved
+refuses the entity's unit (`DR-D3` in [`derived-contract.md`](derived-contract.md)).
 
 ## Authoring rules for stack skills
 

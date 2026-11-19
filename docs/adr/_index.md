@@ -9,6 +9,7 @@ chronology, which the ids do not. Newest first.
 
 | Date | ADR | Status |
 |------|-----|--------|
+| 2026-11-16 | [adr-entity-datastore](adr-entity-datastore.md) | Proposed — 2026-11-16 |
 | 2026-11-13 | [adr-face-store](adr-face-store.md) | Proposed |
 | 2026-11-13 | [adr-visor](adr-visor.md) | Accepted — 2026-11-13 |
 | 2026-11-12 | [adr-markdown-links](adr-markdown-links.md) | Accepted — shipped in 0.17.0 |

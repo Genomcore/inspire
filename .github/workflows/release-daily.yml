@@ -241,16 +241,19 @@ jobs:
 
           # Notas: CHANGELOG.md → "## Release notes" de la PR → autogeneradas.
           : > notes.md
+          # Los awk leen su entrada entera en vez de salir con `exit` al acabar la
+          # sección: con pipefail, cortar el pipe mata al productor con SIGPIPE
+          # (141) en cuanto la entrada pasa del buffer del pipe (64 KB).
           if git cat-file -e "$MERGE_SHA:CHANGELOG.md" 2>/dev/null; then
             git show "$MERGE_SHA:CHANGELOG.md" | awk -v v="$v" '
-              $0 ~ "^## " { if (on) exit; if (index($0, "## " v " ") == 1 || $0 == "## " v) { on = 1; next } }
+              $0 ~ "^## " { if (on) { on = 0; done = 1 } else if (!done && (index($0, "## " v " ") == 1 || $0 == "## " v)) { on = 1; next } }
               on' > notes.md
           fi
           if [ ! -s notes.md ]; then
             [ -n "$PR_NUM" ] || PR_NUM="$(gh api "repos/$GH_REPO/commits/$MERGE_SHA/pulls" -q '.[0].number // empty')"
             if [ -n "$PR_NUM" ]; then
               gh pr view "$PR_NUM" --json body -q .body \
-                | awk '/^## Release notes/ { on = 1; next } on && /^## / { exit } on' \
+                | awk '!done && /^## Release notes/ { on = 1; next } on && /^## / { on = 0; done = 1 } on' \
                 | sed -e 's/<!--.*-->//g' > notes.md
             fi
           fi
