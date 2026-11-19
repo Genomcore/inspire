@@ -482,8 +482,13 @@ derived by INSPIRE Factory's deriver.
   A row the action does not select, the prose of the section and its links are
   never hashed. Rewording the section moves no fingerprint; editing a row moves
   the binding fingerprints of the actions that select it, and only those.
-  INSPIRE Factory hashed the whole section before; its `remap` re-stamps the
-  citations of those fingerprints whose selected rows did not change.
+  A moved fingerprint is not a rebuild: INSPIRE Factory first checks whether the
+  test that cites the claim still proves it, and changes code only when it does
+  not. When an action's `binding/route` moves, the built screens that call the
+  action check their calls to it as well.
+  INSPIRE Factory hashed the whole section before; each run re-stamps, before it
+  plans and with no agent, the citations of those fingerprints whose selected
+  rows did not change.
 - **The roles** are the first argument of every `## Preconditions` entry whose
   head word is `actor`, deduplicated and sorted bytewise.
 - **The input names** feed the route: whether the action takes the entity's
