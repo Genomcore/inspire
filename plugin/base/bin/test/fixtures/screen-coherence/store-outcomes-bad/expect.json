@@ -1,0 +1,25 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "message_substring": "two outcomes leave one dispatch: 'create'",
+      "severity": "error"
+    },
+    {
+      "rule": "screen-coherence",
+      "message_substring": "store write on error: 'set store `studies`'",
+      "severity": "error"
+    },
+    {
+      "rule": "screen-coherence",
+      "message_substring": "navigation Then: 'remember the study' is not",
+      "severity": "error"
+    },
+    {
+      "rule": "screen-coherence",
+      "message_substring": "passes param 'slug', which portal.study-detail does not declare",
+      "severity": "error"
+    }
+  ]
+}

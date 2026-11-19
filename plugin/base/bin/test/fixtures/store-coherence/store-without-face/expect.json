@@ -1,0 +1,10 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "store names face 'lab', which no face declares",
+      "severity": "error"
+    }
+  ]
+}
