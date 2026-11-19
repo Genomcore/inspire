@@ -1,0 +1,10 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "message_substring": "navigation Then: 'set store `currentStudyId` from param `id`;set store `currentStudyId` from param `id`' is not"
+    }
+  ],
+  "finding_count": 1
+}

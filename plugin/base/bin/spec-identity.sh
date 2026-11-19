@@ -7,15 +7,21 @@
 #   RESERVED  — a user-chosen id never starts with `_`: a leading `_` is INSPIRE
 #               structure (`_modules/`, `_faces/` …). Error.
 #   UNIQUE    — two artifacts of one type never share an id within the scope D3
-#               names: the project for modules, ADRs, bundles, faces, processes
-#               and catalog entries; the module for features. Entities, actions
-#               and screens are checked by the rules that own them. Error.
+#               names: the project for modules, ADRs, bundles, faces, stores,
+#               processes and catalog entries; the module for features.
+#               Entities, actions and screens are checked by the rules that own
+#               them. Error.
 #   TYPE      — a frontmatter `type:` (or a `kind:` that names a type) agrees with
 #               the typed extension. Error.
+#   STORE ID  — a store's id, its face's, is the id of no other unit the Factory
+#               plans (an entity, action, screen, bundle, process or catalog entry):
+#               the Factory keys units by id alone and refuses such a plan (PR-14).
+#               Error.
 #   FACES AND BUNDLES, as a set (what the surface roster used to check):
 #               two faces never share a shell; a face's `bundles:` names bundles
-#               that exist; a bundle declares its `package:` (warning — the
-#               Factory cannot plan its mount test without one).
+#               that exist, and its `shell_layout:` a layout that exists; a
+#               bundle declares its `package:` (warning — the Factory cannot plan
+#               its mount test without one).
 #
 # Scope: `$1 ∩ 01_spec` for what is reported; the indexes are spec-wide, because a
 # duplicate is not local.
@@ -52,7 +58,7 @@ INDEX="$(mktemp -t sdd-spec-identity.XXXXXX)"
 trap 'rm -f "$INDEX"' EXIT
 
 # kind <TAB> uniqueness key <TAB> id <TAB> path — one row per typed artifact.
-TYPES="module feature entity action adr adr.rationale bundle face screen process component layout pattern"
+TYPES="module feature entity action adr adr.rationale bundle face store screen process component layout pattern"
 for t in $TYPES; do
   while IFS= read -r f; do
     [ -n "$f" ] || continue
@@ -100,6 +106,18 @@ while IFS="$(printf '\t')" read -r kind key id file; do
   esac
 done < "$INDEX"
 
+while IFS="$(printf '\t')" read -r kind key id file; do
+  [ "$kind" = "store" ] || continue
+  in_scope "$file" || continue
+  while IFS="$(printf '\t')" read -r other_kind other_file; do
+    emit "error" "$file" "store '$id' shares its id with the $other_kind $other_file — the Factory plans units by id and refuses this plan (PR-14); rename the face or the $other_kind"
+  done < <(awk -F'\t' -v id="$id" '
+    $1 ~ /^(entity|action|screen|bundle|process|component|layout|pattern)$/ {
+      other = $3; gsub(/::/, ".", other)
+      if (other == id) print $1 "\t" $4
+    }' "$INDEX")
+done < "$INDEX"
+
 # Faces and bundles, as a set.
 bundles="$(awk -F'\t' '$1 == "bundle" { print $3 }' "$INDEX")"
 SHELLS="$(mktemp -t sdd-spec-shells.XXXXXX)"
@@ -123,6 +141,11 @@ while IFS= read -r face; do
     printf '%s\n' "$bundles" | grep -qxF "$b" || \
       emit "error" "$face" "face uses bundle '$b', which no {bundle}.bundle.md declares"
   done < <(sdd_fm_list "$face" '.bundles')
+  shell_layout="$(sdd_fm_value "$face" '.shell_layout')"
+  if [ -n "$shell_layout" ] && [ "$shell_layout" != "null" ]; then
+    awk -F'\t' -v id="$shell_layout" '$1 == "layout" && $3 == id { f = 1 } END { exit !f }' "$INDEX" || \
+      emit "error" "$face" "face names shell layout '$shell_layout', which no {layout}.layout.md declares"
+  fi
 done < <(sdd_find_faces "$SDD_SPEC_ROOT")
 
 while IFS= read -r bundle; do
