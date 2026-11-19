@@ -74,6 +74,9 @@ jobs:
     permissions:
       contents: write      # tags, ramas y releases
       pull-requests: write # abrir y mergear la PR de release
+      checks: read         # gh pr checks: leer los check runs de la PR
+      statuses: read       # gh pr checks: leer los commit statuses de la PR
+      actions: read        # gh pr checks: leer el workflow de cada check
     outputs:
       # Rama de la release que se acaba de mergear (vacío si no se ha mergeado nada).
       merged_branch: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
@@ -166,8 +169,14 @@ jobs:
           fi
 
           # Checks del último commit.
-          checks="$(gh pr checks "$num" --json name,bucket 2>/dev/null || true)"
-          checks="${checks:-[]}"
+          # gh pr checks sale con código distinto de 0 si hay checks en curso o en
+          # rojo, así que no se mira el código: se exige que devuelva una lista.
+          # Si no puede leerlos (p. ej. por permisos del token), se dice por qué.
+          checks="$(gh pr checks "$num" --json name,bucket 2>checks.err || true)"
+          if ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+            echo "::error::No se pueden leer los checks de #$num: $(tr '\n' ' ' < checks.err)"
+            exit 1
+          fi
           pending="$(jq '[.[] | select(.bucket == "pending")] | length' <<<"$checks")"
           failed="$(jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' <<<"$checks")"
           has_required="$(jq --arg n "$REQUIRED_CHECK" '[.[] | select(.name == $n and .bucket == "pass")] | length' <<<"$checks")"
