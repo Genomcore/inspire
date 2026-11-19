@@ -67,6 +67,10 @@ warning explicitly.
 | a review `read` file not committed, or a `#Section` with no `## <Section>` heading in it (in no profile, for `{profiles}`) | error | the runner stops before the release |
 | a review check without `focus` | warning | the reviewer judges every rule it was given |
 | a `factory.model`, `review_model`, `subagent_models` or `spec_classifier_model` name that is not the exact name OMP resolves | not detectable here | the reader accepts the shape; the run stops when it creates the first agent (`<model> is not an exact model name: OMP would run <provider>/<id> instead`). Copy a name the operator has already run |
+| a Jest, Vitest or pytest check in phase `tests` without `report` | error | a run whose plan has units with claims does not start ([`derive.md`](derive.md) § `report`) |
+| a `report` that `run` or `run_related` does not write: no reporter flags, or an output file other than `report` once the command's `cd` is applied | error | the check fails on every run: the factory finds no report |
+| a pytest check with `report` and no `pytest-json-report` among the development dependencies | error | pytest refuses `--json-report` and the check fails in every unit |
+| a `report` that `.gitignore` does not cover | warning | the factory keeps it out of its commits, but a local run leaves it in the working tree |
 | `.inspire/emanate.json` still on disk | error | the factory refuses the project until its keys move under `factory` ([`derive.md`](derive.md) § Migrating `emanate.json`) |
 
 ## 3. The image probe (optional)

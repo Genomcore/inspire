@@ -111,6 +111,24 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   it passes with no related test. In the proposal, say that
   `run_related` turns on the release check, which runs the whole suite once more
   before the PR; the operator may drop it from the draft like any other key.
+- **`report`.** On by default ([`format.md`](format.md) § Test reports); no question
+  asks for it. The factory reads each test check's JSON report, and a run whose plan
+  has units with claims does not start when no test check declares one. Every Jest,
+  Vitest or pytest check in phase `tests`, e2e suites included, writes its report to
+  `.inspire-report-<check>.json` in the directory its command `cd`s into: `<check>` is
+  the check's name in lowercase, with `-` for spaces (`Unit tests` →
+  `.inspire-report-unit-tests.json`). `report` names that file from the repository
+  root (`source/.inspire-report-unit-tests.json`). The same flags go in `run` and in
+  `run_related`:
+  - Vitest: `--reporter=default --reporter=json --outputFile.json=<file>`;
+  - Jest: `--json --outputFile=<file>`;
+  - pytest: `--json-report --json-report-file=<file>`. It needs `pytest-json-report`
+    among the development dependencies; when it is missing, propose adding it, and
+    leave the install to the operator.
+
+  `.gitignore` covers `.inspire-report-*.json`. Other runners get no `report`: say
+  that a run whose plan has claims will not start until their suite writes a report
+  the factory reads.
 - **`bash_timeout`.** Proposed, confirm: `600`. Without it OMP kills an agent's command
   after 300 s, before the agent sees its result, unless the agent passed a timeout of its
   own; a migration, a build or a whole e2e file can take longer. A higher value lets a
@@ -193,6 +211,8 @@ are expected.
   related tests; propose moving it before `tests`.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
   as in a new file.
+- A Jest, Vitest or pytest test check without `report` gets one in the proposal, with
+  its reporter flags in `run` and `run_related`, as in a new file (§ `report`).
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
   whose config runs one file at a time over per-file databases gets `--fileParallelism`
   and its `--maxWorkers`, as in a new file (§ Run checks).

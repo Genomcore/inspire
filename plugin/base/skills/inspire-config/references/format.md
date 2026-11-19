@@ -146,9 +146,10 @@ a phase.
 
 | Key | Rule | Factory error |
 |---|---|---|
-| (keys) | only `name`, `run` and `run_related` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related` |
+| (keys) | only `name`, `run`, `run_related` and `report` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related, report` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
 | `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed. It must contain `{files}`, and it must pass when no test relates to those files: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files}` |
+| `report` | optional; the path, from the repository root, of the JSON test report that `run` and `run_related` write on every run (§ Test reports). Inside the repository, not under `.git`, a protected path, `.claude/worktrees` or `.inspire/check-output`, and never the same file as another check's, in any case | `… check <name> report must be a nonempty string` · `… check <name>: report <path> must be a path inside the repository` · `… check <name>: report <path> must not be under <dir>` · `…: checks <a> and <b> both write the report <path>` |
 
 There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
@@ -170,6 +171,35 @@ runner takes file paths:
 
 Without `--passWithNoTests`, a unit that changes only files outside this check's
 package fails it: no test relates to them, and the runner exits non-zero.
+
+#### Test reports
+
+A run check with `report` passes only when its command exits with 0 and its report
+shows that the tests ran. The factory reads two shapes: the Jest-shaped JSON that
+Vitest and Jest write, and pytest-json-report's.
+
+- Vitest: `--reporter=default --reporter=json --outputFile.json=<file>`
+- Jest: `--json --outputFile=<file>`
+- pytest: `--json-report --json-report-file=<file>`, with `pytest-json-report` installed
+
+`<file>` is relative to the command's `cd`; `report` is the same file from the
+repository root. The factory:
+
+- deletes the report before each run, so an old one never passes a check, and keeps
+  it out of every commit;
+- fails the check when the report is missing or unreadable, when a test failed, was
+  skipped, disabled or todo (pytest's `xfailed` counts as skipped), and, on `run`,
+  when no test passed. A run of `run_related` may run none;
+- names each failed test, with its messages, and each skipped one in the repair
+  prompt;
+- counts a `@claim` citation only in a file in which a test passed in a report of the
+  unit's checks, and runs, through `run_related`, the test files that cite the unit's
+  claims even when the unit did not change them.
+
+A run whose plan has units with claims stops before it starts when no check has a
+report: `<n> units of the plan have claims, but no tests check of .inspire/emanate.yml
+declares a report, so the factory cannot tell whether the tests that cite them ran and
+passed: add report to the checks that run the tests`.
 
 ### Review checks
 
@@ -331,10 +361,12 @@ phases:
   - name: tests
     checks:
       - name: Unit tests
-        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
-        run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 {files}'
+        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json'
+        run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json {files}'
+        report: 'source/.inspire-report-unit-tests.json'
       - name: E2E tests
-        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2'
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json'
+        report: 'source/.inspire-report-e2e-tests.json'
   - name: claims
     checks:
       - name: Claim citations
@@ -351,4 +383,5 @@ long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
 an e2e test that starts the whole application relates to most changes, so the
-narrowing saves little there. That one `run_related` turns on the release check.
+narrowing saves little there. That one `run_related` turns on the release check. Both
+test checks write a report, each to its own file: the e2e tests prove claims too.
