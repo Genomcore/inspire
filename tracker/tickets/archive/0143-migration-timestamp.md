@@ -2,15 +2,15 @@
 id: 0143-migration-timestamp
 title: "0143 — the NestJS skill does not say which instant names a migration"
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-18
 reporter: "@irene.gonzalez"
-closed_by: null
-closed_at: null
+closed_by: "@irene.gonzalez"
+closed_at: 2026-11-18
 epic: follow-up
 size: S
 importance: Mid
 skills: [code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [0143-store-side-constraints]
 ---
@@ -46,10 +46,10 @@ have to start the same file in the same millisecond.
 
 ## Acceptance criteria
 
-- [ ] `inspire-code-nestjs` § Persistence says the number in a migration's name is its
+- [x] `inspire-code-nestjs` § Persistence says the number in a migration's name is its
       creation instant in milliseconds (`date +%s%3N`), never one derived from the
       previous migration.
-- [ ] The rule says the number stays the last 13 characters of the class name. TypeORM
+- [x] The rule says the number stays the last 13 characters of the class name. TypeORM
       reads the instant from `migrationClassName.substr(-13)` and refuses a name that does
       not end in one.
 
@@ -66,3 +66,9 @@ have to start the same file in the same millisecond.
 - A migration merged after another with a later number is a separate problem, and the
   number's source does not fix it. TypeORM 0.3 runs it anyway: the check that rejected a
   migration older than the last one applied is commented out in `MigrationExecutor`.
+- The rule cites `npx typeorm migration:create`, which numbers with `Date.now()`, instead
+  of `date +%s%3N`: BSD `date` on macOS has no `%N` and prints the seconds followed by
+  `3N`, so a migration named on a Mac would not end in a 13-digit instant. Found in
+  review.
+- Closed in the PR that ships the rule, so its merge closes the ticket with no second
+  PR. Jira: INSPIRE-27.
