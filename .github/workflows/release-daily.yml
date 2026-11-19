@@ -331,9 +331,27 @@ jobs:
             exit 0
           fi
 
+          stale_syncs="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName \
+            | jq -r --arg t "$target" '
+                .[] | select((.headRefName == "main" or (.headRefName | startswith("sync/"))) and .baseRefName != $t)
+                    | "\(.number) \(.headRefName)"')"
+          while read -r num head; do
+            [ -n "$num" ] || continue
+            if [ "$DRY_RUN" = true ]; then
+              echo "(dry run) se cerraría #$num $head"
+              continue
+            fi
+            flags=()
+            [ "$head" = main ] || flags=(--delete-branch)
+            gh pr close "$num" "${flags[@]}" --comment "Cerrada: su release ya no es la abierta (\`$target\`). El workflow Sync release with main abrirá otra si hace falta." \
+              && echo "- #$num \`$head\`: cerrada" | tee -a "$GITHUB_STEP_SUMMARY" \
+              || echo "::warning::#$num: no se ha podido cerrar."
+          done <<<"$stale_syncs"
+
           candidates="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName,headRefOid \
             | jq -r --arg t "$target" --arg allowed "$ALLOWED_TO_MAIN_RE" --arg rel "$RELEASE_BRANCH_RE" '
                 .[] | select(.headRefName != $t and .baseRefName != $t)
+                    | select(.headRefName != "main" and (.headRefName | startswith("sync/") | not))
                     | select((.baseRefName == "main" and (.headRefName | test($allowed) | not))
                              or (.baseRefName | test($rel)))
                     | "\(.number) \(.baseRefName) \(.headRefName) \(.headRefOid)"')"
