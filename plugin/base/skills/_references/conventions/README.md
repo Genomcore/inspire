@@ -23,7 +23,7 @@ declares the departure.
 Resolved from `inspire_kb/00_bootstrap/stack.md`:
 
 1. **Deterministic** — if `stack.md`'s frontmatter declares
-   `wire_conventions: [<id>, …]`, use that set. `/inspire-bootstrap stack`
+   `wire_conventions: [<id>, …]`, use that set. `/inspire-config stack`
    maintains this line.
 2. **Inference fallback** — otherwise infer from the declared transport (a GraphQL ADR
    or a `## API` section naming GraphQL → `graphql`; an HTTP/REST API → `rest`).
@@ -35,7 +35,7 @@ folded into `profiles/`.
 
 **No convention resolved is not a free pass.** It means the wire behavior is
 unspecified, and the honest move is to say so and offer to run
-`/inspire-bootstrap stack` — not to guess a status code and write a test that pins
+`/inspire-config stack` — not to guess a status code and write a test that pins
 the guess.
 
 ## Two halves, and the line between them
@@ -99,7 +99,7 @@ instead of an interpretation.
 
 | Consumer | Uses it for |
 |---|---|
-| `/inspire-bootstrap stack` | asking the project-policy questions once, recording the answers |
+| `/inspire-config stack` | asking the project-policy questions once, recording the answers |
 | test authoring | deriving the full test list before writing the first failing test |
 | code review | a case the convention requires and no test covers is a finding |
 | `/inspire-feature` | the acceptance-criteria gate: a declared error with no criterion |

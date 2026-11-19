@@ -4,7 +4,7 @@
 `/inspire-screens backfill [{reference}]` brings a vault written before the layouts
 tier and `## Render` up to the current presentation shape in one run: the frames,
 the breakpoints, how every value is drawn, and the component entries those name.
-`/inspire:update` runs it after `/inspire-bootstrap design-system backfill` whenever
+`/inspire:update` runs it after `/inspire-screens design-system backfill` whenever
 the vault has a presentation gap; an operator can run it on its own at any time.
 
 It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a binding,
@@ -17,7 +17,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
 1. **The design system is ready.** `design-system.md` carries `## Supported
    viewports`, `## Icons` and `## Reference`, and `design-system.tokens.json` exists. If
    `.inspire/bin/design-system-coherence.sh` reports any of them missing, run
-   `/inspire-bootstrap design-system backfill` first: every row this flow writes
+   `/inspire-screens design-system backfill` first: every row this flow writes
    cites a token or the reference that file names.
 2. **The reference is resolved** per [`_references/ui-reference.md`](../../_references/ui-reference.md)
    § Which reference. When `/inspire:update` invokes this flow it passes the
@@ -94,7 +94,7 @@ It fills gaps and nothing else. It never touches an id, a `lifecycle:`, a bindin
    - **when anything was generated, the advisory** of
      [`_references/ui-reference.md`](../../_references/ui-reference.md) § Which
      reference: how many values, in which files, decided by nobody, and that
-     `/inspire-bootstrap design-system` confirms them.
+     `/inspire-screens design-system` confirms them.
 4. **No propagation question.** The run made the spec catch up with the reference;
    the prototype has nothing to catch up with. A run that generated values asks
    instead whether to rebuild the prototype from them (`/inspire-prototype`).

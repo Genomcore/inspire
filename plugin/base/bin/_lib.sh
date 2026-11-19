@@ -40,11 +40,22 @@ esac
 # ...and the foundation layer, where the stack declares which profiles are resolved.
 SDD_BOOTSTRAP_ROOT="${SDD_BOOTSTRAP_ROOT:-$_SDD_PARENT/00_bootstrap}"
 
+# The spec config, `.inspire/config.json` beside the KB root: `source_root`,
+# `prototype_root` and `output_language`. sdd_config_value <key> prints the key's value
+# when the file holds it as a string, and nothing otherwise — a missing or broken file
+# reads as "not declared", and the caller falls through to its next source.
+SDD_CONFIG_FILE="${SDD_CONFIG_FILE:-$(dirname "$_SDD_PARENT")/.inspire/config.json}"
+sdd_config_value() {
+  [ -f "$SDD_CONFIG_FILE" ] || return 0
+  jq -r --arg k "$1" '.[$k] | if type == "string" then . else empty end' "$SDD_CONFIG_FILE" 2>/dev/null || true
+}
+
 # Where the product's code lives. Resolution order: the env var, then the project's own
-# declaration (`source_root:` in stack.md's frontmatter — a brownfield install sets it
-# to "." there, and nothing else would ever tell these rules about it), then the
-# greenfield default. Without the stack.md step, every source-reading gate on a
-# brownfield project would look for a `source/` that does not exist, see zero test
+# declaration (`source_root` in the spec config — a brownfield install sets it to "."
+# there, and nothing else would ever tell these rules about it), then the place a
+# project installed before 0.20.0 declared it (`source_root:` in stack.md's frontmatter),
+# then the greenfield default. Without the declaration steps, every source-reading gate
+# on a brownfield project would look for a `source/` that does not exist, see zero test
 # files, and quietly pass — enforced-looking and inert.
 _sdd_stack_source_root() {
   local stack="$_SDD_PARENT/00_bootstrap/stack.md"
@@ -61,9 +72,8 @@ _sdd_stack_source_root() {
     }
   ' "$stack"
 }
-if [ -z "${SDD_SOURCE_ROOT:-}" ]; then
-  SDD_SOURCE_ROOT="$(_sdd_stack_source_root)"
-fi
+[ -n "${SDD_SOURCE_ROOT:-}" ] || SDD_SOURCE_ROOT="$(sdd_config_value source_root)"
+[ -n "${SDD_SOURCE_ROOT:-}" ] || SDD_SOURCE_ROOT="$(_sdd_stack_source_root)"
 SDD_SOURCE_ROOT="${SDD_SOURCE_ROOT:-source}"
 
 # Where the skills live. Part of the runtime rather than the KB, so NOT derived from the

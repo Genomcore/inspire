@@ -1,9 +1,11 @@
 # Output language — the language INSPIRE artifacts are written in
 
 Every INSPIRE skill authors the artifacts it produces in the project's **declared
-output language**, read from `output_language` in
-`inspire_kb/00_bootstrap/project.md`. Default:
-`en` (English). Set it with `/inspire-bootstrap language`.
+output language**, read from `output_language` in the spec config,
+`.inspire/config.json`. Default: `en` (English). Set it with `/inspire-config language`.
+A project installed before INSPIRE 0.20.0 may still declare it in the frontmatter of
+`inspire_kb/00_bootstrap/project.md`; that value is read only when the spec config
+has none.
 
 ## The rule
 
@@ -23,8 +25,9 @@ This holds regardless of two things it is deliberately independent of:
    stable and diffable across regenerations.
 
 Applies to new artifacts and to edits of existing ones. When `output_language`
-changes, existing artifacts are **not** auto-translated — translate only on the
-operator's request.
+changes, existing artifacts are **not** auto-translated: the knowledge base holds two
+languages until they are translated, which is a refactor done only on the operator's
+request.
 
 ## What stays as-is regardless of language
 

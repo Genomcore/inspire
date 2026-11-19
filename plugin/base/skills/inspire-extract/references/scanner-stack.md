@@ -57,5 +57,5 @@ them against `00_bootstrap/stack.md` per [bootstrap-comparison.md](bootstrap-com
 - `consolidations` — incoherence/redundancy findings.
 - `elaboration` — the signals above, as `high`/`medium`/`low` maturity notes.
 
-Do **not** author `stack.md`; that is `/inspire-bootstrap`'s job after the operator
+Do **not** author `stack.md`; that is `/inspire-config stack`'s job after the operator
 approves the verdict.

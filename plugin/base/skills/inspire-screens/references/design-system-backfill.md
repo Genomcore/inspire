@@ -1,7 +1,7 @@
-# Bootstrap — design-system backfill
-> Part of [inspire-bootstrap](../SKILL.md). Read together with [`_references/ui-reference.md`](../../_references/ui-reference.md).
+# Screens — design-system backfill
+> Part of [inspire-screens](../SKILL.md). Read together with [`_references/ui-reference.md`](../../_references/ui-reference.md).
 
-`/inspire-bootstrap design-system backfill [{reference}]` brings a design system
+`/inspire-screens design-system backfill [{reference}]` brings a design system
 written before the token file up to the current shape: `design-system.tokens.json` beside
 it, and the `## Supported viewports`, `## Icons` and `## Reference` sections in it.
 `/inspire:update` runs it before `/inspire-screens backfill` whenever
@@ -57,7 +57,7 @@ reference does not show either.
    shows: what was measured, when, at which widths — or `none — values generated on
    {date}`.
 8. **Stamp and check.** `.inspire/bin/trust.sh stamp inspire_kb/01_spec/_design-system/design-system.md
-   --skill bootstrap`; the token file carries no frontmatter and is not stamped.
+   --skill screens`; the token file carries no frontmatter and is not stamped.
    Re-run `design-system-coherence.sh`: it should report only the counted generated
    tokens.
 9. **Report** the tokens by source (stated, reference, generated), every

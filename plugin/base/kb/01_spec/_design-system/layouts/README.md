@@ -42,7 +42,7 @@ the vocabulary is closed:
 
 `screen-presentation.sh` counts the `generated` and `undecided` rows of every entry
 on each run. Confirming one is a design-system decision, so it runs through
-`/inspire-bootstrap design-system`, which moves the value into a token and turns the
+`/inspire-screens design-system`, which moves the value into a token and turns the
 row's Source into `design-system.tokens.json`.
 
 ## The Breakpoints table

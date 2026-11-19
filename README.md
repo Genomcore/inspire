@@ -110,26 +110,30 @@ or `/inspire:visor` needs it installed.
 /inspire:init
 ```
 
-It asks two questions (product roots; whether to declare the marketplace for
-teammates), then materializes the skills, validators, hooks and KB skeleton,
+It asks two questions (run the configuration wizard afterwards, or keep the shipped
+defaults; whether to declare the marketplace for teammates), then materializes the skills, validators, hooks and KB skeleton,
 marker-merges the `session-start` + `dispatch` hooks into `.claude/settings.json`,
-seeds the design system and its token file from your bootstrap theme, seeds a provisional root
-`CLAUDE.md` and a `.gitignore` block (both left untouched if already present), and
+seeds the design system and its token file from the default theme, seeds a provisional root
+`CLAUDE.md` and a `.gitignore` block (both left untouched if already present), writes
+the default configuration to `.inspire/config.json` (where the code and the prototype
+live, and the language the knowledge base is written in), and
 writes `.inspire.lock` recording which release was materialized. It never touches your git
 history and never clobbers existing content.
 
-**3. Reload, then bootstrap.**
+**3. Reload, then configure — or keep the defaults.**
 
 ```
 /reload-skills
-/inspire-bootstrap init
+/inspire-config init
 ```
 
 `/reload-skills` picks up the newly materialized `inspire-*` skills — no restart
-needed. `/inspire-bootstrap init` then sets the project's output language,
-configures the stack + theme and its shape (frontend / backend / monorepo · one
-face or several · web / mobile · database), refines the seeded `CLAUDE.md` and creates your project's own
-`README.md`, and optionally wires your git remote. Then start filling in
+needed. `/inspire-config init` is the wizard, and it is optional: INSPIRE ships a
+default for everything it asks, so a project specifies its product before anyone
+answers a technical question. It asks the product questions first (the language,
+the project's name and purpose, what you want to build, the look) and the technical
+ones apart (the stack, the product roots, the factory's file), and each technical
+question can keep its default for a technical operator to answer later. Then start filling in
 `inspire_kb/` — your modules, features, screens and specs. The foundation
 (`00_bootstrap`) and starter screen patterns ship with sensible defaults; the
 `inspire-*` skills guide the rest.
@@ -148,11 +152,11 @@ nothing already built.
 **5. Configure the factory.**
 
 ```
-/inspire-config init
+/inspire-config emanate
 ```
 
 INSPIRE specifies; [INSPIRE Factory](https://inspire.openbims.dev/factory.html) writes
-the code. `/inspire-config init` writes `.inspire/emanate.yml`, the factory's only
+the code. `/inspire-config emanate` writes `.inspire/emanate.yml`, the factory's only
 configuration, from your stack, and validates it with the factory's own reader. The
 factory then builds every accepted unit and opens one pull request.
 [QARA](https://github.com/Genomcore/inspire-qara) is an optional layer on top, for

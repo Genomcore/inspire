@@ -84,7 +84,7 @@ what `--skill` takes:
 | `*.face.md`, `*.bundle.md` | face |
 | `*.process.md` | process |
 | `*.screen.md`, `*.pattern.md`, `*.layout.md`, `*.component.md`, `_index.md` | screens |
-| `design-system.md` | bootstrap (its one artifact outside `00_bootstrap`) |
+| `design-system.md` | screens |
 
 Hence: **a skill writing a type it does not own is misbehaviour — route the write to the
 owner.**

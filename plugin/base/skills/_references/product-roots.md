@@ -1,12 +1,11 @@
 # Product roots — where code and the prototype live
 
 Two locations on the **product side** are configurable per project, declared in the
-frontmatter of
-`inspire_kb/00_bootstrap/stack.md`:
+spec config, `.inspire/config.json`:
 
 | Field | Points at | Default | Owner skill |
 |-------|-----------|---------|-------------|
-| `source_root` | the production code INSPIRE realizes | `source` | `inspire-bootstrap` |
+| `source_root` | the production code INSPIRE realizes | `source` | `inspire-config` |
 | `prototype_root` | the horizontal, mock-data prototype | `prototype` | `inspire-prototype` |
 
 A face's or a bundle's `package` (in `{face}.face.md` or `{bundle}.bundle.md`) is a path
@@ -18,12 +17,14 @@ declares a root of its own.
 
 When a skill needs to read, write, run or reference the production code or the
 horizontal prototype, **resolve the configured root** — never assume the literal
-`source/` or `prototype/`. Read the value from `stack.md`; fall back to the default if
-the field is absent.
+`source/` or `prototype/`. Read the value from `.inspire/config.json`. When the file
+or the key is absent, read the frontmatter of `inspire_kb/00_bootstrap/stack.md`,
+where a project installed before INSPIRE 0.20.0 declares it, and fall back to the
+default only when neither has it.
 
 Skill prose uses the **default** names (`source/`, `prototype/`) because most projects
-keep them and they read cleanly — but the operative location is always what `stack.md`
-declares.
+keep them and they read cleanly — but the operative location is always what the spec
+config declares.
 
 ## Special values
 
@@ -37,8 +38,9 @@ declares.
 
 ## Who sets them
 
-`inspire-bootstrap` owns these fields — the `stack` subcommand, as part of the product's
-**Shape**. `materialize.sh` reads them (via `/inspire:init` / `/inspire:update`) when
-materializing the product-side folders: it creates the default `source/` / `prototype/`
-only when the roots point at those relative paths, and skips creation for `.` / `none`.
-Changing a root later is a layout change — surface it like any Shape change.
+`/inspire:init` writes them, with the defaults or with `source_root: .` and
+`prototype_root: none` when the repository root already holds code. `/inspire-config
+stack` changes them afterwards, as part of the product's **Shape**. `materialize.sh`
+creates the product-side folders from them (via `/inspire:init` / `/inspire:update`): a
+relative path gets a folder, and `.` / `none` get none. Changing a root later is a
+layout change — surface it like any Shape change.

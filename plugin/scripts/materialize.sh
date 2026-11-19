@@ -6,8 +6,8 @@
 # Everything mechanical lives here rather than in skill prose: version detection,
 # layout verification, the layout hops, the three-way content merge, chmod,
 # excluding bin/test/, seeding the KB and the design system, seeding CLAUDE.md and
-# .gitignore, creating product roots, the marker-based settings.json merge, and
-# writing .inspire.lock. Skills carry judgment — preconditions, questions,
+# .gitignore, creating product roots, writing .inspire/config.json, the
+# marker-based settings.json merge, and writing .inspire.lock. Skills carry judgment — preconditions, questions,
 # routing, reporting; this script carries the merge rules exactly once so init
 # and update cannot drift apart.
 #
@@ -20,6 +20,7 @@
 #                   --project-root PATH       # repo root
 #                   [--source-root VALUE]     # e.g. source | . | none   (init/update)
 #                   [--prototype-root VALUE]  # e.g. prototype | none    (init/update)
+#                   [--output-language VALUE] # e.g. en | es | Spanish    (init/update)
 #                   [--declare-marketplace]   # add extraKnownMarketplaces + enabledPlugins
 #                   [--take-base RELPATH]...  # update: resolve an `ask` row to OUR version
 #                   [--take-mine RELPATH]...  # update: resolve an `ask` row to THEIRS
@@ -62,6 +63,7 @@ usage() {
 Usage: materialize.sh --mode init|update|plan
                        --plugin-root PATH --project-root PATH
                        [--source-root VALUE] [--prototype-root VALUE]
+                       [--output-language VALUE]
                        [--declare-marketplace]
                        [--take-base RELPATH]... [--take-mine RELPATH]...
                        [--dry-run]
@@ -82,6 +84,8 @@ SOURCE_ROOT=""
 PROTOTYPE_ROOT=""
 SOURCE_ROOT_SET=0
 PROTOTYPE_ROOT_SET=0
+OUTPUT_LANGUAGE=""
+OUTPUT_LANGUAGE_SET=0
 DECLARE_MARKETPLACE=0
 DRY_RUN=0
 # The two ways an `ask` row gets resolved. Repeatable, project-relative paths in
@@ -109,6 +113,15 @@ parse_args() {
       --prototype-root)
         [ "$#" -ge 2 ] || { log "materialize.sh: --prototype-root requires a value"; usage; exit 1; }
         PROTOTYPE_ROOT="$2"; PROTOTYPE_ROOT_SET=1; shift 2 ;;
+      # An ISO 639-1 code or a plain name. The session-start hook injects it into
+      # every session's context, so only letters, digits, space, '-' and '_' pass.
+      --output-language)
+        [ "$#" -ge 2 ] || { log "materialize.sh: --output-language requires a value"; usage; exit 1; }
+        case "$2" in
+          ""|*[!A-Za-z0-9\ _-]*)
+            log "materialize.sh: --output-language '$2' must be a language code or name (letters, digits, space, - and _)"; exit 1 ;;
+        esac
+        OUTPUT_LANGUAGE="$2"; OUTPUT_LANGUAGE_SET=1; shift 2 ;;
       --declare-marketplace)
         DECLARE_MARKETPLACE=1; shift 1 ;;
       # A resolution value is matched against a verdict path and, for --take-base,
@@ -237,6 +250,7 @@ CREATED=()
 WARNINGS=()
 SETTINGS_STATUS="unchanged"
 LOCK_STATUS="unchanged"
+CONFIG_STATUS="unchanged"
 
 # Seed inspire_kb/ from base/kb — strictly additive, in BOTH modes.
 #
@@ -414,7 +428,7 @@ seed_design_system() {
 
 # Seed the project's root CLAUDE.md from the stub template, once. Never
 # clobbers an existing CLAUDE.md — a brownfield adopter brings their own, and
-# from here on the file is the project's: `/inspire-bootstrap init` refines
+# from here on the file is the project's: `/inspire-config init` refines
 # the seeded stub in place, it is not re-seeded on update.
 seed_claude_md() {
   local stub_src="$PLUGIN_ROOT/base/templates/CLAUDE.md"
@@ -605,11 +619,10 @@ warn_shadowed_runtime() {
 
 # Create the product-side roots (source/prototype) at their configured location.
 # ".", "none" and empty create nothing; an existing directory is left alone.
-# Also writes both values into inspire_kb/00_bootstrap/stack.md frontmatter —
-# but only for a root whose flag was actually passed, so an update call that
-# omits a root never clobbers what is already recorded there. Product READMEs
-# are one-time scaffolds, not tracked in the lock (meant to be replaced by real
-# code / diverge immediately, like the design system).
+# Only a root whose flag was passed is created; write_config records the values,
+# in .inspire/config.json. Product READMEs are one-time scaffolds, not tracked in
+# the lock (meant to be replaced by real code / diverge immediately, like the
+# design system).
 create_product_roots() {
   local concept value flag_set dest template
   for concept in source prototype; do
@@ -637,18 +650,91 @@ create_product_roots() {
         ;;
     esac
   done
+}
 
-  [ "$DRY_RUN" = 1 ] && return 0
-  local stack="$PROJECT_ROOT/inspire_kb/00_bootstrap/stack.md"
-  [ -f "$stack" ] || return 0
+# ---------------------------------------------------------------------------
+# .inspire/config.json — the spec config: source_root, prototype_root and
+# output_language. Committed, and the project's from the first write: a value
+# already in it is replaced only by a flag, a key it lacks is added, and a key
+# INSPIRE does not know is kept.
+#
+# Each key resolves in this order: the flag, the value already in the file, the
+# place it lived before 0.20.0 (stack.md's frontmatter for the roots, project.md's
+# for the language), the default. The third step is the whole migration of an
+# older project, and it is why an update never re-asks what stack.md already
+# answers. The KB copies stay where they are, because an update never edits the
+# KB; every reader takes the config's value over them.
+# ---------------------------------------------------------------------------
 
-  local expr=""
-  [ "$SOURCE_ROOT_SET" = 1 ] && expr=".source_root = \"$SOURCE_ROOT\""
-  if [ "$PROTOTYPE_ROOT_SET" = 1 ]; then
-    if [ -n "$expr" ]; then expr="$expr | .prototype_root = \"$PROTOTYPE_ROOT\""; else expr=".prototype_root = \"$PROTOTYPE_ROOT\""; fi
+# _legacy_fm <file> <key> — a frontmatter value, or nothing.
+_legacy_fm() {
+  local v
+  [ -f "$1" ] || return 0
+  v="$(yq --front-matter=extract ".$2 // \"\"" "$1" 2>/dev/null || true)"
+  [ "$v" = "null" ] || printf '%s' "$v"
+}
+
+write_config() {
+  local rel=".inspire/config.json"
+  local cfg="$PROJECT_ROOT/$rel" kb="$PROJECT_ROOT/inspire_kb/00_bootstrap"
+  local cur='{}' next row key flag_set flag legacy_file default legacy value moved=""
+
+  if [ -f "$cfg" ]; then
+    cur="$(jq -c 'if type == "object" then . else error("not an object") end' "$cfg" 2>/dev/null)" || {
+      WARNINGS+=("$rel is not a JSON object, so it was left as it is and no key was added. Until it is repaired every reader uses the defaults (source_root: source, prototype_root: prototype, output_language: en). Run /inspire-config review.")
+      log "  · $rel is not a JSON object — left as-is"
+      return 0
+    }
   fi
-  [ -n "$expr" ] || return 0
-  yq -i --front-matter=process "$expr" "$stack" 2>/dev/null || true
+
+  next="$cur"
+  for row in \
+    "source_root|$SOURCE_ROOT_SET|$SOURCE_ROOT|stack.md|source" \
+    "prototype_root|$PROTOTYPE_ROOT_SET|$PROTOTYPE_ROOT|stack.md|prototype" \
+    "output_language|$OUTPUT_LANGUAGE_SET|$OUTPUT_LANGUAGE|project.md|en"; do
+    IFS='|' read -r key flag_set flag legacy_file default <<<"$row"
+    legacy="$(_legacy_fm "$kb/$legacy_file" "$key")"
+    value="$(printf '%s' "$cur" | jq -r --arg k "$key" '.[$k] | if type == "string" then . else "" end')"
+    if [ "$flag_set" = 1 ] && [ -n "$flag" ]; then
+      value="$flag"
+    elif [ -z "$value" ]; then
+      if [ -n "$legacy" ]; then value="$legacy"; moved="$moved, $key from $legacy_file"; else value="$default"; fi
+    fi
+    next="$(printf '%s' "$next" | jq -c --arg k "$key" --arg v "$value" '.[$k] = $v')"
+    if [ -n "$legacy" ] && [ "$legacy" != "$value" ]; then
+      WARNINGS+=("$key is '$value' in $rel and '$legacy' in inspire_kb/00_bootstrap/$legacy_file. INSPIRE reads $rel: delete the key from $legacy_file, or correct $rel with /inspire-config.")
+    fi
+  done
+
+  if [ -n "$moved" ]; then
+    WARNINGS+=("$rel now holds ${moved#, }. The frontmatter copies are no longer read and this run never edits the KB: delete them from those files; /inspire-config review lists the ones still there.")
+  fi
+  if git -C "$PROJECT_ROOT" check-ignore -q --no-index "$rel" 2>/dev/null; then
+    WARNINGS+=("gitignore excludes $rel — it will not be committed, so teammates and INSPIRE Factory will read the defaults instead of this project's roots and language. Remove the rule ('git check-ignore -v $rel' names it) and commit the file.")
+  fi
+
+  if [ -f "$cfg" ] && [ "$(printf '%s' "$cur" | jq -S .)" = "$(printf '%s' "$next" | jq -S .)" ]; then
+    log "  · $rel already complete — left as-is"
+    return 0
+  fi
+
+  [ -f "$cfg" ] || CREATED+=("$rel")
+  if [ "$DRY_RUN" = 1 ]; then
+    CONFIG_STATUS="planned"
+    log "  · [dry-run] would write $rel"
+    return 0
+  fi
+  mkdir -p "$PROJECT_ROOT/.inspire"
+  local tmp
+  tmp="$(mktemp "${cfg}.XXXXXX" 2>/dev/null || mktemp)"
+  if printf '%s' "$next" | jq . > "$tmp" && mv "$tmp" "$cfg"; then
+    CONFIG_STATUS="written"
+    log "  · wrote $rel"
+  else
+    rm -f "$tmp"
+    log "materialize.sh: could not write $rel"
+    exit 2
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -1120,6 +1206,7 @@ run_materialize() {
   seed_claude_md
   seed_gitignore
   create_product_roots
+  write_config
   warn_shadowed_runtime
   warn_retired_escape_hatches
   warn_uninstalled_escape_hatch_rules
@@ -1160,10 +1247,11 @@ run_materialize() {
     --argjson ask "$ask_json" \
     --argjson existing_kb "$existing_kb_bool" \
     --arg settings "$SETTINGS_STATUS" --arg lock "$LOCK_STATUS" \
+    --arg config "$CONFIG_STATUS" \
     --argjson dry_run "$dry_bool" \
     '{mode:$mode, source_version:$src, version:$tgt, created:$created,
       warnings:$warnings, ask:$ask, existing_kb:$existing_kb,
-      settings:$settings, lock:$lock}
+      settings:$settings, config:$config, lock:$lock}
      + (if $dry_run then {dry_run: true} else {} end)'
 
   rm -f "$verdicts" "$HOP_JOURNAL" "$keepset"

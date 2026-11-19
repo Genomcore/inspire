@@ -391,7 +391,7 @@ and R7 the tokens `00_bootstrap/style-tokens.md` lists. The built-in R6 and R7 l
 are English, so another language checks only the declared tokens, and an empty
 `style-tokens.md` leaves strikethrough as R6's one check. Every check binds to a
 section through its id, so `## ACT1: Propósito` is the action's Purpose in every
-language. When `00_bootstrap/project.md` declares another language, `prose-style.sh`
+language. When `.inspire/config.json` declares another language, `prose-style.sh`
 emits one info note that says so, then runs. The 35-word and 8-sentence signals apply
 unchanged.
 

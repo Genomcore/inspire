@@ -668,7 +668,7 @@ if [ -n "$SKELETON" ] && [ -d "$SKELETON" ]; then
   done
   # Like materialize's seed_design_system: the default tokens arrive only WITH the
   # default design system. Beside a design system the project already has, they
-  # would be values nobody decided; /inspire-bootstrap design-system backfill owns that.
+  # would be values nobody decided; /inspire-screens design-system backfill owns that.
   ds="$SPEC/_design-system"
   if [ ! -f "$ds/design-system.md" ] && [ -f "$ds/theme.md" ]; then
     cp "$ds/theme.md" "$ds/design-system.md"

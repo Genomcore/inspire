@@ -280,6 +280,6 @@ judgment checks above name the check in the rule slot.
 - `/inspire-prototype` — one shell per face.
 - `/inspire-extract` — reads an existing codebase and emits face and bundle
   candidates.
-- `/inspire-bootstrap` — the shape interview delegates each face and bundle here.
+- `/inspire-config stack` — the shape interview delegates each face and bundle here.
 - `/inspire-config` — reads each face's and bundle's `package` and `profiles`.
 - `/inspire-workspace` — the global pre-PR review runs both validators over the KB.

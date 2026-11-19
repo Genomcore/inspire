@@ -97,7 +97,7 @@ phases below never restate a finding a validator already made.
 - **Design-system variance signal.** Report how many per-face variant sections
   `01_spec/_design-system/design-system.md` carries and how much of the file they occupy. Those
   sections are defined by
-  [`/inspire-bootstrap design-system`](../../inspire-bootstrap/SKILL.md), which allows
+  [`/inspire-screens design-system`](../../inspire-screens/references/design-system-edit.md), which allows
   them deliberately and expects them to stay rare; a count that keeps climbing is the
   early shape of a design system splitting in place, which is why it is worth
   counting. It is a **signal, not a finding**, and is treated as every signal is —

@@ -54,6 +54,10 @@ repo is both its source and its own marketplace.
     disk is never replaced, only missing skeleton files are added, because the KB is
     product content INSPIRE never owns), seeding the design system, seeding a
     provisional root `CLAUDE.md` + a `.gitignore` block, creating the product roots,
+    writing the spec config `.inspire/config.json` (`source_root`, `prototype_root`,
+    `output_language`: a value already in it is replaced only by a flag, and a
+    project installed before 0.20.0 gets the file built from its `stack.md` and
+    `project.md` frontmatter, so an update asks nothing and edits no KB file),
     warning when `.gitignore` excludes a payload class root or a shipped file, the marker-based
     `settings.json` merge (which also retires the unmarked pre-0.3 hook entries),
     and writing `.inspire.lock`. The lock is **provenance only** —
@@ -84,7 +88,7 @@ repo is both its source and its own marketplace.
     `/inspire:init`, never auto-loaded here because Claude Code only discovers a
     plugin's `skills/`, `hooks/`, `agents/` and `bin/` at its top level, not inside
     a nested `base/`. Materializes as:
-    - `base/skills/` → `.claude/skills/inspire-*` — the 21 agent skills: the
+    - `base/skills/` → `.claude/skills/inspire-*` — the 20 agent skills: the
       judgment half of the runtime, in three families:
       - **Specification** (8) — capture what the product is and why: `module` ·
         `feature` · `domain` · `process` (work that runs on a trigger, with nobody
@@ -107,12 +111,18 @@ repo is both its source and its own marketplace.
         only `react`, `nestjs` and `angular` declare a `language:`. The contract is
         `_references/stack-skills.md`. The validators resolve an id the same way
         (`sdd_stack_skills` in `_lib.sh`, over `SDD_SKILLS_ROOT`).
-      - **Housekeeping** (7) — set up and keep the workspace coherent: `bootstrap`
-        (greenfield foundation: language, stack, theme + the live design system),
-        `config` (writes and validates `.inspire/emanate.yml`, the one file
-        INSPIRE Factory reads to run a project — image, services, env, setup and
-        phases of checks — derived from `stack.md` and the stack skills and checked
-        with the Factory's own reader; `init` · `review`),
+      - **Housekeeping** (6) — set up and keep the workspace coherent:
+        `config` (the project's configuration, and the successor of the retired
+        `/inspire-bootstrap`: the spec config `.inspire/config.json` — product
+        roots and output language — the project's identity, the default theme,
+        `stack.md`, and `.inspire/emanate.yml`, the one file INSPIRE Factory reads
+        to run a project — image, services, env, setup and phases of checks —
+        derived from `stack.md`, the seed and the stack skills and checked with the
+        Factory's own reader. Its wizard marks every question product or technical,
+        asks the target before the stack, and lets a technical question keep the
+        shipped default; a seed names its image, so a project on one is asked for
+        none; `init` · `language` · `identity` · `theme` · `stack` · `emanate` ·
+        `review`. The live design system is `/inspire-screens design-system`'s),
         `face` (faces and bundles — `add` · `retire` · `review`; the only skill
         that writes `{face}.face.md` and `{bundle}.bundle.md`), `extract` (brownfield onboarding — fan out
         scanners over an existing codebase into KB candidates), `task` (the ticket
@@ -218,7 +228,7 @@ repo is both its source and its own marketplace.
       form); the runtime rules live in `base/skills/_references/face-scope.md`,
       `base/skills/_references/kb-links.md` and `base/kb/01_spec/README.md`.
     - `base/templates/` → the provisional root `CLAUDE.md` (placeholders filled
-      in afterwards by `/inspire-bootstrap init`, never clobbered if one already
+      in afterwards by `/inspire-config init`, never clobbered if one already
       exists) and the `source/` + `prototype/` README stubs.
 - `.claude-plugin/marketplace.json` — makes this repo its own plugin marketplace,
   so `/plugin marketplace add Genomcore/inspire` resolves.
@@ -251,9 +261,13 @@ product you build, not INSPIRE:
   actual product code, realized from the KB. An ADR reaches `implemented` maturity
   when it lands here.
 
-Both roots are configurable at init time (`--source-root`/`--prototype-root`,
-answered once via `/inspire:init`'s questions and read back from `stack.md` by
-`/inspire:update` — never re-asked).
+Both roots are configurable (`--source-root`/`--prototype-root`). `/inspire:init`
+asks for neither: it writes `.` and `none` when the repository root already holds
+code and the defaults otherwise, into `.inspire/config.json`, where
+`/inspire:update` reads them back and `/inspire-config stack` changes them. Its one
+configuration question is whether to run `/inspire-config init`, the wizard, after
+the install; declining leaves every shipped default in place, and the project
+authors specs on them.
 
 ### Template vs deployed layout — why the runtime payload is inert in `plugin/base/`
 

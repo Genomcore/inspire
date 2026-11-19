@@ -9,7 +9,7 @@ Each numbered folder is a part of the graph, operated by matching skills in
 
 | Folder | Holds | Skill |
 |--------|-------|-------|
-| [`00_bootstrap`](00_bootstrap) | The foundation: tech `stack.md`, `project.md` (the output language), the glossary and the project's semantic types — the base context for all skills | `inspire-bootstrap` |
+| [`00_bootstrap`](00_bootstrap) | The foundation: tech `stack.md`, `project.md`, the glossary and the project's semantic types — the base context for all skills | `inspire-config` |
 | [`01_spec`](01_spec) | The **specification**, by concept: global ADRs, the design system, modules (hub, use cases, entities and actions, module ADRs), bundles, faces (screens, face ADRs) and processes. Every file carries a typed extension (`.module.md`, `.feature.md`, `.entity.md`, `.action.md`, `.adr.md`, `.bundle.md`, `.face.md`, `.screen.md`, `.process.md`…) and is found by it | `inspire-adr` · `inspire-module` · `inspire-feature` · `inspire-domain` · `inspire-face` · `inspire-screens` · `inspire-process` |
 | [`06_spikes`](06_spikes) | External vertical-spike **knowledge**: repo links + imported learnings + gap analysis (the horizontal prototype keeps no file here — its insights land in the specification) | `inspire-spike` |
 | [`98_lessons`](98_lessons) | **Meta:** durable, version-stamped one-line **lessons** that teach the `inspire-*` skills how to behave here — relevant locally, distilled upstream by the observer | `inspire-lesson` |

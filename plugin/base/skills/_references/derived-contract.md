@@ -101,7 +101,9 @@ the grouped human report.
   A screen with no identity block is refused, not renamed. `module` is absent
   for the three catalog kinds and for a bundle, and `state` is the catalog
   kinds' alone. `face` is a screen's: the first segment of its id. `package` is
-  a bundle's, relative to `source_root`.
+  a bundle's, relative to `source_root`: the key of `.inspire/config.json`, then the
+  `source_root:` frontmatter of `00_bootstrap/stack.md` that a project installed
+  before INSPIRE 0.20.0 carries, then `source`.
 - **`unit.population`** is an entity's alone — `internal` (the default a missing
   `population:` field means) or `external`, the marker
   [`inspire-domain/references/format-entity.md`](../inspire-domain/references/format-entity.md)
@@ -535,7 +537,7 @@ this table name the same thing.
 | `DR-P1` | a process's `## Trigger` is absent or empty | touch the process |
 | `DR-P2` | a `## Before` or `## After` entry links no action, or links one already linked in that section | touch the process |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
-| `DR-D3` | an entity's datastore cannot be resolved: `stack.md` declares two or more `datastores:` and no `default_datastore:` and the entity names none; its `datastore:` names one `datastores:` does not declare, or `stack.md` declares no `datastores:`; the `default_datastore:` it falls to is not declared; or the stack id its datastore maps to is not in `profiles:`, or no stack skill with that `stack:` has a `## Persistence` section | `/inspire-domain update {id}` for the entity's field; `/inspire-bootstrap` for `stack.md` |
+| `DR-D3` | an entity's datastore cannot be resolved: `stack.md` declares two or more `datastores:` and no `default_datastore:` and the entity names none; its `datastore:` names one `datastores:` does not declare, or `stack.md` declares no `datastores:`; the `default_datastore:` it falls to is not declared; or the stack id its datastore maps to is not in `profiles:`, or no stack skill with that `stack:` has a `## Persistence` section | `/inspire-domain update {id}` for the entity's field; `/inspire-config stack` for `stack.md` |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
 

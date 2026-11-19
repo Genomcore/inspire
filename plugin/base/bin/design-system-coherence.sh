@@ -120,7 +120,7 @@ check_sections() {
   for section in "${REQUIRED_SECTIONS[@]}"; do
     sdd_has_section "$DESIGN_FILE" "$section" && continue
     emit "warning" "$DESIGN_FILE" \
-      "design system carries no '## $section' section — run /inspire-bootstrap design-system backfill"
+      "design system carries no '## $section' section — run /inspire-screens design-system backfill"
   done
 }
 
@@ -136,7 +136,7 @@ check_tokens() {
   IFS=$'\t' read -r generated_n generated_paths < <(jq -r "$GENERATED_TOKENS" "$TOKENS_FILE")
   if [ -n "${generated_n:-}" ]; then
     emit "warning" "$TOKENS_FILE" \
-      "$generated_n token(s) generated and decided by nobody yet: $generated_paths — confirm each through /inspire-bootstrap design-system"
+      "$generated_n token(s) generated and decided by nobody yet: $generated_paths — confirm each through /inspire-screens design-system"
   fi
   return 0
 }
@@ -168,7 +168,7 @@ fi
 if [ ! -f "$TOKENS_FILE" ]; then
   if in_scope "$SCOPE_DIR" "$DESIGN_FILE"; then
     emit "warning" "$DESIGN_FILE" \
-      "no design-system.tokens.json beside the design system — run /inspire-bootstrap design-system backfill"
+      "no design-system.tokens.json beside the design system — run /inspire-screens design-system backfill"
   fi
   sdd_exit_with_counters
   exit $?

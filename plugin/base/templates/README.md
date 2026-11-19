@@ -12,13 +12,13 @@ project the first time `materialize.sh` runs (via `/inspire:init`).
 - `CLAUDE.md` → `/CLAUDE.md` — seeds the project root with a provisional stub
   orienting an agent to the INSPIRE-governed project (the KB layout, the
   `inspire-*` skills, the validators, `.inspire.lock`), with the project's name,
-  purpose and stack left as clearly marked placeholders. `/inspire-bootstrap init`
+  purpose and stack left as clearly marked placeholders. `/inspire-config init`
   refines it in place afterwards. Never clobbered — a brownfield adopter's own
   `CLAUDE.md` is left untouched.
 
 The project's own root `README.md` is **not** here: it is not a static copy but is
-generated interactively by `/inspire-bootstrap init` (asking for title, git remote
-and description). A project materialized from the plugin never carries the template's
+generated interactively by `/inspire-config identity` (asking for title and
+description). A project materialized from the plugin never carries the template's
 own methodology README, so this is the only place it gets one.
 
 `.gitignore` is likewise not a static template here: `materialize.sh` writes its

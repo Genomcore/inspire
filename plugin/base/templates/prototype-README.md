@@ -19,5 +19,5 @@ legible end to end, without real backends or production depth.
 > horizontal prototype here when the project starts.
 >
 > Location is configurable: this is `prototype_root` (default `prototype/`) in
-> [`00_bootstrap/stack.md`](../inspire_kb/00_bootstrap/stack.md). A project with no
+> [`.inspire/config.json`](../.inspire/config.json). A project with no
 > horizontal prototype sets `prototype_root: none`, and this folder is not created.

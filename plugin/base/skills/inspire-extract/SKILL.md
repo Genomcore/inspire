@@ -59,7 +59,7 @@ the **handoff** into the authoring skills.
 
 Does NOT own: writing final KB artifacts (it delegates to `/inspire-module`,
 `/inspire-feature`, `/inspire-screens`, `/inspire-domain`, `/inspire-face`,
-`/inspire-process`, `/inspire-bootstrap`); the
+`/inspire-process`, `/inspire-config`); the
 interview *content* (the authoring skills own that); or **building / running /
 installing** the source (extract never executes the code it reads).
 
@@ -251,7 +251,7 @@ Extract never writes these files — it feeds each authoring skill:
 
 | Layer | Skill | Extract supplies |
 |-------|-------|------------------|
-| Bootstrap | `/inspire-bootstrap stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
+| Bootstrap | `/inspire-config stack` · `theme` | scanner A/D inventory + elaboration verdict; ADR flag for load-bearing changes |
 | Face | `/inspire-face add face` | each `faces_inferred` candidate: proposed id, package, profiles, shell, bundles, evidence — one interview each, confirmed field by field |
 | Bundle | `/inspire-face add bundle` | each `bundles_inferred` candidate: proposed id, package, profiles, the actions it exposes, evidence |
 | Module | `/inspire-module create {module}` | inferred slug, id prefix, one-line description, members |
@@ -315,7 +315,7 @@ Extract never writes these files — it feeds each authoring skill:
 - `/inspire-module` — scaffolds inferred modules and reviews them.
 - `/inspire-feature` · `/inspire-screens` · `/inspire-domain` — the authoring skills
   extract delegates to; they own the interview and the KB writes.
-- `/inspire-bootstrap` — owns `stack.md` and the design system; the stack + styles scanners
+- `/inspire-config` — owns `stack.md` and the theme, and `/inspire-screens design-system` the live design system; the stack + styles scanners
   feed its `stack` / `theme` flows when a migration is recommended.
 - `/inspire-process` — authors the process candidates.
 - `/inspire-face` — owns faces and bundles; records the `faces_inferred` and

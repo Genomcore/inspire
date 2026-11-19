@@ -109,7 +109,7 @@ yes "skill-sha: an empty dir still yields a hash" "$empty_sha"
 
 P="$ROOT/proj"
 mkdir -p "$P/.claude/skills/_references"
-for s in adr module feature domain screens bootstrap; do mkskill "$P/.claude/skills/inspire-$s"; done
+for s in adr module feature domain screens; do mkskill "$P/.claude/skills/inspire-$s"; done
 printf 'surface scoping rules.\n' > "$P/.claude/skills/_references/face-scope.md"
 printf '{"inspire_version":"0.5.0","released":"2026-08-01","template_sha":"deadbee","installed_at":"2026-08-01"}\n' \
   > "$P/.inspire.lock"
@@ -313,7 +313,7 @@ R="$ROOT/rep"
 mkdir -p "$R/.claude/skills/_references"
 # inspire-feature is deliberately NOT installed — deleting a skill is legitimate
 # use, and its artifacts must land in OWNER NOT INSTALLED, never in STALE.
-for s in adr module domain screens bootstrap; do mkskill "$R/.claude/skills/inspire-$s"; done
+for s in adr module domain screens; do mkskill "$R/.claude/skills/inspire-$s"; done
 printf 'surface scoping rules.\n' > "$R/.claude/skills/_references/face-scope.md"
 printf '{"inspire_version":"0.6.0","released":"2026-08-11","template_sha":"cafe123","installed_at":"2026-08-11"}\n' \
   > "$R/.inspire.lock"
@@ -322,13 +322,12 @@ R_ADR="$("$TRUST" skill-sha "$R/.claude/skills/inspire-adr")"
 R_MOD="$("$TRUST" skill-sha "$R/.claude/skills/inspire-module")"
 R_DOM="$("$TRUST" skill-sha "$R/.claude/skills/inspire-domain")"
 R_SCR="$("$TRUST" skill-sha "$R/.claude/skills/inspire-screens")"
-R_BOOT="$("$TRUST" skill-sha "$R/.claude/skills/inspire-bootstrap")"
 R_REFS="$("$TRUST" skill-sha "$R/.claude/skills/_references")"
 
 # Guard on the fixture itself: every owner must hash distinctly, or every
 # "compared against the right owner" assertion below is vacuous.
-eq "fixture: all six skill dirs hash distinctly" \
-  "$(printf '%s\n' "$R_ADR" "$R_MOD" "$R_DOM" "$R_SCR" "$R_BOOT" "$R_REFS" | LC_ALL=C sort -u | grep -c .)" "6"
+eq "fixture: all five skill dirs hash distinctly" \
+  "$(printf '%s\n' "$R_ADR" "$R_MOD" "$R_DOM" "$R_SCR" "$R_REFS" | LC_ALL=C sort -u | grep -c .)" "5"
 
 mkdir -p "$R/inspire_kb/00_bootstrap" "$R/inspire_kb/01_spec/_adr"
 
@@ -357,7 +356,7 @@ art 01_spec/_faces/app/_index.md no  screens "$R_SCR"  "$R_REFS"      # produced
 art 01_spec/_modules/billing/billing.module.md     yes                                 # PRE-PROVENANCE
 art 01_spec/_modules/shop/_features/checkout.feature.md   yes feature 0000000   "$R_REFS"      # OWNER NOT INSTALLED, not STALE
 art 01_spec/_modules/auth/_domain/user/user.entity.md yes module "$R_DOM" "$R_REFS" # MISROUTED (owner is domain)
-art 01_spec/_design-system/design-system.md yes bootstrap "$R_BOOT" "$R_REFS"  # clean — DS is owned by bootstrap
+art 01_spec/_design-system/design-system.md yes screens "$R_SCR" "$R_REFS"  # clean — DS is owned by screens
 art 01_spec/_faces/app/_screens/login.screen.md       no                                  # UNENDORSED + PRE-PROVENANCE
 art 01_spec/_design-system/patterns/list.pattern.md no screens "$R_SCR" "$R_REFS"      # UNENDORSED — patterns/ became endorsable (T12)
 art 01_spec/_design-system/components/button.component.md yes screens "$R_SCR" "$R_REFS" # clean — endorsed AND fresh, the inverse positive
@@ -417,9 +416,9 @@ has "report: STALE keyed by owner and stamped sha" \
 has "report: STALE lists the artifact"             'inspire_kb/01_spec/_adr/stale.adr.md' "$(group_block STALE "$FULL")"
 hasnt "report: an uninstalled owner is not STALE"  'checkout.md' "$(group_block STALE "$FULL")"
 # Real only because every skill dir hashes distinctly: design-system.md is stamped
-# with inspire-bootstrap's hash, so comparing it against inspire-screens (the
+# with inspire-screens's hash, so comparing it against any other owner (the
 # positional owner) would put it in STALE.
-hasnt "report: design-system.md compared against bootstrap, not screens" \
+hasnt "report: design-system.md compared against screens, its owner" \
   'design-system.md' "$(group_block STALE "$FULL")"
 has "report: STALE names the remedy"               'owning skill' "$FULL"
 

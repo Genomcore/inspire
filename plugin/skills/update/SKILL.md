@@ -158,7 +158,7 @@ resolved `ask` path — paths come straight back from the plan's `ask` array
   --mode update \
   --plugin-root "${CLAUDE_PLUGIN_ROOT}" \
   --project-root "$(git rev-parse --show-toplevel)" \
-  --source-root "<from stack.md>" --prototype-root "<from stack.md>" \
+  --source-root "<from the config>" --prototype-root "<from the config>" \
   [--take-base <path>]... [--take-mine <path>]...
 ```
 
@@ -172,9 +172,18 @@ outranks everything, an explicit `--take-base` outranks the verdict and calls th
 defaults to keeping the operator's file — `_apply_resolutions` for a content `ask`, the
 same fallthrough for a retirement one — doing nothing is always the safe choice.
 
-Read `source_root` and `prototype_root` from `inspire_kb/00_bootstrap/stack.md` — update
-never re-asks; those were settled at init and changing them is a Shape change owned by
-`/inspire-bootstrap stack`.
+Read `source_root` and `prototype_root` from `.inspire/config.json`, and from the
+frontmatter of `inspire_kb/00_bootstrap/stack.md` when the project has no config yet (one
+installed before 0.20.0); omit a flag whose value neither file gives. Update never
+re-asks: those were settled at init, and changing them is a Shape change owned by
+`/inspire-config stack`.
+
+The same run keeps `.inspire/config.json` complete, and reports it as `config` in the JSON
+summary. A project without one gets it built from what it already declares — the roots
+from `stack.md`'s frontmatter, `output_language` from `project.md`'s — so nothing is asked.
+A value already in the file is never replaced, and no KB file is edited: the frontmatter
+keys stay, and a warning names them. Relay every such warning, and tell the operator to
+commit the config.
 
 Run with `--dry-run` first if the operator wants to see the exact file list before
 writing — the decision logic is identical in both, only the write is skipped, so the
@@ -246,20 +255,20 @@ of warnings.
    - **The reference** the gaps are measured from, per
      `.claude/skills/_references/ui-reference.md` § Which reference. Options: **the
      prototype** (recommended, offered first, when `prototype_root` in
-     `inspire_kb/00_bootstrap/stack.md` is not `none` and holds a project), **another
+     `.inspire/config.json` is not `none` and holds a project), **another
      reference** (the operator types a URL, a path or a description in "Other"),
      **no reference — generate by common sense**, and **skip for now**.
    - **The narrowest supported width**, only when `design-system.md` carries no
      `## Supported viewports`: laptop (1024px) and up, tablet (768px) and up, phone
      (390px) and up. A product decision, never inferred.
 3. **Run the two backfills in order**, passing the answers: first
-   `/inspire-bootstrap design-system backfill` (the token file and the three
+   `/inspire-screens design-system backfill` (the token file and the three
    sections — every later row cites them), then `/inspire-screens backfill` (the
    layouts, the `**Layout:**` lines, the `## Render` tables, the component entries).
    Each follows its own reference file; this skill writes none of it.
 4. **Relay both reports.** When either generated a value, say so plainly and
    first: how many values, in which files, that nobody has decided them, and that
-   `/inspire-bootstrap design-system` confirms them one by one. A generated value
+   `/inspire-screens design-system` confirms them one by one. A generated value
    is a proposal, and the operator must know which ones they are before they
    commit.
 
@@ -307,7 +316,7 @@ recommended option, not as one of two equal choices. The KB is the operator's
 1. Run `.inspire/bin/heading-keys.sh`. Each rewritten heading carries its section id,
    and keeps its label or takes the English name as one: `## Fields` becomes
    `## ENT4: Fields`.
-2. If `output_language` in `inspire_kb/00_bootstrap/project.md` is not English, translate
+2. If `output_language` in `.inspire/config.json` is not English, translate
    every English label the script wrote, in the files it reported. Change only the text
    after `: `. The id stays verbatim.
 3. Run `.inspire/bin/review.sh inspire_kb` and report anything it finds.
@@ -315,16 +324,27 @@ recommended option, not as one of two equal choices. The KB is the operator's
 The validators still read the English name as its section, so a project that declines
 keeps validating.
 
-## Step 10 — The factory's project file
+## Step 10 — The project's configuration
 
-If `.inspire/emanate.yml` exists, run `/inspire-config review`. It writes nothing. A new
-release can change how the file is derived (a check's flags, a top-level key), and this
-update never edits the file. When the review reports warnings, relay them and offer —
-never run unprompted — `/inspire-config init`, which re-derives the file, shows the diff
+Run `/inspire-config review`. It writes nothing. It checks `.inspire/config.json` and the
+bootstrap layer, and validates `.inspire/emanate.yml` when the project has one. A new
+release can change how that file is derived (a check's flags, a top-level key), and this
+update never edits it. When the review reports warnings about it, relay them and offer —
+never run unprompted — `/inspire-config emanate`, which re-derives the file, shows the diff
 against the current one and writes only on the operator's yes. Without a factory
 checkout (`INSPIRE_FACTORY_ROOT` unset, or a factory older than 0.18.1), the review says
 *validation pending*: relay it and the warnings it could still check, and go on; never
 stop the update to ask for a path.
+
+When the update came from a version before 0.20.0, say once that `/inspire-bootstrap` is
+retired and name where each of its subcommands went: `init`, `language`, `stack` and
+`theme` are the same subcommands of `/inspire-config`; `readme` is
+`/inspire-config identity`; `review` is `/inspire-config review`; `design-system` and
+`design-system backfill` are `/inspire-screens design-system` and
+`/inspire-screens design-system backfill`. An unedited `inspire-bootstrap` skill directory
+is deleted by this update, and an edited file in it is kept and listed in the report. The
+project's own `CLAUDE.md` may still name the old command: it is the operator's file, so
+point it out and change nothing.
 
 ## What this skill is, and what is missing from it
 
@@ -406,5 +426,5 @@ skill waits on it: everything above is what the current release actually does.
 5. **No lesson reconciliation here.** Classification, archiving and skill rebuilding are
    D6, and unbuilt. This skill does not read `98_lessons/`. Do not approximate it — telling
    the operator an edit was kept is truthful; silently merging it is not.
-6. **Do not re-ask the product roots.** Read them from `stack.md`; changing them is a Shape
-   change owned by `/inspire-bootstrap stack`.
+6. **Do not re-ask the product roots.** Read them from `.inspire/config.json`; changing them is a Shape
+   change owned by `/inspire-config stack`.

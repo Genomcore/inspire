@@ -1,9 +1,11 @@
 # Config — deriving the file
 > Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-`stack.md` and the profiles give the file its structure: paths, services, setup,
-commands and claim roots. They never give the image, exact tags, or which commands
-block a unit. Those are proposed and confirmed, every time.
+This is the `emanate` flow. `stack.md`, the spec config and the stack skills give the
+file its structure: paths, services, setup, commands and claim roots. A seed gives the
+image ([`seeds.md`](seeds.md)). Nothing gives exact service tags or which commands
+block a unit: those are proposed and confirmed, every time, and so is the image of a
+project that is not on a seed.
 
 ## Read the sources
 
@@ -16,8 +18,9 @@ carries a different value; the run never sees it.
 | Source | What it gives | Key |
 |---|---|---|
 | `stack.md` frontmatter `profiles` | the framework profiles, plus each one's `language:` profile | all |
-| `stack.md` frontmatter `source_root` (default `source`) | the `cd` prefix of every command and every root; `.` means no prefix | `setup`, `run`, `claims` |
-| `stack.md` frontmatter `prototype_root` | a tree no root may enter | `claims` |
+| `stack.md` frontmatter `seed` | the image, while `profiles` still equal the seed's ([`seeds.md`](seeds.md) § What a seed decides) | `image` |
+| `.inspire/config.json` `source_root` (default `source`) | the `cd` prefix of every command and every root; `.` means no prefix | `setup`, `run`, `claims` |
+| `.inspire/config.json` `prototype_root` | a tree no root may enter | `claims` |
 | `## Shape` | whether the database is local (a service) or external | `services` |
 | `## Language`, `## Backend / runtime`, `## Frontend`, `## Data` | runtimes and their major versions, in prose | `image`, `services.*.image` |
 | `## Test infrastructure` | one service per row; the Component column is its name | `services` |
@@ -30,8 +33,9 @@ carries a different value; the run never sees it.
 Read the profiles from the project's `profiles_root`, never the plugin's: a project
 adds its own. A `profiles:` id with no file (`postgres`, `mongodb`, `sqlite`) is a
 hint about the data layer, not an error. `stack.md` carrying `status: default` is a
-warning only: ask the operator to confirm `profiles`, since the stack may still be
-the seeded one.
+warning only: say that nobody has confirmed the stack and that the file is derived
+from the shipped seed, and go on. A technical operator confirms it with
+`/inspire-config stack`.
 
 ## Inspect the repository
 
@@ -58,7 +62,8 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
 
 ## Build each key
 
-- **`image`.** One runtime: the official Debian tag with the full version, for
+- **`image`.** On a seed: the seed's `name` and `description`, marked *from the
+  seed*, and no question. Otherwise, one runtime: the official Debian tag with the full version, for
   example `node:24.22.1-trixie`. A floating tag is a warning, not an error. Never
   `-slim` or `-alpine`. Several runtimes (Node with uv, Node with Rust, Haskell):
   no official image combines them, so propose a custom image and its Dockerfile,
@@ -145,8 +150,8 @@ sources leave it open.
 
 | # | Question | When | Default |
 |---|---|---|---|
-| Q1 | Which image runs the agents, and from which registry can the run's machine pull it? | always | the full Debian tag; a custom image for several runtimes |
-| Q2 | Confirm the image description. | always, after Q1 | one sentence per toolchain and version |
+| Q1 | Which image runs the agents, and from which registry can the run's machine pull it? | the project is not on a seed | the full Debian tag; a custom image for several runtimes |
+| Q2 | Confirm the image description. | after Q1 | one sentence per toolchain and version |
 | Q3 | Which tag and test credentials does service `<n>` use? | per row with no compose entry | the `stack.md` major, newest full tag |
 | Q4 | The database is external: how do the tests reach it? | `## Shape` says external | none — a service cannot model it |
 | Q5 | Which variables does the application read? | no environment file and no `### Layout` | the `### Layout` names |
@@ -164,7 +169,7 @@ sources leave it open.
 
 | Value | Why |
 |---|---|
-| `image.name` and its registry | no profile names an image, and an unpullable one stops the run |
+| `image.name` and its registry, off a seed | only a seed names an image, and an unpullable one stops the run |
 | exact service tags | the prose gives only the major version |
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
 | whether to review, and against which rules | a review is a cost the operator chooses |

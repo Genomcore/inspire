@@ -1,13 +1,19 @@
-# Bootstrap — stack interview
-> Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here.
+# Config — stack interview
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 ## Subcommand: stack
 
 Define or update `stack.md` — the official application stack, including its
-`## Shape`.
+`## Shape`. Every question in this file is `[technical]` except the target, and
+each one offers "I don't know — keep the default"
+([`../SKILL.md`](../SKILL.md) § Asking).
 
-1. Read the current `stack.md`.
-2. **Establish the shape first — it frames which layers apply.** Ask one simple
+1. Read the current `stack.md` and `.inspire/config.json`.
+2. **Ask the target, then the stack** ([`seeds.md`](seeds.md)): what the product is
+   delivered as, then the seed recommended for it or "other". On a seed, the steps
+   below confirm what the seed declares and ask only what it leaves open. On
+   "other", they are the interview.
+3. **Establish the shape — it frames which layers apply.** Ask one simple
    choice at a time (defaults from `stack.md` in brackets); write it to the
    `## Shape` section:
    1. **Platform** — is the product **[1] frontend-only**, **[2] backend-only** (an
@@ -25,9 +31,10 @@ Define or update `stack.md` — the official application stack, including its
       and this one never does. Which actions a bundle exposes is decided later,
       from the use cases — here only the id, package and profiles are needed
       ([`_references/face-scope.md`](../../_references/face-scope.md)).
-   3. **If there is a frontend** — **[1] web-only**, **[2] mobile-only**, or
-      **[3] web + mobile**? Mobile adds a mobile UI stack (e.g. React Native /
-      Expo); web + mobile means both, ideally sharing types/logic.
+   3. **If there is a frontend** — the target already says web, mobile or both;
+      confirm it instead of asking again. Mobile adds a mobile UI stack, and web +
+      mobile means both, ideally sharing types and logic. Suggest only a stack some
+      stack skill serves, or say that the project writes its own skill for it.
    4. **If there is a backend** — two questions:
       - **Database:** do we **deploy** a database as part of the platform, or
         **connect to an existing external** one? If connecting, record it as
@@ -37,24 +44,39 @@ Define or update `stack.md` — the official application stack, including its
         running it via Docker** — a container like any other local service — and
         fall back to deploying it directly on the host only when Docker isn't
         available. If no, note that dev runs against a shared/remote DB.
-   5. **Product roots** — where production code and the horizontal prototype live.
-      Default `source_root: source`, `prototype_root: prototype` (greenfield). For a
-      **brownfield** install into an existing repo, set `source_root: .` (the repo root
-      *is* the code) and usually `prototype_root: none`. Write both to the `stack.md`
-      frontmatter. See [`_references/product-roots.md`](../../_references/product-roots.md).
-3. Interview / confirm each **applicable** layer, skipping what the shape excludes
+   5. **Product roots** — see § Product roots below.
+4. Interview / confirm each **applicable** layer, skipping what the shape excludes
    (no backend/data questions for a frontend-only product, no frontend questions
    for a backend-only service): language; frontend (UI library, build, styling,
    component layer, icons, charts, routing — plus the mobile stack if mobile is in
    scope); backend runtime + framework; data / messaging / scheduling; function
    execution; the prototype's mock-data engine; and shared tooling.
-4. Present a diff — the `## Shape` section plus the layers — and apply on approval.
-5. **A load-bearing change is an ADR.** Adding a tool is a plain edit here;
+5. Present a diff — the `## Shape` section plus the layers — and apply on approval.
+   Drop `status: default` from the frontmatter once the operator has confirmed or
+   changed the stack: the file is then the project's own.
+6. **A load-bearing change is an ADR.** Adding a tool is a plain edit here;
    replacing a load-bearing choice (a framework, the runtime, the primary DB) — or
    **changing the shape** (adding a backend, adding mobile, switching from a
    deployed database to an external one) — must be recorded as a global ADR in
    `inspire_kb/01_spec/_adr` — surface that and offer to chain
    `/inspire-adr create`.
+
+### Product roots
+
+Where the production code and the horizontal prototype live. The values are
+`source_root` and `prototype_root` in `.inspire/config.json`
+([`spec-config.md`](spec-config.md)), never in `stack.md`.
+
+1. Read both from the config and show them.
+2. Recommend by what is on disk: with code at the repository root, `source_root: .`
+   (the repository root is the code) and `prototype_root: none`; with none, the
+   defaults `source` and `prototype`.
+3. Ask only when the recommendation differs from the config or the operator wants a
+   change. Write the answer to the config, through a shown diff.
+4. Changing a root on a project that has code is a shape change: it is an ADR, and
+   `.inspire/emanate.yml` is re-derived afterwards. This skill moves no code.
+
+See [`_references/product-roots.md`](../../_references/product-roots.md).
 
 ### Datastores
 
@@ -101,10 +123,8 @@ confirming the layers:
    framework skill already covers) needs no skill, unless it serves a datastore
    (§ *Datastores* above). Framework conventions only — org policy
    (branch naming, private registries, CI) stays in the project's `CLAUDE.md`
-   (seeded by `/inspire:init`, refined by the `init` flow's CLAUDE.md step in
-   [`../SKILL.md`](../SKILL.md) § Subcommand: init, whose long form is
-   [`bootstrap-identity.md`](bootstrap-identity.md); that step also creates one if
-   the project somehow lacks it).
+   (seeded by `/inspire:init` and refined by the `identity` flow,
+   [`identity.md`](identity.md), which also creates one if the project lacks it).
 3. **Check every stack language has a language skill.** Stack skills compose along
    two axes: a framework skill declares `language: <id>` and pulls that language skill
    in, and the language skill is where a semantic type's rendering lives
@@ -135,7 +155,7 @@ whoever writes the first test. Resolve it right after the layers:
    defaulted: the convention's default then applies, and saying so is what keeps a later
    test from pinning a different choice as though it were the contract.
 
-Why this belongs at bootstrap and not in the coding stage: the answers are what turn an
+Why this belongs with the stack and not in the coding stage: the answers are what turn an
 acceptance criterion into an executable test. Deferred, every feature re-derives them,
 and two features end up with two contracts for the same error.
 
@@ -165,7 +185,7 @@ per-feature one — resolve it here, right after the layers:
    burn a unit's whole rework budget proving nothing. Offer to author the profile
    section rather than leaving the warning standing.
 
-Why this belongs at bootstrap: an unattended INSPIRE Factory run refuses before
+Why this belongs with the stack: an unattended INSPIRE Factory run refuses before
 it starts when a declared component is not healthy, and it can only do that against a declaration. A
 project that never made one gets a safety property that is vacuous by construction.
 

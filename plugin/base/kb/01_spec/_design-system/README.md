@@ -21,10 +21,10 @@ A face can add tokens of its own in `_faces/{face}/{face}.tokens.json`.
   markdown says what a token means, the JSON says what it is, and every other file
   cites a token by its path in braces. Both are **seeded by `materialize.sh`** from
   the defaults `theme.md` and `theme.tokens.json` beside them, then owned
-  by `/inspire-bootstrap design-system` (screens **read** the tokens, they don't
+  by `/inspire-screens design-system` (screens **read** the tokens, they don't
   edit them). (So neither is shipped in the bare template; they appear after
   `/inspire:init` runs. An upgraded project gets its token file from
-  `/inspire-bootstrap design-system backfill`.)
+  `/inspire-screens design-system backfill`.)
 
 ## Four ownerships
 
@@ -50,5 +50,5 @@ loop reads it exactly as it reads a domain artifact's `lifecycle:`, so a
 `to-extract` entry is a unit it emanates and the screens naming it wait for its
 wave rather than refusing over it.
 
-**Skills:** `inspire-bootstrap design-system` (the design system and its tokens),
+**Skills:** `inspire-screens design-system` (the design system and its tokens),
 `inspire-screens` (components, layouts, patterns).
