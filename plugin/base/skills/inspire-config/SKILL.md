@@ -103,7 +103,10 @@ Read the reference before the step it covers. The table is an index, not the flo
    `run_related` is the exception: it is written by default, with no check of the
    factory's version. A factory that does not know it refuses the file when the run
    starts, before any unit, with `… has unknown key run_related`; the fix is to
-   update the factory, not to drop the key.
+   update the factory, not to drop the key. Its `{tests}` form is not: it needs a
+   factory 0.23.0 or later, and an older one refuses the file with
+   `… run_related must contain {files}`, so the rule proposes it only on 0.23.0 or
+   later, like the parallel e2e flags.
 3. **Never write a secret.** `env` is committed, and every agent reads it in
    plain text. Test credentials only.
 4. **Never invent an image.** An image is pulled at every run; a reference that

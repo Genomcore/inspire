@@ -98,19 +98,35 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
 - **`run_related`.** On by default ([`format.md`](format.md) § Run checks); no
-  question asks for it, and no factory version is checked. Every Jest or
-  Vitest unit suite in phase `tests` gets the same command as `run`, narrowed and
-  with `--passWithNoTests`:
+  question asks for it. Every Jest or Vitest suite in phase `tests` gets the same
+  command as `run`, narrowed and with `--passWithNoTests`. A unit suite is narrowed
+  to the files the unit changed (`{files}`), and no factory version is checked:
   - Jest: `run` plus `--passWithNoTests --findRelatedTests {files}`;
   - Vitest: `vitest run` becomes `vitest related --run`, plus `--passWithNoTests`
     and `{files}` at the end.
 
-  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite whose
-  tests start the whole application gains little, so it gets none unless the
-  operator asks. Other runners get none unless the operator gives the command and
-  it passes with no related test. In the proposal, say that
-  `run_related` turns on the release check, which runs the whole suite once more
-  before the PR; the operator may drop it from the draft like any other key.
+  An e2e suite whose tests start the whole application relates to every change
+  through its entry point, so `{files}` would select it whole. It is narrowed
+  instead to the tests that cite the unit's claims (`{tests}`), on INSPIRE Factory
+  0.23.0 or later, when a root of the claims check holds its tests:
+  - Jest: `run` plus `--passWithNoTests --runTestsByPath {tests}`;
+  - Vitest: `run` stays `vitest run`, plus `--passWithNoTests` and `{tests}` at
+    the end.
+
+  `{tests}` lists every citing test under the claims roots, unit tests included, so
+  the runner may keep none of them for this check's config: `--passWithNoTests`
+  stays. Never `vitest related` or `--findRelatedTests` with `{tests}`: they take
+  source files and would select the tests that import those tests. With an older
+  Factory, an unknown version, or no claims root over its tests, an e2e suite gets
+  no `run_related` unless the operator asks.
+
+  Keep every other flag of `run` (`--config`, `--maxWorkers`, `--fileParallelism`).
+  Other runners get none unless the operator gives the command and it passes with
+  no related test. In the proposal, say that `run_related` turns on the release
+  check, which runs the whole suite once more before the PR, and, for `{tests}`,
+  that a unit's e2e check no longer runs the tests of modules it neither cites nor
+  requires, so a regression across modules surfaces only in the release check. The
+  operator may drop either from the draft like any other key.
 - **`bash_timeout`.** Proposed, confirm: `600`. Without it OMP kills an agent's command
   after 300 s, before the agent sees its result, unless the agent passed a timeout of its
   own; a migration, a build or a whole e2e file can take longer. A higher value lets a
@@ -192,7 +208,9 @@ are expected.
 - A `review` phase after `tests` is a file written before the factory ran only
   related tests; propose moving it before `tests`.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
-  as in a new file.
+  as in a new file. So does a Jest or Vitest e2e suite, with `{tests}`, when
+  § `run_related` allows it; one whose `run_related` names `{files}` gets the
+  change to `{tests}` proposed, with the reason.
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
   whose config runs one file at a time over per-file databases gets `--fileParallelism`
   and its `--maxWorkers`, as in a new file (§ Run checks).

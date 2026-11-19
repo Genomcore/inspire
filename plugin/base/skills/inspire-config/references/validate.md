@@ -55,8 +55,11 @@ warning explicitly.
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
 | no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
 | a Vitest e2e check whose config sets `fileParallelism: false`, with no `--fileParallelism`, while its test code gives each file its own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`), on INSPIRE Factory 0.19.0 or later | warning | its files run one at a time; four at once ran a 279-file suite in 120 s instead of 425 s ([`derive.md`](derive.md) § Run checks). No warning when the database is shared or cannot be found |
-| a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
-| `{files}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
+| a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, or whose citing tests this check's config does not include, fails the check |
+| `{files}` or `{tests}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
+| `{tests}` with `vitest related` or `--findRelatedTests` | error | they take source files: the check would run the tests that import its tests, not the tests themselves |
+| `{tests}` in a check whose tests no claims root holds, or with no claims check | warning | the factory finds no citing test, so every unit runs the whole check |
+| a Jest or Vitest e2e check with `run_related` naming `{files}`, on INSPIRE Factory 0.23.0 or later | warning | its tests start the whole application, so every change relates to every test and the check runs whole ([`derive.md`](derive.md) § `run_related`) |
 | a `run_related` whose runner or flags differ from its `run` beyond the narrowing | warning | the units and the release check would run different suites |
 | a `review` phase after a `tests` phase | warning | a change the review rejects costs a full test run before its repair |
 | `npm run <x>` with no script `<x>`; `npx --no-install <bin>` with `<bin>` not a dependency | warning | the command fails in every unit |

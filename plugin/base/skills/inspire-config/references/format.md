@@ -148,7 +148,7 @@ a phase.
 |---|---|---|
 | (keys) | only `name`, `run` and `run_related` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
-| `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed. It must contain `{files}`, and it must pass when no test relates to those files: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files}` |
+| `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed (`{files}`) or to the tests that cite the unit's claims (`{tests}`, INSPIRE Factory 0.23.0 or later). It must contain `{files}` or `{tests}`, and it must pass when it selects no test: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files} or {tests}` (before 0.23.0: `… must contain {files}`) |
 
 There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
@@ -170,6 +170,21 @@ runner takes file paths:
 
 Without `--passWithNoTests`, a unit that changes only files outside this check's
 package fails it: no test relates to them, and the runner exits non-zero.
+
+`{tests}` becomes the test files under the claims check's roots that cite a claim
+of the unit or of a unit it `requires`, plus the files the unit changed under those
+roots that cite any claim (a changed helper or fixture cites none, so it is not
+one), as absolute paths, each shell-quoted. It is for an e2e suite, whose tests
+start the whole application, so `{files}` would relate every test to every change.
+Write it where the runner takes test files:
+
+- Jest: `npx --no-install jest --passWithNoTests --runTestsByPath {tests}`
+- Vitest: `npx --no-install vitest run --passWithNoTests {tests}`
+
+The factory looks for these tests only under the claims roots: without a claims
+check, or with the suite's tests outside its roots, the check always runs `run`.
+A factory older than 0.23.0 refuses `{tests}` with `… run_related must contain
+{files}` when the run starts: update the factory.
 
 ### Review checks
 
@@ -245,7 +260,7 @@ or `.venv` makes the scan read all of it. Point at the directories that hold tes
   run, after each repair, and again when the unit is rechecked after a merge from
   a base that moved. It runs `run` instead in three cases: the unit changed no
   file, it deleted a file, or the command with its files would pass 100,000
-  characters.
+  characters. With `{tests}` there is a fourth: no test cites the unit's claims.
 - Order the phases: lint and types, then `review`, then tests, then claims. A
   red phase stops the suite, so a change the review rejects is repaired before a
   full test run is spent on it.
@@ -335,6 +350,7 @@ phases:
         run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 {files}'
       - name: E2E tests
         run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2'
+        run_related: 'cd source && npx --no-install vitest run --passWithNoTests --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 {tests}'
   - name: claims
     checks:
       - name: Claim citations
@@ -349,6 +365,10 @@ with `sandbox.memory: 2g` or more, on INSPIRE Factory 0.19.0 or later. On an old
 the check keeps the config's one file at a time. `bash_timeout: 600` lets an agent's
 long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
-profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
-an e2e test that starts the whole application relates to most changes, so the
-narrowing saves little there. That one `run_related` turns on the release check.
+profiles; drop it to run without reviews. The unit tests narrow to the tests
+related to the changed files (`{files}`). The e2e tests start the whole application,
+so every test relates to every change; they narrow instead to the tests that cite
+the unit's claims (`{tests}`), which the factory finds under the claims roots, here
+`source/test`, on INSPIRE Factory 0.23.0 or later. Either `run_related` turns on
+the release check, which also catches what `{tests}` lets through: a regression in
+a module the unit neither cites nor requires.
