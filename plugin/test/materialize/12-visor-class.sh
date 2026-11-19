@@ -39,8 +39,9 @@ check "init: the class root and its shipped files are not" \
   "{ git -C '$ip' check-ignore --no-index .inspire/visor .inspire/visor/visor.yaml .inspire/visor/plugins/inspire/dist/index.js >/dev/null; [ \$? = 1 ]; }"
 check "premise: the graph plugin's source holds files its shipped copy does not" \
   "[ -f '$PLUGIN_ROOT/visor-src/inspire-graph/build.mjs' ] && [ ! -e '$VB/plugins/inspire-graph/build.mjs' ]"
+# A seed's starter ships a lockfile of its own, under .inspire/seeds/.
 check "init: nothing of plugin/visor-src/ reached the project" \
-  "[ -z \"\$(find '$ip' -name build.mjs -o -name '*.inline.ts' -o -name package-lock.json)\" ]"
+  "[ -z \"\$(find '$ip' -path '$ip/.inspire/seeds' -prune -o \\( -name build.mjs -o -name '*.inline.ts' -o -name package-lock.json \\) -print)\" ]"
 rm -rf "$(dirname "$ip")"
 
 # --- update ----------------------------------------------------------------

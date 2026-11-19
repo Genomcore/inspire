@@ -26,6 +26,12 @@ while IFS="$(printf '\t')" read -r id profiles image desc; do
   check "seed $id: its image is neither slim nor alpine" \
     "! printf '%s' '$image' | grep -E >/dev/null 'slim|alpine|latest'"
   check "seed $id: describes its image" "[ \${#desc} -gt 20 ]"
+  # seed.json is what the tools read; the table repeats it for the operator.
+  J="$BASE/seeds/$id/seed.json"
+  check "seed $id: ships its seed.json and a starter" "[ -f '$J' ] && [ -f '$BASE/seeds/$id/files/README.md' ]"
+  eq "seed $id: the table's profiles are seed.json's" "$profiles" "$(jq -r '.profiles | join(",")' "$J")"
+  eq "seed $id: the table's image is seed.json's" "$image" "$(jq -r .image.name "$J")"
+  eq "seed $id: the table's description is seed.json's" "$desc" "\`$(jq -r .image.description "$J")\`"
   for prof in $(printf '%s' "$profiles" | tr ',' ' '); do
     check "seed $id: a shipped skill serves '$prof'" \
       "grep -l >/dev/null '^stack: $prof\$' '$BASE'/skills/*/SKILL.md"

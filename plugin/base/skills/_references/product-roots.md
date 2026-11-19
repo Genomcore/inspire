@@ -19,7 +19,7 @@ When a skill needs to read, write, run or reference the production code or the
 horizontal prototype, **resolve the configured root** — never assume the literal
 `source/` or `prototype/`. Read the value from `.inspire/config.json`. When the file
 or the key is absent, read the frontmatter of `inspire_kb/00_bootstrap/stack.md`,
-where a project installed before INSPIRE 0.20.0 declares it, and fall back to the
+where a project installed before INSPIRE 0.21.0 declares it, and fall back to the
 default only when neither has it.
 
 Skill prose uses the **default** names (`source/`, `prototype/`) because most projects

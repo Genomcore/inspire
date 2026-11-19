@@ -103,7 +103,7 @@ the grouped human report.
   kinds' alone. `face` is a screen's: the first segment of its id. `package` is
   a bundle's, relative to `source_root`: the key of `.inspire/config.json`, then the
   `source_root:` frontmatter of `00_bootstrap/stack.md` that a project installed
-  before INSPIRE 0.20.0 carries, then `source`.
+  before INSPIRE 0.21.0 carries, then `source`.
 - **`unit.population`** is an entity's alone — `internal` (the default a missing
   `population:` field means) or `external`, the marker
   [`inspire-domain/references/format-entity.md`](../inspire-domain/references/format-entity.md)

@@ -53,7 +53,7 @@ sdd_config_value() {
 # Where the product's code lives. Resolution order: the env var, then the project's own
 # declaration (`source_root` in the spec config — a brownfield install sets it to "."
 # there, and nothing else would ever tell these rules about it), then the place a
-# project installed before 0.20.0 declared it (`source_root:` in stack.md's frontmatter),
+# project installed before 0.21.0 declared it (`source_root:` in stack.md's frontmatter),
 # then the greenfield default. Without the declaration steps, every source-reading gate
 # on a brownfield project would look for a `source/` that does not exist, see zero test
 # files, and quietly pass — enforced-looking and inert.

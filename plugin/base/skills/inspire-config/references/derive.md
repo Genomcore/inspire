@@ -178,13 +178,18 @@ sources leave it open.
 
 ## An empty project
 
-Today, with no code under `source_root`, the factory scaffolds the project before
-the first unit and adapts it to this file. When the profiles match one of its
-templates, follow that template's layout: `react-nestjs-npm` keeps one package
-(`source/src`, `source/test`, `source/web/test`); `react-fastapi-uv` uses
-`source/backend/tests`, `source/web/src`, `source/web/test`. Otherwise warn that the
-scaffold will adapt the project to these commands, and that roots not yet on disk
-are expected.
+A project gets its starter before this flow: the seed's, or the minimal application
+of a described stack ([`seeds.md`](seeds.md) § The starter project). With no code
+under `source_root`, say so and offer `/inspire-config stack`, which lays it; derive
+from the starter once it is on disk. The `web` seed's starter is one package:
+`setup` is `(cd source && npm ci)`, the checks are its `lint`, `typecheck`, `build`,
+`test` and `test:e2e` scripts, and the claim roots are `source/src`, `source/test`
+and `source/web/test`.
+
+A factory that still scaffolds an empty project itself does so before the first
+unit and adapts it to this file. Deriving for a project left empty on purpose, warn
+that roots not yet on disk are expected, and that a factory without that step
+refuses or fails the run.
 
 ## Updating an existing file
 

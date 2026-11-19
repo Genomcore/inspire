@@ -56,7 +56,7 @@ repo is both its source and its own marketplace.
     provisional root `CLAUDE.md` + a `.gitignore` block, creating the product roots,
     writing the spec config `.inspire/config.json` (`source_root`, `prototype_root`,
     `output_language`: a value already in it is replaced only by a flag, and a
-    project installed before 0.20.0 gets the file built from its `stack.md` and
+    project installed before 0.21.0 gets the file built from its `stack.md` and
     `project.md` frontmatter, so an update asks nothing and edits no KB file),
     warning when `.gitignore` excludes a payload class root or a shipped file, the marker-based
     `settings.json` merge (which also retires the unmarked pre-0.3 hook entries),
@@ -121,7 +121,8 @@ repo is both its source and its own marketplace.
         Factory's own reader. Its wizard marks every question product or technical,
         asks the target before the stack, and lets a technical question keep the
         shipped default; a seed names its image, so a project on one is asked for
-        none; `init` · `language` · `identity` · `theme` · `stack` · `emanate` ·
+        none, and carries a starter project, which `stack` lays in a repository
+        with no code; `init` · `language` · `identity` · `theme` · `stack` · `emanate` ·
         `review`. The live design system is `/inspire-screens design-system`'s),
         `face` (faces and bundles — `add` · `retire` · `review`; the only skill
         that writes `{face}.face.md` and `{bundle}.bundle.md`), `extract` (brownfield onboarding — fan out
@@ -203,6 +204,15 @@ repo is both its source and its own marketplace.
       and the built site live in `.inspire/visor/.quartz/`, which the INSPIRE
       `.gitignore` block ignores and an update never scans; the block also re-includes
       `.inspire/visor/plugins/*/dist/` against a project's own `dist/` rule.
+    - `base/seeds/` → `.inspire/seeds/` — the **seeds payload class**: one directory
+      per seed, with `seed.json` (its stack ids, its image, the runtime files its
+      starter copies) and `files/`, the starter project. `web` is the one that ships:
+      a single npm package with a NestJS API and a React + Vite web, which installs,
+      lints, type-checks, builds and passes its tests as copied. `base/bin/scaffold.sh`
+      lays a seed under the source root of a repository with no code, refuses one
+      that has any, and replaces no file. Like `agents` and `visor`, the class is an
+      entry of the 0.3 row's `dest_map`, not a layout. A project may edit a seed or
+      add its own, and an update keeps both.
     - `base/kb/` → `inspire_kb/` — the **knowledge-base skeleton**: the navigable
       graph a project fills in. `00_bootstrap` (stack, project, glossary, semantic
       types, style tokens), **`01_spec`** — the specification, one directory per
@@ -267,7 +277,10 @@ code and the defaults otherwise, into `.inspire/config.json`, where
 `/inspire:update` reads them back and `/inspire-config stack` changes them. Its one
 configuration question is whether to run `/inspire-config init`, the wizard, after
 the install; declining leaves every shipped default in place, and the project
-authors specs on them.
+authors specs on them. Declining in a repository with no code also passes
+`--seed web`, so the install lays the default seed's starter project and the first
+INSPIRE Factory run has a tree to build on; the wizard lays it otherwise, once the
+stack is chosen.
 
 ### Template vs deployed layout — why the runtime payload is inert in `plugin/base/`
 
@@ -286,9 +299,9 @@ plugin installed:
 /inspire:init
 ```
 
-It materializes `plugin/base/{skills,agents,bin,hooks,visor,kb,templates}` into the
+It materializes `plugin/base/{skills,agents,bin,hooks,visor,seeds,kb,templates}` into the
 project (`.claude/skills/`, `.claude/agents/`, `.inspire/bin/`,
-`.claude/inspire/hooks/`, `.inspire/visor/`, `inspire_kb/`, plus
+`.claude/inspire/hooks/`, `.inspire/visor/`, `.inspire/seeds/`, `inspire_kb/`, plus
 the seeded `CLAUDE.md`/`.gitignore`/product roots), makes the scripts executable,
 marker-merges the hooks into `.claude/settings.json`, seeds
 `01_spec/_design-system/design-system.md` from `theme.md` beside it (and

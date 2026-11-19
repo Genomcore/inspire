@@ -47,6 +47,9 @@ Skipped whole when the person answers only the product questions. Each one offer
 | T4 | `[technical]` Write the factory's file now? | no, while no code exists; yes otherwise | the `emanate` flow, [`derive.md`](derive.md) |
 | T5 | `[technical]` Which remote does the project push to? | the current `origin`, or none | below |
 
+T1 ends with the starter project: the seed's, laid by `.inspire/bin/scaffold.sh`, or a
+minimal application for a described stack. Only a repository with no code gets one.
+
 T2 is asked only when the recommendation differs from the config, or the operator
 asks to change a root. On a seed, T3 asks only what the seed leaves open.
 

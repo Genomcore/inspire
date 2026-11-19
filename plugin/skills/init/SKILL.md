@@ -55,10 +55,14 @@ One `AskUserQuestion` with these questions:
    project authors specs straight away. Options:
    - **Keep the defaults** (recommended when the person installing is not the one who
      decides the technology): nothing more is asked, and `/inspire-config init` runs
-     the wizard whenever someone wants it.
+     the wizard whenever someone wants it. Without `BROWNFIELD`, Step 3 passes
+     `--seed web`: the install lays the default stack's starter project under the
+     source root, so the first factory run has a tree to build on. With `BROWNFIELD`
+     it never does: a project with code is not scaffolded.
    - **Run the wizard after the install**: Step 4 hands over to `/inspire-config init`,
      which asks the product questions and the technical ones apart, and lets every
-     technical question keep its default.
+     technical question keep its default. Step 3 passes no `--seed`: the wizard lays
+     the starter once the stack is chosen.
 
    Both are complete installs. Declining the wizard is a supported path, never an
    error or a warning.
@@ -74,7 +78,8 @@ Everything mechanical is handled by `materialize.sh` — copying (including the
 `inspire_kb/` skeleton, seeded once here and never again), `chmod`, the `test/`
 exclusion, design-system seeding, a provisional root `CLAUDE.md`, the `.gitignore`
 block, product roots, the spec config `.inspire/config.json` (the roots and
-`output_language: en`), the `settings.json` merge and `.inspire.lock`. This skill does
+`output_language: en`), the default seed's starter project (`--seed`), the
+`settings.json` merge and `.inspire.lock`. This skill does
 not reimplement any of it, and must not perform file operations of its own.
 
 First a dry run, and show the operator what it will do:
@@ -85,7 +90,7 @@ First a dry run, and show the operator what it will do:
   --plugin-root "${CLAUDE_PLUGIN_ROOT}" \
   --project-root "$(git rev-parse --show-toplevel)" \
   --source-root "<from Step 1>" --prototype-root "<from Step 1>" \
-  [--declare-marketplace] \
+  [--seed web] [--declare-marketplace] \
   --dry-run
 ```
 
@@ -137,7 +142,8 @@ When the operator kept the defaults:
 ```
 INSPIRE <version> installed, with the default configuration:
   language <output_language> · code in <source_root> · prototype in <prototype_root> ·
-  the recommended web stack · the default theme.
+  the recommended web stack, with its starter project in <source_root> · the default theme.
+  (Say "no starter project: the repository already has code" on a brownfield install.)
 
   Run:  /reload-skills
   Then: /inspire-module create     to specify the first module

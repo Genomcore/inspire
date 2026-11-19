@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # session-start.sh and prose-style.sh read output_language from .inspire/config.json,
-# then from project.md's frontmatter, where a project installed before 0.20.0 keeps it.
+# then from project.md's frontmatter, where a project installed before 0.21.0 keeps it.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."

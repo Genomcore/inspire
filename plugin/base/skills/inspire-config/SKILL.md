@@ -31,6 +31,10 @@ answer it:
   design-system default.
 - The project's identity: the root `README.md` and the placeholders of the seeded
   `CLAUDE.md`.
+- The starter project: in a repository with no code, the seed's starter laid under
+  the source root by `.inspire/bin/scaffold.sh`, or a minimal application for a stack
+  the operator described ([`references/seeds.md`](references/seeds.md) § The starter
+  project).
 - `.inspire/emanate.yml`, the file **INSPIRE Factory** reads to run the project, its
   `factory` section included: the Factory's own settings (`kb_root`, `spec_root`,
   `model`, `review_model`, `subagent_models`, `concurrency`, `check_concurrency`,
@@ -58,7 +62,7 @@ answer it:
 | `/inspire-config language` | product | set `output_language` in the spec config ([`references/spec-config.md`](references/spec-config.md) § Changing the language) |
 | `/inspire-config identity` | product | the root `README.md` and the `CLAUDE.md` placeholders ([`references/identity.md`](references/identity.md)) |
 | `/inspire-config theme` | product | define or update the design-system default ([`references/theme-interview.md`](references/theme-interview.md)) |
-| `/inspire-config stack` | technical | the target, then a shipped seed or the layer-by-layer interview, and the product roots ([`references/seeds.md`](references/seeds.md), [`references/stack-interview.md`](references/stack-interview.md)) |
+| `/inspire-config stack` | technical | the target, then a shipped seed or the layer-by-layer interview, the product roots, and the starter project in a repository with no code ([`references/seeds.md`](references/seeds.md), [`references/stack-interview.md`](references/stack-interview.md)) |
 | `/inspire-config emanate` | technical | derive, ask, validate, then write `.inspire/emanate.yml` on approval ([`references/derive.md`](references/derive.md)) |
 | `/inspire-config review` | — | read-only: the foundation checklist ([`references/foundation-review.md`](references/foundation-review.md)), then, when `.inspire/emanate.yml` exists, its validation ([`references/validate.md`](references/validate.md)). Writes nothing |
 
@@ -72,7 +76,7 @@ Read the reference before the step it covers. The table is an index, not the flo
 |---|---|
 | [`wizard.md`](references/wizard.md) | The `init` flow: the order of the questions, which are product and which technical, and how a default is kept |
 | [`spec-config.md`](references/spec-config.md) | `.inspire/config.json`: its keys, who reads them, the checks, and changing the language |
-| [`seeds.md`](references/seeds.md) | The targets, and the seed each one gets: profiles, image and layout |
+| [`seeds.md`](references/seeds.md) | The targets, the seed each one gets (profiles, image, starter), and laying the starter project |
 | [`stack-interview.md`](references/stack-interview.md) | The `stack` flow: shape, layers, datastores, stack skills, wire conventions, test infrastructure, worktree recipe, quality gates |
 | [`theme-interview.md`](references/theme-interview.md) | The `theme` flow, including abstracting a theme from a mockup's CSS |
 | [`identity.md`](references/identity.md) | The `identity` flow: `CLAUDE.md` placeholders and the root `README.md` |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # .inspire/config.json: init writes the defaults, an update never replaces a value,
-# and a project installed before 0.20.0 gets its file from stack.md and project.md.
+# and a project installed before 0.21.0 gets its file from stack.md and project.md.
 set -uo pipefail
 HERE="$(cd -P "$(dirname "$0")/.." && pwd -P)"
 PLUGIN_ROOT="$HERE/.."
@@ -50,7 +50,7 @@ eq    "update: a missing key gets its default" "$(key "$p" output_language)" "en
 eq    "update: the answered root is kept"    "$(key "$p" source_root)" "."
 eq    "update: an unknown key is kept"       "$(jq -c .supported_languages "$p/.inspire/config.json")" '["es","ca"]'
 
-# --- update of a project installed before 0.20.0 -------------------------------
+# --- update of a project installed before 0.21.0 -------------------------------
 p="$(project legacy)"
 run init "$p" >/dev/null
 rm "$p/.inspire/config.json"

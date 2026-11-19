@@ -35,6 +35,8 @@ exists ([`validate.md`](validate.md)).
   so, and name `/inspire-config stack`. A `seed:` whose `profiles` no longer equal
   the seed's ([`seeds.md`](seeds.md)) is a project on its own stack: flag the stale
   `seed:` line.
+- The source root holds code, or `source_root` is `.`. An empty source root with a
+  `seed:` in `stack.md` has no starter: name `/inspire-config stack`, which lays it.
 - The project's root `README.md` exists and is the project's own (not the
   template's methodology README, which install removes). Flag if missing and name
   `/inspire-config identity`. Flag a `CLAUDE.md` that still carries a

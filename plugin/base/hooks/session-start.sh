@@ -53,7 +53,7 @@ cat >/dev/null 2>&1 || true
 PROJECT_FILE="$PROJECT_ROOT/inspire_kb/00_bootstrap/project.md"
 
 # Read output_language from the spec config, then from the frontmatter a project
-# installed before 0.20.0 keeps it in; default to English if absent/empty.
+# installed before 0.21.0 keeps it in; default to English if absent/empty.
 CONFIG_FILE="$PROJECT_ROOT/.inspire/config.json"
 LANG_VALUE=""
 if [ -f "$CONFIG_FILE" ] && command -v jq >/dev/null 2>&1; then

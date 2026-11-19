@@ -174,7 +174,7 @@ same fallthrough for a retirement one — doing nothing is always the safe choic
 
 Read `source_root` and `prototype_root` from `.inspire/config.json`, and from the
 frontmatter of `inspire_kb/00_bootstrap/stack.md` when the project has no config yet (one
-installed before 0.20.0); omit a flag whose value neither file gives. Update never
+installed before 0.21.0); omit a flag whose value neither file gives. Update never
 re-asks: those were settled at init, and changing them is a Shape change owned by
 `/inspire-config stack`.
 
@@ -336,7 +336,7 @@ checkout (`INSPIRE_FACTORY_ROOT` unset, or a factory older than 0.18.1), the rev
 *validation pending*: relay it and the warnings it could still check, and go on; never
 stop the update to ask for a path.
 
-When the update came from a version before 0.20.0, say once that `/inspire-bootstrap` is
+When the update came from a version before 0.21.0, say once that `/inspire-bootstrap` is
 retired and name where each of its subcommands went: `init`, `language`, `stack` and
 `theme` are the same subcommands of `/inspire-config`; `readme` is
 `/inspire-config identity`; `review` is `/inspire-config review`; `design-system` and

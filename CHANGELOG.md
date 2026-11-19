@@ -73,10 +73,20 @@ there.
   `node:24.22.1-trixie`) is the `stack.md` INSPIRE ships. On a seed,
   `/inspire-config emanate` takes the image from it and asks no image question; the
   question stays for a project that describes its own stack.
+- **A seed carries a starter project, and INSPIRE lays it.** `.inspire/seeds/web/` is
+  a new payload class: `seed.json` and `files/`, one npm package with a NestJS API
+  (`GET /api/is-alive`), a React + Vite web that calls it, a 404 on each side, unit
+  and e2e tests, and oxlint, oxfmt and tsgo configured with every gate the `nestjs`
+  stack skill declares. `.inspire/bin/scaffold.sh <seed>` copies it under the source
+  root of a repository with no code; it refuses one that has any and replaces no
+  file. `/inspire:init` runs it when the operator keeps the defaults, and
+  `/inspire-config stack` when the operator takes the seed. A project that describes
+  its own stack gets a minimal application scaffolded by the interview. A project
+  therefore reaches its first INSPIRE Factory run with a tree the units build on.
 - **Changing the language warns about the refactor.** `/inspire-config language`
   counts the artifacts already written, and says they stay in the old language and
   that translating them is a refactor, before it writes the key.
-- `materialize.sh --output-language`, and `config` in its JSON summary.
+- `materialize.sh --output-language` and `--seed`, and `config` in its JSON summary.
 
 ### Changed
 

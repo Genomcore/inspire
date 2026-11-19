@@ -36,7 +36,7 @@ value. A key INSPIRE does not list is kept as it stands.
 | `/inspire:init`, `/inspire:update` | all three | create the product roots, and keep the file complete |
 
 Each reader takes the key from this file. When the file or the key is absent it
-reads the place a project installed before INSPIRE 0.20.0 kept the value — the
+reads the place a project installed before INSPIRE 0.21.0 kept the value — the
 frontmatter of `00_bootstrap/stack.md` for the roots, of `00_bootstrap/project.md`
 for the language — and then the default. `/inspire:update` builds the file from
 those two frontmatters the first time, so nothing is asked again. It never edits the

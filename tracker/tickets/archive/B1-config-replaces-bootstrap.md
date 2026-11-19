@@ -301,7 +301,7 @@ image.** Direction stated.
 - *Change:* a new acceptance criterion. Each shipped seed names its image, and with a seed,
   `/inspire-config` asks no image question. The question stays for "describe your own".
 
-## Close note (2026-11-19, ships in 0.20.0)
+## Close note (2026-11-19, ships in 0.21.0)
 
 **The decisions this ticket waited on**, taken by `@joaquim.ballester` on 2026-11-19:
 
@@ -353,6 +353,17 @@ image.** Direction stated.
 - *Targets and seeds.* `inspire-config/references/seeds.md` holds six targets and one
   seed, `web`. `native-mobile`, `binary` and `other` have no seed: the wizard says so
   and a technical operator describes the stack.
+- *The scaffold.* A seed carries a starter project, in the new payload class
+  `.inspire/seeds/<seed>/` (`seed.json` and `files/`). `.inspire/bin/scaffold.sh`
+  lays it under the source root of a repository with no code, refuses one with code,
+  and replaces no file. `/inspire:init` runs it when the operator keeps the defaults,
+  and `/inspire-config stack` when the operator takes the seed. The `web` starter is
+  the Factory's `react-nestjs-npm` template, brought here with the escape-hatch rules
+  the `nestjs` stack skill gates added to its lint configuration; installed from its
+  lockfile it passes its tests, e2e, type check, lint, build and format check, and
+  `profile-gates-installed.sh` reports no gate missing. A described stack gets a
+  minimal application scaffolded by the interview (`GET /api/is-alive`, a home
+  screen that calls it, a 404 on each side, one real integration test).
 - *Several data sources* (the first note): confirmed. Each is a row of `stack.md`'s
   `## Test infrastructure`, and so a service in `emanate.yml`; `datastores:` says which
   entity lives in which.
@@ -360,19 +371,28 @@ image.** Direction stated.
 **Not built, and not tracked by any ticket.** Each needs a decision before it is
 scheduled, so none was filed (tracker rule 2):
 
-- a scaffold under `source_root`, and the Factory's templates moving here as seeds
-  (the Factory still scaffolds an empty project itself);
+- the Factory's second template, `react-fastapi-uv`, as a seed: INSPIRE ships no
+  stack skill for FastAPI, so a seed for it would name a profile nothing serves;
 - a monorepo seed, technology versions as config keys, an OpenAPI starter
   (2026-10-30 note);
 - a seed for a native mobile target, which waits on `FB1-react-native-profile`;
 - the candidate keys of the 2026-10-27 note, which stay with `B3-overridable-types`
   and `B3-ui-text-keys`.
 
-**Factory work.** The product roots moved from `stack.md`'s frontmatter to
+**Factory work.** Two changes there follow this one, each described here and filed
+in the Factory's tracker when this lands.
+
+*The scaffold can leave the run.* A project now gets its starter from INSPIRE, so
+the Factory's own scaffold step has nothing left to do for a project on the `web`
+seed or on a described stack. Its removal should refuse a run whose source root is
+empty and name `/inspire-config stack`, since a project that skipped the starter has
+no other way to get one.
+
+*The roots moved.* The product roots moved from `stack.md`'s frontmatter to
 `.inspire/config.json`. The Factory's deriver resolves a face's and a bundle's
 `package` against `source_root`, so it must read the key from the config first, then
 from the frontmatter, then default to `source`, as `derived-contract.md` now states.
-Until it does, a project installed on 0.20.0 with `source_root: .` is read by the
+Until it does, a project installed on 0.21.0 with `source_root: .` is read by the
 Factory as `source`. `emanate.yml`'s commands and claim roots carry the root
 literally and are not affected.
 

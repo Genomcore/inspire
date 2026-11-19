@@ -109,7 +109,7 @@ the two gates must agree on what a test file *is*, and the glob set already had 
 silent-miss bug in it. Where the product code lives resolves in `_lib.sh` too:
 `$SDD_SOURCE_ROOT` if set, else `source_root` in `.inspire/config.json` (a brownfield
 install sets `.` there), else the `source_root:` frontmatter of `00_bootstrap/stack.md`
-that a project installed before 0.20.0 carries, else `source/` — so a
+that a project installed before 0.21.0 carries, else `source/` — so a
 project whose code is not at `source/` gets these gates pointed at the right tree
 without any per-hook plumbing.
 
@@ -140,6 +140,8 @@ syntax. Rationale and the ceiling-in-repo exception:
 | `adr-split.sh` | **A tool, not a review rule.** Splits a single-file ADR into its decision `adr-{slug}.md` and its rationale `adr-{slug}.rationale.md`, moving every line verbatim; `--list` prints the single-file ADRs and writes nothing. One `split` / `skipped` line per file; exits 1 when it skips one, which is an ADR with no `## Decision` to keep. Absent from `review.sh`'s `DEFAULT_RULES`. | `/inspire-adr migrate`, and `--list` from the `/inspire:update` tail. |
 | `heading-keys.sh` | **A tool, not a review rule.** Rewrites each templated heading of a KB artifact that still names its section in English into the `{ID}: {label}` shape (`## Fields` → `## ENT4: Fields`, `## Fields: Campos` → `## ENT4: Campos`), from `SDD_SECTION_IDS`. Only the headings the templates ship are touched, an H3 only under its own parent, and nothing inside frontmatter, a fence or an HTML comment. `--list` prints `{file}<TAB>{count}` and writes nothing. | `/inspire:update` runs `--list` and recommends the rewrite; it never rewrites unprompted. |
 | `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire-workspace review` and the `/inspire:update` tail. |
+
+| `scaffold.sh` | **A tool, not a review rule.** `scaffold.sh <seed>` copies `.inspire/seeds/<seed>/files/` under the source root of a repository with no code, plus the runtime files the seed's `seed.json` names under `copy`. It refuses when `source_root` is `.` or the source root holds anything but a `README.md`, replaces no file but the `README.md` stub `/inspire:init` seeds there, and installs nothing. `--dry-run` prints what it would create; `--list` names the seeds. Exit 0 scaffolded, 1 refused. | `/inspire-config stack` when the operator takes a seed; `/inspire:init` for the default seed when the operator keeps the defaults. |
 
 ## Output format
 
