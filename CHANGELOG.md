@@ -9,6 +9,24 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.20.0 — 2026-11-19
+
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and nothing in the knowledge base moves. The update re-materializes the
+`inspire-code-nestjs` skill.
+
+### Changed
+
+- **A NestJS migration is numbered by the instant it is created.** The
+  `inspire-code-nestjs` skill's `## Persistence` asked for "one timestamp-named file per
+  change" without saying which instant, and two Factory runs read it differently: the
+  current time, and the previous migration plus one. The second gives two emanations
+  running at once the same number, and TypeORM then orders the equal numbers however
+  its file glob returns them. A migration is now created with
+  `npx typeorm migration:create src/migrations/<Name>`, which names the file
+  `<ms>-<Name>.ts` and the class `<Name><ms>` from `Date.now()`, never from the
+  previous migration.
+
 ## 0.19.0 — 2026-11-17
 
 Upgrade with `/inspire:update` if you like; nothing in the runtime changed. Every
