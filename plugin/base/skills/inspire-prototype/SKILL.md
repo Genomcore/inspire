@@ -13,7 +13,7 @@ build?"* — the code is throwaway; the **clarity is the deliverable**, and that
 clarity lands in the vault.
 
 > **Where the prototype lives is configurable.** `prototype/` is the default; the
-> operative root is `prototype_root` in `00_bootstrap/stack.md`. A project with no
+> operative root is `prototype_root` in `.inspire/config.json`. A project with no
 > horizontal prototype sets `prototype_root: none`. Resolve it rather than assuming
 > `prototype/` — see [`_references/product-roots.md`](../_references/product-roots.md).
 
@@ -21,7 +21,7 @@ clarity lands in the vault.
 > what's needed to *learn*. Rigor (tests, error handling, robustness) is reserved
 > for real implementation in the coding stage. Building
 > the mock, borrow the UI conventions of the codification stage — the
-> **design system** ([`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md))
+> **design system** ([`/inspire-screens design-system`](../inspire-screens/references/design-system-edit.md))
 > and the UI **stack skill** (`inspire-code-react` etc.) — but in sketch mode.
 >
 > **Vertical spikes are a different skill.** Deep, functional, throwaway builds in
@@ -106,7 +106,7 @@ The horizontal prototype keeps **no learnings file of its own** — everything i
 teaches lands in the vault through the owning skill (above). Insight that is
 cross-cutting rather than one feature/screen has a higher-level home: a **decision**
 → an ADR (`/inspire-adr`, module-scoped or cross-cutting by slug); a **system-wide
-design pattern** → the design system (`/inspire-bootstrap design-system`); a **stack
+design pattern** → the design system (`/inspire-screens design-system`); a **stack
 pitfall** → `00_bootstrap`; **future work** → a task (`/inspire-task`); a question the
 horizontal **can't resolve** → a spike (`/inspire-spike`). Nothing accumulates in a
 feature file for the horizontal — a running learnings log would fight R6 of the

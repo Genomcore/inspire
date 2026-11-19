@@ -171,8 +171,8 @@ lock_version() {
 # when it disagrees with the map that disagreement is a reported finding.
 #
 # The owner follows the typed extension, never the directory (adr-kb-structure
-# D4). `design-system.md` is the one artifact inspire-bootstrap owns inside
-# 01_spec, and a face's `_index.md` is the screens skill's navigation.
+# D4). `design-system.md` is the screens skill's, like the catalog beside it, and
+# a face's `_index.md` is that skill's navigation.
 # ─────────────────────────────────────────────────────────────────────────────
 
 owner_for() {
@@ -181,14 +181,13 @@ owner_for() {
     *) printf '\n'; return 0 ;;
   esac
   case "${1##*/}" in
-    design-system.md)                printf 'bootstrap\n' ;;
     *.adr.md|*.adr.rationale.md)     printf 'adr\n' ;;
     *.module.md)                     printf 'module\n' ;;
     *.feature.md)                    printf 'feature\n' ;;
     *.entity.md|*.action.md)         printf 'domain\n' ;;
     *.face.md|*.bundle.md)           printf 'face\n' ;;
     *.process.md)                    printf 'process\n' ;;
-    *.screen.md|*.pattern.md|*.layout.md|*.component.md|_index.md) printf 'screens\n' ;;
+    *.screen.md|*.pattern.md|*.layout.md|*.component.md|_index.md|design-system.md) printf 'screens\n' ;;
     *)                               printf '\n' ;;
   esac
 }

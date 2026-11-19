@@ -1,6 +1,6 @@
 ---
 name: inspire-screens
-description: "Create and validate screens (a screen is the UI spec for one view). A screen declares its own bindings — data sources, dispatches, navigation, states — and names a shared layout and shared components as dependencies. Use when designing or reviewing an application's screens."
+description: "Create and validate screens (a screen is the UI spec for one view), and own the project's live design system (design-system.md and its token file). A screen declares its own bindings — data sources, dispatches, navigation, states — and names a shared layout and shared components as dependencies. Use when designing or reviewing an application's screens, or when viewing, editing or backfilling the live design system and its tokens."
 ---
 
 # /inspire-screens — Screen Specifications
@@ -60,7 +60,8 @@ promotes one into a decision.
 `design-system.md` and its token file `design-system.tokens.json` are **seeded at
 install** from the defaults `theme.md` and `theme.tokens.json` beside them in
 `_design-system/`, and
-owned by [`/inspire-bootstrap design-system`](../inspire-bootstrap/SKILL.md) —
+edited only through this skill's `design-system` flow
+([`references/design-system-edit.md`](references/design-system-edit.md)) —
 screens **read** the tokens, citing each by its path in braces, and never edit
 them. A face can add tokens of its own in `_faces/{face}/{face}.tokens.json`;
 screens read those the same way. What every measurement is taken from — the prototype by default — and how it
@@ -191,6 +192,8 @@ index, not the flow.
 | Render the derived route map | [`references/screen-routes.md`](references/screen-routes.md) | `routes` |
 | Extract a pattern/layout/component | [`references/screen-catalog.md`](references/screen-catalog.md) | `extract {pattern\|layout\|component} {name}` |
 | Backfill the presentation half | [`references/screen-backfill.md`](references/screen-backfill.md) **and** [`_references/ui-reference.md`](../_references/ui-reference.md) | `backfill [{reference}]` |
+| View or edit the live design system | [`references/design-system-edit.md`](references/design-system-edit.md) | `design-system` |
+| Backfill the design system's token file and sections | [`references/design-system-backfill.md`](references/design-system-backfill.md) **and** [`_references/ui-reference.md`](../_references/ui-reference.md) | `design-system backfill [{reference}]` |
 | Propagation after spec edits | [`references/screen-propagation.md`](references/screen-propagation.md) — it owns which edits trigger the ask | a duty, not an invocation |
 
 ## When validating an existing screen

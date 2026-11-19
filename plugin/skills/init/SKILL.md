@@ -1,6 +1,6 @@
 ---
 name: init
-description: "Install the INSPIRE runtime into this repository: materialize the skills, validators, hooks and knowledge-base skeleton, register the hooks, and freeze the runtime version. Run once per project. Use when setting up INSPIRE in a new or existing repo."
+description: "Install the INSPIRE runtime into this repository: materialize the skills, validators, hooks and knowledge-base skeleton, write the default configuration, register the hooks, and freeze the runtime version. Run once per project. Use when setting up INSPIRE in a new or existing repo."
 ---
 
 # /inspire:init — install INSPIRE into this project
@@ -34,7 +34,11 @@ Record, before writing anything:
 
 - `BROWNFIELD` — whether the repo has code already. Heuristic: any of `package.json`,
   `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile` at root, or a `src/`
-  directory. Used only to recommend roots in Step 2.
+  directory. It decides the product roots this install writes, and nothing else:
+  with code already there, `source_root: .` and `prototype_root: none`, since the
+  repository root is the code; without, the defaults `source` and `prototype`. No
+  question asks for them. The dry run of Step 3 shows them, and
+  `/inspire-config stack` changes them afterwards.
 - `EXISTING_KB` — whether `inspire_kb/` is already present. With no `.inspire.lock`
   (precondition 3), that means this is an **adoption**, not a fresh install: a completed
   v0.2 migration, a restored backup, a KB vendored in before init, or a lock deleted by
@@ -45,9 +49,23 @@ Record, before writing anything:
 
 One `AskUserQuestion` with these questions:
 
-1. **Product roots.** Greenfield (`source_root: source`, `prototype_root: prototype`) or
-   brownfield-in-place (`source_root: .`, `prototype_root: none`)? Recommend by
-   `BROWNFIELD`.
+1. **Configure now, or keep the defaults?** INSPIRE installs a default for
+   everything: English as the knowledge base's language, the recommended stack for a
+   web application, a neutral theme, and the product roots of Step 1. With them the
+   project authors specs straight away. Options:
+   - **Keep the defaults** (recommended when the person installing is not the one who
+     decides the technology): nothing more is asked, and `/inspire-config init` runs
+     the wizard whenever someone wants it. Without `BROWNFIELD`, Step 3 passes
+     `--seed web`: the install lays the default stack's starter project under the
+     source root, so the first factory run has a tree to build on. With `BROWNFIELD`
+     it never does: a project with code is not scaffolded.
+   - **Run the wizard after the install**: Step 4 hands over to `/inspire-config init`,
+     which asks the product questions and the technical ones apart, and lets every
+     technical question keep its default. Step 3 passes no `--seed`: the wizard lays
+     the starter once the stack is chosen.
+
+   Both are complete installs. Declining the wizard is a supported path, never an
+   error or a warning.
 2. **Declare the marketplace for teammates?** If yes, Step 3 passes `--declare-marketplace`
    to `materialize.sh`, which writes `extraKnownMarketplaces` + `enabledPlugins` into
    `.claude/settings.json` so a teammate who trusts the repo folder is prompted to install
@@ -59,7 +77,9 @@ One `AskUserQuestion` with these questions:
 Everything mechanical is handled by `materialize.sh` — copying (including the
 `inspire_kb/` skeleton, seeded once here and never again), `chmod`, the `test/`
 exclusion, design-system seeding, a provisional root `CLAUDE.md`, the `.gitignore`
-block, product roots, the `settings.json` merge and `.inspire.lock`. This skill does
+block, product roots, the spec config `.inspire/config.json` (the roots and
+`output_language: en`), the default seed's starter project (`--seed`), the
+`settings.json` merge and `.inspire.lock`. This skill does
 not reimplement any of it, and must not perform file operations of its own.
 
 First a dry run, and show the operator what it will do:
@@ -69,13 +89,15 @@ First a dry run, and show the operator what it will do:
   --mode init \
   --plugin-root "${CLAUDE_PLUGIN_ROOT}" \
   --project-root "$(git rev-parse --show-toplevel)" \
-  --source-root "<answer>" --prototype-root "<answer>" \
-  [--declare-marketplace] \
+  --source-root "<from Step 1>" --prototype-root "<from Step 1>" \
+  [--seed web] [--declare-marketplace] \
   --dry-run
 ```
 
 Summarize the returned JSON for the operator: what will be created, what already exists and
-will be left alone. Two fields need more than a summary line:
+will be left alone. Name the two product roots and why they were chosen (code found at the
+root, or none), so a wrong guess is caught before anything is written. Two fields need more
+than a summary line:
 
 - **`existing_kb: true`** — the run is adopting a KB that is already there. Say so
   explicitly and confirm before proceeding: *"`inspire_kb/` already exists (N files). Init
@@ -103,18 +125,34 @@ Print what was created — and re-print any `warnings` from the final run, above
 rather than buried under it. A warning the operator scrolls past is a warning that did not
 happen. Then:
 
+When the operator chose the wizard:
+
 ```
-INSPIRE <version> installed.
+INSPIRE <version> installed, with the default configuration.
 
   Run:  /reload-skills
-  Then: /inspire-bootstrap init
+  Then: /inspire-config init
 
-  (/reload-skills picks up the newly materialized skills; /inspire-bootstrap init
-  fills in CLAUDE.md's placeholders and starts the KB.)
+  (/reload-skills picks up the newly materialized skills; /inspire-config init
+  asks the product questions, then the technical ones, and each can keep its default.)
 ```
 
-Do not invoke `/reload-skills` or `/inspire-bootstrap init` on the operator's behalf —
-`/reload-skills` is the operator's action, and chaining `/inspire-bootstrap init` across it
+When the operator kept the defaults:
+
+```
+INSPIRE <version> installed, with the default configuration:
+  language <output_language> · code in <source_root> · prototype in <prototype_root> ·
+  the recommended web stack, with its starter project in <source_root> · the default theme.
+  (Say "no starter project: the repository already has code" on a brownfield install.)
+
+  Run:  /reload-skills
+  Then: /inspire-module create     to specify the first module
+
+  /inspire-config init changes any default, whenever someone wants to.
+```
+
+Do not invoke `/reload-skills` or `/inspire-config init` on the operator's behalf —
+`/reload-skills` is the operator's action, and chaining `/inspire-config init` across it
 would run against whatever skill state existed before the reload. Instruct, don't chain.
 
 Remind the operator to **commit** the result — that is what makes the runtime available to
@@ -132,6 +170,6 @@ teammates and CI.
    message, never a thing to work around — and a non-zero exit from the script is a stop
    too, not something to patch up by hand.
 4. **This skill does not author content.** Language, stack, theme and the project README
-   belong to `/inspire-bootstrap init`.
+   belong to `/inspire-config`. Init installs their defaults and asks about none of them.
 5. **Instruct, don't chain.** Report the handoff and stop; `/reload-skills` and
-   `/inspire-bootstrap init` are the operator's next actions, not this skill's.
+   `/inspire-config init` are the operator's next actions, not this skill's.

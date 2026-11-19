@@ -1,11 +1,15 @@
-# Bootstrap — review checklist
-> Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here.
+# Config — foundation review
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 ## Subcommand: review
 
+Read-only. Report every item below, then validate `.inspire/emanate.yml` when it
+exists ([`validate.md`](validate.md)).
+
+- `.inspire/config.json` passes every check of
+  [`spec-config.md`](spec-config.md) § Checks.
 - `project.md` and `stack.md` exist and parse, and so does
   `01_spec/_design-system/theme.md`.
-- `project.md` declares a valid `output_language`. Flag if missing/empty.
 - `glossary.md` exists and parses — a header row and its separator, then zero or more
   data rows. That is the shape R4 of
   [`_references/writing-style.md`](../../_references/writing-style.md) consumes. **Zero
@@ -27,12 +31,16 @@
   and `default_datastore:`, when set, is one of them. Flag a `## Data` section that
   names two or more databases with no `datastores:`: the entities cannot say which
   one they live in. `entity-datastore.sh` reports what this leaves unfixed.
-- `stack.md` declares `source_root` and `prototype_root` (frontmatter). Flag if
-  missing. `source_root: .` and `prototype_root: none` are valid (brownfield); a
-  relative path must not escape the repo.
+- `stack.md` carrying `status: default` means nobody has confirmed the stack: say
+  so, and name `/inspire-config stack`. A `seed:` whose `profiles` no longer equal
+  the seed's ([`seeds.md`](seeds.md)) is a project on its own stack: flag the stale
+  `seed:` line.
+- The source root holds code, or `source_root` is `.`. An empty source root with a
+  `seed:` in `stack.md` has no starter: name `/inspire-config stack`, which lays it.
 - The project's root `README.md` exists and is the project's own (not the
-  template's methodology README, which install removes). Flag if missing and offer
-  to run the `readme` flow.
+  template's methodology README, which install removes). Flag if missing and name
+  `/inspire-config identity`. Flag a `CLAUDE.md` that still carries a
+  `TODO(/inspire-config init)` or `TODO(/inspire-bootstrap init)` placeholder.
 - No load-bearing stack choice contradicts a current global ADR (`*.adr.md` in
   `01_spec/_adr/`) — one present and not superseded or rejected.
 - `01_spec/_design-system/design-system.md` exists (it should have been seeded from `theme.md`
@@ -41,13 +49,13 @@
 - `design-system.tokens.json` exists beside it, and `design-system.md` carries
   `## Supported viewports`, `## Icons` and `## Reference` — run
   `.inspire/bin/design-system-coherence.sh`; anything it reports missing is closed
-  by the `design-system backfill` flow. Report its count of `generated` tokens as
+  by `/inspire-screens design-system backfill`. Report its count of `generated` tokens as
   values still awaiting a decision.
 - **No second design-system file exists**, anywhere under `01_spec/` — no
   `design-system.*.md`, and no `design-system.md` inside a face. One is an override
-  attempt by another name; flag it and offer to fold what it holds back
-  into the one file as a named variant section (see the `design-system` flow in
-  [`../SKILL.md`](../SKILL.md) § Subcommand: design-system).
+  attempt by another name; flag it and point at
+  [`/inspire-screens design-system`](../../inspire-screens/references/design-system-edit.md),
+  which folds what it holds back into the one file as a named variant section.
 - A face's `{face}.tokens.json` adds tokens only: flag one that redefines a path
   `design-system.tokens.json` already defines.
 - No `theme.md`, `theme.tokens.json` or roster file sits in `00_bootstrap/`: the

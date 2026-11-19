@@ -1,12 +1,12 @@
 # {Project Name}
 
-> **Provisional stub.** Seeded by `/inspire:init`. Run `/inspire-bootstrap init`
+> **Provisional stub.** Seeded by `/inspire:init`. Run `/inspire-config init`
 > to replace the placeholders below with this project's real name, purpose and
 > stack — it edits this file in place rather than appending to it.
 
-**Purpose:** <!-- TODO(/inspire-bootstrap init): one or two sentences on what this product does and for whom. -->
+**Purpose:** <!-- TODO(/inspire-config init): one or two sentences on what this product does and for whom. -->
 
-**Stack:** <!-- TODO(/inspire-bootstrap init): summary of inspire_kb/00_bootstrap/stack.md. -->
+**Stack:** <!-- TODO(/inspire-config init): summary of inspire_kb/00_bootstrap/stack.md. -->
 
 ## This project is governed by INSPIRE
 
@@ -14,6 +14,9 @@
 intent is captured in a knowledge base, load-bearing decisions are recorded,
 and code is generated from what is specified.
 
+- **Configuration** — `.inspire/config.json` holds where the code and the
+  prototype live and the language the knowledge base is written in;
+  `/inspire-config` changes it.
 - **Knowledge base** — [`inspire_kb/`](inspire_kb/): `00_bootstrap` (project,
   stack, glossary) · `01_spec` (the specification, one directory per concept:
   global ADRs, the design system, modules with their features and
@@ -22,7 +25,7 @@ and code is generated from what is specified.
   own README. Every artifact has a typed extension (`*.module.md`,
   `*.entity.md`, `*.screen.md` …), and tools find it by that extension, never by
   its directory.
-- **Skills** — the `inspire-*` slash commands (`inspire-bootstrap`,
+- **Skills** — the `inspire-*` slash commands (`inspire-config`,
   `inspire-module`, `inspire-feature`, `inspire-domain`, `inspire-face`,
   `inspire-screens`, `inspire-process`, `inspire-adr`, …) read and write it. Operate the
   KB through a skill rather than editing it by hand.
@@ -50,4 +53,4 @@ Five rules cover most of it:
 
 `.inspire/bin/prose-style.sh` checks the greppable part at review time.
 
-Haven't run it yet? Start with `/inspire-bootstrap init`.
+Haven't run it yet? Start with `/inspire-config init`.

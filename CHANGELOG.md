@@ -9,6 +9,92 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.21.0 — 2026-11-19
+
+Upgrade with `/inspire:update`, then commit `.inspire/config.json`, the file the
+update writes. Nothing is asked: the update reads the product roots from
+`stack.md`'s frontmatter and the output language from `project.md`'s, where
+`/inspire-bootstrap` kept them, and writes them to the new file. It edits no
+knowledge-base file, so those frontmatter keys stay where they are and are no longer
+read; delete them when convenient. `/inspire-config review` lists the ones still
+there.
+
+### Breaking for existing vaults
+
+- **`/inspire-bootstrap` is retired.** An update deletes the skill, and keeps any
+  file of it you edited. Each subcommand has a successor:
+
+  | Was | Is |
+  |---|---|
+  | `/inspire-bootstrap init` | `/inspire-config init` |
+  | `/inspire-bootstrap language` | `/inspire-config language` |
+  | `/inspire-bootstrap stack` | `/inspire-config stack` |
+  | `/inspire-bootstrap theme` | `/inspire-config theme` |
+  | `/inspire-bootstrap readme` | `/inspire-config identity` |
+  | `/inspire-bootstrap review` | `/inspire-config review` |
+  | `/inspire-bootstrap design-system` | `/inspire-screens design-system` |
+  | `/inspire-bootstrap design-system backfill` | `/inspire-screens design-system backfill` |
+
+  A project's own `CLAUDE.md` may still name the old command; the update leaves that
+  file alone.
+- **`/inspire-config init` is the wizard.** The flow that writes
+  `.inspire/emanate.yml` is `/inspire-config emanate`. `/inspire-config review` now
+  checks the spec config and the bootstrap layer too, before it validates
+  `emanate.yml`.
+- **The product roots and the output language live in `.inspire/config.json`.**
+  Every skill, validator and hook reads `source_root`, `prototype_root` and
+  `output_language` there. A project without the file or the key is read as before,
+  from `stack.md` and `project.md`. When the two places disagree the config wins,
+  and `/inspire:update` names both values.
+- **`design-system.md` belongs to `inspire-screens`.** The trust report compares it
+  against that skill. A design system stamped by `inspire-bootstrap` is reported as
+  stamped by another skill until `/inspire-screens design-system` writes it again.
+
+### Added
+
+- **A default configuration ships.** `/inspire:init` writes `.inspire/config.json`
+  with the defaults, beside the default stack and theme, so a project authors specs
+  before anyone answers a technical question. It asks whether to run the wizard
+  afterwards, and declining is a complete install. It no longer asks for the product
+  roots: with code at the repository root it writes `source_root: .` and
+  `prototype_root: none`, shows them in its plan, and `/inspire-config stack` changes
+  them.
+- **The wizard separates the two operators.** Every question of `/inspire-config`
+  is marked product or technical. The product questions come first: the language,
+  the project's name and purpose, what you want to build, the look. Each technical
+  question offers "I don't know — keep the default", and the closing report lists
+  what was left for a technical operator.
+- **The target comes before the stack.** The wizard asks what the product is
+  delivered as — a web application for a computer, a responsive one, an installable
+  one, a native mobile app, a program, something else — and then offers the stack
+  INSPIRE recommends for it, or "other".
+- **Seeds, and each names its image.** A seed is the default for a target: its
+  stack ids, its image and its layout. The `web` seed (React and NestJS, on
+  `node:24.22.1-trixie`) is the `stack.md` INSPIRE ships. On a seed,
+  `/inspire-config emanate` takes the image from it and asks no image question; the
+  question stays for a project that describes its own stack.
+- **A seed carries a starter project, and INSPIRE lays it.** `.inspire/seeds/web/` is
+  a new payload class: `seed.json` and `files/`, one npm package with a NestJS API
+  (`GET /api/is-alive`), a React + Vite web that calls it, a 404 on each side, unit
+  and e2e tests, and oxlint, oxfmt and tsgo configured with every gate the `nestjs`
+  stack skill declares. `.inspire/bin/scaffold.sh <seed>` copies it under the source
+  root of a repository with no code; it refuses one that has any and replaces no
+  file. `/inspire:init` runs it when the operator keeps the defaults, and
+  `/inspire-config stack` when the operator takes the seed. A project that describes
+  its own stack gets a minimal application scaffolded by the interview. A project
+  therefore reaches its first INSPIRE Factory run with a tree the units build on.
+- **Changing the language warns about the refactor.** `/inspire-config language`
+  counts the artifacts already written, and says they stay in the old language and
+  that translating them is a refactor, before it writes the key.
+- `materialize.sh --output-language` and `--seed`, and `config` in its JSON summary.
+
+### Changed
+
+- No shipped default names a product: `stack.md`, `theme.md` and the bootstrap
+  layer's README describe their defaults as INSPIRE's own.
+- Tracker: `B1-config-replaces-bootstrap` is closed. Its close note records the
+  shape the spec config took, and what was withdrawn or left to later tickets.
+
 ## 0.20.0 — 2026-11-19
 
 Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout

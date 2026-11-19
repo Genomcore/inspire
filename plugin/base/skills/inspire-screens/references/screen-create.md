@@ -8,7 +8,7 @@
    has its `{face}.face.md`. A missing face goes to `/inspire-face add`; this skill
    never creates one. If anything else is missing,
    say so and run the missing piece first — the range through
-   `/inspire-bootstrap design-system`, the shell as a layout entry measured per
+   `/inspire-screens design-system`, the shell as a layout entry measured per
    [`_references/ui-reference.md`](../../_references/ui-reference.md). A screen
    specified before them guesses whether a phone is in scope and what frame it sits
    in.

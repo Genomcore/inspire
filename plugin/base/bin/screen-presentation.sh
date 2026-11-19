@@ -99,7 +99,7 @@ check_sourced_table() {
     esac
   done < <(table_rows "$file" "$section")
   if [ "$open_n" -gt 0 ]; then
-    emit "$file" "layout $section: $open_n row(s) decided by nobody yet —$open_rows; confirm each through /inspire-bootstrap design-system"
+    emit "$file" "layout $section: $open_n row(s) decided by nobody yet —$open_rows; confirm each through /inspire-screens design-system"
   fi
   printf '%s\n' "$open_n" > "$OPEN_COUNT"
 }

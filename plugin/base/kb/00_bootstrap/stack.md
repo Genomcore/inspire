@@ -1,32 +1,32 @@
 ---
 kind: bootstrap-stack
-status: default          # default (seeded from the OpenBIMS reference) → adapt per project
+status: default          # default (the shipped `web` seed) → confirm or change with /inspire-config stack
+seed: web                   # the shipped seed this stack is; removed when the project describes its own stack
 profiles: [react, nestjs]   # stack ids: a skill whose frontmatter `stack:` names one is served to that stack's units
-source_root: source         # where production code lives. "." = repo root (brownfield, in place); a relative path otherwise
-prototype_root: prototype   # where the horizontal prototype lives (inspire-prototype). "none" = no horizontal prototype
 ---
 
 # Tech stack
 
 The application stack the product is built with. This is the single registry of
 the official stack; adding a tool is an edit here, replacing a load-bearing choice
-is an ADR ([`01_spec/_adr`](../01_spec/_adr)). Configure with `/inspire-bootstrap`.
+is an ADR ([`01_spec/_adr`](../01_spec/_adr)). Configure with `/inspire-config stack`.
 
-> **Default**, seeded from the OpenBIMS reference implementation. Swap any layer
-> for your project's choice — the skills are stack-agnostic and read this file.
+> **Default**: the `web` seed, the stack INSPIRE recommends for a web application.
+> A project works on it until someone decides otherwise. Swap any layer for your
+> project's choice — the skills are stack-agnostic and read this file.
 
 ## Shape
 
-How the product is laid out. Established at `/inspire-bootstrap init`; it frames
+How the product is laid out. Established by `/inspire-config stack`; it frames
 which layers below apply. **Load-bearing** — changing it later (adding a backend,
 adding mobile, moving off a deployed database) is an ADR.
 
 - **Platform:** monorepo — **frontend + backend**. (Alternatives: frontend-only ·
   backend-only, an API / service · or *undecided* — revisit once the prototype
   clarifies; don't force it.)
-- **Frontend targets:** **web**. (Alternatives: mobile-only · web + mobile — mobile
-  pulls in a mobile UI stack, e.g. React Native / Expo, ideally sharing
-  types/logic with web.)
+- **Frontend targets:** **web**, used on a computer (`desktop-web`). (Alternatives:
+  `responsive-web` · `pwa` · `native-mobile` · `binary` · `other` — a mobile target
+  pulls in a mobile UI stack, ideally sharing types and logic with web.)
 - **Backend:** yes — an API / service layer (see *Backend / runtime* below).
 - **Database provisioning:** **deploy** the metadata database (see *Data*) as part
   of the platform. (Alternative: connect to an **existing external** database — no
@@ -36,10 +36,10 @@ adding mobile, moving off a deployed database) is an ADR.
   Docker isn't available. (Alternative: no local DB — develop against a
   shared/remote one.)
 - **Product roots:** production code at `source_root` (default `source/`) and the
-  horizontal prototype at `prototype_root` (default `prototype/`) — set in the
-  frontmatter above. A greenfield project keeps the defaults; **brownfield** installing
-  into an existing repo sets `source_root: .` (the repo root *is* the code) and often
-  `prototype_root: none`.
+  horizontal prototype at `prototype_root` (default `prototype/`) — set in
+  `.inspire/config.json`. A greenfield project keeps the defaults; **brownfield**
+  installing into an existing repo sets `source_root: .` (the repo root *is* the code)
+  and often `prototype_root: none`.
 
 ## Language
 
@@ -92,7 +92,7 @@ and may set a `default_datastore:`; an entity outside the default says so with
 Which convention set the product's transport follows, and the project's answer to
 each of that set's `## Project policy` questions — the existence-leak choice, the
 validation status, the error body shape. Decided **once**, at
-`/inspire-bootstrap stack`, and never re-asked per feature: the ids go in the
+`/inspire-config stack`, and never re-asked per feature: the ids go in the
 frontmatter as `wire_conventions: [<id>, …]`, the answers in the table below. The
 catalogue is
 `.claude/skills/_references/conventions/`.

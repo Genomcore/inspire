@@ -69,7 +69,7 @@ blocking a commit over (`sdd_progressive_severity` in `_lib.sh`).
 These two read the parts of the screen layer that mint no claim: the design system, its
 token file, the `layouts/` tier and a screen's `## Render` table. Every finding is a
 **warning at every lifecycle**, and derive never consults either rule, so a vault upgraded
-without them is reported, never blocked. `/inspire-bootstrap design-system backfill` and
+without them is reported, never blocked. `/inspire-screens design-system backfill` and
 `/inspire-screens backfill` close what they report.
 
 | Script | Checks |
@@ -83,7 +83,7 @@ without them is reported, never blocked. `/inspire-bootstrap design-system backf
 |---|---|---|
 | `prose-style.sh` | The greppable half of the writing contract (`.claude/skills/_references/writing-style.md`), across entities, actions, features, ADRs and screens: R2 sentence length (over 35 words), R4 glossary synonyms (from `00_bootstrap/glossary.md`), R5 paragraph length (over 8 sentences), R6 historical language (the closed token list `previously` / `used to` / `migrated from` / `~~…~~`, plus the R6 tokens `00_bootstrap/style-tokens.md` declares), R7 figurative language (the closed intensifier list plus the declared R7 tokens, first hit per line), R1 passive voice and R3 noun clusters. Checks bind by section kind, not by file. | **Only R4 ramps**, with the object's own lifecycle for entities and actions, and it is a flat warning everywhere else: features and ADRs carry no `lifecycle:` for the columns to read, and screens carry one these checks deliberately do not read — a screen ramps on its contract, never on its prose. R4 is alone because it reads a declaration: the glossary records the rejected word and names the approved one. Every other rule is a **warning at every lifecycle, never ramping**, so nothing here gates a commit on style. |
 
-**Partly English-only, and it says so.** When `00_bootstrap/project.md` declares
+**Partly English-only, and it says so.** When `.inspire/config.json` declares
 an `output_language` other than English — `en`, `en-*`/`en_*` and `english` are
 all read as English, case-insensitively — `prose-style.sh` emits one **info**-level
 note naming R1 and R3 as skipped, then runs the rest. R1 and R3 are English
@@ -107,8 +107,9 @@ Test-file discovery for both is in `_lib.sh` (`sdd_find_test_files`, `sdd_litera
 `sdd_covers_in_tests`, `SDD_TEST_SCOPE`, `SDD_TEST_GLOBS`) rather than duplicated per rule —
 the two gates must agree on what a test file *is*, and the glob set already had one
 silent-miss bug in it. Where the product code lives resolves in `_lib.sh` too:
-`$SDD_SOURCE_ROOT` if set, else the `source_root:` frontmatter of
-`00_bootstrap/stack.md` (a brownfield install sets `.` there), else `source/` — so a
+`$SDD_SOURCE_ROOT` if set, else `source_root` in `.inspire/config.json` (a brownfield
+install sets `.` there), else the `source_root:` frontmatter of `00_bootstrap/stack.md`
+that a project installed before 0.21.0 carries, else `source/` — so a
 project whose code is not at `source/` gets these gates pointed at the right tree
 without any per-hook plumbing.
 
@@ -139,6 +140,8 @@ syntax. Rationale and the ceiling-in-repo exception:
 | `adr-split.sh` | **A tool, not a review rule.** Splits a single-file ADR into its decision `adr-{slug}.md` and its rationale `adr-{slug}.rationale.md`, moving every line verbatim; `--list` prints the single-file ADRs and writes nothing. One `split` / `skipped` line per file; exits 1 when it skips one, which is an ADR with no `## Decision` to keep. Absent from `review.sh`'s `DEFAULT_RULES`. | `/inspire-adr migrate`, and `--list` from the `/inspire:update` tail. |
 | `heading-keys.sh` | **A tool, not a review rule.** Rewrites each templated heading of a KB artifact that still names its section in English into the `{ID}: {label}` shape (`## Fields` → `## ENT4: Fields`, `## Fields: Campos` → `## ENT4: Campos`), from `SDD_SECTION_IDS`. Only the headings the templates ship are touched, an H3 only under its own parent, and nothing inside frontmatter, a fence or an HTML comment. `--list` prints `{file}<TAB>{count}` and writes nothing. | `/inspire:update` runs `--list` and recommends the rewrite; it never rewrites unprompted. |
 | `trust.sh` | **A tool, not a review rule.** Artifact trust: `skill-sha` (composite hash of a deployed skill dir), `stamp` (the machine-owned `produced:` block), `endorse` (the human-owned `endorsed:` block), `report` (the trust signal). It emits no findings, is deliberately absent from `review.sh`'s `DEFAULT_RULES`, and `report` exits 0 whatever it finds — a signal, never a gate. Needs only `yq` (no `jq`), and does not source `_lib.sh`. | `stamp` / `endorse` from the owning skills; `report --summary` from the `pre-pr.sh` hook; the full `report` from `/inspire-workspace review` and the `/inspire:update` tail. |
+
+| `scaffold.sh` | **A tool, not a review rule.** `scaffold.sh <seed>` copies `.inspire/seeds/<seed>/files/` under the source root of a repository with no code, plus the runtime files the seed's `seed.json` names under `copy`. It refuses when `source_root` is `.` or the source root holds anything but a `README.md`, replaces no file but the `README.md` stub `/inspire:init` seeds there, and installs nothing. `--dry-run` prints what it would create; `--list` names the seeds. Exit 0 scaffolded, 1 refused. | `/inspire-config stack` when the operator takes a seed; `/inspire:init` for the default seed when the operator keeps the defaults. |
 
 ## Output format
 

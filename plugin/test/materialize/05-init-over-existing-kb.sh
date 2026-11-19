@@ -40,12 +40,12 @@ check "PRE-EXISTING KB: nested domain descriptor survives init" \
   "[ -f '$pre/inspire_kb/04_domain/billing/invoice/invoice.md' ] && [ '$pre_dom_before' = \"\$(shasum -a 256 '$pre/inspire_kb/04_domain/billing/invoice/invoice.md' | cut -d' ' -f1)\" ]"
 check "PRE-EXISTING KB: authored ADR survives init" \
   "[ -f '$pre/inspire_kb/01_adr/adr-0001-postgres.md' ] && [ '$pre_adr_before' = \"\$(shasum -a 256 '$pre/inspire_kb/01_adr/adr-0001-postgres.md' | cut -d' ' -f1)\" ]"
-# stack.md is the one KB file init may still edit — create_product_roots writes
-# the answered roots into its frontmatter. It must be AMENDED, never replaced.
-check "PRE-EXISTING KB: stack.md keeps its authored body" \
-  "grep -q 'Our real stack' '$pre/inspire_kb/00_bootstrap/stack.md'"
-check "PRE-EXISTING KB: stack.md gains the answered source_root" \
-  "grep -q 'source_root' '$pre/inspire_kb/00_bootstrap/stack.md'"
+# init edits no KB file at all, stack.md included: the answered roots go to the
+# spec config, .inspire/config.json.
+check "PRE-EXISTING KB: stack.md is byte-identical" \
+  "[ '$pre_stack_before' = \"\$(shasum -a 256 '$pre/inspire_kb/00_bootstrap/stack.md' | cut -d' ' -f1)\" ]"
+check "PRE-EXISTING KB: the answered source_root is in the spec config" \
+  "[ \"\$(jq -r .source_root '$pre/.inspire/config.json')\" = source ]"
 # Seeding must still fill in what the project lacks, at file granularity.
 check "PRE-EXISTING KB: missing file inside an existing layer is seeded" \
   "[ -f '$pre/inspire_kb/00_bootstrap/README.md' ]"

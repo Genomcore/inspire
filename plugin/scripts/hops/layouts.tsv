@@ -53,6 +53,8 @@
 # `visor:.inspire/visor` (0.18) follows the same rule: no manifest before it
 # lists a path under `.inspire/visor/`, and `.inspire/bin` is its sibling, not
 # its parent.
+# `seeds:.inspire/seeds` (0.21) follows it too: no manifest before it lists a
+# path under `.inspire/seeds/`.
 #
 # The pre-0.3 row is deliberately NOT extended. That layout never materialized
 # agents, and its dest_map is only ever read as a SOURCE map (TARGET_LAYOUT is
@@ -60,4 +62,4 @@
 # class still reaches a pre-0.3 project: classify's pass 2 and apply_base's
 # pass 1 both walk the TARGET map, so base/agents/ arrives as a plain `create`.
 pre-0.3	.inspire_kb	inspire_kb .claude/inspire/hooks	bin:.claude/bin hooks:.claude/hooks skills:.claude/skills
-0.3	inspire_kb	.inspire_kb	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents visor:.inspire/visor
+0.3	inspire_kb	.inspire_kb	bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents visor:.inspire/visor seeds:.inspire/seeds

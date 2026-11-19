@@ -1,9 +1,9 @@
-# Bootstrap — theme interview
-> Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here.
+# Config — theme interview
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
 ## Subcommand: theme
 
-Define or update `theme.md` and `theme.tokens.json` in
+`[product]` Define or update `theme.md` and `theme.tokens.json` in
 `inspire_kb/01_spec/_design-system/` — the design-system default.
 The token **roles** (primary, accent, status map, typography, density) are what
 downstream skills rely on; the values are yours to set, and they live in the JSON
@@ -22,9 +22,9 @@ only — the markdown cites each by its path in braces.
    working design system. So:
    - Edit `theme.md` here to change the **reusable default** (e.g. before
      bootstrapping, or to keep the default in sync).
-   - To change the **project's live** design system, use the `design-system`
-     subcommand ([`../SKILL.md`](../SKILL.md) § Subcommand: design-system) — that's
-     the source of truth once seeded.
+   - To change the **project's live** design system, use
+     [`/inspire-screens design-system`](../../inspire-screens/references/design-system-edit.md)
+     — that's the source of truth once seeded.
    - Offer to (re)seed `design-system.md` from `theme.md` if it doesn't
      exist yet.
 

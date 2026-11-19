@@ -30,6 +30,6 @@ the knowledge base and de-risked in prototypes, then **realized here**.
 > for the full rules.
 >
 > Location is configurable: this is `source_root` (default `source/`) in
-> [`00_bootstrap/stack.md`](../inspire_kb/00_bootstrap/stack.md). A brownfield project
+> [`.inspire/config.json`](../.inspire/config.json). A brownfield project
 > installing in place sets `source_root: .` (the repo root is the code), and this
 > folder is not created.

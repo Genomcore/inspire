@@ -59,14 +59,14 @@ Remember: the **live** design system is `01_spec/_design-system/design-system.md
 
 | Source vs KB | Recommendation |
 |--------------|----------------|
-| Source clearly more elaborated **and** production-real | **Recommend migrate.** Present the diff; on approval, route through `/inspire-bootstrap stack` / `theme` (or `/inspire-screens design-system` for the live one). |
+| Source clearly more elaborated **and** production-real | **Recommend migrate.** Present the diff; on approval, route through `/inspire-config stack` / `theme` (or `/inspire-screens design-system` for the live one). |
 | Comparable | **Keep local.** Note any *specific* concrete detail worth lifting (a pinned version, one status color) as an à-la-carte suggestion — not a wholesale swap. |
 | Source less elaborated (prototype/spike) | **Keep local, don't migrate.** Say so plainly: the source is a scaffold, not a decision. |
 | KB is still the seeded default, source is real | **Recommend migrate** — the default was a placeholder; the source reflects an actual product. |
 
 ## Load-bearing changes are ADRs
 
-Per `/inspire-bootstrap`'s rules, **replacing a load-bearing choice** — a framework,
+Per `/inspire-config`'s rules, **replacing a load-bearing choice** — a framework,
 the runtime, the primary database, or the primary color — is an architectural
 decision. If a recommended migration touches one, surface it and offer to chain
 `/inspire-adr create` to record the decision, rather than editing

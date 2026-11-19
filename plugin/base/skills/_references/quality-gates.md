@@ -168,7 +168,7 @@ step 3: a human act, handed over as a ticket.
 
 | Consumer | Uses it for |
 |---|---|
-| `/inspire-bootstrap stack` | installing a new project's gates from its profiles; declaring the external one |
+| `/inspire-config stack` | installing a new project's gates from its profiles; declaring the external one |
 | code review | a missing mechanical check is a finding, with the gate that should own it |
 | code authoring | which violations the toolchain already refuses, so they are never written |
 | stack skills (`## Quality gates`) | the per-framework translation of Rules 1–2 |

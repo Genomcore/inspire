@@ -205,14 +205,13 @@ PS_FLOURISH="simply|simple matter of|merely|of course|needless to say|it goes wi
 # ─────────────────────────────────────────────────────────────────────────────
 
 PROJECT_FILE="$SDD_KB_ROOT/00_bootstrap/project.md"
-OUTPUT_LANGUAGE=""
-if [ -f "$PROJECT_FILE" ]; then
+OUTPUT_LANGUAGE="$(sdd_config_value output_language)"
+if [ -z "$OUTPUT_LANGUAGE" ] && [ -f "$PROJECT_FILE" ]; then
   OUTPUT_LANGUAGE="$(sdd_fm_value "$PROJECT_FILE" '.output_language')"
 fi
 [ -n "$OUTPUT_LANGUAGE" ] && [ "$OUTPUT_LANGUAGE" != "null" ] || OUTPUT_LANGUAGE="en"
 
-# `output_language` is authored by a human, and project.md's own comment invites
-# a plain name as much as a code. `EN`, `en-US`, `en_GB` and `English` all
+# `output_language` is authored by a human, as a plain name as much as a code. `EN`, `en-US`, `en_GB` and `English` all
 # declare English, and reading only the byte string `en` would silently skip
 # every one of them — a checker that quietly checks nothing is worse than one
 # that says it cannot. Anything else is another language and skips R1 and R3.

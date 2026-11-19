@@ -1,7 +1,12 @@
-# Bootstrap — project identity
-> Part of [inspire-bootstrap](../SKILL.md). Read when the entry's index routes here; `init` step 4's long form comes first, then the `readme` flow.
+# Config — project identity
+> Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-## `init` step 4 — refine the project's `CLAUDE.md`
+`[product]` The `identity` flow gives the project its name and purpose in the two
+files a newcomer opens first: the seeded `CLAUDE.md` and the root `README.md`. A
+project materialized from the plugin never carries the template's own methodology
+README, so a fresh project has none until this flow writes it.
+
+## `CLAUDE.md`
 
 `/inspire:init` seeds a provisional stub (project name, purpose and stack left as
 placeholders, clearly marked). Replace those placeholders **in place** with the
@@ -14,7 +19,7 @@ it the same way. Leave the rest of the file (the INSPIRE orientation, KB layer
 list, skills, validators, lock note, and the § How prose is written here summary
 of the writing contract) untouched — that part is generic and correct as shipped.
 
-## Subcommand: readme
+## `README.md`
 
 Create (or update) the **project's root `README.md`** — the product's own front
 door, not INSPIRE's. Keep it **easy and optional**: propose good defaults, ask in
@@ -49,12 +54,11 @@ project's `output_language` (default English).
 
    `{CLAUDE.md pointer}` is `" (see [`CLAUDE.md`](CLAUDE.md))"` when `CLAUDE.md`
    exists at the project root — the normal case, since `/inspire:init` seeds it
-   and the `init` flow's CLAUDE.md step ([`../SKILL.md`](../SKILL.md) §
-   Subcommand: init, long form in § `init` step 4 above) runs before `readme` and
-   refines it — otherwise the empty string, so the README never links a file that
-   isn't there.
+   and § `CLAUDE.md` above refines it first — otherwise the empty string, so the
+   README never links a file that isn't there.
 
    Drop any section whose input was skipped. If everything was skipped, write just
    the title heading plus the `## Development` note.
-5. **The git remote is not a README field.** It is asked (optional) to wire local
-   git at `init`, not stored here — don't add a "Repository" line.
+5. **The git remote is not a README field.** The wizard asks it, optionally, to wire
+   local git ([`wizard.md`](wizard.md), T5); it is not stored here — don't add a
+   "Repository" line.

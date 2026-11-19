@@ -2,7 +2,7 @@
 # .claude/inspire/hooks/session-start.sh
 #
 # Claude SessionStart hook. Reads the project's declared output language from
-# inspire_kb/00_bootstrap/project.md and injects it into the session as context,
+# .inspire/config.json and injects it into the session as context,
 # so EVERY session — regardless of the language the operator converses in — starts
 # knowing which language INSPIRE artifacts must be authored in. This is the strong,
 # always-present half of the output-language rule; the skills carry the same rule
@@ -23,7 +23,7 @@
 # Output contract (SessionStart): stdout is JSON with
 #   {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "…"}}
 # additionalContext is prepended to the session context. Exit 0 always — a missing
-# project.md just falls back to English; this hook never blocks a session.
+# config just falls back to English; this hook never blocks a session.
 #
 # Worktree self-scoping: the harness caches hooks per project, so a registration
 # installed by one worktree's settings.json can be replayed for a session whose
@@ -52,9 +52,14 @@ cat >/dev/null 2>&1 || true
 
 PROJECT_FILE="$PROJECT_ROOT/inspire_kb/00_bootstrap/project.md"
 
-# Read output_language from the frontmatter; default to English if absent/empty.
+# Read output_language from the spec config, then from the frontmatter a project
+# installed before 0.21.0 keeps it in; default to English if absent/empty.
+CONFIG_FILE="$PROJECT_ROOT/.inspire/config.json"
 LANG_VALUE=""
-if [ -f "$PROJECT_FILE" ] && command -v yq >/dev/null 2>&1; then
+if [ -f "$CONFIG_FILE" ] && command -v jq >/dev/null 2>&1; then
+  LANG_VALUE="$(jq -r '.output_language | if type == "string" then . else empty end' "$CONFIG_FILE" 2>/dev/null || true)"
+fi
+if [ -z "$LANG_VALUE" ] && [ -f "$PROJECT_FILE" ] && command -v yq >/dev/null 2>&1; then
   LANG_VALUE="$(yq --front-matter=extract '.output_language // ""' "$PROJECT_FILE" 2>/dev/null || true)"
 fi
 [ -n "$LANG_VALUE" ] && [ "$LANG_VALUE" != "null" ] || LANG_VALUE="en"

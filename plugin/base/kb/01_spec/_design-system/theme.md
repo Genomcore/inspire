@@ -11,11 +11,11 @@ of truth — `materialize.sh` copies it to
 [`design-system.md`](design-system.md), and its token values
 [`theme.tokens.json`](theme.tokens.json) to `design-system.tokens.json`,
 during `/inspire:init`. Those two files become the project's working design
-system. From then on edit the live ones with `/inspire-bootstrap design-system`;
-re-seed this default with `/inspire-bootstrap theme`.
+system. From then on edit the live ones with `/inspire-screens design-system`;
+change this default with `/inspire-config theme`.
 
-> **Default**, abstracted from the OpenBIMS mockup's CSS (`@theme` tokens +
-> design-system spec). Swap the values for your brand — the token *roles* below are
+> **Default**: a neutral theme INSPIRE ships so a project has one before anyone
+> chooses. Swap the values for your brand — the token *roles* below are
 > what the skills rely on.
 
 ## Tokens

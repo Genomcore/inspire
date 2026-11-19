@@ -2,15 +2,15 @@
 id: B1-config-replaces-bootstrap
 title: "B1 — /inspire:config with a shipped default replaces /inspire-bootstrap"
 created: 2026-10-23
-updated: 2026-11-05
+updated: 2026-11-19
 reporter: "@dario.blasco"
-closed_by: null
-closed_at: null
+closed_by: "@joaquim.ballester"
+closed_at: 2026-11-19
 epic: roadmap
 size: XL
 importance: High
-skills: [bootstrap]
-status: Open
+skills: [bootstrap, screens]
+status: Done
 blocked_by: []
 related_to: []
 ---
@@ -140,26 +140,28 @@ Each needs a home:
 
 ## Acceptance criteria
 
-- [ ] `/inspire-bootstrap` is retired. Each of its current subcommands and steps has a
+- [x] `/inspire-bootstrap` is retired. Each of its current subcommands and steps has a
       named successor, recorded in this ticket's close note or in an ADR.
-- [ ] A default config ships and is materialized on init. A project that declines the
+- [x] A default config ships and is materialized on init. A project that declines the
       wizard can still author specs.
-- [ ] Init offers the wizard, and declining it is a supported path, not an error.
-- [ ] The functional/technical split is explicit:
+- [x] Init offers the wizard, and declining it is a supported path, not an error.
+- [x] The functional/technical split is explicit:
   - Every question Config asks is marked as technical or product.
   - A technical question offers "I don't know — keep the default".
-- [ ] No shipped default names OpenBIMS. Today `00_bootstrap/stack.md`, `theme.md`,
+- [x] No shipped default names OpenBIMS. Today `00_bootstrap/stack.md`, `theme.md`,
       `00_bootstrap/README.md` and `inspire-bootstrap/SKILL.md` describe their defaults
       as seeded from the OpenBIMS reference. That breaks this repository's rule that the
       runtime is free of any one product's vocabulary.
 - [ ] `config-check` exists and enforces the pass and refusal rules above, with tests.
-- [ ] `/inspire:update` moves an existing project from bootstrap's outputs to Config's,
+      **Withdrawn**, with the compose environment it checks (2026-10-26 amendment, and
+      the close note). Not built.
+- [x] `/inspire:update` moves an existing project from bootstrap's outputs to Config's,
       and does not re-ask anything `stack.md` already answers.
-- [ ] `output_language` is a key of `.inspire/config.json`, read at install and update.
+- [x] `output_language` is a key of `.inspire/config.json`, read at install and update.
       Changing it on a project with artifacts warns about the refactor.
-- [ ] The wizard asks for the target before the stack, and offers the recommended stack
+- [x] The wizard asks for the target before the stack, and offers the recommended stack
       or "other".
-- [ ] Each shipped seed names its image. With a seed, `/inspire-config` asks no image
+- [x] Each shipped seed names its image. With a seed, `/inspire-config` asks no image
       question. The question stays for "describe your own".
 
 ## Notes
@@ -298,3 +300,101 @@ image.** Direction stated.
   of product.
 - *Change:* a new acceptance criterion. Each shipped seed names its image, and with a seed,
   `/inspire-config` asks no image question. The question stays for "describe your own".
+
+## Close note (2026-11-19, ships in 0.21.0)
+
+**The decisions this ticket waited on**, taken by `@joaquim.ballester` on 2026-11-19:
+
+- *The shape of the spec config* (open since the 2026-10-28 note): the shipped one.
+  `.inspire/emanate.yml` stays the one file INSPIRE Factory reads.
+  `.inspire/config.json` holds `source_root`, `prototype_root` and `output_language`
+  and nothing else. The original description's `toolchains`, `journeys`,
+  `environment`, the compose file, the Dockerfiles and `config-check` are withdrawn.
+  The control-plane design named in the 2026-10-30 note was not adopted here; if it
+  is approved later, it is a new ticket.
+- *One skill, and which one* (2026-10-27 note): the project skill `/inspire-config`
+  grows. No plugin skill `/inspire:config` exists. So `/inspire:init` cannot start
+  the wizard in its own session: it asks whether to run it, and hands over to
+  `/reload-skills` and `/inspire-config init`.
+- *The other half of bootstrap*: in Config, as product questions. The live design
+  system goes to `/inspire-screens`, which already owns the catalog beside it.
+- *One ticket, not two*: the planned split into Config and Init was not made, since
+  one change retires the skill and both halves land together.
+
+**Successors of `/inspire-bootstrap`** (first acceptance criterion):
+
+| Subcommand or step | Successor |
+|---|---|
+| `init` | `/inspire-config init`, the wizard |
+| `init` step 1, `language` | `/inspire-config language`; the value is `output_language` in `.inspire/config.json` |
+| `init` step 2, `stack` | `/inspire-config stack`: the target, then a seed or the layer interview |
+| the product roots, asked by `/inspire:init` and by `stack` | `/inspire:init` writes them without asking (`.` and `none` with code at the root, the defaults otherwise); `/inspire-config stack` changes them; the values are in `.inspire/config.json` |
+| `init` step 3, `theme` | `/inspire-config theme` |
+| `init` step 4, the `CLAUDE.md` placeholders | `/inspire-config identity` |
+| `init` step 5, `readme` | `/inspire-config identity` |
+| `init` step 6, the git remote | the wizard's question T5 |
+| `review` | `/inspire-config review`, which also validates `emanate.yml` |
+| `design-system` | `/inspire-screens design-system` |
+| `design-system backfill` | `/inspire-screens design-system backfill` |
+| `/inspire-config init` as it was (write `emanate.yml`) | `/inspire-config emanate` |
+
+**How the criteria are met.**
+
+- *Default config.* `materialize.sh` writes `.inspire/config.json` at init, beside the
+  default `stack.md` (the `web` seed) and theme.
+- *Update.* It builds the file from `stack.md`'s and `project.md`'s frontmatter when a
+  project has none, and replaces no value. It edits no KB file: the frontmatter keys
+  stay, unread, and a warning names them. Every reader takes the config first and the
+  frontmatter second, so a project is read correctly before and after.
+- *Output language.* Install and update write and keep the key, and the session-start
+  hook injects it into every session. The 2026-10-26 open question is answered: no,
+  "deterministic" does not mean writing the language into the skills, because every
+  update would then be a local edit to merge. Applying it stays the agent's job.
+- *Targets and seeds.* `inspire-config/references/seeds.md` holds six targets and one
+  seed, `web`. `native-mobile`, `binary` and `other` have no seed: the wizard says so
+  and a technical operator describes the stack.
+- *The scaffold.* A seed carries a starter project, in the new payload class
+  `.inspire/seeds/<seed>/` (`seed.json` and `files/`). `.inspire/bin/scaffold.sh`
+  lays it under the source root of a repository with no code, refuses one with code,
+  and replaces no file. `/inspire:init` runs it when the operator keeps the defaults,
+  and `/inspire-config stack` when the operator takes the seed. The `web` starter is
+  the Factory's `react-nestjs-npm` template, brought here with the escape-hatch rules
+  the `nestjs` stack skill gates added to its lint configuration; installed from its
+  lockfile it passes its tests, e2e, type check, lint, build and format check, and
+  `profile-gates-installed.sh` reports no gate missing. A described stack gets a
+  minimal application scaffolded by the interview (`GET /api/is-alive`, a home
+  screen that calls it, a 404 on each side, one real integration test).
+- *Several data sources* (the first note): confirmed. Each is a row of `stack.md`'s
+  `## Test infrastructure`, and so a service in `emanate.yml`; `datastores:` says which
+  entity lives in which.
+
+**Not built, and not tracked by any ticket.** Each needs a decision before it is
+scheduled, so none was filed (tracker rule 2):
+
+- the Factory's second template, `react-fastapi-uv`, as a seed: INSPIRE ships no
+  stack skill for FastAPI, so a seed for it would name a profile nothing serves;
+- a monorepo seed, technology versions as config keys, an OpenAPI starter
+  (2026-10-30 note);
+- a seed for a native mobile target, which waits on `FB1-react-native-profile`;
+- the candidate keys of the 2026-10-27 note, which stay with `B3-overridable-types`
+  and `B3-ui-text-keys`.
+
+**Factory work.** Two changes there follow this one, each described here and filed
+in the Factory's tracker when this lands.
+
+*The scaffold can leave the run.* A project now gets its starter from INSPIRE, so
+the Factory's own scaffold step has nothing left to do for a project on the `web`
+seed or on a described stack. Its removal should refuse a run whose source root is
+empty and name `/inspire-config stack`, since a project that skipped the starter has
+no other way to get one.
+
+*The roots moved.* The product roots moved from `stack.md`'s frontmatter to
+`.inspire/config.json`. The Factory's deriver resolves a face's and a bundle's
+`package` against `source_root`, so it must read the key from the config first, then
+from the frontmatter, then default to `source`, as `derived-contract.md` now states.
+Until it does, a project installed on 0.21.0 with `source_root: .` is read by the
+Factory as `source`. `emanate.yml`'s commands and claim roots carry the root
+literally and are not affected.
+
+**The manual.** The pages that describe `/inspire-bootstrap` and `/inspire:init`'s
+questions need the matching change in Genomcore/inspire-docs.
