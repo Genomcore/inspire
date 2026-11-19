@@ -193,8 +193,8 @@ repository root. The factory:
 - names each failed test, with its messages, and each skipped one in the repair
   prompt;
 - counts a `@claim` citation only in a file in which a test passed in a report of the
-  unit's checks, and runs, through `run_related`, the test files that cite the unit's
-  claims even when the unit did not change them.
+  unit's checks. A test that `run_related` does not select never counts in that unit, so
+  the claims of a unit must be cited in tests its related run reaches.
 
 A run whose plan has units with claims stops before it starts when no check has a
 report: `<n> units of the plan have claims, but no tests check of .inspire/emanate.yml
