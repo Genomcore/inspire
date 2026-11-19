@@ -28,6 +28,12 @@ deviations:
 - **Extended `skills:` enum.** Tickets may name `extract`, `lesson` and `spike`; the shipped enum
   predates those skills.
 
+The folder and each ticket's frontmatter are the only record of what is open; nothing here
+lists or counts the open set. Context and provenance: the foci, themes, dependency graph
+and original critical path live in `~/.agent/diagrams/inspire-070-clarity-map.{md,html}`;
+the underlying evidence per vector in `~/.agent/diagrams/inspire-070-vectors.html`. Both
+predate 0.7.0 and are the record of how the foci were derived.
+
 ## Three rules for filing
 
 Adopted 2026-08-19, after 0.7.0 closed four foci and left seven follow-ups behind. The
@@ -69,6 +75,10 @@ cancelled on 2026-08-19 for exactly that: nine unrelated bullets, invisible to a
 scanning the open set. It is archived with a table routing every bullet to the ticket
 whose theme it shares — a cancelled bag stays readable, so the routing is never lost.
 
+**Answer what fits in a sitting.** A question that can be answered in a sitting should be
+answered, not filed: tracking it converts a decision into a queue entry, and queue entries
+outlive the thing that motivated them.
+
 `blocked_by` carries **hard** dependencies only; soft ordering preferences live in
 `related_to` plus a note in the body. A `blocked_by` entry is cleared when the blocker
 closes, and the ticket's Notes say so — the archive keeps the history, the open set keeps
@@ -82,97 +92,3 @@ a rule its agents must follow), the ticket says so in a note, and the Factory ti
 filed in the Factory's tracker when the change here lands, never before. The note
 describes the Factory work in words and never names a Factory ticket: those ids belong to
 the other tracker and can change. The Factory ticket names the ticket here.
-
-## Where things stand (2026-11-17)
-
-Since the tracker pass below, `B3-screen-parameters` shipped (PR #69),
-`0911-file-scope-silent-pass` shipped in 0.14.2, the fifth design review filed two,
-`0143-prose-checks-in-any-language` was filed, the first block of the INSPIRE Factory's
-follow-up review filed two, the second block filed `FB2-kb-contradiction-check`, and
-the fifth block filed `FB5-audit-events-kept`, `FB5-exists-precondition-error` and
-`FB5-errors-mapped-above-controller`, and governed projects' reports filed
-`0143-entity-datastore` and `0180-minted-unique-fields`. A governed project's Factory run filed
-`0180-component-without-props` and `0180-derive-only-refusals`, and amended
-`B3-overridable-types` and `FB2-kb-contradiction-check` (2026-11-17).
-The tracker pass on 2026-10-28 closed six and filed none:
-
-- `F14-semantic-types` — Done; all three criteria shipped.
-- `F09-screens`, `F10-flows` — absorbed into `B3-navigation-map` (entry screens, actor
-  and visibility, the screens `_index.md`).
-- `F12-guide`, `F13-viz` — cancelled under rule 2.
-- `090-change-scoped-test-runs` — cancelled; its cost is the emanation test estate, which
-  leaves with emanation.
-
-It also narrowed several tickets to their attended half (`F06-tdd`, `F07-gates`,
-`090-reference-data-home`) and added Factory notes where a change here needs matching
-Factory work.
-
-- **Foci:** `F04-mech` (the script split waits for emanation to leave), `F07-gates` (the ratchet's use/mention defect, and running the
-  ratchet in the Factory), `F08-authority`, `F11-lessons` (the local loop and the
-  observer ADR amendment).
-- **Follow-ups:** `070-format-doc-consolidation`, `070-relocate-validator-tests`,
-  `080-comment-density-cleanup`, `090-actor-head-without-a-role`,
-  `090-reference-data-home`, `0143-prose-checks-in-any-language` (prose-style checks
-  nothing when the KB is not in English; blocked by `B4-section-keys`),
-  `0143-factory-settings-in-emanate-yml` (High; `/inspire-config` follows the Factory's
-  settings into `emanate.yml`, and ships when the Factory publishes its 0.13.0 version),
-  `0143-entity-datastore` (High; an entity cannot say which database it lives in, so a
-  stack's second database never reaches the build), `0180-minted-unique-fields`
-  (`OS-X1` demands a conflict error for a unique value the action mints itself),
-  `0180-component-without-props` (a component with no props passes review and the Factory
-  refuses it), `0180-derive-only-refusals` (High; a spec the Factory refuses can pass every
-  INSPIRE rule).
-- **First design review, B1:** `B1-kb-structure` (Done, shipped in 0.15.0) and `B1-config-replaces-bootstrap`
-  are the two XL design items. Config waits on one decision: which shape the spec config
-  takes, the original description or the shipped `.inspire/emanate.yml`. The INSPIRE
-  Factory's control-plane design, ready for approval, takes the original description.
-  Then
-  `B1-adr-decision-rationale`, `B1-decisions-in-context`, `B1-spikes-out-of-the-kb`, and
-  `B1-operator-profiles` (Low, long-term; it now holds part 3 of
-  `B2-endorsement-reliability`).
-- **Second design review, B2:** `B2-endorsement-reliability` (parts 1 and 2),
-  `B2-git-hooks-at-init`.
-- **Third design review, B3:** `B3-entry-points`, `B3-action-effects`,
-  `B3-action-verbs`, `B3-navigation-map`, `B3-overridable-types`, `B3-ui-text-keys`.
-  Most change the KB format, so most carry a Factory note.
-- **Fourth design review, B4:** `B4-section-keys` (High; translated headings fail
-  validation today), `B4-one-home-per-value`, `B4-prose-checks-before-commit` (unblocked
-  now that 0.14.2 checks a single file). The same session amended `F06-tdd` (no tests is
-  not a pass) and `B2-git-hooks-at-init`.
-- **Fifth and last design review, B5:** `B5-react-skill-from-the-team` (High; the
-  React stack skill defers its gates and module boundaries), `B5-error-codes-on-the-wire`.
-  The same session amended `F07-gates` (the ratchet runs in the Factory),
-  `B1-spikes-out-of-the-kb` (a spike produces spec, never code, and extract gets a spike
-  mode) and `B1-config-replaces-bootstrap` (the project's base is specified in config).
-- **INSPIRE Factory follow-up review, block 1, FB1:** how a project enters the Factory
-  and how it is configured. `FB1-install-only-stack-skills` (init installs only the code
-  skills of the project's stack), `FB1-react-native-profile` (a profile for the chosen
-  mobile stack). The same block amended `B1-config-replaces-bootstrap` (each seed names its
-  image, so a functional operator never chooses one) and `B1-kb-structure` (the layout
-  migration keeps built code built, and the INSPIRE Factory accepts only INSPIRE 0.15.0 or
-  later, read from `.inspire.lock`).
-- **INSPIRE Factory follow-up review, block 2, FB2:** how a unit's agent works during a run.
-  `FB2-kb-contradiction-check` (High; a check before a plan is queued reports ADRs that
-  contradict each other, the stack, the spec or a tracker ticket, and `authority.md` says that
-  tickets are not authority). When the Factory ships its command that checks a branch as it
-  checks a unit, INSPIRE's hooks get a ticket to call it.
-- **INSPIRE Factory follow-up review, block 3, FB3:** how a unit's work is checked and
-  repaired. `FB3-config-run-related` (Done, ships in 0.17.1; `/inspire-config` writes
-  `run_related` by default and puts the review phase before the tests).
-- **INSPIRE Factory follow-up review, block 5, FB5:** errors and observability in the code the
-  Factory builds. `FB5-audit-events-kept` (the NestJS profile's audit events reach an output
-  that the default configuration keeps), `FB5-exists-precondition-error` (an `exists`
-  precondition requires an error with the same head; when it ships, the Factory's deriver gets
-  a ticket to refuse the same shape), `FB5-errors-mapped-above-controller` (the NestJS profile
-  maps domain errors for the whole app, so an error raised before the handler keeps its
-  status).
-
-A question that can be answered in a sitting should be answered, not filed: tracking it
-converts a decision into a queue entry, and queue entries outlive the thing that
-motivated them.
-
-Context and provenance: the foci, themes, dependency graph and original critical path live
-in `~/.agent/diagrams/inspire-070-clarity-map.{md,html}`; the underlying evidence per
-vector in `~/.agent/diagrams/inspire-070-vectors.html`. Both predate 0.7.0 — this README's
-status section is the current view; the diagrams are the record of how the foci were
-derived.
