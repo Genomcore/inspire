@@ -1,0 +1,93 @@
+name: Sync release with main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sync-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_BRANCH_RE: '^release/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Token de la GitHub App
+        id: app
+        if: vars.SYNC_RELEASE_APP_ID != ''
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.SYNC_RELEASE_APP_ID }}
+          private-key: ${{ secrets.SYNC_RELEASE_APP_KEY }}
+
+      - name: Abrir o avanzar la PR sync/<release> → release
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          VIA_APP: ${{ steps.app.outputs.token != '' }}
+        run: |
+          set -euo pipefail
+          summary() { echo "$1" | tee -a "$GITHUB_STEP_SUMMARY"; }
+
+          target="$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/release/" -q '.[].ref' \
+                    | sed 's#^refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" | sort | tail -1 || true)"
+          if [ -z "$target" ]; then
+            summary "No hay rama release/AAAA-MM-DD abierta: nada que sincronizar."
+            exit 0
+          fi
+
+          merged="$(gh pr list --head "$target" --base main --state merged --json number -q length)"
+          if [ "$merged" -gt 0 ]; then
+            summary "$target ya está mergeada en main: se espera a la siguiente release."
+            exit 0
+          fi
+
+          behind="$(gh api "repos/$GH_REPO/compare/$target...main" -q .ahead_by)"
+          if [ "$behind" -eq 0 ]; then
+            summary "$target ya tiene todo lo de main."
+            exit 0
+          fi
+
+          branch="sync/$target"
+          main_sha="$(gh api "repos/$GH_REPO/git/ref/heads/main" -q .object.sha)"
+
+          existing="$(gh pr list --head "$branch" --base "$target" --state open --json url -q '.[0].url // empty')"
+          if [ -n "$existing" ]; then
+            own="$(gh api "repos/$GH_REPO/compare/main...$branch" -q .ahead_by)"
+            if [ "$own" -eq 0 ]; then
+              gh api -X PATCH "repos/$GH_REPO/git/refs/heads/$branch" -f sha="$main_sha" -F force=false >/dev/null
+              summary "$branch avanzada a main @ ${main_sha:0:7}; la PR ya estaba abierta: $existing"
+            else
+              summary "La PR ya está abierta y $branch tiene $own commit(s) propios (conflictos resueltos): no se toca. $existing"
+            fi
+            exit 0
+          fi
+
+          if gh api "repos/$GH_REPO/git/ref/heads/$branch" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GH_REPO/git/refs/heads/$branch" -f sha="$main_sha" -F force=true >/dev/null
+          else
+            gh api "repos/$GH_REPO/git/refs" -f ref="refs/heads/$branch" -f sha="$main_sha" >/dev/null
+          fi
+
+          cat > body.md <<BODY
+          Sincroniza \`$target\` con \`main\` ($behind commit(s) que están en main y no en la release: hotfixes, tickets de \`docs/\`…).
+
+          - Mergear con **merge commit**, nunca squash: con squash la release y main divergen y la siguiente PR release → main da conflictos.
+          - Si hay conflictos (por ejemplo la versión, cuando un hotfix la sube), resuélvelos en esta PR: con el editor de GitHub o con un push a \`$branch\`. Nunca en \`main\`.
+          - Mientras esté abierta y sin commits propios, cada push a \`main\` avanza \`$branch\` y esta PR recoge lo nuevo.
+          - Mergearla mueve la cabeza de \`$target\`: la PR \`$target\` → main necesitará un approval nuevo antes de la daily.
+          BODY
+          if [ "$VIA_APP" != true ]; then
+            echo "- Si no aparecen los checks, cierra y reabre la PR: las PRs que abre \`GITHUB_TOKEN\` no lanzan otros workflows." >> body.md
+          fi
+          url="$(gh pr create --base "$target" --head "$branch" --title "Sync main into $target" --body-file body.md)"
+          summary "PR abierta: $url"

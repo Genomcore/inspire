@@ -9,8 +9,8 @@ Run the mechanical rules over the whole KB, whatever the module scope:
 .inspire/bin/review.sh inspire_kb
 ```
 
-It runs every rule in `review.sh`'s list, `spec-identity.sh`, `face-exposure.sh` and
-`process-shape.sh` among them. Report each error as `critical` and each warning as
+It runs every rule in `review.sh`'s list, `spec-identity.sh`, `face-exposure.sh`,
+`process-shape.sh` and `store-coherence.sh` among them. Report each error as `critical` and each warning as
 `important`, under the section its file belongs to, and name the rule. The judgment
 phases below never restate a finding a validator already made.
 
