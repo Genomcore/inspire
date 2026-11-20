@@ -1,5 +1,5 @@
 {
-  "commit": "14e2bec9ec7a12ec8fdbc14d300a4ee6eb6dfbd5",
+  "commit": "5fec8d8a442b12dfa74b580af36e84962accbda4",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -12,7 +12,7 @@
     ".claude/skills/_references/conventions/_example.md": "4841e0be766a1e0abd2c4a0d722d82c74fff4eba6939245837ed2f26a5068baa",
     ".claude/skills/_references/conventions/graphql.md": "7dd705058aa10cf2bea406fc912903eb61b4a9c874b6563b6c02d71588527bb5",
     ".claude/skills/_references/conventions/rest.md": "66072451ad25ddb34e626960b2d596349afb38ae9793764e21647824ece6fc04",
-    ".claude/skills/_references/derived-contract.md": "1f0279ce814d94926974ea8c18eb8a67fc4b8d61f4a887d22eab62ef0964bb5b",
+    ".claude/skills/_references/derived-contract.md": "9b551532b24c09b398f60c43c2719cf1f68a98fed4c7c76fc50662a6fda9f2d2",
     ".claude/skills/_references/face-scope.md": "5c6ae86a5112f5ef9b94a5926b5f0313396578eeb2430d6f8eddd4092dcd4add",
     ".claude/skills/_references/findings-format.md": "2ced78661c2567814236077c17c1090da958adb1ad97686282e460741e17c05b",
     ".claude/skills/_references/git-conventions.md": "989a6b0646d222ffa52c2ae91e60f5efa146268e1cacc2bc61584e2c4b459cee",
