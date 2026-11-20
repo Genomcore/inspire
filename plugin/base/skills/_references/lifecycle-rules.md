@@ -88,7 +88,7 @@ and an ADR's `### Breaking changes` (an ADR that breaks nothing still says so).
 | Rule | draft | accepted | stable | superseded |
 |---|---|---|---|---|
 | `field-coverage` (every entity Fields row touched by ≥1 action) | warning | error | error | warning |
-| `type-cells` (every Type cell names a universal type or a declared project type on a universal base) | warning | error | error | warning |
+| `type-cells` (every Type cell names a universal type or a declared project type on a universal base; records and their rows sit only in Inputs and Outputs, each row under a parent of the right type) | warning | error | error | warning |
 | `rationale-link` (≥1 link in Rationale / Purpose / Behavior) | warning | error | error | warning |
 | `keys-present` — what a keyed entry says (`OS-A2` · `OS-A5` · `OS-A6` · `OS-A8` · `OS-A9` · `OS-E5` · `OS-E6`) | warning | error | error | warning |
 | `constraints-mechanics` — vocabulary, arity, placement and a row for every field sub-section (`OS-E2` · `OS-E4` · `OS-E8` · `OS-E9`) | warning | error | error | warning |
