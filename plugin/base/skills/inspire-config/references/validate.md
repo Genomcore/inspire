@@ -56,7 +56,8 @@ warning explicitly.
 | no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
 | a Vitest e2e check whose config sets `fileParallelism: false`, with no `--fileParallelism`, while its test code gives each file its own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`), on INSPIRE Factory 0.19.0 or later | warning | its files run one at a time; four at once ran a 279-file suite in 120 s instead of 425 s ([`derive.md`](derive.md) § Run checks). No warning when the database is shared or cannot be found |
 | a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
-| `{files}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
+| `{files}` or `{tests}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
+| a Jest or Vitest e2e check whose `run_related` uses `{files}` | warning | an e2e test seldom imports the file a unit changed, so it does not run in the unit and its citations do not count; use `{tests}` ([`derive.md`](derive.md) § `run_related`) |
 | a `run_related` whose runner or flags differ from its `run` beyond the narrowing | warning | the units and the release check would run different suites |
 | a `review` phase after a `tests` phase | warning | a change the review rejects costs a full test run before its repair |
 | `npm run <x>` with no script `<x>`; `npx --no-install <bin>` with `<bin>` not a dependency | warning | the command fails in every unit |

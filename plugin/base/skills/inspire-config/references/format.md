@@ -148,7 +148,7 @@ a phase.
 |---|---|---|
 | (keys) | only `name`, `run`, `run_related` and `report` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related, report` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
-| `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed. It must contain `{files}`, and it must pass when no test relates to those files: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files}` |
+| `run_related` | optional; the same command as `run`, narrowed to the tests related to the unit: those related to the files it changed (`{files}`) or those that cite its claims (`{tests}`). It must contain `{files}` or `{tests}`, and it must pass when no test relates to them: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files} or {tests}` |
 | `report` | optional; the path, from the repository root, of the JSON test report that `run` and `run_related` write on every run (§ Test reports). Inside the repository, not under `.git`, a protected path, `.claude/worktrees` or `.inspire/check-output`, and never the same file as another check's, in any case | `… check <name> report must be a nonempty string` · `… check <name>: report <path> must be a path inside the repository` · `… check <name>: report <path> must not be under <dir>` · `…: checks <a> and <b> both write the report <path>` |
 
 There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
@@ -168,6 +168,18 @@ runner takes file paths:
 
 - Jest: `npx --no-install jest --passWithNoTests --findRelatedTests {files}`
 - Vitest: `npx --no-install vitest related --run --passWithNoTests {files}`
+
+`{tests}` becomes the test files under the `claims` roots that cite a claim of the
+unit or of a unit it requires, plus the files the unit changed there that cite any
+claim, as absolute paths, each shell-quoted. When there are none, the check runs
+`run`. It suits e2e suites, whose tests start the whole application, relate to
+almost every change and seldom import the file a unit changed:
+
+- Jest: `npx --no-install jest --passWithNoTests --runTestsByPath {tests}`
+- Vitest: `npx --no-install vitest run --passWithNoTests {tests}`
+
+A factory that does not know `{tests}` refuses the file when the run starts, with
+`… run_related must contain {files}`: update the factory.
 
 Without `--passWithNoTests`, a unit that changes only files outside this check's
 package fails it: no test relates to them, and the runner exits non-zero.
@@ -194,7 +206,8 @@ repository root. The factory:
   prompt;
 - counts a `@claim` citation only in a file in which a test passed in a report of the
   unit's checks. A test that `run_related` does not select never counts in that unit, so
-  the claims of a unit must be cited in tests its related run reaches.
+  the claims of a unit must be cited in tests its related run reaches: `{tests}` selects
+  them all.
 
 A run whose plan has units with claims stops before it starts when no check has a
 report: `<n> units of the plan have claims, but no tests check of .inspire/emanate.yml
@@ -366,6 +379,7 @@ phases:
         report: 'source/.inspire-report-unit-tests.json'
       - name: E2E tests
         run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json'
+        run_related: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --passWithNoTests --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json {tests}'
         report: 'source/.inspire-report-e2e-tests.json'
   - name: claims
     checks:
@@ -381,7 +395,8 @@ with `sandbox.memory: 2g` or more, on INSPIRE Factory 0.19.0 or later. On an old
 the check keeps the config's one file at a time. `bash_timeout: 600` lets an agent's
 long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
-profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
-an e2e test that starts the whole application relates to most changes, so the
-narrowing saves little there. That one `run_related` turns on the release check. Both
+profiles; drop it to run without reviews. The unit tests narrow by `{files}`; the e2e
+tests, which start the whole application and relate to almost every change, by
+`{tests}`, the files that cite the unit's claims. Either `run_related` turns on the
+release check. Both
 test checks write a report, each to its own file: the e2e tests prove claims too.

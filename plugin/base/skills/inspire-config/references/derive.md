@@ -105,10 +105,19 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   - Vitest: `vitest run` becomes `vitest related --run`, plus `--passWithNoTests`
     and `{files}` at the end.
 
-  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite whose
-  tests start the whole application gains little, so it gets none unless the
-  operator asks. Other runners get none unless the operator gives the command and
-  it passes with no related test. In the proposal, say that
+  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite, whose
+  tests start the whole application and so relate to almost every change, is
+  narrowed by `{tests}` instead of `{files}`: the test files that cite a claim of the
+  unit or of a unit it requires. A test that `run_related` does not select never
+  counts as a citation in that unit, and an e2e test seldom imports the file a unit
+  changes, so with `{files}` the unit's claims cited only in e2e tests would stay
+  uncited:
+  - Jest: `run` plus `--passWithNoTests --runTestsByPath {tests}`;
+  - Vitest: `run` plus `--passWithNoTests` and `{tests}` at the end.
+
+  When no test cites those claims, the factory runs `run`, the whole e2e suite.
+  Other runners get none unless the operator gives the command and it passes with
+  no related test. In the proposal, say that
   `run_related` turns on the release check, which runs the whole suite once more
   before the PR; the operator may drop it from the draft like any other key.
 - **`report`.** On by default ([`format.md`](format.md) § Test reports); no question
@@ -210,7 +219,9 @@ are expected.
 - A `review` phase after `tests` is a file written before the factory ran only
   related tests; propose moving it before `tests`.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
-  as in a new file.
+  as in a new file, and so does a Jest or Vitest e2e suite, with `{tests}`. An e2e
+  `run_related` with `{files}` gets `{tests}` in its place (`--findRelatedTests {files}`
+  becomes `--runTestsByPath {tests}`).
 - A Jest, Vitest or pytest test check without `report` gets one in the proposal, with
   its reporter flags in `run` and `run_related`, as in a new file (§ `report`).
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
