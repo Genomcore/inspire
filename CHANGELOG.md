@@ -9,6 +9,70 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.21.0 — 2026-11-20
+
+Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
+Factory release that requires 0.21.0 does not start a run whose plan has units with
+claims unless a test check of `.inspire/emanate.yml` declares its JSON test `report`.
+No hop and no layout change, and a knowledge base without a store file changes
+nothing. The update re-materializes the skills,
+references, templates and validators listed below.
+
+### Breaking for existing vaults
+
+- **Test checks declare a JSON report.** The Factory now passes a unit only when the
+  tests that cite its claims ran and passed, which it reads from each test check's
+  report. Run `/inspire-config init` after the update: it adds `report` and the
+  reporter flags to every Jest, Vitest and pytest check (§ Changed). A run whose plan
+  has units with claims and no check with a report stops before it starts. A pytest
+  project also needs `pytest-json-report` among its development dependencies.
+
+### Added
+
+- **A face declares the state it keeps between screens in one store**
+  (`adr-face-store`, Proposed): `_faces/{face}/{face}.store.md`, with server keys (an
+  action and a load trigger), client keys (type, initial value, `Persist`) and an
+  `## On error` default per error class. A screen or the shell reads a key with
+  ``store `k` `` and writes it from a dispatch's `On success` (``set store `k` ``,
+  ``refresh store `k` ``) or from a navigation's new `Then` column
+  (``set store `k` from param `p` ``). An outcome cell may hold several outcomes joined
+  by `; `, at most one of which navigates or enters a state.
+- **The shell binds data**: the shell layout gains `## LAY8: Bindings`, and with
+  several faces each face names its shell in `shell_layout:` (default `shell`).
+- **An `inspire-store` skill and template.**
+- **The derived contract** gains `store`, a ninth unit kind, with its claims,
+  fingerprints and refusals `DR-K1`–`DR-K4`; a shell's bindings become claims keyed by
+  its layout id.
+- **A validator, `store-coherence.sh`.** `screen-coherence.sh` checks the new outcome
+  forms and the shell's bindings, `face-exposure.sh` the store's and the shell's
+  actions against the face's bundles, and `spec-identity.sh` one store per face,
+  `shell_layout:`, and a store whose id is another unit's id.
+- **React's `## Store` seed**: TanStack Query for server keys and Zustand for client
+  keys, which a project may swap.
+
+### Changed
+
+- **`/inspire-config` writes the test report of every Jest, Vitest and pytest check**:
+  `report` names `.inspire-report-<check>.json`, and `run` and `run_related` carry the
+  reporter flags (Vitest `--reporter=default --reporter=json --outputFile.json=<file>`,
+  Jest `--json --outputFile=<file>`, pytest `--json-report --json-report-file=<file>`).
+  `.gitignore` covers `.inspire-report-*.json`. Other runners get no report.
+- **A Jest or Vitest e2e check narrows by `{tests}`**, the test files that cite a claim
+  of the unit or of a unit it requires: an e2e test seldom imports the file a unit
+  changes, so under `{files}` its citations never count. On update, an e2e
+  `run_related` with `{files}` is proposed to switch.
+- **A binding claim hashes only the `## Bindings` rows its action selects**
+  (`derived-contract.md` § Binding claims): the route rows of its verb (or `*` /
+  `* with id`), the plural row of its entity and its guard rows, plus its input names
+  and roles. Rewording the section's prose moves no fingerprint, and neither does a
+  rule written only as prose: the shipped `inspire-code-nestjs` seed states its rules
+  for named operations, plurals and the guard in prose, so a project that wants them to
+  move fingerprints declares them as rows (`### Routes`, `### Plurals`, `### Guard`).
+  Nothing to run after the update: the Factory re-stamps the old fingerprints itself.
+- **`/inspire-config review` reports** a test check without `report`, a report its
+  commands do not write, pytest without `pytest-json-report`, a report `.gitignore`
+  does not cover, and an e2e `run_related` with `{files}`.
+
 ## 0.20.0 — 2026-11-19
 
 Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout

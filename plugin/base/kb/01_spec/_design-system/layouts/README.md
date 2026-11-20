@@ -18,6 +18,18 @@ A screen links both: `**Pattern:** [list](../../../_design-system/patterns/list.
 bars, every persistent control — is a layout entry too, `shell.layout.md`, that no screen
 names because it frames every route.
 
+## The shell binds data
+
+The shell is the one layout that shows data and fires actions: the signed-in user in
+the sidebar, the study being worked on, a sign-out button. It declares them in
+`## LAY8: Bindings`, in a screen's binding format, and reads and writes its face's
+store the way a screen does (``store `me` `` in a data row). It has no
+`### Parameters`, because no route opens it.
+
+A shell that binds data serves one face, and lists it in `faces:`. With several
+faces, each face names its own shell entry in its `shell_layout:` field, and the
+entry named `shell` is the default for a project with one face.
+
 A layout at `**State:** to-extract` is a unit INSPIRE Factory builds, like a
 pattern or a component: each `## Geometry` and `## Breakpoints` row is a claim its
 tests cite, and a screen waits for every layout its `**Layout:**` line names. Every

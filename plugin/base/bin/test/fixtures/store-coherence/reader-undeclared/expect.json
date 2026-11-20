@@ -1,0 +1,23 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "screen reads store key 'ghost', which the store of face 'portal' does not declare",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "screen refreshes store key 'currentStudyId', which is a client key — only a server key can be",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "screen sets store key 'study', which is a server key — only a client key can be",
+      "severity": "error"
+    }
+  ],
+  "forbidden": [
+    "has no store"
+  ]
+}

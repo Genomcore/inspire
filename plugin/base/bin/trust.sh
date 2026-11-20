@@ -188,6 +188,7 @@ owner_for() {
     *.entity.md|*.action.md)         printf 'domain\n' ;;
     *.face.md|*.bundle.md)           printf 'face\n' ;;
     *.process.md)                    printf 'process\n' ;;
+    *.store.md)                      printf 'store\n' ;;
     *.screen.md|*.pattern.md|*.layout.md|*.component.md|_index.md) printf 'screens\n' ;;
     *)                               printf '\n' ;;
   esac
