@@ -45,6 +45,7 @@ screen-coherence.sh \
 screen-presentation.sh \
 design-system-coherence.sh \
 field-coverage.sh \
+type-cells.sh \
 rationale-link.sh \
 keys-present.sh \
 constraints-mechanics.sh \
