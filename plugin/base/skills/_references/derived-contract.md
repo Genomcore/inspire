@@ -409,9 +409,9 @@ whitespace-collapsed and trimmed:
 | entity datastore | `datastore` · the datastore id · the stack id it maps to |
 | invariant · precondition · postcondition · error | the canonical head text (empty when there is none) · the prose |
 | behavior step | the canonical head text (always empty) · the prose |
-| binding route | `route` · the input names, sorted and comma-joined · the bindings text |
-| binding dispatch | `dispatch` · the bindings text |
-| binding guard | `guard` · the roles, sorted and comma-joined, or `public` · the bindings text |
+| binding route | `route` · the input names, sorted and comma-joined · the route rows · the plural row |
+| binding dispatch | `dispatch` · the input names, sorted and comma-joined · the route rows · the plural row |
+| binding guard | `guard` · the roles, sorted and comma-joined, or `public` · the input names, sorted and comma-joined · the route rows · the plural row · the guard rows |
 | screen parameter | in · type name · required · notes |
 | screen data | action id · notes |
 | screen dispatch | action id · trigger · canonical `on_success` · canonical `on_error` |
@@ -467,10 +467,36 @@ derived by INSPIRE Factory's deriver.
 - **The binding profile** is the one profile in that set whose frontmatter says
   `layer: backend` and whose `## Bindings` section is not blank. None: the action
   carries no binding claims. More than one: `DR-B1`.
-- **The bindings text** is that section's lines, HTML comments stripped, joined
-  by newlines — the same section reader every other claim uses. Any edit to the
-  section moves every action's binding fingerprints, which is the correct
-  reading: the rule that renders every route changed.
+- **The binding rows** are the rows of that section's tables, each row's cells
+  with backticks dropped, whitespace-collapsed and joined by ` | `, keyed by its
+  first cell. When the section has a `### Routes`, `### Plurals` or `### Guard`
+  subsection, each kind of row comes from its own subsection; otherwise every
+  table of the section serves all three. An action selects:
+  - **the route rows**: the row keyed by its verb, else the rows keyed `*` and
+    `* with id`, joined by U+001F;
+  - **the plural row**: the row keyed by its entity, else the row keyed `*`;
+  - **the guard rows**: with an `actor(…)` precondition, the rows whose key
+    starts with `actor(`; without one, the row keyed `public`; joined by U+001F.
+
+  A row the action does not select, the prose of the section and its links are
+  never hashed. Rewording the section moves no fingerprint; editing a row moves
+  the binding fingerprints of the actions that select it, and only those.
+  A rule written only as prose is therefore not hashed at all. The shipped
+  `inspire-code-nestjs` seed has one table, the five verbs, with no `*` or
+  `* with id` row, no plural row and no guard row: its rules for named
+  operations, for plurals and for the guard are prose. With that seed a named
+  operation's route hashes no row, no action hashes a plural or guard row, and
+  editing any of those three rules moves no fingerprint, so built code keeps the
+  old rule. To have them move fingerprints, declare them as rows: `*` and
+  `* with id` under `### Routes`, `### Plurals`, and `### Guard`. Adding those
+  rows moves, once, the binding fingerprints of every action that selects them.
+  A moved fingerprint is not a rebuild: INSPIRE Factory first checks whether the
+  test that cites the claim still proves it, and changes code only when it does
+  not. When an action's `binding/route` moves, the built screens that call the
+  action check their calls to it as well.
+  INSPIRE Factory hashed the whole section before; each run re-stamps, before it
+  plans and with no agent, the citations of those fingerprints whose selected
+  rows did not change.
 - **The roles** are the first argument of every `## Preconditions` entry whose
   head word is `actor`, deduplicated and sorted bytewise.
 - **The input names** feed the route: whether the action takes the entity's
