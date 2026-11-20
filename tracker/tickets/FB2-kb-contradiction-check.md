@@ -2,7 +2,7 @@
 id: FB2-kb-contradiction-check
 title: "FB2 — a KB that contradicts itself reaches the Factory"
 created: 2026-11-06
-updated: 2026-11-17
+updated: 2026-11-20
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [adr, workspace]
 status: Open
 blocked_by: []
-related_to: [B1-decisions-in-context, B4-one-home-per-value, B1-adr-decision-rationale, 0180-derive-only-refusals]
+related_to: [B1-decisions-in-context, B4-one-home-per-value, B1-adr-decision-rationale, 0180-derive-only-refusals, 0200-inputs-and-states-without-a-rule, 0200-lookup-before-the-access-check]
 ---
 
 ## Origin
@@ -99,3 +99,30 @@ appeared only when its unit started, after the run had already built 54 units. T
 already ships `derive` for one unit, which is how the project checked its fixes. This ticket
 now asks for the attended side of that check. The Factory side, where the planner derives every
 unit and reports the plan as not ready, is Factory work in the Factory's tracker.
+
+**Amended 2026-11-20 (genomics-suite, GSTKT-78).**
+
+Four runs on INSPIRE 0.20.0 and Factory 0.22.1 in `strict` mode (2026-11-19) stopped 14 units
+with 15 reasons, and `review.sh` had returned 0 errors on the whole KB before each run. Four
+reasons were a descriptor against an ADR or against the `## Bindings` of the stack skill it builds with:
+
+| Run | Unit | Contradiction |
+|---|---|---|
+| run-1qAMLj | `findings.comment` | the entity's alias is "unique within the organisation"; the ADR on external identifiers scopes it by `org_id`, and the entity has no `org_id` |
+| run-baCbUx | `cases.case.open` | body references typed as uuids; the bindings' alias-or-id pipe resolves them by alias |
+| run-baCbUx | `findings.comment.post` | the pipe's `404` has no problem shape in `## Bindings`, and the action names none |
+| run-baCbUx | `findings.interpretation.classify` | `case_id` typed as uuid against the alias-or-id pipe |
+
+This ticket now also asks for:
+
+- **A descriptor against the `## Bindings` of the stack skill it cites** as a fourth source: an
+  input type or an error that the bindings decide differently is a contradiction.
+- **A descriptor against the code already built from it**, as an open question: a field or an
+  error code the descriptor removes or reuses while built code still uses it. Three reasons in the
+  same runs were this case (a screen that still sent `org_id`); the Factory side, where the
+  planner rebuilds that code, is Factory work in the Factory's tracker.
+
+Of the other reasons in these runs, input combinations and states with no rule are
+`0200-inputs-and-states-without-a-rule`, and a lookup by alias before the access check is
+`0200-lookup-before-the-access-check`. Logs: `Genomcore/inspire-factory-logs`,
+`runs/genomics-suite/<run>/state.json`, field `spec_issues`.
