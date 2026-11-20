@@ -19,6 +19,9 @@
 #   - (solo Inspire) si la PR toca el runtime, el manifest está al día y la PR
 #     añade su entrada a esa sección del CHANGELOG. La skill /release-entry lo
 #     deja preparado.
+# Se comprueba el merge de la PR con la release tal como está ahora
+# (refs/pull/N/merge), que es lo que va a entrar: si otra PR ya trajo el bump,
+# vale para todas sin que se actualicen con la release.
 # Las PRs sync/ (main → release, de sync-release.yml) no se comprueban: solo
 # traen lo que ya está en main.
 #
@@ -117,10 +120,13 @@ jobs:
             echo "✓ $HEAD_REF"
           fi
 
+      # Contra main, el commit de la PR; contra la release, su merge con la
+      # release actual (la ref viva, no github.sha: en un relanzamiento tras
+      # reapuntarla, github.sha sigue siendo el merge con main).
       - uses: actions/checkout@v4
         if: steps.branch.outputs.bump == 'true' || steps.branch.outputs.bump == 'false'
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.live.outputs.mode == 'release' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.event.pull_request.head.sha }}
           fetch-depth: 0 # historial completo + tags
 
       - name: docs/ solo toca tracker/
