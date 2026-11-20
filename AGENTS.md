@@ -332,4 +332,6 @@ asks the operator anything.
 - **Releasing** — the version bumps, the hash manifest, `CHANGELOG.md`, the
   release-branch workflow and the post-merge tag + GitHub release (**merging is not
   releasing**) — follows the `/template-release` skill in `.claude/skills/`. Load it
-  whenever you cut, tag or publish a version.
+  whenever you cut, tag or publish a version. Every PR into a `release/` branch
+  carries its own share — the bump, its `CHANGELOG.md` entry and the manifest —
+  which `/release-entry` prepares before `gh pr create`.
