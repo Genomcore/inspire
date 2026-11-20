@@ -471,8 +471,7 @@ derived by INSPIRE Factory's deriver.
   with backticks dropped, whitespace-collapsed and joined by ` | `, keyed by its
   first cell. When the section has a `### Routes`, `### Plurals` or `### Guard`
   subsection, each kind of row comes from its own subsection; otherwise every
-  table of the section serves all three, which is the shape of the shipped
-  seeds. An action selects:
+  table of the section serves all three. An action selects:
   - **the route rows**: the row keyed by its verb, else the rows keyed `*` and
     `* with id`, joined by U+001F;
   - **the plural row**: the row keyed by its entity, else the row keyed `*`;
@@ -482,6 +481,15 @@ derived by INSPIRE Factory's deriver.
   A row the action does not select, the prose of the section and its links are
   never hashed. Rewording the section moves no fingerprint; editing a row moves
   the binding fingerprints of the actions that select it, and only those.
+  A rule written only as prose is therefore not hashed at all. The shipped
+  `inspire-code-nestjs` seed has one table, the five verbs, with no `*` or
+  `* with id` row, no plural row and no guard row: its rules for named
+  operations, for plurals and for the guard are prose. With that seed a named
+  operation's route hashes no row, no action hashes a plural or guard row, and
+  editing any of those three rules moves no fingerprint, so built code keeps the
+  old rule. To have them move fingerprints, declare them as rows: `*` and
+  `* with id` under `### Routes`, `### Plurals`, and `### Guard`. Adding those
+  rows moves, once, the binding fingerprints of every action that selects them.
   A moved fingerprint is not a rebuild: INSPIRE Factory first checks whether the
   test that cites the claim still proves it, and changes code only when it does
   not. When an action's `binding/route` moves, the built screens that call the
