@@ -1,0 +1,34 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: field `shipping` is typed `address`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-no-base: field `tenant` is typed `tenant`, a project type that declares no base type"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-empty: input `note` declares no type"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-no-base: output `balance` is typed `ledger_amount`, a project type whose base `decimal` is not a universal type"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-alias: `shop::order` field `shipping` is typed `text`, a rejected alias: use `string`"
+    }
+  ],
+  "forbidden": [
+    "`id`",
+    "\"warning\""
+  ]
+}

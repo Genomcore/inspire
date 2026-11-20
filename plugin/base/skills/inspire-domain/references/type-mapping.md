@@ -52,7 +52,7 @@ Which of the three homes a new type belongs in is decided by who would recognize
 
 Two consequences worth stating:
 
-- A project semantic type with neither a base type nor a rendering row is caught at emanation, not authoring time: INSPIRE Factory's planner refuses a unit in that state as a readiness error, rather than emitting a guess.
+- A Type cell that names no type, a rejected alias, an undeclared type or a project type with no universal base is caught at authoring time by `type-cells` in `review.sh`: a warning at `draft`, an error from `accepted` on. INSPIRE Factory's deriver refuses the same cells, so an artifact that skipped review is still stopped before a guess is emitted.
 - The `enum<...>` form is parametric. If the variants change between actions on the same entity, `entity-coherence` flags it as a field-conflict (different type-strings, even though the semantic kind matches).
 
 ## Type aliases (rejected)

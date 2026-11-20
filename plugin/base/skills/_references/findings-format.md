@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `type-cells`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -75,6 +75,10 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 |---|---|---|
 | `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. Entities and actions only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
+| `type-empty` | type-cells | A Type cell is empty, `-` or `—`. |
+| `type-alias` | type-cells | A Type cell names a rejected alias (`int`, `bool`, `text`, `varchar(N)`, `numeric(p,s)`); the message names the type to use. |
+| `type-unknown` | type-cells | A Type cell names a type that is neither universal nor a row of `00_bootstrap/semantic-types.md`. |
+| `type-no-base` | type-cells | A Type cell names a project type whose `Base type` is empty or not universal. |
 | `has no link in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-link | No back-source link in the rationale-bearing section(s). |
 | `link does not resolve` | links-resolve | A Markdown link in a KB file (any `.md` but a template or a file under `_migration/`) has a path that, joined to the linking file's directory, names no file and no directory; a path that starts with `/` joins the repository root. Screen files are checked alongside entities and actions, so a dangling navigation target is reported here. Fix it by correcting the path or by creating the target first ([kb-links.md](kb-links.md)). |
 | `wikilink [[…]]` | links-resolve | A wikilink in a KB file. It is an error at every lifecycle; `/inspire:migrate` converts it, or settles it: a draft of the artifact it names, or its text. |
