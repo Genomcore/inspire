@@ -13,13 +13,16 @@ A release needs both `plugin/.claude-plugin/plugin.json` and
 changelog is the release-note channel, one section per release, and the convention
 starts at 0.9.0. `.claude/hooks/template-runtime-version.sh` blocks `gh pr create`
 if the two versions diverge, if the runtime changed without a bump, or if the
-version is already tagged. It checks only PRs into `main`. `plugin/scripts/` is
-deliberately **not** exempt from that check: it decides how every install behaves.
+version is already tagged. `plugin/scripts/` is deliberately **not** exempt from
+that check: it decides how every install behaves.
 
 Ticket work lands on the open `release/YYYY-MM-DD` branch, cut from `main` by the
-daily release workflow, whose PR to `main` is the release PR. The first PR into a
-fresh release branch bumps both versions to the next minor, and **ships the
-manifest for the new version in the same PR**: the test suite reads
+daily release workflow, whose PR to `main` is the release PR. **Every PR into the
+release carries its share of it** — the bump, its `CHANGELOG.md` entry and a
+manifest that describes the tree — and the Release check and the same hook block
+it otherwise; `/release-entry` prepares all three. So the first PR into a fresh
+release branch bumps both versions to the next minor, and **ships the manifest for
+the new version in the same PR**: the test suite reads
 `plugin/manifests/<plugin.json version>.json`, so a bump without it fails
 `materialize/01-init-current-tree`, `upgrade/22b-derive-equal-real-root` and
 `upgrade/17-e2e-0.2.1` on "lock carries a real template_sha". Commit the bump
