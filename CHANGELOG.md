@@ -14,8 +14,8 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
 Factory release that requires 0.21.0 does not start a run whose plan has units with
 claims unless a test check of `.inspire/emanate.yml` declares its JSON test `report`.
-No hop and no layout change; a knowledge base without a store file changes nothing,
-and every existing claim keeps its fingerprint. The update re-materializes the skills,
+No hop and no layout change, and a knowledge base without a store file changes
+nothing. The update re-materializes the skills,
 references, templates and validators listed below.
 
 ### Breaking for existing vaults
@@ -61,6 +61,14 @@ references, templates and validators listed below.
   of the unit or of a unit it requires: an e2e test seldom imports the file a unit
   changes, so under `{files}` its citations never count. On update, an e2e
   `run_related` with `{files}` is proposed to switch.
+- **A binding claim hashes only the `## Bindings` rows its action selects**
+  (`derived-contract.md` § Binding claims): the route rows of its verb (or `*` /
+  `* with id`), the plural row of its entity and its guard rows, plus its input names
+  and roles. Rewording the section's prose moves no fingerprint, and neither does a
+  rule written only as prose: the shipped `inspire-code-nestjs` seed states its rules
+  for named operations, plurals and the guard in prose, so a project that wants them to
+  move fingerprints declares them as rows (`### Routes`, `### Plurals`, `### Guard`).
+  Nothing to run after the update: the Factory re-stamps the old fingerprints itself.
 - **`/inspire-config review` reports** a test check without `report`, a report its
   commands do not write, pytest without `pytest-json-report`, a report `.gitignore`
   does not cover, and an e2e `run_related` with `{files}`.
