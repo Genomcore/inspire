@@ -26,12 +26,6 @@ while IFS="$(printf '\t')" read -r id profiles image desc; do
   check "seed $id: its image is neither slim nor alpine" \
     "! printf '%s' '$image' | grep -E >/dev/null 'slim|alpine|latest'"
   check "seed $id: describes its image" "[ \${#desc} -gt 20 ]"
-  # seed.json is what the tools read; the table repeats it for the operator.
-  J="$BASE/seeds/$id/seed.json"
-  check "seed $id: ships its seed.json and a starter" "[ -f '$J' ] && [ -f '$BASE/seeds/$id/files/README.md' ]"
-  eq "seed $id: the table's profiles are seed.json's" "$profiles" "$(jq -r '.profiles | join(",")' "$J")"
-  eq "seed $id: the table's image is seed.json's" "$image" "$(jq -r .image.name "$J")"
-  eq "seed $id: the table's description is seed.json's" "$desc" "\`$(jq -r .image.description "$J")\`"
   for prof in $(printf '%s' "$profiles" | tr ',' ' '); do
     check "seed $id: a shipped skill serves '$prof'" \
       "grep -l >/dev/null '^stack: $prof\$' '$BASE'/skills/*/SKILL.md"
@@ -73,5 +67,14 @@ eq "wizard: every question is marked product or technical" "$unmarked" "0"
 has "wizard: a technical question can keep the default" "$(cat "$W")" "I don't know — keep the default"
 first="$(grep -nE '^\| P3 \|' "$W" | cut -d: -f1)"; stack="$(grep -nE '^\| T1 \|' "$W" | cut -d: -f1)"
 check "wizard: the target is asked before the stack" "[ '$first' -lt '$stack' ]"
+
+# The starter project is written by an agent each time: none ships, and the operator
+# is told what rides on it before a file is written.
+S="$(cat "$BASE/skills/inspire-config/references/stack-interview.md")"
+check "no starter project ships" "[ ! -e '$BASE/seeds' ] && [ ! -e '$BASE/bin/scaffold.sh' ]"
+has "starter: the operator is told everything is built from it" "$S" "Everything else is built from this code."
+has "starter: and to use the most capable model" "$S" "most capable model you have"
+has "starter: and to review the code before committing it" "$S" "review the code yourself before you commit it"
+has "starter: no command is described as passing without being run" "$S" "Never"$'\n'"   describe one as passing without having run it."
 
 summary

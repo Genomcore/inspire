@@ -178,13 +178,10 @@ sources leave it open.
 
 ## An empty project
 
-A project gets its starter before this flow: the seed's, or the minimal application
-of a described stack ([`seeds.md`](seeds.md) § The starter project). With no code
-under `source_root`, say so and offer `/inspire-config stack`, which lays it; derive
-from the starter once it is on disk. The `web` seed's starter is one package:
-`setup` is `(cd source && npm ci)`, the checks are its `lint`, `typecheck`, `build`,
-`test` and `test:e2e` scripts, and the claim roots are `source/src`, `source/test`
-and `source/web/test`.
+A project gets its starter project before this flow
+([`stack-interview.md`](stack-interview.md) § The starter project). With no code under
+`source_root`, say so and offer `/inspire-config stack`, which builds it; derive from
+the starter once it is on disk, reading its real scripts and test directories.
 
 A factory that still scaffolds an empty project itself does so before the first
 unit and adapts it to this file. Deriving for a project left empty on purpose, warn

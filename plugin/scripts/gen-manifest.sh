@@ -7,9 +7,8 @@
 # installed project has on disk — because that is what gets compared to disk.
 # Two layouts exist:
 #   pre-0.3 : install.sh copied .inspire/{skills,bin,hooks} → .claude/{skills,bin,hooks}
-#   0.3     : materialize.sh copies base/{bin,hooks,skills,agents,visor,seeds} → .inspire/bin,
-#             .claude/inspire/hooks, .claude/skills, .claude/agents, .inspire/visor,
-#             .inspire/seeds — excluding
+#   0.3     : materialize.sh copies base/{bin,hooks,skills,agents,visor} → .inspire/bin,
+#             .claude/inspire/hooks, .claude/skills, .claude/agents, .inspire/visor — excluding
 #             whatever lib/merge.sh's _base_excluded rejects (today: the top-level
 #             base/bin/test/ entry and any top-level template-*.sh entry).
 #             That function is SOURCED here rather than re-expressed: it is the
@@ -22,8 +21,7 @@
 # `git ls-tree -r <commit> -- plugin/base/agents` is empty at every tag up to
 # v0.8.0 — the class first ships at 0.9.0 — so every pre-0.9 manifest
 # regenerates byte-identically with `agents` in the map (and every pre-0.18
-# manifest with `visor`, which first ships at 0.18.0, and every pre-0.21
-# manifest with `seeds`), which is what
+# manifest with `visor`, which first ships at 0.18.0), which is what
 # test/manifest/03-reproduction-sweep.sh asserts over the lot, and it is
 # the mechanical half of the argument for extending the 0.3 layout rather than
 # minting a new one (see scripts/hops/layouts.tsv). The layout id is therefore
@@ -76,8 +74,8 @@ if git -C "$REPO" cat-file -e "$commit:plugin/.claude-plugin/plugin.json" 2>/dev
   LAYOUT="0.3"
   IDENTITY_PATH="plugin/.claude-plugin/plugin.json"
   SRC_PREFIX="plugin/base"
-  MAP_NAMES="bin hooks skills agents visor seeds"
-  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills .claude/agents .inspire/visor .inspire/seeds"
+  MAP_NAMES="bin hooks skills agents visor"
+  MAP_DESTS=".inspire/bin .claude/inspire/hooks .claude/skills .claude/agents .inspire/visor"
 else
   LAYOUT="pre-0.3"
   IDENTITY_PATH=".inspire/manifest.json"

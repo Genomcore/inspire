@@ -21,7 +21,6 @@
 #                   [--source-root VALUE]     # e.g. source | . | none   (init/update)
 #                   [--prototype-root VALUE]  # e.g. prototype | none    (init/update)
 #                   [--output-language VALUE] # e.g. en | es | Spanish    (init/update)
-#                   [--seed ID]               # init: lay that seed's starter under the source root
 #                   [--declare-marketplace]   # add extraKnownMarketplaces + enabledPlugins
 #                   [--take-base RELPATH]...  # update: resolve an `ask` row to OUR version
 #                   [--take-mine RELPATH]...  # update: resolve an `ask` row to THEIRS
@@ -64,7 +63,7 @@ usage() {
 Usage: materialize.sh --mode init|update|plan
                        --plugin-root PATH --project-root PATH
                        [--source-root VALUE] [--prototype-root VALUE]
-                       [--output-language VALUE] [--seed ID]
+                       [--output-language VALUE]
                        [--declare-marketplace]
                        [--take-base RELPATH]... [--take-mine RELPATH]...
                        [--dry-run]
@@ -87,7 +86,6 @@ SOURCE_ROOT_SET=0
 PROTOTYPE_ROOT_SET=0
 OUTPUT_LANGUAGE=""
 OUTPUT_LANGUAGE_SET=0
-SEED=""
 DECLARE_MARKETPLACE=0
 DRY_RUN=0
 # The two ways an `ask` row gets resolved. Repeatable, project-relative paths in
@@ -124,13 +122,6 @@ parse_args() {
             log "materialize.sh: --output-language '$2' must be a language code or name (letters, digits, space, - and _)"; exit 1 ;;
         esac
         OUTPUT_LANGUAGE="$2"; OUTPUT_LANGUAGE_SET=1; shift 2 ;;
-      --seed)
-        [ "$#" -ge 2 ] || { log "materialize.sh: --seed requires a value"; usage; exit 1; }
-        case "$2" in
-          ""|*[!a-z0-9-]*)
-            log "materialize.sh: --seed '$2' must be a seed id (lowercase letters, digits and -)"; exit 1 ;;
-        esac
-        SEED="$2"; shift 2 ;;
       --declare-marketplace)
         DECLARE_MARKETPLACE=1; shift 1 ;;
       # A resolution value is matched against a verdict path and, for --take-base,
@@ -192,11 +183,6 @@ validate_args() {
     log "  to --mode update only. Plan predicts the UNRESOLVED split, and init has"
     log "  nothing to resolve; '--mode update --dry-run' previews resolutions"
     log "  without writing anything."
-    usage; exit 1
-  fi
-  # A starter is laid once, in a repository with no code. An update never lays one.
-  if [ -n "$SEED" ] && [ "$MODE" != "init" ]; then
-    log "materialize.sh: --seed belongs to --mode init only; afterwards .inspire/bin/scaffold.sh lays a seed."
     usage; exit 1
   fi
   [ -n "$PLUGIN_ROOT" ] || { log "materialize.sh: --plugin-root is required"; usage; exit 1; }
@@ -664,34 +650,6 @@ create_product_roots() {
         ;;
     esac
   done
-}
-
-# ---------------------------------------------------------------------------
-# --seed: lay the seed's starter under the source root, through the tool this
-# run has just installed (.inspire/bin/scaffold.sh), so init and
-# /inspire-config stack scaffold by one set of rules. The tool refuses a source
-# root that holds code; a refusal is a warning here, never a failed install.
-# ---------------------------------------------------------------------------
-scaffold_seed() {
-  [ -n "$SEED" ] || return 0
-  [ -d "$PLUGIN_ROOT/base/seeds/$SEED/files" ] || {
-    WARNINGS+=("no seed '$SEED' ships with this INSPIRE, so no starter project was laid. .inspire/bin/scaffold.sh --list names the seeds.")
-    return 0
-  }
-  if [ "$DRY_RUN" = 1 ]; then
-    CREATED+=("the '$SEED' seed's starter project under the source root")
-    log "  · [dry-run] would lay the '$SEED' seed's starter under the source root"
-    return 0
-  fi
-  local out n
-  if out="$(cd "$PROJECT_ROOT" && bash .inspire/bin/scaffold.sh "$SEED" 2>&1)"; then
-    n="$(printf '%s\n' "$out" | grep -c '^create ')"
-    CREATED+=("the '$SEED' seed's starter project ($n files)")
-    log "  · laid the '$SEED' seed's starter ($n files)"
-  else
-    WARNINGS+=("the '$SEED' seed's starter project was not laid: ${out##*scaffold.sh: }")
-    log "  · the '$SEED' seed's starter was not laid"
-  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -1249,7 +1207,6 @@ run_materialize() {
   seed_gitignore
   create_product_roots
   write_config
-  scaffold_seed
   warn_shadowed_runtime
   warn_retired_escape_hatches
   warn_uninstalled_escape_hatch_rules

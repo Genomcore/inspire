@@ -353,17 +353,17 @@ image.** Direction stated.
 - *Targets and seeds.* `inspire-config/references/seeds.md` holds six targets and one
   seed, `web`. `native-mobile`, `binary` and `other` have no seed: the wizard says so
   and a technical operator describes the stack.
-- *The scaffold.* A seed carries a starter project, in the new payload class
-  `.inspire/seeds/<seed>/` (`seed.json` and `files/`). `.inspire/bin/scaffold.sh`
-  lays it under the source root of a repository with no code, refuses one with code,
-  and replaces no file. `/inspire:init` runs it when the operator keeps the defaults,
-  and `/inspire-config stack` when the operator takes the seed. The `web` starter is
-  the Factory's `react-nestjs-npm` template, brought here with the escape-hatch rules
-  the `nestjs` stack skill gates added to its lint configuration; installed from its
-  lockfile it passes its tests, e2e, type check, lint, build and format check, and
-  `profile-gates-installed.sh` reports no gate missing. A described stack gets a
-  minimal application scaffolded by the interview (`GET /api/is-alive`, a home
-  screen that calls it, a 404 on each side, one real integration test).
+- *The scaffold.* An agent writes it, every time: `/inspire-config stack` ends by
+  building the starter project in a repository with no code, for a seed and for a
+  described stack alike (`GET /api/is-alive`, a home screen that calls it, a 404 on
+  each side, one real integration test, and the configuration the stack skills
+  prescribe). INSPIRE ships no copy of one. A shipped copy was built first and
+  withdrawn on `@joaquim.ballester`'s decision of 2026-11-20: a copy lags behind the
+  stack skills, as the Factory's own template did, which lacked the lint rules the
+  `nestjs` skill gates. Before writing, the skill tells the operator that the Factory
+  builds everything on this code, to use the most capable model, and to review it.
+  `/inspire:init` lays no code, so a project that keeps the defaults has no starter
+  until someone runs `/inspire-config stack`.
 - *Several data sources* (the first note): confirmed. Each is a row of `stack.md`'s
   `## Test infrastructure`, and so a service in `emanate.yml`; `datastores:` says which
   entity lives in which.
@@ -371,8 +371,6 @@ image.** Direction stated.
 **Not built, and not tracked by any ticket.** Each needs a decision before it is
 scheduled, so none was filed (tracker rule 2):
 
-- the Factory's second template, `react-fastapi-uv`, as a seed: INSPIRE ships no
-  stack skill for FastAPI, so a seed for it would name a profile nothing serves;
 - a monorepo seed, technology versions as config keys, an OpenAPI starter
   (2026-10-30 note);
 - a seed for a native mobile target, which waits on `FB1-react-native-profile`;
@@ -382,11 +380,11 @@ scheduled, so none was filed (tracker rule 2):
 **Factory work.** Two changes there follow this one, each described here and filed
 in the Factory's tracker when this lands.
 
-*The scaffold can leave the run.* A project now gets its starter from INSPIRE, so
-the Factory's own scaffold step has nothing left to do for a project on the `web`
-seed or on a described stack. Its removal should refuse a run whose source root is
-empty and name `/inspire-config stack`, since a project that skipped the starter has
-no other way to get one.
+*The scaffold can leave the run.* A project now gets its starter project from
+`/inspire-config stack`, so the Factory's own scaffold step has nothing left to do.
+Its removal should refuse a run whose source root is empty and name
+`/inspire-config stack`: a project that kept every default has no starter, and
+without that refusal its first units would build the project unreviewed.
 
 *The roots moved.* The product roots moved from `stack.md`'s frontmatter to
 `.inspire/config.json`. The Factory's deriver resolves a face's and a bundle's

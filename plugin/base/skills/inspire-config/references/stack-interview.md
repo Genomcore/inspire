@@ -267,24 +267,56 @@ and `profiles:` are confirmed:
 An existing codebase that predates its gates is not this subcommand's problem: that
 is a coding-stage job, brought up to standard from `source/` rather than scaffolded.
 
-### The starter of a described stack
+### The starter project
 
-A project on a seed gets the seed's starter ([`seeds.md`](seeds.md) § The starter
-project). A project that described its own stack has no shipped one, so the interview
-ends by scaffolding a minimal application, only when the source root holds no code:
+A repository with no code gets a **starter project**: the minimal application every
+unit INSPIRE Factory builds is added to. INSPIRE ships no copy of one. An agent writes
+it each time, in this flow, from the stack just confirmed and the stack skills as they
+are today, so a starter never lags behind the rules its project is held to. Nothing in
+a factory run creates one.
 
-- `GET /api/is-alive`, answering `200` with `{ "status": "ok" }`;
-- a home screen that calls it and shows the answer;
-- a 404 on each side: an unknown API route, and an unknown screen;
-- one real integration test, which starts the application and calls the endpoint
-  over HTTP;
-- the lint, format, type-check and test commands of the resolved stack skills'
-  `## Build & verify`, each passing, and every gate their `gates:` declare installed
-  (`.inspire/bin/profile-gates-installed.sh` reports none missing).
+It runs only when the source root holds no code: `source_root` is not `.`, and the
+directory is absent, empty, or holds nothing but the `README.md` stub `/inspire:init`
+seeds. A project with code is never scaffolded.
 
-Present the file list before writing, write on approval, then run the commands and
-show their results. A command that fails is repaired or reported, never described as
-passing. A backend-only or frontend-only shape scaffolds only its side.
+**Say this to the operator before writing anything, and again when you hand the
+result over for review**, in the project's `output_language`:
+
+> **Everything else is built from this code.** INSPIRE Factory adds every unit on top
+> of this starter and follows what it finds here: its layout, its tests, its lint
+> rules, its naming. The better this code is, the better the code the Factory
+> emanates; a shortcut taken here is repeated in every unit. Run this step with the
+> most capable model you have, and review the code yourself before you commit it.
+
+Then ask whether to go on now, or to stop so the operator can switch model first.
+Never start on the strength of an earlier yes to the stack.
+
+1. **Read every resolved stack skill in full** before the first file: its layout, its
+   `## Build & verify`, its `## Test conventions`, its `## Quality gates` and the
+   `gates:` it declares. On a seed, follow the seed's layout
+   ([`seeds.md`](seeds.md) § Seeds).
+2. **Present the file list**, with one line per file saying what it is for, and write
+   on approval. The starter holds:
+   - `GET /api/is-alive`, answering `200` with `{ "status": "ok" }`;
+   - a home screen that calls it and shows the answer;
+   - a 404 on each side: an unknown API route, and an unknown screen;
+   - one real integration test, which starts the application and calls the endpoint
+     over HTTP, and a unit test on each side;
+   - the lint, format, type-check and test configuration the stack skills prescribe,
+     with every gate their `gates:` declare installed;
+   - a lockfile, and a `README.md` naming the commands. The stub `/inspire:init`
+     seeded is replaced; a `README.md` the project wrote is kept.
+
+   A backend-only or frontend-only shape builds only its side. Nothing beyond this
+   list goes in: no feature, no entity, no screen of the product.
+3. **Run every command and show its result**: the install, then the lint, format,
+   type-check, build and test commands of each stack skill's `## Build & verify`, and
+   `.inspire/bin/profile-gates-installed.sh`, which must report no gate missing. A
+   command that fails is repaired and run again, or reported as failing. Never
+   describe one as passing without having run it.
+4. **Hand it over for review.** Repeat the warning above, list what was written and
+   what each command returned, and name what you are least sure of. The operator
+   reviews and commits; never commit it unasked.
 
 ### Project semantic types
 

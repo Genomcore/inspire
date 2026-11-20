@@ -31,9 +31,10 @@ answer it:
   design-system default.
 - The project's identity: the root `README.md` and the placeholders of the seeded
   `CLAUDE.md`.
-- The starter project: in a repository with no code, the seed's starter laid under
-  the source root by `.inspire/bin/scaffold.sh`, or a minimal application for a stack
-  the operator described ([`references/seeds.md`](references/seeds.md) § The starter
+- The starter project: in a repository with no code, the minimal application an
+  agent writes under the source root for the confirmed stack, which every unit the
+  factory builds is added to
+  ([`references/stack-interview.md`](references/stack-interview.md) § The starter
   project).
 - `.inspire/emanate.yml`, the file **INSPIRE Factory** reads to run the project, its
   `factory` section included: the Factory's own settings (`kb_root`, `spec_root`,
@@ -76,8 +77,8 @@ Read the reference before the step it covers. The table is an index, not the flo
 |---|---|
 | [`wizard.md`](references/wizard.md) | The `init` flow: the order of the questions, which are product and which technical, and how a default is kept |
 | [`spec-config.md`](references/spec-config.md) | `.inspire/config.json`: its keys, who reads them, the checks, and changing the language |
-| [`seeds.md`](references/seeds.md) | The targets, the seed each one gets (profiles, image, starter), and laying the starter project |
-| [`stack-interview.md`](references/stack-interview.md) | The `stack` flow: shape, layers, datastores, stack skills, wire conventions, test infrastructure, worktree recipe, quality gates |
+| [`seeds.md`](references/seeds.md) | The targets, and the seed each one gets: profiles, image and layout |
+| [`stack-interview.md`](references/stack-interview.md) | The `stack` flow: shape, layers, datastores, stack skills, wire conventions, test infrastructure, worktree recipe, quality gates, and the starter project |
 | [`theme-interview.md`](references/theme-interview.md) | The `theme` flow, including abstracting a theme from a mockup's CSS |
 | [`identity.md`](references/identity.md) | The `identity` flow: `CLAUDE.md` placeholders and the root `README.md` |
 | [`foundation-review.md`](references/foundation-review.md) | The read-only checklist over the spec config and the bootstrap layer |
