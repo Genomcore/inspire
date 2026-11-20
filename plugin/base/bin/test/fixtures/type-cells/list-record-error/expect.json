@@ -1,0 +1,65 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-alias: input `ids` is typed `list<int>`, whose element is typed `int`, a rejected alias: use `integer`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `a` is typed `list<address>`, whose element is typed `address`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `b` is typed `list<>`, a list whose element type is missing or is itself a list"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `c` is typed `list<list<uuid>>`, a list whose element type is missing or is itself a list"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `d` is typed `list`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `list<T>` with its element type"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `e` is typed `array<uuid>`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `list<T>`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `f` is typed `object`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `record`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-record-rows: output `owner` is typed `record` and no `owner.{field}` row declares its fields"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "sits under `lines`, which has no row of its own"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-record-rows: output `total.cents` sits under `total`, which is not typed `record`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "and a row under a list names one field of its records, as `rows"
+    }
+  ],
+  "forbidden": [
+    "output `total` is typed",
+    "\"warning\"",
+    "type-record-legacy"
+  ]
+}

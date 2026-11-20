@@ -33,8 +33,8 @@ if [ -f "$SEMANTIC_TYPES" ]; then
 fi
 
 type_rows() {
-  local file="$1" section="$2" label="$3"
-  sdd_body_section "$file" "$section" | awk -v label="$label" '
+  local file="$1" section="$2" kind="$3"
+  sdd_body_section "$file" "$section" | awk -v kind="$kind" '
     !/^\|/ { tab = 0; next }
     !tab { tab = 1; next }
     {
@@ -43,61 +43,127 @@ type_rows() {
       gsub(/`/, "", name)
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
       if (name == "" || name ~ /^:?-+:?$/) next
-      printf "%s `%s`\t%s\n", label, name, (n >= 4) ? c[3] : ""
+      printf "%s\t%s `%s`\t%s\t%s\n", kind, kind, name, name, (n >= 4) ? c[3] : ""
     }
   '
 }
 
 entity_rows() {
-  sdd_entities_touched "$1" | awk -F'\t' '{ printf "`%s` field `%s`\t%s\n", $1, $2, $4 }'
+  sdd_entities_touched "$1" | awk -F'\t' '{ printf "touch\t`%s` field `%s`\t%s\t%s\n", $1, $2, $2, $4 }'
 }
 
 classify() {
   awk -F'\t' -v types="$PROJECT_TYPES" '
     BEGIN {
-      split("email uuid timestamp date password string integer number boolean json enum", u, " ")
+      split("email uuid timestamp date password string integer number boolean json enum record", u, " ")
       for (i in u) universal[u[i]] = 1
       alias["int"] = "integer"; alias["bool"] = "boolean"; alias["text"] = "string"
+      NONE = "\001"
       while ((getline line < types) > 0) {
         split(line, p, "\t")
         if (!(p[1] in project)) project[p[1]] = p[2]
       }
     }
     function head(t) { sub(/<.*/, "", t); return t }
-    {
-      where = $1; t = $2
+    function element(t,    e) {
+      if (t !~ /^list<.*>$/) return NONE
+      e = substr(t, 6, length(t) - 6)
+      gsub(/^ | $/, "", e)
+      return e
+    }
+    function clean(t) {
       gsub(/`/, "", t)
       gsub(/[[:space:]]+/, " ", t)
       gsub(/^ | $/, "", t)
-      if (t == "" || t == "-" || t == "—" || t == "–") {
-        print "type-empty: " where " declares no type"
-        next
-      }
+      return t
+    }
+    function hint(t) {
+      if (t == "list") return "; write `list<T>` with its element type"
+      if (t ~ /^array</) return "; write `list<T>`"
+      if (t == "object") return "; write `record`"
+      return ""
+    }
+    function resolve(t,    e, use, base, inner, r) {
+      if (t == "" || t == "-" || t == "—" || t == "–") return "type-empty\tdeclares no type"
       use = ""
       if (t in alias) use = alias[t]
       else if (t ~ /^varchar([( ]|$)/) use = "string"
       else if (t ~ /^numeric([( ]|$)/) use = "number"
-      if (use != "") {
-        print "type-alias: " where " is typed `" t "`, a rejected alias: use `" use "`"
-        next
+      if (use != "") return "type-alias\tis typed `" t "`, a rejected alias: use `" use "`"
+      e = element(t)
+      if (e != NONE) {
+        if (e == "" || element(e) != NONE) return "type-unknown\tis typed `" t "`, a list whose element type is missing or is itself a list"
+        inner = resolve(e)
+        if (inner == "") return ""
+        split(inner, r, "\t")
+        return r[1] "\tis typed `" t "`, whose element " r[2]
       }
-      if (head(t) in universal) next
-      if (!(t in project)) {
-        print "type-unknown: " where " is typed `" t "`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md"
-        next
-      }
+      if (head(t) in universal) return ""
+      if (!(t in project)) return "type-unknown\tis typed `" t "`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md" hint(t)
       base = project[t]
-      if (base == "") print "type-no-base: " where " is typed `" t "`, a project type that declares no base type"
-      else if (!(head(base) in universal)) print "type-no-base: " where " is typed `" t "`, a project type whose base `" base "` is not a universal type"
+      if (base == "") return "type-no-base\tis typed `" t "`, a project type that declares no base type"
+      if (element(base) != NONE) return ""
+      if (!(head(base) in universal)) return "type-no-base\tis typed `" t "`, a project type whose base `" base "` is not a universal type"
+      return ""
+    }
+    function holds_record(t) { return t == "record" || t == "list<record>" }
+    {
+      kind = $1; where = $2; name = $3; t = clean($4)
+      verdict = resolve(t)
+      if (verdict != "") {
+        split(verdict, v, "\t")
+        print v[1] ": " where " " v[2]
+      }
+      nested = (name ~ /\./ || name ~ /\[\]/)
+      if (kind == "field" || kind == "touch") {
+        if (holds_record(t)) print "type-record-misplaced: " where " is typed `" t "`, and a record is declared only in the ## Inputs or ## Outputs of an action"
+        else if (nested) print "type-record-misplaced: " where " is a nested row, and nested rows are declared only in the ## Inputs or ## Outputs of an action"
+        next
+      }
+      row[kind, name] = t
+      order[++rows] = kind SUBSEP name
+      label[kind, name] = where
+    }
+    END {
+      for (i = 1; i <= rows; i++) {
+        split(order[i], key, SUBSEP)
+        kind = key[1]; name = key[2]
+        if (name ~ /\./) {
+          parent = name
+          sub(/\.[^.]*$/, "", parent)
+          want = "record"
+          if (parent ~ /\[\]$/) { sub(/\[\]$/, "", parent); want = "list<record>" }
+          if (!((kind, parent) in row)) print "type-record-rows: " label[kind, name] " sits under `" parent "`, which has no row of its own"
+          else if (row[kind, parent] != want && project[row[kind, parent]] == "json") {
+            if (!((kind, parent) in legacy)) print "warning\ttype-record-legacy: " label[kind, parent] " is typed `" row[kind, parent] "`, a project type on `json`, and has rows of its own; type it `" want "` so they are checked as its fields"
+            legacy[kind, parent] = 1
+          }
+          else if (row[kind, parent] != want) print "type-record-rows: " label[kind, name] " sits under `" parent "`, which is not typed `" want "`"
+          else has_child[kind, parent] = 1
+        } else if (name ~ /\[\]/) {
+          print "type-record-rows: " label[kind, name] " ends in `[]`, and a row under a list names one field of its records, as `" name ".{field}`"
+        }
+      }
+      for (i = 1; i <= rows; i++) {
+        split(order[i], key, SUBSEP)
+        kind = key[1]; name = key[2]; t = row[kind, name]
+        if (!holds_record(t) || ((kind, name) in has_child)) continue
+        sub_row = (t == "record") ? name ".{field}" : name "[].{field}"
+        print "type-record-rows: " label[kind, name] " is typed `" t "` and no `" sub_row "` row declares its fields"
+      }
     }
   '
 }
 
 report() {
-  local file="$1" severity message
-  severity="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
+  local file="$1" ramp severity message
+  ramp="$(sdd_progressive_severity "$(sdd_fm_value "$file" '.lifecycle')")"
   while IFS= read -r message; do
     [ -n "$message" ] || continue
+    severity="$ramp"
+    case "$message" in
+      warning$'\t'*) severity="warning"; message="${message#warning$'\t'}" ;;
+    esac
     sdd_finding "$severity" "$RULE" "$file" "$message"
     sdd_count_by_severity "$severity"
   done
