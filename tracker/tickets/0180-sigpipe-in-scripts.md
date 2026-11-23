@@ -2,7 +2,7 @@
 id: 0180-sigpipe-in-scripts
 title: "0180 — validators and hooks pipe into grep -q under pipefail"
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-23
 reporter: "@irene.gonzalez"
 closed_by: null
 closed_at: null
@@ -46,10 +46,12 @@ Every file below runs with `set -o pipefail`, and each line tests the pipeline's
 | File | Line | Pipe |
 |---|---|---|
 | `plugin/base/bin/screen-coherence.sh` | 241 | `printf '%s\n' "$SC_FACES" \| grep -qxF "$face"` |
-| `plugin/base/bin/face-exposure.sh` | 101 | `printf '%s\n' "$exposure" \| grep -qxF -e "$a" -e "$module"` |
+| `plugin/base/bin/screen-coherence.sh` | 401 | `printf '%s\n' "$outcome" \| grep -qE '^set store …$'` |
+| `plugin/base/bin/face-exposure.sh` | 102, 118 | `printf '%s\n' "$exposure" \| grep -qxF -e "$a" -e "$module"` (twice) |
 | `plugin/base/bin/screen-presentation.sh` | 220–221 | `printf '%s' "$body" \| grep -qi …` (twice) |
 | `plugin/base/bin/process-shape.sh` | 84 | `printf '%s\n' "$touched" \| grep -qxF "$e"` |
-| `plugin/base/bin/spec-identity.sh` | 123 | `printf '%s\n' "$bundles" \| grep -qxF "$b"` |
+| `plugin/base/bin/spec-identity.sh` | 141 | `printf '%s\n' "$bundles" \| grep -qxF "$b"` |
+| `plugin/base/bin/entity-datastore.sh` | 77 | `printf '%s\n' "$PROFILES" \| grep -Fxq -- "$stack"` |
 | `plugin/base/bin/decisions.sh` | 48 | `head -1 "$1" \| grep -q '^---…$'` |
 | `plugin/base/hooks/pre-commit.sh` | 46 | `printf '%s\n' "$modules" \| grep -qxF "$m"` |
 | `plugin/scripts/visor.sh` | 168 | `ps -ww -p "$pid" -o command= \| grep -q …` |
