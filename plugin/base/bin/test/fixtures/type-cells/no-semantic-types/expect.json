@@ -1,0 +1,13 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: field `total` is typed `money`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md"
+    }
+  ],
+  "forbidden": [
+    "`id`"
+  ]
+}

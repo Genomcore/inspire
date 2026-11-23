@@ -32,6 +32,7 @@ has "the English twin reports a stray constraint"    'OS-E9' "$EN"
 has "the English twin reports an unknown head arg"   'OS-X2' "$EN"
 has "the English twin reports an unresolved state"   "state 'gone'" "$EN"
 has "the English twin reports an undeclared param"   "param 'tab'" "$EN"
+has "the English twin reports a rejected type alias"  'type-alias: `auth::user` field `phone` is typed `text`' "$EN"
 has "the English twin reads the render columns"      "Narrow 'wide'" "$EN"
 
 has "prose-style names the checks it skips for the Spanish twin" 'output_language: es' "$ES"
