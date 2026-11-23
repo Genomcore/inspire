@@ -47,6 +47,16 @@ needs the INSPIRE Factory release that derives them.
   or project-typed field, a dotted row with no parent row, a row named `x[]`, and a
   dotted field in an entity. Each warning names the type or row to write instead.
 
+### Added
+
+- **`/inspire-config` proposes a time limit on every test check**: `timeout: 1800`, the
+  `checks[].timeout` key INSPIRE Factory 0.24.0 reads. A check that runs longer is
+  stopped and fails with exit code 124 and a line naming the limit, so a test run
+  that never ends no longer holds its slot until someone stops the run. On a Factory
+  older than 0.24.0 it proposes none: the older reader refuses the key. `/inspire-config
+  review` warns about a test check without one, and `/inspire-config init` adds it to
+  an existing file.
+
 ## 0.21.0 — 2026-11-20
 
 Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
