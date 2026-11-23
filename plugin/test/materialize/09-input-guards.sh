@@ -88,7 +88,7 @@ v2err="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-roo
 rc_v2drift=$?
 check "guard: pre-0.3 lock — plan can't identify an empty tree (rc)" "[ '$rc_v2drift' = 1 ]"
 check "guard: pre-0.3 lock — plan explains why" \
-  "printf '%s' \"\$v2err\" | grep -qi 'cannot identify'"
+  "printf '%s' \"\$v2err\" | grep -i >/dev/null 'cannot identify'"
 # require_v03_lock's call site inside run_materialize was deleted in Task 12,
 # which left `update` running the old blind-copy path for one release: it wrote
 # the v0.3 runtime over this fixture, exiting 0, on the strength of nothing but
@@ -105,7 +105,7 @@ v2uerr="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$
 rc_v2update=$?
 check "guard: pre-0.3 lock — update refuses an unidentifiable tree (rc)" "[ '$rc_v2update' = 1 ]"
 check "guard: pre-0.3 lock — update explains why, as plan does" \
-  "printf '%s' \"\$v2uerr\" | grep -qi 'cannot identify'"
+  "printf '%s' \"\$v2uerr\" | grep -i >/dev/null 'cannot identify'"
 check "guard: pre-0.3 lock — update wrote no runtime" \
   "[ ! -d '$v2p/.claude/skills' ] && [ ! -d '$v2p/.inspire/bin' ]"
 check "guard: pre-0.3 lock — update did not rewrite the lock" \

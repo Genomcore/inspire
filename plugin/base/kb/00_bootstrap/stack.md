@@ -66,6 +66,11 @@ adding mobile, moving off a deployed database) is an ADR.
 
 - **PostgreSQL** — system metadata database.
 
+One database needs nothing more. With two or more, the frontmatter names them in
+`datastores:` (each mapped to the stack id whose skill carries its `## Persistence`)
+and may set a `default_datastore:`; an entity outside the default says so with
+`datastore:`. See `.claude/skills/_references/stack-skills.md` § *Datastores*.
+
 ## Prototype (mock data)
 
 - The horizontal prototype at `/prototype` runs on **mocked

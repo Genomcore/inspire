@@ -7,6 +7,11 @@
 #   - (solo Inspire) el check propio del repo: plugin.json == marketplace.json
 #     y plugin/manifests/<version>.json coincide con el árbol
 #
+# Si la PR ya no apunta a main cuando corre (GitHub la pasó a main al borrar
+# su release y el workflow diario la ha devuelto a la release abierta y ha
+# relanzado este check), pasa en verde sin comprobar nada: todo lo de arriba
+# solo tiene sentido para lo que va a entrar en main.
+#
 # Para que bloquee de verdad hay que añadir el check "Release check" como
 # required status check en el ruleset de main.
 #
@@ -21,6 +26,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read # leer a qué rama apunta la PR ahora
 
 concurrency:
   group: release-check-${{ github.event.pull_request.number }}
@@ -41,8 +47,28 @@ jobs:
     name: Release check
     runs-on: ubuntu-latest
     steps:
+      # Se mira a dónde apunta la PR ahora, no cuando se lanzó la ejecución:
+      # en un relanzamiento el evento sigue diciendo main.
+      - name: La PR sigue apuntando a main
+        id: live
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          base="$(gh api "repos/$GH_REPO/pulls/$NUM" -q .base.ref)"
+          if [ "$base" = main ]; then
+            echo "main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "main=false" >> "$GITHUB_OUTPUT"
+            echo "✓ La PR ya no apunta a main sino a $base: no hay nada que comprobar." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Los pasos siguientes dependen de steps.branch: si este no corre, tampoco ellos.
       - name: Rama de origen permitida
         id: branch
+        if: steps.live.outputs.main == 'true'
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
@@ -59,6 +85,7 @@ jobs:
           fi
 
       - uses: actions/checkout@v4
+        if: steps.live.outputs.main == 'true'
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0 # historial completo + tags

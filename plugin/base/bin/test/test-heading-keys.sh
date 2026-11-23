@@ -15,8 +15,8 @@ pass=0; fail=0
 ok(){ echo "PASS $1"; pass=$((pass+1)); }
 bad(){ echo "FAIL $1"; fail=$((fail+1)); }
 eq(){ if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
-has(){ if printf '%s\n' "$3" | grep -qF -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
-hasnt(){ if printf '%s\n' "$3" | grep -qF -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
+has(){ if printf '%s\n' "$3" | grep -F >/dev/null -- "$2"; then ok "$1"; else bad "$1 (no match for '$2')"; fi; }
+hasnt(){ if printf '%s\n' "$3" | grep -F >/dev/null -- "$2"; then bad "$1 (unexpected match for '$2')"; else ok "$1"; fi; }
 
 if [ ! -x "$KEYS" ]; then
   echo "FAIL heading-keys.sh is not executable at $KEYS" >&2
@@ -48,6 +48,7 @@ for pair in \
   "component inspire-screens/templates/component.template.md" \
   "layout inspire-screens/templates/layout.template.md" \
   "module inspire-module/templates/module.template.md" \
+  "store inspire-store/templates/store.template.md" \
   "spike inspire-spike/templates/spike.template.md"; do
   set -- $pair
   kind="$1"; shift

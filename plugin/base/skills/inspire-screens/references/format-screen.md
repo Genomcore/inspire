@@ -197,7 +197,7 @@ a screen-local key**:
 | `### Parameters` | Key, In, Type, Required, Notes | the inputs this screen is opened with |
 | `### Data` | Key, Action, Notes | which actions feed this screen |
 | `### Dispatches` | Key, Action, Trigger, On success, On error | which actions this screen invokes, and what follows |
-| `### Navigation` | Key, Target, Trigger | the transitions **no dispatch on this screen causes** |
+| `### Navigation` | Key, Target, Trigger, Then | the transitions **no dispatch on this screen causes** |
 | `### States` | Key, When, Presentation | the keyed states this screen can be in |
 
 - **Keys are declared, screen-local, and unique per subsection** — not action ids,
@@ -205,10 +205,12 @@ a screen-local key**:
   The default key is the action id's final segment when the action is dispatched
   once; an explicit distinct key is mandatory on duplicates.
 - **Outcomes are attributes of their dispatch, not claims of their own.**
-  `On success` and `On error` take one of three forms, and nothing else:
+  `On success` and `On error` take one of three forms:
   `→ [{screen-id}]({path})` (navigate), `state \`{key}\`` (a key declared in
   `### States`), or `refresh \`{key}\`` (a key declared in `### Data`). A dash
-  means the dispatch has no declared outcome on that side.
+  means the dispatch has no declared outcome on that side. `On success` may also
+  write the face's store (§ The store), and a cell may hold several outcomes
+  joined by `; `, at most one of them a navigate or a `state`.
 - **One transition, one declaration, one claim.** A transition a dispatch causes
   is that dispatch's `On success` / `On error` outcome, **never** a Navigation
   row. `### Navigation` declares only the transitions no dispatch on this screen
@@ -234,6 +236,55 @@ a screen-local key**:
   from an English word that happens to spell it.
 - Drop any subsection the screen has nothing to declare in. `## Bindings` itself
   stays, with at least one subsection under it.
+
+## The store
+
+A face's store ([`inspire-store`](../../inspire-store/SKILL.md)) holds what
+outlives one screen. A screen reads and writes it through the rows it already
+declares, and never names the face: a screen belongs to one face, and reads that
+face's store.
+
+| Where | Form | Means |
+|---|---|---|
+| `### Data` → `Action` | ``store `k` `` | this binding reads key `k` |
+| `### Dispatches` → `On success` | ``set store `k` `` | the key becomes the action's output |
+| `### Dispatches` → `On success` | ``refresh store `k` `` | server key `k` loads again through its own action |
+| `### Navigation` → `Then` | ``set store `k` from param `p` `` | client key `k` takes the value of parameter `p`, which the target declares |
+
+```markdown
+### Data
+
+| Key | Action | Notes |
+|---|---|---|
+| `study` | store `study` | the study being worked on |
+
+### Dispatches
+
+| Key | Action | Trigger | On success | On error |
+|---|---|---|---|---|
+| `create` | [studies::study::create](../../../_modules/studies/_domain/study/study.create.action.md) | primary action | refresh store `studies`; → [portal.study-detail](study-detail.screen.md) param `id` | state `error` |
+
+### Navigation
+
+| Key | Target | Trigger | Then |
+|---|---|---|---|
+| `row` | [portal.study-detail](study-detail.screen.md) param `id` | clicking a row | set store `currentStudyId` from param `id` |
+```
+
+- **A store read keeps a screen-local key.** A state anchors on it like on any data
+  key: `` `study` fails `` is the state a failed load shows.
+- **A store write is a success outcome.** A dispatch that fails wrote nothing.
+- **`Then` writes a client key only,** and is `—` or absent when the transition
+  writes nothing. A server key changes through `refresh store` or its own
+  `on change of`.
+- **The key exists in the store.** `store-coherence.sh` checks each form against
+  the face's `{face}.store.md`: the key is declared, a `refresh` names a server
+  key, a `Then` a client key.
+- **No new claim.** A store read is the row's `data` claim with `store:{key}` in
+  place of the action id; a write feeds its dispatch's or navigation's fingerprint.
+
+The shell reads and writes the store the same way, from its layout entry's
+`## LAY8: Bindings` ([layout.template.md](../templates/layout.template.md)).
 
 ## `### Parameters` — what the screen is opened with
 

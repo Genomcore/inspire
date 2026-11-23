@@ -1,0 +1,1 @@
+{ "exit": 1, "findings": [ { "rule": "spec-identity", "severity": "error", "message_substring": "face names shell layout 'portal-shell', which no" } ], "finding_count": 1 }

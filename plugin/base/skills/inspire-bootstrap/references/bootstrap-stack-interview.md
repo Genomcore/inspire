@@ -56,6 +56,33 @@ Define or update `stack.md` — the official application stack, including its
    `inspire_kb/01_spec/_adr` — surface that and offer to chain
    `/inspire-adr create`.
 
+### Datastores
+
+When the *Data* layer names more than one database (PostgreSQL for metadata and
+ClickHouse for analytics, say), the entities need to know which one they live in,
+and the coding stage needs each one's conventions:
+
+1. **Write `datastores:`** in the `stack.md` frontmatter: a project-chosen id per
+   database, mapped to its stack id (`metadata: postgres`, `analytics: clickhouse`).
+   Add each stack id to `profiles:` too.
+2. **Ask whether one is the default.** "Do most entities live in one of them?" If
+   so, write `default_datastore:` and an entity names its datastore only when it
+   lives elsewhere. If not, every entity must name one, and `inspire-domain` will ask.
+   Never pick the default yourself: it is the project's decision.
+3. **Check each datastore's stack id has a skill with a `## Persistence` section**,
+   and offer to scaffold one from
+   [`stack-skill-example.md`](../../_references/stack-skill-example.md) when it does
+   not: the engine, the table and column naming, the keys and the migration rule.
+   The skill declares `layer: backend`, and neither `language:` nor `## Bindings`
+   ([`stack-skills.md`](../../_references/stack-skills.md) § *Datastores*).
+   INSPIRE ships none for a second engine, and an entity in a datastore without one
+   is refused at the coding stage.
+4. **Offer an ADR** if none records why the data is split: moving entities to a
+   second database is a load-bearing choice.
+
+A project with one database writes none of this. The contract is
+[`stack-skills.md`](../../_references/stack-skills.md) § *Datastores*.
+
 ### Stack skills
 
 `stack.md` also decides which **stack skills** reach the coding stage. After
@@ -71,7 +98,8 @@ confirming the layers:
    create a lean one from the contract
    ([`stack-skill-example.md`](../../_references/stack-skill-example.md)) so the coding
    stage starts stack-aware. An id with no conventions of its own (a database the
-   framework skill already covers) needs no skill. Framework conventions only — org policy
+   framework skill already covers) needs no skill, unless it serves a datastore
+   (§ *Datastores* above). Framework conventions only — org policy
    (branch naming, private registries, CI) stays in the project's `CLAUDE.md`
    (seeded by `/inspire:init`, refined by the `init` flow's CLAUDE.md step in
    [`../SKILL.md`](../SKILL.md) § Subcommand: init, whose long form is

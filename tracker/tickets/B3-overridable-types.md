@@ -2,7 +2,7 @@
 id: B3-overridable-types
 title: "B3 — Default semantic types a project can override"
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-11-17
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [domain, code, bootstrap]
 status: Open
 blocked_by: []
-related_to: [F14-semantic-types, B1-config-replaces-bootstrap]
+related_to: [F14-semantic-types, B1-config-replaces-bootstrap, 0180-derive-only-refusals]
 ---
 
 ## Origin
@@ -59,6 +59,18 @@ appears to have shipped.
 - Keep the semantic types that carry behaviour, such as credentials, so the spec never
   has to repeat "don't log it, don't store it".
 - Setup offers the defaults in one step. It doesn't ask about each type.
+- **A validator for the Type cells, which can ship first.** A new rule in `review.sh`'s
+  default list reads every Type cell: entity `## Fields`, and action inputs, outputs and
+  entities. Each cell resolves to a universal type or to a `semantic-types.md` row whose base
+  is universal. It reports an empty cell, an unknown type, a project type with no universal
+  base, and a rejected alias with its replacement (`int` → `integer`). A finding is a warning
+  at `draft` and an error from `accepted` on. It checks today's vocabulary, so it does not
+  wait for the rest of this ticket; the collection type and the overrides then extend it.
+- **Nested records.** The collection type also covers a row with its own fields, such as
+  `items[].reservation`, and `format-action.md` § Outputs says how an output writes
+  `{field}[].…` rows.
+- `type-mapping.md` stops saying that an unknown project type "is caught at emanation, not
+  authoring time".
 
 ### Open questions
 
@@ -80,6 +92,12 @@ appears to have shipped.
 - [ ] The basic list has been reviewed against the current stack, and the outcome is
       recorded in this ticket's close note.
 - [ ] Setup offers the defaults in one step.
+- [ ] A rule in `review.sh`'s default list reports an empty Type cell, an unknown type, a
+      project type with no universal base, and a rejected alias with its replacement, as a
+      warning at `draft` and an error from `accepted` on. Fixtures cover each case, in entity
+      fields and in action inputs, outputs and entities.
+- [ ] `format-action.md` § Outputs and `type-mapping.md` show how an output types a list of
+      rows and a nested record, with an example.
 - [ ] The open questions have written answers in this ticket's close note.
 
 ## Notes
@@ -91,3 +109,26 @@ appears to have shipped.
 - *Factory port.* The INSPIRE Factory derives contracts with its own reader of the KB. A
   collection type and overridable defaults change what that reader accepts, and the
   matching change is filed in the Factory's tracker when this ticket's format lands.
+
+**Amended 2026-11-17 (a governed project's Factory run).**
+
+A governed project's first full INSPIRE Factory run (Factory 0.18.0, 2026-11-16) built 54
+units and refused six at derive, before any agent started. The six refusals blocked seven
+more units: the project's API bundle and six screens. Every refused spec had passed
+`review.sh` and been promoted to `accepted`. Five of the six were type refusals:
+
+| Refused unit | What the deriver refused |
+|---|---|
+| `accounts.user.list` · `reservations.reservation.list` · `sharing.friendship.list` | output `items` typed `list` |
+| `wishlists.wishlist.get` | `items` typed `list`; `items[].reservation` typed `object` |
+| `wishlists.wishlist.list` | `items` typed `list`; input `limit` and `items[].item_count` typed `int` |
+
+- *No rule checks a Type cell.* No script under `plugin/base/bin/` reads
+  `semantic-types.md` or compares a Type cell with the universal list, and `type-mapping.md`
+  says so ("caught at emanation, not authoring time"). It also lists `int` as a rejected
+  alias of `integer`, and no script enforces that. The validator above closes the gap.
+- *Four list actions had no type to use.* With no collection type and no nested record, the
+  authors invented `list` and `object`. The project now declares both as project types on
+  `json`, which the deriver accepts.
+- *Factory port.* The Factory's own list of universal types changes in the same release as the
+  collection type, or the deriver refuses the new type. The Factory note above covers it.

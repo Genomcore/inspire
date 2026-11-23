@@ -55,6 +55,8 @@ The quality gate (D24) — rule families across three severity tiers, plus the s
 | `entity-coherence` (field-conflict, write-on-external) | error | error | error | error |
 | `entity-coherence` (field-unsourced — the column is the highest lifecycle among the entity and every action reading the field) | warning | error | error | warning |
 | `entity-coherence` (field-orphan-write) | warning | warning | warning | warning |
+| `entity-datastore` (datastore-missing, datastore-undeclared, datastore-default-undeclared, datastore-unserved) | error | error | error | error |
+| `entity-datastore` (reference-crosses-datastore) | warning | warning | warning | warning |
 | `stable-blockers` (`requires:` deps must be stable) | exempt | exempt | error | exempt |
 | `touched-entity-lifecycle` (touched entities must be ≥ accepted) | exempt | exempt | error | exempt |
 
@@ -149,7 +151,7 @@ R1 and R3 are **English-only**, and outside English R6 and R7 read only the toke
 `00_bootstrap/style-tokens.md` declares: a project whose `output_language` is not
 `en` gets one info-level note saying so, and R2, R4 and R5 still run.
 
-A process file (`*.process.md`) carries `lifecycle:` too: every `process-shape` finding ramps with these columns, read from the process's own field.
+A process file (`*.process.md`) carries `lifecycle:` too: every `process-shape` finding ramps with these columns, read from the process's own field. So does a store file (`*.store.md`): its `store-coherence` findings ramp with the store's own field.
 
 Drafts are deliberately permissive on lifecycle-coupled rules (`stable-blockers`, `touched-entity-lifecycle`) but the mechanical and coherence tiers apply unconditionally — type drift, broken references, missing sections, and TODO sludge silently break later promotion otherwise.
 

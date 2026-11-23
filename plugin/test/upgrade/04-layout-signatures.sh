@@ -23,7 +23,7 @@ mkdir -p "$p/inspire_kb"
 out="$(verify_layout "$PLUGIN_ROOT" "$p" pre-0.3 2>&1)"; rc=$?
 eq "half-migrated tree is refused" "$rc" "1"
 check "refusal explains the ambiguity" \
-  "printf '%s' \"\$out\" | grep -qi 'inspire_kb'"
+  "printf '%s' \"\$out\" | grep -i >/dev/null 'inspire_kb'"
 fixture_cleanup "$w"
 
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.3.1 "$w" "$REPO")"

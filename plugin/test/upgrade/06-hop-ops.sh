@@ -138,7 +138,7 @@ check "hop_mv left the refused source where it was" \
 eq "a refused hop_mv journals nothing" \
   "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$nest_j_before"
 check "the hop_mv refusal names both paths on stderr" \
-  "printf '%s' \"\$nest_err\" | grep -q 'nest-src/payload' && printf '%s' \"\$nest_err\" | grep -q 'nest-dst/payload'"
+  "printf '%s' \"\$nest_err\" | grep >/dev/null 'nest-src/payload' && printf '%s' \"\$nest_err\" | grep >/dev/null 'nest-dst/payload'"
 
 # hop_rm removes ONE FILE. `rm -f` cannot remove a directory, so it used to
 # leak a raw "is a directory" error after already journalling the delete.
@@ -152,9 +152,9 @@ check "hop_rm left the refused directory and its contents" \
 eq "a refused hop_rm journals nothing" \
   "$(wc -l < "$HOP_JOURNAL" | tr -d ' ')" "$rmd_j_before"
 check "hop_rm explains itself instead of leaking a raw rm error" \
-  "printf '%s' \"\$rmd_err\" | grep -q 'it is a directory' && ! printf '%s' \"\$rmd_err\" | grep -q '^rm:'"
+  "printf '%s' \"\$rmd_err\" | grep >/dev/null 'it is a directory' && ! printf '%s' \"\$rmd_err\" | grep >/dev/null '^rm:'"
 check "hop_rm points at hop_rm_owned for directories" \
-  "printf '%s' \"\$rmd_err\" | grep -q 'hop_rm_owned'"
+  "printf '%s' \"\$rmd_err\" | grep >/dev/null 'hop_rm_owned'"
 
 hop_report 'a note for the operator'
 check "hop_report journals the note" "grep -q 'a note for the operator' '$HOP_JOURNAL'"

@@ -29,7 +29,7 @@ half_hash="$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{p
 half_err="$(bash "$MZ" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$p" 2>&1 >/dev/null)"
 eq "half-migrated tree: update refuses (rc)" "$?" "1"
 check "half-migrated tree: the refusal names both KB locations" \
-  "printf '%s' \"\$half_err\" | grep -q 'inspire_kb'"
+  "printf '%s' \"\$half_err\" | grep >/dev/null 'inspire_kb'"
 eq "half-migrated tree: the edited skill is untouched" \
    "$(shasum -a 256 "$p/.claude/skills/inspire-domain/SKILL.md" | awk '{print $1}')" "$half_hash"
 check "half-migrated tree: nothing was moved" \

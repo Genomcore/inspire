@@ -16,35 +16,35 @@ printf '%s\n' "$config" > "$proj/.escape-hatches.json"
 
 dry="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" --dry-run 2>/dev/null)"
 check "a dry run warns about .escape-hatches.json" \
-  "printf '%s' \"\$dry\" | jq -r '.warnings[]' | grep -q '^.escape-hatches.json is no longer read'"
+  "printf '%s' \"\$dry\" | jq -r '.warnings[]' | grep >/dev/null '^.escape-hatches.json is no longer read'"
 
 out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
 check "the update warns about .escape-hatches.json" \
-  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q '^.escape-hatches.json is no longer read'"
+  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep >/dev/null '^.escape-hatches.json is no longer read'"
 check "the warning points at the lint config" \
-  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q 'no-restricted-disable'"
+  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep >/dev/null 'no-restricted-disable'"
 eq "the update leaves .escape-hatches.json as it was" "$(cat "$proj/.escape-hatches.json")" "$config"
 check "the update deletes the ratchet" "[ ! -e '$proj/.inspire/bin/escape-hatch-ratchet.sh' ]"
 
 rm -f "$proj/.escape-hatches.json"
 again="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
 check "no warning once the file is gone" \
-  "! printf '%s' \"\$again\" | jq -r '.warnings[]' | grep -q 'escape-hatches'"
+  "! printf '%s' \"\$again\" | jq -r '.warnings[]' | grep >/dev/null 'escape-hatches'"
 
 premise "the project resolves the nestjs profile" \
-  "yq --front-matter=extract '.profiles[]' '$proj/inspire_kb/00_bootstrap/stack.md' | grep -qx nestjs"
+  "yq --front-matter=extract '.profiles[]' '$proj/inspire_kb/00_bootstrap/stack.md' | grep -x >/dev/null nestjs"
 mkdir -p "$proj/source"
 printf '%s\n' '{ "rules": { "typescript/no-explicit-any": "error" } }' > "$proj/source/.oxlintrc.json"
 
 dry="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" --dry-run 2>/dev/null)"
 check "a dry run warns that the oxlint config lacks the escape-hatch rules" \
-  "printf '%s' \"\$dry\" | jq -r '.warnings[]' | grep -q '^source/.oxlintrc.json lacks the escape-hatch rules'"
+  "printf '%s' \"\$dry\" | jq -r '.warnings[]' | grep >/dev/null '^source/.oxlintrc.json lacks the escape-hatch rules'"
 
 out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
 check "the update warns that the oxlint config lacks the escape-hatch rules" \
-  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q '^source/.oxlintrc.json lacks the escape-hatch rules'"
+  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep >/dev/null '^source/.oxlintrc.json lacks the escape-hatch rules'"
 check "the warning names the pre-PR hook" \
-  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep 'lacks the escape-hatch rules' | grep -q 'pre-PR hook'"
+  "printf '%s' \"\$out\" | jq -r '.warnings[]' | grep 'lacks the escape-hatch rules' | grep >/dev/null 'pre-PR hook'"
 
 printf '%s\n' '{ "jsPlugins": ["./oxlint-escape-hatches.mjs"], "rules": {
   "escape-hatches/require-reason": "error",
@@ -52,7 +52,7 @@ printf '%s\n' '{ "jsPlugins": ["./oxlint-escape-hatches.mjs"], "rules": {
   "escape-hatches/no-double-cast": "error" } }' > "$proj/source/.oxlintrc.json"
 installed="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" 2>/dev/null)"
 check "no warning once the three rules are in the oxlint config" \
-  "! printf '%s' \"\$installed\" | jq -r '.warnings[]' | grep -q 'escape-hatch'"
+  "! printf '%s' \"\$installed\" | jq -r '.warnings[]' | grep >/dev/null 'escape-hatch'"
 
 fixture_cleanup "$work"
 summary

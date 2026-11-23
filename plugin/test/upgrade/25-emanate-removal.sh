@@ -64,7 +64,7 @@ eq "update: the edited shell is kept with its edit" \
 eq "update: the edited tool is kept with its edit" \
    "$(shasum -a 256 < "$p/.inspire/bin/emanate-plan.sh")" "$plan_edit"
 check "update: the report says why the edited files stayed" \
-  "printf '%s' \"\$out\" | grep -q 'no longer part of INSPIRE, but you edited it'"
+  "printf '%s' \"\$out\" | grep >/dev/null 'no longer part of INSPIRE, but you edited it'"
 eq "update: the operator's own agent is untouched" \
    "$(cat "$p/.claude/agents/my-agent.md")" "mine"
 check "update: the agents class itself survives" "[ -f '$p/.claude/agents/README.txt' ]"

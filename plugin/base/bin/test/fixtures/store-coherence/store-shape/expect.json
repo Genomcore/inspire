@@ -1,0 +1,81 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'me' links no action",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'studies' Load is 'on boot'",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'study' loads on change of 'nope', which this store does not declare",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'study' On error is 'retry'",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'a' loads on a chain of 'on change of' that comes back to it",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'b' loads on a chain of 'on change of' that comes back to it",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "server key 'c' loads on change of itself",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "client key 'currentStudyId' Persist is 'forever'",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "client key 'theme' declares no Type",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "duplicate store key: 'me'",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "error class 'timeout' is not one of",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "error class 'other' has two rows",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "error class 'other' outcome is 'retry'",
+      "severity": "error"
+    },
+    {
+      "rule": "store-coherence",
+      "message_substring": "store key 'theme' has no reader",
+      "severity": "warning"
+    }
+  ],
+  "forbidden": [
+    "store key 'study' has no reader",
+    "store key 'a' has no reader",
+    "store key 'c' has no reader",
+    "server key 'c' loads on a chain"
+  ]
+}

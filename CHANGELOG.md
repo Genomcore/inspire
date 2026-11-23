@@ -9,6 +9,145 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.21.0 — 2026-11-20
+
+Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
+Factory release that requires 0.21.0 does not start a run whose plan has units with
+claims unless a test check of `.inspire/emanate.yml` declares its JSON test `report`.
+No hop and no layout change, and a knowledge base without a store file changes
+nothing. The update re-materializes the skills,
+references, templates and validators listed below.
+
+### Breaking for existing vaults
+
+- **Test checks declare a JSON report.** The Factory now passes a unit only when the
+  tests that cite its claims ran and passed, which it reads from each test check's
+  report. Run `/inspire-config init` after the update: it adds `report` and the
+  reporter flags to every Jest, Vitest and pytest check (§ Changed). A run whose plan
+  has units with claims and no check with a report stops before it starts. A pytest
+  project also needs `pytest-json-report` among its development dependencies.
+
+### Added
+
+- **A face declares the state it keeps between screens in one store**
+  (`adr-face-store`, Proposed): `_faces/{face}/{face}.store.md`, with server keys (an
+  action and a load trigger), client keys (type, initial value, `Persist`) and an
+  `## On error` default per error class. A screen or the shell reads a key with
+  ``store `k` `` and writes it from a dispatch's `On success` (``set store `k` ``,
+  ``refresh store `k` ``) or from a navigation's new `Then` column
+  (``set store `k` from param `p` ``). An outcome cell may hold several outcomes joined
+  by `; `, at most one of which navigates or enters a state.
+- **The shell binds data**: the shell layout gains `## LAY8: Bindings`, and with
+  several faces each face names its shell in `shell_layout:` (default `shell`).
+- **An `inspire-store` skill and template.**
+- **The derived contract** gains `store`, a ninth unit kind, with its claims,
+  fingerprints and refusals `DR-K1`–`DR-K4`; a shell's bindings become claims keyed by
+  its layout id.
+- **A validator, `store-coherence.sh`.** `screen-coherence.sh` checks the new outcome
+  forms and the shell's bindings, `face-exposure.sh` the store's and the shell's
+  actions against the face's bundles, and `spec-identity.sh` one store per face,
+  `shell_layout:`, and a store whose id is another unit's id.
+- **React's `## Store` seed**: TanStack Query for server keys and Zustand for client
+  keys, which a project may swap.
+
+### Changed
+
+- **`/inspire-config` writes the test report of every Jest, Vitest and pytest check**:
+  `report` names `.inspire-report-<check>.json`, and `run` and `run_related` carry the
+  reporter flags (Vitest `--reporter=default --reporter=json --outputFile.json=<file>`,
+  Jest `--json --outputFile=<file>`, pytest `--json-report --json-report-file=<file>`).
+  `.gitignore` covers `.inspire-report-*.json`. Other runners get no report.
+- **A Jest or Vitest e2e check narrows by `{tests}`**, the test files that cite a claim
+  of the unit or of a unit it requires: an e2e test seldom imports the file a unit
+  changes, so under `{files}` its citations never count. On update, an e2e
+  `run_related` with `{files}` is proposed to switch.
+- **A binding claim hashes only the `## Bindings` rows its action selects**
+  (`derived-contract.md` § Binding claims): the route rows of its verb (or `*` /
+  `* with id`), the plural row of its entity and its guard rows, plus its input names
+  and roles. Rewording the section's prose moves no fingerprint, and neither does a
+  rule written only as prose: the shipped `inspire-code-nestjs` seed states its rules
+  for named operations, plurals and the guard in prose, so a project that wants them to
+  move fingerprints declares them as rows (`### Routes`, `### Plurals`, `### Guard`).
+  Nothing to run after the update: the Factory re-stamps the old fingerprints itself.
+- **`/inspire-config review` reports** a test check without `report`, a report its
+  commands do not write, pytest without `pytest-json-report`, a report `.gitignore`
+  does not cover, and an e2e `run_related` with `{files}`.
+
+## 0.20.0 — 2026-11-19
+
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and nothing in the knowledge base moves. The update re-materializes the
+`inspire-code-nestjs` skill.
+
+### Changed
+
+- **A NestJS migration is numbered by the instant it is created.** The
+  `inspire-code-nestjs` skill's `## Persistence` asked for "one timestamp-named file per
+  change" without saying which instant, and two Factory runs read it differently: the
+  current time, and the previous migration plus one. The second gives two emanations
+  running at once the same number, and TypeORM then orders the equal numbers however
+  its file glob returns them. A migration is now created with
+  `npx typeorm migration:create src/migrations/<Name>`, which names the file
+  `<ms>-<Name>.ts` and the class `<Name><ms>` from `Date.now()`, never from the
+  previous migration.
+
+## 0.19.0 — 2026-11-17
+
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and contracts and claims derive as before until a project declares `datastores:`
+in `stack.md`. The update re-materializes the skills, references and validators listed
+below.
+
+A project that keeps an entity in a database other than its main one declares
+`datastores:` and `default_datastore:` in `stack.md`, and `datastore:` on each entity
+that lives outside the default. INSPIRE Factory builds those entities in their database
+from **0.21.0**; Factory 0.20.0 and earlier ignore the fields and build every entity in
+the backend profile's database. In an emanated project the default must be the database
+its tables are already in: then only the entities placed outside the default are rebuilt.
+
+### Added
+
+- **An entity names the datastore it lives in** (`adr-entity-datastore`, Proposed).
+  `stack.md` may declare `datastores:` (datastore id → the stack id whose skill serves
+  it) and a `default_datastore:`; an entity names its database with `datastore:`, or
+  lives in the default. With two or more datastores and no default, an entity without
+  the field is refused: INSPIRE never picks one. The entity's table follows the
+  `## Persistence` of its datastore's stack skill, and `population: external` does not
+  move the table out of the project.
+- **A validator, `entity-datastore.sh`**, in `review.sh`'s default list. Errors at every
+  lifecycle: `datastore-missing`, `datastore-undeclared`, `datastore-default-undeclared`
+  and `datastore-unserved`. Warning: `reference-crosses-datastore`, for a `references(…)`
+  whose target lives in another datastore, since no foreign key spans two engines. A
+  stack with no `datastores:` produces no finding.
+- **The derived contract carries the datastore:** `unit.datastore`, `datastore` on an
+  action's entities, a claim `{module}.{entity}/datastore` (oracle `store`) made only by
+  an entity outside the default, and a refusal class, `DR-D3` (`derived-contract.md`).
+
+### Changed
+
+- **`/inspire-bootstrap` asks for the datastores.** The stack interview writes
+  `datastores:` and asks for the default, its review checks them, and the `stack.md`
+  template's `## Data` explains the fields.
+- **`/inspire-domain` asks each entity for its datastore**, and never infers it.
+  `format-entity.md` documents the field and how it resolves, and the domain review
+  runs the new rule.
+- **A database skill declares `layer: backend` with no `## Bindings`** (`stack-skills.md`
+  § Datastores), so it reaches only backend units and is never taken for the backend
+  framework.
+- **The daily release moves stranded pull requests to the open release branch.**
+  Deleting a merged `release/<date>` branch made GitHub retarget its open PRs to
+  `main`, where the Release check refused them. The daily workflow now points them,
+  and any PR into `main` that is not from `release/`, `hotfix/` or `docs/`, at the
+  newest open release branch, reruns their Release check, and only then deletes the
+  published release's branch. The Release check passes without checking anything
+  when the PR no longer targets `main`.
+
+### Fixed
+
+- The daily release reads the release notes without cutting the pipe. Under `pipefail`,
+  stopping `awk` at the end of the section killed `git show` with SIGPIPE (141) once the
+  CHANGELOG passed 64 KB, after the merge and before the tag and the GitHub Release.
+
 ## 0.18.0 — 2026-11-17
 
 Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
