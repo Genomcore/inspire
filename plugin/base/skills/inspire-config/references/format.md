@@ -146,12 +146,15 @@ a phase.
 
 | Key | Rule | Factory error |
 |---|---|---|
-| (keys) | only `name`, `run`, `run_related` and `report` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related, report` |
+| (keys) | only `name`, `run`, `run_related`, `report` and `timeout` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related, report, timeout` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
 | `run_related` | optional; the same command as `run`, narrowed to the tests related to the unit: those related to the files it changed (`{files}`) or those that cite its claims (`{tests}`). It must contain `{files}` or `{tests}`, and it must pass when no test relates to them: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files} or {tests}` |
 | `report` | optional; the path, from the repository root, of the JSON test report that `run` and `run_related` write on every run (§ Test reports). Inside the repository, not under `.git`, a protected path, `.claude/worktrees` or `.inspire/check-output`, and never the same file as another check's, in any case | `… check <name> report must be a nonempty string` · `… check <name>: report <path> must be a path inside the repository` · `… check <name>: report <path> must not be under <dir>` · `…: checks <a> and <b> both write the report <path>` |
+| `timeout` | optional; whole seconds, at least 1: the check's time limit, for `run` and `run_related` alike, in the units, the scaffold and the release check. The clock starts when the check's container starts, not while it waits for a slot. A check that runs longer is stopped and fails with exit code 124 and the line `The check ran longer than its timeout of <N> seconds, so the factory stopped it.`, which goes to a repair agent with the rest of its output; it is never rerun as a flaky kill. Needs INSPIRE Factory 0.24.0 or later | `… check <name> timeout must be a whole number of seconds, at least 1` |
 
-There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
+Without `timeout` a check has no time limit: a watch mode, a foreground server or a
+test that never ends holds its slot until someone stops the run (one held an e2e slot
+for 3.5 hours). With it, the same check fails at the limit instead. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
 command starts with `set -o pipefail`.
 
@@ -377,10 +380,12 @@ phases:
         run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json'
         run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json {files}'
         report: 'source/.inspire-report-unit-tests.json'
+        timeout: 1800
       - name: E2E tests
         run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json'
         run_related: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --passWithNoTests --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json {tests}'
         report: 'source/.inspire-report-e2e-tests.json'
+        timeout: 1800
   - name: claims
     checks:
       - name: Claim citations
@@ -393,7 +398,9 @@ profile requires, and each file copies its own database, so the check runs files
 side with `--fileParallelism`: two workers at the default `sandbox` memory (`1536m`), four
 with `sandbox.memory: 2g` or more, on INSPIRE Factory 0.19.0 or later. On an older Factory
 the check keeps the config's one file at a time. `bash_timeout: 600` lets an agent's
-long command finish and still bounds a shell that never returns to ten minutes.
+long command finish and still bounds a shell that never returns to ten minutes;
+`timeout: 1800` does the same for a test check that hangs, on INSPIRE Factory 0.24.0
+or later.
 The review phase reads the `## Review focus` section of the react and nestjs
 profiles; drop it to run without reviews. The unit tests narrow by `{files}`; the e2e
 tests, which start the whole application and relate to almost every change, by

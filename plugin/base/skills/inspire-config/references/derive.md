@@ -143,6 +143,14 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   own; a migration, a build or a whole e2e file can take longer. A higher value lets a
   shell that never returns hold the unit's slot that long: one held a genomics-suite unit
   for 30 minutes at `1800`.
+- **`timeout`.** Proposed, confirm: `1800` on every run check in phase `tests`, on
+  INSPIRE Factory 0.24.0 or later; an older reader refuses the key when the run
+  starts, so with an older Factory or no checkout propose none, and say why. Without
+  it a test run that never ends holds its slot until someone stops the run: a stuck
+  e2e Jest run held one of two slots for 3.5 hours. The limit also bounds the release
+  check, which runs `run`, the whole suite: when the operator knows how long the whole
+  suite takes, propose at least three times that. `bash_timeout` does not cover it: it
+  limits the agents' commands, not the checks.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
   named `review`, after `quality` and **before** `tests`, with one check per
@@ -226,7 +234,8 @@ are expected.
   its reporter flags in `run` and `run_related`, as in a new file (§ `report`).
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
   whose config runs one file at a time over per-file databases gets `--fileParallelism`
-  and its `--maxWorkers`, as in a new file (§ Run checks).
+  and its `--maxWorkers`, as in a new file (§ Run checks). A test check without
+  `timeout` gets `1800`, on INSPIRE Factory 0.24.0 or later (§ `timeout`).
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for
