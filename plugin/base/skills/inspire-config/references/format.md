@@ -1,7 +1,7 @@
 # Config — the format
 > Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-`.inspire/emanate.yml` has six top-level keys. The factory's reader is the
+`.inspire/emanate.yml` has seven top-level keys. The factory's reader is the
 authority, and this page summarizes it: when the two disagree, the reader wins
 and this page is stale. The reader stops at the **first** error, so one run of
 it reports one problem. Any key it does not know is an error, at every level.
@@ -14,12 +14,13 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | (document) | yes | one YAML document, a mapping | `… is not valid YAML: <parser message>` · `… must be a mapping` |
-| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, phases` |
+| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `bash_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, bash_timeout, phases` |
 | `factory` | no | a mapping: the factory's own settings, below. Omit the key to take every default | `… factory must be a mapping` |
 | `image` | yes | the reader accepts it absent; the runner then stops before planning | `the factory runs agents in the project image: add image to .inspire/emanate.yml` |
 | `services` | no | a mapping of name → service. With no services, omit the key: `services:` with nothing after it is null, and null is an error | `… services must be a mapping` |
 | `env` | no | a mapping of variable → string. Omit it rather than leave it empty | `… env must be a mapping` |
 | `setup` | no | one nonempty string | `… setup must be a nonempty string` |
+| `bash_timeout` | no | whole seconds from 1 to 3600: the time limit of each shell command a unit, scaffold, repair or reviewer agent runs when it passes no timeout of its own. Without it OMP's own limit applies (300 s), and a command that takes longer is killed before the agent sees its result. It limits the agents' commands, not the checks | `… bash_timeout must be a whole number of seconds from 1 to 3600` |
 | `phases` | yes | a nonempty list | `… phases must be a nonempty list` |
 
 ## `factory`
@@ -32,12 +33,16 @@ default. The reader refuses any key not in the table, under `factory` and under
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
 | `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/01_spec` | `… factory.spec_root must be a nonempty string` |
-| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, max_tries, base_branch, viewer_port, sandbox` |
+| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, check_concurrency, max_tries, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
 | `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |
+| `check_concurrency` | a positive integer: check commands (lint, typecheck, test suites) running at once across all units; the others wait for a free one. Review checks, the setup and the agents take none. Agents mostly wait on the model while suites keep the CPUs busy, so this bounds the load of the factory's own checks better than `concurrency`. The tests an agent runs in its shell take no slot | `2` | `… factory.check_concurrency must be a positive integer` |
 | `max_tries` | a positive integer: repairs per check for each unit | `2` | `… factory.max_tries must be a positive integer` |
+| `spec_strictness` | `strict`, `auto` or `yolo`: what a unit does when its agent reports a spec problem with `report_spec_issue`. `strict` stops the unit with the report. `yolo` has a spec writer agent apply the proposed solution to the spec files and lets the unit continue; each applied report is a numbered spec revision committed to the release branch. `auto` has a small model (`spec_classifier_model`) classify each report: `small` is applied as in `yolo`, `critical` stops the unit as in `strict` | `strict` | `… factory.spec_strictness must be strict, auto or yolo` |
+| `spec_max_revisions` | a positive integer: the most spec revisions a `yolo` or `auto` run commits; once the run holds that many, the next report stops its unit as in `strict` | `5` | `… factory.spec_max_revisions must be a positive integer` |
+| `spec_classifier_model` | same form as `model`: the model that classifies each report in `auto`; a small model is enough. Required by `auto` | none | `… factory.spec_classifier_model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` · `… factory.spec_strictness auto requires spec_classifier_model` |
 | `base_branch` | a branch name, or `null` for a local release | `main` | `… factory.base_branch must be a branch name or null` |
 | `viewer_port` | an integer from 0 to 65535 | `4319` | `… factory.viewer_port must be an integer from 0 to 65535` |
 | `sandbox` | a mapping with only `memory`, the memory limit of each unit container (setup, each check, each agent): a Docker size such as `1536m` or `2g` (default `1536m`); requires `model`. The Factory runs at once only as many units as fit in Docker's memory, each taking `sandbox.memory` plus every service's `memory`, so raise it only for a suite that needs it | none | `… factory.sandbox must be a mapping` · `… factory.sandbox has unknown key <k>; allowed keys: memory` · `… factory.sandbox.memory must be a Docker memory size such as 1536m or 2g` · `… factory.sandbox requires model` |
@@ -141,9 +146,10 @@ a phase.
 
 | Key | Rule | Factory error |
 |---|---|---|
-| (keys) | only `name`, `run` and `run_related` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related` |
+| (keys) | only `name`, `run`, `run_related` and `report` | `… phases[<i>].checks[<j>] has unknown key <k>; allowed keys: name, run, run_related, report` |
 | `run` | one string, run with `bash -c` from the worktree root. The exit code decides | `… check <name> run must be a nonempty string` |
-| `run_related` | optional; the same command as `run`, narrowed to the tests related to the files the unit changed. It must contain `{files}`, and it must pass when no test relates to those files: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files}` |
+| `run_related` | optional; the same command as `run`, narrowed to the tests related to the unit: those related to the files it changed (`{files}`) or those that cite its claims (`{tests}`). It must contain `{files}` or `{tests}`, and it must pass when no test relates to them: Jest and Vitest need `--passWithNoTests` | `… check <name> run_related must be a nonempty string` · `… check <name> run_related must contain {files} or {tests}` |
+| `report` | optional; the path, from the repository root, of the JSON test report that `run` and `run_related` write on every run (§ Test reports). Inside the repository, not under `.git`, a protected path, `.claude/worktrees` or `.inspire/check-output`, and never the same file as another check's, in any case | `… check <name> report must be a nonempty string` · `… check <name>: report <path> must be a path inside the repository` · `… check <name>: report <path> must not be under <dir>` · `…: checks <a> and <b> both write the report <path>` |
 
 There is no timeout: a watch mode or a foreground server hangs the unit. A pipe
 returns its last command's code, so `cargo test | tail` is always green unless the
@@ -163,8 +169,50 @@ runner takes file paths:
 - Jest: `npx --no-install jest --passWithNoTests --findRelatedTests {files}`
 - Vitest: `npx --no-install vitest related --run --passWithNoTests {files}`
 
+`{tests}` becomes the test files under the `claims` roots that cite a claim of the
+unit or of a unit it requires, plus the files the unit changed there that cite any
+claim, as absolute paths, each shell-quoted. When there are none, the check runs
+`run`. It suits e2e suites, whose tests start the whole application, relate to
+almost every change and seldom import the file a unit changed:
+
+- Jest: `npx --no-install jest --passWithNoTests --runTestsByPath {tests}`
+- Vitest: `npx --no-install vitest run --passWithNoTests {tests}`
+
+A factory that does not know `{tests}` refuses the file when the run starts, with
+`… run_related must contain {files}`: update the factory.
+
 Without `--passWithNoTests`, a unit that changes only files outside this check's
 package fails it: no test relates to them, and the runner exits non-zero.
+
+#### Test reports
+
+A run check with `report` passes only when its command exits with 0 and its report
+shows that the tests ran. The factory reads two shapes: the Jest-shaped JSON that
+Vitest and Jest write, and pytest-json-report's.
+
+- Vitest: `--reporter=default --reporter=json --outputFile.json=<file>`
+- Jest: `--json --outputFile=<file>`
+- pytest: `--json-report --json-report-file=<file>`, with `pytest-json-report` installed
+
+`<file>` is relative to the command's `cd`; `report` is the same file from the
+repository root. The factory:
+
+- deletes the report before each run, so an old one never passes a check, and keeps
+  it out of every commit;
+- fails the check when the report is missing or unreadable, when a test failed, was
+  skipped, disabled or todo (pytest's `xfailed` counts as skipped), and, on `run`,
+  when no test passed. A run of `run_related` may run none;
+- names each failed test, with its messages, and each skipped one in the repair
+  prompt;
+- counts a `@claim` citation only in a file in which a test passed in a report of the
+  unit's checks. A test that `run_related` does not select never counts in that unit, so
+  the claims of a unit must be cited in tests its related run reaches: `{tests}` selects
+  them all.
+
+A run whose plan has units with claims stops before it starts when no check has a
+report: `<n> units of the plan have claims, but no tests check of .inspire/emanate.yml
+declares a report, so the factory cannot tell whether the tests that cite them ran and
+passed: add report to the checks that run the tests`.
 
 ### Review checks
 
@@ -281,7 +329,7 @@ So: **single-quote every string value** except phase and check names —
 and `services.*.env` value, every `healthcheck` and `command` item, every string
 under `factory`. A single quote inside a value is written `''`. Indent with two
 spaces; tabs are rejected. Write the keys in the order `factory`, `image`,
-`services`, `env`, `setup`, `phases`.
+`services`, `env`, `setup`, `bash_timeout`, `phases`.
 
 ## Worked example
 
@@ -309,6 +357,7 @@ services:
 env:
   DATABASE_URL: 'postgresql://inspire:inspire@postgres:5432/app'
 setup: 'cd source && npm ci'
+bash_timeout: 600
 phases:
   - name: quality
     checks:
@@ -325,10 +374,13 @@ phases:
   - name: tests
     checks:
       - name: Unit tests
-        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2'
-        run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 {files}'
+        run: 'cd source && npx --no-install vitest run --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json'
+        run_related: 'cd source && npx --no-install vitest related --run --passWithNoTests --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-unit-tests.json {files}'
+        report: 'source/.inspire-report-unit-tests.json'
       - name: E2E tests
-        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts'
+        run: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json'
+        run_related: 'cd source && npx --no-install vitest run --config vitest.e2e.config.ts --fileParallelism --maxWorkers=2 --passWithNoTests --reporter=default --reporter=json --outputFile.json=.inspire-report-e2e-tests.json {tests}'
+        report: 'source/.inspire-report-e2e-tests.json'
   - name: claims
     checks:
       - name: Claim citations
@@ -336,10 +388,15 @@ phases:
 ```
 
 `--host 127.0.0.1` keeps `pg_isready` from answering through the socket while
-Postgres is still initializing. The e2e suite takes no `--maxWorkers`: its config sets
-`fileParallelism: false`, which already runs one file at a time, as the NestJS profile
-requires.
+Postgres is still initializing. The e2e config runs one file at a time, as the NestJS
+profile requires, and each file copies its own database, so the check runs files side by
+side with `--fileParallelism`: two workers at the default `sandbox` memory (`1536m`), four
+with `sandbox.memory: 2g` or more, on INSPIRE Factory 0.19.0 or later. On an older Factory
+the check keeps the config's one file at a time. `bash_timeout: 600` lets an agent's
+long command finish and still bounds a shell that never returns to ten minutes.
 The review phase reads the `## Review focus` section of the react and nestjs
-profiles; drop it to run without reviews. Only the unit tests carry `run_related`:
-an e2e test that starts the whole application relates to most changes, so the
-narrowing saves little there. That one `run_related` turns on the release check.
+profiles; drop it to run without reviews. The unit tests narrow by `{files}`; the e2e
+tests, which start the whole application and relate to almost every change, by
+`{tests}`, the files that cite the unit's claims. Either `run_related` turns on the
+release check. Both
+test checks write a report, each to its own file: the e2e tests prove claims too.

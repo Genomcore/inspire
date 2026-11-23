@@ -23,7 +23,7 @@ mkdir -p "$p/inspire_kb"
 out="$(verify_layout "$PLUGIN_ROOT" "$p" pre-0.3 2>&1)"; rc=$?
 eq "half-migrated tree is refused" "$rc" "1"
 check "refusal explains the ambiguity" \
-  "printf '%s' \"\$out\" | grep -qi 'inspire_kb'"
+  "printf '%s' \"\$out\" | grep -i >/dev/null 'inspire_kb'"
 fixture_cleanup "$w"
 
 w="$(mktemp -d)"; p="$(fixture_from_tag v0.3.1 "$w" "$REPO")"
@@ -39,7 +39,7 @@ eq "layout_map for pre-0.3 puts bin under .claude" \
    "bin:.claude/bin hooks:.claude/hooks skills:.claude/skills"
 eq "layout_map for 0.3 puts bin under .inspire" \
    "$(layout_map "$PLUGIN_ROOT" 0.3)" \
-   "bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents"
+   "bin:.inspire/bin hooks:.claude/inspire/hooks skills:.claude/skills agents:.claude/agents visor:.inspire/visor"
 layout_map "$PLUGIN_ROOT" no-such-layout >/dev/null 2>&1
 eq "layout_map refuses an unknown layout" "$?" "1"
 

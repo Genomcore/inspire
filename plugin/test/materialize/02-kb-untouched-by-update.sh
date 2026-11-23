@@ -16,8 +16,9 @@ FIXTURE_MANIFEST="$PLUGIN_ROOT/manifests/$FIXTURE_VERSION.json"
 FIXTURE_WORK="$(mktemp -d)"
 # The tag is spelled out: run.sh greps these call sites for what to pre-build.
 FIXTURE_BASE="$(fixture_from_tag v0.6.0 "$FIXTURE_WORK" "$REPO")"
+fixture_require "$FIXTURE_BASE" v0.6.0
 # fixture_copy <dest> — a private copy of the baseline, for one block to mutate.
-fixture_copy() { mkdir -p "$1" && cp -R "$FIXTURE_BASE/." "$1/"; }
+fixture_copy() { mkdir -p "$1" && cp -R "${FIXTURE_BASE:?}/." "$1/"; }
 
 # ---------------------------------------------------------------------------
 # Regression: /inspire:update must never touch inspire_kb/ — the KB is
@@ -121,7 +122,7 @@ rm -f "$kbp/.inspire/bin/no-todos.sh"
 
 dc_kb="$("$SCRIPT" --mode drift-check --plugin-root "$PLUGIN_ROOT" --project-root "$kbp" 2>/dev/null)"
 check "KB regression: drift-check names no inspire_kb path" \
-  "! (printf '%s' \"\$dc_kb\" | jq -r '.ask[]' | grep -q '^inspire_kb/')"
+  "! (printf '%s' \"\$dc_kb\" | jq -r '.ask[]' | grep >/dev/null '^inspire_kb/')"
 
 skip_args=(--skip .claude/skills/inspire-domain/SKILL.md)
 
@@ -131,7 +132,7 @@ upd_out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "
 # A layered KB gets the layout warning only: its links convert after the moves.
 premise "the layered KB holds wikilinks" "[ \"\$(bash '$PLUGIN_ROOT/scripts/migrate-links.sh' --count --kb '$kbp/inspire_kb')\" -gt 0 ]"
 check "KB regression: a layered KB gets no wikilink warning" \
-  "! (printf '%s' \"\$upd_out\" | jq -r '.warnings[]' | grep -q 'wikilink')"
+  "! (printf '%s' \"\$upd_out\" | jq -r '.warnings[]' | grep >/dev/null 'wikilink')"
 
 check "KB regression: ADR in 01_adr survives update" \
   "[ -f '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' ] && [ '$adr_before' = \"\$(shasum -a 256 '$kbp/inspire_kb/01_adr/adr-0099-event-sourcing.md' | cut -d' ' -f1)\" ]"

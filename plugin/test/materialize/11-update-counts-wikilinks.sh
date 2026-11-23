@@ -13,7 +13,8 @@ SCRIPT="$PLUGIN_ROOT/scripts/materialize.sh"
 FIXTURE_WORK="$(mktemp -d)"
 # The tag is spelled out: run.sh greps these call sites for what to pre-build.
 FIXTURE_BASE="$(fixture_from_tag v0.16.0 "$FIXTURE_WORK" "$REPO")"
-proj="$(mktemp -d)/proj"; mkdir -p "$proj" && cp -R "$FIXTURE_BASE/." "$proj/"
+fixture_require "$FIXTURE_BASE" v0.16.0
+proj="$(mktemp -d)/proj"; mkdir -p "$proj" && cp -R "${FIXTURE_BASE:?}/." "$proj/"
 
 note="$proj/inspire_kb/99_tracker/tickets/T-1.md"
 mkdir -p "$(dirname "$note")"
@@ -37,7 +38,7 @@ done < <(grep -rl '\[\[' "$proj/inspire_kb")
 premise "the KB holds no wikilink" "[ \"\$(bash '$PLUGIN_ROOT/scripts/migrate-links.sh' --count --kb '$proj/inspire_kb')\" = 0 ]"
 out="$("$SCRIPT" --mode update --plugin-root "$PLUGIN_ROOT" --project-root "$proj" \
   --source-root source --prototype-root prototype 2>/dev/null)"
-check "update: no wikilink, no warning" "! (printf '%s' \"\$out\" | jq -r '.warnings[]' | grep -q 'wikilink')"
+check "update: no wikilink, no warning" "! (printf '%s' \"\$out\" | jq -r '.warnings[]' | grep >/dev/null 'wikilink')"
 
 rm -rf "$(dirname "$proj")"
 fixture_cleanup "$FIXTURE_WORK"

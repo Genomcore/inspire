@@ -1,0 +1,11 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "rule": "store-coherence",
+      "message_substring": "client key 'currentStudyId' Persist is 'forever'",
+      "severity": "warning"
+    }
+  ],
+  "finding_count": 1
+}

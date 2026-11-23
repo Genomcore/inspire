@@ -39,7 +39,7 @@ mkdir -p "$p/.inspire_kb"
 out="$(verify_layout "$PLUGIN_ROOT" "$p" 0.3 2>&1)"; rc=$?
 eq "half-migrated tree is refused against the 0.3 signature too" "$rc" "1"
 check "0.3-side refusal explains the ambiguity" \
-  "printf '%s' \"\$out\" | grep -qi 'inspire_kb'"
+  "printf '%s' \"\$out\" | grep -i >/dev/null 'inspire_kb'"
 fixture_cleanup "$w"
 
 # Structure-not-content, as a permanent assertion rather than a one-off

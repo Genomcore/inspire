@@ -1,0 +1,19 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "face-exposure",
+      "message_substring": "loads billing::invoice::list, which no bundle of face 'portal' exposes",
+      "severity": "error"
+    },
+    {
+      "rule": "face-exposure",
+      "message_substring": "binds action billing::invoice::list, which no bundle of face 'portal' exposes",
+      "severity": "error"
+    }
+  ],
+  "forbidden": [
+    "auth::user::me",
+    "studies::"
+  ]
+}

@@ -6,7 +6,7 @@
 
 **A software engineering methodology for the agentic era.**
 
-> **I**ndividual · **N**avigable · **S**pec-driven · **P**rototypical · **I**terative · **R**egenerative · **E**nforceable
+> **I**ntelligent · **N**avigable · **S**pec-driven · **P**rototypical · **I**terative · **R**obust · **E**xecutable
 
 [**Read the manual → inspire.openbims.dev**](https://inspire.openbims.dev) · [OpenBIMS](https://openbims.dev) · [Genomcore](https://genomcore.com)
 
@@ -27,7 +27,7 @@ from coordination to **judgment**.
 INSPIRE is a way to build software around that shift:
 
 - **Intent lives in a navigable knowledge graph** — plain-text artifacts that stay
-  durable across every regeneration of the code.
+  durable each time the code is emanated afresh.
 - **Prototypes create clarity** — a wide, shallow horizontal prototype and narrow,
   deep vertical spikes reduce uncertainty *before* you commit.
 - **Coherence is enforced mechanically** — guardrails, skills and automated checks
@@ -54,7 +54,7 @@ platform by [Genomcore](https://genomcore.com). This repository is both its
   prototype (wide, shallow, mocked) asks "is this the right thing?"; many *vertical*
   spikes (narrow, deep, functional) ask "can we build it as we think?".
 - **The specification is the DNA of the system.** Code is its current expression; when
-  it drifts, agents regenerate it while preserving the original intent.
+  it drifts, agents emanate it afresh from the spec instead of patching it.
 
 *Stop sprinting. Start breathing.*
 
@@ -67,7 +67,7 @@ product you build on top.
 
 | Path | What it is |
 |---|---|
-| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update,migrate}/` are the only **live** skills — `/inspire:init`, `/inspire:update` and `/inspire:migrate`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
+| [`plugin/`](plugin/) | The distributable **Claude Code plugin**. `.claude-plugin/plugin.json` carries the release identity (`version` + `released`); `skills/{init,update,migrate,visor}/` are the only **live** skills — `/inspire:init`, `/inspire:update`, `/inspire:migrate` and `/inspire:visor`; `base/` is the **inert payload**, materialized into a governed project by init: `base/skills/` → `.claude/skills/inspire-*`, `base/agents/` → `.claude/agents/`, `base/bin/` → `.inspire/bin/` (validators — `base/bin/test/` never materializes), `base/hooks/` → `.claude/inspire/hooks/`, `base/visor/` → `.inspire/visor/` (the visor's configuration), `base/kb/` → `inspire_kb/`, `base/templates/` → a provisional root `CLAUDE.md`, a `.gitignore` block, and the `source/` + `prototype/` README stubs. |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Makes this repo its own plugin marketplace, so `/plugin marketplace add Genomcore/inspire` resolves. |
 | [`docs/adr/`](docs/adr/) | Hand-authored, core-level ADRs about INSPIRE itself — not materialized; a governed project's own decisions live in its `inspire_kb/01_spec/` (`*.adr.md`). |
 
@@ -79,7 +79,7 @@ product you build on top.
 > `plugin/base/`.
 
 The skills + validators + hooks under `plugin/base/` are the **guardrail layer**:
-the concrete embodiment of INSPIRE's *Enforceable* principle — skills carry the
+the concrete embodiment of INSPIRE's *Robust* principle — skills carry the
 judgment, hooks + validators catch drift mechanically. `inspire_kb/` is the graph
 they operate on.
 
@@ -100,9 +100,9 @@ prototypes — so they fit any stack.
 /reload-plugins
 ```
 
-This is a per-user maintainer tool, not a runtime dependency — it is never
-referenced once a project is materialized. Only whoever runs an init or update
-needs it installed; teammates and CI need nothing.
+The plugin is installed per user. A materialized project runs its skills, validators
+and hooks without it, so CI needs nothing; whoever runs an init, an update, a migration
+or `/inspire:visor` needs it installed.
 
 **2. In the repo you want to govern, initialize.**
 
@@ -115,8 +115,7 @@ teammates), then materializes the skills, validators, hooks and KB skeleton,
 marker-merges the `session-start` + `dispatch` hooks into `.claude/settings.json`,
 seeds the design system and its token file from your bootstrap theme, seeds a provisional root
 `CLAUDE.md` and a `.gitignore` block (both left untouched if already present), and
-writes `.inspire.lock` recording which release was materialized plus a hash of
-every file it wrote (used later for drift detection). It never touches your git
+writes `.inspire.lock` recording which release was materialized. It never touches your git
 history and never clobbers existing content.
 
 **3. Reload, then bootstrap.**
@@ -145,6 +144,19 @@ the layered layout (`01_adr` … `05_screens`), and one whose KB predates 0.17.0
 with `[[wikilinks]]`; after updating, run `/inspire:migrate` once to move it to
 `inspire_kb/01_spec/` and convert its links to relative Markdown links. It rebuilds
 nothing already built.
+
+**5. Configure the factory.**
+
+```
+/inspire-config init
+```
+
+INSPIRE specifies; [INSPIRE Factory](https://inspire.openbims.dev/factory.html) writes
+the code. `/inspire-config init` writes `.inspire/emanate.yml`, the factory's only
+configuration, from your stack, and validates it with the factory's own reader. The
+factory then builds every accepted unit and opens one pull request.
+[QARA](https://github.com/Genomcore/inspire-qara) is an optional layer on top, for
+the assurance of quality, security, personal data and responsible AI use.
 
 > Drift tracking covers the files INSPIRE shipped: each release's manifest holds
 > their hashes, and `.inspire.lock` records only provenance — version, commit,
@@ -178,7 +190,7 @@ nothing already built.
 It represents how a well-designed system *breathes* — coherent, alive, and able to
 renew itself.
 
-*Individual · Navigable · Spec-driven · Prototypical · Iterative · Regenerative · Enforceable*
+*Intelligent · Navigable · Spec-driven · Prototypical · Iterative · Robust · Executable*
 
 Born in [OpenBIMS](https://openbims.dev) · by [Genomcore](https://genomcore.com)
 

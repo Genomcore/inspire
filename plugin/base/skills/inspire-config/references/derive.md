@@ -83,7 +83,15 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   `cd <source_root>[/<package>] &&`. No watch mode:
   `vitest run`, `npx --no-install jest`. Vitest and Jest unit suites take
   `--maxWorkers=2`; a suite whose config already sets `maxWorkers` (or, in Vitest,
-  `fileParallelism: false`) takes no flag. A suite that may still be empty takes
+  `fileParallelism: false`) takes no flag. The exception is a Vitest e2e suite whose
+  config sets `fileParallelism: false` while each file gets a database of its own: its
+  `globalSetup` migrates one template database, and each file's `beforeAll` runs
+  `CREATE DATABASE … TEMPLATE` (the NestJS profile's shape). Its files share nothing, so
+  it takes `--fileParallelism --maxWorkers=4` when `factory.sandbox.memory` is at least
+  `2g`, and `--fileParallelism --maxWorkers=2` below that: each worker boots its own
+  application. It needs INSPIRE Factory 0.19.0 or later, which no longer caps a unit's
+  CPUs; with an older Factory, or when the per-file database cannot be found in the
+  test code, the suite keeps its config. A suite that may still be empty takes
   `--passWithNoTests` in `run`: the release check and the units' fallback to `run`
   still run it whole.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
@@ -97,12 +105,44 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   - Vitest: `vitest run` becomes `vitest related --run`, plus `--passWithNoTests`
     and `{files}` at the end.
 
-  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite whose
-  tests start the whole application gains little, so it gets none unless the
-  operator asks. Other runners get none unless the operator gives the command and
-  it passes with no related test. In the proposal, say that
+  Keep every other flag of `run` (`--config`, `--maxWorkers`). An e2e suite, whose
+  tests start the whole application and so relate to almost every change, is
+  narrowed by `{tests}` instead of `{files}`: the test files that cite a claim of the
+  unit or of a unit it requires. A test that `run_related` does not select never
+  counts as a citation in that unit, and an e2e test seldom imports the file a unit
+  changes, so with `{files}` the unit's claims cited only in e2e tests would stay
+  uncited:
+  - Jest: `run` plus `--passWithNoTests --runTestsByPath {tests}`;
+  - Vitest: `run` plus `--passWithNoTests` and `{tests}` at the end.
+
+  When no test cites those claims, the factory runs `run`, the whole e2e suite.
+  Other runners get none unless the operator gives the command and it passes with
+  no related test. In the proposal, say that
   `run_related` turns on the release check, which runs the whole suite once more
   before the PR; the operator may drop it from the draft like any other key.
+- **`report`.** On by default ([`format.md`](format.md) § Test reports); no question
+  asks for it. The factory reads each test check's JSON report, and a run whose plan
+  has units with claims does not start when no test check declares one. Every Jest,
+  Vitest or pytest check in phase `tests`, e2e suites included, writes its report to
+  `.inspire-report-<check>.json` in the directory its command `cd`s into: `<check>` is
+  the check's name in lowercase, with `-` for spaces (`Unit tests` →
+  `.inspire-report-unit-tests.json`). `report` names that file from the repository
+  root (`source/.inspire-report-unit-tests.json`). The same flags go in `run` and in
+  `run_related`:
+  - Vitest: `--reporter=default --reporter=json --outputFile.json=<file>`;
+  - Jest: `--json --outputFile=<file>`;
+  - pytest: `--json-report --json-report-file=<file>`. It needs `pytest-json-report`
+    among the development dependencies; when it is missing, propose adding it, and
+    leave the install to the operator.
+
+  `.gitignore` covers `.inspire-report-*.json`. Other runners get no `report`: say
+  that a run whose plan has claims will not start until their suite writes a report
+  the factory reads.
+- **`bash_timeout`.** Proposed, confirm: `600`. Without it OMP kills an agent's command
+  after 300 s, before the agent sees its result, unless the agent passed a timeout of its
+  own; a migration, a build or a whole e2e file can take longer. A higher value lets a
+  shell that never returns hold the unit's slot that long: one held a genomics-suite unit
+  for 30 minutes at `1800`.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
   named `review`, after `quality` and **before** `tests`, with one check per
@@ -145,6 +185,7 @@ sources leave it open.
 | Q11 | Does any test need a real secret, or `setup` a private registry? | the code reads an external credential | no — the factory has no channel for secrets; say so |
 | Q12 | Does the machine reach the internet through a proxy or a mirror? | always | no; if yes, `HTTP(S)_PROXY` plus a `NO_PROXY` naming `orchestrator` and every service |
 | Q13 | Add a review phase? With which rules: the profiles' `## Review focus`, project skills, other files? | a profile has `## Review focus`, or the operator asks | no review; if yes, `'{profiles}#Review focus'` |
+| Q14 | When a unit's agent reports a spec problem: stop the unit (`strict`), let a small model decide (`auto`), or apply the agent's fix to the spec (`yolo`)? With `auto`, which model classifies? | always | `strict`, which writes no key; `auto` also writes `spec_classifier_model` |
 
 ## What is never deduced
 
@@ -155,7 +196,7 @@ sources leave it open.
 | which commands block a unit, and the phase order | the profiles give commands, not policy |
 | whether to review, and against which rules | a review is a cost the operator chooses |
 | secrets | `env` is committed and shown to every agent |
-| any value under `factory` | the models, the concurrency, the tries and the base branch are the operator's choice. The section is carried over from the old file or answered, never proposed |
+| any value under `factory` | the models, the concurrency, the tries, the spec strictness and the base branch are the operator's choice. The section is carried over from the old file or answered (Q14), never proposed |
 
 ## An empty project
 
@@ -178,7 +219,14 @@ are expected.
 - A `review` phase after `tests` is a file written before the factory ran only
   related tests; propose moving it before `tests`.
 - A Jest or Vitest unit suite without `run_related` gets one in the proposal,
-  as in a new file.
+  as in a new file, and so does a Jest or Vitest e2e suite, with `{tests}`. An e2e
+  `run_related` with `{files}` gets `{tests}` in its place (`--findRelatedTests {files}`
+  becomes `--runTestsByPath {tests}`).
+- A Jest, Vitest or pytest test check without `report` gets one in the proposal, with
+  its reporter flags in `run` and `run_related`, as in a new file (§ `report`).
+- A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
+  whose config runs one file at a time over per-file databases gets `--fileParallelism`
+  and its `--maxWorkers`, as in a new file (§ Run checks).
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for

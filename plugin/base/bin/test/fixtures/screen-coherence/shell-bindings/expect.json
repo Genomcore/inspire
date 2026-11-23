@@ -1,0 +1,15 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "rule": "screen-coherence",
+      "message_substring": "shell declares parameters",
+      "severity": "error"
+    },
+    {
+      "rule": "screen-coherence",
+      "message_substring": "unresolved outcome: 'flash a toast'",
+      "severity": "error"
+    }
+  ]
+}

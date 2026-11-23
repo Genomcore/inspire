@@ -1,0 +1,394 @@
+# Release diaria.
+#
+# schedule (L-V tras la daily) / manual:
+#   1. Busca LA PR abierta release/AAAA-MM-DD → main. Ninguna: no hace nada.
+#      Más de una: falla.
+#   2. Exige: no draft, ≥1 approval sobre el último commit, ningún
+#      "changes requested", todos los checks en verde (incluido "Release check")
+#      y que la versión suba y no esté tagueada.
+#   3. Merge (merge commit) → tag ligero v<version> sobre el merge commit →
+#      GitHub Release.
+#   4. Crea la siguiente rama release/<fecha de hoy> desde main si no hay otra.
+#   5. (job retarget) Reapunta a esa rama las PRs abiertas que se han quedado
+#      sin release (ver abajo), relanza su Release check y borra la rama de la
+#      release ya publicada.
+#
+# push a release/AAAA-MM-DD: abre la PR release → main si aún no existe y, si
+# es la release más reciente, le reapunta las PRs que se han quedado sin release.
+#
+# Reapuntar: al borrar la rama de una release mergeada, GitHub mueve a main las
+# PRs que apuntaban a ella. Este workflow las pasa a la release abierta, junto
+# con cualquier PR contra main que no venga de release/, hotfix/ ni docs/ (el
+# Release check no la dejaría entrar) y las que apuntan a una release/ ya
+# mergeada en main.
+# push a main (hotfix o merge manual de la release): crea el tag y la release
+# si la versión de main todavía no está tagueada.
+#
+# Notas de la release, por orden: sección "## <version>" de CHANGELOG.md →
+# sección "## Release notes" del cuerpo de la PR → notas autogeneradas.
+#
+# Lo único que cambia entre Inspire y Factory es el bloque env.
+
+name: Daily release
+
+on:
+  schedule:
+    # Cron en UTC. 09:00 UTC = 10:00 en Madrid en horario de invierno (CET).
+    # En horario de verano (CEST) pasarlo a '0 8 * * 1-5'.
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Solo comprobar, sin mergear ni publicar
+        type: boolean
+        default: false
+  push:
+    branches: [main, 'release/**']
+
+# Cada job pide solo lo que usa.
+permissions: {}
+
+concurrency:
+  # La publicación nunca corre dos veces a la vez; los push no se limitan.
+  group: ${{ github.event_name == 'push' && format('push-{0}', github.run_id) || 'release-publish' }}
+  cancel-in-progress: false
+
+env:
+  VERSION_FILE: plugin/.claude-plugin/plugin.json
+  VERSION_JQ: .version
+  RELEASE_BRANCH_RE: '^release/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  # Ramas que pueden apuntar a main (igual que HEAD_BRANCH_RE en release-check.yml).
+  # Las PRs contra main desde cualquier otra rama se reapuntan a la release abierta.
+  ALLOWED_TO_MAIN_RE: '^(release/[0-9]{4}-[0-9]{2}-[0-9]{2}|hotfix/.+|docs/.+)$'
+  REQUIRED_CHECK: Release check
+  # true: el approval tiene que ser sobre el último commit de la PR, para que
+  # no se publique nada que entró después de aprobar.
+  REQUIRE_APPROVAL_ON_HEAD: 'true'
+  TZ_RELEASE: Europe/Madrid
+  GH_TOKEN: ${{ github.token }}
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # tags, ramas y releases
+      pull-requests: write # abrir y mergear la PR de release
+      checks: read         # gh pr checks: leer los check runs de la PR
+      statuses: read       # gh pr checks: leer los commit statuses de la PR
+      actions: read        # gh pr checks: leer el workflow de cada check
+    outputs:
+      # Rama de la release que se acaba de mergear (vacío si no se ha mergeado nada).
+      merged_branch: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── push a release/AAAA-MM-DD ──────────────────────────────────────────
+      - name: Abrir la PR de release si no existe
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$BRANCH" =~ $RELEASE_BRANCH_RE ]]; then
+            echo "$BRANCH no sigue release/AAAA-MM-DD: no se abre PR."
+            exit 0
+          fi
+          open="$(gh pr list --head "$BRANCH" --base main --state open --json number -q length)"
+          ahead="$(gh api "repos/$GH_REPO/compare/main...$BRANCH" -q .ahead_by)"
+          if [ "$open" -gt 0 ] || [ "$ahead" -eq 0 ]; then
+            echo "Nada que hacer (PRs abiertas: $open, commits por delante de main: $ahead)."
+            exit 0
+          fi
+          cat > body.md <<'EOF'
+          Release diaria. Se publica sola tras la daily si está aprobada y los checks en verde.
+
+          Antes de aprobar:
+          - [ ] Versión subida (patch o minor) en el fichero de versión
+          - [ ] Inspire: `marketplace.json`, `plugin/manifests/<version>.json` y sección en `CHANGELOG.md` (skill `/template-release`)
+
+          ## Release notes
+
+          <!-- Si el repo no tiene CHANGELOG.md, lo que escribas aquí se publica como notas de la GitHub Release. -->
+          EOF
+          gh pr create --base main --head "$BRANCH" --title "Release ${BRANCH#release/}" --body-file body.md
+
+      # ── schedule / manual: localizar y validar la PR ───────────────────────
+      - name: Buscar y validar la PR de release
+        id: pr
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          summary() { echo "$1" | tee -a "$GITHUB_STEP_SUMMARY"; }
+
+          prs="$(gh pr list --base main --state open --limit 100 \
+                   --json number,headRefName,headRefOid,isDraft,url \
+                 | jq --arg re "$RELEASE_BRANCH_RE" '[.[] | select(.headRefName | test($re))]')"
+          count="$(jq length <<<"$prs")"
+
+          if [ "$count" -eq 0 ]; then
+            summary "Sin PR release/AAAA-MM-DD abierta contra main: hoy no se publica nada."
+            exit 0
+          fi
+          if [ "$count" -gt 1 ]; then
+            echo "::error::Hay $count PRs de release abiertas contra main; tiene que haber una sola:"
+            jq -r '.[] | "  #\(.number) \(.headRefName) \(.url)"' <<<"$prs"
+            exit 1
+          fi
+
+          num="$(jq -r '.[0].number' <<<"$prs")"
+          branch="$(jq -r '.[0].headRefName' <<<"$prs")"
+          sha="$(jq -r '.[0].headRefOid' <<<"$prs")"
+          url="$(jq -r '.[0].url' <<<"$prs")"
+          summary "PR: [#$num $branch]($url) @ ${sha:0:7}"
+
+          if [ "$(jq -r '.[0].isDraft' <<<"$prs")" = "true" ]; then
+            echo "::warning::#$num está en draft: no se publica."
+            exit 0
+          fi
+
+          # Approvals: último review de cada persona (ignorando comentarios).
+          reviews="$(gh api --paginate "repos/$GH_REPO/pulls/$num/reviews" \
+                     | jq -s 'add | map(select(.state != "COMMENTED"))
+                              | group_by(.user.login) | map(max_by(.submitted_at))')"
+          changes="$(jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length' <<<"$reviews")"
+          if [ "$REQUIRE_APPROVAL_ON_HEAD" = "true" ]; then
+            approvals="$(jq --arg sha "$sha" '[.[] | select(.state == "APPROVED" and .commit_id == $sha)] | length' <<<"$reviews")"
+          else
+            approvals="$(jq '[.[] | select(.state == "APPROVED")] | length' <<<"$reviews")"
+          fi
+          if [ "$changes" -gt 0 ]; then
+            echo "::warning::#$num tiene changes requested: no se publica."
+            exit 0
+          fi
+          if [ "$approvals" -lt 1 ]; then
+            echo "::warning::#$num no tiene approval sobre el último commit (${sha:0:7}): no se publica."
+            exit 0
+          fi
+
+          # Checks del último commit.
+          # gh pr checks sale con código distinto de 0 si hay checks en curso o en
+          # rojo, así que no se mira el código: se exige que devuelva una lista.
+          # Si no puede leerlos (p. ej. por permisos del token), se dice por qué.
+          checks="$(gh pr checks "$num" --json name,bucket 2>checks.err || true)"
+          if ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+            echo "::error::No se pueden leer los checks de #$num: $(tr '\n' ' ' < checks.err)"
+            exit 1
+          fi
+          pending="$(jq '[.[] | select(.bucket == "pending")] | length' <<<"$checks")"
+          failed="$(jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' <<<"$checks")"
+          has_required="$(jq --arg n "$REQUIRED_CHECK" '[.[] | select(.name == $n and .bucket == "pass")] | length' <<<"$checks")"
+          if [ -n "$failed" ]; then
+            echo "::error::#$num tiene checks en rojo: $failed"
+            exit 1
+          fi
+          if [ "$pending" -gt 0 ]; then
+            echo "::warning::#$num tiene checks en curso: no se publica hoy."
+            exit 0
+          fi
+          if [ "$has_required" -lt 1 ]; then
+            echo "::error::#$num no tiene el check '$REQUIRED_CHECK' en verde sobre ${sha:0:7}. Haz un push a la rama para que corra."
+            exit 1
+          fi
+
+          # Versión: repetimos la comprobación del Release check por seguridad.
+          git fetch -q origin "$branch"
+          base_v="$(git show "origin/main:$VERSION_FILE" | jq -r "$VERSION_JQ")"
+          head_v="$(git show "$sha:$VERSION_FILE" | jq -r "$VERSION_JQ")"
+          highest="$(printf '%s\n%s\n' "$base_v" "$head_v" | sort -V | tail -1)"
+          if [ "$head_v" = "$base_v" ] || [ "$highest" != "$head_v" ]; then
+            echo "::error::La versión no sube: main $base_v, release $head_v."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$head_v" >/dev/null; then
+            echo "::error::v$head_v ya está tagueada."
+            exit 1
+          fi
+
+          summary "Lista para publicar: $base_v → **$head_v**"
+          {
+            echo "ready=true"
+            echo "number=$num"
+            echo "branch=$branch"
+            echo "sha=$sha"
+            echo "version=$head_v"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Merge de la PR
+        id: merge
+        if: steps.pr.outputs.ready == 'true' && !inputs.dry_run
+        env:
+          NUM: ${{ steps.pr.outputs.number }}
+          SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # --match-head-commit: si alguien empuja algo justo ahora, no se mergea.
+          gh pr merge "$NUM" --merge --match-head-commit "$SHA"
+          merge_sha="$(gh pr view "$NUM" --json mergeCommit -q .mergeCommit.oid)"
+          echo "sha=$merge_sha" >> "$GITHUB_OUTPUT"
+          echo "Mergeada #$NUM → main @ ${merge_sha:0:7}" | tee -a "$GITHUB_STEP_SUMMARY"
+          # La rama no se borra aquí: se borra al final, cuando sus PRs ya
+          # apuntan a la release nueva (borrarla a mano cerraría esas PRs).
+
+      # ── tag + GitHub Release (tras el merge de arriba o tras un push a main) ─
+      - name: Tag y GitHub Release
+        if: steps.merge.outputs.sha != '' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.sha || github.sha }}
+          PR_NUM: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          git fetch -q origin main --tags
+          v="$(git show "$MERGE_SHA:$VERSION_FILE" | jq -r "$VERSION_JQ")"
+          tag="v$v"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "$tag ya existe: nada que publicar."
+            exit 0
+          fi
+
+          # Notas: CHANGELOG.md → "## Release notes" de la PR → autogeneradas.
+          : > notes.md
+          # Los awk leen su entrada entera en vez de salir con `exit` al acabar la
+          # sección: con pipefail, cortar el pipe mata al productor con SIGPIPE
+          # (141) en cuanto la entrada pasa del buffer del pipe (64 KB).
+          if git cat-file -e "$MERGE_SHA:CHANGELOG.md" 2>/dev/null; then
+            git show "$MERGE_SHA:CHANGELOG.md" | awk -v v="$v" '
+              $0 ~ "^## " { if (on) { on = 0; done = 1 } else if (!done && (index($0, "## " v " ") == 1 || $0 == "## " v)) { on = 1; next } }
+              on' > notes.md
+          fi
+          if [ ! -s notes.md ]; then
+            [ -n "$PR_NUM" ] || PR_NUM="$(gh api "repos/$GH_REPO/commits/$MERGE_SHA/pulls" -q '.[0].number // empty')"
+            if [ -n "$PR_NUM" ]; then
+              gh pr view "$PR_NUM" --json body -q .body \
+                | awk '!done && /^## Release notes/ { on = 1; next } on && /^## / { on = 0; done = 1 } on' \
+                | sed -e 's/<!--.*-->//g' > notes.md
+            fi
+          fi
+
+          # Tag ligero sobre el merge commit (convención de /template-release).
+          gh api "repos/$GH_REPO/git/refs" -f ref="refs/tags/$tag" -f sha="$MERGE_SHA" >/dev/null
+          if grep -q '[^[:space:]]' notes.md; then
+            gh release create "$tag" --title "$tag" --notes-file notes.md --verify-tag
+          else
+            gh release create "$tag" --title "$tag" --generate-notes --verify-tag
+          fi
+          echo "Publicada $tag @ ${MERGE_SHA:0:7}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # ── siguiente rama de release ──────────────────────────────────────────
+      - name: Crear la siguiente rama release/AAAA-MM-DD
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.dry_run
+        env:
+          MERGED_BRANCH: ${{ steps.merge.outputs.sha != '' && steps.pr.outputs.branch || '' }}
+        run: |
+          set -euo pipefail
+          # La release recién mergeada no cuenta: la borra el job retarget.
+          open_branches="$(git ls-remote --heads origin 'release/*' \
+                           | sed 's#.*refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" \
+                           | grep -vxF "${MERGED_BRANCH:-}" || true)"
+          if [ -n "$open_branches" ]; then
+            echo "Ya hay rama de release abierta: $open_branches" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          next="release/$(TZ="$TZ_RELEASE" date +%F)"
+          main_sha="$(gh api "repos/$GH_REPO/git/ref/heads/main" -q .object.sha)"
+          gh api "repos/$GH_REPO/git/refs" -f ref="refs/heads/$next" -f sha="$main_sha" >/dev/null
+          echo "Creada $next desde main @ ${main_sha:0:7}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # Job aparte para que solo él tenga actions: write (relanzar el Release check).
+  # Corre aunque el job release falle: mover las PRs no depende de publicar.
+  retarget:
+    needs: release
+    if: >-
+      !cancelled() && (
+        github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # borrar la rama de la release publicada
+      pull-requests: write # cambiar la rama destino de las PRs y comentar
+      actions: write       # relanzar el Release check que falló mientras apuntaban a main
+    steps:
+      - name: Reapuntar PRs a la release abierta
+        env:
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+          PUSHED: ${{ github.event_name == 'push' && github.ref_name || '' }}
+          MERGED_BRANCH: ${{ needs.release.outputs.merged_branch }}
+          RELEASE_CHECK_WORKFLOW: Release check
+        run: |
+          set -euo pipefail
+          # La release abierta es la release/AAAA-MM-DD más reciente.
+          target="$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/release/" -q '.[].ref' \
+                    | sed 's#^refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" \
+                    | grep -vxF "${MERGED_BRANCH:-}" | sort | tail -1 || true)"
+          if [ -z "$target" ]; then
+            echo "No hay rama de release abierta: no se reapunta nada."
+            exit 0
+          fi
+          if [ -n "$PUSHED" ] && [ "$PUSHED" != "$target" ]; then
+            echo "$PUSHED no es la release más reciente ($target): no se reapunta nada."
+            exit 0
+          fi
+
+          stale_syncs="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName \
+            | jq -r --arg t "$target" '
+                .[] | select((.headRefName == "main" or (.headRefName | startswith("sync/"))) and .baseRefName != $t)
+                    | "\(.number) \(.headRefName)"')"
+          while read -r num head; do
+            [ -n "$num" ] || continue
+            if [ "$DRY_RUN" = true ]; then
+              echo "(dry run) se cerraría #$num $head"
+              continue
+            fi
+            flags=()
+            [ "$head" = main ] || flags=(--delete-branch)
+            gh pr close "$num" "${flags[@]}" --comment "Cerrada: su release ya no es la abierta (\`$target\`). El workflow Sync release with main abrirá otra si hace falta." \
+              && echo "- #$num \`$head\`: cerrada" | tee -a "$GITHUB_STEP_SUMMARY" \
+              || echo "::warning::#$num: no se ha podido cerrar."
+          done <<<"$stale_syncs"
+
+          candidates="$(gh pr list --state open --limit 300 --json number,baseRefName,headRefName,headRefOid \
+            | jq -r --arg t "$target" --arg allowed "$ALLOWED_TO_MAIN_RE" --arg rel "$RELEASE_BRANCH_RE" '
+                .[] | select(.headRefName != $t and .baseRefName != $t)
+                    | select(.headRefName != "main" and (.headRefName | startswith("sync/") | not))
+                    | select((.baseRefName == "main" and (.headRefName | test($allowed) | not))
+                             or (.baseRefName | test($rel)))
+                    | "\(.number) \(.baseRefName) \(.headRefName) \(.headRefOid)"')"
+
+          moved=0
+          while read -r num base head sha; do
+            [ -n "$num" ] || continue
+            # Una PR contra otra release/ solo se mueve si esa release ya está en main.
+            if [ "$base" != main ] && [ "$base" != "${MERGED_BRANCH:-}" ]; then
+              ahead="$(gh api "repos/$GH_REPO/compare/main...$base" -q .ahead_by 2>/dev/null || echo 1)"
+              [ "$ahead" -eq 0 ] || continue
+            fi
+            if [ "$DRY_RUN" = true ]; then
+              echo "(dry run) #$num $head: $base → $target"
+              continue
+            fi
+            gh api -X PATCH "repos/$GH_REPO/pulls/$num" -f base="$target" >/dev/null
+            gh pr comment "$num" --body "Reapuntada de \`$base\` a \`$target\`, la release abierta. A main solo se llega desde \`release/\`, \`hotfix/\` o \`docs/\`."
+            echo "- #$num \`$head\`: $base → $target" | tee -a "$GITHUB_STEP_SUMMARY"
+            moved=$((moved + 1))
+
+            # Mientras apuntaba a main, el Release check falló en este commit.
+            # Relanzado, ve que ya no apunta a main y pasa en verde.
+            failed_run="$(gh api "repos/$GH_REPO/actions/runs?head_sha=$sha&event=pull_request&per_page=100" \
+              | jq -r --arg w "$RELEASE_CHECK_WORKFLOW" '
+                  [.workflow_runs[] | select(.name == $w)] | max_by(.created_at) // empty
+                  | select(.conclusion == "failure") | .id')"
+            if [ -n "$failed_run" ]; then
+              gh api -X POST "repos/$GH_REPO/actions/runs/$failed_run/rerun-failed-jobs" >/dev/null \
+                && echo "  Release check relanzado (run $failed_run)" \
+                || echo "::warning::#$num: no se ha podido relanzar el Release check (run $failed_run)."
+            fi
+          done <<<"$candidates"
+          echo "PRs reapuntadas a $target: $moved"
+
+          # Ya sin PRs colgando, se puede borrar la rama publicada (si el borrado
+          # automático de ramas está activado, ya no existe).
+          if [ -n "${MERGED_BRANCH:-}" ] && [ "$DRY_RUN" != true ]; then
+            gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$MERGED_BRANCH" >/dev/null 2>&1 || true
+          fi

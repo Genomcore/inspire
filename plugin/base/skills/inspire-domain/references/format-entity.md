@@ -14,6 +14,7 @@ id: auth.user
 module: auth
 entity: user
 lifecycle: draft           # draft | accepted | stable | superseded
+# datastore: analytics     # only when stack.md declares datastores: and this entity is not in the default
 ---
 
 ## Purpose
@@ -89,6 +90,40 @@ Four tooling consequences:
 - `field-coverage` skips `population: external` entities entirely (whole-entity reads do not enumerate fields, so per-field coverage is not a meaningful check).
 - A new `write-on-external` check errors when any action declares a write touch (`create`, `update`, `delete`, `append`, `replace`) on a `population: external` entity. The marker is a contract, not just a permission slip.
 - The derived contract carries it as `unit.population`, so an emanation phase acts on it without reading this vault: there is no write path to declare and none to test. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
+
+The marker does not move the table out of the project. The entity's table is still built from `## Fields`, in its datastore (below); a mechanism outside the spec only fills it.
+
+## Datastore
+
+_Reference material about the `datastore:` frontmatter field below — not a section of an entity document._
+
+A project with more than one database names them in `00_bootstrap/stack.md`'s `datastores:`, each mapped to the stack id whose skill carries that database's `## Persistence`, and may name one `default_datastore:` ([`_references/stack-skills.md`](../../_references/stack-skills.md) § *Datastores*). An entity then says which one its rows live in:
+
+```markdown
+---
+id: genomics.variant
+module: genomics
+entity: variant
+lifecycle: draft
+population: external
+datastore: analytics
+---
+```
+
+| `stack.md` | entity without `datastore:` | entity with `datastore:` |
+|---|---|---|
+| no `datastores:` | the backend profile's `## Persistence`, as before | error: nothing declares it |
+| one datastore | that datastore | that datastore, or an error if it names another |
+| two or more, with `default_datastore:` | the default | that datastore, or an error if undeclared |
+| two or more, no default | error: the entity must name one | that datastore, or an error if undeclared |
+
+The field is `datastore`, never `store`: a store is a face's application state (`{face}.store.md`). Name it only when the entity lives outside the default, or when the stack declares no default. The default is the project's choice, written in `stack.md`; the skills never pick one for an entity.
+
+Three tooling consequences:
+
+- `entity-datastore` reports an entity whose datastore is missing or undeclared, a default `datastores:` does not list, and a datastore whose stack id is not in `profiles:` or has no skill with a `## Persistence` section. Each is an error at every lifecycle.
+- `entity-datastore` warns when a `references(…)` names an entity in another datastore: no foreign key spans two engines, so the application keeps the reference. It does not block, since a design may need the link.
+- The derived contract carries it as `unit.datastore`, adds it to each entity an action touches, and derives one more claim, `{module}.{entity}/datastore`, for an entity outside the default, so moving an entity out of the default rebuilds its table where it now belongs. An entity in the default makes no such claim, so declaring `datastores:` in a project that is already built rebuilds only the entities placed outside it. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
 
 ## Section conventions
 

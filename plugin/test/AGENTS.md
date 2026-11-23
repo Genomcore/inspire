@@ -26,6 +26,11 @@ summary; the cache is an accelerator, never a dependency. The shared assertion
 vocabulary is `plugin/test/lib/assert.sh` — `plugin/test/lib/` holds no tests and
 the runner never runs it.
 
+Files under `visor/` run their Node assertions only with Node 22 or later on `PATH`
+(and npm for the builds), and the graph and Quartz builds also need the npm registry
+and GitHub; without them each records a `SKIP` with its assertion count. Compare
+`--inventory` files only between runs with the same Node, network and `PATH`.
+
 ## Cost
 
 A run takes minutes rather than seconds, and that is fixture builds and process
@@ -53,6 +58,15 @@ inside its own `mktemp -d`: read-only to the jobs, fingerprinted after the build
 and again before exit, so a job that writes into it fails the run and the failure
 names the cache rather than the job. Keep the cache inside `mktemp -d`: a fixed
 path under `/tmp` produces phantom failures in the upgrade suite.
+
+## Pipes into a match
+
+Never pipe into `grep -q`: it exits on the first match, the writer gets SIGPIPE,
+and under `pipefail` the assertion fails although the text is there — only when
+the output outgrows the pipe buffer, so it flakes. Pipe into a `grep` that reads
+everything and drop its output instead: `printf '%s' "$out" | grep >/dev/null 'x'`.
+The same goes for any reader that stops early (`head`, `awk … exit`) when the
+pipeline's status is what the assertion tests.
 
 ## Fixtures
 

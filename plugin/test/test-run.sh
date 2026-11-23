@@ -71,11 +71,31 @@ bash "$A/plugin/test/run.sh" -j 1 --inventory "$WORK/inv1" >/dev/null 2>&1
 eq "-j 1 exits 0 too" "$?" "0"
 eq "-j 1 and -j 4 give the same inventory" "$(cat "$WORK/inv1")" "$(cat "$WORK/inv4")"
 
+# --shard: the slices of one run are disjoint and together are the whole run.
+: > "$WORK/invs"
+for k in 1 2 3; do
+  bash "$A/plugin/test/run.sh" -j 4 --shard "$k/3" --inventory "$WORK/invs$k" \
+    > "$WORK/outs$k" 2>&1
+  eq "shard $k/3 exits 0" "$?" "0"
+  cat "$WORK/invs$k" >> "$WORK/invs"
+done
+eq "the three shards together give the unsharded inventory" \
+   "$(LC_ALL=C sort "$WORK/invs")" "$(cat "$WORK/inv4")"
+eq "each job runs in exactly one shard" \
+   "$(cat "$WORK/outs1" "$WORK/outs2" "$WORK/outs3" | grep -c '^PASS plugin/test/synth/' | tr -d ' ')" "4"
+s5="$(bash "$A/plugin/test/run.sh" -j 4 --shard 5/5 2>&1)"; s5_rc=$?
+eq "a shard left with no jobs exits 0" "$s5_rc" "0"
+check "and says it is empty" "printf '%s\n' \"\$s5\" | grep >/dev/null 'has no jobs'"
+for bad in 0/3 4/3 x/3 1/ 3; do
+  bash "$A/plugin/test/run.sh" --shard "$bad" >/dev/null 2>&1
+  eq "--shard $bad is refused" "$?" "2"
+done
+
 f="$(bash "$A/plugin/test/run.sh" -j 1 a-green 2>&1)"
 eq "a filter narrows to the jobs whose name contains it" \
    "$(printf '%s\n' "$f" | grep -c '^PASS plugin/test/synth/' | tr -d ' ')" "1"
 check "a filter leaves the other jobs out" \
-  "! printf '%s\n' \"\$f\" | grep -q 'b-green'"
+  "! printf '%s\n' \"\$f\" | grep >/dev/null 'b-green'"
 
 # --- a red job fails the whole run -----------------------------------------
 B="$WORK/b"; mk_estate "$B"
@@ -83,10 +103,10 @@ synth "$B" a-green "$GREEN2" "$GREEN2b"
 synth "$B" d-red 'ok "synth before the red"' 'bad "synth deliberate red"'
 b="$(bash "$B/plugin/test/run.sh" -j 1 2>&1)"; b_rc=$?
 eq "a red job fails the run" "$b_rc" "1"
-check "the red job is named" "printf '%s\n' \"\$b\" | grep -q '^FAIL plugin/test/synth/d-red.sh'"
-check "its output is dumped under it" "printf '%s\n' \"\$b\" | grep -q 'synth deliberate red'"
+check "the red job is named" "printf '%s\n' \"\$b\" | grep >/dev/null '^FAIL plugin/test/synth/d-red.sh'"
+check "its output is dumped under it" "printf '%s\n' \"\$b\" | grep >/dev/null 'synth deliberate red'"
 check "the green job beside it still reports PASS" \
-  "printf '%s\n' \"\$b\" | grep -q '^PASS plugin/test/synth/a-green.sh'"
+  "printf '%s\n' \"\$b\" | grep >/dev/null '^PASS plugin/test/synth/a-green.sh'"
 
 # --- a job that asserts nothing fails the run ------------------------------
 C="$WORK/c"; mk_estate "$C"
@@ -95,7 +115,7 @@ synth "$C" e-empty ': nothing asserted here'
 c="$(bash "$C/plugin/test/run.sh" -j 1 2>&1)"; c_rc=$?
 eq "a zero-assertion job fails the run" "$c_rc" "1"
 check "and is reported as zero assertions, by name" \
-  "printf '%s\n' \"\$c\" | grep -q '^FAIL plugin/test/synth/e-empty.sh 0 assertions'"
+  "printf '%s\n' \"\$c\" | grep >/dev/null '^FAIL plugin/test/synth/e-empty.sh 0 assertions'"
 
 # --- a red hand-wired sibling fails the run too -----------------------------
 # A sibling's verdict line and output dump are printed by run.sh itself, so its
@@ -112,9 +132,9 @@ eq "a red sibling job fails the run" "$e_rc" "1"
 eq "it is counted as a failing file, beside the green sibling and job" \
    "$(printf '%s\n' "$e" | sed -n 's/^Files: \([0-9]*\/[0-9]*\) .*/\1/p')" "2/1"
 check "the red sibling is named" \
-  "printf '%s\n' \"\$e\" | grep -q '^FAIL golden/test-trust.sh'"
+  "printf '%s\n' \"\$e\" | grep >/dev/null '^FAIL golden/test-trust.sh'"
 check "its output is dumped under it" \
-  "printf '%s\n' \"\$e\" | grep -q 'synth sibling deliberate red'"
+  "printf '%s\n' \"\$e\" | grep >/dev/null 'synth sibling deliberate red'"
 
 # --- sharding a golden rule keeps every scenario, exactly once -------------
 #
@@ -160,9 +180,9 @@ eq "and none of them twice" \
 # vacuity class in a new coat.
 miss="$(bash "$G/plugin/base/bin/test/run-tests.sh" synthrule scen-1 nope-not-here 2>&1)"
 check "a named scenario that does not exist is reported FAIL" \
-  "printf '%s\n' \"\$miss\" | grep -q '^FAIL synthrule/nope-not-here'"
+  "printf '%s\n' \"\$miss\" | grep >/dev/null '^FAIL synthrule/nope-not-here'"
 check "and it makes the run non-green" \
-  "printf '%s\n' \"\$miss\" | grep -q 'Failed: 1'"
+  "printf '%s\n' \"\$miss\" | grep >/dev/null 'Failed: 1'"
 
 # --- a job that reaches into the shared cache fails the run ----------------
 D="$WORK/d"; mk_estate "$D"
@@ -174,6 +194,6 @@ check "premise: both jobs of the mutation estate went green" \
   "[ \"\$(printf '%s\n' \"\$d\" | grep -c '^PASS plugin/test/synth/')\" = 2 ]"
 eq "a cache mutated during the run fails it" "$d_rc" "1"
 check "the failure names the cache, not a test file" \
-  "printf '%s\n' \"\$d\" | grep -q '^FAIL fixture-cache (mutated during the run)'"
+  "printf '%s\n' \"\$d\" | grep >/dev/null '^FAIL fixture-cache (mutated during the run)'"
 
 summary

@@ -9,6 +9,279 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.21.0 — 2026-11-20
+
+Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
+Factory release that requires 0.21.0 does not start a run whose plan has units with
+claims unless a test check of `.inspire/emanate.yml` declares its JSON test `report`.
+No hop and no layout change, and a knowledge base without a store file changes
+nothing. The update re-materializes the skills,
+references, templates and validators listed below.
+
+### Breaking for existing vaults
+
+- **Test checks declare a JSON report.** The Factory now passes a unit only when the
+  tests that cite its claims ran and passed, which it reads from each test check's
+  report. Run `/inspire-config init` after the update: it adds `report` and the
+  reporter flags to every Jest, Vitest and pytest check (§ Changed). A run whose plan
+  has units with claims and no check with a report stops before it starts. A pytest
+  project also needs `pytest-json-report` among its development dependencies.
+
+### Added
+
+- **A face declares the state it keeps between screens in one store**
+  (`adr-face-store`, Proposed): `_faces/{face}/{face}.store.md`, with server keys (an
+  action and a load trigger), client keys (type, initial value, `Persist`) and an
+  `## On error` default per error class. A screen or the shell reads a key with
+  ``store `k` `` and writes it from a dispatch's `On success` (``set store `k` ``,
+  ``refresh store `k` ``) or from a navigation's new `Then` column
+  (``set store `k` from param `p` ``). An outcome cell may hold several outcomes joined
+  by `; `, at most one of which navigates or enters a state.
+- **The shell binds data**: the shell layout gains `## LAY8: Bindings`, and with
+  several faces each face names its shell in `shell_layout:` (default `shell`).
+- **An `inspire-store` skill and template.**
+- **The derived contract** gains `store`, a ninth unit kind, with its claims,
+  fingerprints and refusals `DR-K1`–`DR-K4`; a shell's bindings become claims keyed by
+  its layout id.
+- **A validator, `store-coherence.sh`.** `screen-coherence.sh` checks the new outcome
+  forms and the shell's bindings, `face-exposure.sh` the store's and the shell's
+  actions against the face's bundles, and `spec-identity.sh` one store per face,
+  `shell_layout:`, and a store whose id is another unit's id.
+- **React's `## Store` seed**: TanStack Query for server keys and Zustand for client
+  keys, which a project may swap.
+
+### Changed
+
+- **`/inspire-config` writes the test report of every Jest, Vitest and pytest check**:
+  `report` names `.inspire-report-<check>.json`, and `run` and `run_related` carry the
+  reporter flags (Vitest `--reporter=default --reporter=json --outputFile.json=<file>`,
+  Jest `--json --outputFile=<file>`, pytest `--json-report --json-report-file=<file>`).
+  `.gitignore` covers `.inspire-report-*.json`. Other runners get no report.
+- **A Jest or Vitest e2e check narrows by `{tests}`**, the test files that cite a claim
+  of the unit or of a unit it requires: an e2e test seldom imports the file a unit
+  changes, so under `{files}` its citations never count. On update, an e2e
+  `run_related` with `{files}` is proposed to switch.
+- **A binding claim hashes only the `## Bindings` rows its action selects**
+  (`derived-contract.md` § Binding claims): the route rows of its verb (or `*` /
+  `* with id`), the plural row of its entity and its guard rows, plus its input names
+  and roles. Rewording the section's prose moves no fingerprint, and neither does a
+  rule written only as prose: the shipped `inspire-code-nestjs` seed states its rules
+  for named operations, plurals and the guard in prose, so a project that wants them to
+  move fingerprints declares them as rows (`### Routes`, `### Plurals`, `### Guard`).
+  Nothing to run after the update: the Factory re-stamps the old fingerprints itself.
+- **`/inspire-config review` reports** a test check without `report`, a report its
+  commands do not write, pytest without `pytest-json-report`, a report `.gitignore`
+  does not cover, and an e2e `run_related` with `{files}`.
+
+## 0.20.0 — 2026-11-19
+
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and nothing in the knowledge base moves. The update re-materializes the
+`inspire-code-nestjs` skill.
+
+### Changed
+
+- **A NestJS migration is numbered by the instant it is created.** The
+  `inspire-code-nestjs` skill's `## Persistence` asked for "one timestamp-named file per
+  change" without saying which instant, and two Factory runs read it differently: the
+  current time, and the previous migration plus one. The second gives two emanations
+  running at once the same number, and TypeORM then orders the equal numbers however
+  its file glob returns them. A migration is now created with
+  `npx typeorm migration:create src/migrations/<Name>`, which names the file
+  `<ms>-<Name>.ts` and the class `<Name><ms>` from `Date.now()`, never from the
+  previous migration.
+
+## 0.19.0 — 2026-11-17
+
+Upgrade with `/inspire:update`. Nothing in a project has to change: no hop, no layout
+change, and contracts and claims derive as before until a project declares `datastores:`
+in `stack.md`. The update re-materializes the skills, references and validators listed
+below.
+
+A project that keeps an entity in a database other than its main one declares
+`datastores:` and `default_datastore:` in `stack.md`, and `datastore:` on each entity
+that lives outside the default. INSPIRE Factory builds those entities in their database
+from **0.21.0**; Factory 0.20.0 and earlier ignore the fields and build every entity in
+the backend profile's database. In an emanated project the default must be the database
+its tables are already in: then only the entities placed outside the default are rebuilt.
+
+### Added
+
+- **An entity names the datastore it lives in** (`adr-entity-datastore`, Proposed).
+  `stack.md` may declare `datastores:` (datastore id → the stack id whose skill serves
+  it) and a `default_datastore:`; an entity names its database with `datastore:`, or
+  lives in the default. With two or more datastores and no default, an entity without
+  the field is refused: INSPIRE never picks one. The entity's table follows the
+  `## Persistence` of its datastore's stack skill, and `population: external` does not
+  move the table out of the project.
+- **A validator, `entity-datastore.sh`**, in `review.sh`'s default list. Errors at every
+  lifecycle: `datastore-missing`, `datastore-undeclared`, `datastore-default-undeclared`
+  and `datastore-unserved`. Warning: `reference-crosses-datastore`, for a `references(…)`
+  whose target lives in another datastore, since no foreign key spans two engines. A
+  stack with no `datastores:` produces no finding.
+- **The derived contract carries the datastore:** `unit.datastore`, `datastore` on an
+  action's entities, a claim `{module}.{entity}/datastore` (oracle `store`) made only by
+  an entity outside the default, and a refusal class, `DR-D3` (`derived-contract.md`).
+
+### Changed
+
+- **`/inspire-bootstrap` asks for the datastores.** The stack interview writes
+  `datastores:` and asks for the default, its review checks them, and the `stack.md`
+  template's `## Data` explains the fields.
+- **`/inspire-domain` asks each entity for its datastore**, and never infers it.
+  `format-entity.md` documents the field and how it resolves, and the domain review
+  runs the new rule.
+- **A database skill declares `layer: backend` with no `## Bindings`** (`stack-skills.md`
+  § Datastores), so it reaches only backend units and is never taken for the backend
+  framework.
+- **The daily release moves stranded pull requests to the open release branch.**
+  Deleting a merged `release/<date>` branch made GitHub retarget its open PRs to
+  `main`, where the Release check refused them. The daily workflow now points them,
+  and any PR into `main` that is not from `release/`, `hotfix/` or `docs/`, at the
+  newest open release branch, reruns their Release check, and only then deletes the
+  published release's branch. The Release check passes without checking anything
+  when the PR no longer targets `main`.
+
+### Fixed
+
+- The daily release reads the release notes without cutting the pipe. Under `pipefail`,
+  stopping `awk` at the end of the section killed `git show` with SIGPIPE (141) once the
+  CHANGELOG passed 64 KB, after the merge and before the tag and the GitHub Release.
+
+## 0.18.0 — 2026-11-17
+
+Upgrade with `/inspire:update`. A project with `.escape-hatches.json` deletes it, and
+sets in its lint config the rules that refuse each hatch it does not allow, closed to
+inline disables: from this version nothing counts them. `/inspire:update` warns while
+the file is still there, and leaves it as it is.
+
+A project on the `nestjs` profile also installs the oxlint escape-hatch plugin, with or
+without `.escape-hatches.json`: it copies `oxlint-escape-hatches.mjs` from the
+`inspire-code-typescript` skill's `references/` into its package, lists it in `jsPlugins`
+and turns on its three rules. Until then `profile-gates-installed.sh` fails the pre-PR
+hook, and `/inspire:update` warns, naming the config that lacks them.
+
+`/inspire:update` adds `.inspire/visor/` and three entries to the INSPIRE block of
+`.gitignore` (the visor's install directory, and a negation that keeps the visor plugins'
+`dist/` tracked under a project's own `dist/` rule). Commit them.
+
+### Added
+
+- **`/inspire:visor` serves the KB as a local site** (`adr-visor`). It builds
+  `inspire_kb/` with Quartz on the operator's machine and serves it on `127.0.0.1` with
+  live reload: search, backlinks, link previews, and a graph that colours each node by its
+  unit kind, with a legend. It reads the KB in place and writes nothing in it. It refuses a
+  KB older than 0.17.0, runs Quartz on the host's Node 22 or later or in a pinned Node
+  container, and leaves out and lists every file whose frontmatter Quartz's parser rejects.
+  The command is a plugin skill; its engine is `plugin/scripts/visor.sh`.
+- **A payload class, `.inspire/visor/`:** `visor.yaml` (Quartz version, Node image, port),
+  `quartz.config.yaml`, and the Quartz plugins the visor loads. A project may edit them or
+  add its own Quartz plugins, and `/inspire:update` keeps the edits. Quartz's install and
+  the built site live in `.inspire/visor/.quartz/`, which is gitignored and never scanned
+  by the update.
+- **Placement rule** (`adr-visor` D1, amending `adr-plugin-delivery`): a file lives in the
+  project when a project may change it, and in the plugin otherwise.
+
+### Changed
+
+- **The linter allows or refuses each escape hatch, and nothing counts them.**
+  `escape-hatch-ratchet.sh` is removed, with its gate in the pre-commit and pre-PR
+  hooks. Whether code may use `as any`, `@ts-ignore` or a disable directive is a lint
+  rule, so a refused hatch fails at the line, in the agent's loop and in INSPIRE
+  Factory's lint check, before it merges. `quality-gates.md` Rule 4 says so, for ESLint
+  and for oxlint. The ratchet counted a mention in a comment as a use, and the Factory
+  never ran it, so code a unit merged could fail the next person's commit.
+- **oxlint gets the escape-hatch rules it lacks from a local JS plugin.** The
+  `inspire-code-typescript` skill ships `references/oxlint-escape-hatches.mjs`, and the
+  NestJS skill gates its three rules: `escape-hatches/require-reason` (a disable names
+  its rules and says why), `escape-hatches/no-restricted-disable` (no inline comment
+  re-allows a refused rule, under any of its spellings) and `escape-hatches/no-double-cast`
+  (`as unknown as`). A NestJS project copies the file into its package, lists it in
+  `jsPlugins` and turns the three rules on, or `profile-gates-installed.sh` reports them
+  as not installed. oxlint's JS plugins are alpha. A bare `/* oxlint-disable */` still
+  gets past the plugin; it is visible in the diff.
+- On existing code, a refused rule is turned off by path in an `overrides` entry, which
+  is the baseline: oxlint keeps no bulk-suppression file.
+
+### Fixed
+
+- `/inspire:update` adds every missing `.gitignore` entry in one run. With two or more
+  missing it added none, while its log said it had.
+- A `.gitignore` with CRLF line endings gets a warning naming the entries the update could
+  not add, instead of a silent no-op.
+- The warning about a `.gitignore` rule that hides the runtime also names a shipped file
+  hidden under a root that is not ignored, and says to add a negation after the rule.
+
+## 0.17.4 — 2026-11-16
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The update now ends by checking
+`.inspire/emanate.yml` and offers to re-derive it; the new e2e flags and `check_concurrency`
+need INSPIRE Factory 0.19.0 or later, and on an older Factory `/inspire-config` proposes
+neither.
+
+### Added
+
+- **`/inspire:update` offers to re-derive `.inspire/emanate.yml`** (Step 10). It runs
+  `/inspire-config review`, which writes nothing, and when the review warns, offers
+  `/inspire-config init`, which shows the diff against the current file and writes only on
+  approval. Without a factory checkout the review says *validation pending* and the update
+  goes on. The review warns about a missing `bash_timeout` and about an e2e suite over
+  per-file databases that still runs one file at a time.
+- **`/inspire-config` proposes `bash_timeout: 600`** in a new file and in an update of an
+  existing one. Without it OMP kills an agent's command after 300 s; a higher value lets a
+  shell that never returns hold a unit's slot that long.
+- **`/inspire-config` documents `check_concurrency`** (Factory 0.19.0 or later, default `2`):
+  how many check commands run at once across all units. Like every `factory` value it is
+  never proposed.
+
+### Changed
+
+- **The factory's e2e check runs files side by side.** A Vitest e2e suite whose files each
+  copy their own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`) gets
+  `--fileParallelism` with `--maxWorkers=4` from `sandbox.memory: 2g`, and `2` below, on
+  Factory 0.19.0 or later, which no longer caps a unit's CPUs. Four workers ran a
+  genomics-suite e2e suite of 279 files in about 120 s, against 425 s one at a time. The
+  factory's version is read from `orchestrator/package.json` in `INSPIRE_FACTORY_ROOT`;
+  with no checkout, or with a suite whose files share a database, the check keeps the
+  config's one file at a time.
+- **The NestJS profile keeps the e2e config one file at a time.** Running files side by
+  side is the factory's check's choice, so the config stays safe on any machine and any
+  Factory.
+
+## 0.17.3 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The `spec_*` keys need INSPIRE Factory
+0.18.0 or later: an earlier Factory refuses them as unknown keys.
+
+### Fixed
+
+- **`/inspire-config` knows every key INSPIRE Factory 0.18.0 accepts.** The format
+  reference treated four of them as unknown keys. It now documents `bash_timeout` at the
+  top level (the time limit of each shell command an agent runs without its own, 1 to 3600
+  seconds; OMP's 300 s without it) and, under `factory`, `spec_strictness` (`strict`,
+  `auto` or `yolo`: what a unit does when its agent reports a spec problem; default
+  `strict`), `spec_max_revisions` (default `5`) and `spec_classifier_model` (required by
+  `auto`), each with the reader's exact errors. `init` asks for `spec_strictness`, default
+  `strict`.
+
+## 0.17.2 — 2026-11-13
+
+Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and
+nothing in your knowledge base needs to change. The rule applies to the code agents write
+from now on; code already built keeps what it has.
+
+### Fixed
+
+- **`inspire-code-react` reads a screen's module and face from the route table, never
+  from its id.** A screen id's first segment has been its face since 0.15.0, so code that
+  took a module from `id.split('.')` picked the same module for every screen once a
+  migration rewrote the ids. The route table now carries each screen's `module` and `face`
+  from its frontmatter, read through `moduleOf('{screen id}')` and `faceOf('{screen id}')`;
+  Forbidden patterns names any read of an id's shape, and the `## Routes` seed of
+  `_references/stack-skills.md` says the table is where code reads them.
+
 ## 0.17.1 — 2026-11-13
 
 Upgrade with `/inspire:update` from any released version. Nothing moves on disk, and

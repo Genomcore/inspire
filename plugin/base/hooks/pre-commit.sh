@@ -24,83 +24,19 @@ set -uo pipefail
 PROJECT_ROOT="$(pwd -P)"   # dispatcher cd'd here
 
 staged_all=$(git diff --cached --name-only 2>/dev/null || true)
-blockers=$(mktemp)
-trap 'rm -f "$blockers"' EXIT
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Gate 1 — the escape-hatch ratchet (product code, not the KB).
-#
-# Only runs when the commit touches a configured scope directory: a preexisting
-# breach must not block an unrelated commit, the same reason the SDD half below
-# filters to staged modules. See quality-gates.md Rule 4.
-# ─────────────────────────────────────────────────────────────────────────────
-
-hatch_config="${ESCAPE_HATCH_CONFIG:-.escape-hatches.json}"
-if [ -f "$hatch_config" ] && [ -n "$staged_all" ]; then
-  touches_scope=false
-  while IFS= read -r dir; do
-    [ -z "$dir" ] && continue
-    dir="${dir%/}"
-    # A scope of "." is the whole repo (source_root: . — brownfield, code at the
-    # root), so any staged file is in scope. For everything else, match the
-    # prefix LITERALLY via a quoted case pattern — a regex here would let a
-    # scope of "." match almost nothing (`^./` anchors one arbitrary character)
-    # and any metacharacter in a scope entry corrupt the match.
-    if [ "$dir" = "." ]; then
-      touches_scope=true
-      break
-    fi
-    while IFS= read -r staged; do
-      [ -z "$staged" ] && continue
-      case "$staged" in "$dir"/*) touches_scope=true; break ;; esac
-    done <<< "$staged_all"
-    [ "$touches_scope" = true ] && break
-  done < <(jq -r '.scope[]? // empty' "$hatch_config" 2>/dev/null)
-
-  if $touches_scope; then
-    hatch_script="$PROJECT_ROOT/.inspire/bin/escape-hatch-ratchet.sh"
-    if [ ! -x "$hatch_script" ]; then
-      # A configured gate whose enforcer is missing must fail loudly. Swallowing
-      # this is how a ratchet becomes decoration: the config says the ceiling is
-      # enforced, and nothing enforces it.
-      printf '%s\n' "$(jq -nc --arg t "$hatch_script" \
-        '{severity:"error",rule:"escape-hatch-ratchet",target:$t,
-          message:"config exists but the enforcer is missing — restore it (it is committed to this repo) or remove .escape-hatches.json. A declared gate that silently does not run is worse than no gate."}')" \
-        >> "$blockers"
-    else
-      hatch_findings=$(mktemp)
-      "$hatch_script" 2>"$hatch_findings" >/dev/null || true
-      jq -c 'select(.severity == "error")' "$hatch_findings" 2>/dev/null >> "$blockers"
-      rm -f "$hatch_findings"
-    fi
-  fi
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Gate 2 — the SDD graph review, scoped to staged modules.
-# ─────────────────────────────────────────────────────────────────────────────
 
 # Staged domain files: entities and actions, found by their typed extension anywhere
 # under the spec root (adr-kb-structure D4).
 staged_files=$(echo "$staged_all" | grep -E '^inspire_kb/01_spec/.+\.(entity|action)\.md$' || true)
 
-if [ -z "$staged_files" ]; then
-  if [ -s "$blockers" ]; then
-    {
-      echo ""
-      echo "pre-commit: blocked —"
-      jq -r '"  - [\(.severity)] \(.rule) — \(.target)\n    \(.message)"' "$blockers"
-    } >&2
-    exit 2
-  fi
-  exit 0
-fi
+[ -n "$staged_files" ] || exit 0
 
 # Affected modules — read from each staged file's id (`auth::user::create` → auth),
 # never from the directory it sits in. Every entity and action of those modules is
 # in the gate's reach; nothing else is.
 in_reach=$(mktemp)
 findings_file=$(mktemp)
+blockers=$(mktemp)
 trap 'rm -f "$blockers" "$findings_file" "$in_reach"' EXIT
 module_of() { yq --front-matter=extract '.id // ""' "$1" 2>/dev/null | sed 's/::.*//; s/\..*//'; }
 modules=$(echo "$staged_files" | while IFS= read -r f; do [ -f "$f" ] && module_of "$f"; done | grep -v '^$' | sort -u)
@@ -123,7 +59,7 @@ jq -c --rawfile reach "$in_reach" '
 
 [ -s "$blockers" ] || exit 0
 
-# Render every gate's findings on stderr and block.
+# Render the findings on stderr and block.
 {
   echo ""
   echo "pre-commit: blocked —"

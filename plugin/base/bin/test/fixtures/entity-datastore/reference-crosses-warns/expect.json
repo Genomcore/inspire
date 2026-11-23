@@ -1,0 +1,1 @@
+{ "exit": 0, "findings": [ { "rule": "entity-datastore", "severity": "warning", "message_substring": "reference-crosses-datastore: `parent_id` references(`genomics.variant`) in datastore `analytics` from datastore `metadata`" } ], "finding_count": 1 }

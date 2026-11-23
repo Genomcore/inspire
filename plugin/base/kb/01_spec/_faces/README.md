@@ -7,6 +7,7 @@ tokens. One directory per face:
 _faces/
   {face}/
     {face}.face.md          # id, package, profiles, shell, the bundles it uses
+    {face}.store.md         # the state it keeps between screens (optional)
     {face}.tokens.json      # tokens of this face only (optional)
     _index.md               # navigation prose for the face
     _adr/{slug}.adr.md      # decisions that bind this face only
@@ -26,9 +27,15 @@ bundles: [api]
 # Face: Customer portal
 ```
 
-- **Skills:** `inspire-face` (faces and bundles), `inspire-screens` (screens).
+- **Skills:** `inspire-face` (faces and bundles), `inspire-screens` (screens),
+  `inspire-store` (the store).
 - A face carries **no claims of its own**: its screens do.
 - **A screen that depends on an action outside its face's bundles is a finding.**
+- **One store per face, read by that face alone.** It holds what outlives one
+  screen: values loaded from the server once (the signed-in user) and values the
+  application keeps (the study a person picked). Screens and the shell read a key
+  with ``store `k` `` in a data row and write it as a dispatch or navigation
+  outcome.
 - **No shared screens.** When two faces show the same thing, what they share is its
   structure: it becomes a layout or a pattern in `_design-system/`, and each face
   keeps its own screen.

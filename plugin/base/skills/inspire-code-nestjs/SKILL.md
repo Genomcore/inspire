@@ -55,6 +55,13 @@ gates:
   # Off unless named: oxlint reports a stale suppression only when this option is set.
   - literal: reportUnusedDisableDirectives
     config: .oxlintrc.json
+  # The local escape-hatch plugin: `references/oxlint-escape-hatches.mjs` in inspire-code-typescript.
+  - literal: escape-hatches/require-reason
+    config: .oxlintrc.json
+  - literal: escape-hatches/no-restricted-disable
+    config: .oxlintrc.json
+  - literal: escape-hatches/no-double-cast
+    config: .oxlintrc.json
   - literal: thresholds
     config: vitest.config.ts
   # Rejected on measured evidence — see `## Quality gates`. Re-adopting it is a decision,
@@ -217,10 +224,14 @@ owns the entity, never to the shared client's config.
   run starts the migration tool and replays every migration, which costs seconds per
   file and turns a suite of a few dozen files into minutes. A store without database
   templates keeps the same shape: build once, copy per file.
-- **E2E files run one at a time** (`fileParallelism: false` in the e2e Vitest config).
-  The files no longer share tables, so this is a resource choice, not a correctness
-  one: a unit's container gets about one CPU, so parallel files gain little and each
-  extra worker costs its own memory.
+- **E2E files run one at a time in the config** (`fileParallelism: false` in the e2e
+  Vitest config). The files share no tables, so this is a resource choice, not a
+  correctness one, and the config keeps the choice that is safe everywhere: a developer's
+  machine, and an INSPIRE Factory that caps each unit's CPUs. Running files side by side
+  is the factory's e2e check's choice: `/inspire-config` adds `--fileParallelism` and a
+  worker count to it when the Factory and the unit's memory allow, and four workers ran a
+  genomics-suite e2e suite of 279 files in about 120 s, against 425 s one at a time. Never
+  change the config to run files in parallel.
 
 ## Test infrastructure
 
@@ -370,22 +381,42 @@ is written down, never silently missing):
   types and rules with invariants. It tests the code with varied inputs; the drill
   tests the tests. Neither replaces the other.
 
-**Escape hatches** (Rule 4 — named, justified, counted):
+**Escape hatches** (Rule 4 — the linter allows or refuses each one, never a count):
 - `typescript/ban-ts-comment` with `"ts-expect-error": "allow-with-description"` and
   `"ts-ignore": true` — `@ts-expect-error` permitted with a reason, `@ts-ignore` never
   (expect-error expires by itself when the underlying error is fixed).
 - `"options": { "reportUnusedDisableDirectives": "error" }` — a stale suppression is an
   error rather than a fossil. oxlint reports it only when this option is set.
-- **No oxlint equivalent** for the rest of `eslint-plugin-eslint-comments`:
-  `require-description` (a suppression must say why) and `no-unlimited-disable` (a
-  suppression must name its rule) have no oxlint rule, so both are review items until
-  oxlint ships one. The ratchet below still counts every suppression.
-- The repo-wide count of suppressions plus `as any` / `as unknown as` / `x!` is
-  **ratcheted in-repo** — the one baseline Rule 3 allows inside the repository, because a
-  suppression is source text and the ceiling bump shows up in the same diff. Patterns and
-  ceilings go in `.escape-hatches.json`; enforced by `.inspire/bin/escape-hatch-ratchet.sh`
-  from `pre-commit`. oxlint honours both `oxlint-disable` and `eslint-disable` comments,
-  so the suppression patterns count both spellings.
+- `typescript/no-explicit-any` and `typescript/no-non-null-assertion` (above) refuse
+  `as any` and `x!`. A hatch no rule refuses is allowed; there is no count of them.
+- **The rest is a local JS plugin**, because oxlint has no `eslint-plugin-eslint-comments`
+  and no `no-restricted-syntax`, and the ESLint plugin itself crashes under oxlint's JS
+  plugin host. Copy
+  [`oxlint-escape-hatches.mjs`](../inspire-code-typescript/references/oxlint-escape-hatches.mjs)
+  into the package, list it in `jsPlugins`, and turn on its three rules at `error`:
+  - `escape-hatches/require-reason` — a disable directive names its rules and says why
+    after `--` (`require-description` and `no-unlimited-disable`);
+  - `escape-hatches/no-restricted-disable`, with the refused rules as its option
+    (`["typescript/no-explicit-any", "typescript/no-non-null-assertion"]`) — no inline
+    comment re-allows what the config refuses (`no-restricted-disable`). It matches the
+    rule name without its plugin prefix, because oxlint honours
+    `@typescript-eslint/no-explicit-any` and a bare `no-explicit-any` in a directive too,
+    and it refuses any directive that names one of the plugin's own rules;
+  - `escape-hatches/no-double-cast` — refuses `as unknown as`, which no oxlint rule does.
+
+  oxlint's JS plugins are **alpha**, so these three rules stand on an experimental host.
+  Two disables still get past them, both measured: a bare `/* oxlint-disable */`
+  switches off every rule from its line on, the plugin's included, and an
+  `oxlint-disable-line` that names the plugin's rules silences their report on its own
+  line. Both are visible in the diff, and refusing them needs a check that runs outside
+  the linter.
+- A refusal a spec file needs (the negative-path cast below) is a config override, never
+  a disable.
+- On existing code with too many hatches to refuse today, the refusal still goes in at
+  `error`, and an `overrides` entry turns the rule off for the files that already break it,
+  listed by path. oxlint keeps no bulk-suppression file, so that list is the baseline: a
+  new file is refused from its first line, and a file leaves the list when its cleanup
+  (a `/inspire-task` ticket) lands.
 
 Test-file relaxations are enumerated **per rule with a written reason**. Two legitimate
 cases, and they are different in kind:
@@ -394,9 +425,9 @@ cases, and they are different in kind:
   it shrinks as the boundary gets modelled.
 - **Negative-path construction** — a test that feeds the wrong type to a validator
   (`null as unknown as string`) needs a cast, because the type system preventing it is
-  the whole point of the code under test. **Structural, not debt**: its ratchet ceiling
-  should hold, not drain, and the config should say so — a ceiling that invites a cleanup
-  which cannot happen trains people to ignore it.
+  the whole point of the code under test. **Structural, not debt**: the spec-file
+  override that allows it is permanent, and the config says so — an override that
+  invites a cleanup which cannot happen trains people to ignore it.
 
 Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 
@@ -501,9 +532,12 @@ editing this section moves every action's binding fingerprints.
 - **The persistence entity is not the domain entity.** It lives in `infrastructure/`
   beside its repository and `toDomain()` mapper; the domain interface never imports
   the ORM (see `## Layering`).
-- **Migrations live in `src/migrations/`,** one timestamp-named file per change. They
-  are **append-shaped**: a new change is a new file, and a migration already merged is
-  never edited.
+- **Migrations live in `src/migrations/`,** one file per change, created with
+  `npx typeorm migration:create src/migrations/<Name>`. It names the file
+  `<ms>-<Name>.ts` and the class `<Name><ms>`, with `<ms>` from `Date.now()`; never
+  number one by the previous migration plus one. TypeORM reads the instant from the
+  class name's last 13 characters. Migrations are **append-shaped**: a new change
+  is a new file, and a migration already merged is never edited.
 - Never `synchronize: true` outside a throwaway local run — migrations are the only
   schema authority.
 

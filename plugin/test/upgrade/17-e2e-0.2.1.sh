@@ -141,7 +141,7 @@ eq "staged source residue is never claimed as the operator's" \
 # INSPIRE owns must still be reported as theirs. Without this the fix could have
 # silenced pass 3 altogether and still passed the assertion above.
 check "a genuinely project-authored file is still reported as theirs" \
-   "awk -F'\t' '\$1==\"keep\" && \$3 ~ /yours/' '$rv' | grep -q 'go-best-practices.md'"
+   "awk -F'\t' '\$1==\"keep\" && \$3 ~ /yours/' '$rv' | grep >/dev/null 'go-best-practices.md'"
 rm -f "$rv"
 fixture_cleanup "$w"
 

@@ -131,6 +131,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
   grammar, the closed head vocabularies, the derived claim ids, which oracle
   asserts what, and the catalogue of old shapes a strict reader refuses.
 - Externally populated entities use `population: external` — see [references/format-entity.md](references/format-entity.md).
+- An entity outside the default database names it with `datastore:` when `stack.md` declares `datastores:` — see [references/format-entity.md](references/format-entity.md) § *Datastore*. Ask, never infer it.
 
 ## Rules
 

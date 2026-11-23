@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # The one entry point for this repo's test estate.
 #
-#   bash plugin/test/run.sh [-j N] [--inventory FILE] [filter ...]
+#   bash plugin/test/run.sh [-j N] [--inventory FILE] [--shard K/N] [filter ...]
 #
 #   -j N           concurrent jobs (default: min(ncpu, 8); -j 1 is serial)
 #   --inventory F  write every PASS/FAIL/SKIP line of the run, LC_ALL=C sorted
+#   --shard K/N    run only the K-th of N slices of the jobs (CI runs one per runner)
 #   filter         run only jobs whose name contains it (upgrade, 06-hop-ops, golden)
 #
 # Every file under plugin/test/ is also runnable on its own; this schedules them
@@ -18,14 +19,16 @@ GOLDEN="$PLUGIN_ROOT/base/bin/test"
 
 TAB="$(printf '\t')"
 
-jobs_n=""; inventory=""; filters=""
+jobs_n=""; inventory=""; filters=""; shard=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -j)            jobs_n="$2"; shift 2 ;;
     -j*)           jobs_n="${1#-j}"; shift ;;
     --inventory)   inventory="$2"; shift 2 ;;
     --inventory=*) inventory="${1#--inventory=}"; shift ;;
-    -h|--help)     sed -n '2,10p' "$0"; exit 0 ;;
+    --shard)       shard="$2"; shift 2 ;;
+    --shard=*)     shard="${1#--shard=}"; shift ;;
+    -h|--help)     sed -n '2,11p' "$0"; exit 0 ;;
     -*)            echo "run.sh: unknown option $1" >&2; exit 2 ;;
     *)             filters="$filters $1"; shift ;;
   esac
@@ -34,6 +37,20 @@ if [ -z "$jobs_n" ]; then
   jobs_n="$( (sysctl -n hw.ncpu || nproc) 2>/dev/null )"
   case "$jobs_n" in ''|*[!0-9]*) jobs_n=4 ;; esac
   [ "$jobs_n" -gt 8 ] && jobs_n=8
+fi
+# A shard is the K-th of N slices of the ordered job list. Every shard of one run
+# has to be given the same -j and filters: -j decides how a golden rule is split,
+# so it decides the list the slices are cut from.
+shard_k=1; shard_n=1
+if [ -n "$shard" ]; then
+  shard_k="${shard%%/*}"; shard_n="${shard#*/}"
+  case "$shard_k" in ''|*[!0-9]*) shard_k=0 ;; esac
+  case "$shard_n" in ''|*[!0-9]*) shard_n=0 ;; esac
+  case "$shard" in */*) ;; *) shard_k=0 ;; esac
+  if [ "$shard_k" -lt 1 ] || [ "$shard_k" -gt "$shard_n" ]; then
+    echo "run.sh: --shard wants K/N with 1 <= K <= N, got '$shard'" >&2
+    exit 2
+  fi
 fi
 
 TMP="$(mktemp -d)"
@@ -156,8 +173,15 @@ for s in "lib-tests.sh${TAB}_lib.sh/readers" \
   w_add "$SIBLING_WEIGHT" sibling "$script" "golden/$script" "$label"
 done
 
+# Sharding deals the weight-ordered list out like cards — job i goes to slice
+# i mod N — so every slice gets one of the heaviest jobs before any gets a second,
+# and the slices come out about even. Contiguous blocks would put every heavy job
+# in slice 1.
+dealt=0
 while IFS="$TAB" read -r _w kind arg name label; do
   [ -n "$kind" ] || continue
+  dealt=$((dealt + 1))
+  [ $(( (dealt - 1) % shard_n + 1 )) -eq "$shard_k" ] || continue
   add "$kind" "$arg" "$label" "$name"
   [ "$kind" = file ] && printf '%s\n' "$arg" >> "$TMP/files"
 done <<EOF
@@ -165,6 +189,11 @@ $(printf '%s' "$weights" | LC_ALL=C sort -rn)
 EOF
 
 njobs=${#KIND[@]}
+if [ "$njobs" -eq 0 ] && [ "$dealt" -gt 0 ]; then
+  # More slices than jobs: this one is empty, which is not a failure.
+  echo "run.sh: shard $shard_k/$shard_n has no jobs ($dealt in all)"
+  exit 0
+fi
 if [ "$njobs" -eq 0 ]; then
   echo "run.sh: no jobs matched${filters:+ filter$filters}" >&2
   exit 2
