@@ -15,7 +15,9 @@ Upgrade with `/inspire:update`. No hop and no layout change. Review gains a rule
 `type-cells`, that reports the Type cells the INSPIRE Factory refuses to derive: in an
 `accepted` or `stable` entity or action they are errors, so a spec the Factory could
 not build already now fails review as well. A spec that writes `list<T>` or `record`
-needs the INSPIRE Factory release that derives them.
+needs the INSPIRE Factory release that derives them, and so does an entity that names
+`embedded_in:`: an earlier Factory ignores the field and still builds the entity's own
+table.
 
 ### Added
 
@@ -46,6 +48,21 @@ needs the INSPIRE Factory release that derives them.
   (`type-record-legacy`), whatever the file's lifecycle: rows under a `json`, scalar
   or project-typed field, a dotted row with no parent row, a row named `x[]`, and a
   dotted field in an entity. Each warning names the type or row to write instead.
+- **An entity can live inside another entity's row** (`adr-embedded-entity`,
+  Proposed): `embedded_in: <entity id>` in its frontmatter says its rows are kept in
+  the parent's row, with no table of its own, as a columnar store keeps a finding's
+  per-sample calls as arrays. It keeps its whole document and lives in its parent's
+  datastore, whose `## Persistence` lays the rows out; the shipped
+  `inspire-code-nestjs` seed keeps them in one `jsonb` column named with the entity's
+  plural. The derived contract carries `unit.embedded_in`, an ordering edge to the
+  parent and a `{module}.{entity}/embedded` claim in place of a datastore claim, and
+  refuses a contradictory placement as `DR-D4`. The parent's contract does not change.
+- **`entity-datastore` checks embedded entities**, as errors at every lifecycle: a
+  parent with no document (`embedded-parent-missing`), a parent that is itself
+  embedded (`embedded-chain`), a `datastore:` other than the parent's
+  (`embedded-datastore`), and `unique` or `immutable` on a field other than `id`
+  (`embedded-constraint`). A `references(…)` into or out of an embedded entity is a
+  warning (`embedded-reference`). A project that embeds nothing gets no new finding.
 
 ## 0.21.0 — 2026-11-20
 
