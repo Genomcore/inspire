@@ -1,0 +1,66 @@
+{
+  "exit": 1,
+  "findings": [
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-alias: input `ids` is typed `list<int>`, whose element is typed `int`, a rejected alias: use `integer`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `a` is typed `list<address>`, whose element is typed `address`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `b` is typed `list<>`, a list whose element type is missing or is itself a list"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `c` is typed `list<list<uuid>>`, a list whose element type is missing or is itself a list"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `d` is typed `list`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `list<T>` with its element type"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `e` is typed `array<uuid>`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `list<T>`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-unknown: output `f` is typed `object`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md; write `record`"
+    },
+    {
+      "severity": "error",
+      "rule": "type-cells",
+      "message_substring": "type-record-rows: output `codes"
+    },
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "type-record-legacy: output `lines"
+    },
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "type-record-legacy: output `total` is typed `integer` and has rows of its own; type it `record` so they are checked as its fields"
+    },
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "name the row `rows` and type it `list<uuid>`"
+    }
+  ],
+  "forbidden": [
+    "output `total` is typed `integer`, ",
+    "type-record-rows: output `lines",
+    "type-record-rows: output `total",
+    "type-record-rows: output `rows"
+  ]
+}
