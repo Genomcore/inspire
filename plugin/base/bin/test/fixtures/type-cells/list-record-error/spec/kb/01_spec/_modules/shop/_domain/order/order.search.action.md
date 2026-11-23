@@ -30,3 +30,5 @@ Search orders.
 | `total`        | integer          | A scalar. |
 | `total.cents`  | integer          | Under a scalar. |
 | `rows[]`       | uuid             | Names no field. |
+| `codes`        | list<uuid>       | A list of scalars. |
+| `codes[].x`    | string           | Under a list of scalars. |

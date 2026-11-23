@@ -98,7 +98,7 @@ classify() {
         split(inner, r, "\t")
         return r[1] "\tis typed `" t "`, whose element " r[2]
       }
-      if (head(t) in universal) return ""
+      if (head(t) in universal && !(t == "record" && (t in project))) return ""
       if (!(t in project)) return "type-unknown\tis typed `" t "`, which is in neither the universal vocabulary nor 00_bootstrap/semantic-types.md" hint(t)
       base = project[t]
       if (base == "") return "type-no-base\tis typed `" t "`, a project type that declares no base type"
@@ -106,7 +106,15 @@ classify() {
       if (!(head(base) in universal)) return "type-no-base\tis typed `" t "`, a project type whose base `" base "` is not a universal type"
       return ""
     }
-    function holds_record(t) { return t == "record" || t == "list<record>" }
+    function is_record(t) { return t == "record" && !("record" in project) }
+    function holds_record(t) { return is_record(t) || (element(t) != NONE && is_record(element(t))) }
+    function is_new(t) { return is_record(t) || element(t) != NONE }
+    function fits(t, want) { return want == "record" ? is_record(t) : (element(t) != NONE && is_record(element(t))) }
+    function legacy(key, message) {
+      if (key in warned) return
+      warned[key] = 1
+      print "warning\ttype-record-legacy: " message
+    }
     {
       kind = $1; where = $2; name = $3; t = clean($4)
       verdict = resolve(t)
@@ -117,7 +125,7 @@ classify() {
       nested = (name ~ /\./ || name ~ /\[\]/)
       if (kind == "field" || kind == "touch") {
         if (holds_record(t)) print "type-record-misplaced: " where " is typed `" t "`, and a record is declared only in the ## Inputs or ## Outputs of an action"
-        else if (nested) print "type-record-misplaced: " where " is a nested row, and nested rows are declared only in the ## Inputs or ## Outputs of an action"
+        else if (nested) legacy(kind SUBSEP name, where " is a nested row; an entity field is stored, so name it without `.` or `[]`, or declare the record in an action\047s ## Inputs or ## Outputs")
         next
       }
       row[kind, name] = t
@@ -133,22 +141,21 @@ classify() {
           sub(/\.[^.]*$/, "", parent)
           want = "record"
           if (parent ~ /\[\]$/) { sub(/\[\]$/, "", parent); want = "list<record>" }
-          if (!((kind, parent) in row)) print "type-record-rows: " label[kind, name] " sits under `" parent "`, which has no row of its own"
-          else if (row[kind, parent] != want && project[row[kind, parent]] == "json") {
-            if (!((kind, parent) in legacy)) print "warning\ttype-record-legacy: " label[kind, parent] " is typed `" row[kind, parent] "`, a project type on `json`, and has rows of its own; type it `" want "` so they are checked as its fields"
-            legacy[kind, parent] = 1
-          }
-          else if (row[kind, parent] != want) print "type-record-rows: " label[kind, name] " sits under `" parent "`, which is not typed `" want "`"
-          else has_child[kind, parent] = 1
+          if (!((kind, parent) in row)) legacy(kind SUBSEP parent, label[kind, name] " sits under `" parent "`, which has no row of its own; add a `" parent "` row typed `" want "`")
+          else if (fits(row[kind, parent], want)) has_child[kind, parent] = 1
+          else if (is_new(row[kind, parent])) print "type-record-rows: " label[kind, name] " sits under `" parent "`, which is not typed `" want "`"
+          else legacy(kind SUBSEP parent, label[kind, parent] " is typed `" row[kind, parent] "` and has rows of its own; type it `" want "` so they are checked as its fields")
         } else if (name ~ /\[\]/) {
-          print "type-record-rows: " label[kind, name] " ends in `[]`, and a row under a list names one field of its records, as `" name ".{field}`"
+          base = name
+          sub(/\[\].*$/, "", base)
+          legacy(kind SUBSEP name, label[kind, name] " ends in `[]`; name the row `" base "` and type it `list<" row[kind, name] ">`")
         }
       }
       for (i = 1; i <= rows; i++) {
         split(order[i], key, SUBSEP)
         kind = key[1]; name = key[2]; t = row[kind, name]
         if (!holds_record(t) || ((kind, name) in has_child)) continue
-        sub_row = (t == "record") ? name ".{field}" : name "[].{field}"
+        sub_row = is_record(t) ? name ".{field}" : name "[].{field}"
         print "type-record-rows: " label[kind, name] " is typed `" t "` and no `" sub_row "` row declares its fields"
       }
     }

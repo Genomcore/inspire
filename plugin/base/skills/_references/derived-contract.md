@@ -212,7 +212,9 @@ field typed `enum<draft|active>` resolves to `{"name": "enum<draft|active>",
 `{"name": "list<uuid>", "base": "list"}`, and an element that does not resolve, is
 missing or is itself a list is `DR-T1`. `record` has base `record`. The rows under a
 record (`items[].quantity`, `buyer.id`) are inputs or outputs of their own, named by
-that path. A bare `list` is not universal, so it resolves only as a project type.
+that path. A bare `list` is not universal, so it resolves only as a project type, and a
+`record` the project declares in `00_bootstrap/semantic-types.md` resolves as that project
+type, not as the universal one.
 
 A **constraint** is `{ "word", "args": [...], "oracle" }`, from the closed V1
 vocabulary.

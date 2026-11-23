@@ -4,12 +4,12 @@
     {
       "severity": "warning",
       "rule": "type-cells",
-      "message_substring": "type-record-legacy: output `items` is typed `list`, a project type on `json`, and has rows of its own; type it `list<record>` so they are checked as its fields"
+      "message_substring": "type-record-legacy: output `items` is typed `list` and has rows of its own; type it `list<record>` so they are checked as its fields"
     },
     {
       "severity": "warning",
       "rule": "type-cells",
-      "message_substring": "buyer` is typed `object`, a project type on `json`, and has rows of its own; type it `record` so they are checked as its fields"
+      "message_substring": "buyer` is typed `object` and has rows of its own; type it `record` so they are checked as its fields"
     }
   ],
   "forbidden": [

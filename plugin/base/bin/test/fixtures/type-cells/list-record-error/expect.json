@@ -39,27 +39,28 @@
     {
       "severity": "error",
       "rule": "type-cells",
-      "message_substring": "type-record-rows: output `owner` is typed `record` and no `owner.{field}` row declares its fields"
+      "message_substring": "type-record-rows: output `codes"
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "rule": "type-cells",
-      "message_substring": "sits under `lines`, which has no row of its own"
+      "message_substring": "type-record-legacy: output `lines"
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "rule": "type-cells",
-      "message_substring": "type-record-rows: output `total.cents` sits under `total`, which is not typed `record`"
+      "message_substring": "type-record-legacy: output `total` is typed `integer` and has rows of its own; type it `record` so they are checked as its fields"
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "rule": "type-cells",
-      "message_substring": "and a row under a list names one field of its records, as `rows"
+      "message_substring": "name the row `rows` and type it `list<uuid>`"
     }
   ],
   "forbidden": [
-    "output `total` is typed",
-    "\"warning\"",
-    "type-record-legacy"
+    "output `total` is typed `integer`, ",
+    "type-record-rows: output `lines",
+    "type-record-rows: output `total",
+    "type-record-rows: output `rows"
   ]
 }

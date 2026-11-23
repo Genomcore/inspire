@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "findings": [
+    { "severity": "warning", "rule": "type-cells", "message_substring": "type-record-legacy: field `address.city` is a nested row" },
+    { "severity": "warning", "rule": "type-cells", "message_substring": "name the row `ids` and type it `list<uuid>`" },
+    { "severity": "warning", "rule": "type-cells", "message_substring": "type-record-legacy: output `A` is typed `json` and has rows of its own; type it `list<record>`" },
+    { "severity": "warning", "rule": "type-cells", "message_substring": "type-record-legacy: output `meta.total` sits under `meta`, which has no row of its own; add a `meta` row typed `record`" },
+    { "severity": "warning", "rule": "type-cells", "message_substring": "type-record-legacy: output `C` is typed `rows` and has rows of its own; type it `list<record>`" },
+    { "severity": "warning", "rule": "type-cells", "message_substring": "type-record-legacy: output `D` is typed `tag_list` and has rows of its own; type it `list<record>`" }
+  ],
+  "forbidden": ["\"error\"", "type-record-rows", "type-record-misplaced", "`extra`", "`E`"]
+}

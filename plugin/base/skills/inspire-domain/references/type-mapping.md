@@ -53,7 +53,12 @@ live in an action's `## Inputs` and `## Outputs` only: an entity's `## Fields` a
 own.
 
 A bare `list`, with no element type, is not the universal type: a project that declared
-its own `list` in `00_bootstrap/semantic-types.md` keeps it, as written.
+its own `list` in `00_bootstrap/semantic-types.md` keeps it, as written. The same holds
+for a project that declared its own `record`: its row wins over the universal one.
+
+Shapes written before these types existed — rows under a `json` field or another type, a
+dotted row with no parent row, a row named `x[]`, a dotted entity field — are a flat
+warning in review (`type-record-legacy`), never an error, with the type or row to use.
 
 ## Mapping-column tokens
 
