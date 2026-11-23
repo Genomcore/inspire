@@ -26,8 +26,17 @@
 #   0 — allow the tool call
 #   2 — block the tool call; stderr is fed back to the agent
 #
+# PRs INTO A RELEASE BRANCH (release/YYYY-MM-DD) carry the release with them.
+# The version is compared with main, not with the release: every PR of the
+# release bumps to the same next version, the first to merge brings it, and in
+# the rest it is an identical change git merges cleanly. On top of that, a PR
+# that changes the runtime must add its own entry under that version's
+# CHANGELOG section — the release-note channel — so nobody writes the notes by
+# hand when the release closes. /release-entry prepares all three.
+#
 # Self-test (no hook harness needed):
 #   .claude/hooks/template-runtime-version.sh --check <base-ref> <head-ref>
+#   .claude/hooks/template-runtime-version.sh --check-release <release-ref> <head-ref>
 #   → exit 0 pass, exit 1 fail
 
 set -uo pipefail
@@ -260,9 +269,84 @@ check_versions() {
   return 0
 }
 
+# A PR into a release that changes the runtime adds lines inside the
+# "## <version>" section of CHANGELOG.md. <base> is where the PR leaves the
+# release, so only this PR's own diff counts — a section other PRs already
+# filled does not excuse this one.
+# Prints the failure report on stdout; returns 0 pass / 1 fail.
+check_changelog_entry() {
+  local base="$1" head="$2" changed runtime_changed version start end added
+
+  changed="$(git diff --name-only "$base" "$head" -- plugin/ 2>/dev/null)"
+  runtime_changed="$(printf '%s\n' "$changed" | grep -vE "$EXEMPT_RE" | grep -E '^plugin/.' || true)"
+  if [ -z "$runtime_changed" ]; then
+    echo "✓ this PR changes no runtime under plugin/ — CHANGELOG entry not required"
+    return 0
+  fi
+
+  version="$(git show "$head:$MANIFEST" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)"
+  # Line numbers of the section in the head CHANGELOG: its heading, and the
+  # next "## " heading (or end of file).
+  start="$(git show "$head:CHANGELOG.md" 2>/dev/null | grep -nE "^## ${version//./\\.}( |\$)" | head -1 | cut -d: -f1)"
+  if [ -z "$version" ] || [ -z "$start" ]; then
+    {
+      echo ""
+      echo "CHANGELOG.md has no section for ${version:-<unknown>} — blocking the PR."
+      echo ""
+      echo "  Add \"## $version — YYYY-MM-DD\" (or run /release-entry, which creates it)."
+      echo ""
+    }
+    return 1
+  fi
+  end="$(git show "$head:CHANGELOG.md" | awk -v s="$start" 'NR > s && /^## / { print NR; exit }')"
+  end="${end:-999999}"
+
+  # Added, non-blank lines of this PR, numbered as in the head file.
+  added="$(git diff -U0 "$base" "$head" -- CHANGELOG.md 2>/dev/null | awk -v s="$start" -v e="$end" '
+    /^@@/ { split($3, a, ","); n = substr(a[1], 2) + 0; next }
+    /^\+\+\+/ { next }
+    /^\+/ { if (n > s && n < e && $0 !~ /^\+[[:space:]]*$/) c++; n++; next }
+    END { print c + 0 }')"
+
+  if [ "$added" -eq 0 ]; then
+    {
+      echo ""
+      echo "Runtime changed without a CHANGELOG entry — blocking the PR."
+      echo ""
+      echo "  Changed runtime files:"
+      printf '%s\n' "$runtime_changed" | sed 's/^/    · /'
+      echo ""
+      echo "  Add what this PR changes for a project to the \"## $version\" section"
+      echo "  of CHANGELOG.md, under Breaking for existing vaults / Added / Changed /"
+      echo "  Fixed. That section becomes the GitHub release notes. /release-entry"
+      echo "  drafts it."
+      echo ""
+    }
+    return 1
+  fi
+
+  echo "✓ CHANGELOG.md: this PR adds $added line(s) to ## $version"
+  return 0
+}
+
 # ---- self-test mode -------------------------------------------------------
 if [ "${1:-}" = "--check" ]; then
   check_versions "${2:?usage: --check <base-ref> <head-ref>}" "${3:?usage: --check <base-ref> <head-ref>}"
+  exit $?
+fi
+
+# Both checks of a PR into a release: the version against main, the CHANGELOG
+# entry against the release. Prints both reports.
+check_release_pr() {
+  local release="$1" head="$2" main_ref="main" rc=0
+  git show-ref --verify --quiet refs/remotes/origin/main && main_ref="origin/main"
+  check_versions "$(git merge-base "$main_ref" "$head")" "$head" || rc=1
+  check_changelog_entry "$(git merge-base "$release" "$head")" "$head" || rc=1
+  return "$rc"
+}
+
+if [ "${1:-}" = "--check-release" ]; then
+  check_release_pr "${2:?usage: --check-release <release-ref> <head-ref>}" "${3:?usage: --check-release <release-ref> <head-ref>}"
   exit $?
 fi
 
@@ -287,12 +371,24 @@ case "$cmd" in
 esac
 
 pr_base="$(printf '%s\n' "$cmd" | sed -nE "s/.*(--base[= ]|-B )[\"']?([^\"' ]+).*/\2/p" | head -1)"
-case "$pr_base" in
-  ''|main|origin/main) ;;
-  *) exit 0 ;;
-esac
+pr_base="${pr_base#origin/}"
 
 cd "$HOME_ROOT" || exit 0
+
+case "$pr_base" in
+  ''|main) ;;
+  release/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+    release_ref="$pr_base"
+    git show-ref --verify --quiet "refs/remotes/origin/$pr_base" && release_ref="origin/$pr_base"
+    report="$(check_release_pr "$release_ref" HEAD)"; rc=$?
+    [ "$rc" -eq 0 ] && exit 0
+    printf '%s\n' "$report" >&2
+    echo "" >&2
+    echo "Run /release-entry: it bumps the version if the release has not yet, adds this PR's CHANGELOG entry and regenerates the manifest." >&2
+    exit 2
+    ;;
+  *) exit 0 ;;
+esac
 
 # Base is the merge-base with main — the PR's actual diff, not everything that
 # landed on main since the branch started.
