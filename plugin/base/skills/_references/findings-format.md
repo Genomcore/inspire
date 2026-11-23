@@ -64,6 +64,10 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `datastore-missing` | entity-datastore | `stack.md` declares two or more datastores and no `default_datastore:`, and the entity names none with `datastore:`. |
 | `datastore-undeclared` | entity-datastore | The entity's `datastore:` names a datastore `stack.md` does not declare. |
 | `datastore-default-undeclared` | entity-datastore | The entity names no datastore and `default_datastore:` is not in `datastores:`, or `stack.md` sets a default with no `datastores:`. |
+| `embedded-parent-missing` | entity-datastore | The entity's `embedded_in:` names no entity document, or the entity itself. |
+| `embedded-chain` | entity-datastore | The entity's `embedded_in:` names an entity that is itself embedded. |
+| `embedded-datastore` | entity-datastore | An embedded entity's `datastore:` names a datastore other than its parent's. |
+| `embedded-constraint` | entity-datastore | A field of an embedded entity other than `id` carries `unique` or `immutable`, which no store enforces on one element of an array. |
 | `datastore-unserved` | entity-datastore | The entity's datastore maps to a stack id `profiles:` does not list, or no stack skill with that `stack:` has a `## Persistence` section. |
 | `requires target not found` | stable-blockers | A `requires` entry points to an id not present in the SDD tree. |
 | `stable action requires X which is at lifecycle: Y` | stable-blockers | A stable action lists a non-stable target in `requires`. |
@@ -95,6 +99,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
 | `type-record-legacy` | type-cells | A nested-row shape written before `list<record>` and `record` existed: rows under a row of any other type (`json`, a project type, a scalar), a dotted row with no parent row, a row named `x[]`, or a dotted name in an entity's `## Fields`. The message names the type or row to use. A flat warning at every lifecycle, so a project that wrote these goes no redder on upgrade. |
 | `reference-crosses-datastore` | entity-datastore | A `references(…)` names an entity in another datastore. No foreign key spans two engines, so the application keeps the reference. |
+| `embedded-reference` | entity-datastore | A `references(…)` points into or out of an embedded entity. No foreign key reaches an element of an array, so the application keeps the reference. |
 | `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.9** — the shapes an upgrade inherits, which is all of them, since 0.8.0 shipped none of these classes — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
 | `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |
 | `use-case file missing required section(s)` / `has empty section(s)` | sections-present | A `*.feature.md` use-case file is missing one of `## Actor` · `## Preconditions` · `## Main flow` · `## Alternative flows` · `## Error flows` · `## Postconditions` · `## Acceptance criteria`, or has one with no body. |

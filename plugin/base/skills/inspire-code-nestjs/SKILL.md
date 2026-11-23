@@ -507,6 +507,15 @@ editing this section moves every action's binding fingerprints.
   binding path uses (`auth::user` → `users`), snake_case. The module is not part of
   the table name — it is the schema where the project uses schemas, and nothing
   otherwise.
+- **Embedded entity → one column of its parent's table.** An entity with
+  `embedded_in:` gets no table: its rows are one `jsonb` column on the parent's table,
+  named with the embedded entity's plural (`findings::finding_call` →
+  `finding_calls`), holding an array of objects keyed by its field names, `[]` by
+  default. Its unit adds that column in its own migration and never touches the
+  parent's other columns. Each element carries its own `id`, generated when it is
+  appended; `nonnull` and `default(v)` hold per element, enforced where the array is
+  written. An entity that already has a table moves its rows into the column and
+  drops the table in the same migration.
 - **Field → column.** snake_case; the column type comes from the language profile's
   *Rendering* table ([`inspire-code-typescript`](../inspire-code-typescript/SKILL.md)), never from a guess here.
   The field's `Constraints:` line renders as column constraints — `unique` → a unique

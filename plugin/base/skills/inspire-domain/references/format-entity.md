@@ -15,6 +15,7 @@ module: auth
 entity: user
 lifecycle: draft           # draft | accepted | stable | superseded
 # datastore: analytics     # only when stack.md declares datastores: and this entity is not in the default
+# embedded_in: auth.org    # only when this entity's rows live inside another entity's row
 ---
 
 ## Purpose
@@ -124,6 +125,38 @@ Three tooling consequences:
 - `entity-datastore` reports an entity whose datastore is missing or undeclared, a default `datastores:` does not list, and a datastore whose stack id is not in `profiles:` or has no skill with a `## Persistence` section. Each is an error at every lifecycle.
 - `entity-datastore` warns when a `references(…)` names an entity in another datastore: no foreign key spans two engines, so the application keeps the reference. It does not block, since a design may need the link.
 - The derived contract carries it as `unit.datastore`, adds it to each entity an action touches, and derives one more claim, `{module}.{entity}/datastore`, for an entity outside the default, so moving an entity out of the default rebuilds its table where it now belongs. An entity in the default makes no such claim, so declaring `datastores:` in a project that is already built rebuilds only the entities placed outside it. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
+
+## Embedded entities
+
+_Reference material about the `embedded_in:` frontmatter field below — not a section of an entity document._
+
+Some entities have no table of their own: their rows are kept inside the row of another entity. A columnar store often keeps a finding's per-sample calls as arrays in the finding's row, one array per field and one element per call. The entity says so by naming the entity whose row holds it:
+
+```markdown
+---
+id: findings.finding_call
+module: findings
+entity: finding_call
+lifecycle: draft
+population: external
+embedded_in: findings.molecular_finding
+---
+```
+
+Each row of the parent holds zero or more rows of the embedded entity. The embedded entity keeps its whole document, and its fields are declared here, never copied onto the parent. The parent names nothing.
+
+- **Its datastore is its parent's.** It may repeat it in `datastore:`, never name another, and is never asked to name one.
+- **One level deep.** The parent is not itself embedded.
+- **The parent's datastore lays the rows out**, in the `## Persistence` section of the stack skill that serves it: one array per field in a columnar store, one JSON column holding an array of objects in the shipped NestJS seed.
+- **Only constraints that hold per element.** `nonnull` and `default(…)` describe each element. A `references(…)` into or out of an embedded entity is kept by the application, since no foreign key reaches an element of an array. `unique` and `immutable` are errors on any field but `id`: write such a rule as an invariant.
+
+Write it only when an ADR or the stack keeps the rows in another entity's row. A nested value that belongs to one action's inputs or outputs is a `record` or a `list<record>` ([`type-mapping.md`](type-mapping.md)), not an embedded entity.
+
+Three tooling consequences:
+
+- `entity-datastore` reports a parent with no document (`embedded-parent-missing`), a parent that is itself embedded (`embedded-chain`), a `datastore:` other than the parent's (`embedded-datastore`) and a `unique` or `immutable` field other than `id` (`embedded-constraint`). Each is an error at every lifecycle.
+- `entity-datastore` warns when a `references(…)` points into or out of an embedded entity (`embedded-reference`).
+- The derived contract carries it as `unit.embedded_in` and in each entity an action touches, makes the embedded entity require its parent, and derives one more claim, `{module}.{entity}/embedded`, in place of a datastore claim. The parent's contract does not change. See [`_references/derived-contract.md`](../../_references/derived-contract.md).
 
 ## Section conventions
 

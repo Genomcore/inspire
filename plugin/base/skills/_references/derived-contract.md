@@ -94,7 +94,7 @@ the grouped human report.
 { "schema": "inspire.derived-contract/1",
   "unit": { "kind", "id", "path", "lifecycle", "module"?,
             "entity"? , "action"?, "face"?, "screen"?, "state"?, "population"?,
-            "datastore"?,
+            "datastore"?, "embedded_in"?,
             "package"? },
   "purpose": "…",
   "requires": [ { "kind", "id", "ordering" } … ],
@@ -125,13 +125,23 @@ the grouped human report.
   convention, as before. `population: external` changes none of this: the table is
   still built from `## Fields`, and only its rows come from elsewhere. A datastore
   that cannot be resolved this way is `DR-D3`.
+- **`unit.embedded_in`** is an entity's alone: the id of the entity whose row holds
+  its rows, from its `embedded_in:` field
+  ([`format-entity.md`](../inspire-domain/references/format-entity.md) § *Embedded
+  entities*). It is absent on every entity that names none, so a project that embeds
+  nothing derives what it did before. An embedded entity has no table: its rows sit
+  in the parent's row, laid out by the `## Persistence` of the stack skill serving
+  the parent's datastore, and its `unit.datastore` is the parent's. Its unit adds
+  those columns to the parent's table in a migration of its own and creates no
+  table. A parent with no document, one that is itself embedded, or a placement
+  that contradicts it is `DR-D4`.
 - **`purpose`** is the unit's intent, whitespace-collapsed to one line — the
   `## Purpose` prose, or the `**Purpose:**` header line for a catalog entry,
   which has no such section. It is what the unit's agent would otherwise have to
   reconstruct from links.
 - **`requires`** is the dependency edge set, deduplicated and sorted: an
   action's frontmatter `requires:` plus every entity it touches; an entity's
-  `references(…)` targets; a screen's data and dispatch actions, its navigation
+  `references(…)` targets and, for an embedded entity, its parent; a screen's data and dispatch actions, its navigation
   targets (including a dispatch outcome that navigates), its pattern, every
   layout its `**Layout:**` line names and its components — plus the shell
   layout, `shell`, whenever that entry exists, since it frames every route and
@@ -153,13 +163,16 @@ the grouped human report.
   sides exist, so build order is free. An action **input**'s `references(…)` is
   always `true`: `nonnull` is barred from an input's line (the `Required` column
   owns required-ness), so its absence there says nothing, and the entity an
-  argument keys into must exist to be keyed into.
+  argument keys into must exist to be keyed into. An embedded entity's edge to its
+  parent is always `true`: its columns are added to the parent's table, which must
+  exist first.
   Whether an ordering edge actually *orders a wave* is still the planner's
   policy, not derive's — `plan` drops navigation and self edges too. Derive
   carries the fact; the planner decides what is done with it.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
-  the field constraints in table order, then the invariants, then its datastore
-  claim when its `unit.datastore` is not the default; for an action the
+  the field constraints in table order, then the invariants, then its embedded
+  claim when it has a `unit.embedded_in`, or else its datastore claim when its
+  `unit.datastore` is not the default; for an action the
   input constraints, preconditions, behavior steps, postconditions, errors and
   then its three binding claims;
   for a screen the parameter, data, dispatch, navigation and state bindings,
@@ -238,9 +251,11 @@ vocabulary.
   `fields` empty — the entity document is the canonical field shape and
   duplicating it here would drift.
 - **`entities`** is one object per touched entity: `{id, as_input, effect,
-  fields, datastore?}`, `datastore` being that entity's `unit.datastore` when it has
-  one, so an action knows which database it reads or writes without opening the
-  entity's document. Each touched field carries **the entity document's own
+  fields, datastore?, embedded_in?}`, `datastore` being that entity's
+  `unit.datastore` and `embedded_in` its `unit.embedded_in` when it has one, so an
+  action knows which database it reads or writes, and that an embedded entity is
+  read and written through its parent's row, without opening the entity's
+  document. Each touched field carries **the entity document's own
   constraints** for that field. They are carried, never claimed: the claim about
   a field belongs to the entity's contract and is minted exactly once, there.
 - **`pattern`** is `{id, path}` or `null`; **`layouts`** is a list of
@@ -318,7 +333,7 @@ declared key, the way every other kind's are:
 
 ```
 {module}.{entity}/field/{field}/{op}     {module}.{entity}/inv/I{n}
-{module}.{entity}/datastore
+{module}.{entity}/datastore            {module}.{entity}/embedded
 {action}/input/{param}/{op}              {action}/pre/P{n}
 {action}/step/B{n}                       {action}/post/Q{n}
 {action}/error/{code}
@@ -375,6 +390,15 @@ outside the default. The default is therefore the database the project's tables
 are already in. A change of `default_datastore:` moves the entities that rely on it
 without touching a claim; an entity that has to move is given its datastore by name.
 
+**An embedded entity makes one more claim**, `{module}.{entity}/embedded`: its rows
+live in its parent's row, laid out under the `## Persistence` of the skill serving the
+parent's datastore, and it has no table of its own. Its oracle is `store`. It takes
+the place of the datastore claim, which an embedded entity never makes, since it has
+no table to place. Embedding an entity that is already built adds this claim and
+retires its datastore claim if it had one, so that entity alone is rebuilt; moving
+it to another parent, or its parent to another database, makes the claim stale. The
+parent's contract does not change, so embedding an entity never rebuilds its parent.
+
 **A grouping bundle makes exactly one claim**, `{bundle-id}/mount/every-action`:
 the bundle's package exposes every one of its member actions. It is the
 aggregate claim the shell's mount claim models, cited by a test that starts the
@@ -413,6 +437,7 @@ whitespace-collapsed and trimmed:
 |---|---|
 | entity field constraint · action input constraint | the canonical constraint token |
 | entity datastore | `datastore` · the datastore id · the stack id it maps to |
+| entity embedded | `embedded` · the parent's id · the stack id the parent's datastore maps to (empty when `stack.md` declares no `datastores:`) |
 | invariant · precondition · postcondition · error | the canonical head text (empty when there is none) · the prose |
 | behavior step | the canonical head text (always empty) · the prose |
 | binding route | `route` · the input names, sorted and comma-joined · the route rows · the plural row |
@@ -618,6 +643,7 @@ this table name the same thing.
 | `DR-K4` | a shell that binds data serves no single face | touch the shell |
 | `DR-D1` | a mandatory body section of a domain artifact is absent or empty | touch the artifact |
 | `DR-D3` | an entity's datastore cannot be resolved: `stack.md` declares two or more `datastores:` and no `default_datastore:` and the entity names none; its `datastore:` names one `datastores:` does not declare, or `stack.md` declares no `datastores:`; the `default_datastore:` it falls to is not declared; or the stack id its datastore maps to is not in `profiles:`, or no stack skill with that `stack:` has a `## Persistence` section | `/inspire-domain update {id}` for the entity's field; `/inspire-bootstrap` for `stack.md` |
+| `DR-D4` | an embedded entity's placement contradicts itself: `embedded_in:` names no entity document, or the entity itself; the parent is itself embedded; its `datastore:` names a datastore other than its parent's; or a field other than `id` carries `unique` or `immutable` | `/inspire-domain update {id}` |
 | `DR-D2` | an entity document's sections sit outside the canonical order (the action shape carries `OS-A10`; the entity one carries no class id of its own) | touch the artifact |
 | `DR-U1` | a consulted rule reported a shape this table has no id for | read the message; then give the shape an id here |
 

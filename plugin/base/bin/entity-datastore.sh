@@ -51,10 +51,27 @@ ed_named() {
   printf '%s\n' "$value"
 }
 
-ed_resolved() {
+ed_embedded() {
+  local value
+  value="$(sdd_fm_value "$1" '.embedded_in')"
+  [ "$value" = "null" ] && value=""
+  printf '%s\n' "$value"
+}
+
+ed_own() {
   local named
   named="$(ed_named "$1")"
   if [ -n "$named" ]; then printf '%s\n' "$named"; else printf '%s\n' "$DEFAULT"; fi
+}
+
+ed_resolved() {
+  local parent parent_file
+  parent="$(ed_embedded "$1")"
+  if [ -n "$parent" ] && parent_file="$(sdd_resolve_entity_id "$parent")" && [ "$parent_file" != "$1" ]; then
+    ed_own "$parent_file"
+  else
+    ed_own "$1"
+  fi
 }
 
 ed_has_persistence() {
@@ -107,6 +124,7 @@ ed_check_references() {
   while IFS=$'\t' read -r where target; do
     [ -n "$target" ] || continue
     target_file="$(sdd_resolve_entity_id "$target")" || continue
+    [ -z "$(ed_embedded "$target_file")" ] || continue
     theirs="$(ed_resolved "$target_file")"
     [ -n "$theirs" ] && [ "$theirs" != "$own" ] || continue
     sdd_finding "warning" "$RULE" "$file" \
@@ -115,8 +133,62 @@ ed_check_references() {
   done < <(ed_reference_targets "$ED_TMP")
 }
 
+ed_check_into_embedded() {
+  local file="$1" where target target_file
+  kh_strip_comments "$file" > "$ED_TMP"
+  while IFS=$'\t' read -r where target; do
+    [ -n "$target" ] || continue
+    target_file="$(sdd_resolve_entity_id "$target")" || continue
+    [ -n "$(ed_embedded "$target_file")" ] || continue
+    sdd_finding "warning" "$RULE" "$file" \
+      "embedded-reference: \`$where\` references(\`$target\`), an entity kept inside another entity's row; no foreign key reaches an element of an array, so the application keeps the reference"
+    sdd_count_warning
+  done < <(ed_reference_targets "$ED_TMP")
+}
+
+ed_check_embedded() {
+  local file="$1" parent="$2" parent_file named theirs h3 list token word where target
+  if ! parent_file="$(sdd_resolve_entity_id "$parent")" || [ "$parent_file" = "$file" ]; then
+    ed_error "$file" "embedded-parent-missing: embedded_in: \`$parent\` names no other entity document"
+    return 0
+  fi
+  if [ -n "$(ed_embedded "$parent_file")" ]; then
+    ed_error "$file" "embedded-chain: embedded_in: \`$parent\` names an entity that is itself embedded; embedding is one level deep"
+  fi
+  named="$(ed_named "$file")"
+  theirs="$(ed_own "$parent_file")"
+  if [ -n "$named" ] && [ "$named" != "$theirs" ]; then
+    ed_error "$file" "embedded-datastore: datastore: \`$named\`, and the rows live in \`$parent\`'s row, in datastore \`${theirs:-none}\`; drop datastore: or name the parent's"
+  fi
+  kh_strip_comments "$file" > "$ED_TMP"
+  while IFS= read -r h3; do
+    [ -z "$h3" ] || [ "$h3" = "id" ] && continue
+    list="$(kh_constraints_of "$ED_TMP" "Fields" "$h3")" || continue
+    while IFS= read -r token; do
+      word="$(kh_head_word "$token")"
+      case "$word" in
+        unique|immutable)
+          ed_error "$file" "embedded-constraint: \`$h3\` carries \`$word\`, which no store enforces on one element of an array; state the rule as an invariant"
+          ;;
+      esac
+    done < <(kh_split_constraints "$list")
+  done < <(kh_h3_names "$ED_TMP" "Fields")
+  while IFS=$'\t' read -r where target; do
+    [ -n "$target" ] || continue
+    sdd_finding "warning" "$RULE" "$file" \
+      "embedded-reference: \`$where\` references(\`$target\`) from an entity kept inside another entity's row; no foreign key leaves an element of an array, so the application keeps the reference"
+    sdd_count_warning
+  done < <(ed_reference_targets "$ED_TMP")
+}
+
 check_entity() {
-  local file="$1" named resolved
+  local file="$1" named resolved parent
+  parent="$(ed_embedded "$file")"
+  if [ -n "$parent" ]; then
+    ed_check_embedded "$file" "$parent"
+    return 0
+  fi
+  ed_check_into_embedded "$file"
   named="$(ed_named "$file")"
 
   if [ "$COUNT" -eq 0 ]; then
