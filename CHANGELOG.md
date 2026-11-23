@@ -11,7 +11,41 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.22.0 — 2026-11-20
 
-Upgrade with `/inspire:update`.
+Upgrade with `/inspire:update`. No hop and no layout change. Review gains a rule,
+`type-cells`, that reports the Type cells the INSPIRE Factory refuses to derive: in an
+`accepted` or `stable` entity or action they are errors, so a spec the Factory could
+not build already now fails review as well. A spec that writes `list<T>` or `record`
+needs the INSPIRE Factory release that derives them.
+
+### Added
+
+- **Review checks every Type cell** (`type-cells.sh`, one of `review.sh`'s default
+  rules): an entity's `## Fields`, and an action's `## Inputs`, `## Outputs` and the
+  entity fields it touches. It reports an empty cell (`type-empty`), a rejected alias
+  such as `int`, `bool`, `text`, `varchar` or `numeric` (`type-alias`), a type in
+  neither the universal vocabulary nor `00_bootstrap/semantic-types.md`
+  (`type-unknown`), and a project type without a universal base (`type-no-base`). Each
+  is a warning in a draft and an error once the file is `accepted` or `stable`.
+- **`list<T>` and `record` join the universal vocabulary.** `list<T>` holds any type
+  but another list (`list<uuid>`, `list<record>`), and a project type may take a
+  `list<T>` as its base. `record` is a structured value, declared only in an action's
+  `## Inputs` or `## Outputs`, with its fields as rows under it: `buyer.id` for a
+  `record` named `buyer`, `items[].quantity` for each record of a `list<record>` named
+  `items`. `type-mapping.md`, `derived-contract.md` and `inspire-code-typescript` say
+  what each one renders to: `T[]` or JSONB for a list, an object type that is never
+  stored for a record.
+- **A project's own `list` and `record` keep their meaning.** A bare `list` is not
+  universal, so a `list` row in `semantic-types.md` still names the project's type, and
+  a project's own `record` row wins over the universal one. Their contracts and
+  fingerprints do not move.
+- **`type-cells` checks the new types**: `type-record-misplaced` for a `record` or
+  `list<record>` among an entity's fields, and `type-record-rows` for a `record` or
+  `list<record>` with no field rows, or rows under a list of plain values
+  (`codes[].x` under a `list<uuid>`).
+- **Shapes written before `record` existed are warnings, never errors**
+  (`type-record-legacy`), whatever the file's lifecycle: rows under a `json`, scalar
+  or project-typed field, a dotted row with no parent row, a row named `x[]`, and a
+  dotted field in an entity. Each warning names the type or row to write instead.
 
 ## 0.21.0 — 2026-11-20
 
