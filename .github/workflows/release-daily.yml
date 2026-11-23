@@ -33,9 +33,9 @@ name: Daily release
 
 on:
   schedule:
-    # Cron en UTC. 09:00 UTC = 10:00 en Madrid en horario de invierno (CET).
-    # En horario de verano (CEST) pasarlo a '0 8 * * 1-5'.
-    - cron: '0 9 * * 1-5'
+    # Cron en UTC. 09:28 UTC = 10:28 en Madrid en horario de invierno (CET).
+    # En horario de verano (CEST) pasarlo a '28 8 * * 1-5'.
+    - cron: '28 9 * * 1-5'
   workflow_dispatch:
     inputs:
       dry_run:
