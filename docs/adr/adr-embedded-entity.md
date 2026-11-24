@@ -141,9 +141,10 @@ usually says.
   until an entity names `embedded_in:`. Marking an entity that is already built adds its
   `embedded` claim and retires its datastore claim, if it had one, so that entity alone is
   rebuilt: its migration moves the rows into the parent's columns and drops its table.
-- **The INSPIRE Factory needs matching work, and must ship first.** Factory v0.23.0 reads entity
-  frontmatter key by key and ignores any key it does not know, so with this field alone it would
-  still build the embedded entity's table. Its deriver reads `embedded_in`, emits
+- **The INSPIRE Factory needs matching work, and must ship first.** Factory v0.24.0 and earlier
+  read entity frontmatter key by key and ignore any key they do not know, so with this field alone
+  they would still build the embedded entity's table. Factory 0.25.0 is the first release that
+  derives it. Its deriver reads `embedded_in`, emits
   `unit.embedded_in`, the parent edge, the `embedded` claim and `DR-D4`, drops the datastore
   claim for an embedded entity, adds `embedded_in` to an action's entities, and tells the
   entity's unit to add columns to the parent's table instead of creating one.
