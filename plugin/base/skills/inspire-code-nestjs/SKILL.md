@@ -514,8 +514,9 @@ editing this section moves every action's binding fingerprints.
   default. Its unit adds that column in its own migration and never touches the
   parent's other columns. Each element carries its own `id`, generated when it is
   appended; `nonnull` and `default(v)` hold per element, enforced where the array is
-  written. An entity that already has a table moves its rows into the column and
-  drops the table in the same migration.
+  written. An entity that already has a table of its own keeps it: the migration
+  adds the column and copies and drops nothing, since code built earlier still reads
+  and writes that table. Moving that code to the parent's row is a separate change.
 - **Field → column.** snake_case; the column type comes from the language profile's
   *Rendering* table ([`inspire-code-typescript`](../inspire-code-typescript/SKILL.md)), never from a guess here.
   The field's `Constraints:` line renders as column constraints — `unique` → a unique

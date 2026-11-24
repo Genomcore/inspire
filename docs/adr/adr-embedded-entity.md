@@ -140,7 +140,11 @@ usually says.
 - Existing projects need no migration: no hop, no layout change, and contracts derive unchanged
   until an entity names `embedded_in:`. Marking an entity that is already built adds its
   `embedded` claim and retires its datastore claim, if it had one, so that entity alone is
-  rebuilt: its migration moves the rows into the parent's columns and drops its table.
+  rebuilt: its migration adds the parent's columns and keeps its old table. The actions and
+  other units that read or write the entity keep their claims, so nothing rebuilds them, and
+  their code keeps using the old table. Moving that code to the parent's row, and only then
+  dropping the table, is the same cutover as moving a built entity to another datastore; until
+  the Factory plans it, the plan warns about each built entity that becomes embedded.
 - **The INSPIRE Factory needs matching work, and must ship first.** Factory v0.24.0 and earlier
   read entity frontmatter key by key and ignore any key they do not know, so with this field alone
   they would still build the embedded entity's table. Factory 0.25.0 is the first release that

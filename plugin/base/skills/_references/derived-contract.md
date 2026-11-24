@@ -395,9 +395,11 @@ live in its parent's row, laid out under the `## Persistence` of the skill servi
 parent's datastore, and it has no table of its own. Its oracle is `store`. It takes
 the place of the datastore claim, which an embedded entity never makes, since it has
 no table to place. Embedding an entity that is already built adds this claim and
-retires its datastore claim if it had one, so that entity alone is rebuilt; moving
-it to another parent, or its parent to another database, makes the claim stale. The
-parent's contract does not change, so embedding an entity never rebuilds its parent.
+retires its datastore claim if it had one, so that entity alone is rebuilt: its unit
+adds the parent's columns and keeps its old table, since the units that touch it keep
+their claims and their code still uses that table. Moving it to another parent, or its
+parent to another database, makes the claim stale. The parent's contract does not
+change, so embedding an entity never rebuilds its parent.
 
 **A grouping bundle makes exactly one claim**, `{bundle-id}/mount/every-action`:
 the bundle's package exposes every one of its member actions. It is the
