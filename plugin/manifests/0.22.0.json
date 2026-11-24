@@ -1,5 +1,5 @@
 {
-  "commit": "cb049e3d5a3b37c701f415c34433de9df656057f",
+  "commit": "4596e71d6dcc1fc4c82e3e5ed401ff9773e3b873",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -64,10 +64,10 @@
     ".claude/skills/inspire-code-react/references/testing.md": "4710e1e472b0554e48643ca2ea272e8d2b40b40bb4a03c91edfdc1765044bf11",
     ".claude/skills/inspire-code-typescript/SKILL.md": "0b1db734437ebcc293abdcdb372248865f99a49291f1859506eac89bc80d48dd",
     ".claude/skills/inspire-code-typescript/references/oxlint-escape-hatches.mjs": "3253008f33eb4bdd88c70cc55f9955ea3fa3c88cf20ff05810f897db5205ec95",
-    ".claude/skills/inspire-config/SKILL.md": "e9ccd5bb08396a24d6e01521aea634af3df4ab61b15fa5715dbf638faa1c2223",
-    ".claude/skills/inspire-config/references/derive.md": "4d912725e1330b2dc9757ad45c1087b47c7b974accdf03ae2764fdbb71047304",
-    ".claude/skills/inspire-config/references/format.md": "4a124d167b04580afc79c8e544c29b2ff0536707c5a1d8ed700ade002c792145",
-    ".claude/skills/inspire-config/references/validate.md": "84ef624b826f548c31f6c0707688b4b522f9304512795dd1f3ba10aeb78815b3",
+    ".claude/skills/inspire-config/SKILL.md": "14a01eb87160f594008b0e6c4532330334d6aa159a274139879875b78f713058",
+    ".claude/skills/inspire-config/references/derive.md": "2f1d05b6fcc52ddf8e105cdd44b3ede00d90e77dc85d978e91663c1ed90fb614",
+    ".claude/skills/inspire-config/references/format.md": "db7c96af0c5a936cf63c6a5deccf23999e5b8ddbe8973f6ecb77c08b8eea8422",
+    ".claude/skills/inspire-config/references/validate.md": "4000325f1e77358892a0a67e8634fa850ada9b1c4582c7974bd9873166434eb5",
     ".claude/skills/inspire-domain/SKILL.md": "13c8dc12e0a28ca976a71aae18d60247fc829db408d48d2d4a2e27cc6e559dfd",
     ".claude/skills/inspire-domain/examples/canonical-action-meta.md": "8e143d37c8badfa02224193c75dc50e276c0817e2529a24630aeb3adac14f5d4",
     ".claude/skills/inspire-domain/examples/canonical-action.md": "82dc0f0cc41d7531703b8a11d772fe3cde4350247f0892e9e7ca639a3585dc0b",

@@ -47,6 +47,19 @@ needs the INSPIRE Factory release that derives them.
   or project-typed field, a dotted row with no parent row, a row named `x[]`, and a
   dotted field in an entity. Each warning names the type or row to write instead.
 
+### Added
+
+- **`/inspire-config` proposes the time limits of every test check**: `run_timeout`,
+  the limit of the whole suite (the release check, the scaffold and a unit's fallback
+  to `run`), and `run_related_timeout`, the limit of the related tests in the units,
+  the keys INSPIRE Factory 0.24.0 reads. A check that runs longer is stopped and fails
+  with exit code 124 and a line naming the limit, so a test run that never ends no
+  longer holds its slot until someone stops the run. It asks how long each whole suite
+  takes and proposes three times that, at least `1800` (`3600` when unknown), and
+  `900` for the related tests. On a Factory older than 0.24.0 it proposes neither:
+  the older reader refuses the keys. `/inspire-config review` warns about a test check
+  without them, and `/inspire-config init` adds them to an existing file.
+
 ## 0.21.0 — 2026-11-20
 
 Upgrade with `/inspire:update`, then run **`/inspire-config init`**: the INSPIRE
