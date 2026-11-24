@@ -95,7 +95,7 @@ Read the reference before the step it covers. The table is an index, not the flo
    needs a factory 0.13.0 or later: an older reader refuses it as an unknown key.
    `spec_strictness`, `spec_max_revisions` and `spec_classifier_model` need a
    factory 0.18.0 or later, for the same reason, `check_concurrency` 0.19.0 or later,
-   and a run check's `timeout` 0.24.0 or later.
+   and a run check's `run_timeout` and `run_related_timeout` 0.24.0 or later.
    The parallel e2e flags also wait for 0.19.0: an older factory caps each unit's CPUs,
    so the rule proposes them only on 0.19.0 or later. The version is `version` in
    `$INSPIRE_FACTORY_ROOT/orchestrator/package.json`, the checkout validation uses

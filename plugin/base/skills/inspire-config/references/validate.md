@@ -46,7 +46,7 @@ warning explicitly.
 | `localhost` in an `env` URL | error | inside a unit the host is the service name |
 | a `## Test infrastructure` row with no service | error, unless the operator accepts it as external (Q4) | every unit would start without it |
 | a root that is `.`, a glob, or holds `node_modules`, `target`, `.venv`, `dist-newstyle` | error | silently uncited claims, or a scan of every dependency |
-| `--watch`, `--watchAll`, `npm run dev`, a server in the foreground | error | it never ends: the unit hangs, or fails at its `timeout` |
+| `--watch`, `--watchAll`, `npm run dev`, a server in the foreground | error | it never ends: the unit hangs, or fails at its time limit |
 | `sudo`, `apt-get`, `npm install -g` in `setup` or a check | error | no root, `--cap-drop ALL` |
 | a secret-looking value in `env` | warning | committed, and shown to every agent |
 | an `env` URL host that is not a service | warning | it will not resolve |
@@ -54,8 +54,9 @@ warning explicitly.
 | a multi-line `run` without `set -e`, a pipe without `set -o pipefail` | warning | a red check reads green |
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
 | no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
-| a run check in phase `tests` without `timeout`, on INSPIRE Factory 0.24.0 or later | warning | a test run that never ends holds its slot until someone stops the run ([`derive.md`](derive.md) § `timeout`) |
-| `timeout` on a Factory older than 0.24.0 | error | the reader refuses the file when the run starts, with `… has unknown key timeout` |
+| a run check in phase `tests` without `run_timeout`, or with `run_related` and no `run_related_timeout`, on INSPIRE Factory 0.24.0 or later | warning | a test run that never ends holds its slot until someone stops the run ([`derive.md`](derive.md) § `run_timeout` and `run_related_timeout`) |
+| a `run_timeout` below `run_related_timeout` on the same check | warning | the whole suite runs every related test and more: its limit is almost surely too short, and the release check fails at it |
+| `run_timeout` or `run_related_timeout` on a Factory older than 0.24.0; `timeout` on any | error | the reader refuses the file when the run starts, with `… has unknown key <k>` |
 | a Vitest e2e check whose config sets `fileParallelism: false`, with no `--fileParallelism`, while its test code gives each file its own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`), on INSPIRE Factory 0.19.0 or later | warning | its files run one at a time; four at once ran a 279-file suite in 120 s instead of 425 s ([`derive.md`](derive.md) § Run checks). No warning when the database is shared or cannot be found |
 | a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
 | `{files}` or `{tests}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |
