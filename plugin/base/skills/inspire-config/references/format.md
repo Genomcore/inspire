@@ -1,7 +1,7 @@
 # Config — the format
 > Part of [inspire-config](../SKILL.md). Read when the entry's index routes here.
 
-`.inspire/emanate.yml` has seven top-level keys. The factory's reader is the
+`.inspire/emanate.yml` has eight top-level keys. The factory's reader is the
 authority, and this page summarizes it: when the two disagree, the reader wins
 and this page is stale. The reader stops at the **first** error, so one run of
 it reports one problem. Any key it does not know is an error, at every level.
@@ -14,13 +14,14 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | (document) | yes | one YAML document, a mapping | `… is not valid YAML: <parser message>` · `… must be a mapping` |
-| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `bash_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, bash_timeout, phases` |
+| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `bash_timeout`, `base_check_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, bash_timeout, base_check_timeout, phases` |
 | `factory` | no | a mapping: the factory's own settings, below. Omit the key to take every default | `… factory must be a mapping` |
 | `image` | yes | the reader accepts it absent; the runner then stops before planning | `the factory runs agents in the project image: add image to .inspire/emanate.yml` |
 | `services` | no | a mapping of name → service. With no services, omit the key: `services:` with nothing after it is null, and null is an error | `… services must be a mapping` |
 | `env` | no | a mapping of variable → string. Omit it rather than leave it empty | `… env must be a mapping` |
 | `setup` | no | one nonempty string | `… setup must be a nonempty string` |
 | `bash_timeout` | no | whole seconds from 1 to 3600: the time limit of each shell command a unit, scaffold, repair or reviewer agent runs when it passes no timeout of its own. Without it OMP's own limit applies (300 s), and a command that takes longer is killed before the agent sees its result. It limits the agents' commands, not the checks | `… bash_timeout must be a whole number of seconds from 1 to 3600` |
+| `base_check_timeout` | no | whole seconds from 1 to 7200: the time limit of the base check, the pass that runs the `setup` and every `run` check once on the commit the units start from, before any unit (default 900, 15 minutes). A setup or check still running at the limit is stopped and the run ends before any unit, naming it. Raise it when the whole suite, end-to-end tests included, takes longer. Needs INSPIRE Factory 0.24.0 or later; an older reader refuses the key | `… base_check_timeout must be a whole number of seconds from 1 to 7200` |
 | `phases` | yes | a nonempty list | `… phases must be a nonempty list` |
 
 ## `factory`

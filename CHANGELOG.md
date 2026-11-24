@@ -19,6 +19,12 @@ needs the INSPIRE Factory release that derives them.
 
 ### Added
 
+- **`/inspire-config` documents `base_check_timeout`**, the top-level key INSPIRE
+  Factory 0.24.0 reads: the time limit, 900 seconds by default, of the pass that runs
+  the `setup` and every `run` check once on the base before any unit. A project whose
+  whole suite, end-to-end tests included, takes longer raises it. An older Factory
+  refuses the key.
+
 - **Review checks every Type cell** (`type-cells.sh`, one of `review.sh`'s default
   rules): an entity's `## Fields`, and an action's `## Inputs`, `## Outputs` and the
   entity fields it touches. It reports an empty cell (`type-empty`), a rejected alias
