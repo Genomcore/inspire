@@ -13,7 +13,7 @@ own declares none, which is the honest state of most projects._
 underscore-separated, never an alias of a universal type (`text`, `int` and friends
 are rejected: see type-mapping).
 
-**Base type** — **mandatory**, one of the universal types. It is what makes a project
+**Base type** — **mandatory**, one of the universal types, a list among them (`list<string>`). It is what makes a project
 type safe to declare: a language profile that carries no explicit row for the type
 renders it exactly as its base type, in every target. Pick the universal type whose
 predicate this one narrows.

@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `type-cells`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -75,6 +75,12 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 |---|---|---|
 | `OS-A10: {kind} section order` (action descriptors; entity documents keep the unprefixed form) | sections-present | The known `## Section` headers of an action descriptor or entity document appear in a different relative order than its format spec fixes. Extra and optional sections skip cleanly — only the canonical ones are ordered. Entities and actions only. |
 | `field-uncovered` | field-coverage | Entity Fields row declared but no action touches the field. |
+| `type-empty` | type-cells | A Type cell is empty, `-` or `—`. |
+| `type-alias` | type-cells | A Type cell names a rejected alias (`int`, `bool`, `text`, `varchar(N)`, `numeric(p,s)`); the message names the type to use. |
+| `type-unknown` | type-cells | A Type cell names a type that is neither universal nor a row of `00_bootstrap/semantic-types.md`. |
+| `type-no-base` | type-cells | A Type cell names a project type whose `Base type` is empty or not universal. |
+| `type-record-misplaced` | type-cells | A `record` or `list<record>` types an entity's `## Fields` row or an `## Entities` touch row; records are declared only in an action's `## Inputs` and `## Outputs`. |
+| `type-record-rows` | type-cells | A nested row sits under a row typed with a new type that holds no record (`codes[].x` under `list<uuid>`), or a `record` / `list<record>` row has no row under it. |
 | `has no link in '## Rationale'` / `## Purpose` or `## Behavior` | rationale-link | No back-source link in the rationale-bearing section(s). |
 | `link does not resolve` | links-resolve | A Markdown link in a KB file (any `.md` but a template or a file under `_migration/`) has a path that, joined to the linking file's directory, names no file and no directory; a path that starts with `/` joins the repository root. Screen files are checked alongside entities and actions, so a dangling navigation target is reported here. Fix it by correcting the path or by creating the target first ([kb-links.md](kb-links.md)). |
 | `wikilink [[…]]` | links-resolve | A wikilink in a KB file. It is an error at every lifecycle; `/inspire:migrate` converts it, or settles it: a draft of the artifact it names, or its text. |
@@ -87,6 +93,7 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | Type | Rule | Meaning |
 |---|---|---|
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
+| `type-record-legacy` | type-cells | A nested-row shape written before `list<record>` and `record` existed: rows under a row of any other type (`json`, a project type, a scalar), a dotted row with no parent row, a row named `x[]`, or a dotted name in an entity's `## Fields`. The message names the type or row to use. A flat warning at every lifecycle, so a project that wrote these goes no redder on upgrade. |
 | `reference-crosses-datastore` | entity-datastore | A `references(…)` names an entity in another datastore. No foreign key spans two engines, so the application keeps the reference. |
 | `OS-A1` · `OS-A3` · `OS-A4` · `OS-E1` · `OS-E3` | keys-present, constraints-mechanics | The keyed shape is absent rather than wrong: no `B{n}` on the first `## Behavior` step, no `## Preconditions` / `## Postconditions`, no `Constraints:` line on `id`, prose or unkeyed `## Invariants`. A **flat warning at every lifecycle in 0.9** — the shapes an upgrade inherits, which is all of them, since 0.8.0 shipped none of these classes — ramping in the release after. The message ends `— derive refuses old-shape artifacts`. |
 | `W-1` | constraints-mechanics | A constraint word still narrated in a `Notes` or `Description` **cell** after the constraint moved to a `Constraints:` line. Table cells only; per-field H3 prose is where a constraint's meaning belongs and is never scanned. A heuristic, so a flat warning forever. |

@@ -208,7 +208,13 @@ have to guess at. `base` is the universal semantic type from
 own type from `00_bootstrap/semantic-types.md` resolves to its declared base
 type. The parametric universal row `enum<A,B,C>` has base name `enum`, so a
 field typed `enum<draft|active>` resolves to `{"name": "enum<draft|active>",
-"base": "enum"}`.
+"base": "enum"}`. A list has base `list` once its element resolves: `list<uuid>` is
+`{"name": "list<uuid>", "base": "list"}`, and an element that does not resolve, is
+missing or is itself a list is `DR-T1`. `record` has base `record`. The rows under a
+record (`items[].quantity`, `buyer.id`) are inputs or outputs of their own, named by
+that path. A bare `list` is not universal, so it resolves only as a project type, and a
+`record` the project declares in `00_bootstrap/semantic-types.md` resolves as that project
+type, not as the universal one.
 
 A **constraint** is `{ "word", "args": [...], "oracle" }`, from the closed V1
 vocabulary.

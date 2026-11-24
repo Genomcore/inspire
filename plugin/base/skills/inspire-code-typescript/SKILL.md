@@ -39,9 +39,13 @@ One row per universal semantic type. SQL is Postgres (see *Engine notes*).
 | `boolean` | `boolean` | `{type: boolean}` | `BOOLEAN` |
 | `json` | `Record<string, unknown>` | `{type: object}` | `JSONB` |
 | `enum<A,B,C>` | `"A"\|"B"\|"C"` | `{type: string, enum: [A, B, C]}` | `TEXT CHECK (col IN (...))` |
+| `list<T>` | `T[]` | `{type: array, items: <T>}` | `JSONB` |
+| `record` | `{ field: T; … }`, one property per row under it | `{type: object, properties: {…}}` | — (never stored) |
 
 `enum<…>` is parametric: the variants come from the descriptor, the shape from
-this row.
+this row. `list<T>` renders its element `T` by `T`'s own row, and `list<record>` is an
+array of the record the `{field}[].…` rows declare. A `record` is never a column: it
+types an action's input or output only.
 
 ## Mapping tokens
 

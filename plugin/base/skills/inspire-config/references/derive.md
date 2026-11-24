@@ -143,6 +143,23 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   own; a migration, a build or a whole e2e file can take longer. A higher value lets a
   shell that never returns hold the unit's slot that long: one held a genomics-suite unit
   for 30 minutes at `1800`.
+- **`run_timeout` and `run_related_timeout`.** On every run check in phase `tests`,
+  on INSPIRE Factory 0.24.0 or later; an older reader refuses both keys when the run
+  starts, so with an older Factory or no checkout propose neither, and say why.
+  Without them a test run that never ends holds its slot until someone stops the run:
+  a stuck e2e Jest run held one of two slots for 3.5 hours. `bash_timeout` does not
+  cover them: it limits the agents' commands, not the checks.
+  - `run_related_timeout`: proposed, confirm, `900`, on each check with `run_related`.
+    It bounds only the units' related runs.
+  - `run_timeout`: three times how long the whole suite takes (Q15), and never below
+    `1800`; `3600` when the operator does not know. It bounds the release check and
+    the scaffold, which always run the whole suite, and a unit's fallback to `run`. A
+    limit under the whole suite fails the release check on every run, at the end of
+    it, and the repair agent it reaches cannot make the suite faster: say so when
+    proposing `3600` without an answer.
+
+  Only phase `tests`: a lint, a typecheck or a build ends or fails on its own, while a
+  test runner is what waits forever on an open handle, a server or a killed worker.
 - **Review checks.** Optional, and only when the operator wants them (Q13): each
   costs a reviewer session per round and its findings cost repairs. One phase
   named `review`, after `quality` and **before** `tests`, with one check per
@@ -186,6 +203,7 @@ sources leave it open.
 | Q12 | Does the machine reach the internet through a proxy or a mirror? | always | no; if yes, `HTTP(S)_PROXY` plus a `NO_PROXY` naming `orchestrator` and every service |
 | Q13 | Add a review phase? With which rules: the profiles' `## Review focus`, project skills, other files? | a profile has `## Review focus`, or the operator asks | no review; if yes, `'{profiles}#Review focus'` |
 | Q14 | When a unit's agent reports a spec problem: stop the unit (`strict`), let a small model decide (`auto`), or apply the agent's fix to the spec (`yolo`)? With `auto`, which model classifies? | always | `strict`, which writes no key; `auto` also writes `spec_classifier_model` |
+| Q15 | How long does the whole suite of check `<n>` take, from start to end, when it passes? | per run check in phase `tests`, on INSPIRE Factory 0.24.0 or later | unknown: `run_timeout: 3600` |
 
 ## What is never deduced
 
@@ -226,7 +244,10 @@ are expected.
   its reporter flags in `run` and `run_related`, as in a new file (§ `report`).
 - A file without `bash_timeout` gets `600` in the proposal, and a Vitest e2e check
   whose config runs one file at a time over per-file databases gets `--fileParallelism`
-  and its `--maxWorkers`, as in a new file (§ Run checks).
+  and its `--maxWorkers`, as in a new file (§ Run checks). A test check without
+  `run_timeout` or `run_related_timeout` gets them, on INSPIRE Factory 0.24.0 or
+  later, after Q15, as in a new file (§ `run_timeout` and `run_related_timeout`). A
+  `timeout` key is never carried over: the Factory never released it.
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for

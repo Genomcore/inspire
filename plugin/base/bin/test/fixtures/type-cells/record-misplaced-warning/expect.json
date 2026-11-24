@@ -1,0 +1,24 @@
+{
+  "exit": 0,
+  "findings": [
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "type-record-misplaced: field `address` is typed `record`, and a record is declared only in the ## Inputs or ## Outputs of an action"
+    },
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "type-record-legacy: field `address.city` is a nested row; an entity field is stored"
+    },
+    {
+      "severity": "warning",
+      "rule": "type-cells",
+      "message_substring": "type-record-misplaced: `shop::order` field `address` is typed `list<record>`, and a record is declared only in the ## Inputs or ## Outputs of an action"
+    }
+  ],
+  "forbidden": [
+    "`tags`",
+    "\"error\""
+  ]
+}
