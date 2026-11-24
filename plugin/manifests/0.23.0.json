@@ -1,5 +1,5 @@
 {
-  "commit": "7884a1029a0e2439c1984e84fceb4118585903ac",
+  "commit": "999940439a91a3facced90b4efe6dfce86b253b3",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -12,7 +12,7 @@
     ".claude/skills/_references/conventions/_example.md": "4841e0be766a1e0abd2c4a0d722d82c74fff4eba6939245837ed2f26a5068baa",
     ".claude/skills/_references/conventions/graphql.md": "7dd705058aa10cf2bea406fc912903eb61b4a9c874b6563b6c02d71588527bb5",
     ".claude/skills/_references/conventions/rest.md": "66072451ad25ddb34e626960b2d596349afb38ae9793764e21647824ece6fc04",
-    ".claude/skills/_references/derived-contract.md": "2952c10e915faa744bcf175fb4f709df84d4919525b27968400e315ddd039494",
+    ".claude/skills/_references/derived-contract.md": "64fe28966eb3bc7dd720bb8c98bc5d07234ae74387045df5f0682b1a8dfd3f02",
     ".claude/skills/_references/face-scope.md": "5c6ae86a5112f5ef9b94a5926b5f0313396578eeb2430d6f8eddd4092dcd4add",
     ".claude/skills/_references/findings-format.md": "d29bd58624ec3d8f9c97ae0e94eb057d43478f7b14c1c34a73a6bde523a38ae7",
     ".claude/skills/_references/git-conventions.md": "989a6b0646d222ffa52c2ae91e60f5efa146268e1cacc2bc61584e2c4b459cee",
@@ -54,7 +54,7 @@
     ".claude/skills/inspire-code-angular/references/testing.md": "723144a63128a3e6bb37a909257441ce0795e4a90c8c6026292afd68a741a9b2",
     ".claude/skills/inspire-code-angular/references/tooling.md": "a2d9f372c6b8790eb72372354b26359af3a20c5171b445d6b3107f9300f05f87",
     ".claude/skills/inspire-code-ios/SKILL.md": "6bfed03584f66b2c0a2be42f3bf9f2a71ead76e08283104e7b78f238352abb85",
-    ".claude/skills/inspire-code-nestjs/SKILL.md": "bf9de3c1b9985d1f7b53ab2e02a0c766121a3d7d5324b359fabc6a0761b49b2b",
+    ".claude/skills/inspire-code-nestjs/SKILL.md": "ee60b42c9fdc3e470731f8c2b1f3c9edc0c722c2a5053af5ef9df296bef46ca2",
     ".claude/skills/inspire-code-nestjs/references/coding-standards.md": "4f9e5a74d5d410f61fa0051cc2a709942ac08c9e9feb0331b4e72f1b528d94b4",
     ".claude/skills/inspire-code-nestjs/references/db-assertions.md": "e8a6096519ce9d893bf21624507bb21665ec1d49ea2ada6777ca8ab0221a88b5",
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
