@@ -122,8 +122,9 @@ An action also carries three claims no section keys: `{action}/binding/route`,
 `{action}/binding/dispatch` and `{action}/binding/guard`, derived from the backend
 profile's `## Bindings` and its `actor(…)` preconditions — see
 [`derived-contract.md`](derived-contract.md) § Binding claims. An entity carries
-one, `{module}.{entity}/datastore`, when it lives outside the default datastore — see
-[`derived-contract.md`](derived-contract.md) § Claim ids.
+one, `{module}.{entity}/datastore`, when it lives outside the default datastore, or
+instead `{module}.{entity}/embedded`, when its rows live inside another entity's row —
+see [`derived-contract.md`](derived-contract.md) § Claim ids.
 
 Claim ids use the **dotted** id form (`auth.user`, `auth.user.create`), matching
 the on-disk filename, never the colon display form. `{op}` in a field claim is

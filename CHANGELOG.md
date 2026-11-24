@@ -9,6 +9,34 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.23.0 — 2026-11-24
+
+Upgrade with `/inspire:update`. No hop and no layout change, and a project that embeds
+nothing changes nothing. An entity that names `embedded_in:` needs INSPIRE Factory
+0.25.0 or later: v0.24.0 and earlier ignore the field and still build the entity's own
+table.
+
+### Added
+
+- **An entity can live inside another entity's row** (`adr-embedded-entity`,
+  Proposed): `embedded_in: <entity id>` in its frontmatter says its rows are kept in
+  the parent's row, with no table of its own, as a columnar store keeps a finding's
+  per-sample calls as arrays. It keeps its whole document and lives in its parent's
+  datastore, whose `## Persistence` lays the rows out; the shipped
+  `inspire-code-nestjs` seed keeps them in one `jsonb` column named with the entity's
+  plural. The derived contract carries `unit.embedded_in`, an ordering edge to the
+  parent and a `{module}.{entity}/embedded` claim in place of a datastore claim, and
+  refuses a contradictory placement as `DR-D4`. The parent's contract does not change.
+  An entity that is already built keeps its old table, and the code of the units that
+  use it keeps using it: moving that code is a cutover the Factory does not plan yet,
+  and its plan warns about each built entity that becomes embedded (`PW-1`).
+- **`entity-datastore` checks embedded entities**, as errors at every lifecycle: a
+  parent with no document (`embedded-parent-missing`), a parent that is itself
+  embedded (`embedded-chain`), a `datastore:` other than the parent's
+  (`embedded-datastore`), and `unique` or `immutable` on a field other than `id`
+  (`embedded-constraint`). A `references(…)` into or out of an embedded entity is a
+  warning (`embedded-reference`). A project that embeds nothing gets no new finding.
+
 ## 0.22.0 — 2026-11-20
 
 Upgrade with `/inspire:update`. No hop and no layout change. Review gains a rule,
