@@ -27,6 +27,9 @@ table.
   plural. The derived contract carries `unit.embedded_in`, an ordering edge to the
   parent and a `{module}.{entity}/embedded` claim in place of a datastore claim, and
   refuses a contradictory placement as `DR-D4`. The parent's contract does not change.
+  An entity that is already built keeps its old table, and the code of the units that
+  use it keeps using it: moving that code is a cutover the Factory does not plan yet,
+  and its plan warns about each built entity that becomes embedded (`PW-1`).
 - **`entity-datastore` checks embedded entities**, as errors at every lifecycle: a
   parent with no document (`embedded-parent-missing`), a parent that is itself
   embedded (`embedded-chain`), a `datastore:` other than the parent's
