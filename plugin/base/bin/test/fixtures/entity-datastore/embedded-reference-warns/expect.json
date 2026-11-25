@@ -1,0 +1,1 @@
+{"exit": 0, "findings": [{"rule": "entity-datastore", "severity": "warning", "message_substring": "embedded-reference: `sample_id` references(`findings.sample`) from an entity kept inside"}, {"rule": "entity-datastore", "severity": "warning", "message_substring": "embedded-reference: `call_id` references(`findings.finding_call`), an entity kept inside"}], "finding_count": 2}

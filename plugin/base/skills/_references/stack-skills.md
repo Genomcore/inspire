@@ -207,6 +207,10 @@ Its table then follows the `## Persistence` of the skill whose `stack:` is the i
 datastore maps to (`stack: clickhouse`), never the backend profile's. Every id a
 datastore maps to is also in `profiles:`, and has a skill with a `## Persistence`
 section. INSPIRE ships no skill for a second engine, so a project writes its own.
+An entity whose rows live inside another entity's row (`embedded_in:`) has no table
+and lives in its parent's datastore, whose `## Persistence` also says how those rows
+are laid out in the parent's row: one array per field, or one JSON column holding an
+array of objects.
 
 A database skill declares `layer: backend`. Entities and actions are the units that
 read or write a table, and both are backend units, so the skill reaches them and no

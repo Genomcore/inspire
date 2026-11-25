@@ -132,6 +132,7 @@ On-disk shape specs (consult when authoring; they govern the file, not the caden
   asserts what, and the catalogue of old shapes a strict reader refuses.
 - Externally populated entities use `population: external` — see [references/format-entity.md](references/format-entity.md).
 - An entity outside the default database names it with `datastore:` when `stack.md` declares `datastores:` — see [references/format-entity.md](references/format-entity.md) § *Datastore*. Ask, never infer it.
+- An entity whose rows live inside another entity's row, with no table of its own, names that entity with `embedded_in:` — see [references/format-entity.md](references/format-entity.md) § *Embedded entities*. Write it only when an ADR or the stack says so, and ask when they do not.
 
 ## Rules
 

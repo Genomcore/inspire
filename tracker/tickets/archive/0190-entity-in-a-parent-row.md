@@ -2,15 +2,15 @@
 id: 0190-entity-in-a-parent-row
 title: "0190 — an entity kept inside another entity's row has no spec form"
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-24
 reporter: "@djessy.czaplicki"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-24
 epic: follow-up
 size: L
 importance: High
 skills: [domain, code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [0143-entity-datastore, B3-overridable-types]
 ---
@@ -66,15 +66,20 @@ The work starts with an ADR in `docs/adr/` that settles the shape. The direction
 
 ## Acceptance criteria
 
-- [ ] An ADR in `docs/adr/` decides the shape. If it decides the child is written as `list<T>`
+- [x] An ADR in `docs/adr/` decides the shape. If it decides the child is written as `list<T>`
       fields of its parent, `format-entity.md` says so, with an example, and the ticket closes
       Done with no new form.
-- [ ] Otherwise `format-entity.md` defines the form, `_references/derived-contract.md` says what
+- [x] Otherwise `format-entity.md` defines the form, `_references/derived-contract.md` says what
       it derives to, a validator checks it with golden fixtures, and the stack skills' `## Persistence`
       seeds say how they build an embedded entity or why they refuse one.
 
 ## Notes
 
 - Factory note: the deriver must read the new form and build the child's columns on the
-  parent's table instead of a table of its own. The Factory ticket is filed in the Factory's
-  tracker when the change here lands.
+  parent's table instead of a table of its own. That work was done alongside this change, in a
+  pull request to the Factory, so no Factory ticket was filed.
+- Closed 2026-11-24: `docs/adr/adr-embedded-entity.md` (Proposed) chose `embedded_in:`, not
+  `list<T>` fields on the parent, because the embedded rows keep their id, invariants and the
+  actions that name them. `entity-datastore.sh` checks the field with golden fixtures, the
+  derived contract carries `unit.embedded_in`, the parent edge, the `embedded` claim and
+  `DR-D4`, and `inspire-code-nestjs` § Persistence keeps the rows in one `jsonb` column.

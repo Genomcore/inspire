@@ -32,7 +32,7 @@ The gate composes rule families across three severity tiers, plus the style chec
 | `no-todos` | `TODO` / `FIXME` / `XXX` / `HACK` markers in body (D19: files state present truth only) |
 | `action-fields-in-entity` | Action touches a field the entity doc's `## Fields` table does not declare |
 | `entity-coherence` | field-conflict (error), field-unsourced (warning while the entity and every action reading the field are draft; error once any is accepted or stable), field-orphan-write (warning), write-on-external (error) across actions sharing an entity |
-| `entity-datastore` | an entity's `datastore:` against `stack.md`'s `datastores:` and `default_datastore:` — missing, undeclared, an undeclared default, or a datastore no stack skill's `## Persistence` serves (error); a `references(…)` into another datastore (warning) |
+| `entity-datastore` | an entity's `datastore:` against `stack.md`'s `datastores:` and `default_datastore:` — missing, undeclared, an undeclared default, or a datastore no stack skill's `## Persistence` serves (error); an `embedded_in:` whose parent is missing or itself embedded, a `datastore:` other than the parent's, or a `unique` or `immutable` embedded field other than `id` (error); a `references(…)` into another datastore, or into or out of an embedded entity (warning) |
 | `stable-blockers` | `stable` actions whose `requires:` targets are not yet stable |
 | `touched-entity-lifecycle` | `stable` action touching an entity below `accepted` |
 
