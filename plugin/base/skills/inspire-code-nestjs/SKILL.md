@@ -64,7 +64,7 @@ gates:
     config: .oxlintrc.json
   - literal: thresholds
     config: vitest.config.ts
-  # The `lint` script runs `references/check-schema-names.mjs`: no two DTO classes share a name.
+  # The `lint` script runs the schema-name check (see `## Quality gates`): no two DTO classes share a name.
   - literal: check-schema-names.mjs
     config: package.json
   # Rejected on measured evidence — see `## Quality gates`. Re-adopting it is a decision,
@@ -447,7 +447,7 @@ cases, and they are different in kind:
 Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 
 ## Build & verify
-build: `npm run build` · lint: `npm run lint` (`oxlint`, then `check-schema-names.mjs`) · format: `npx oxfmt --check` ·
+build: `npm run build` · lint: `npm run lint` (`oxlint`, then the schema-name check) · format: `npx oxfmt --check` ·
 types: `npx tsgo --noEmit` · tests: `npm run test` + `npm run test:e2e` (`vitest run`)
 
 The default toolchain is **oxlint** with `oxlint-tsgolint` for the type-aware rules,
