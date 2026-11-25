@@ -369,7 +369,7 @@ jobs:
               continue
             fi
             gh api -X PATCH "repos/$GH_REPO/pulls/$num" -f base="$target" >/dev/null
-            gh pr comment "$num" --body "Reapuntada de \`$base\` a \`$target\`, la release abierta. A main solo se llega desde \`release/\`, \`hotfix/\` o \`docs/\`."
+            gh pr comment "$num" --body "Retargeted from \`$base\` to \`$target\`, the open release. Only \`release/\`, \`hotfix/\` and \`docs/\` branches can merge into main."
             echo "- #$num \`$head\`: $base → $target" | tee -a "$GITHUB_STEP_SUMMARY"
             moved=$((moved + 1))
 
