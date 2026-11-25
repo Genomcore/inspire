@@ -535,6 +535,17 @@ warn_uninstalled_escape_hatch_rules() {
   log "  · $configs lacks the escape-hatch plugin rules — install them, or the pre-PR hook fails"
 }
 
+warn_uninstalled_schema_name_check() {
+  local configs
+  configs="$(cd "$PROJECT_ROOT" && SDD_SKILLS_ROOT="$PLUGIN_ROOT/base/skills" \
+    "$PLUGIN_ROOT/base/bin/profile-gates-installed.sh" 2>&1 >/dev/null \
+    | jq -rR 'fromjson? | select(.message | startswith("does not contain `check-schema-names.mjs`")) | .target' \
+    | sort -u | paste -sd ' ' -)"
+  [ -n "$configs" ] || return 0
+  WARNINGS+=("$configs does not run check-schema-names.mjs, which the NestJS stack skill now gates, so profile-gates-installed.sh fails the pre-PR hook. Copy it from .claude/skills/inspire-code-nestjs/references/ into the package and run it in the lint script after oxlint: the OpenAPI document shows one shape for two DTO classes of one name.")
+  log "  · $configs does not run check-schema-names.mjs — add it to the lint script, or the pre-PR hook fails"
+}
+
 # _print_shadowed <path>... — each path with the .gitignore rule that excludes it.
 _print_shadowed() {
   local p
@@ -1123,6 +1134,7 @@ run_materialize() {
   warn_shadowed_runtime
   warn_retired_escape_hatches
   warn_uninstalled_escape_hatch_rules
+  warn_uninstalled_schema_name_check
   merge_settings "$HOP_JOURNAL"
   write_lock "$target"
 
