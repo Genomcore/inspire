@@ -2,7 +2,7 @@
 id: 090-reference-data-home
 title: "090 — reference rows have no home, so an invariant about them has no owner"
 created: 2026-09-09
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [domain, code]
 status: Open
 blocked_by: []
-related_to: [090-immutable-oracle-adr]
+related_to: []
 ---
 
 ## Description

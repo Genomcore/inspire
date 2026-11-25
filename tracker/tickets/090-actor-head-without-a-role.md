@@ -2,7 +2,7 @@
 id: 090-actor-head-without-a-role
 title: "090 — V3 can say which role may act, and cannot say that anyone signed in may"
 created: 2026-09-09
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [domain]
 status: Open
 blocked_by: []
-related_to: [090-plan-headless-authorization, B3-entry-points]
+related_to: [B3-entry-points]
 ---
 
 ## Description
