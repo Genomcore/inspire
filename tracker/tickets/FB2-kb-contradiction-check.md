@@ -126,3 +126,20 @@ Of the other reasons in these runs, input combinations and states with no rule a
 `0200-inputs-and-states-without-a-rule`, and a lookup by alias before the access check is
 `0200-lookup-before-the-access-check`. Logs: `Genomcore/inspire-factory-logs`,
 `runs/genomics-suite/<run>/state.json`, field `spec_issues`.
+
+**Amended 2026-11-25 (the `wishlist-app` bench case).**
+
+The project's ADR `prisma-data-access` and its `stack.md` chose Prisma. Its `inspire-code-nestjs`
+kept the seeded § Persistence, "**ORM:** TypeORM against the seeded Postgres stack", which the
+seed says a project on another ORM replaces wholesale. The Factory's `react-nestjs-npm` template
+ships TypeORM too. `review.sh` reported nothing. On Factory 0.19.0 (2026-11-16) the
+`accounts.user` agent installed Prisma next to TypeORM, and the project's `package.json` still
+holds both. On Factory 0.25.0 (2026-11-25, `run-nFlgdn`, `strict`) the same agent reported the
+contradiction and stopped the unit; the run went on only after the KB was moved to TypeORM.
+
+This ticket now also asks for:
+
+- **An ADR or `stack.md` against a seed section of the stack skill it selects** as a fifth
+  source: a seed the project's decisions replace and that the project's copy of the skill still
+  holds is a contradiction. The ORM is the first case; the same holds for any `> **Seed**`
+  section.
