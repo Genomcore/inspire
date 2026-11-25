@@ -14,8 +14,8 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 Upgrade with `/inspire:update`. A project on the `nestjs` profile copies
 `check-schema-names.mjs` from the `inspire-code-nestjs` skill's `references/` into its
 package and runs it in the `lint` script after oxlint. Until then
-`profile-gates-installed.sh` fails the pre-PR hook, and `/inspire:update` warns, naming
-the `package.json` that lacks it.
+`profile-gates-installed.sh` fails the pre-PR hook, and `/inspire:update` warns when the
+source root's `package.json` does not run it.
 
 ### Breaking for existing vaults
 
@@ -24,8 +24,8 @@ the `package.json` that lacks it.
   class of a name, so two units of one INSPIRE Factory run that each wrote a
   `CriterionRequest` left `/api/docs` showing one shape for both, while the API behaved
   correctly and every test passed. `references/check-schema-names.mjs` reads every
-  non-test `.ts` file under `src/` that imports `@nestjs/swagger` and fails naming each
-  class name declared in more than one of them. It runs in the `lint` script, which
+  non-test `.ts` file under `src/` that imports `@nestjs/swagger` or is a `.dto.ts` or
+  `.entity.ts` file, and fails naming each class name declared in more than one of them. It runs in the `lint` script, which
   INSPIRE Factory runs on every unit, also after the unit merges the work of the units
   before it, so the second unit renames its class before it merges. The skill's `gates:`
   requires `check-schema-names.mjs` in `package.json`.

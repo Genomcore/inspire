@@ -338,8 +338,9 @@ loop and fixes them before anything reaches the operator):
   [`check-schema-names.mjs`](references/check-schema-names.mjs) into the package and
   run it in the `lint` script after oxlint (`"lint": "oxlint && node
   check-schema-names.mjs"`): it reads every non-test `.ts` file under `src/` that
-  imports `@nestjs/swagger`, and fails naming each class name declared in more than
-  one of them. Rename the classes by their module (`FrameworkCriterionRequest`). A
+  imports `@nestjs/swagger` or that the Swagger CLI plugin documents (`.dto.ts`,
+  `.entity.ts`), and fails naming each class name declared in more than one of them.
+  Rename the classes by their module (`FrameworkCriterionRequest`). A
   text scan cannot tell a schema class from any other class in those files, so it
   also refuses two controllers of the same name, which the project never needs either.
 - **A local rule worth authoring: a test may not import a *numeric* constant from the

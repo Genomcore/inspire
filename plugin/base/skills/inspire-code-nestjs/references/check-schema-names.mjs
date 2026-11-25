@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const SWAGGER_IMPORT = /from\s+["']@nestjs\/swagger["']/;
+const SWAGGER_IMPORT = /from\s+["']@nestjs\/swagger(?:\/[^"']*)?["']/;
+const PLUGIN_FILE = /\.(?:dto|entity)\.ts$/;
 const CLASS = /^[ \t]*(?:export[ \t]+)?(?:default[ \t]+)?(?:abstract[ \t]+)?class[ \t]+([A-Za-z_$][\w$]*)/gm;
 const SKIPPED_DIRECTORIES = new Set(["node_modules", "dist"]);
 const TEST_FILE = /\.(?:spec|test|e2e-spec)\.ts$|\.d\.ts$/;
@@ -17,17 +18,20 @@ function* sourceFiles(directory) {
   }
 }
 
+function isSchemaFile(file, source) {
+  return PLUGIN_FILE.test(file) || SWAGGER_IMPORT.test(source);
+}
+
 function schemaClasses(roots) {
   const filesByName = new Map();
   for (const root of roots) {
     for (const file of sourceFiles(root)) {
       const source = readFileSync(file, "utf8");
-      if (!SWAGGER_IMPORT.test(source)) continue;
-      for (const match of source.matchAll(CLASS)) {
-        const name = match[1];
-        const files = filesByName.get(name) ?? [];
-        files.push(relative(process.cwd(), file).split("\\").join("/"));
-        filesByName.set(name, files);
+      if (!isSchemaFile(file, source)) continue;
+      const shown = relative(process.cwd(), file).split("\\").join("/");
+      const names = new Set([...source.matchAll(CLASS)].map((match) => match[1]));
+      for (const name of names) {
+        filesByName.set(name, [...(filesByName.get(name) ?? []), shown]);
       }
     }
   }
@@ -35,8 +39,13 @@ function schemaClasses(roots) {
 }
 
 const roots = process.argv.length > 2 ? process.argv.slice(2) : ["src"];
-const duplicates = [...schemaClasses(roots)].filter(([, files]) => files.length > 1);
+const missing = roots.filter((root) => !existsSync(root));
+if (missing.length > 0) {
+  console.error(`check-schema-names: no directory ${missing.join(", ")} under ${process.cwd()}. Run it from the NestJS package, or pass its source directories.`);
+  process.exit(2);
+}
 
+const duplicates = [...schemaClasses(roots)].filter(([, files]) => files.length > 1);
 for (const [name, files] of duplicates) {
   console.error(
     `${name} is declared in ${files.join(", ")}. @nestjs/swagger names a schema after its class and keeps only the first class of a name, so the OpenAPI document shows one shape for all of them. Rename all but one.`,
