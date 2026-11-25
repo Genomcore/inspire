@@ -65,12 +65,13 @@ A leading `_` on a directory is INSPIRE structure; on a file it means navigation
    table: a search for `*.screen.md` under the face gives the screens, and routes
    derive from `module:` + `screen:`. Existence only; content is `/inspire-screens`'s.
 5. **Task tracker:**
-   - `inspire_kb/99_tracker/tickets/` has valid `.md` files at top level (open)
-     and under `archive/` (closed). Frontmatter parses, enums match, ID format
-     `TASK-[a-z0-9]{6}`.
-   - `id` matches filename; no duplicate IDs across `tickets/` and `archive/`.
-   - **Location ↔ status invariant:** every top-level ticket is `Open`; every
-     archived ticket is `Done`/`Cancelled`.
+   - `inspire_kb/99_tracker/tickets/` has valid `.md` files at top level.
+     Frontmatter parses, enums match, ID format `TASK-[a-z0-9]{6}`.
+   - `id` matches filename; no duplicate IDs.
+   - **Every ticket on disk is `Open`.** A closed ticket is deleted, and git history
+     keeps it; a `Done` or `Cancelled` file on disk is `minor`.
+   - A `tickets/archive/` folder is a leftover of earlier versions: `minor`, fixed by
+     deleting it (`/inspire-task` offers to).
    - `blocked_by` / `related_to` references to other `TASK-*` IDs resolve (warning
      if not).
 6. **No orphan files:** no stale `.md` at `inspire_kb/` root (except
@@ -102,7 +103,7 @@ frontmatter `type` are `spec-identity.sh`'s; this check does not repeat them.
 
 ## Task tracker
 - tickets/: {N} open
-- tickets/archive/: {N} closed ({Done: N, Cancelled: N})
+- Leftover tickets/archive/: {none | N files}
 
 ## Issues
 - [{severity}] {description}
