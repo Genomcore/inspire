@@ -22,7 +22,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: Token de la GitHub App
+      - name: GitHub App token
         id: app
         if: vars.SYNC_RELEASE_APP_ID != ''
         uses: actions/create-github-app-token@v2
@@ -30,7 +30,7 @@ jobs:
           app-id: ${{ vars.SYNC_RELEASE_APP_ID }}
           private-key: ${{ secrets.SYNC_RELEASE_APP_KEY }}
 
-      - name: Abrir o avanzar la PR sync/<release> → release
+      - name: Open or advance the sync/<release> → release PR
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
           VIA_APP: ${{ steps.app.outputs.token != '' }}
@@ -41,19 +41,19 @@ jobs:
           target="$(gh api --paginate "repos/$GH_REPO/git/matching-refs/heads/release/" -q '.[].ref' \
                     | sed 's#^refs/heads/##' | grep -E "$RELEASE_BRANCH_RE" | sort | tail -1 || true)"
           if [ -z "$target" ]; then
-            summary "No hay rama release/AAAA-MM-DD abierta: nada que sincronizar."
+            summary "No open release/YYYY-MM-DD branch: nothing to sync."
             exit 0
           fi
 
           merged="$(gh pr list --head "$target" --base main --state merged --json number -q length)"
           if [ "$merged" -gt 0 ]; then
-            summary "$target ya está mergeada en main: se espera a la siguiente release."
+            summary "$target is already merged into main: waiting for the next release."
             exit 0
           fi
 
           behind="$(gh api "repos/$GH_REPO/compare/$target...main" -q .ahead_by)"
           if [ "$behind" -eq 0 ]; then
-            summary "$target ya tiene todo lo de main."
+            summary "$target already has everything in main."
             exit 0
           fi
 
@@ -65,9 +65,9 @@ jobs:
             own="$(gh api "repos/$GH_REPO/compare/main...$branch" -q .ahead_by)"
             if [ "$own" -eq 0 ]; then
               gh api -X PATCH "repos/$GH_REPO/git/refs/heads/$branch" -f sha="$main_sha" -F force=false >/dev/null
-              summary "$branch avanzada a main @ ${main_sha:0:7}; la PR ya estaba abierta: $existing"
+              summary "$branch advanced to main @ ${main_sha:0:7}; the PR was already open: $existing"
             else
-              summary "La PR ya está abierta y $branch tiene $own commit(s) propios (conflictos resueltos): no se toca. $existing"
+              summary "The PR is already open and $branch has $own commit(s) of its own (resolved conflicts): left untouched. $existing"
             fi
             exit 0
           fi
@@ -79,15 +79,15 @@ jobs:
           fi
 
           cat > body.md <<BODY
-          Sincroniza \`$target\` con \`main\` ($behind commit(s) que están en main y no en la release: hotfixes, tickets de \`docs/\`…).
+          Syncs \`$target\` with \`main\` ($behind commit(s) that are in main and not in the release: hotfixes, \`docs/\` tickets…).
 
-          - Mergear con **merge commit**, nunca squash: con squash la release y main divergen y la siguiente PR release → main da conflictos.
-          - Si hay conflictos (por ejemplo la versión, cuando un hotfix la sube), resuélvelos en esta PR: con el editor de GitHub o con un push a \`$branch\`. Nunca en \`main\`.
-          - Mientras esté abierta y sin commits propios, cada push a \`main\` avanza \`$branch\` y esta PR recoge lo nuevo.
-          - Mergearla mueve la cabeza de \`$target\`: la PR \`$target\` → main necesitará un approval nuevo antes de la daily.
+          - Merge with a **merge commit**, never squash: with squash the release and main diverge and the next release → main PR conflicts.
+          - If there are conflicts (the version, for example, when a hotfix bumps it), resolve them in this PR: with GitHub's editor or by pushing to \`$branch\`. Never in \`main\`.
+          - While it is open and has no commits of its own, every push to \`main\` advances \`$branch\` and this PR picks up what is new.
+          - Merging it moves the head of \`$target\`: the \`$target\` → main PR will need a new approval before the daily stand-up.
           BODY
           if [ "$VIA_APP" != true ]; then
-            echo "- Si no aparecen los checks, cierra y reabre la PR: las PRs que abre \`GITHUB_TOKEN\` no lanzan otros workflows." >> body.md
+            echo "- If the checks do not show up, close and reopen the PR: PRs opened by \`GITHUB_TOKEN\` do not trigger other workflows." >> body.md
           fi
           url="$(gh pr create --base "$target" --head "$branch" --title "Sync main into $target" --body-file body.md)"
-          summary "PR abierta: $url"
+          summary "PR opened: $url"
