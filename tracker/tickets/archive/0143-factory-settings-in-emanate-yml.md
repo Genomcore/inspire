@@ -2,15 +2,15 @@
 id: 0143-factory-settings-in-emanate-yml
 title: "0143 — the Factory's settings move into emanate.yml and /inspire-config follows"
 created: 2026-11-09
-updated: 2026-11-09
+updated: 2026-11-25
 reporter: "@joaquim.ballester"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-25
 epic: follow-up
 size: S
 importance: High
 skills: []
-status: Open
+status: Done
 blocked_by: []
 related_to: [B1-config-replaces-bootstrap]
 ---
@@ -64,3 +64,23 @@ Today `/inspire-config` says that `emanate.json` is not its file and reads `base
   Factory's version decides when that is, not the date of the merge.
 - `B1-config-replaces-bootstrap` described the Factory's old settings file in its section on
   what the Factory does; that sentence was updated with this change.
+
+## Closed 2026-11-25 — shipped
+
+Shipped in 0.14.4 with Factory 0.13.0. Each criterion, checked against `main`:
+
+- [x] `/inspire-config` writes and validates the `factory` section of `emanate.yml`
+      (`references/format.md`, `references/validate.md`), and names `emanate.json` only to
+      migrate it.
+- [x] `/inspire-config init` moves an `emanate.json` under `factory`, drops `schema`, and
+      deletes the file on approval (`references/derive.md` § Migrating `emanate.json`).
+- [x] The skill says the file is read from the base branch, and that only `base_branch` is read
+      from the working tree (`SKILL.md`).
+- [x] Outside the skill, `emanate.json` appears only where a migration detects it
+      (`migrate-kb.sh`, `/inspire:migrate`) and in the changelog.
+- [x] The 0.14.4 changelog entry says a project with an `emanate.json` must move its keys
+      before it runs the new Factory.
+
+The Factory version check (`factory-compat.json`, `factory-check.sh`) also shipped in 0.14.4
+and was removed on 2026-11-10 (8e0bd949): the Factory now declares the oldest INSPIRE it
+supports, so INSPIRE no longer checks the Factory. That criterion is superseded, not missing.

@@ -2,15 +2,15 @@
 id: 0143-entity-datastore
 title: "0143 — an entity cannot say which database it lives in"
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-25
 reporter: "@djessy.czaplicki"
-closed_by: null
-closed_at: null
+closed_by: "@djessy.czaplicki"
+closed_at: 2026-11-25
 epic: follow-up
 size: L
 importance: High
 skills: [domain, bootstrap, code]
-status: Open
+status: Done
 blocked_by: []
 related_to: [FB2-kb-contradiction-check, B1-decisions-in-context, 090-reference-data-home]
 ---
@@ -98,3 +98,34 @@ the unit prompt today. The cost is that the list repeats what the entity specs s
 - **Factory port, filed when this ships:** the deriver emits `unit.datastore` and refuses the
   same shapes. The persistence seed comes from the entity's datastore, not from the one backend
   profile, and "create its migration as usual" follows that datastore's migration rule.
+
+## Closed 2026-11-25 — shipped
+
+Shipped in Genomcore/inspire#127 (0.19.0), with the embedded case added in 0190 (0.23.0). Each
+criterion, checked against `main`:
+
+- [x] `docs/adr/adr-entity-datastore.md` records `datastores:` and `default_datastore:` in
+      `stack.md` (D1), the entity's `datastore:` field (D2), the refusal (D3) and
+      `unit.datastore` in the contract (D5).
+- [x] `entity-datastore.sh` reports `datastore-missing`, `datastore-undeclared`,
+      `datastore-default-undeclared` and `datastore-unserved`, with fixtures for each case and
+      for passing ones (`plugin/base/bin/test/fixtures/entity-datastore/`).
+- [x] `derived-contract.md` specifies `unit.datastore` and that an entity unit gets its
+      datastore's stack skill.
+- [x] `format-entity.md`, the `inspire-domain` entity interview and `inspire-bootstrap`'s stack
+      interview and review cover the field.
+
+Answers to the open questions, from the ADR:
+
+- **Who owns the schema of a `population: external` entity in a second datastore?** The
+  project does. `population: external` says only that no action writes the rows: the table is
+  built from the entity's `## Fields` under its datastore's convention, and a pipeline only
+  fills it (D4).
+- **Is a cross-datastore reference an error?** No. `reference-crosses-datastore` is a warning,
+  because no foreign key spans two engines and a real design often needs the link (D6).
+- **Does a project with one datastore need `datastores:`?** No. Without it the project has one
+  implied datastore whose convention is the backend profile's `## Persistence`, and nothing
+  changes for an existing project (D1).
+
+The Factory side shipped as its `0120-entity-datastore` (Genomcore/inspire-factory#196), and
+genomics-suite has since run with entities in ClickHouse.
