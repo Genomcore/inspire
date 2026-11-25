@@ -18,9 +18,10 @@ This is a plain root-level folder, **not** a materialized `inspire_kb/` — the 
 is not a governed project, and a root `inspire_kb/` here could confuse the upgrade
 fingerprinting. The format still mirrors the on-disk contract a governed project gets from
 `inspire-task` (`tracker-format.md`) — one file per ticket, same frontmatter schema,
-`Open | Done | Cancelled`, closed tickets move to `tickets/archive/` — with two declared
-deviations:
+`Open | Done | Cancelled` — with three declared deviations, the same as the INSPIRE
+Factory's tracker:
 
+- **Closed tickets are deleted**, not moved to `tickets/archive/`. Git history keeps them.
 - **Descriptive ids.** Files and `id:` use the focus key (`F01-derive` … `F14-semantic-types`) or the
   release-plus-slug form (`070-glossary-population`) instead of random `TASK-xxxxxx`.
   Random ids exist for concurrent creation in live projects; a roadmap with stable natural
@@ -72,8 +73,9 @@ an external deadline when what it actually needed was an honest done condition.
 **One ticket, one theme.** A ticket that needs the word "and" in its own summary is two
 tickets, and a ticket nobody can pick up as a next task is a bag. `070-carryforwards` was
 cancelled on 2026-08-19 for exactly that: nine unrelated bullets, invisible to anyone
-scanning the open set. It is archived with a table routing every bullet to the ticket
-whose theme it shares — a cancelled bag stays readable, so the routing is never lost.
+scanning the open set. Its last version, in git history, holds a table routing every bullet
+to the ticket whose theme it shares — a cancelled bag stays readable, so the routing is never
+lost.
 
 **Answer what fits in a sitting.** A question that can be answered in a sitting should be
 answered, not filed: tracking it converts a decision into a queue entry, and queue entries
@@ -81,8 +83,8 @@ outlive the thing that motivated them.
 
 `blocked_by` carries **hard** dependencies only; soft ordering preferences live in
 `related_to` plus a note in the body. A `blocked_by` entry is cleared when the blocker
-closes, and the ticket's Notes say so — the archive keeps the history, the open set keeps
-only what is still true.
+closes, and the ticket's Notes say so — git history keeps the closed tickets, the open set
+keeps only what is still true.
 
 **Factory work goes to the Factory's tracker.** The INSPIRE Factory
 (Genomcore/inspire-factory) runs emanation, builds the code and reads the KB with its own

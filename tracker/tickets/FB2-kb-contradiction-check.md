@@ -2,7 +2,7 @@
 id: FB2-kb-contradiction-check
 title: "FB2 — a KB that contradicts itself reaches the Factory"
 created: 2026-11-06
-updated: 2026-11-20
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [adr, workspace]
 status: Open
 blocked_by: []
-related_to: [B1-decisions-in-context, B4-one-home-per-value, B1-adr-decision-rationale, 0180-derive-only-refusals, 0200-inputs-and-states-without-a-rule, 0200-lookup-before-the-access-check]
+related_to: [B4-one-home-per-value, 0180-derive-only-refusals, 0200-inputs-and-states-without-a-rule, 0200-lookup-before-the-access-check]
 ---
 
 ## Origin

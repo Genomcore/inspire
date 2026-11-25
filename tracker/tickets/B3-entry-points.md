@@ -2,7 +2,7 @@
 id: B3-entry-points
 title: "B3 — Entry points: how an action gets called"
 created: 2026-10-27
-updated: 2026-11-03
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [domain, screens, code]
 status: Open
 blocked_by: []
-related_to: [B3-action-effects, 090-actor-head-without-a-role, B1-kb-structure]
+related_to: [B3-action-effects, 090-actor-head-without-a-role]
 ---
 
 ## Origin

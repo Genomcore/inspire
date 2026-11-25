@@ -2,7 +2,7 @@
 id: B5-react-skill-from-the-team
 title: "B5 — the React stack skill defers its own rules"
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [code]
 status: Open
 blocked_by: []
-related_to: [F07-gates]
+related_to: []
 ---
 
 ## Origin
