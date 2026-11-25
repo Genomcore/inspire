@@ -1,38 +1,38 @@
-# Release check — corre en cada PR contra main o contra la release abierta.
+# Release check — runs on every PR against main or against the open release.
 #
-# Contra main bloquea el merge si:
-#   - la rama de origen no es release/AAAA-MM-DD, hotfix/<algo> ni docs/<algo>
-#   - la versión no sube respecto a main (semver estrictamente mayor);
-#     las ramas docs/ no tienen que subirla, pero solo pueden tocar tracker/
-#   - la versión ya está tagueada (v<version> ya publicada)
-#   - (si el repo tiene CHANGELOG.md) falta la sección "## <version>"
-#   - (solo Inspire) el check propio del repo: plugin.json == marketplace.json
-#     y plugin/manifests/<version>.json coincide con el árbol
+# Against main it blocks the merge if:
+#   - the head branch is not release/YYYY-MM-DD, hotfix/<name> or docs/<name>
+#   - the version does not go up from main (strictly greater semver);
+#     docs/ branches need no bump, but may only touch tracker/
+#   - the version is already tagged (v<version> already published)
+#   - (if the repo has CHANGELOG.md) the "## <version>" section is missing
+#   - (Inspire only) the repo's own check: plugin.json == marketplace.json
+#     and plugin/manifests/<version>.json matches the tree
 #
-# Contra release/AAAA-MM-DD cada PR trae ya lo que la release necesita para
-# llegar a main, en vez de arreglarlo a mano al cerrarla:
-#   - la versión sube respecto a main y no está publicada. Todas las PRs de la
-#     misma release suben a la misma versión, así que la primera que entra
-#     trae el bump y en las demás es un cambio idéntico que git no conflicta.
-#     Un día sin PRs no genera versión.
-#   - (si el repo tiene CHANGELOG.md) existe la sección "## <version>"
-#   - (solo Inspire) si la PR toca el runtime, el manifest está al día y la PR
-#     añade su entrada a esa sección del CHANGELOG. La skill /release-entry lo
-#     deja preparado.
-# Se comprueba el merge de la PR con la release tal como está ahora
-# (refs/pull/N/merge), que es lo que va a entrar: si otra PR ya trajo el bump,
-# vale para todas sin que se actualicen con la release.
-# Las PRs sync/ (main → release, de sync-release.yml) no se comprueban: solo
-# traen lo que ya está en main.
+# Against release/YYYY-MM-DD every PR already brings what the release needs to
+# reach main, instead of fixing it by hand when the release closes:
+#   - the version goes up from main and is not published. Every PR of the same
+#     release bumps to the same version, so the first one to land brings the
+#     bump and in the rest it is an identical change git does not conflict on.
+#     A day without PRs cuts no version.
+#   - (if the repo has CHANGELOG.md) the "## <version>" section exists
+#   - (Inspire only) if the PR changes the runtime, the manifest is up to date
+#     and the PR adds its entry to that CHANGELOG section. The /release-entry
+#     skill prepares it.
+# What is checked is the PR merged with the release as it is now
+# (refs/pull/N/merge), which is what will land: if another PR already brought
+# the bump, it counts for all of them without updating them from the release.
+# sync/ PRs (main → release, from sync-release.yml) are not checked: they only
+# bring what is already in main.
 #
-# Se mira a dónde apunta la PR cuando corre, no cuando se lanzó: si el
-# workflow diario la ha reapuntado de main a la release abierta y ha relanzado
-# este check, se aplican las reglas de la release.
+# The PR's base is read when the check runs, not when it was triggered: if the
+# daily workflow retargeted it from main to the open release and reran this
+# check, the release rules apply.
 #
-# Para que bloquee de verdad hay que añadir el check "Release check" como
-# required status check en el ruleset de main.
+# To actually block, add "Release check" as a required status check in the
+# main ruleset.
 #
-# Lo único que cambia entre Inspire y Factory es el bloque env.
+# The only difference between Inspire and Factory is the env block.
 
 name: Release check
 
@@ -43,21 +43,21 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read # leer a qué rama apunta la PR ahora
+  pull-requests: read # read which branch the PR targets now
 
 concurrency:
   group: release-check-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
-  # Inspire: la identidad de release es plugin.json (marketplace.json la duplica).
+  # Inspire: the release identity is plugin.json (marketplace.json duplicates it).
   VERSION_FILE: plugin/.claude-plugin/plugin.json
   VERSION_JQ: .version
   RELEASE_BRANCH_RE: '^release/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
   SYNC_BRANCH_RE: '^sync/'
   HEAD_BRANCH_RE: '^(release/[0-9]{4}-[0-9]{2}-[0-9]{2}|hotfix/.+|docs/.+)$'
-  # Ramas que llegan a main sin subir versión (no publican release): solo
-  # crean o actualizan tickets, así que solo pueden tocar DOCS_PATHS_RE.
+  # Branches that reach main without a bump (they publish no release): they
+  # only create or update tickets, so they may only touch DOCS_PATHS_RE.
   NO_BUMP_RE: '^docs/.+$'
   DOCS_PATHS_RE: '^tracker/'
 
@@ -66,9 +66,9 @@ jobs:
     name: Release check
     runs-on: ubuntu-latest
     steps:
-      # Se mira a dónde apunta la PR ahora, no cuando se lanzó la ejecución:
-      # en un relanzamiento el evento sigue diciendo la rama de antes.
-      - name: A dónde apunta la PR
+      # Read where the PR points now, not when the run was triggered: on a
+      # rerun the event still names the previous branch.
+      - name: Where the PR points
         id: live
         env:
           GH_TOKEN: ${{ github.token }}
@@ -84,13 +84,13 @@ jobs:
             echo "mode=release" >> "$GITHUB_OUTPUT"
           else
             echo "mode=none" >> "$GITHUB_OUTPUT"
-            echo "✓ La PR apunta a $base, que no es main ni una release diaria: no hay nada que comprobar." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "✓ The PR targets $base, which is neither main nor a daily release: nothing to check." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
-      # Los pasos siguientes dependen de steps.branch: si este no corre, tampoco ellos.
-      # bump=true: comprobar versión (y CHANGELOG); false: docs/ a main;
-      # none: PR sync/ a la release, nada que comprobar.
-      - name: Rama de origen permitida
+      # The next steps depend on steps.branch: if it does not run, neither do they.
+      # bump=true: check the version (and CHANGELOG); false: docs/ into main;
+      # none: sync/ PR into the release, nothing to check.
+      - name: Allowed head branch
         id: branch
         if: steps.live.outputs.mode == 'main' || steps.live.outputs.mode == 'release'
         env:
@@ -101,7 +101,7 @@ jobs:
           if [ "$MODE" = release ]; then
             if [[ "$HEAD_REF" =~ $SYNC_BRANCH_RE ]]; then
               echo "bump=none" >> "$GITHUB_OUTPUT"
-              echo "✓ $HEAD_REF → $BASE (sync desde main: nada que comprobar)" | tee -a "$GITHUB_STEP_SUMMARY"
+              echo "✓ $HEAD_REF → $BASE (sync from main: nothing to check)" | tee -a "$GITHUB_STEP_SUMMARY"
             else
               echo "bump=true" >> "$GITHUB_OUTPUT"
               echo "✓ $HEAD_REF → $BASE"
@@ -109,40 +109,40 @@ jobs:
             exit 0
           fi
           if ! [[ "$HEAD_REF" =~ $HEAD_BRANCH_RE ]]; then
-            echo "::error::A main solo se llega desde release/AAAA-MM-DD, hotfix/<nombre> o docs/<nombre>. Esta PR viene de '$HEAD_REF': mergéala en la rama release/ abierta."
+            echo "::error::Only release/YYYY-MM-DD, hotfix/<name> and docs/<name> branches can merge into main. This PR comes from '$HEAD_REF': merge it into the open release/ branch."
             exit 1
           fi
           if [[ "$HEAD_REF" =~ $NO_BUMP_RE ]]; then
             echo "bump=false" >> "$GITHUB_OUTPUT"
-            echo "✓ $HEAD_REF (docs: sin subir versión, solo tracker/)" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "✓ $HEAD_REF (docs: no version bump, tracker/ only)" | tee -a "$GITHUB_STEP_SUMMARY"
           else
             echo "bump=true" >> "$GITHUB_OUTPUT"
             echo "✓ $HEAD_REF"
           fi
 
-      # Contra main, el commit de la PR; contra la release, su merge con la
-      # release actual (la ref viva, no github.sha: en un relanzamiento tras
-      # reapuntarla, github.sha sigue siendo el merge con main).
+      # Against main, the PR's commit; against the release, its merge with the
+      # current release (the live ref, not github.sha: on a rerun after a
+      # retarget, github.sha is still the merge with main).
       - uses: actions/checkout@v4
         if: steps.branch.outputs.bump == 'true' || steps.branch.outputs.bump == 'false'
         with:
           ref: ${{ steps.live.outputs.mode == 'release' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.event.pull_request.head.sha }}
-          fetch-depth: 0 # historial completo + tags
+          fetch-depth: 0 # full history + tags
 
-      - name: docs/ solo toca tracker/
+      - name: docs/ only touches tracker/
         if: steps.branch.outputs.bump == 'false'
         run: |
           set -euo pipefail
           base="$(git merge-base origin/main HEAD)"
           outside="$(git diff --name-only "$base" HEAD | grep -vE "$DOCS_PATHS_RE" || true)"
           if [ -n "$outside" ]; then
-            echo "::error::Una rama docs/ solo puede tocar tickets (tracker/). Estos ficheros tienen que ir por la rama release/ abierta o por un hotfix/:"
+            echo "::error::A docs/ branch may only touch tickets (tracker/). These files must go through the open release/ branch or a hotfix/:"
             printf '  %s\n' $outside
             exit 1
           fi
-          echo "✓ solo cambia tracker/"
+          echo "✓ only tracker/ changes"
 
-      - name: La versión sube y no está publicada
+      - name: The version goes up and is not published
         id: version
         if: steps.branch.outputs.bump == 'true'
         run: |
@@ -153,37 +153,37 @@ jobs:
 
           semver='^[0-9]+\.[0-9]+\.[0-9]+$'
           if ! [[ "$head_v" =~ $semver ]]; then
-            echo "::error file=$VERSION_FILE::La versión '$head_v' no es X.Y.Z."
+            echo "::error file=$VERSION_FILE::The version '$head_v' is not X.Y.Z."
             exit 1
           fi
           highest="$(printf '%s\n%s\n' "$base_v" "$head_v" | sort -V | tail -1)"
           if [ "$head_v" = "$base_v" ] || [ "$highest" != "$head_v" ]; then
-            echo "::error file=$VERSION_FILE::La versión tiene que subir respecto a main ($base_v). Ahora es $head_v. En una PR a la release, sube a la misma versión que el resto de la release (la siguiente minor de main si aún no la ha subido nadie)."
+            echo "::error file=$VERSION_FILE::The version must go up from main ($base_v). It is $head_v. In a PR into the release, bump to the same version as the rest of the release (main's next minor if nobody has bumped it yet)."
             exit 1
           fi
           if git rev-parse -q --verify "refs/tags/v$head_v" >/dev/null; then
-            echo "::error file=$VERSION_FILE::v$head_v ya está tagueada: elige una versión nueva."
+            echo "::error file=$VERSION_FILE::v$head_v is already tagged: pick a new version."
             exit 1
           fi
           echo "version=$head_v" >> "$GITHUB_OUTPUT"
           echo "✓ $base_v → $head_v" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: CHANGELOG tiene la sección de la versión
+      - name: CHANGELOG has the version's section
         if: steps.branch.outputs.bump == 'true' && hashFiles('CHANGELOG.md') != ''
         env:
           V: ${{ steps.version.outputs.version }}
         run: |
           if grep -qE "^## ${V//./\\.}( |$)" CHANGELOG.md; then
-            echo "✓ CHANGELOG.md tiene ## $V"
+            echo "✓ CHANGELOG.md has ## $V"
           else
-            echo "::error file=CHANGELOG.md::Falta la sección '## $V — AAAA-MM-DD' en CHANGELOG.md."
+            echo "::error file=CHANGELOG.md::The '## $V — YYYY-MM-DD' section is missing from CHANGELOG.md."
             exit 1
           fi
 
-      # Solo existe en Inspire: comprueba que marketplace.json coincide con
-      # plugin.json y que plugin/manifests/<version>.json describe el árbol.
-      # En una PR a la release, además, que trae su entrada en el CHANGELOG.
-      - name: Check propio del repo (Inspire)
+      # Exists only in Inspire: checks that marketplace.json matches plugin.json
+      # and that plugin/manifests/<version>.json describes the tree. In a PR
+      # into the release, also that it brings its CHANGELOG entry.
+      - name: Repo's own check (Inspire)
         if: steps.branch.outputs.bump == 'true' && hashFiles('.claude/hooks/template-runtime-version.sh') != ''
         env:
           MODE: ${{ steps.live.outputs.mode }}
