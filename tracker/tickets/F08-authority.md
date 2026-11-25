@@ -2,7 +2,7 @@
 id: F08-authority
 title: "F8 AUTHORITY — extract knows what it is reading"
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [extract, prototype, domain]
 status: Open
 blocked_by: []
-related_to: [070-scanner-count]
+related_to: []
 ---
 
 ## Description

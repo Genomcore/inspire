@@ -2,7 +2,7 @@
 id: B3-overridable-types
 title: "B3 — Default semantic types a project can override"
 created: 2026-10-27
-updated: 2026-11-17
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [domain, code, bootstrap]
 status: Open
 blocked_by: []
-related_to: [F14-semantic-types, B1-config-replaces-bootstrap, 0180-derive-only-refusals]
+related_to: [B1-config-replaces-bootstrap, 0180-derive-only-refusals]
 ---
 
 ## Origin
@@ -105,7 +105,7 @@ appears to have shipped.
 **Amended 2026-10-28 (tracker pass).**
 
 - *F14 is closed.* Its three criteria were checked against the 0.12.1 tree and it is
-  archived as Done, so the third open question has its answer.
+  closed as Done, so the third open question has its answer.
 - *Factory port.* The INSPIRE Factory derives contracts with its own reader of the KB. A
   collection type and overridable defaults change what that reader accepts, and the
   matching change is filed in the Factory's tracker when this ticket's format lands.

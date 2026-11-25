@@ -2,7 +2,7 @@
 id: B1-spikes-out-of-the-kb
 title: "B1 — spikes are tracked inside the KB, but they are experiments outside it"
 created: 2026-10-23
-updated: 2026-10-30
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [adr, spike]
 status: Open
 blocked_by: []
-related_to: [B1-kb-structure]
+related_to: []
 ---
 
 ## Origin

@@ -2,7 +2,7 @@
 id: B3-navigation-map
 title: "B3 — The navigation map: a design session on whether to store it"
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [screens]
 status: Open
 blocked_by: []
-related_to: [B3-screen-parameters, F09-screens, F10-flows]
+related_to: []
 ---
 
 ## Origin
