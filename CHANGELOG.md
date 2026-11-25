@@ -11,7 +11,22 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.24.0 — 2026-11-25
 
-Upgrade with `/inspire:update`.
+Upgrade with `/inspire:update`. A project with closed tickets in
+`inspire_kb/99_tracker/tickets/archive/` can delete that folder once it is committed:
+`/inspire-task` keeps reading it until then, and offers to delete it.
+
+### Changed
+
+- **Closing a ticket deletes it, and git history keeps it.** `/inspire-task close` no
+  longer moves the file to `tickets/archive/`: it deletes it, removes the id from the
+  other open tickets' `blocked_by` and `related_to`, and proposes a commit message
+  (`docs(tracker): close TASK-{id} — Done: {title}`) that records the status and the
+  reason. `show`, `update` and `list --all` read a closed ticket from git history, and
+  setting `status: Open` on one writes it back. `create` checks git history too, so an
+  id is never reused. `--include-archived` still works as another name for `--all`.
+- **`/inspire-workspace structure` expects only open tickets on disk.** A `Done` or
+  `Cancelled` file in `tickets/`, and a leftover `tickets/archive/` folder, are
+  `minor` findings.
 
 ## 0.23.0 — 2026-11-24
 
