@@ -1,5 +1,5 @@
 {
-  "commit": "9346e534482a239d750953dd763216b96126e0ca",
+  "commit": "e627ea50714494ff336b7d57012190b372e6b315",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -140,11 +140,11 @@
     ".claude/skills/inspire-spike/templates/spike.template.md": "6cc1cd8ef8bd31264dc840486601df93a6837f5372e07ea5534096dd73b555a0",
     ".claude/skills/inspire-store/SKILL.md": "38e1a2ab2e0887333862238cb97d5579ee6ca968535621e5d3e5fe53f3f5c6de",
     ".claude/skills/inspire-store/templates/store.template.md": "d0ff7fe47fdad15c4e3ab266f52be8b9f712a2a3aad91237af89066af34e0285",
-    ".claude/skills/inspire-task/SKILL.md": "dc96d13c146ad502e4de640e7c458999599c0ebea6a2288febbd736faf92598d",
-    ".claude/skills/inspire-task/references/tracker-format.md": "1ec10dad9e6034de8e45ee07152239afdba0e898a828e4f86b6b25b8c9457ff9",
+    ".claude/skills/inspire-task/SKILL.md": "ea7e89eb94ecfc6988ecc935db248e6bb5343aca07038333688660bdd38c720a",
+    ".claude/skills/inspire-task/references/tracker-format.md": "051d8d55d2658591aca0cd7b9eab4277452888205d5f8247ac77602063f3a279",
     ".claude/skills/inspire-workspace/SKILL.md": "5137f02d2e36407998c331b1296ea9343c300bca0dda216be5a2968ce63e067c",
     ".claude/skills/inspire-workspace/references/workspace-review.md": "fe34f57e56e236a68b4f507d3f4c5a4c1315fa3e2c68fa7265b15b07cc626b45",
-    ".claude/skills/inspire-workspace/references/workspace-structure.md": "761418c0878f26fdac0482a8be7e13096c634ad3b4e758b8c5a6682813e25bbd",
+    ".claude/skills/inspire-workspace/references/workspace-structure.md": "6d24756fa387f044bb03be2e0db45995895d08537cda1fba82f32e537e975273",
     ".claude/skills/inspire-workspace/review.workflow.mjs": "14172a2d0211aafd56c519258ed04fa56554247f04ff892aeed3e9babf067c69",
     ".inspire/bin/README.md": "65af70400067d183fc10200f00b12ff7a7313987a0b5c3e9cb984bb35dcdd4d3",
     ".inspire/bin/_keyed-heads.sh": "3bf835ce3ca5da8f5c5824fd35f5df77df28a4bade06b8ee517f6d6e75303d9a",
