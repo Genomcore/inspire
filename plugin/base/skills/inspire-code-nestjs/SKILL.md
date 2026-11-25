@@ -64,6 +64,9 @@ gates:
     config: .oxlintrc.json
   - literal: thresholds
     config: vitest.config.ts
+  # The `lint` script runs the schema-name check (see `## Quality gates`): no two DTO classes share a name.
+  - literal: check-schema-names.mjs
+    config: package.json
   # Rejected on measured evidence — see `## Quality gates`. Re-adopting it is a decision,
   # so it must come with an edit here rather than arrive quietly. oxlint accepts the rule
   # under both names, so both are refused.
@@ -327,6 +330,19 @@ loop and fixes them before anything reaches the operator):
 - The `vitest` plugin: `vitest/expect-expect` (a test that asserts nothing — the
   characteristic failure of generated tests) · `vitest/no-disabled-tests` ·
   `vitest/no-focused-tests` · `vitest/no-conditional-expect`.
+- **Schema names are unique.** `@nestjs/swagger` names each DTO's schema in the
+  OpenAPI document after its class, and keeps only the first class of a name: a second
+  `CriterionRequest` in another module is documented with the first one's shape. The
+  API still behaves correctly, so no test sees it, and a reviewer that reads one change
+  cannot see a name another change declared. Copy
+  [`check-schema-names.mjs`](references/check-schema-names.mjs) into the package and
+  run it in the `lint` script after oxlint (`"lint": "oxlint && node
+  check-schema-names.mjs"`): it reads every non-test `.ts` file under `src/` that
+  imports `@nestjs/swagger` or that the Swagger CLI plugin documents (`.dto.ts`,
+  `.entity.ts`), and fails naming each class name declared in more than one of them.
+  Rename the classes by their module (`FrameworkCriterionRequest`). A
+  text scan cannot tell a schema class from any other class in those files, so it
+  also refuses two controllers of the same name, which the project never needs either.
 - **A local rule worth authoring: a test may not import a *numeric* constant from the
   code it tests.** This is the lint half of "never build the expected value from the code
   under test": a threshold imported into a test makes the test move with the code, so
@@ -432,7 +448,7 @@ cases, and they are different in kind:
 Never a blanket disable of the correctness rules for `**/*.spec.ts`.
 
 ## Build & verify
-build: `npm run build` · lint: `npm run lint` (`oxlint`) · format: `npx oxfmt --check` ·
+build: `npm run build` · lint: `npm run lint` (`oxlint`, then the schema-name check) · format: `npx oxfmt --check` ·
 types: `npx tsgo --noEmit` · tests: `npm run test` + `npm run test:e2e` (`vitest run`)
 
 The default toolchain is **oxlint** with `oxlint-tsgolint` for the type-aware rules,
@@ -583,3 +599,6 @@ Deep material, read on demand — never load one whose topic the task does not t
 - [`references/coding-standards.md`](references/coding-standards.md) —
   the audit-event rule in full, and typed invariants (`NonEmptyArray` + assertion
   functions). Read when writing a service mutation or a validated boundary.
+- [`references/check-schema-names.mjs`](references/check-schema-names.mjs) — the
+  schema-name check the `lint` script runs (`## Quality gates`). Copy it when the
+  package has none.

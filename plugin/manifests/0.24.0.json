@@ -1,5 +1,5 @@
 {
-  "commit": "9346e534482a239d750953dd763216b96126e0ca",
+  "commit": "560446fb42c2b9cdc725d78822f651796fa3a934",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -54,7 +54,8 @@
     ".claude/skills/inspire-code-angular/references/testing.md": "723144a63128a3e6bb37a909257441ce0795e4a90c8c6026292afd68a741a9b2",
     ".claude/skills/inspire-code-angular/references/tooling.md": "a2d9f372c6b8790eb72372354b26359af3a20c5171b445d6b3107f9300f05f87",
     ".claude/skills/inspire-code-ios/SKILL.md": "6bfed03584f66b2c0a2be42f3bf9f2a71ead76e08283104e7b78f238352abb85",
-    ".claude/skills/inspire-code-nestjs/SKILL.md": "ee60b42c9fdc3e470731f8c2b1f3c9edc0c722c2a5053af5ef9df296bef46ca2",
+    ".claude/skills/inspire-code-nestjs/SKILL.md": "766c99262cae0bb3d61ebb71063ad128de6b855fa7e3641bd1bb450ce4d18d06",
+    ".claude/skills/inspire-code-nestjs/references/check-schema-names.mjs": "4bed15434823788d9571766c3a421087cc0c832b900a6be25bd041973515957f",
     ".claude/skills/inspire-code-nestjs/references/coding-standards.md": "4f9e5a74d5d410f61fa0051cc2a709942ac08c9e9feb0331b4e72f1b528d94b4",
     ".claude/skills/inspire-code-nestjs/references/db-assertions.md": "e8a6096519ce9d893bf21624507bb21665ec1d49ea2ada6777ca8ab0221a88b5",
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
