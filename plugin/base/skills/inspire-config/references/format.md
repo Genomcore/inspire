@@ -14,12 +14,13 @@ In the error column, `…` stands for the prefix `.inspire/emanate.yml`.
 | Key | Required | Rule | Factory error |
 |---|---|---|---|
 | (document) | yes | one YAML document, a mapping | `… is not valid YAML: <parser message>` · `… must be a mapping` |
-| (keys) | — | only `factory`, `image`, `setup`, `services`, `env`, `bash_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, services, env, bash_timeout, phases` |
+| (keys) | — | only `factory`, `image`, `setup`, `setup_timeout`, `services`, `env`, `bash_timeout`, `phases` | `… has unknown key <k>; allowed keys: factory, image, setup, setup_timeout, services, env, bash_timeout, phases` |
 | `factory` | no | a mapping: the factory's own settings, below. Omit the key to take every default | `… factory must be a mapping` |
 | `image` | yes | the reader accepts it absent; the runner then stops before planning | `the factory runs agents in the project image: add image to .inspire/emanate.yml` |
 | `services` | no | a mapping of name → service. With no services, omit the key: `services:` with nothing after it is null, and null is an error | `… services must be a mapping` |
 | `env` | no | a mapping of variable → string. Omit it rather than leave it empty | `… env must be a mapping` |
 | `setup` | no | one nonempty string | `… setup must be a nonempty string` |
+| `setup_timeout` | no | only with `setup`; whole seconds, at least 1: the time limit of each run of `setup`, in the units, the scaffold, the release check and the base check. Without it the limit is 1800 s. A setup still running at it is stopped and fails with exit code 124 and the line naming the limit (§ Run checks). Needs INSPIRE Factory 0.26.0 or later | `… setup_timeout needs setup` · `… setup_timeout must be a whole number of seconds, at least 1` |
 | `bash_timeout` | no | whole seconds from 1 to 3600: the time limit of each shell command a unit, scaffold, repair or reviewer agent runs when it passes no timeout of its own. Without it OMP's own limit applies (300 s), and a command that takes longer is killed before the agent sees its result. It limits the agents' commands, not the checks | `… bash_timeout must be a whole number of seconds from 1 to 3600` |
 | `phases` | yes | a nonempty list | `… phases must be a nonempty list` |
 
@@ -153,12 +154,15 @@ a phase.
 | `run_timeout` | optional; whole seconds, at least 1: the time limit of each `run`, the whole suite, wherever it runs: the scaffold, the release check, and a unit's check when it runs `run` (no `run_related`, or a fallback to `run`). Size it to the whole suite. Needs INSPIRE Factory 0.24.0 or later | `… check <name> run_timeout must be a whole number of seconds, at least 1` |
 | `run_related_timeout` | optional, only with `run_related`; whole seconds, at least 1: the time limit of each `run_related`, which runs only in the units. Size it to the related tests. Needs INSPIRE Factory 0.24.0 or later | `… check <name> run_related_timeout must be a whole number of seconds, at least 1` · `… check <name> run_related_timeout needs run_related` |
 
-Without `run_timeout` and `run_related_timeout` a check has no time limit: a watch
-mode, a foreground server or a test that never ends holds its slot until someone
-stops the run (one held an e2e slot for 3.5 hours). With them, the check is stopped
-at the limit of the command it runs, after its container starts, not while it waits
-for a slot. It fails with exit code 124 and the line `The check ran longer than its
-timeout of <N> seconds, so the factory stopped it.`, which goes to a repair agent with
+On INSPIRE Factory 0.26.0 or later every run check has a limit: `run_related`
+without `run_related_timeout` takes the check's `run_timeout`, and a command with
+neither is stopped at 1800 s, lint and typecheck included. On 0.24.0 and 0.25.x a
+check without them has no time limit: a watch mode, a foreground server or a test
+that never ends holds its slot until someone stops the run (one held an e2e slot for
+3.5 hours). The check is stopped at the limit of the command it runs, after its
+container starts, not while it waits for a slot. It fails with exit code 124 and the
+line `The command ran longer than its timeout of <N> seconds, so the factory stopped
+it.` (`The check ran …` before 0.26.0), which goes to a repair agent with
 the rest of its output; it is never rerun as a flaky kill. There are two limits
 because one cannot fit both commands: sized to the related tests, a whole suite that
 takes longer fails the release check on every run, and no repair can make it faster;
@@ -340,7 +344,7 @@ So: **single-quote every string value** except phase and check names —
 and `services.*.env` value, every `healthcheck` and `command` item, every string
 under `factory`. A single quote inside a value is written `''`. Indent with two
 spaces; tabs are rejected. Write the keys in the order `factory`, `image`,
-`services`, `env`, `setup`, `bash_timeout`, `phases`.
+`services`, `env`, `setup`, `setup_timeout`, `bash_timeout`, `phases`.
 
 ## Worked example
 
