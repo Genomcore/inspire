@@ -35,6 +35,17 @@ yes, run the e2e suite, and commit the change with the update.
   project file moves to Step 11, where `/inspire-config init` now proposes the shards of
   one suite back in one phase once their setup names its template per run.
 
+### Changed
+
+- **`/inspire-config` knows the INSPIRE Factory's default time limits.** From INSPIRE
+  Factory 0.26.0 every run check is stopped at 1800 s when it sets no limit of its own,
+  and `run_related` without `run_related_timeout` takes the check's `run_timeout`. The
+  setup gets a limit too: `setup_timeout`, a new top-level key in whole seconds that
+  needs `setup`, 1800 s when absent. `references/format.md` documents both and the new
+  stop line, `The command ran longer than its timeout of <N> seconds, so the factory
+  stopped it.`, and validation refuses `setup_timeout` on an older Factory. A project
+  whose suite or setup takes longer than 30 minutes with no limit of its own sets one.
+
 ## 0.23.0 — 2026-11-24
 
 Upgrade with `/inspire:update`. No hop and no layout change, and a project that embeds
