@@ -22,6 +22,11 @@ Upgrade with `/inspire:update`.
   the same time, and says how to keep them parallel. `/inspire:update` runs the review,
   so a Factory behaviour change reaches the project on its next update. An older
   Factory prints no warnings, and the review shows none.
+- **`inspire-code-nestjs` names the e2e template database per run**: the `globalSetup`
+  gives it a random suffix, hands it to the test files through Vitest's `provide` and
+  `inject`, and drops only its own. Shards of one e2e suite that share a database server
+  no longer drop or recreate each other's template. An existing project's e2e setup does
+  not change by itself; a unit that touches it follows the rule.
 
 ## 0.23.0 — 2026-11-24
 
