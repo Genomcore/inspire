@@ -52,9 +52,9 @@ A test overrides only the fields it cares about; the shared mock supplies the re
 
 ## Store
 
-A server key whose fetch fails with a `clear` outcome (`SKILL.md` § Store) gets one
-test that renders a real reader of the key — the shell, for a key the shell reads —
-and makes the fetch fail with that class:
+A server key whose fetch fails with a `clear` outcome
+([`SKILL.md`](../SKILL.md) § Store) gets one test that renders a real reader of the
+key — the shell, for a key the shell reads — and makes the fetch fail with that class:
 
 ```tsx
 it('should request the session once and show the signed-out state when it is missing', async () => {
