@@ -339,7 +339,7 @@ What follows is the `immutable` rule, word for word:
 - **The application keeps its own check.** The store is what holds the rule, not
   the first thing that says no. An action still validates its inputs at its
   boundary, so a caller gets the validation error of the wire convention
-  (`conventions/rest.md`, *Validation failure*) with the field named, and never a
+  ([`conventions/rest.md`](conventions/rest.md), *Validation failure*) with the field named, and never a
   constraint violation the store raised.
 
 ## Coherence, beyond grammar
