@@ -9,7 +9,7 @@ reader, and the run applies the reader's rules anyway.
 ## 1. The factory's reader
 
 Locate the factory checkout through `INSPIRE_FACTORY_ROOT`; when it is unset, ask
-the operator for the path, except when `/inspire:update` runs this review (its Step 10):
+the operator for the path, except when `/inspire:update` runs this review (its Step 11):
 then never ask, and go on to *validation pending* below. Anyone who launches a factory run already has that
 checkout and `bun`. Then run its project-file check on the draft, from the
 project root:
