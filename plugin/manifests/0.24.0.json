@@ -1,5 +1,5 @@
 {
-  "commit": "9346e534482a239d750953dd763216b96126e0ca",
+  "commit": "5c7532d45d15cdf9122d403ca3f0c8a01d362d5d",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -54,7 +54,7 @@
     ".claude/skills/inspire-code-angular/references/testing.md": "723144a63128a3e6bb37a909257441ce0795e4a90c8c6026292afd68a741a9b2",
     ".claude/skills/inspire-code-angular/references/tooling.md": "a2d9f372c6b8790eb72372354b26359af3a20c5171b445d6b3107f9300f05f87",
     ".claude/skills/inspire-code-ios/SKILL.md": "6bfed03584f66b2c0a2be42f3bf9f2a71ead76e08283104e7b78f238352abb85",
-    ".claude/skills/inspire-code-nestjs/SKILL.md": "ee60b42c9fdc3e470731f8c2b1f3c9edc0c722c2a5053af5ef9df296bef46ca2",
+    ".claude/skills/inspire-code-nestjs/SKILL.md": "a326763d0fd5e639fb03062dc089011fdc00164ce29fb95668906fc71ce89b9d",
     ".claude/skills/inspire-code-nestjs/references/coding-standards.md": "4f9e5a74d5d410f61fa0051cc2a709942ac08c9e9feb0331b4e72f1b528d94b4",
     ".claude/skills/inspire-code-nestjs/references/db-assertions.md": "e8a6096519ce9d893bf21624507bb21665ec1d49ea2ada6777ca8ab0221a88b5",
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
@@ -65,9 +65,9 @@
     ".claude/skills/inspire-code-typescript/SKILL.md": "0b1db734437ebcc293abdcdb372248865f99a49291f1859506eac89bc80d48dd",
     ".claude/skills/inspire-code-typescript/references/oxlint-escape-hatches.mjs": "3253008f33eb4bdd88c70cc55f9955ea3fa3c88cf20ff05810f897db5205ec95",
     ".claude/skills/inspire-config/SKILL.md": "14a01eb87160f594008b0e6c4532330334d6aa159a274139879875b78f713058",
-    ".claude/skills/inspire-config/references/derive.md": "2f1d05b6fcc52ddf8e105cdd44b3ede00d90e77dc85d978e91663c1ed90fb614",
+    ".claude/skills/inspire-config/references/derive.md": "41598c319b43bea6d1991feebe4f6ef90e5695a8d9b753b463f8990c0f08da7d",
     ".claude/skills/inspire-config/references/format.md": "db7c96af0c5a936cf63c6a5deccf23999e5b8ddbe8973f6ecb77c08b8eea8422",
-    ".claude/skills/inspire-config/references/validate.md": "4000325f1e77358892a0a67e8634fa850ada9b1c4582c7974bd9873166434eb5",
+    ".claude/skills/inspire-config/references/validate.md": "733ba124dd44ece6e5af6e3001ce61a0fd13374dd320014d25b6753af6db8ddc",
     ".claude/skills/inspire-domain/SKILL.md": "3ecae21186f0b142b591fffa59c081845571571527443293dc11e747acd93397",
     ".claude/skills/inspire-domain/examples/canonical-action-meta.md": "8e143d37c8badfa02224193c75dc50e276c0817e2529a24630aeb3adac14f5d4",
     ".claude/skills/inspire-domain/examples/canonical-action.md": "82dc0f0cc41d7531703b8a11d772fe3cde4350247f0892e9e7ca639a3585dc0b",

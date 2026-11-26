@@ -9,7 +9,7 @@ reader, and the run applies the reader's rules anyway.
 ## 1. The factory's reader
 
 Locate the factory checkout through `INSPIRE_FACTORY_ROOT`; when it is unset, ask
-the operator for the path, except when `/inspire:update` runs this review (its Step 10):
+the operator for the path, except when `/inspire:update` runs this review (its Step 11):
 then never ask, and go on to *validation pending* below. Anyone who launches a factory run already has that
 checkout and `bun`. Then run its project-file check on the draft, from the
 project root:
@@ -21,10 +21,14 @@ bun --config="$INSPIRE_FACTORY_ROOT/orchestrator/bunfig.toml" --no-env-file \
 
 | Exit | Meaning | Act |
 |---|---|---|
-| `0` | valid; the parsed config is printed as JSON | show the normalized roots and phases |
+| `0` | valid; the parsed config is printed as JSON | show the normalized roots and phases, then every entry of its `warnings`, word for word, as a warning |
 | `2` | usage | this skill built the command; report it as an internal error |
 | `3` | the file is missing | write it first |
 | `4` | invalid; the reader's message is on stderr | fix that one error and run again |
+
+The factory's `warnings` carry each risk with its fix; the factory owns them, so this skill
+adds no rule of its own for what they cover. An older factory prints no `warnings` key:
+show none and go on.
 
 The reader stops at the first error, so loop one error per round until `0`. The
 check also requires `image`, which the bare reader accepts absent and the runner

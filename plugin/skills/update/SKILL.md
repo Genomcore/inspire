@@ -315,7 +315,40 @@ recommended option, not as one of two equal choices. The KB is the operator's
 The validators still read the English name as its section, so a project that declines
 keeps validating.
 
-## Step 10 — The factory's project file
+## Step 10 — The e2e template database
+
+`inspire-code-nestjs` now names the e2e template database per run
+(§ "Each e2e FILE gets its own database"). A setup written before keeps one fixed
+name, and the shards of its suite, or an INSPIRE Factory phase that runs them at the
+same time, then drop or recreate the template another shard is copying from. This
+step brings that setup to the rule, through the skill that owns it, so the shards
+can run together again.
+
+1. **Detect.** Only when `nestjs` is among the profiles in
+   `inspire_kb/00_bootstrap/stack.md`. Read the e2e `globalSetup` named in each
+   `vitest.e2e.config.ts` under the source root, and the test helpers it calls. A gap
+   is a template database whose name is a fixed string: a constant, or a literal in the
+   `CREATE DATABASE` or `DROP DATABASE` that builds it, with no per-run part. A name
+   with a random or per-run part, or no template at all, is no gap: skip to Step 11.
+2. **Ask once**, in one `AskUserQuestion`: name each file and the fixed name, say what
+   breaks (shards of the suite that run at the same time fail creating it, `23505`),
+   and offer **apply the rule** (recommended) or **skip for now**.
+3. **Apply** on yes, following `inspire-code-nestjs` § "Each e2e FILE gets its own
+   database": the `globalSetup` names the template with a random suffix, hands the name
+   to the files with Vitest's `project.provide` and `inject`, and its teardown drops
+   only that template. Change nothing else in the test code.
+4. **Verify.** Run the e2e suite as `stack.md`'s `## Build & verify` says, with its
+   test infrastructure up. When it cannot run here, say the change is unverified, give
+   the command, and leave the change for the operator to run first.
+5. **Relay** the changed files, and that the operator reviews and commits them with
+   the rest of the update. When `.inspire/emanate.yml` runs this suite's shards in a
+   phase each, say that they can run together again: Step 11's `/inspire-config init`
+   proposes it.
+
+**Skip for now** leaves the test code as it was, and says so: shards of the suite
+must stay in a phase each, and running this update again offers the change again.
+
+## Step 11 — The factory's project file
 
 If `.inspire/emanate.yml` exists, run `/inspire-config review`. It writes nothing. A new
 release can change how the file is derived (a check's flags, a top-level key), and this
@@ -357,7 +390,8 @@ skill waits on it: everything above is what the current release actually does.
 
 1. **All runtime file operations go through `materialize.sh`.** No copying, hashing
    or settings editing in prose. The one KB write this flow causes is Step 5's, and
-   it goes through the skills that own those files, never through this one. Content classification is `--mode plan` (`--mode drift-check` is
+   the one code write is Step 10's; each goes through the skill that owns those files,
+   on the operator's yes, never through this one. Content classification is `--mode plan` (`--mode drift-check` is
    accepted as a deprecated alias).
 2. **Never silently overwrite an operator's file.** An `ask` row left unresolved defaults
    to keeping the operator's version — doing nothing is how work survives. Only
