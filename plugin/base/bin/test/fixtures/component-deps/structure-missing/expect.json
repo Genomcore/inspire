@@ -1,0 +1,4 @@
+{ "exit": 0, "finding_count": 2, "findings": [
+  { "rule": "component-deps", "severity": "warning", "message_substring": "`select-field` is named in ## CMP1: Structure" },
+  { "rule": "component-deps", "severity": "warning", "message_substring": "`button` is named in ## CMP1: Structure" }
+], "forbidden": ["`text-field` is named", "`item-form` is named", "circle"] }

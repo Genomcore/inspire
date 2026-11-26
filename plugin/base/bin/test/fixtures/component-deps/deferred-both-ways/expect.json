@@ -1,0 +1,3 @@
+{ "exit": 1, "finding_count": 2, "findings": [
+  { "rule": "component-deps", "severity": "error", "message_substring": "`comment` lists `comment-thread` on .*Deferred components:" }
+] }

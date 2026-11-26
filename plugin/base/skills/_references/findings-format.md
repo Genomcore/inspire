@@ -13,7 +13,7 @@ Bash rule scripts under `.inspire/bin/*.sh` emit findings as **JSON Lines on std
 Fields:
 
 - `severity` — `error` | `warning` | `info`
-- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `type-cells`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
+- `rule` — short identifier. The quality gate (D24) emits findings under: `lifecycle-valid`, `requires-resolves`, `superseded-by-resolves`, `acyclic-deps`, `component-deps`, `sections-present`, `no-todos`, `action-fields-in-entity`, `entity-coherence`, `entity-datastore`, `stable-blockers`, `touched-entity-lifecycle`, `screen-coherence`, `screen-presentation`, `design-system-coherence`, `field-coverage`, `type-cells`, `rationale-link`, `links-resolve`, `keys-present`, `constraints-mechanics`, `head-referents`, `prose-style`.
 - `target` — path or id the finding applies to (a file path or a `module::entity[::action]` id)
 - `message` — human-readable description prefixed with the finding *type* (e.g. `field-conflict:`, `self-loop detected:`)
 
@@ -49,6 +49,8 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 | `superseded_by target does not resolve` | superseded-by-resolves | `superseded_by:` is set but the pointed id is not present in the SDD tree. |
 | `self-loop detected` | acyclic-deps | Action's `requires` list contains its own id. |
 | `cycle in requires graph` | acyclic-deps | Action participates in a multi-node cycle in the action→action graph. |
+| `circle of components` | component-deps | Component entries whose `**Components:**` and `**Deferred components:**` links leave no build order. The message names every entry of the circle in order and the line of each link on it. |
+| `component link names no component entry` | component-deps | A link on `**Components:**` or `**Deferred components:**` names a file that is not a `*.component.md` entry. |
 
 ### Coherence-blocker errors (from draft+)
 
@@ -96,6 +98,8 @@ The set of finding types is closed — every rule emits one of these. If a rule 
 
 | Type | Rule | Meaning |
 |---|---|---|
+| `component used without an edge` | component-deps | A catalog component named in a component's `## CMP1: Structure`, in backticks or by a link, is on neither its `**Components:**` nor its `**Deferred components:**` line. A heuristic, since a name there is not always a use, so a flat warning forever. |
+| `component lists itself` · `component listed on both lines` | component-deps | A component's own entry on one of its lines, which adds no edge, or one component on both lines, which is built first, as `**Components:**` says. |
 | `field-orphan-write` | entity-coherence | Field has at least one `Touch=written` declaration but no `Touch=read` declaration. Writing for no-one. |
 | `type-record-legacy` | type-cells | A nested-row shape written before `list<record>` and `record` existed: rows under a row of any other type (`json`, a project type, a scalar), a dotted row with no parent row, a row named `x[]`, or a dotted name in an entity's `## Fields`. The message names the type or row to use. A flat warning at every lifecycle, so a project that wrote these goes no redder on upgrade. |
 | `reference-crosses-datastore` | entity-datastore | A `references(…)` names an entity in another datastore. No foreign key spans two engines, so the application keeps the reference. |
