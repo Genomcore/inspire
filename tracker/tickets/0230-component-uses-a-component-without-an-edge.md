@@ -2,7 +2,7 @@
 id: 0230-component-uses-a-component-without-an-edge
 title: "0230 — a component cannot depend on the components it is built from"
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 reporter: "@djessy.czaplicki"
 closed_by: null
 closed_at: null
@@ -109,6 +109,13 @@ that omission as if it were the rule.
   `**Components:**` line, so the gap is found before a run.
 - A component without the line derives as today, with the same contract and fingerprints, so a
   project that has not edited its components derives as before.
+- **Adding the line rebuilds nothing.** A component that is already built and gains a
+  `**Components:**` line keeps the fingerprints of its claims, so the Factory does not plan it
+  again.
+- **The change is measured.** New edges make units wait for others, so the change is checked
+  on `wishlist-app`, before and after: the depth of the component graph, the total duration of
+  the run, the time each unit waits for its `requires`, and the units re-emanated after
+  `/inspire:update`.
 
 ### Circular dependencies
 
@@ -170,6 +177,11 @@ For circles, this ticket asks for:
 - [ ] A component that lists itself is reported as a warning and derives with no edge to itself.
 - [ ] A fixture component without the line derives with the same contract and fingerprints as
       before.
+- [ ] Adding the `**Components:**` line to a component that is already built does not change the
+      fingerprints of its claims.
+- [ ] The PR reports, for `wishlist-app` before and after the change, the depth of the
+      component graph, the total duration of the run, the time each unit waits for its
+      `requires`, and the units re-emanated after `/inspire:update`.
 - [ ] `derived-contract.md` states A17 in full and no longer says a component declares none.
 
 ## Notes
