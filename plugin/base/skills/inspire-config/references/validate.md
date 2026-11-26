@@ -9,7 +9,7 @@ reader, and the run applies the reader's rules anyway.
 ## 1. The factory's reader
 
 Locate the factory checkout through `INSPIRE_FACTORY_ROOT`; when it is unset, ask
-the operator for the path, except when `/inspire:update` runs this review (its Step 10):
+the operator for the path, except when `/inspire:update` runs this review (its Step 11):
 then never ask, and go on to *validation pending* below. Anyone who launches a factory run already has that
 checkout and `bun`. Then run its project-file check on the draft, from the
 project root:
@@ -21,10 +21,14 @@ bun --config="$INSPIRE_FACTORY_ROOT/orchestrator/bunfig.toml" --no-env-file \
 
 | Exit | Meaning | Act |
 |---|---|---|
-| `0` | valid; the parsed config is printed as JSON | show the normalized roots and phases |
+| `0` | valid; the parsed config is printed as JSON | show the normalized roots and phases, then every entry of its `warnings`, word for word, as a warning |
 | `2` | usage | this skill built the command; report it as an internal error |
 | `3` | the file is missing | write it first |
 | `4` | invalid; the reader's message is on stderr | fix that one error and run again |
+
+The factory's `warnings` carry each risk with its fix; the factory owns them, so this skill
+adds no rule of its own for what they cover. An older factory prints no `warnings` key:
+show none and go on.
 
 The reader stops at the first error, so loop one error per round until `0`. The
 check also requires `image`, which the bare reader accepts absent and the runner
@@ -54,9 +58,9 @@ warning explicitly.
 | a multi-line `run` without `set -e`, a pipe without `set -o pipefail` | warning | a red check reads green |
 | `vitest` without `run`; Jest or Vitest with no worker limit | warning | the first may wait; the second risks running out of memory |
 | no `bash_timeout` | warning | OMP kills an agent's command after 300 s unless the agent passes a timeout of its own ([`derive.md`](derive.md) § `bash_timeout`) |
-| a run check in phase `tests` without `run_timeout`, or with `run_related` and no `run_related_timeout`, on INSPIRE Factory 0.24.0 or later | warning | a test run that never ends holds its slot until someone stops the run ([`derive.md`](derive.md) § `run_timeout` and `run_related_timeout`) |
+| a run check in phase `tests` without `run_timeout`, or with `run_related` and no `run_related_timeout`, on INSPIRE Factory 0.24.0 or later | warning | a test run that never ends holds its slot until someone stops the run, or for 1800 s on 0.26.0 or later ([`derive.md`](derive.md) § `run_timeout` and `run_related_timeout`) |
 | a `run_timeout` below `run_related_timeout` on the same check | warning | the whole suite runs every related test and more: its limit is almost surely too short, and the release check fails at it |
-| `run_timeout` or `run_related_timeout` on a Factory older than 0.24.0; `timeout` on any | error | the reader refuses the file when the run starts, with `… has unknown key <k>` |
+| `run_timeout` or `run_related_timeout` on a Factory older than 0.24.0; `setup_timeout` on one older than 0.26.0; `timeout` on any | error | the reader refuses the file when the run starts, with `… has unknown key <k>` |
 | a Vitest e2e check whose config sets `fileParallelism: false`, with no `--fileParallelism`, while its test code gives each file its own database (`CREATE DATABASE … TEMPLATE` in a `beforeAll`), on INSPIRE Factory 0.19.0 or later | warning | its files run one at a time; four at once ran a 279-file suite in 120 s instead of 425 s ([`derive.md`](derive.md) § Run checks). No warning when the database is shared or cannot be found |
 | a Jest or Vitest `run_related` without `--passWithNoTests` | error | a unit that changes only files no test relates to, such as another package's, fails the check |
 | `{files}` or `{tests}` inside quotes in `run_related` | error | the factory already shell-quotes each path; quoted again, the paths reach the runner as one argument |

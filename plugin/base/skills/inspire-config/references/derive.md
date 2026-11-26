@@ -94,6 +94,11 @@ Read-only — `ls`, `git ls-files`, `grep`, reading files. Install nothing.
   test code, the suite keeps its config. A suite that may still be empty takes
   `--passWithNoTests` in `run`: the release check and the units' fallback to `run`
   still run it whole.
+  The shards of one suite (`--shard=1/3`, `--shard=2/3`, …) go in one phase, so they
+  run at the same time, when its `globalSetup` names its template database per run
+  (the NestJS profile's shape); with a fixed template name they race on it, so each
+  shard gets a phase of its own until `/inspire:update` or a unit brings the setup to
+  the rule.
   Never copy a profile's "machine-readable results" recipe: its `{file}` reaches
   bash literally, and "tolerated non-zero" as `|| true` makes the check always
   green.
@@ -248,6 +253,8 @@ are expected.
   `run_timeout` or `run_related_timeout` gets them, on INSPIRE Factory 0.24.0 or
   later, after Q15, as in a new file (§ `run_timeout` and `run_related_timeout`). A
   `timeout` key is never carried over: the Factory never released it.
+- Shards of one suite in a phase each, whose `globalSetup` now names its template per
+  run, are proposed back in one phase, as in a new file (§ Run checks).
 - Re-derive the proposal from the sources above, then compare key by key. Keep the
   operator's values unless they contradict `stack.md` or a reader rule.
 - Show a unified diff with what is added, changed and removed, and the reason for

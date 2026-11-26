@@ -9,6 +9,43 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.24.0 — 2026-11-25
+
+Upgrade with `/inspire:update`. A NestJS project whose e2e setup gives its template
+database a fixed name is offered the per-run name during the update (Step 10); say
+yes, run the e2e suite, and commit the change with the update.
+
+### Changed
+
+- **`/inspire-config review` shows the Factory's own warnings**, word for word, with the
+  fix each one gives. The Factory's `check-project.ts` now lists what an `emanate.yml`
+  allows but a run would likely trip on; the first warns when the shards of one test
+  suite share a phase and the project's services, since the checks of a phase run at
+  the same time, and says how to keep them parallel. `/inspire:update` runs the review,
+  so a Factory behaviour change reaches the project on its next update. An older
+  Factory prints no warnings, and the review shows none.
+- **`inspire-code-nestjs` names the e2e template database per run**: the `globalSetup`
+  gives it a random suffix, hands it to the test files through Vitest's `provide` and
+  `inject`, and drops only its own. Shards of one e2e suite that share a database server
+  no longer drop or recreate each other's template. `/inspire:update` offers the change
+  to an existing setup (below).
+- **`/inspire:update` brings an old e2e setup to the per-run template name** (new Step 10,
+  NestJS only): it finds a template database with a fixed name, and on the operator's
+  yes applies the `inspire-code-nestjs` rule to it and runs the e2e suite. The factory's
+  project file moves to Step 11, where `/inspire-config init` now proposes the shards of
+  one suite back in one phase once their setup names its template per run.
+
+### Changed
+
+- **`/inspire-config` knows the INSPIRE Factory's default time limits.** From INSPIRE
+  Factory 0.26.0 every run check is stopped at 1800 s when it sets no limit of its own,
+  and `run_related` without `run_related_timeout` takes the check's `run_timeout`. The
+  setup gets a limit too: `setup_timeout`, a new top-level key in whole seconds that
+  needs `setup`, 1800 s when absent. `references/format.md` documents both and the new
+  stop line, `The command ran longer than its timeout of <N> seconds, so the factory
+  stopped it.`, and validation refuses `setup_timeout` on an older Factory. A project
+  whose suite or setup takes longer than 30 minutes with no limit of its own sets one.
+
 ## 0.23.0 — 2026-11-24
 
 Upgrade with `/inspire:update`. No hop and no layout change, and a project that embeds

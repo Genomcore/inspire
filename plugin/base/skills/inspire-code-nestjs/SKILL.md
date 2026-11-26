@@ -220,7 +220,14 @@ owns the entity, never to the shared client's config.
   `CREATE DATABASE <file db> TEMPLATE <template db>`, which copies the migrated schema
   in milliseconds, and its `afterAll` runs `DROP DATABASE <file db> WITH (FORCE)` and
   awaits it. Derive the file's database name from its test path, never a shared
-  constant, so a new file cannot forget. **Never run the migrations per file:** each
+  constant, so a new file cannot forget. **The template's name is unique to the run:**
+  the `globalSetup` names it with a random suffix
+  (`` `e2e_template_${randomUUID().slice(0, 8)}` ``), hands the name to the files with
+  Vitest's `project.provide` and `inject`, and its teardown drops only that template.
+  The shards of one suite run different files but share the database server, and an
+  INSPIRE Factory phase runs its checks at the same time: with one fixed template name,
+  a shard drops or recreates the template another shard is copying from.
+  **Never run the migrations per file:** each
   run starts the migration tool and replays every migration, which costs seconds per
   file and turns a suite of a few dozen files into minutes. A store without database
   templates keeps the same shape: build once, copy per file.
