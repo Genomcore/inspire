@@ -49,3 +49,39 @@ A test overrides only the fields it cares about; the shared mock supplies the re
 2. New data: add to `data/*.ts` (auto-exported via `data/index.ts`).
 3. New API method: add to `api.ts` + a flat export alias.
 4. New third-party module: add to `third-party.tsx`.
+
+## Store
+
+A server key whose fetch fails with a `clear` outcome (`SKILL.md` § Store) gets one
+test that renders a real reader of the key — the shell, for a key the shell reads —
+and makes the fetch fail with that class:
+
+```tsx
+it('should request the session once and show the signed-out state when it is missing', async () => {
+  // GIVEN
+  mockAuthMe.mockRejectedValue(unauthenticatedError);
+  const queryClient = new QueryClient();
+
+  // WHEN
+  render(
+    <QueryClientProvider client={queryClient}>
+      <Shell />
+    </QueryClientProvider>,
+  );
+
+  // THEN
+  expect(await screen.findByRole('link', { name: 'Sign in' })).toBeInTheDocument();
+  await waitFor(() => expect(queryClient.getQueryState(['store', 'me'])?.status).toBe('success'));
+  expect(queryClient.getQueryData(['store', 'me'])).toBeNull();
+  expect(mockAuthMe).toHaveBeenCalledTimes(1);
+});
+```
+
+- `mockAuthMe` is the client function's alias in the shared mock layer, and
+  `unauthenticatedError` is a failure the `api/` layer classifies as
+  `unauthenticated`, kept in `data/*.ts`.
+- The query has to settle as `success` with `null` data before the calls are
+  counted. A key cleared with `removeQueries` never settles: the mounted reader keeps
+  building the query again, so `waitFor` times out and the test fails instead of
+  counting a request too early.
+- Render the reader, never the hook alone: the loop needs a mounted observer.
