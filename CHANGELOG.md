@@ -11,10 +11,10 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 ## 0.25.0 — 2026-11-26
 
-Upgrade with `/inspire:update`. A React project whose face store already clears a key
-with `queryClient.removeQueries` keeps that code until the store is built again; build
-it again, or apply the new `clear` rule of `inspire-code-react` § Store by hand, if a
-mounted component reads a key with a `clear` outcome.
+Upgrade with `/inspire:update`. In a React project whose face store clears a key with
+`queryClient.removeQueries`, the update rewrites the store to the new `clear` rule
+(Step 12) and runs the face's unit tests; review the changed files and commit them
+with the update.
 
 ### Fixed
 
@@ -29,6 +29,11 @@ mounted component reads a key with a `clear` outcome.
   ``refresh store `k` ``, and a `start-up` key is no longer fetched a second time when
   its first reader mounts. `references/testing.md` § Store adds the test that a mounted
   reader of such a key makes one request.
+- **`/inspire:update` fixes a store built with the old rule** (new Step 12, React only).
+  The specification did not change, so INSPIRE Factory builds nothing again; the update
+  finds a `removeQueries` that a `clear` outcome reaches, or a server key without
+  `staleTime: Infinity`, and brings the store, its readers and its tests to the rule
+  without asking, then runs the face's unit tests and lists every file it changed.
 
 ## 0.24.0 — 2026-11-25
 
