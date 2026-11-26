@@ -267,8 +267,8 @@ is what makes the head worth writing:
 
 | oracle | claims |
 |---|---|
-| **store** — asserted against the schema | `unique` · `nonnull` · `default` · `references` · `immutable` (V1 and V2 alike) |
-| **test** — asserted by the suite | `enum` · `min` · `max` · `len` · `pattern`; every V3, V4 and V5 head; **every prose-only entry** |
+| **store** — asserted against the schema | `unique` · `nonnull` · `default` · `references` · `immutable` (V1 and V2 alike); `enum` · `min` · `max` · `len` · `pattern` on an entity field |
+| **test** — asserted by the suite | `enum` · `min` · `max` · `len` · `pattern` on an action input; every V3, V4 and V5 head; **every prose-only entry** |
 
 A prose-only entry is therefore never worthless — it is a test-oracle claim
 whose assertion a human or an agent has to write, rather than one a schema
@@ -293,6 +293,54 @@ finding, and a store-violation test may
 still cite it, green on arrival by design. A profile that declares **no** form
 for it is a rendering hole, so the unit's agent refuses the emission and names the
 file to edit — it never emits a field whose immutability nothing enforces.
+
+**`enum`, `min`, `max`, `len` and `pattern` on an entity field are store claims
+for the same reason.** They sat with the test oracle through 0.24.0, on the idea that a rule
+every store cannot hold is safer asserted in code for all of them. A run showed
+what that reading costs: the migration of an entity whose `title` was
+`len(1,100)` and whose `isbn` was a `pattern(/…/)` carried no rule for either. The
+agent wrote both into a domain validator with its own unit test, which cited
+every `len` and `pattern` claim while no write path called the validator. The
+claims read as asserted, and a raw `INSERT` still wrote a 500-character title.
+Even a validator that every action calls is invisible to raw SQL and to the next
+repository.
+
+So each rule is asserted as close to the store as the stack allows, and the
+rule's oracle is decided by its word and where the word sits, never by the
+stack. The oracle is part of the derived contract, and the contract is derived
+from the KB, never from a stack profile, so "store where the profile declares a
+column form, test otherwise" cannot be written as an oracle: the same claim would
+have two oracles in two projects.
+
+The same words on an **action input** stay test claims. An input is a request
+parameter, not a column: no store holds it, and it reaches the store only
+through an entity field, which carries its own claim. A `password` input bound by
+`len(12, 128)` is hashed before it is written, so only the action's boundary can
+assert it.
+
+What follows is the `immutable` rule, word for word:
+
+- **The profile declares a column form for each word.** The framework profile's
+  `## Persistence` says how its store rejects a value outside the rule, the way
+  `unique` takes an index. In a SQL store that is one `CHECK` per claim, in the
+  migration that creates the field.
+- **No form is a rendering hole.** A profile that declares no form for a word, or
+  a store that cannot hold it, makes the unit's agent refuse the emission and name
+  the file to edit. It never emits a field whose rule nothing enforces.
+- **A pattern the store cannot read is the same hole.** A store reads a regular
+  expression in its own dialect. The profile names the constructs its dialect does
+  not accept, and a `pattern(/…/)` that uses one is refused, with the construct
+  named. The fix is a pattern written in what the store reads, or a form the
+  profile adds for it.
+- **The test asserts the store.** A store claim's citing test writes through the
+  store and expects the store to reject the value, never a mock and never a
+  validator called on its own. A unit test of a validator does not cover a store
+  claim.
+- **The application keeps its own check.** The store is what holds the rule, not
+  the first thing that says no. An action still validates its inputs at its
+  boundary, so a caller gets the validation error of the wire convention
+  (`conventions/rest.md`, *Validation failure*) with the field named, and never a
+  constraint violation the store raised.
 
 ## Coherence, beyond grammar
 

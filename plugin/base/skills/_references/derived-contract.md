@@ -253,7 +253,9 @@ that path. A bare `list` is not universal, so it resolves only as a project type
 type, not as the universal one.
 
 A **constraint** is `{ "word", "args": [...], "oracle" }`, from the closed V1
-vocabulary.
+vocabulary. Its oracle is [`keyed-heads.md`](keyed-heads.md) § Oracles': `enum`, `min`,
+`max`, `len` and `pattern` are `store` on an entity field and `test` on an action input,
+and every other V1 word is `store`.
 
 ### Kind-specific sections
 
