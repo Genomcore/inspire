@@ -19,7 +19,9 @@ renders another catalog component without naming it gets a
 `component used without an edge` warning. Add a `**Components:**` line to it, as the
 warning says; the update never writes it for you. Adding the line rebuilds nothing that
 is already built. It orders the build only with an INSPIRE Factory that reads it, which
-ships with or before this release.
+ships with or before this release. Tables already built keep their columns as they are: a field's
+`enum`, `min`, `max`, `len` and `pattern` reach its table as `CHECK`s the next time
+its entity is built.
 
 ### Added
 
@@ -46,6 +48,24 @@ ships with or before this release.
   no edge. A deferred component edge is `ordering: false`, and the planner builds its
   target after the component that defers it. `requires` feeds no fingerprint, so
   adding or moving a link re-emanates nothing.
+- **`enum`, `min`, `max`, `len` and `pattern` on an entity field are store claims.**
+  `keyed-heads.md` § Oracles moves them from the test oracle to the store oracle, with
+  the reasoning, the way `immutable` moved: a rule that only a validator knows is
+  invisible to raw SQL and to the next repository, and a unit test of that validator
+  read as covering the claim while nothing called it. On an action input the same
+  words stay test claims, since no store holds an input. A profile that declares no
+  column form for one of them is a rendering hole, and the unit's agent refuses the
+  emission. `derived-contract.md` follows. The oracle is not part of a claim's
+  fingerprint, so no built unit drifts.
+- **`inspire-code-nestjs` renders each of them as one `CHECK`** in the migration that
+  creates the column (`char_length(col) BETWEEN n AND m` for `len`, `col ~ '…'` for
+  `pattern`, one bound per `min` and `max`), and names the regular-expression constructs
+  Postgres reads differently from JavaScript (`\b`, named groups, `\p{…}`, flags), which
+  the agent refuses. The request DTO keeps its `class-validator` rule, so a caller still
+  gets the validation status with the field named rather than a constraint violation.
+  An embedded entity holds them per element, where the array is written.
+- **`inspire-code-typescript` gives `matches {pattern}` its SQL form**, `col ~ '…'`, and
+  its *Engine notes* name the length and match functions to swap on another engine.
 
 ### Added
 
