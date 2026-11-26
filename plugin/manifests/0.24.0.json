@@ -1,5 +1,5 @@
 {
-  "commit": "f08e8c89c805e313845414257e8493aaeb6952a0",
+  "commit": "5c7532d45d15cdf9122d403ca3f0c8a01d362d5d",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -65,9 +65,9 @@
     ".claude/skills/inspire-code-typescript/SKILL.md": "0b1db734437ebcc293abdcdb372248865f99a49291f1859506eac89bc80d48dd",
     ".claude/skills/inspire-code-typescript/references/oxlint-escape-hatches.mjs": "3253008f33eb4bdd88c70cc55f9955ea3fa3c88cf20ff05810f897db5205ec95",
     ".claude/skills/inspire-config/SKILL.md": "14a01eb87160f594008b0e6c4532330334d6aa159a274139879875b78f713058",
-    ".claude/skills/inspire-config/references/derive.md": "2f1d05b6fcc52ddf8e105cdd44b3ede00d90e77dc85d978e91663c1ed90fb614",
+    ".claude/skills/inspire-config/references/derive.md": "41598c319b43bea6d1991feebe4f6ef90e5695a8d9b753b463f8990c0f08da7d",
     ".claude/skills/inspire-config/references/format.md": "db7c96af0c5a936cf63c6a5deccf23999e5b8ddbe8973f6ecb77c08b8eea8422",
-    ".claude/skills/inspire-config/references/validate.md": "c3026c9d5736e3ee1451e937df04a452a19db3cd04c12d04b08b1ed8f7238a05",
+    ".claude/skills/inspire-config/references/validate.md": "733ba124dd44ece6e5af6e3001ce61a0fd13374dd320014d25b6753af6db8ddc",
     ".claude/skills/inspire-domain/SKILL.md": "3ecae21186f0b142b591fffa59c081845571571527443293dc11e747acd93397",
     ".claude/skills/inspire-domain/examples/canonical-action-meta.md": "8e143d37c8badfa02224193c75dc50e276c0817e2529a24630aeb3adac14f5d4",
     ".claude/skills/inspire-domain/examples/canonical-action.md": "82dc0f0cc41d7531703b8a11d772fe3cde4350247f0892e9e7ca639a3585dc0b",
