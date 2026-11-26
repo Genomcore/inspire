@@ -13,6 +13,16 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 
 Upgrade with `/inspire:update`.
 
+### Changed
+
+- **`/inspire-config review` shows the Factory's own warnings**, word for word, with the
+  fix each one gives. The Factory's `check-project.ts` now lists what an `emanate.yml`
+  allows but a run would likely trip on; the first warns when the shards of one test
+  suite share a phase and the project's services, since the checks of a phase run at
+  the same time, and says how to keep them parallel. `/inspire:update` runs the review,
+  so a Factory behaviour change reaches the project on its next update. An older
+  Factory prints no warnings, and the review shows none.
+
 ## 0.23.0 — 2026-11-24
 
 Upgrade with `/inspire:update`. No hop and no layout change, and a project that embeds
