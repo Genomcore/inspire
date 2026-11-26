@@ -9,6 +9,32 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.25.0 — 2026-11-26
+
+Upgrade with `/inspire:update`. In a React project whose face store clears a key with
+`queryClient.removeQueries`, the update rewrites the store to the new `clear` rule
+(Step 12) and runs the face's unit tests; review the changed files and commit them
+with the update.
+
+### Fixed
+
+- **A store key cleared on error is no longer fetched again in an endless loop.**
+  `inspire-code-react` § Store emptied a key with a `clear` outcome through
+  `queryClient.removeQueries`, and a component that still read the key, such as a shell
+  reading `me`, built the query again and fetched it, failing and fetching again for as
+  long as the failure lasted. The store's query function now turns a failure of a
+  `clear` class into `null` data, so the key reads as empty (signed out, for `me`), the
+  cache holds no error and nothing is retried or refetched. Every server key is
+  `staleTime: Infinity`, so it is fetched only on its own trigger and on a
+  ``refresh store `k` ``, and a `start-up` key is no longer fetched a second time when
+  its first reader mounts. `references/testing.md` § Store adds the test that a mounted
+  reader of such a key makes one request.
+- **`/inspire:update` fixes a store built with the old rule** (new Step 12, React only).
+  The specification did not change, so INSPIRE Factory builds nothing again; the update
+  finds a `removeQueries` that a `clear` outcome reaches, or a server key without
+  `staleTime: Infinity`, and brings the store, its readers and its tests to the rule
+  without asking, then runs the face's unit tests and lists every file it changed.
+
 ## 0.24.0 — 2026-11-25
 
 Upgrade with `/inspire:update`. A NestJS project whose e2e setup gives its template
