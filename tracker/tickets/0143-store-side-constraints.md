@@ -2,7 +2,7 @@
 id: 0143-store-side-constraints
 title: "0143 — `len`, `pattern`, `min` and `max` are test claims, so raw SQL writes past them"
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-25
 reporter: "@irene.gonzalez"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [code]
 status: Open
 blocked_by: []
-related_to: [090-immutable-oracle-adr, B5-error-codes-on-the-wire]
+related_to: [B5-error-codes-on-the-wire]
 ---
 
 ## Description

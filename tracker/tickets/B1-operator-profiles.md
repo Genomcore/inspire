@@ -2,7 +2,7 @@
 id: B1-operator-profiles
 title: "B1 — trust and guardrails treat every operator the same"
 created: 2026-10-23
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Low
 skills: [workspace]
 status: Open
 blocked_by: []
-related_to: [B1-config-replaces-bootstrap, B2-endorsement-reliability]
+related_to: [B1-config-replaces-bootstrap]
 ---
 
 ## Origin

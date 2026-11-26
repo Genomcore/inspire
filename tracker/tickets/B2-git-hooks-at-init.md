@@ -2,7 +2,7 @@
 id: B2-git-hooks-at-init
 title: "B2 — INSPIRE's commit rules apply only to commits Claude Code makes"
 created: 2026-10-26
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: []
 status: Open
 blocked_by: []
-related_to: [B4-prose-checks-before-commit]
+related_to: []
 ---
 
 ## Origin

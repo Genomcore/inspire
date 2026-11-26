@@ -2,7 +2,7 @@
 id: F04-mech
 title: "F4 MECH — move mechanical work from prose to scripts"
 created: 2026-08-13
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: High
 skills: [task, lesson, workspace, surface]
 status: Open
 blocked_by: []
-related_to: [F05-restruct]
+related_to: []
 ---
 
 ## Description
@@ -62,7 +62,7 @@ Re-measured 2026-10-28 at 0.12.1: `materialize.sh` **1209** · `_lib.sh` **970**
 ## Notes
 
 Hard dependency on F02-contracts: validators enforce pinned shapes — **discharged**, F02
-shipped in 0.7.0 and is archived, so `blocked_by` is now empty and this is the head of the
+shipped in 0.7.0 and is closed, so `blocked_by` is now empty and this is the head of the
 spine. Excludes the monolith-skill split — that is F05-restruct, shipped in 0.7.0.
 Bundles CTX-01..03 + SPLIT-01/02.
 

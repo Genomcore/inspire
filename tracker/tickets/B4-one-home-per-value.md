@@ -2,7 +2,7 @@
 id: B4-one-home-per-value
 title: "B4 — a rule's value is copied across layers, and the copies drift"
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-11-25
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -12,7 +12,7 @@ importance: Mid
 skills: [feature, domain, workspace]
 status: Open
 blocked_by: []
-related_to: [B1-adr-decision-rationale]
+related_to: []
 ---
 
 ## Origin
