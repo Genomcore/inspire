@@ -34,8 +34,9 @@ default. The reader refuses any key not in the table, under `factory` and under
 |---|---|---|---|
 | `kb_root` | a nonempty string: the knowledge base root (`SDD_KB_ROOT` wins) | `inspire_kb` | `… factory.kb_root must be a nonempty string` |
 | `spec_root` | a nonempty string: the domain specification root (`SDD_SPEC_ROOT` wins) | `<kb_root>/01_spec` | `… factory.spec_root must be a nonempty string` |
-| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, review_model, subagent_models, concurrency, check_concurrency, max_tries, checks, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
+| (keys) | only the keys below | — | `… factory has unknown key <k>; allowed keys: kb_root, spec_root, model, handoff_model, review_model, subagent_models, concurrency, check_concurrency, max_tries, checks, spec_strictness, spec_max_revisions, spec_classifier_model, base_branch, viewer_port, sandbox` |
 | `model` | `anthropic/<model>` or `litellm/<alias>`, and the **exact** name OMP resolves | none | `… factory.model must be anthropic/<model> (the Claude subscription) or litellm/<alias> (the LiteLLM gateway)` |
+| `handoff_model` | same form as `model`; the model that takes over unit, scaffold and release-check agents in the same session at their first file edit. Absent, agents keep `model` | none | `… factory.handoff_model must be anthropic/<model> …` |
 | `review_model` | same form as `model`; the model of the review checks | `model` | `… factory.review_model must be anthropic/<model> …` |
 | `subagent_models` | a list of models in the same form | `[]` | `… factory.subagent_models must be a list of models` |
 | `concurrency` | a positive integer: units solved at once | `3` | `… factory.concurrency must be a positive integer` |

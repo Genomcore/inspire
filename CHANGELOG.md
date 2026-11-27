@@ -79,6 +79,8 @@ sooner can add them in a migration of its own, one per claim as
   check. `true`, the default, changes nothing, and `/inspire-config review` shows the
   Factory's warning when the key is `false`. The table entry is in
   `inspire-config/references/format.md`.
+- **`/inspire-config` documents `factory.handoff_model`**, which its table and its
+  list of allowed `factory` keys left out.
 
 ### Added
 
