@@ -36,9 +36,14 @@ screen as `[list](../../../_design-system/patterns/list.pattern.md)`.
 
 Patterns, components and layouts are **siblings**: none depends on another by
 construction. A pattern's regions accept injected content, so it never imports leaf
-components, and a leaf component never references a pattern. Where a pattern does
-reference a shared component, it declares it on a `**Components:**` line like any
-other dependency — an actual declared edge, never an assumed tier.
+components, and a leaf component never references a pattern. Where a pattern or a
+component does render a shared component, it declares it on a `**Components:**`
+line like any other dependency — an actual declared edge, never an assumed tier. A
+component that renders a catalog component in `## CMP1: Structure` must list it
+there, and two components that render each other break the circle with a
+`**Deferred components:**` line
+([`references/screen-catalog.md`](references/screen-catalog.md) § A component built
+from other components).
 
 Four ownerships, and they never bleed: a **component** owns its props, a
 **pattern** owns its regions, a **layout** owns the geometry those regions sit at,

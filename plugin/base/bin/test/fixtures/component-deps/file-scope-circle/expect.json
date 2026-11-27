@@ -1,0 +1,3 @@
+{ "exit": 1, "args": ["spec/kb/01_spec/_design-system/components/comment.component.md"], "finding_count": 1, "findings": [
+  { "rule": "component-deps", "severity": "error", "message_substring": "circle of components: `comment` → `comment-thread` → `comment`" }
+], "forbidden": ["comment-thread.component.md\""] }

@@ -14,7 +14,38 @@ the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 Upgrade with `/inspire:update`. In a React project whose face store clears a key with
 `queryClient.removeQueries`, the update rewrites the store to the new `clear` rule
 (Step 12) and runs the face's unit tests; review the changed files and commit them
-with the update.
+with the update. Then run `/inspire-workspace review`: each component entry that
+renders another catalog component without naming it gets a
+`component used without an edge` warning. Add a `**Components:**` line to it, as the
+warning says; the update never writes it for you. Adding the line rebuilds nothing that
+is already built. It orders the build only with an INSPIRE Factory that reads it, which
+ships with or before this release.
+
+### Added
+
+- **A component names the components it is built from.** A component entry carries a
+  `**Components:**` line, the same line and link form as a pattern's, and INSPIRE Factory
+  builds every component on it first. A form that holds a `text-field` no longer starts
+  before the `text-field` exists. Two components that render each other break the
+  circle with a `**Deferred components:**` line in the entry that can be built without
+  the other: that one is built first, and the other is built after it and adds itself
+  in. The template, `inspire-screens` and `screen-catalog.md` show both lines and when
+  each is required.
+- **`component-deps.sh` checks the lines before a run.** A circle of components is an
+  error that names every entry of it in order and the line each link sits on, and so is
+  a link to a file that is not a component entry. A catalog component named in
+  `## CMP1: Structure` that neither line lists is a warning, as are a component that
+  lists itself and one listed on both lines. A name right after *as*, *like*, *of* or
+  *from* compares with a component and is not reported. `review.sh` runs it.
+
+### Changed
+
+- **`derived-contract.md` states the catalog ordering rule in full.** Catalog entries
+  order only by an edge one of them declares; the rule no longer rests on an id
+  (A17) this repository does not define, and no longer says a component declares
+  no edge. A deferred component edge is `ordering: false`, and the planner builds its
+  target after the component that defers it. `requires` feeds no fingerprint, so
+  adding or moving a link re-emanates nothing.
 
 ### Fixed
 
