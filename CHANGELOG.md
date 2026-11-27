@@ -19,9 +19,15 @@ renders another catalog component without naming it gets a
 `component used without an edge` warning. Add a `**Components:**` line to it, as the
 warning says; the update never writes it for you. Adding the line rebuilds nothing that
 is already built. It orders the build only with an INSPIRE Factory that reads it, which
-ships with or before this release. Tables already built keep their columns as they are: a field's
-`enum`, `min`, `max`, `len` and `pattern` reach its table as `CHECK`s the next time
-its entity is built.
+ships with or before this release.
+
+Entities already built are not rebuilt, and their tables get no new `CHECK`. Their
+validator tests still cite the moved claims at the same fingerprint, so INSPIRE Factory
+counts them as aligned and no run touches them. Such a table still accepts a raw write
+that breaks a field's `enum`, `min`, `max`, `len` or `pattern` until its entity is built
+again for another reason. Nothing forces the change: a project that wants the `CHECK`s
+sooner can add them in a migration of its own, one per claim as
+`inspire-code-nestjs` § Persistence names it.
 
 ### Added
 
