@@ -2,7 +2,7 @@
 id: B3-entry-points
 title: "B3 — Entry points: how an action gets called"
 created: 2026-10-27
-updated: 2026-11-25
+updated: 2026-11-27
 reporter: "@dario.blasco"
 closed_by: null
 closed_at: null
@@ -45,8 +45,9 @@ tracks the authorization half.
 
 - A new KB artifact type that binds a kind of caller to an action: direct (screen, API,
   CLI) · scheduled · event / trigger · listener / interceptor · system condition.
-- Exposure (API, MCP, gRPC, none) belongs to the entry point, not the action. An action
-  with no entry point is internal and never gets a public route.
+- Exposure (API, MCP, gRPC, none) belongs to the entry point, not the action. A direct
+  call through an API, a CLI or a library is declared by bundle membership (amended
+  2026-11-27). An action that no bundle lists is internal and never gets a route.
 - Screens' `### Dispatches` stay as they are: they are the direct kind, already declared.
 - A trigger is **one kind** of entry point, not the whole concept.
 - A final name for the artifact, chosen from the candidates below.
@@ -87,14 +88,26 @@ reader more than an odd one.
   overlaps with part 3 of `B1-kb-structure` (surface or module).
 - Does `090-actor-head-without-a-role` fold into this ticket, or stay separate as the
   authorization half?
+- How does a bundle say it is an API and not a CLI: from its `profiles`, or from a new
+  field?
+- Does a KB with no bundle make every action private?
+- Should an API bundle be able to set the route of each action it lists, against
+  `adr-kb-structure` D6 R1, which derives the route from the action's id?
+- With bundles for direct calls and processes for schedules, events, start-up and
+  interceptors, which caller kind still needs a new artifact? If none does, this ticket
+  closes Done with the mapping in the 2026-11-27 note.
 
 ## Acceptance criteria
 
 - [ ] The artifact has a final name, recorded in this ticket's close note or in an ADR.
 - [ ] The artifact type has a format reference, a KB home and a skill that authors it,
       covering every caller kind listed above.
-- [ ] Exposure is declared on the entry point. An action with no entry point gets no
-      public route, and the framework profiles' route derivation follows that.
+- [ ] Binding claims exist only for an action that at least one bundle lists, in
+      `_references/derived-contract.md` and the NestJS skill's `## Bindings`. An action
+      in no bundle gets a service method and no route, controller or guard. The claim ids
+      stay `{action}/binding/route|dispatch|guard`, on the action, and
+      `adr-kb-structure` D6 R1 is amended to say that bundle membership decides whether
+      they exist.
 - [ ] Screens' `### Dispatches` are read as direct entry points with no format change.
 - [ ] The open questions have written answers in this ticket's close note.
 
@@ -128,3 +141,28 @@ left unbuilt.
   startup, with no route, and a claim that checks it. Under this ticket's decision that
   is a system-condition entry point, with exposure `none`. The claim is part of the
   third acceptance criterion: an action with no public entry point gets no route.
+
+**Amended 2026-11-27 (bundles declare direct calls).** The maintainers held a support
+session with a new operator on 2026-11-27. The operator asked for actions that other
+actions and processes call, but that no API, client or bundle exposes. The generated code
+gave such an action a public route.
+
+- *Decision.* An action that no bundle lists is private: other actions and processes call
+  it, and it gets no route. A bundle is a package (an API, a CLI, an SDK, a library), and
+  only a bundle that is an API makes routes. One action can be in several bundles, so the
+  same action can be called through an API bundle and a CLI bundle.
+- *What happens today.* `inspire-code-nestjs/SKILL.md` § Bindings derives a route for every
+  action from its id, and a public one when the action has no `actor(…)` precondition.
+  `_references/derived-contract.md` § Binding claims derives the route, dispatch and guard
+  claims for every action and does not consult a bundle. `adr-kb-structure` D6 R1 keeps
+  exposure on the action. A bundle has `package`, `profiles` and `## Actions`, and no field
+  for its channel. `inspire-adr` already allows one action in several bundles.
+- *What the caller kinds map to now.* Direct calls through an API, a CLI or a library:
+  bundle membership. A person through a screen: `### Dispatches`. A schedule, an event,
+  start-up: a process trigger. An interceptor: a process whose trigger is "before every
+  action" or "after every action", which the process format already allows because
+  `## Trigger` is free text.
+- *Criterion.* The third acceptance criterion is rewritten in terms of bundles.
+- *Factory port.* The INSPIRE Factory gives every action binding claims without reading the
+  bundles. Its matching work, binding claims only for an action that a bundle lists, is
+  filed in the Factory's tracker now and starts when this rule ships.
