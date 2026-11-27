@@ -22,6 +22,15 @@ Upgrade with `/inspire:update`. Nothing to do for an existing project.
   maintainer tool that reads only, and no project runs it; the skills INSPIRE ships
   hold its hard limits.
 
+### Changed
+
+- **`inspire-code-nestjs` keeps its quality gates in a reference**: the `## Quality
+  gates` prose moves, word for word, to `references/quality-gates.md`, and the section
+  in `SKILL.md` keeps its heading and says when to read it — when changing the lint or
+  coverage config, or before suppressing a lint rule. The skill loads about 2,600 fewer
+  tokens on every run; the `gates:` frontmatter does not change. A project that edited
+  this skill's `SKILL.md` is asked about it during `/inspire:update`.
+
 ## 0.24.0 — 2026-11-25
 
 Upgrade with `/inspire:update`. A NestJS project whose e2e setup gives its template
