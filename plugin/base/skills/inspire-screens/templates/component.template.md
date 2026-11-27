@@ -7,6 +7,14 @@
 
 **Purpose:** {one-line description of what this component is for — first body line, greppable}
 **State:** implemented | to-extract
+**Components:** [{component-name}]({component-name}.component.md)
+**Deferred components:** [{component-name}]({component-name}.component.md)
+
+<!-- `**Components:**` names every catalog component this one renders: each is
+     built before it. `**Deferred components:**` is only for a circle — two
+     components that render each other: list the other one there in the entry
+     that can be built without it, and it is built after this one and adds
+     itself in. Omit a line that names nothing; a component never lists itself. -->
 
 {One-paragraph description of the component.}
 

@@ -359,6 +359,47 @@ checkout (`INSPIRE_FACTORY_ROOT` unset, or a factory older than 0.18.1), the rev
 *validation pending*: relay it and the warnings it could still check, and go on; never
 stop the update to ask for a path.
 
+## Step 12 — The store's `clear` outcome
+
+`inspire-code-react` § Store now empties a key with a `clear` outcome by returning
+`null` from its query function, and makes every server key `staleTime: Infinity`. A
+store built before calls `queryClient.removeQueries` instead, and a component that
+still reads the key, such as the shell reading `me`, then fetches it again in an
+endless loop for as long as the failure lasts. The specification did not change, so
+INSPIRE Factory builds nothing again: this step is what brings the code to the rule.
+
+1. **Detect.** Only when `react` is among the profiles in
+   `inspire_kb/00_bootstrap/stack.md`. Under the source root, outside `node_modules/`,
+   search each face's `src/store/` and every file that imports from it for:
+   - a `removeQueries` call that a `clear` outcome reaches, whether it names a
+     `['store', …]` cache key or takes the failing query's key, as a `QueryCache`
+     `onError` that applies the outcomes does;
+   - a `useStore{Key}` query hook, or the `ensureQueryData` that loads a `start-up`
+     key, without `staleTime: Infinity`.
+
+   Neither found: skip the rest of this step.
+2. **Apply**, without asking: the code is generated from the rule, and this is the
+   rule's fix. Follow `inspire-code-react` § Store, and change nothing else:
+   - each `removeQueries` on a store key goes; the key's query function catches a
+     failure whose class has the `clear` outcome (the key's own, or the store's
+     default in `{face}.store.md` `## On error`) and returns `null`, and throws every
+     other class again;
+   - every server key's hook gets `staleTime: Infinity`, and a `start-up` key's
+     `ensureQueryData` uses the hook's own query function;
+   - a reader that tells the key's empty state by its error, by the missing query or
+     by `undefined` (`isError`, `status === 'error'`, `data === undefined`,
+     `data !== undefined`) takes `null` as empty too (`data == null`,
+     `data != null`), so the screen it shows stays the same;
+   - each key with a `clear` outcome gets the one-request test of
+     `inspire-code-react` `references/testing.md` § Store, in the face's tests.
+3. **Verify.** Run the face's unit tests as `stack.md`'s `## Build & verify` says. A
+   test the change breaks is fixed only when it asserted the old behaviour (a removed
+   query, an error state for a `clear` class); any other failure is reported, and
+   the change is left for the operator to look at. When the tests cannot run here,
+   say the change is unverified and give the command.
+4. **Relay** the changed files, which store keys had the loop, and that the operator
+   reviews and commits them with the rest of the update.
+
 ## What this skill is, and what is missing from it
 
 Update has two halves, and only one of them can be a script:
@@ -390,8 +431,10 @@ skill waits on it: everything above is what the current release actually does.
 
 1. **All runtime file operations go through `materialize.sh`.** No copying, hashing
    or settings editing in prose. The one KB write this flow causes is Step 5's, and
-   the one code write is Step 10's; each goes through the skill that owns those files,
-   on the operator's yes, never through this one. Content classification is `--mode plan` (`--mode drift-check` is
+   the code writes are Step 10's and Step 12's; each follows the skill that owns those
+   files, never this one. Steps 5 and 10 write on the operator's yes. Step 12 writes
+   without asking, because it only brings generated code to a rule that fixes a defect
+   in it, and it relays every file it changed and commits none. Content classification is `--mode plan` (`--mode drift-check` is
    accepted as a deprecated alias).
 2. **Never silently overwrite an operator's file.** An `ask` row left unresolved defaults
    to keeping the operator's version — doing nothing is how work survives. Only

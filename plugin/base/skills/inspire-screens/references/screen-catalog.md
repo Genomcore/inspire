@@ -42,7 +42,7 @@ underlying prototype component doesn't exist yet, set the entry's
 `**State:** to-extract` and list adopters. Prefer adding a variant to an existing
 pattern over creating a new one.
 
-**A link creates its entry.** Whenever a screen, a layout or a pattern links a
+**A link creates its entry.** Whenever a screen, a layout, a pattern or a component links a
 pattern, layout or component no `*.pattern.md`, `*.layout.md` or `*.component.md`
 declares, the entry is created in the same turn from its template at
 `**State:** to-extract`. A missing target is then always a broken link, never a
@@ -60,6 +60,43 @@ A region called `columns`, or any region naming the fields its content shows, is
 component prop that leaked into a pattern: put it back in the component's entry,
 where the screen's wiring can reach it. A pixel value in a `## Regions` table is a
 measurement that leaked the same way: it belongs to the layout.
+
+## A component built from other components
+
+A component that renders another component with its own catalog entry names it on a
+`**Components:**` line, under `**State:**`: the same line and the same link form as a
+pattern's, `[text-field](text-field.component.md)` for a sibling entry. The line is
+required whenever such a component appears in `## CMP1: Structure`, and it is what
+orders the build: INSPIRE Factory builds every component the line names before this
+one. A form that holds a `text-field` and a `button` waits for both.
+
+**Two components that render each other form a circle**, and a circle has no build
+order: `comment-thread` renders `comment`, and `comment` renders `comment-thread` for
+its replies. Break it in the entry that can be built without the other: name the other
+there on `**Deferred components:**` instead of `**Components:**`. `comment` is built
+first, with an empty place where the thread goes, and `comment-thread` is built after
+it and adds itself into that place. Two entries that defer each other are still a
+circle. A component that renders itself, such as a tree node that renders its
+children, names nothing for it: it never waits for itself.
+
+Review checks the lines with `component-deps.sh`:
+
+| Finding | Severity |
+|---|---|
+| a circle of `**Components:**` links, every entry in it in order | error |
+| a link on either line to a file that is not a component entry | error |
+| a catalog component named in `## CMP1: Structure` that neither line lists | warning |
+| a component that lists itself, or lists one component on both lines | warning |
+
+The structure check reads names in backticks and links in `## CMP1: Structure` only.
+A name right after *as*, *like*, *of* or *from* ("a panel as `item-form`", "the ground
+of `page-banner`") compares with that component rather than rendering it, and is
+skipped. Any other name there is still not always a use, so the check is a warning:
+reword the item, or keep the warning and say so.
+
+Adding either line to an entry moves none of its fingerprints, so a component that is
+already built is not built again for it. `/inspire:update` never writes the lines into
+a project's entries: review reports the missing ones, and the operator adds them.
 
 ## `**State:**` is the entry's lifecycle
 

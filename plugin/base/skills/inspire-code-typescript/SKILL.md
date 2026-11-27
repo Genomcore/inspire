@@ -61,7 +61,7 @@ and defined in [type-mapping.md](../inspire-domain/references/type-mapping.md); 
 | `input.{field}` | `input.{field}` | — (bound at runtime) |
 | `hash({field})` | `await bcrypt.hash(input.{field}, 10)` | — (app layer) |
 | `from {R.{field}}` | `(await read(R, {pk})).{field}` | — (app layer) |
-| `matches {pattern}` | — (validator) | — |
+| `matches {pattern}` | `new RegExp('{pattern}').test(value)` | `<col> ~ '{pattern}'`, each `'` doubled |
 | `—` | — | — |
 
 ## Project semantic types
@@ -88,7 +88,10 @@ another engine, edit the SQL column in place rather than adding a parallel one �
 one project runs one engine, and two columns would let them disagree. The usual
 substitutions: `UUID` → `CHAR(36)`, `TIMESTAMPTZ` → `DATETIME` /
 `TIMESTAMP WITH TIME ZONE`, `JSONB` → `JSON`, `gen_random_uuid()` → the engine's
-generator, `TEXT CHECK (…)` → a native `ENUM` where one exists.
+generator, `TEXT CHECK (…)` → a native `ENUM` where one exists, `char_length(col)`
+→ the engine's length function, `col ~ '…'` → the engine's regular-expression match
+(`REGEXP` in MySQL). An engine with no regular-expression match cannot hold a
+`pattern(/…/)`, and the framework profile's `## Persistence` says so.
 
 ## Compile stub
 

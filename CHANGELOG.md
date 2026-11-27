@@ -9,6 +9,108 @@ that order, and a release omits any heading it has nothing under. Versions are
 the runtime identity in `plugin/.claude-plugin/plugin.json`, which
 `/inspire:init` freezes into a project's `.inspire.lock`.
 
+## 0.25.0 — 2026-11-26
+
+Upgrade with `/inspire:update`. In a React project whose face store clears a key with
+`queryClient.removeQueries`, the update rewrites the store to the new `clear` rule
+(Step 12) and runs the face's unit tests; review the changed files and commit them
+with the update. Then run `/inspire-workspace review`: each component entry that
+renders another catalog component without naming it gets a
+`component used without an edge` warning. Add a `**Components:**` line to it, as the
+warning says; the update never writes it for you. Adding the line rebuilds nothing that
+is already built. It orders the build only with an INSPIRE Factory that reads it, which
+ships with or before this release.
+
+Entities already built are not rebuilt, and their tables get no new `CHECK`. Their
+validator tests still cite the moved claims at the same fingerprint, so INSPIRE Factory
+counts them as aligned and no run touches them. Such a table still accepts a raw write
+that breaks a field's `enum`, `min`, `max`, `len` or `pattern` until its entity is built
+again for another reason. Nothing forces the change: a project that wants the `CHECK`s
+sooner can add them in a migration of its own, one per claim as
+`inspire-code-nestjs` § Persistence names it.
+
+### Added
+
+- **A component names the components it is built from.** A component entry carries a
+  `**Components:**` line, the same line and link form as a pattern's, and INSPIRE Factory
+  builds every component on it first. A form that holds a `text-field` no longer starts
+  before the `text-field` exists. Two components that render each other break the
+  circle with a `**Deferred components:**` line in the entry that can be built without
+  the other: that one is built first, and the other is built after it and adds itself
+  in. The template, `inspire-screens` and `screen-catalog.md` show both lines and when
+  each is required.
+- **`component-deps.sh` checks the lines before a run.** A circle of components is an
+  error that names every entry of it in order and the line each link sits on, and so is
+  a link to a file that is not a component entry. A catalog component named in
+  `## CMP1: Structure` that neither line lists is a warning, as are a component that
+  lists itself and one listed on both lines. A name right after *as*, *like*, *of* or
+  *from* compares with a component and is not reported. `review.sh` runs it.
+
+### Changed
+
+- **`derived-contract.md` states the catalog ordering rule in full.** Catalog entries
+  order only by an edge one of them declares; the rule no longer rests on an id
+  (A17) this repository does not define, and no longer says a component declares
+  no edge. A deferred component edge is `ordering: false`, and the planner builds its
+  target after the component that defers it. `requires` feeds no fingerprint, so
+  adding or moving a link re-emanates nothing.
+- **`enum`, `min`, `max`, `len` and `pattern` on an entity field are store claims.**
+  `keyed-heads.md` § Oracles moves them from the test oracle to the store oracle, with
+  the reasoning, the way `immutable` moved: a rule that only a validator knows is
+  invisible to raw SQL and to the next repository, and a unit test of that validator
+  read as covering the claim while nothing called it. On an action input the same
+  words stay test claims, since no store holds an input. A profile that declares no
+  column form for one of them is a rendering hole, and the unit's agent refuses the
+  emission. `derived-contract.md` follows. The oracle is not part of a claim's
+  fingerprint, so no built unit drifts.
+- **`inspire-code-nestjs` renders each of them as one `CHECK`** in the migration that
+  creates the column (`char_length(col) BETWEEN n AND m` for `len`, `col ~ '…'` for
+  `pattern`, one bound per `min` and `max`), and names the regular-expression constructs
+  Postgres reads differently from JavaScript (`\b`, named groups, `\p{…}`, flags), which
+  the agent refuses. The request DTO keeps its `class-validator` rule, so a caller still
+  gets the validation status with the field named rather than a constraint violation.
+  An embedded entity holds them per element, where the array is written.
+- **`inspire-code-typescript` gives `matches {pattern}` its SQL form**, `col ~ '…'`, and
+  its *Engine notes* name the length and match functions to swap on another engine.
+
+### Added
+
+- **`plugin/scripts/skill-size.sh` reports a skill too big to load well**: a
+  description over 1024 characters, or a description and `when_to_use` over 1536
+  together, is an error; a `SKILL.md` of 500 lines or more, a `SKILL.md` body over
+  5000 tokens, any other skill file over 10000 tokens, or a line over 768 characters
+  (omp's read tool cuts a longer one), is a warning. It is a maintainer tool that
+  reads only, and no project runs it; the skills INSPIRE ships
+  hold its hard limits.
+
+### Changed
+
+- **`inspire-code-nestjs` keeps its quality gates in a reference**: the `## Quality
+  gates` prose moves, word for word, to `references/quality-gates.md`, and the section
+  in `SKILL.md` keeps its heading and says when to read it — when changing the lint or
+  coverage config, or before suppressing a lint rule. The skill loads about 2,600 fewer
+  tokens on every run; the `gates:` frontmatter does not change. A project that edited
+  this skill's `SKILL.md` is asked about it during `/inspire:update`.
+
+### Fixed
+
+- **A store key cleared on error is no longer fetched again in an endless loop.**
+  `inspire-code-react` § Store emptied a key with a `clear` outcome through
+  `queryClient.removeQueries`, and a component that still read the key, such as a shell
+  reading `me`, built the query again and fetched it, failing and fetching again for as
+  long as the failure lasted. The store's query function now turns a failure of a
+  `clear` class into `null` data, so the key reads as empty (signed out, for `me`), the
+  cache holds no error and nothing is retried or refetched. Every server key is
+  `staleTime: Infinity`, so it is fetched only on its own trigger and on a
+  ``refresh store `k` ``, and a `start-up` key is no longer fetched a second time when
+  its first reader mounts. `references/testing.md` § Store adds the test that a mounted
+  reader of such a key makes one request.
+- **`/inspire:update` fixes a store built with the old rule** (new Step 12, React only).
+  The specification did not change, so INSPIRE Factory builds nothing again; the update
+  finds a `removeQueries` that a `clear` outcome reaches, or a server key without
+  `staleTime: Infinity`, and brings the store, its readers and its tests to the rule
+  without asking, then runs the face's unit tests and lists every file it changed.
+
 ## 0.24.0 — 2026-11-25
 
 Upgrade with `/inspire:update`. A NestJS project whose e2e setup gives its template
