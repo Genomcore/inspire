@@ -16,13 +16,13 @@ run() { out="$(bash "$LINT" "$T/$1")"; code=$?; }
 echo 'Small.' | skill small 'Does x. Use when y.'
 run small; eq "a small skill reports nothing" "$out" ""; eq "a small skill exits 0" "$code" 0
 
-awk 'BEGIN { for (i = 0; i < 500; i++) print "line" }' | skill long 'Long.'
+seq 500 | skill long 'Long.'
 run long; has "500 lines warn" "$out" "WARN $T/long/SKILL.md: 504 lines"; eq "a warning alone exits 0" "$code" 0
 
 rep 'word ' 4001 | skill heavy 'Heavy.'
 run heavy; has "a body over 5000 tokens warns" "$out" "body ~5001 tokens"
 
-rep é 1024 | skill accents "$(rep é 1024)"
+echo x | skill accents "$(rep é 1024)"
 run accents; eq "1024 two-byte chars are 1024 chars, not 2048" "$out" ""
 
 echo x | skill desc "$(rep a 1025)"

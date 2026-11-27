@@ -32,7 +32,7 @@ loop and fixes them before anything reaches the operator):
   readable. Cyclomatic complexity counts branches, and a dispatch table is all branches and no
   complexity; splitting one to satisfy the rule makes the code worse. Adopt a *cognitive*
   complexity rule instead if the need is real; oxlint ships none today.
-- `import/no-cycle` (the `import` plugin), plus the four-layer boundary above as a build
+- `import/no-cycle` (the `import` plugin), plus the four-layer boundary of [`## Layering`](../SKILL.md#layering) as a build
   error instead of a review comment (controllers → application → infrastructure → domain;
   `domain/` imports nothing). oxlint has no `no-restricted-paths`, so the boundary is
   `no-restricted-imports`, set once per layer in an `overrides` entry: `files:
@@ -87,7 +87,7 @@ loop and fixes them before anything reaches the operator):
   under its own Vitest config, so it contributes nothing to this number** — which is where
   most acceptance criteria are actually covered. A low statements floor beside a high
   branch floor is the expected shape, not a defect to explain away.
-  With `## Test conventions` above in force, `application/` and `domain/` should measure
+  With [`## Test conventions`](../SKILL.md#test-conventions) in force, `application/` and `domain/` should measure
   at or near 100% on their own — a gap there is a missing unit spec, not noise; the drag
   on the aggregate comes from declaration-heavy files, never from untested logic.
 

@@ -5,7 +5,7 @@ stack: nestjs
 layer: backend
 language: typescript
 
-# The machine-checkable half of `## Quality gates` below, verified by
+# The machine-checkable half of [references/quality-gates.md](references/quality-gates.md), verified by
 # `.inspire/bin/profile-gates-installed.sh`. The prose says WHY; this says WHAT MUST BE
 # TRUE, and the two are separate on purpose: the prose deliberately names rules this stack
 # **rejects** (`complexity`), so a validator scraping it would demand the very thing the
@@ -64,7 +64,7 @@ gates:
     config: .oxlintrc.json
   - literal: thresholds
     config: vitest.config.ts
-  # Rejected on measured evidence — see `## Quality gates`. Re-adopting it is a decision,
+  # Rejected on measured evidence — see [references/quality-gates.md](references/quality-gates.md). Re-adopting it is a decision,
   # so it must come with an edit here rather than arrive quietly. oxlint accepts the rule
   # under both names, so both are refused.
   - literal: '"complexity"'

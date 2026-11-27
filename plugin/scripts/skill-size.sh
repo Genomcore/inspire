@@ -12,47 +12,43 @@
 #   WARN  SKILL.md body > 5000 tokens        (spec; after compaction Claude Code keeps only
 #                                             the first 5000 tokens of each skill)
 #   WARN  any other .md > 10000 tokens       (agent-ecosystem/skill-validator default)
-# Characters are Unicode code points (wc -m); tokens are estimated as chars/4, since
-# there is no public Claude tokenizer.
+# Characters are Unicode code points; tokens are estimated as chars/4, since there is
+# no public Claude tokenizer.
 set -uo pipefail
 export LC_ALL=C.UTF-8
+HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
+. "$HERE/../base/bin/_lib.sh" || { echo "skill-size.sh: cannot read the plugin library" >&2; exit 2; }
 
 MAX_DESC=1024 MAX_LISTING=1536 MAX_LINES=500 MAX_BODY_TOKENS=5000 MAX_REF_TOKENS=10000
 
-body() { awk 'NR == 1 && /^---$/ { fm = 1; next } fm && /^---$/ { fm = 0; next } !fm' "$1"; }
-chars() { printf %s "$1" | wc -m | tr -d ' '; }
-fm() { yq --front-matter=extract "(.$2 // \"\")" "$1" 2>/dev/null; }
-
 if [ "${1:-}" = --sections ]; then
   [ -f "${2:-}" ] || { echo "usage: skill-size.sh --sections <SKILL.md>" >&2; exit 2; }
-  awk '
+  awk "$SDD_AWK_FENCE_FUNCS"'
     BEGIN { h = "(before the first ##, frontmatter included)"; start = 1 }
-    /^[ \t]*(```|~~~)/ { fence = !fence }
-    !fence && /^## / { if (h) out(NR); h = $0; start = NR; n = 0 }
-    h { n += length($0) + 1 }
+    !sdd_fence($0) && !sdd_in_fence() && /^## / { out(NR); h = $0; start = NR; n = 0 }
+    { n += length($0) + 1 }
     function out(end) { printf "%5d %5d ~%5d  %s\n", start, end - start, n / 4, h }
-    END { if (h) out(NR + 1) }
+    END { out(NR + 1) }
   ' "$2"
   exit 0
 fi
 
 command -v yq >/dev/null || { echo "skill-size.sh: needs yq" >&2; exit 2; }
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-[ $# -gt 0 ] || set -- "$ROOT/plugin/base/skills" "$ROOT/plugin/skills"
+[ $# -gt 0 ] || set -- "${HERE%/scripts}/base/skills" "${HERE%/scripts}/skills"
 
 errors=0
 while IFS= read -r f; do
-  if [ "$(basename "$f")" != SKILL.md ]; then
-    t=$(( $(wc -m < "$f") / 4 ))
-    [ "$t" -le $MAX_REF_TOKENS ] || echo "WARN $f: ~$t tokens (recommended <= $MAX_REF_TOKENS)"
-    continue
-  fi
-  d=$(chars "$(fm "$f" description)"); w=$(chars "$(fm "$f" when_to_use)")
-  [ "$d" -le $MAX_DESC ] || { echo "ERROR $f: description is $d chars (max $MAX_DESC)"; errors=1; }
-  [ $((d + w)) -le $MAX_LISTING ] || { echo "ERROR $f: description + when_to_use is $((d + w)) chars (max $MAX_LISTING)"; errors=1; }
-  l=$(wc -l < "$f" | tr -d ' ')
-  [ "$l" -lt $MAX_LINES ] || echo "WARN $f: $l lines (recommended < $MAX_LINES)"
-  t=$(( $(body "$f" | wc -m) / 4 ))
+  d="$(sdd_fm_value "$f" .description)"; w="$(sdd_fm_value "$f" .when_to_use)"
+  [ ${#d} -le $MAX_DESC ] || { echo "ERROR $f: description is ${#d} chars (max $MAX_DESC)"; errors=1; }
+  [ $((${#d} + ${#w})) -le $MAX_LISTING ] || { echo "ERROR $f: description + when_to_use is $((${#d} + ${#w})) chars (max $MAX_LISTING)"; errors=1; }
+  l=$(wc -l < "$f")
+  [ "$l" -lt $MAX_LINES ] || echo "WARN $f: $((l)) lines (recommended < $MAX_LINES)"
+  t=$(( $(awk "$SDD_AWK_FM_READER"'{ print }' "$f" | wc -m) / 4 ))
   [ "$t" -le $MAX_BODY_TOKENS ] || echo "WARN $f: body ~$t tokens (recommended <= $MAX_BODY_TOKENS)"
-done < <(find "$@" -type f -name '*.md' ! -path '*/templates/*' | LC_ALL=C sort)
+done < <(find "$@" -type f -name SKILL.md | LC_ALL=C sort)
+
+find "$@" -type f -name '*.md' ! -name SKILL.md ! -path '*/templates/*' -exec wc -m {} + |
+  awk -v max=$MAX_REF_TOKENS '{ t = int($1 / 4); f = $0; sub(/^ *[0-9]+ /, "", f) }
+    f != "total" && t > max { print "WARN " f ": ~" t " tokens (recommended <= " max ")" }' |
+  LC_ALL=C sort
 exit $errors

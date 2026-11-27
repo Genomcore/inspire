@@ -81,10 +81,9 @@ repo is both its source and its own marketplace.
     because the manifest ships in the same PR and the tag is only cut once it
     merges.
   - `plugin/scripts/skill-size.sh` — maintainer tool: reports skills too big to load
-    well (description over 1024 chars or description + `when_to_use` over 1536 is an
-    error; `SKILL.md` at 500 lines or over 5000 tokens, any other file over 10000
-    tokens, a warning). `--sections` maps a `SKILL.md`'s `##` sections by size. The
-    template-only `/skill-split` command (`.claude/skills/skill-split/`, never
+    well, with its limits and their sources in its header (an over-long description is
+    an error, an over-long file a warning). `--sections` maps a `SKILL.md`'s `##`
+    sections by size. The template-only `/skill-split` command (`.claude/skills/skill-split/`, never
     invoked by the model) uses it to move sections of an oversized `SKILL.md` into
     `references/`; `plugin/test/skills/02-skill-size.sh` holds the shipped skills to
     the hard limits.

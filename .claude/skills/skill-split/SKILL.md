@@ -2,7 +2,7 @@
 name: skill-split
 description: Split an oversized SKILL.md into a lean SKILL.md plus up to three reference files it links to, moving whole sections verbatim. Run only when the operator types /skill-split.
 disable-model-invocation: true
-argument-hint: "[skill-dir] [max-files]"
+argument-hint: "[skill-dir]"
 ---
 
 # Split an oversized skill
@@ -12,9 +12,8 @@ Code keeps only its first 5000 tokens. This command keeps in `SKILL.md` what eve
 run needs and moves what only some runs need to `references/`, behind a link that
 says when to read it. It moves text; it never rewrites it.
 
-Arguments: `$ARGUMENTS`, as `<skill-dir> [max-files]`. The skill directory is
-required (for example `plugin/base/skills/inspire-code-nestjs`); `max-files`
-defaults to 3.
+Argument: `$ARGUMENTS`, the skill directory (for example
+`plugin/base/skills/inspire-code-nestjs`).
 
 ## 1. Measure
 
@@ -43,17 +42,23 @@ Keep in `SKILL.md`, because every run needs it:
 - rules that apply to every run, and the final checklist (`Before you finish` or
   similar);
 - the shared blocks every INSPIRE skill carries (Output language, Writing contract,
-  Lesson capture), unchanged.
+  Lesson capture), unchanged;
+- any section another file reads by its content: a stack skill's seeds and the
+  sections `inspire-config` derives from. Find them with
+  `grep -rn '## <Heading>' plugin/ --include=*.md --include=*.sh`. A section a
+  validator only checks the heading of may move, with its heading kept as the
+  pointer.
 
 Move whole `##` sections that only some runs need: one subcommand's detailed
 procedure, a format specification, a catalogue or long table, worked examples,
-escape hatches, troubleshooting. Group them into at most `max-files` files, each one
+escape hatches, troubleshooting. Group them into at most three files, each one
 topic, named by that topic in kebab-case (`references/test-conventions.md`, never
 `part-2.md`). Reuse the skill's `references/` directory if it has one, and do not
 reuse a file name already there.
 
 Aim for `SKILL.md` under 400 lines and 4000 tokens, which leaves room to grow below
-the 500-line and 5000-token limits. Move the fewest sections that get there.
+the 500-line and 5000-token limits. Move the fewest sections that get there. If
+what must stay is already over a limit, say so in the plan: the warning stays.
 
 Show the plan as a table — section, lines, tokens, destination file, and the
 condition under which an agent must read that file — and wait for the operator's
@@ -85,19 +90,20 @@ changing a quality gate.
 The condition is concrete: name the subcommand, step or situation. Where a step of
 the procedure is what needs the moved text, put the pointer in that step as well.
 
-Then find links into the moved sections from anywhere in the tree and repoint
-them:
+Then repoint what referred to the moved text by position or by heading:
 
-```bash
-grep -rn '<skill-name>/SKILL.md#' plugin/ docs/ .claude/
-```
+- in the moved text, `above`, `below` and `## <Heading>` that name a section still in
+  `SKILL.md` become links to it (`[## Layering](../SKILL.md#layering)`);
+- in `SKILL.md`, frontmatter comments included, a mention of a moved heading becomes
+  a link to the new file;
+- elsewhere in the tree, `grep -rn '<skill-name>/SKILL.md#' plugin/ docs/ .claude/`.
 
 ## 4. Verify
 
 All three must pass before you report done:
 
 ```bash
-bash plugin/scripts/skill-size.sh <skill-dir>   # no WARN for SKILL.md
+bash plugin/scripts/skill-size.sh <skill-dir>   # no WARN for SKILL.md beyond the plan's
 bash plugin/test/run.sh skill-links             # every link resolves
 ```
 
@@ -114,7 +120,6 @@ comm -23 <(git show HEAD:"$d/SKILL.md" | grep -v '^[[:space:]]*$' | sort -u) \
 ## 5. Report
 
 Before and after for `SKILL.md` (lines and tokens), the files created with their
-read-when condition, and the verify output. Under `plugin/`, the split changes the
-runtime: before opening the PR, run `/release-entry` (version bump, `CHANGELOG.md`
-entry, manifest). A project whose operator edited this skill will see a conflict
-on upgrade; mention that in the changelog entry.
+read-when condition, and the verify output. Under `plugin/`, run `/release-entry`
+before the PR, and say in its changelog entry that a project whose operator edited
+this skill is asked about it on upgrade.
