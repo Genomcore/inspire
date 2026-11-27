@@ -378,15 +378,16 @@ editing this section moves every action's binding fingerprints.
   `finding_calls`), holding an array of objects keyed by its field names, `[]` by
   default. Its unit adds that column in its own migration and never touches the
   parent's other columns. Each element carries its own `id`, generated when it is
-  appended; `nonnull` and `default(v)` hold per element, enforced where the array is
-  written. An entity that already has a table of its own keeps it: the migration
+  appended; `nonnull`, `default(v)`, `enum`, `min`, `max`, `len` and `pattern` hold
+  per element, enforced where the array is written, since no column `CHECK` below
+  reaches an element of the array. An entity that already has a table of its own keeps it: the migration
   adds the column and copies and drops nothing, since code built earlier still reads
   and writes that table. Moving that code to the parent's row is a separate change.
 - **Field → column.** snake_case; the column type comes from the language profile's
   *Rendering* table ([`inspire-code-typescript`](../inspire-code-typescript/SKILL.md)), never from a guess here.
   The field's `Constraints:` line renders as column constraints — `unique` → a unique
   index, `nonnull` → `NOT NULL`, `default(v)` → the expansion in that profile's
-  *Mapping tokens*.
+  *Mapping tokens*, and the words below.
 - **`immutable` → a `BEFORE UPDATE` trigger** in the same migration that creates the
   column, raising when the column's value changes:
   `IF NEW.<col> IS DISTINCT FROM OLD.<col> THEN RAISE EXCEPTION …`. One trigger
@@ -396,6 +397,42 @@ editing this section moves every action's binding fingerprints.
   repository convention is invisible to raw SQL and to the next repository, and
   TypeORM's own `update: false` only silences the write it builds — Postgres still
   runs anyone else's `UPDATE`.
+- **`enum`, `min`, `max`, `len` and `pattern` → one `CHECK` per claim**, in the same
+  migration that creates the column, named `<table>_<col>_<word>` so a violation names
+  the claim it breaks:
+
+  | word | `CHECK` |
+  |---|---|
+  | `enum(a\|b\|…)` | `CHECK (<col> IN ('a', 'b', …))` |
+  | `min(n)` | `CHECK (<col> >= n)`; on a string type, `CHECK (char_length(<col>) >= n)` |
+  | `max(n)` | `CHECK (<col> <= n)`; on a string type, `CHECK (char_length(<col>) <= n)` |
+  | `len(n,m)` | `CHECK (char_length(<col>) BETWEEN n AND m)` |
+  | `pattern(/…/)` | `CHECK (<col> ~ '…')`, the pattern between the slashes with each `'` doubled |
+
+  A field with `min(1), max(100)` gets two `CHECK`s, never one `BETWEEN`: they are two
+  claims, and each one's test expects its own constraint to fail. A null passes every
+  `CHECK`, so a value is required only where the field also says `nonnull`. The checks
+  are what make these words **store** claims
+  ([`keyed-heads.md`](../_references/keyed-heads.md) § Oracles).
+- **A pattern Postgres cannot read is refused.** `~` reads Postgres's own regular
+  expressions, which differ from the JavaScript ones a validator runs. The unit's agent
+  refuses a `pattern(/…/)` that holds any of these, and names the construct and the
+  field:
+  - `\b` and `\B`, which are a backspace in Postgres, not a word boundary;
+  - a named group, `(?<name>…)`;
+  - a Unicode property, `\p{…}` or `\P{…}`;
+  - a flag after the closing slash.
+
+  The fix is the pattern written without the construct, in the KB, or a form a project
+  adds here for it.
+- **The DTO keeps its validator.** Every rule a `CHECK` holds is also checked on the
+  request DTO with `class-validator` (`@IsIn`, `@Min` and `@Max`, or `@MinLength` and
+  `@MaxLength` on a string, `@Length`, `@Matches`), so
+  a caller gets the validation status of the wire convention with the field named, never
+  the `500` of a constraint violation. The `CHECK` is what holds the rule; the
+  validator is what explains it to the caller. The field's claim is cited only by a
+  test that writes past the DTO, in the repository's e2e suite, and expects Postgres to
+  reject the row; a test of the validator covers an input's claim, never a field's.
 - **Keys and stamps.** `id UUID DEFAULT gen_random_uuid()` is the primary-key
   convention. A stamp is a **column only when the entity declares the field** —
   this clause fixes the rendering (`created_at` / `updated_at` as `TIMESTAMPTZ`),
