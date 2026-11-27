@@ -1,5 +1,5 @@
 {
-  "commit": "2938fcb9cb9fd1d6436425453f6e1571a4825913",
+  "commit": "0b1a508bcad4baa1fb42a5d9f94cc096b2ae313c",
   "files": {
     ".claude/agents/README.txt": "496010e6095bfa2def3e5dba41f045c6b435cfacbf7a900663c8a877aa489e85",
     ".claude/inspire/hooks/dispatch.sh": "b3363c5eed3e6296951fab275ae0b0f2d7dda5c18071c1ab0967e817d4709851",
@@ -54,11 +54,12 @@
     ".claude/skills/inspire-code-angular/references/testing.md": "723144a63128a3e6bb37a909257441ce0795e4a90c8c6026292afd68a741a9b2",
     ".claude/skills/inspire-code-angular/references/tooling.md": "a2d9f372c6b8790eb72372354b26359af3a20c5171b445d6b3107f9300f05f87",
     ".claude/skills/inspire-code-ios/SKILL.md": "6bfed03584f66b2c0a2be42f3bf9f2a71ead76e08283104e7b78f238352abb85",
-    ".claude/skills/inspire-code-nestjs/SKILL.md": "a326763d0fd5e639fb03062dc089011fdc00164ce29fb95668906fc71ce89b9d",
+    ".claude/skills/inspire-code-nestjs/SKILL.md": "05a9299a6008eefbe8bd964c09497779e21e1caf0211293faf46641ec8c2538b",
     ".claude/skills/inspire-code-nestjs/references/coding-standards.md": "4f9e5a74d5d410f61fa0051cc2a709942ac08c9e9feb0331b4e72f1b528d94b4",
     ".claude/skills/inspire-code-nestjs/references/db-assertions.md": "e8a6096519ce9d893bf21624507bb21665ec1d49ea2ada6777ca8ab0221a88b5",
     ".claude/skills/inspire-code-nestjs/references/error-assertions.md": "75ba85d90d67f355b382c1ce6351bd93455b649ed27419997842b7a4573ce734",
     ".claude/skills/inspire-code-nestjs/references/nock-helpers.md": "5128678c14604a893dd21658aa7ff643f246c56740da607f90aae41d67311b8a",
+    ".claude/skills/inspire-code-nestjs/references/quality-gates.md": "7a036a0c5e509ff72a091e2f1b14f74b94cee00000c331f9383c240078808eda",
     ".claude/skills/inspire-code-nestjs/references/testing.md": "0480bfb4755ae3d9e0bd019deb01d45fae0785cb2536694645d73f16aec840c8",
     ".claude/skills/inspire-code-react/SKILL.md": "01fdebcce6cca491e8dc0eb424100fcfd5c2cd326a64045d1b632b0d2ba88381",
     ".claude/skills/inspire-code-react/references/testing.md": "84bca5dc1fd0e279b9e52d47c88d35c8d5e8d4a34eb5b2b7d93a68e4c96fbc63",
