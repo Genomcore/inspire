@@ -72,6 +72,13 @@ sooner can add them in a migration of its own, one per claim as
   An embedded entity holds them per element, where the array is written.
 - **`inspire-code-typescript` gives `matches {pattern}` its SQL form**, `col ~ '…'`, and
   its *Engine notes* name the length and match functions to swap on another engine.
+- **`/inspire-config` documents `factory.checks`**, the INSPIRE Factory key that turns
+  every check off for a fast run. With `false` the run executes no base check, no unit
+  check or citation check and no release check, starts no services, and its agents
+  write a test for each claim but never run one, so the release pull request passed no
+  check. `true`, the default, changes nothing, and `/inspire-config review` shows the
+  Factory's warning when the key is `false`. The table entry is in
+  `inspire-config/references/format.md`.
 
 ### Added
 
