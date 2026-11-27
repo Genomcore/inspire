@@ -1,0 +1,3 @@
+{ "exit": 1, "finding_count": 1, "findings": [
+  { "rule": "component-deps", "severity": "error", "message_substring": "links `../patterns/list.pattern.md`, which is not a `.*.component.md` file" }
+] }

@@ -1,0 +1,3 @@
+{ "exit": 1, "finding_count": 3, "findings": [
+  { "rule": "component-deps", "severity": "error", "message_substring": "circle of components: `a` → `b` → `c` → `a`" }
+], "forbidden": ["`d`"] }

@@ -145,18 +145,29 @@ the grouped human report.
   targets (including a dispatch outcome that navigates), its pattern, every
   layout its `**Layout:**` line names and its components — plus the shell
   layout, `shell`, whenever that entry exists, since it frames every route and
-  no screen names it; a pattern's own `**Components:**` line; a layout's
+  no screen names it; a pattern's own `**Components:**` line; a component's
+  `**Components:**` and `**Deferred components:**` lines, except a link to the
+  component itself, which adds no edge; a layout's
   `**Pattern:**` line; a bundle's member actions, a whole-module entry expanded
   to every action of that module; a process's `## Requires` actions and every
   action its `## Before` and `## After` entries link; a store's server-key actions;
   and, for a screen or a shell layout that reads or writes its face's store, that
-  store. A shell layout's binding edges are a screen's, store included. A component declares none — A17's rule is that
-  catalog entries order only by a *declared* edge between them, never by an
-  assumed tier. Whether a required id exists is
+  store. A shell layout's binding edges are a screen's, store included.
+  **Catalog entries order only by an edge one of them declares** (the
+  maintainers' design notes call this rule A17). Patterns, components and
+  layouts are siblings: no tier between the three catalogs and no position
+  inside one orders anything, so a pattern is not built after a component
+  because patterns sit "above" components, and a form is not built after a
+  `text-field` because it looks bigger. An entry orders after another only when
+  it names it on its `**Components:**` or `**Pattern:**` line. A component with
+  neither line derives no `requires` at all, as it did before it could declare
+  one. Whether a required id exists is
   the planner's question — derive records the edge.
 - **`requires[].ordering`** says whether the edge is a *build-time* dependency —
   whether the target must be finished first. It is `true` everywhere except on a
-  **deferred reference**: a `references(…)` on an entity **field** whose
+  **deferred reference** — or on a **deferred component**, a link on a
+  component's `**Deferred components:**` line; a component on both lines is an
+  ordering edge. A deferred reference is a `references(…)` on an entity **field** whose
   `Constraints:` line does not carry `nonnull`. `nonnull` is what makes a
   reference structural — a row carrying one cannot exist before its target, so
   the target must be built first. Drop it and the column is populated once both
@@ -169,6 +180,18 @@ the grouped human report.
   Whether an ordering edge actually *orders a wave* is still the planner's
   policy, not derive's — `plan` drops navigation and self edges too. Derive
   carries the fact; the planner decides what is done with it.
+  One policy is fixed here, because the review of the spec and the planner must
+  agree on it: **a deferred component edge orders the other way.** When `comment`
+  defers `comment-thread`, the planner builds `comment-thread` after `comment`,
+  and `comment-thread`'s unit adds it into the place `comment` left for it. The
+  edge that breaks a circle of components is reversed, not dropped, so the build
+  order and the agent that completes `comment` are both decided. A cycle of
+  ordering edges that is left is the planner's `PR-11` refusal: no unit is ever
+  built on a cycle. For components it names every entry of the circle in order,
+  and its remedy is to move one link of the circle to `**Deferred components:**`
+  in the entry that can be built without the other, or to move the shared part
+  into a new component both use. `component-deps.sh` reports the same circles
+  before a run.
 - **`claims`** is every claim the unit makes, in derivation order: for an entity
   the field constraints in table order, then the invariants, then its embedded
   claim when it has a `unit.embedded_in`, or else its datastore claim when its
@@ -476,6 +499,10 @@ Two consequences worth stating. Two files differing only in whitespace or in
 markdown ordinals produce byte-identical claim lists. And two claims with
 identical content — `nonnull` on two different fields — carry the same
 fingerprint; they are told apart by their ids, which is what ids are for.
+
+`requires` feeds no payload. Adding, removing or deferring a link on a
+`**Components:**` line moves no fingerprint, so a component that is already
+built is not built again because its entry now declares what it renders.
 
 ### Binding claims
 

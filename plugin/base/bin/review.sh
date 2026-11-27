@@ -33,6 +33,7 @@ SCOPE="${1:-$SDD_SPEC_ROOT}"
 DEFAULT_RULES="\
 frontmatter-mechanics.sh \
 acyclic-deps.sh \
+component-deps.sh \
 sections-present.sh \
 no-todos.sh \
 links-resolve.sh \
