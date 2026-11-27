@@ -82,9 +82,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  skill-size:
+    name: Skill size
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Fails on an ERROR; each WARN becomes an annotation on the PR's files.
+      - run: |
+          set -o pipefail
+          bash plugin/scripts/skill-size.sh plugin/base/skills plugin/skills | tee -a "$GITHUB_STEP_SUMMARY" |
+            sed -E -e 's/^WARN /::warning file=/' -e 's/^ERROR /::error file=/' \
+              -e 's/^(::[a-z]+ file=[^:]+):([0-9]+): /\1,line=\2::/' -e 's/^(::[a-z]+ file=[^:,]+): /\1::/'
+
   tests:
     name: Tests
-    needs: [changes, suite]
+    needs: [changes, suite, skill-size]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -92,8 +106,10 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           CODE: ${{ needs.changes.outputs.code }}
           SUITE: ${{ needs.suite.result }}
+          SKILL_SIZE: ${{ needs.skill-size.result }}
         run: |
           if [ "$CHANGES" != "success" ]; then echo "::error::Could not read the PR's files."; exit 1; fi
           if [ "$CODE" != "true" ]; then echo "No code touched: nothing to test."; exit 0; fi
           if [ "$SUITE" != "success" ]; then echo "::error::The suite failed in at least one shard ($SUITE)."; exit 1; fi
+          if [ "$SKILL_SIZE" != "success" ]; then echo "::error::A skill breaks a hard size limit ($SKILL_SIZE)."; exit 1; fi
           echo "All shards passed."

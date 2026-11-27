@@ -47,6 +47,25 @@ ships with or before this release.
   target after the component that defers it. `requires` feeds no fingerprint, so
   adding or moving a link re-emanates nothing.
 
+### Added
+
+- **`plugin/scripts/skill-size.sh` reports a skill too big to load well**: a
+  description over 1024 characters, or a description and `when_to_use` over 1536
+  together, is an error; a `SKILL.md` of 500 lines or more, a `SKILL.md` body over
+  5000 tokens, any other skill file over 10000 tokens, or a line over 768 characters
+  (omp's read tool cuts a longer one), is a warning. It is a maintainer tool that
+  reads only, and no project runs it; the skills INSPIRE ships
+  hold its hard limits.
+
+### Changed
+
+- **`inspire-code-nestjs` keeps its quality gates in a reference**: the `## Quality
+  gates` prose moves, word for word, to `references/quality-gates.md`, and the section
+  in `SKILL.md` keeps its heading and says when to read it — when changing the lint or
+  coverage config, or before suppressing a lint rule. The skill loads about 2,600 fewer
+  tokens on every run; the `gates:` frontmatter does not change. A project that edited
+  this skill's `SKILL.md` is asked about it during `/inspire:update`.
+
 ### Fixed
 
 - **A store key cleared on error is no longer fetched again in an endless loop.**
