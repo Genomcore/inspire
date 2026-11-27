@@ -37,6 +37,10 @@ check "update skill: names the legitimate no-lock pre-0.3 case" \
   "grep -qi 'may legitimately have no lock' '$US_FLAT'"
 check "update skill: warns that redirecting to init is the closed loop" \
   "grep -qi 'closed loop' '$US_FLAT'"
+check "update skill: brings an old React store's clear to the rule" \
+  "grep -q '## Step 12 — The store' '$US_FLAT' && grep -q 'removeQueries' '$US_FLAT' && grep -q 'staleTime: Infinity' '$US_FLAT'"
+check "update skill: the store step applies without asking and commits nothing" \
+  "grep -q 'Step 12 writes without asking' '$US_FLAT' && grep -q 'commits none' '$US_FLAT'"
 rm -f "$US_FLAT"
 
 summary

@@ -175,10 +175,12 @@ components reach it through hooks only.
 
 - **Server keys** → MUST be one query hook per key, `useStore{Key}` (`me` →
   `useStoreMe`), with cache key `['store', '{key}']`, calling the action's client
-  function from `## Bindings`.
-  - `start-up` → fetched with `queryClient.ensureQueryData` before the router renders
-    its first route.
-  - `first read` → `staleTime: Infinity`, fetched by the first hook that mounts.
+  function from `## Bindings`. Every server key is `staleTime: Infinity`, so it is
+  fetched only on its own trigger and on a ``refresh store `k` ``, never again because a
+  reader mounts or the window regains focus.
+  - `start-up` → fetched with `queryClient.ensureQueryData`, with the hook's own query
+    function, before the router renders its first route.
+  - `first read` → fetched by the first hook that mounts.
   - ``on change of `k` `` → cache key `['store', '{key}', {value of k}]`, `enabled`
     while `k` holds a value, which is the action's input.
 - **Client keys** → MUST be one Zustand store per face, `use{Face}Store`, with one
@@ -189,8 +191,16 @@ components reach it through hooks only.
 - **On error** → the `api/` layer classifies a failure once into `unauthenticated`,
   `forbidden`, `not-found`, `unavailable` or `other`. The key's own outcome, or the
   store's default for that class: `keep` leaves the cached data as it is, `clear`
-  removes the query (`queryClient.removeQueries`), a navigate outcome calls
-  `navigate(routeOf('{screen id}'))`.
+  empties the key, a navigate outcome calls `navigate(routeOf('{screen id}'))`.
+  - `clear` → the hook's query function catches a failure whose class has the
+    `clear` outcome and returns `null`; every other class is thrown again. The key
+    then holds `null`, which its readers render as its empty state (signed out, for
+    `me`), and the cache holds no error, so the query is not retried and a mounted
+    reader starts no fetch.
+  - `clear` MUST NOT call `queryClient.removeQueries` on a key a component reads: a
+    mounted reader builds the removed query again and fetches it, and while the
+    failure lasts that is an endless loop of requests. A key the shell reads, `me`
+    first of all, is always mounted.
 - **Reads** → a data row ``store `k` `` calls `useStore{Key}()` for a server key and
   `use{Face}Store((s) => s.{key})` for a client key. A store read never fetches with
   a screen's cache key.
@@ -199,7 +209,9 @@ components reach it through hooks only.
   setter for a client key; ``refresh store `k` `` invalidates `['store', '{key}']`;
   a navigation `Then` calls the setter, then navigates.
 - **Tests** → each test MUST start from an empty store: a new `QueryClient`, and
-  `use{Face}Store.setState(initialState, true)` with both storages cleared.
+  `use{Face}Store.setState(initialState, true)` with both storages cleared. A server
+  key with a `clear` outcome MUST have the one-request test of
+  [`references/testing.md`](references/testing.md) § Store.
 
 ## Persistence
 
