@@ -107,9 +107,10 @@ bash plugin/scripts/skill-size.sh <skill-dir>   # no WARN for SKILL.md beyond th
 bash plugin/test/run.sh skill-links             # every link resolves
 ```
 
-and no line was lost: every non-blank line of the old `SKILL.md` must appear in
-some file of the skill. The only lines this may print are the ones whose links you
-changed:
+and no distinct line was lost: every non-blank line of the old `SKILL.md` must appear
+in some file of the skill. The only lines this may print are the ones whose links you
+changed. It compares distinct lines, so it does not see a repeated line dropped (a
+closing fence, a repeated table row) or a changed order — read `git diff` for those:
 
 ```bash
 d=<skill-dir>

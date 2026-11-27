@@ -6,6 +6,7 @@
 #   skill-size.sh --sections SKILL.md   # each H2 section: line, lines, ~tokens, heading
 #
 # One line per finding, `ERROR|WARN <file>: <message>`; exit 1 when any ERROR.
+#   ERROR no readable description            (frontmatter missing or not valid YAML)
 #   ERROR description > 1024 chars           (rejected on upload; agentskills.io spec)
 #   ERROR description + when_to_use > 1536   (cut from the skill listing Claude Code shows)
 #   WARN  SKILL.md >= 500 lines              (Anthropic skill-authoring best practices)
@@ -25,6 +26,8 @@ if [ "${1:-}" = --sections ]; then
   [ -f "${2:-}" ] || { echo "usage: skill-size.sh --sections <SKILL.md>" >&2; exit 2; }
   awk "$SDD_AWK_FENCE_FUNCS"'
     BEGIN { h = "(before the first ##, frontmatter included)"; start = 1 }
+    NR == 1 && $0 == "---" { fm = 1 }
+    fm { n += length($0) + 1; if (NR > 1 && $0 == "---") fm = 0; next }
     !sdd_fence($0) && !sdd_in_fence() && /^## / { out(NR); h = $0; start = NR; n = 0 }
     { n += length($0) + 1 }
     function out(end) { printf "%5d %5d ~%5d  %s\n", start, end - start, n / 4, h }
@@ -36,9 +39,12 @@ fi
 command -v yq >/dev/null || { echo "skill-size.sh: needs yq" >&2; exit 2; }
 [ $# -gt 0 ] || set -- "${HERE%/scripts}/base/skills" "${HERE%/scripts}/skills"
 
+for p in "$@"; do [ -e "$p" ] || { echo "skill-size.sh: no such path: $p" >&2; exit 2; }; done
+
 errors=0
 while IFS= read -r f; do
   d="$(sdd_fm_value "$f" .description)"; w="$(sdd_fm_value "$f" .when_to_use)"
+  [ -n "$d" ] || { echo "ERROR $f: no description (frontmatter missing or not valid YAML)"; errors=1; }
   [ ${#d} -le $MAX_DESC ] || { echo "ERROR $f: description is ${#d} chars (max $MAX_DESC)"; errors=1; }
   [ $((${#d} + ${#w})) -le $MAX_LISTING ] || { echo "ERROR $f: description + when_to_use is $((${#d} + ${#w})) chars (max $MAX_LISTING)"; errors=1; }
   l=$(wc -l < "$f")

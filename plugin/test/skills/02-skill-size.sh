@@ -31,12 +31,17 @@ run desc; has "a 1025-char description is an error" "$out" "ERROR $T/desc/SKILL.
 echo x | skill listing "$(rep a 1000)" "$(rep b 537)"
 run listing; has "description + when_to_use over 1536 is an error" "$out" "is 1537 chars (max 1536)"
 
+echo x | skill colon "Use when: $(rep a 1100)"
+run colon; has "a frontmatter that is not valid YAML is an error" "$out" "ERROR $T/colon/SKILL.md: no description"; eq "an unreadable description exits 1" "$code" 1
+
+run missing 2>/dev/null; eq "a path that does not exist exits 2" "$code" 2
+
 mkdir -p "$T/refs/references"; echo x | skill refs 'Refs.'; rep 'word ' 8001 > "$T/refs/references/big.md"
 run refs; has "a reference over 10000 tokens warns" "$out" "WARN $T/refs/references/big.md: ~10001 tokens"
 
-printf '%s\n' '# T' '## A' 'a' '```' '## not a section' '```' '## B' 'b' 'b' > "$T/s.md"
+printf '%s\n' '---' '## not a section' '---' '# T' '## A' 'a' '```' '## not a section' '```' '## B' 'b' 'b' > "$T/s.md"
 out="$(bash "$LINT" --sections "$T/s.md" | awk '{ print $1, $2, $NF }')"
-eq "--sections lists H2s outside fences with their line counts" "$out" "$(printf '1 1 included)\n2 5 A\n7 3 B')"
+eq "--sections lists H2s outside fences with their line counts" "$out" "$(printf '1 4 included)\n5 5 A\n10 3 B')"
 
 out="$(bash "$LINT" 2>&1)"; code=$?
 hasnt "the shipped skills hold the hard limits" "$out" "ERROR "
