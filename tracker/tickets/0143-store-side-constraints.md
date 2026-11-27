@@ -2,7 +2,7 @@
 id: 0143-store-side-constraints
 title: "0143 — `len`, `pattern`, `min` and `max` are test claims, so raw SQL writes past them"
 created: 2026-11-02
-updated: 2026-11-25
+updated: 2026-11-27
 reporter: "@irene.gonzalez"
 closed_by: null
 closed_at: null
@@ -68,10 +68,16 @@ table level, the table carries it; where the store cannot, the rule stays in cod
 - [ ] The skills say whether the application keeps a validator beside the `CHECK`, for a
       readable API error rather than a constraint violation, and where that error is
       specified (see `B5-error-codes-on-the-wire`).
-- [ ] If the review keeps the current split, `keyed-heads.md` § Oracles says why (which
-      stores lack the capability), and the ticket closes **Done** with no other change.
 
 ## Notes
+
+**Amended 2026-11-27 (direction confirmed).** The maintainers confirm the direction: INSPIRE
+puts each validation as low in the stack as the store allows, so no path skips it, raw SQL
+included. Where an engine cannot express a rule, the rule stays in the backend. The current
+split is not kept, so the criterion that let this ticket close with no change is removed. A
+project that wants a rule in code instead, for example for insert speed, edits its stack
+skill's `## Persistence` seed, which `_references/stack-skills.md` § Seeds makes
+project-owned, and records a lesson. The tests the profile writes follow the same skill.
 
 - **Factory.** The INSPIRE Factory derives contracts with its own deriver, which assigns
   each claim's oracle, and its gate counts an uncited store claim without a finding. A
