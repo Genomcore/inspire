@@ -36,6 +36,10 @@ run colon; has "a frontmatter that is not valid YAML is an error" "$out" "ERROR 
 
 run missing 2>/dev/null; eq "a path that does not exist exits 2" "$code" 2
 
+{ rep a 769; echo; rep b 768; echo; } | skill wide 'Wide.'
+run wide; has "a body line over 768 chars warns" "$out" "WARN $T/wide/SKILL.md:5: line is 769 chars"
+hasnt "a 768-char line does not" "$out" "SKILL.md:6:"
+
 mkdir -p "$T/refs/references"; echo x | skill refs 'Refs.'; rep 'word ' 8001 > "$T/refs/references/big.md"
 run refs; has "a reference over 10000 tokens warns" "$out" "WARN $T/refs/references/big.md: ~10001 tokens"
 

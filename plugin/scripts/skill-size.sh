@@ -13,6 +13,8 @@
 #   WARN  SKILL.md body > 5000 tokens        (spec; after compaction Claude Code keeps only
 #                                             the first 5000 tokens of each skill)
 #   WARN  any other .md > 10000 tokens       (agent-ecosystem/skill-validator default)
+#   WARN  a body line > 768 chars in any .md (omp's read tool cuts a longer line at
+#                                             tools.outputMaxColumns)
 # Characters are Unicode code points; tokens are estimated as chars/4, since there is
 # no public Claude tokenizer.
 set -uo pipefail
@@ -20,7 +22,7 @@ export LC_ALL=C.UTF-8
 HERE="$(cd -P "$(dirname "$0")" && pwd -P)"
 . "$HERE/../base/bin/_lib.sh" || { echo "skill-size.sh: cannot read the plugin library" >&2; exit 2; }
 
-MAX_DESC=1024 MAX_LISTING=1536 MAX_LINES=500 MAX_BODY_TOKENS=5000 MAX_REF_TOKENS=10000
+MAX_DESC=1024 MAX_LISTING=1536 MAX_LINES=500 MAX_BODY_TOKENS=5000 MAX_REF_TOKENS=10000 MAX_COLS=768
 
 if [ "${1:-}" = --sections ]; then
   [ -f "${2:-}" ] || { echo "usage: skill-size.sh --sections <SKILL.md>" >&2; exit 2; }
@@ -57,4 +59,12 @@ find "$@" -type f -name '*.md' ! -name SKILL.md ! -path '*/templates/*' -exec wc
   awk -v max=$MAX_REF_TOKENS '{ t = int($1 / 4); f = $0; sub(/^ *[0-9]+ /, "", f) }
     f != "total" && t > max { print "WARN " f ": ~" t " tokens (recommended <= " max ")" }' |
   LC_ALL=C sort
+
+# ponytail: awk length() counts bytes here, so a multibyte line between 768 chars and
+# 768 bytes warns too; never a miss. Switch to perl -CSD if that noise shows up.
+find "$@" -type f -name '*.md' ! -path '*/templates/*' -exec awk -v max=$MAX_COLS '
+  FNR == 1 { fm = ($0 == "---") }
+  fm { if (FNR > 1 && $0 == "---") fm = 0; next }
+  length($0) > max { print "WARN " FILENAME ":" FNR ": line is " length($0) " chars (omp read cuts at " max ")" }
+' {} + | LC_ALL=C sort -t: -k1,1 -k2,2n
 exit $errors

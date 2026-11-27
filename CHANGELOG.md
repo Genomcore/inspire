@@ -21,8 +21,9 @@ with the update.
 - **`plugin/scripts/skill-size.sh` reports a skill too big to load well**: a
   description over 1024 characters, or a description and `when_to_use` over 1536
   together, is an error; a `SKILL.md` of 500 lines or more, a `SKILL.md` body over
-  5000 tokens, or any other skill file over 10000 tokens, is a warning. It is a
-  maintainer tool that reads only, and no project runs it; the skills INSPIRE ships
+  5000 tokens, any other skill file over 10000 tokens, or a line over 768 characters
+  (omp's read tool cuts a longer one), is a warning. It is a maintainer tool that
+  reads only, and no project runs it; the skills INSPIRE ships
   hold its hard limits.
 
 ### Changed

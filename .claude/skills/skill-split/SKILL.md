@@ -12,7 +12,7 @@ Code keeps only its first 5000 tokens. This command keeps in `SKILL.md` what eve
 run needs and moves what only some runs need to `references/`, behind a link that
 says when to read it. It moves text; it never rewrites it.
 
-Argument: `$ARGUMENTS`, the skill directory (for example
+Argument: the skill directory, given after the command (`$ARGUMENTS`) (for example
 `plugin/base/skills/inspire-code-nestjs`).
 
 ## 1. Measure
